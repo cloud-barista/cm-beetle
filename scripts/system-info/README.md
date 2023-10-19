@@ -5,6 +5,9 @@ It can be useful for extracting and referencing the configuration of the source 
 This script helps to quickly understand the current state of the system and diagnose issues.
 It is useful for checking and referencing the configuration of the source computing environment for the cloud migrator project.
 
+## Tested on
+- `Python 3.8.10`
+- `pip 20.0.2`
 
 ## Dependencies
 
@@ -13,6 +16,12 @@ It is useful for checking and referencing the configuration of the source comput
 - `netifaces`
 - `pyyaml`
 - `GPUtil`
+- `distro`
+
+### Install dependencies
+```bash
+pip3 install -r requirements.txt
+```
 
 ## Execution
 
