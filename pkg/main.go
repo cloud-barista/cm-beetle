@@ -15,8 +15,6 @@ limitations under the License.
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
 	"flag"
 	"fmt"
 	"os"
@@ -28,61 +26,62 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 
-	"github.com/cloud-barista/cm-beetle/src/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
-	restServer "github.com/cloud-barista/cm-beetle/src/api/rest/server"
+	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
 )
 
 // init for main
 func init() {
-	profile := "cloud_conf"
-	setConfig(profile)
+	// profile := "cloud_conf"
+	// setConfig(profile)
 }
 
 // setConfig get cloud settings from a config file
-func setConfig(profile string) {
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./conf/")
-	viper.AddConfigPath("../conf/")
-	viper.SetConfigName(profile)
-	viper.SetConfigType("yaml")
-	err := viper.ReadInConfig()
-	if err != nil { // Handle errors reading the config file
-		panic(fmt.Errorf("fatal error config file: %w", err))
-	}
-	err = viper.Unmarshal(&common.RuntimeConf)
-	if err != nil {
-		panic(err)
-	}
+// func setConfig(profile string) {
+// 	viper.AddConfigPath(".")       // optionally look for config in the working directory
+// 	viper.AddConfigPath("./conf/") // optionally look for config in the working directory/conf/
+// 	viper.AddConfigPath("../conf/")
+// 	viper.SetConfigName(profile)
+// 	viper.SetConfigType("yaml")
+// 	err := viper.ReadInConfig()
+// 	if err != nil { // Handle errors reading the config filemak
+// 		panic(fmt.Errorf("fatal error config file: %w", err))
+// 	}
+// 	err = viper.Unmarshal(&common.RuntimeConf)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	// const mrttArrayXMax = 300
-	// const mrttArrayYMax = 300
-	// common.RuntimeLatancyMap = make([][]string, mrttArrayXMax)
+// 	// const mrttArrayXMax = 300
+// 	// const mrttArrayYMax = 300
+// 	// common.RuntimeLatancyMap = make([][]string, mrttArrayXMax)
 
-	// cloudlatencymap.csv
-	file, fileErr := os.Open("../assets/cloudlatencymap.csv")
-	defer file.Close()
-	if fileErr != nil {
-		common.CBLog.Error(fileErr)
-		panic(fileErr)
-	}
-	rdr := csv.NewReader(bufio.NewReader(file))
-	common.RuntimeLatancyMap, _ = rdr.ReadAll()
+// 	// cloudlatencymap.csv
+// 	file, fileErr := os.Open("../assets/cloudlatencymap.csv")
+// 	if fileErr != nil {
+// 		common.CBLog.Error(fileErr)
+// 		panic(fileErr)
+// 	}
+// 	defer file.Close()
 
-	for i, v := range common.RuntimeLatancyMap {
-		if i == 0 {
-			continue
-		}
-		if v[0] == "" {
-			break
-		}
-		common.RuntimeLatancyMapIndex[v[0]] = i
-	}
+// 	rdr := csv.NewReader(bufio.NewReader(file))
+// 	common.RuntimeLatancyMap, _ = rdr.ReadAll()
 
-	//fmt.Printf("RuntimeLatancyMap: %v\n\n", common.RuntimeLatancyMap)
-	//fmt.Printf("[RuntimeLatancyMapIndex]\n %v\n", common.RuntimeLatancyMapIndex)
+// 	for i, v := range common.RuntimeLatancyMap {
+// 		if i == 0 {
+// 			continue
+// 		}
+// 		if v[0] == "" {
+// 			break
+// 		}
+// 		common.RuntimeLatancyMapIndex[v[0]] = i
+// 	}
 
-}
+// 	//fmt.Printf("RuntimeLatancyMap: %v\n\n", common.RuntimeLatancyMap)
+// 	//fmt.Printf("[RuntimeLatancyMapIndex]\n %v\n", common.RuntimeLatancyMapIndex)
+
+// }
 
 // Main Body
 
@@ -133,11 +132,11 @@ func main() {
 	common.AutocontrolDurationMs = common.NVL(os.Getenv("AUTOCONTROL_DURATION_MS"), "10000")
 
 	// load the latest configuration from DB (if exist)
-	fmt.Println("")
-	fmt.Println("[Update system environment]")
-	common.UpdateGlobalVariable(common.StrDragonflyRestUrl)
-	common.UpdateGlobalVariable(common.StrSpiderRestUrl)
-	common.UpdateGlobalVariable(common.StrAutocontrolDurationMs)
+	// fmt.Println("")
+	// fmt.Println("[Update system environment]")
+	// common.UpdateGlobalVariable(common.StrDragonflyRestUrl)
+	// common.UpdateGlobalVariable(common.StrSpiderRestUrl)
+	// common.UpdateGlobalVariable(common.StrAutocontrolDurationMs)
 
 	// load config
 	//masterConfigInfos = confighandler.GetMasterConfigInfos()

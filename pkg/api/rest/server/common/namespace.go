@@ -19,7 +19,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/cloud-barista/cm-beetle/src/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 )
 
 func RestCheckNs(c echo.Context) error {

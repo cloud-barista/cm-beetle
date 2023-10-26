@@ -22,8 +22,7 @@ import (
 	"syscall"
 	"time"
 
-	rest_common "github.com/cloud-barista/cm-beetle/src/api/rest/server/common"
-	rest_mcis "github.com/cloud-barista/cm-beetle/src/api/rest/server/mcis"
+	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/server/common"
 
 	"crypto/subtle"
 	"fmt"
@@ -36,7 +35,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	// echo-swagger middleware
-	_ "github.com/cloud-barista/cm-beetle/src/api/rest/docs"
+	_ "github.com/cloud-barista/cm-beetle/pkg/api/rest/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
@@ -115,28 +114,28 @@ func RunServer(port string) {
 	fmt.Println("\n \n ")
 
 	// Route
-	e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)
-	e.GET("/beetle/connConfig/:connConfigName", rest_common.RestGetConnConfig)
+	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)
+	// e.GET("/beetle/connConfig/:connConfigName", rest_common.RestGetConnConfig)
 
 	// path specific timeout and ratelimit
 	// timeout middleware
-	timeoutConfig := middleware.TimeoutConfig{
-		Timeout:      60 * time.Second,
-		Skipper:      middleware.DefaultSkipper,
-		ErrorMessage: "Error: request time out (60s)",
-	}
+	// timeoutConfig := middleware.TimeoutConfig{
+	// 	Timeout:      60 * time.Second,
+	// 	Skipper:      middleware.DefaultSkipper,
+	// 	ErrorMessage: "Error: request time out (60s)",
+	// }
 
-	g.GET("/:nsId/mcis/:mcisId", rest_mcis.RestGetMcis, middleware.TimeoutWithConfig(timeoutConfig),
-		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
-	g.GET("/:nsId/mcis", rest_mcis.RestGetAllMcis, middleware.TimeoutWithConfig(timeoutConfig),
-		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
+	// g.GET("/:nsId/mcis/:mcisId", rest_mcis.RestGetMcis, middleware.TimeoutWithConfig(timeoutConfig),
+	// 	middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
+	// g.GET("/:nsId/mcis", rest_mcis.RestGetAllMcis, middleware.TimeoutWithConfig(timeoutConfig),
+	// 	middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
 
-	g.POST("/:nsId/mcis/:mcisId/vm", rest_mcis.RestPostMcisVm)
-	g.GET("/:nsId/mcis/:mcisId/vm/:vmId", rest_mcis.RestGetMcisVm)
-	g.GET("/:nsId/mcis/:mcisId/subgroup", rest_mcis.RestGetMcisGroupIds)
-	g.GET("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestGetMcisGroupVms)
-	g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
-	g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
+	// g.POST("/:nsId/mcis/:mcisId/vm", rest_mcis.RestPostMcisVm)
+	// g.GET("/:nsId/mcis/:mcisId/vm/:vmId", rest_mcis.RestGetMcisVm)
+	// g.GET("/:nsId/mcis/:mcisId/subgroup", rest_mcis.RestGetMcisGroupIds)
+	// g.GET("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestGetMcisGroupVms)
+	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
+	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
 	selfEndpoint := os.Getenv("SELF_ENDPOINT")
 	apidashboard := " http://" + selfEndpoint + "/beetle/swagger/index.html"

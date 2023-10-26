@@ -1,14 +1,15 @@
-import platform
-import distro
-import socket
-import psutil
-import subprocess
-from prettytable import PrettyTable
-from datetime import datetime
-from collections import defaultdict
 import os
+import platform
+import socket
+import subprocess
+from collections import defaultdict
+from datetime import datetime
+
+import distro
 import netifaces
+import psutil
 import yaml  # Required for YAML file operations
+from prettytable import PrettyTable
 
 # Optional packages for GPU and Graphic Card information
 try:
@@ -26,7 +27,9 @@ def bytes_to_gb(bytes_value):
 
 def get_os_info():
     """Fetch Operating System information."""
-    boot_time = datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
+    boot_time = datetime.fromtimestamp(psutil.boot_time()).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     try:
         logged_user = os.getlogin()
     except OSError:
@@ -153,7 +156,9 @@ def get_gpu_info():
     if GPU_AVAILABLE:
         gpus = GPUtil.getGPUs()
         for gpu in gpus:
-            info_list.append((f"{gpu.name}", f"Driver Version: {gpu.driver_version}"))
+            info_list.append(
+                (f"{gpu.name}", f"Driver Version: {gpu.driver_version}")
+            )
     else:
         info_list.append(("Status", "Not Available"))
     return "GPU", info_list
@@ -173,28 +178,6 @@ def get_graphic_card_info():
         info_list = [("Status", "Not Available")]
 
     return "Graphic Card", info_list
-
-
-# New function to get IP and MAC addresses using netifaces
-def get_advanced_network_info():
-    """Fetch advanced network information using netifaces."""
-    # Add a function using netifaces
-    interfaces = netifaces.interfaces()
-    iface_info = []
-    for iface in interfaces:
-        addresses = netifaces.ifaddresses(iface)
-        if netifaces.AF_INET in addresses:
-            ip_info = addresses[netifaces.AF_INET][0]
-            ip = ip_info.get("addr", "N/A")
-            netmask = ip_info.get("netmask", "N/A")
-            broadcast = ip_info.get("broadcast", "N/A")
-            if netifaces.AF_LINK in addresses:
-                mac_info = addresses[netifaces.AF_LINK][0]
-                mac = mac_info.get("addr", "N/A")
-                iface_info.append((iface, ip, netmask, broadcast, mac))
-            else:
-                iface_info.append((iface, ip, netmask, broadcast, "N/A"))
-    return "Advanced Network", iface_info
 
 
 def get_process_info():
@@ -246,7 +229,11 @@ def save_to_yaml(data):
 
 
 def main():
-    """Main function to collect and print all system information and save it to YAML."""
+    """
+    Main function to collect and print all system information
+    and save it to YAML.
+    """
+
     system_table = PrettyTable()
     system_table.field_names = ["Index", "Group", "Category", "Info"]
 

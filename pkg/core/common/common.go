@@ -16,10 +16,7 @@ package common
 
 import (
 	"database/sql"
-	"time"
 
-	cbstore "github.com/cloud-barista/cb-store"
-	"github.com/cloud-barista/cb-store/config"
 	icbs "github.com/cloud-barista/cb-store/interfaces"
 	"github.com/sirupsen/logrus"
 	"xorm.io/xorm"
@@ -81,10 +78,10 @@ const (
 var StartTime string
 
 func init() {
-	CBLog = config.Cblogger
-	CBStore = cbstore.GetStore()
+	// CBLog = config.Cblogger
+	// CBStore = cbstore.GetStore()
 
-	StartTime = time.Now().Format("2006.01.02 15:04:05 Mon")
+	// StartTime = time.Now().Format("2006.01.02 15:04:05 Mon")
 }
 
 // Spider 2020-03-30 https://github.com/cloud-barista/cb-spider/blob/master/cloud-control-manager/cloud-driver/interfaces/resources/IId.go

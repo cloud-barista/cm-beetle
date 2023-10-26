@@ -14,9 +14,7 @@ RUN apk add --no-cache build-base
 
 ADD . /go/src/github.com/cloud-barista/cm-beetle
 
-WORKDIR /go/src/github.com/cloud-barista/cm-beetle
-
-WORKDIR src
+WORKDIR /go/src/github.com/cloud-barista/cm-beetle/pkg
 
 RUN go build -ldflags '-w -extldflags "-static"' -tags cm-beetle -o cm-beetle -v
 
