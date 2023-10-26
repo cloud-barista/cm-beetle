@@ -29,13 +29,13 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 WORKDIR /app/src
 
-COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/assets/ /app/assets/
+# COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/assets/ /app/assets/
 
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scripts/
 
-COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
+# COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
 
-COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/src/cm-beetle /app/src/
+COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/pkg/cm-beetle /app/pkg/
 
 #RUN /bin/bash -c "source /app/conf/setup.env"
 ENV CMBEETLE_ROOT /app
@@ -67,8 +67,8 @@ ENV SELF_ENDPOINT localhost:1323
 # Environment variables that you don't need to touch
 
 # Swagger UI API document file path 
-ENV API_DOC_PATH /app/src/api/rest/docs/swagger.json
+ENV API_DOC_PATH /app/pkg/api/rest/docs/swagger.json
 
-ENTRYPOINT [ "/app/src/cm-beetle" ]
+ENTRYPOINT [ "/app/pkg/cm-beetle" ]
 
 EXPOSE 1323
