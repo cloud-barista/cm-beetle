@@ -1,0 +1,439 @@
+basePath: /beetle
+definitions:
+  common.ConfigInfo:
+    properties:
+      id:
+        example: SPIDER_REST_URL
+        type: string
+      name:
+        example: SPIDER_REST_URL
+        type: string
+      value:
+        example: http://localhost:1024/spider
+        type: string
+    type: object
+  common.ConfigReq:
+    properties:
+      name:
+        example: SPIDER_REST_URL
+        type: string
+      value:
+        example: http://localhost:1024/spider
+        type: string
+    type: object
+  common.IdList:
+    properties:
+      output:
+        items:
+          type: string
+        type: array
+    type: object
+  common.JSONResult:
+    type: object
+  common.NsInfo:
+    properties:
+      description:
+        example: Description for this namespace
+        type: string
+      id:
+        example: ns01
+        type: string
+      name:
+        example: ns01
+        type: string
+    type: object
+  common.NsReq:
+    properties:
+      description:
+        example: Description for this namespace
+        type: string
+      name:
+        example: ns01
+        type: string
+    type: object
+  common.RestGetAllConfigResponse:
+    properties:
+      config:
+        description: Name string     `json:"name"`
+        items:
+          $ref: '#/definitions/common.ConfigInfo'
+        type: array
+    type: object
+  common.RestGetAllNsResponse:
+    properties:
+      ns:
+        description: Name string     `json:"name"`
+        items:
+          $ref: '#/definitions/common.NsInfo'
+        type: array
+    type: object
+  common.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+info:
+  contact:
+    email: contact-to-cloud-barista@googlegroups.com
+    name: API Support
+    url: http://cloud-barista.github.io
+  description: CM-Beetle REST API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: CM-Beetle REST API
+  version: latest
+paths:
+  /config:
+    delete:
+      consumes:
+      - application/json
+      description: Init all configs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Init all configs
+      tags:
+      - '[Admin] System environment'
+    get:
+      consumes:
+      - application/json
+      description: List all configs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.RestGetAllConfigResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: List all configs
+      tags:
+      - '[Admin] System environment'
+    post:
+      consumes:
+      - application/json
+      description: Create or Update config (SPIDER_REST_URL, DRAGONFLY_REST_URL, ...)
+      parameters:
+      - description: Key and Value for configuration
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/common.ConfigReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ConfigInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Create or Update config
+      tags:
+      - '[Admin] System environment'
+  /config/{configId}:
+    delete:
+      consumes:
+      - application/json
+      description: Init config
+      parameters:
+      - description: Config ID
+        in: path
+        name: configId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ConfigInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Init config
+      tags:
+      - '[Admin] System environment'
+    get:
+      consumes:
+      - application/json
+      description: Get config
+      parameters:
+      - description: Config ID
+        in: path
+        name: configId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.ConfigInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Get config
+      tags:
+      - '[Admin] System environment'
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check Beetle is alive
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Check Beetle is alive
+      tags:
+      - '[Admin] System management'
+  /httpVersion:
+    get:
+      consumes:
+      - application/json
+      description: Checks and logs the HTTP version of the incoming request to the
+        server console.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Check HTTP version of incoming request
+      tags:
+      - '[Admin] System management'
+  /ns:
+    delete:
+      consumes:
+      - application/json
+      description: Delete all namespaces
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Delete all namespaces
+      tags:
+      - '[Namespace] Namespace management'
+    get:
+      consumes:
+      - application/json
+      description: List all namespaces or namespaces' ID
+      parameters:
+      - description: Option
+        enum:
+        - id
+        in: query
+        name: option
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Different return structures by the given option param
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.JSONResult'
+            - properties:
+                '[DEFAULT]':
+                  $ref: '#/definitions/common.RestGetAllNsResponse'
+                '[ID]':
+                  $ref: '#/definitions/common.IdList'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: List all namespaces or namespaces' ID
+      tags:
+      - '[Namespace] Namespace management'
+    post:
+      consumes:
+      - application/json
+      description: Create namespace
+      parameters:
+      - description: Details for a new namespace
+        in: body
+        name: nsReq
+        required: true
+        schema:
+          $ref: '#/definitions/common.NsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.NsInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Create namespace
+      tags:
+      - '[Namespace] Namespace management'
+  /ns/{nsId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete namespace
+      parameters:
+      - default: ns01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Delete namespace
+      tags:
+      - '[Namespace] Namespace management'
+    get:
+      consumes:
+      - application/json
+      description: Get namespace
+      parameters:
+      - default: ns01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.NsInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Get namespace
+      tags:
+      - '[Namespace] Namespace management'
+    put:
+      consumes:
+      - application/json
+      description: Update namespace
+      parameters:
+      - default: ns01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Details to update existing namespace
+        in: body
+        name: namespace
+        required: true
+        schema:
+          $ref: '#/definitions/common.NsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.NsInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Update namespace
+      tags:
+      - '[Namespace] Namespace management'
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
