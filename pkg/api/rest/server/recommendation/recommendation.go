@@ -11,8 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration is to handle REST API for migration
-package migration
+// Package common is to handle REST API for common funcitonalities
+package recommendation
 
 import (
 	"fmt"
@@ -32,29 +32,29 @@ type Infrastructure struct {
 	VirtualMachine string
 }
 
-type MigrateInfraRequest struct {
+type RecommendInfraRequest struct {
 	Infrastructure
 }
 
-type MigrateInfraResponse struct {
+type RecommendInfraResponse struct {
 	Infrastructure
 }
 
-// MigrateInfra godoc
-// @Summary Migrate an infrastructure on a cloud platform
-// @Description It migrates an infrastructure on a cloud platform. Infrastructure includes network, storage, compute, and so on.
-// @Tags [Migration] Infrastructure
+// RecommendInfra godoc
+// @Summary Recommend an appropriate infrastructure for cloud migration
+// @Description It recommends a cloud infrastructure most similar to the input. Infrastructure includes network, storage, compute, and so on.
+// @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param InfrastructureInfo body MigrateInfraRequest true "Specify network, disk, compute, security group, virtual machine, etc."
-// @Success 200 {object} MigrateInfraResponse "Successfully migrated infrastructure on a cloud platform"
+// @Param UserInfrastructure body RecommendInfraRequest true "Specify network, disk, compute, security group, virtual machine, etc."
+// @Success 200 {object} RecommendInfraResponse "Successfully recommended an appropriate infrastructure for cloud migration"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /migration/infra [post]
-func (rh *Handlers) MigrateInfra(c echo.Context) error {
+// @Router /recommendation/infra [post]
+func (rh *Handlers) RecommendInfra(c echo.Context) error {
 
 	// Input
-	req := &MigrateInfraRequest{}
+	req := &RecommendInfraRequest{}
 	if err := c.Bind(req); err != nil {
 		return err
 	}
@@ -65,10 +65,8 @@ func (rh *Handlers) MigrateInfra(c echo.Context) error {
 	fmt.Print(req.SecurityGroup)
 	fmt.Print(req.VirtualMachine)
 
-	res := &MigrateInfraResponse{}
+	res := &RecommendInfraResponse{}
 	// Process
-
-	// Call CB-Tumblebug API, which can be "/mcisDynamic"
 
 	// Ouput
 
