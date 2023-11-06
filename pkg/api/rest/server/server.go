@@ -117,7 +117,7 @@ func RunServer(port string) {
 	fmt.Println("\n \n ")
 
 	// Route to infrastructure recommendation for cloud migration
-	v1 := e.Group("/beetle/v1")
+	v1 := e.Group("/beetle")
 	{
 		// API for infrastructure recommendation for cloud migration
 		recommHandlers := &recommendation.Handlers{}
