@@ -23,6 +23,8 @@ import (
 	"time"
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/server/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/server/migration"
+	recommendation "github.com/cloud-barista/cm-beetle/pkg/api/rest/server/recommendation"
 
 	"crypto/subtle"
 	"fmt"
@@ -108,10 +110,28 @@ func RunServer(port string) {
 	}))
 
 	fmt.Println("\n \n ")
-	fmt.Printf(banner)
+	fmt.Print(banner)
+	fmt.Println("\n ")
 	fmt.Println("\n ")
 	fmt.Printf(infoColor, website)
 	fmt.Println("\n \n ")
+
+	// Route to infrastructure recommendation for cloud migration
+	v1 := e.Group("/beetle/v1")
+	{
+		// API for infrastructure recommendation for cloud migration
+		recommHandlers := &recommendation.Handlers{}
+		recomm := v1.Group("/recommendation")
+
+		recomm.POST("/infra", recommHandlers.RecommendInfra)
+
+		// API for migration
+		migHandlers := &migration.Handlers{}
+		mig := v1.Group("/migration")
+
+		mig.POST("/infra", migHandlers.MigrateInfra)
+
+	}
 
 	// Route
 	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)

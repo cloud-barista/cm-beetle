@@ -17,9 +17,8 @@ package common
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/labstack/echo/v4"
 )
 
 func RestCheckNs(c echo.Context) error {
