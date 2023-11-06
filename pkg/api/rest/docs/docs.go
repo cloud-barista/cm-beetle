@@ -675,6 +675,62 @@ const docTemplate = `{
                 }
             }
         },
+        "common.ConnConfig": {
+            "type": "object",
+            "properties": {
+                "configName": {
+                    "type": "string"
+                },
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/common.GeoLocation"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.GeoLocation": {
+            "type": "object",
+            "properties": {
+                "briefAddr": {
+                    "type": "string"
+                },
+                "cloudType": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "string"
+                },
+                "nativeRegion": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.IID": {
+            "type": "object",
+            "properties": {
+                "nameId": {
+                    "description": "NameID by user",
+                    "type": "string"
+                },
+                "systemId": {
+                    "description": "SystemID by CloudOS",
+                    "type": "string"
+                }
+            }
+        },
         "common.IdList": {
             "type": "object",
             "properties": {
@@ -688,6 +744,17 @@ const docTemplate = `{
         },
         "common.JSONResult": {
             "type": "object"
+        },
+        "common.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
         },
         "common.NsInfo": {
             "type": "object",
@@ -798,8 +865,274 @@ const docTemplate = `{
         "migration.MigrateInfraResponse": {
             "type": "object",
             "properties": {
-                "responseText": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "description": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "yes",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "label": {
+                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "type": "string",
+                    "example": "User custom label"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/migration.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.TbVmInfo"
+                    }
+                }
+            }
+        },
+        "migration.RegionInfo": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.SpiderVMInfo": {
+            "type": "object",
+            "properties": {
+                "cspid": {
+                    "description": "VM ID given by CSP (required for registering VM)",
+                    "type": "string"
+                },
+                "dataDiskIIDs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.IID"
+                    }
+                },
+                "dataDiskNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "iid": {
+                    "description": "Fields for response",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.IID"
+                        }
+                    ]
+                },
+                "imageIId": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "imageName": {
+                    "type": "string"
+                },
+                "imageType": {
+                    "type": "string"
+                },
+                "keyPairIId": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "keyPairName": {
+                    "type": "string"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Fields for request",
+                    "type": "string"
+                },
+                "networkInterface": {
+                    "description": "ex) eth0",
+                    "type": "string"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.RegionInfo"
+                        }
+                    ]
+                },
+                "rootDeviceName": {
+                    "description": "\"/dev/sda1\", ...",
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", \"50\", \"1000\" (GB)",
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "description": "\"SSD(gp2)\", \"Premium SSD\", ...",
+                    "type": "string"
+                },
+                "securityGroupIIds": {
+                    "description": "AWS, ex) sg-0b7452563e1121bb6",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.IID"
+                    }
+                },
+                "securityGroupNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sshaccessPoint": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "subnetIID": {
+                    "description": "AWS, ex) subnet-8c4a53e4",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.IID"
+                        }
+                    ]
+                },
+                "subnetName": {
+                    "type": "string"
+                },
+                "vmspecName": {
+                    "description": "Fields for both request and response",
+                    "type": "string"
+                },
+                "vmuserId": {
+                    "description": "ex) user1",
+                    "type": "string"
+                },
+                "vmuserPasswd": {
+                    "type": "string"
+                },
+                "vpcIID": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "vpcname": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.StatusCountInfo": {
+            "type": "object",
+            "properties": {
+                "countCreating": {
+                    "description": "CountCreating is for counting Creating",
+                    "type": "integer"
+                },
+                "countFailed": {
+                    "description": "CountFailed is for counting Failed",
+                    "type": "integer"
+                },
+                "countRebooting": {
+                    "description": "CountRebooting is for counting Rebooting",
+                    "type": "integer"
+                },
+                "countResuming": {
+                    "description": "CountResuming is for counting Resuming",
+                    "type": "integer"
+                },
+                "countRunning": {
+                    "description": "CountRunning is for counting Running",
+                    "type": "integer"
+                },
+                "countSuspended": {
+                    "description": "CountSuspended is for counting Suspended",
+                    "type": "integer"
+                },
+                "countSuspending": {
+                    "description": "CountSuspending is for counting Suspending",
+                    "type": "integer"
+                },
+                "countTerminated": {
+                    "description": "CountTerminated is for counting Terminated",
+                    "type": "integer"
+                },
+                "countTerminating": {
+                    "description": "CountTerminating is for counting Terminating",
+                    "type": "integer"
+                },
+                "countTotal": {
+                    "description": "CountTotal is for Total VMs",
+                    "type": "integer"
+                },
+                "countUndefined": {
+                    "description": "CountUndefined is for counting Undefined",
+                    "type": "integer"
                 }
             }
         },
@@ -853,6 +1186,138 @@ const docTemplate = `{
                     "example": "3"
                 },
                 "vmUserPassword default:": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.TbVmInfo": {
+            "type": "object",
+            "properties": {
+                "connectionConfig": {
+                    "$ref": "#/definitions/common.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "Created time",
+                    "type": "string",
+                    "example": "2022-11-10 23:00:00"
+                },
+                "cspViewVmDetail": {
+                    "$ref": "#/definitions/migration.SpiderVMInfo"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "idByCSP": {
+                    "description": "CSP managed ID or Name",
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/common.GeoLocation"
+                },
+                "monAgentStatus": {
+                    "description": "Montoring agent status",
+                    "type": "string",
+                    "example": "[installed, notInstalled, failed]"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "networkAgentStatus": {
+                    "description": "NetworkAgent status",
+                    "type": "string",
+                    "example": "[notInstalled, installing, installed, failed]"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.RegionInfo"
+                        }
+                    ]
+                },
+                "rootDeviceName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "sshPort": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Required by CB-Tumblebug",
+                    "type": "string"
+                },
+                "subGroupId": {
+                    "description": "defined if the VM is in a group",
+                    "type": "string"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserAccount": {
+                    "type": "string"
+                },
+                "vmUserPassword": {
                     "type": "string"
                 }
             }
