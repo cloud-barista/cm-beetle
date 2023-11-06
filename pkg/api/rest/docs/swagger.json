@@ -278,6 +278,52 @@
                 }
             }
         },
+        "/migration/infra": {
+            "post": {
+                "description": "It migrates an infrastructure on a cloud platform. Infrastructure includes network, storage, compute, and so on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "Migrate an infrastructure on a cloud platform",
+                "parameters": [
+                    {
+                        "description": "Specify network, disk, compute, security group, virtual machine, etc.",
+                        "name": "InfrastructureInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateInfraRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully migrated infrastructure on a cloud platform",
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateInfraResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/ns": {
             "get": {
                 "description": "List all namespaces or namespaces' ID",
@@ -543,6 +589,52 @@
                     }
                 }
             }
+        },
+        "/recommendation/infra": {
+            "post": {
+                "description": "It recommends a cloud infrastructure most similar to the input. Infrastructure includes network, storage, compute, and so on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "Recommend an appropriate infrastructure for cloud migration",
+                "parameters": [
+                    {
+                        "description": "Specify network, disk, compute, security group, virtual machine, etc.",
+                        "name": "UserInfrastructure",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/recommendation.RecommendInfraRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended an appropriate infrastructure for cloud migration",
+                        "schema": {
+                            "$ref": "#/definitions/recommendation.RecommendInfraResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -650,6 +742,151 @@
                 "message": {
                     "type": "string",
                     "example": "Any message"
+                }
+            }
+        },
+        "migration.MigrateInfraRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "yes",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "type": "string",
+                    "example": "DynamicVM"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mcis01"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "migration.MigrateInfraResponse": {
+            "type": "object",
+            "properties": {
+                "responseText": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.TbVmDynamicReq": {
+            "type": "object",
+            "required": [
+                "commonImage",
+                "commonSpec"
+            ],
+            "properties": {
+                "commonImage": {
+                    "description": "CommonImage is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ubuntu18.04"
+                },
+                "commonSpec": {
+                    "description": "CommonSpec is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws-ap-northeast-2-t2-small"
+                },
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "DynamicVM"
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
+                },
+                "vmUserPassword default:": {
+                    "type": "string"
+                }
+            }
+        },
+        "recommendation.RecommendInfraRequest": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
+                }
+            }
+        },
+        "recommendation.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
                 }
             }
         }
