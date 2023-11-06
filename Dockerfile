@@ -60,8 +60,8 @@ ENV API_PASSWORD default
 # Set period for auto control goroutine invocation
 ENV AUTOCONTROL_DURATION_MS 10000
 
-# Set SELF_ENDPOINT, if you want to access Swagger API dashboard from outside. (Ex: export SELF_ENDPOINT=xxx.xxx.xxx.xxx:1323)
-ENV SELF_ENDPOINT localhost:1323
+# Set SELF_ENDPOINT, if you want to access Swagger API dashboard from outside. (Ex: export SELF_ENDPOINT=xxx.xxx.xxx.xxx:8056)
+ENV SELF_ENDPOINT localhost:8056
 
 
 # Environment variables that you don't need to touch
@@ -71,4 +71,4 @@ ENV API_DOC_PATH /app/pkg/api/rest/docs/swagger.json
 
 ENTRYPOINT [ "/app/pkg/cm-beetle" ]
 
-EXPOSE 1323
+EXPOSE 8056

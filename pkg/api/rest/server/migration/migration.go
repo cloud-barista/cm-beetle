@@ -24,20 +24,67 @@ import (
 type Handlers struct {
 }
 
-type Infrastructure struct {
-	Network        string
-	Disk           string
-	Compute        string
-	SecurityGroup  string
-	VirtualMachine string
+// type Infrastructure struct {
+// 	Network        string
+// 	Disk           string
+// 	Compute        string
+// 	SecurityGroup  string
+// 	VirtualMachine string
+// }
+
+// TbMcisDynamicReq is sturct for requirements to create MCIS dynamically (with default resource option)
+type TbMcisDynamicReq struct {
+	Name string `json:"name" validate:"required" example:"mcis01"`
+
+	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
+	InstallMonAgent string `json:"installMonAgent" example:"no" default:"yes" enums:"yes,no"` // yes or no
+
+	// Label is for describing the mcis in a keyword (any string can be used)
+	Label string `json:"label" example:"DynamicVM" default:""`
+
+	// SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose
+	SystemLabel string `json:"systemLabel" example:"" default:""`
+
+	Description string `json:"description" example:"Made in CB-TB"`
+
+	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
+}
+
+// TbVmDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
+type TbVmDynamicReq struct {
+	// VM name or subGroup name if is (not empty) && (> 0). If it is a group, actual VM name will be generated with -N postfix.
+	Name string `json:"name" example:"g1-1"`
+
+	// if subGroupSize is (not empty) && (> 0), subGroup will be gernetad. VMs will be created accordingly.
+	SubGroupSize string `json:"subGroupSize" example:"3" default:""`
+
+	Label string `json:"label" example:"DynamicVM"`
+
+	Description string `json:"description" example:"Description"`
+
+	// CommonSpec is field for id of a spec in common namespace
+	CommonSpec string `json:"commonSpec" validate:"required" example:"aws-ap-northeast-2-t2-small"`
+	// CommonImage is field for id of a image in common namespace
+	CommonImage string `json:"commonImage" validate:"required" example:"ubuntu18.04"`
+
+	RootDiskType string `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+	RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
+
+	VmUserPassword string `json:"vmUserPassword default:""`
+	// if ConnectionName is given, the VM tries to use associtated credential.
+	// if not, it will use predefined ConnectionName in Spec objects
+	ConnectionName string `json:"connectionName,omitempty" default:""`
 }
 
 type MigrateInfraRequest struct {
-	Infrastructure
+	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
+	// mcis.TbMcisDynamicReq
+
+	TbMcisDynamicReq
 }
 
 type MigrateInfraResponse struct {
-	Infrastructure
+	ResponseText string
 }
 
 // MigrateInfra godoc
@@ -59,11 +106,7 @@ func (rh *Handlers) MigrateInfra(c echo.Context) error {
 		return err
 	}
 
-	fmt.Print(req.Network)
-	fmt.Print(req.Disk)
-	fmt.Print(req.Compute)
-	fmt.Print(req.SecurityGroup)
-	fmt.Print(req.VirtualMachine)
+	fmt.Print(req)
 
 	res := &MigrateInfraResponse{}
 	// Process
