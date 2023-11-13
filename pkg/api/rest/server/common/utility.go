@@ -77,7 +77,7 @@ func Validate(c echo.Context, params []string) error {
 // @Router /health [get]
 func RestGetHealth(c echo.Context) error {
 	okMessage := common.SimpleMsg{}
-	okMessage.Message = "API server of CM-Beetle is alive"
+	okMessage.Message = "CM-Beetle API server is running"
 
 	return c.JSON(http.StatusOK, &okMessage)
 }
