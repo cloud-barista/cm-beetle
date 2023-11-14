@@ -1,9 +1,11 @@
-# This workflow will build the container image and publish it to container registries.
-name: Publish multi-arch container images
+# This workflow performs continuous delivery (CD).
+# This workflow will build a container image and publish it to container registries.
+name: Continuous Delivery (CD)
 
-# When its time to do a release do a full cross platform build for all supported
-# architectures and push all of them to Docker Hub and GitHub Container Registry (GHCR).
-# Only trigger on semver shaped tags.
+# When it's time to do a release,
+# do a full cross-platform build for all supported architectures and
+# push all of them to Docker Hub and GitHub Container Registry (GHCR).
+
 on:
   # "Build and publish" on merged
   # Actually, there's no "merged" event.
@@ -12,8 +14,11 @@ on:
   push:
     branches:
       - main
+    # # workflow trigger button
+    # workflow_dispatch:
     tags:
-      - "v*.*.*"
+      # Only trigger on semver shaped tags.
+      - "v*.*.*" 
     paths-ignore:
       - '**.md'
       - '.all-contributorsrc'
@@ -25,11 +30,16 @@ on:
       - 'src/testclient/scripts/**'
       - 'docs/**'
 
+env:
+  DOCKER_REGISTRY_NAME: cloudbaristaorg
+  GHCR_REGISTRY_NAME: ${{ github.repository_owner }}
+  IMAGE_NAME: ${{ github.event.repository.name }}
+
 jobs:
-  # The job key is "publishing"
-  publishing:
-    # Job name is "Publishing"
-    name: Publishing
+  # The job key is "publish-container-image"
+  publish-container-image:
+    # Job name is "Publish a container image"
+    name: Publish a container image
 
     if: github.repository == 'cloud-barista/cm-beetle'
 
@@ -41,34 +51,30 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Prepare tags
-        id: prep
-        env:
-          # TODO: Change variable to your repository name and image name.
-          DOCKER_REPO: cloudbaristaorg
-          IMAGE_NAME: cm-beetle
-        run: |
-          VERSION=latest
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          fi
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            VERSION=nightly
-          fi
-          DOCKER_IMAGE=$DOCKER_REPO/$IMAGE_NAME
-          DOCKER_TAGS="${DOCKER_IMAGE}:${VERSION}"
-          if [[ $VERSION =~ ^v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}.*$ ]]; then
-            DOCKER_TAGS="$DOCKER_TAGS,${DOCKER_IMAGE}:latest"
-          fi
-          echo "docker-tags=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
-          echo ${DOCKER_TAGS}
-          GHCR_IMAGE=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-          GHCR_TAGS="${GHCR_IMAGE}:${VERSION}"
-          if [[ $VERSION =~ ^v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}.*$ ]]; then
-            GHCR_TAGS="$GHCR_TAGS,${GHCR_IMAGE}:latest"
-          fi
-          echo "ghcr-tags=${GHCR_TAGS}" >> $GITHUB_OUTPUT
-          echo ${GHCR_TAGS}
+      - name: Extract metadata from Git reference and GitHub events
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            # image name for Docker Hub
+            ${{env.DOCKER_REGISTRY_NAME}}/${{env.IMAGE_NAME}}
+            # image name for GitHub Container Registry (GHCR)
+            ghcr.io/${{env.GHCR_REGISTRY_NAME}}/${{env.IMAGE_NAME}}
+          tags: |
+            ## Tags for a push tag event
+            # minimal (e.g., 1.2.3)
+            type=semver,enable=true,pattern={{version}}
+            # type=semver,pattern={{major}}.{{minor}}
+            ## Tags for a push branch event
+            # minimal (short sha)
+            type=sha,enable=true,format=short                        
+            ## Other types (currently the followings may be out of scope)
+            ## Tags for a push or pull_request event
+            # type=ref,event=branch
+            # type=ref,event=tag
+            # type=ref,event=pr
+            ## Tags for a schedule event - handlebars with timezone (e.g. 20200110-093000)
+            # type=schedule,enable=true,pattern={{date 'YYYYMMDD-hhmmss' tz='Asia/Tokyo'}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -110,10 +116,8 @@ jobs:
           file: ./Dockerfile
           target: prod
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
-          push: true
-          tags: |
-            ${{ steps.prep.outputs.docker-tags }}
-            ${{ steps.prep.outputs.ghcr-tags }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 

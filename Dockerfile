@@ -41,15 +41,13 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/pkg/cm-beetle /ap
 ENV CMBEETLE_ROOT /app
 ENV CBSTORE_ROOT /app
 ENV CBLOG_ROOT /app
-ENV SPIDER_CALL_METHOD REST
-ENV DRAGONFLY_CALL_METHOD REST
-ENV SPIDER_REST_URL http://cb-spider:1024/spider
-ENV DRAGONFLY_REST_URL http://cb-dragonfly:9090/dragonfly
+# ENV SPIDER_CALL_METHOD REST
+# ENV SPIDER_REST_URL http://cb-spider:1024/spider
 
 ENV DB_URL localhost:3306
-ENV DB_DATABASE cb_beetle
-ENV DB_USER cb_beetle
-ENV DB_PASSWORD cb_beetle
+ENV DB_DATABASE cm_beetle
+ENV DB_USER cm_beetle
+ENV DB_PASSWORD cm_beetle
 
 # API Setting
 # ALLOW_ORIGINS (ex: https://cloud-barista.org,xxx.xxx.xxx.xxx or * for all)
@@ -62,7 +60,6 @@ ENV AUTOCONTROL_DURATION_MS 10000
 
 # Set SELF_ENDPOINT, if you want to access Swagger API dashboard from outside. (Ex: export SELF_ENDPOINT=xxx.xxx.xxx.xxx:8056)
 ENV SELF_ENDPOINT localhost:8056
-
 
 # Environment variables that you don't need to touch
 
