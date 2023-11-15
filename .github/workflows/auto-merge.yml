@@ -30,7 +30,7 @@ jobs:
                           -H "Accept: application/vnd.github+json" \
                           -H "Authorization: Bearer ${{ secrets.CR_PAT }}" \
                           -H "X-GitHub-Api-Version: 2022-11-28" \
-                          https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq -r '.[] | .login')
+                          https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq -r '.[] | .login' | tr '\n' ',')
           echo "TEAM_MEMBERS=$TEAM_MEMBERS" >> $GITHUB_ENV
           echo "TEAM_MEMBERS: ${TEAM_MEMBERS}"
           
