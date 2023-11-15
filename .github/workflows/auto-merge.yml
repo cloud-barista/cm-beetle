@@ -25,14 +25,10 @@ jobs:
         run: |
           TEAM_NAME="${{ env.REPO_NAME }}-maintainer"
           echo "GITHUB_ACTOR: ${GITHUB_ACTOR} / TEAM_NAME: ${TEAM_NAME}"
-          curl -L \
-                -H "Accept: application/vnd.github+json" \
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                -H "X-GitHub-Api-Version: 2022-11-28" \
-                https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq '.'
-                
-          TEAM_MEMBERS=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                          -H "Accept: application/vnd.github.v3+json" \
+          TEAM_MEMBERS=$(curl -L \
+                          -H "Accept: application/vnd.github+json" \
+                          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                          -H "X-GitHub-Api-Version: 2022-11-28" \
                           https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq -r '.[] | .login')
           echo "TEAM_MEMBERS=$TEAM_MEMBERS" >> $GITHUB_ENV
           echo "TEAM_MEMBERS: ${TEAM_MEMBERS}"
