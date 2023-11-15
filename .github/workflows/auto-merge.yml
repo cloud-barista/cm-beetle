@@ -36,7 +36,8 @@ jobs:
           
       - name: Verify if GITHUB_ACTOR is a Maintainer Team Member
         run: |
-          if [[ ! " $TEAM_MEMBERS " =~ " ${GITHUB_ACTOR} " ]]; then
+          TEAM_MEMBERS_ARRAY=(${TEAM_MEMBERS//,/ })
+          if [[ ! " ${TEAM_MEMBERS_ARRAY[@]} " =~ " ${GITHUB_ACTOR} " ]]; then
             echo "User ${GITHUB_ACTOR} is not a member of the team. Stopping workflow."
             exit 1
           fi
