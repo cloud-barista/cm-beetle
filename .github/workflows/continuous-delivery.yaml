@@ -20,6 +20,7 @@ on:
       # Only trigger on semver shaped tags.
       - "v*.*.*" 
     paths-ignore:
+      - '.github/**'
       - '**.md'
       - '.all-contributorsrc'
       - '.gitignore'
