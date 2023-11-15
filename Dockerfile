@@ -52,6 +52,7 @@ ENV DB_PASSWORD cm_beetle
 # API Setting
 # ALLOW_ORIGINS (ex: https://cloud-barista.org,xxx.xxx.xxx.xxx or * for all)
 ENV ALLOW_ORIGINS *
+ENV SKIP_BASIC_AUTH false
 ENV API_USERNAME default
 ENV API_PASSWORD default
 

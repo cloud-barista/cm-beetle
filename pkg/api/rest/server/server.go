@@ -18,7 +18,6 @@ import (
 	"context"
 	"log"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -98,12 +97,14 @@ func RunServer(port string) {
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
+	skipBasicAuthOption := os.Getenv("SKIP_BASIC_AUTH") == "true"
+
 	apiUser := os.Getenv("API_USERNAME")
 	apiPass := os.Getenv("API_PASSWORD")
 
 	e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Request().Host, "localhost") ||
+			if skipBasicAuthOption ||
 				c.Path() == "/beetle/health" ||
 				c.Path() == "/beetle/httpVersion" {
 				// c.Path() == "/beetle/swagger/*" {
