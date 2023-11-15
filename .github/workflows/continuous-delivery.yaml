@@ -12,8 +12,8 @@ on:
   # A "push" event is occurred after the pull request "close" event with "merged" true condition.
   # The "push" event could replace "merged" event.
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
     # # workflow trigger button
     # workflow_dispatch:
     tags:
@@ -52,6 +52,8 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      # About billing for GitHub Packages
+      # https://docs.github.com/en/billing/managing-billing-for-github-packages/about-billing-for-github-packages
       - name: Extract metadata from Git reference and GitHub events
         id: meta
         uses: docker/metadata-action@v5
@@ -67,8 +69,8 @@ jobs:
             type=semver,enable=true,pattern={{version}}
             # type=semver,pattern={{major}}.{{minor}}
             ## Tags for a push branch event
-            # minimal (short sha)
-            type=sha,enable=true,format=short                        
+            # minimal (short sha) 
+            # type=sha,enable=true,format=short                        
             ## Other types (currently the followings may be out of scope)
             ## Tags for a push or pull_request event
             # type=ref,event=branch
