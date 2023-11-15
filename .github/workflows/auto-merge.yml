@@ -24,12 +24,15 @@ jobs:
         id: check-team-members
         run: |
           TEAM_NAME="${{ env.REPO_NAME }}-maintainer"
+          echo "GITHUB_ACTOR: ${GITHUB_ACTOR} / TEAM_NAME: ${TEAM_NAME}"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                          -H "Accept: application/vnd.github.v3+json" \
+                          https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq '.')
           TEAM_MEMBERS=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                           -H "Accept: application/vnd.github.v3+json" \
                           https://api.github.com/orgs/cloud-barista/teams/${TEAM_NAME}/members | jq -r '.[] | .login')
           echo "TEAM_MEMBERS=$TEAM_MEMBERS" >> $GITHUB_ENV
-          echo "GITHUB_ACTOR: ${GITHUB_ACTOR}"
-          echo "${TEAM_NAME}: ${TEAM_MEMBERS}"
+          echo "TEAM_MEMBERS: ${TEAM_MEMBERS}"
           
       - name: Verify if GITHUB_ACTOR is a Maintainer Team Member
         run: |
