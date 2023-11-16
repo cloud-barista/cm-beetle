@@ -153,7 +153,7 @@ type MigrateNetworkResponse struct {
 // @Tags [Migration] Network
 // @Accept  json
 // @Produce  json
-// @Param Network information body MigrateNetworkRequest true "Specify name, IPv4 CIDR block, etc."
+// @Param NetworkInfo body MigrateNetworkRequest true "Specify name, IPv4 CIDR block, etc."
 // @Success 200 {object} MigrateNetworkResponse "Successfully migrated network on a cloud platform"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -224,7 +224,7 @@ type MigrateStorageResponse struct {
 // @Tags [Migration] Storage
 // @Accept  json
 // @Produce  json
-// @Param Storage information body MigrateStorageRequest true "Specify name, type, size, affiliated Network ID, and so on."
+// @Param StorageInfo body MigrateStorageRequest true "Specify name, type, size, affiliated Network ID, and so on."
 // @Success 200 {object} MigrateStorageResponse "Successfully migrated storage on a cloud platform"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -295,7 +295,7 @@ type MigrateInstanceResponse struct {
 // @Tags [Migration] Instance
 // @Accept  json
 // @Produce  json
-// @Param Instance information body MigrateInstanceRequest true "Specify name, spec, OS, and so on."
+// @Param InstanceInfo body MigrateInstanceRequest true "Specify name, spec, OS, and so on."
 // @Success 200 {object} MigrateInstanceResponse "Successfully migrated storage on a cloud platform"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
