@@ -11,8 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration is to handle REST API for migration
-package migration
+// Package model has structs for migration APIs
+package model
 
 import (
 	"time"
@@ -246,3 +246,55 @@ type TbMcisInfo struct {
 	// List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.
 	NewVmList []string `json:"newVmList"`
 }
+
+// ///////////
+
+type Network struct {
+	Name          string `json:"name"`
+	Id            string `json:"id"`
+	IPv4CIDRBlock string `json:"ipv4CidrBlock"`
+	IPv6CIDRBlock string `json:"ipv6CidrBlock"`
+}
+
+type Subnet struct {
+	Network
+	ParentNetworkId string `json:"parentNetworkId"`
+}
+
+type DummyNetwork struct {
+	Network
+	Subnets []Subnet `json:"subnets"`
+}
+
+/////////////
+
+// ///////////
+type Storage struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+	Type string `json:"type"`
+	Size string `json:"size"`
+}
+
+type DummyStorage struct {
+	Storage
+	NetworkID string `json:"NetworkId"`
+}
+
+/////////////
+
+/////////////
+
+type Instance struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+	Spec string `json:"type"`
+	OS   string `json:"os"`
+}
+
+type DummyInstance struct {
+	Instance
+	NetworkID string `json:"NetworkId"`
+}
+
+/////////////

@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // Package common is to handle REST API for common funcitonalities
-package recommendation
+package controller
 
 import (
 	"fmt"
@@ -20,9 +20,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 )
-
-type Handlers struct {
-}
 
 type Infrastructure struct {
 	Network        string
@@ -51,7 +48,7 @@ type RecommendInfraResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/infra [post]
-func (rh *Handlers) RecommendInfra(c echo.Context) error {
+func RecommendInfra(c echo.Context) error {
 
 	// Input
 	req := &RecommendInfraRequest{}

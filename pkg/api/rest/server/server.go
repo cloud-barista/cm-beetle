@@ -22,9 +22,8 @@ import (
 	"syscall"
 	"time"
 
-	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/server/common"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/server/migration"
-	recommendation "github.com/cloud-barista/cm-beetle/pkg/api/rest/server/recommendation"
+	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 
 	"crypto/subtle"
 	"fmt"
@@ -135,20 +134,18 @@ func RunServer(port string) {
 	v1 := e.Group("/beetle")
 	{
 		// API for infrastructure recommendation for cloud migration
-		recommHandlers := &recommendation.Handlers{}
 		recomm := v1.Group("/recommendation")
 
-		recomm.POST("/infra", recommHandlers.RecommendInfra)
+		recomm.POST("/infra", controller.RecommendInfra)
 
 		// API for migration
-		migHandlers := &migration.Handlers{}
 		mig := v1.Group("/migration")
 
-		mig.POST("/infra", migHandlers.MigrateInfra)
+		mig.POST("/infra", controller.MigrateInfra)
 
-		mig.POST("/infra/network", migHandlers.MigrateInfra)
-		mig.POST("/infra/storage", migHandlers.MigrateInfra)
-		mig.POST("/infra/instance", migHandlers.MigrateInfra)
+		mig.POST("/infra/network", controller.MigrateInfra)
+		mig.POST("/infra/storage", controller.MigrateInfra)
+		mig.POST("/infra/instance", controller.MigrateInfra)
 
 	}
 
