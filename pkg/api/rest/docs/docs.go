@@ -331,6 +331,144 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/infra/instance": {
+            "post": {
+                "description": "It migrates instance on a cloud platform. Storage includes name, spec, OS, and so on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "(Skeleton) Migrate instance on a cloud platform",
+                "parameters": [
+                    {
+                        "description": "Specify name, spec, OS, and so on.",
+                        "name": "InstanceInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateInstanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully migrated storage on a cloud platform",
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateInstanceResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/infra/network": {
+            "post": {
+                "description": "It migrates network on a cloud platform. Network includes name, ID, IPv4 CIDR block, IPv6 CIDR block, and so on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "(Skeleton) Migrate network on a cloud platform",
+                "parameters": [
+                    {
+                        "description": "Specify name, IPv4 CIDR block, etc.",
+                        "name": "NetworkInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateNetworkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully migrated network on a cloud platform",
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateNetworkResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/infra/storage": {
+            "post": {
+                "description": "It migrates storage on a cloud platform. Storage includes name, ID, type, size, and so on.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "(Skeleton) Migrate storage on a cloud platform",
+                "parameters": [
+                    {
+                        "description": "Specify name, type, size, affiliated Network ID, and so on.",
+                        "name": "StorageInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateStorageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully migrated storage on a cloud platform",
+                        "schema": {
+                            "$ref": "#/definitions/migration.MigrateStorageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/ns": {
             "get": {
                 "description": "List all namespaces or namespaces' ID",
@@ -939,6 +1077,132 @@ const docTemplate = `{
                 }
             }
         },
+        "migration.MigrateInstanceRequest": {
+            "type": "object",
+            "properties": {
+                "NetworkId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.MigrateInstanceResponse": {
+            "type": "object",
+            "properties": {
+                "NetworkId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.MigrateNetworkRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ipv4CidrBlock": {
+                    "type": "string"
+                },
+                "ipv6CidrBlock": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subnets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.Subnet"
+                    }
+                }
+            }
+        },
+        "migration.MigrateNetworkResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ipv4CidrBlock": {
+                    "type": "string"
+                },
+                "ipv6CidrBlock": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subnets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.Subnet"
+                    }
+                }
+            }
+        },
+        "migration.MigrateStorageRequest": {
+            "type": "object",
+            "properties": {
+                "NetworkId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "migration.MigrateStorageResponse": {
+            "type": "object",
+            "properties": {
+                "NetworkId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "migration.RegionInfo": {
             "type": "object",
             "properties": {
@@ -1136,6 +1400,26 @@ const docTemplate = `{
                 }
             }
         },
+        "migration.Subnet": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ipv4CidrBlock": {
+                    "type": "string"
+                },
+                "ipv6CidrBlock": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentNetworkId": {
+                    "type": "string"
+                }
+            }
+        },
         "migration.TbVmDynamicReq": {
             "type": "object",
             "required": [
@@ -1185,7 +1469,7 @@ const docTemplate = `{
                     "type": "string",
                     "example": "3"
                 },
-                "vmUserPassword default:": {
+                "vmUserPassword": {
                     "type": "string"
                 }
             }

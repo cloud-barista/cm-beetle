@@ -213,6 +213,88 @@ definitions:
           $ref: '#/definitions/migration.TbVmInfo'
         type: array
     type: object
+  migration.MigrateInstanceRequest:
+    properties:
+      NetworkId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      os:
+        type: string
+      type:
+        type: string
+    type: object
+  migration.MigrateInstanceResponse:
+    properties:
+      NetworkId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      os:
+        type: string
+      type:
+        type: string
+    type: object
+  migration.MigrateNetworkRequest:
+    properties:
+      id:
+        type: string
+      ipv4CidrBlock:
+        type: string
+      ipv6CidrBlock:
+        type: string
+      name:
+        type: string
+      subnets:
+        items:
+          $ref: '#/definitions/migration.Subnet'
+        type: array
+    type: object
+  migration.MigrateNetworkResponse:
+    properties:
+      id:
+        type: string
+      ipv4CidrBlock:
+        type: string
+      ipv6CidrBlock:
+        type: string
+      name:
+        type: string
+      subnets:
+        items:
+          $ref: '#/definitions/migration.Subnet'
+        type: array
+    type: object
+  migration.MigrateStorageRequest:
+    properties:
+      NetworkId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      size:
+        type: string
+      type:
+        type: string
+    type: object
+  migration.MigrateStorageResponse:
+    properties:
+      NetworkId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      size:
+        type: string
+      type:
+        type: string
+    type: object
   migration.RegionInfo:
     properties:
       region:
@@ -346,6 +428,19 @@ definitions:
         description: CountUndefined is for counting Undefined
         type: integer
     type: object
+  migration.Subnet:
+    properties:
+      id:
+        type: string
+      ipv4CidrBlock:
+        type: string
+      ipv6CidrBlock:
+        type: string
+      name:
+        type: string
+      parentNetworkId:
+        type: string
+    type: object
   migration.TbVmDynamicReq:
     properties:
       commonImage:
@@ -388,7 +483,7 @@ definitions:
           VMs will be created accordingly.
         example: "3"
         type: string
-      'vmUserPassword default:':
+      vmUserPassword:
         type: string
     required:
     - commonImage
@@ -726,6 +821,99 @@ paths:
           schema:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Migrate an infrastructure on a cloud platform
+      tags:
+      - '[Migration] Infrastructure'
+  /migration/infra/instance:
+    post:
+      consumes:
+      - application/json
+      description: It migrates instance on a cloud platform. Storage includes name,
+        spec, OS, and so on.
+      parameters:
+      - description: Specify name, spec, OS, and so on.
+        in: body
+        name: InstanceInfo
+        required: true
+        schema:
+          $ref: '#/definitions/migration.MigrateInstanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully migrated storage on a cloud platform
+          schema:
+            $ref: '#/definitions/migration.MigrateInstanceResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: (Skeleton) Migrate instance on a cloud platform
+      tags:
+      - '[Migration] Infrastructure'
+  /migration/infra/network:
+    post:
+      consumes:
+      - application/json
+      description: It migrates network on a cloud platform. Network includes name,
+        ID, IPv4 CIDR block, IPv6 CIDR block, and so on.
+      parameters:
+      - description: Specify name, IPv4 CIDR block, etc.
+        in: body
+        name: NetworkInfo
+        required: true
+        schema:
+          $ref: '#/definitions/migration.MigrateNetworkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully migrated network on a cloud platform
+          schema:
+            $ref: '#/definitions/migration.MigrateNetworkResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: (Skeleton) Migrate network on a cloud platform
+      tags:
+      - '[Migration] Infrastructure'
+  /migration/infra/storage:
+    post:
+      consumes:
+      - application/json
+      description: It migrates storage on a cloud platform. Storage includes name,
+        ID, type, size, and so on.
+      parameters:
+      - description: Specify name, type, size, affiliated Network ID, and so on.
+        in: body
+        name: StorageInfo
+        required: true
+        schema:
+          $ref: '#/definitions/migration.MigrateStorageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully migrated storage on a cloud platform
+          schema:
+            $ref: '#/definitions/migration.MigrateStorageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: (Skeleton) Migrate storage on a cloud platform
       tags:
       - '[Migration] Infrastructure'
   /ns:
