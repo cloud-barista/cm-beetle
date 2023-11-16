@@ -150,7 +150,7 @@ type MigrateNetworkResponse struct {
 // MigrateNetwork godoc
 // @Summary (Skeleton) Migrate network on a cloud platform
 // @Description It migrates network on a cloud platform. Network includes name, ID, IPv4 CIDR block, IPv6 CIDR block, and so on.
-// @Tags [Migration] Network
+// @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param NetworkInfo body MigrateNetworkRequest true "Specify name, IPv4 CIDR block, etc."
@@ -221,7 +221,7 @@ type MigrateStorageResponse struct {
 // MigrateStorage godoc
 // @Summary (Skeleton) Migrate storage on a cloud platform
 // @Description It migrates storage on a cloud platform. Storage includes name, ID, type, size, and so on.
-// @Tags [Migration] Storage
+// @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param StorageInfo body MigrateStorageRequest true "Specify name, type, size, affiliated Network ID, and so on."
@@ -292,7 +292,7 @@ type MigrateInstanceResponse struct {
 // MigrateInstance godoc
 // @Summary (Skeleton) Migrate instance on a cloud platform
 // @Description It migrates instance on a cloud platform. Storage includes name, spec, OS, and so on.
-// @Tags [Migration] Instance
+// @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param InstanceInfo body MigrateInstanceRequest true "Specify name, spec, OS, and so on."
