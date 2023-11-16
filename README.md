@@ -87,6 +87,11 @@ cd ${HOME}/cm-beetle/pkg
 make swag
 ```
 
+If you got an error because of missing `swag`, install `swag`:
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+```
+
 #### Run CM-Beetle binary
 
 ```bash
