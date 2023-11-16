@@ -146,6 +146,10 @@ func RunServer(port string) {
 
 		mig.POST("/infra", migHandlers.MigrateInfra)
 
+		mig.POST("/infra/network", migHandlers.MigrateInfra)
+		mig.POST("/infra/storage", migHandlers.MigrateInfra)
+		mig.POST("/infra/instance", migHandlers.MigrateInfra)
+
 	}
 
 	// Route
