@@ -52,6 +52,8 @@ ENV DB_PASSWORD cm_beetle
 # API Setting
 # ALLOW_ORIGINS (ex: https://cloud-barista.org,xxx.xxx.xxx.xxx or * for all)
 ENV ALLOW_ORIGINS *
+## Set ENABLE_AUTH=true currently for basic auth for all routes (i.e., url or path)
+ENV ENABLE_AUTH true
 ENV API_USERNAME default
 ENV API_PASSWORD default
 

@@ -97,17 +97,32 @@ func RunServer(port string) {
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
 	}))
 
+	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
+	enableAuth := os.Getenv("ENABLE_AUTH") == "true"
+
 	apiUser := os.Getenv("API_USERNAME")
 	apiPass := os.Getenv("API_PASSWORD")
 
-	e.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
-		// Be careful to use constant time comparison to prevent timing attacks
-		if subtle.ConstantTimeCompare([]byte(username), []byte(apiUser)) == 1 &&
-			subtle.ConstantTimeCompare([]byte(password), []byte(apiPass)) == 1 {
-			return true, nil
-		}
-		return false, nil
-	}))
+	if enableAuth {
+		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
+			// Skip authentication for some routes that do not require authentication
+			Skipper: func(c echo.Context) bool {
+				if c.Path() == "/beetle/health" ||
+					c.Path() == "/beetle/httpVersion" {
+					return true
+				}
+				return false
+			},
+			Validator: func(username, password string, c echo.Context) (bool, error) {
+				// Be careful to use constant time comparison to prevent timing attacks
+				if subtle.ConstantTimeCompare([]byte(username), []byte(apiUser)) == 1 &&
+					subtle.ConstantTimeCompare([]byte(password), []byte(apiPass)) == 1 {
+					return true, nil
+				}
+				return false, nil
+			},
+		}))
+	}
 
 	fmt.Println("\n \n ")
 	fmt.Print(banner)
@@ -130,6 +145,10 @@ func RunServer(port string) {
 		mig := v1.Group("/migration")
 
 		mig.POST("/infra", migHandlers.MigrateInfra)
+
+		mig.POST("/infra/network", migHandlers.MigrateInfra)
+		mig.POST("/infra/storage", migHandlers.MigrateInfra)
+		mig.POST("/infra/instance", migHandlers.MigrateInfra)
 
 	}
 
@@ -160,7 +179,9 @@ func RunServer(port string) {
 	selfEndpoint := os.Getenv("SELF_ENDPOINT")
 	apidashboard := " http://" + selfEndpoint + "/beetle/swagger/index.html"
 
-	fmt.Println(" Access to API dashboard" + " (username: " + apiUser + " / password: " + apiPass + ")")
+	if enableAuth {
+		fmt.Println(" Access to API dashboard" + " (username: " + apiUser + " / password: " + apiPass + ")")
+	}
 	fmt.Printf(noticeColor, apidashboard)
 	fmt.Println("\n ")
 
