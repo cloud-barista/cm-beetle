@@ -1,4 +1,6 @@
 # Computing Infrastructure Migration
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloud-barista%2Fcm-beetle.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloud-barista%2Fcm-beetle?ref=badge_shield)
+
 
 This repository provides computing infrastructure migration features.
 This is a sub-system on [Cloud-Barista platform](https://github.com/cloud-barista/docs)
@@ -128,3 +130,7 @@ curl http://localhost:8056/beetle/health
 # Output if it's running successfully
 # {"message":"CM-Beetle API server is running"}
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcloud-barista%2Fcm-beetle.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcloud-barista%2Fcm-beetle?ref=badge_large)
