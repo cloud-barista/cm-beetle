@@ -117,7 +117,32 @@ definitions:
         example: Any message
         type: string
     type: object
-  migration.MigrateInfraRequest:
+  controller.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.GetUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.GetUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/model.MyUser'
+        type: array
+    type: object
+  controller.MigrateInfraRequest:
     properties:
       description:
         example: Made in CB-TB
@@ -146,13 +171,13 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/migration.TbVmDynamicReq'
+          $ref: '#/definitions/model.TbVmDynamicReq'
         type: array
     required:
     - name
     - vm
     type: object
-  migration.MigrateInfraResponse:
+  controller.MigrateInfraResponse:
     properties:
       configureCloudAdaptiveNetwork:
         default: "no"
@@ -194,7 +219,7 @@ definitions:
       status:
         type: string
       statusCount:
-        $ref: '#/definitions/migration.StatusCountInfo'
+        $ref: '#/definitions/model.StatusCountInfo'
       systemLabel:
         description: SystemLabel is for describing the mcis in a keyword (any string
           can be used) for special System purpose
@@ -210,10 +235,10 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/migration.TbVmInfo'
+          $ref: '#/definitions/model.TbVmInfo'
         type: array
     type: object
-  migration.MigrateInstanceRequest:
+  controller.MigrateInstanceRequest:
     properties:
       NetworkId:
         type: string
@@ -226,7 +251,7 @@ definitions:
       type:
         type: string
     type: object
-  migration.MigrateInstanceResponse:
+  controller.MigrateInstanceResponse:
     properties:
       NetworkId:
         type: string
@@ -239,7 +264,7 @@ definitions:
       type:
         type: string
     type: object
-  migration.MigrateNetworkRequest:
+  controller.MigrateNetworkRequest:
     properties:
       id:
         type: string
@@ -251,10 +276,10 @@ definitions:
         type: string
       subnets:
         items:
-          $ref: '#/definitions/migration.Subnet'
+          $ref: '#/definitions/model.Subnet'
         type: array
     type: object
-  migration.MigrateNetworkResponse:
+  controller.MigrateNetworkResponse:
     properties:
       id:
         type: string
@@ -266,10 +291,10 @@ definitions:
         type: string
       subnets:
         items:
-          $ref: '#/definitions/migration.Subnet'
+          $ref: '#/definitions/model.Subnet'
         type: array
     type: object
-  migration.MigrateStorageRequest:
+  controller.MigrateStorageRequest:
     properties:
       NetworkId:
         type: string
@@ -282,7 +307,7 @@ definitions:
       type:
         type: string
     type: object
-  migration.MigrateStorageResponse:
+  controller.MigrateStorageResponse:
     properties:
       NetworkId:
         type: string
@@ -295,14 +320,85 @@ definitions:
       type:
         type: string
     type: object
-  migration.RegionInfo:
+  controller.PatchUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.PatchUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.RecommendInfraRequest:
+    properties:
+      compute:
+        type: string
+      disk:
+        type: string
+      network:
+        type: string
+      securityGroup:
+        type: string
+      virtualMachine:
+        type: string
+    type: object
+  controller.RecommendInfraResponse:
+    properties:
+      compute:
+        type: string
+      disk:
+        type: string
+      network:
+        type: string
+      securityGroup:
+        type: string
+      virtualMachine:
+        type: string
+    type: object
+  controller.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  controller.UpdateUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.MyUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.RegionInfo:
     properties:
       region:
         type: string
       zone:
         type: string
     type: object
-  migration.SpiderVMInfo:
+  model.SpiderVMInfo:
     properties:
       cspid:
         description: VM ID given by CSP (required for registering VM)
@@ -349,7 +445,7 @@ definitions:
         type: string
       region:
         allOf:
-        - $ref: '#/definitions/migration.RegionInfo'
+        - $ref: '#/definitions/model.RegionInfo'
         description: ex) {us-east1, us-east1-c} or {ap-northeast-2}
       rootDeviceName:
         description: '"/dev/sda1", ...'
@@ -392,7 +488,7 @@ definitions:
       vpcname:
         type: string
     type: object
-  migration.StatusCountInfo:
+  model.StatusCountInfo:
     properties:
       countCreating:
         description: CountCreating is for counting Creating
@@ -428,7 +524,7 @@ definitions:
         description: CountUndefined is for counting Undefined
         type: integer
     type: object
-  migration.Subnet:
+  model.Subnet:
     properties:
       id:
         type: string
@@ -441,7 +537,7 @@ definitions:
       parentNetworkId:
         type: string
     type: object
-  migration.TbVmDynamicReq:
+  model.TbVmDynamicReq:
     properties:
       commonImage:
         description: CommonImage is field for id of a image in common namespace
@@ -489,7 +585,7 @@ definitions:
     - commonImage
     - commonSpec
     type: object
-  migration.TbVmInfo:
+  model.TbVmInfo:
     properties:
       connectionConfig:
         $ref: '#/definitions/common.ConnConfig'
@@ -500,7 +596,7 @@ definitions:
         example: "2022-11-10 23:00:00"
         type: string
       cspViewVmDetail:
-        $ref: '#/definitions/migration.SpiderVMInfo'
+        $ref: '#/definitions/model.SpiderVMInfo'
       dataDiskIds:
         items:
           type: string
@@ -538,7 +634,7 @@ definitions:
         type: string
       region:
         allOf:
-        - $ref: '#/definitions/migration.RegionInfo'
+        - $ref: '#/definitions/model.RegionInfo'
         description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
       rootDeviceName:
         type: string
@@ -577,32 +673,6 @@ definitions:
       vmUserAccount:
         type: string
       vmUserPassword:
-        type: string
-    type: object
-  recommendation.RecommendInfraRequest:
-    properties:
-      compute:
-        type: string
-      disk:
-        type: string
-      network:
-        type: string
-      securityGroup:
-        type: string
-      virtualMachine:
-        type: string
-    type: object
-  recommendation.RecommendInfraResponse:
-    properties:
-      compute:
-        type: string
-      disk:
-        type: string
-      network:
-        type: string
-      securityGroup:
-        type: string
-      virtualMachine:
         type: string
     type: object
 info:
@@ -804,14 +874,14 @@ paths:
         name: InfrastructureInfo
         required: true
         schema:
-          $ref: '#/definitions/migration.MigrateInfraRequest'
+          $ref: '#/definitions/controller.MigrateInfraRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully migrated infrastructure on a cloud platform
           schema:
-            $ref: '#/definitions/migration.MigrateInfraResponse'
+            $ref: '#/definitions/controller.MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
@@ -835,14 +905,14 @@ paths:
         name: InstanceInfo
         required: true
         schema:
-          $ref: '#/definitions/migration.MigrateInstanceRequest'
+          $ref: '#/definitions/controller.MigrateInstanceRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully migrated storage on a cloud platform
           schema:
-            $ref: '#/definitions/migration.MigrateInstanceResponse'
+            $ref: '#/definitions/controller.MigrateInstanceResponse'
         "404":
           description: Not Found
           schema:
@@ -866,14 +936,14 @@ paths:
         name: NetworkInfo
         required: true
         schema:
-          $ref: '#/definitions/migration.MigrateNetworkRequest'
+          $ref: '#/definitions/controller.MigrateNetworkRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully migrated network on a cloud platform
           schema:
-            $ref: '#/definitions/migration.MigrateNetworkResponse'
+            $ref: '#/definitions/controller.MigrateNetworkResponse'
         "404":
           description: Not Found
           schema:
@@ -897,14 +967,14 @@ paths:
         name: StorageInfo
         required: true
         schema:
-          $ref: '#/definitions/migration.MigrateStorageRequest'
+          $ref: '#/definitions/controller.MigrateStorageRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully migrated storage on a cloud platform
           schema:
-            $ref: '#/definitions/migration.MigrateStorageResponse'
+            $ref: '#/definitions/controller.MigrateStorageResponse'
         "404":
           description: Not Found
           schema:
@@ -1103,7 +1173,7 @@ paths:
         name: UserInfrastructure
         required: true
         schema:
-          $ref: '#/definitions/recommendation.RecommendInfraRequest'
+          $ref: '#/definitions/controller.RecommendInfraRequest'
       produces:
       - application/json
       responses:
@@ -1111,7 +1181,7 @@ paths:
           description: Successfully recommended an appropriate infrastructure for
             cloud migration
           schema:
-            $ref: '#/definitions/recommendation.RecommendInfraResponse'
+            $ref: '#/definitions/controller.RecommendInfraResponse'
         "404":
           description: Not Found
           schema:
@@ -1123,6 +1193,172 @@ paths:
       summary: Recommend an appropriate infrastructure for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
+  /sample/users:
+    get:
+      consumes:
+      - application/json
+      description: Get information of all users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/controller.GetUsersResponse'
+        "404":
+          description: User Not Found
+          schema:
+            type: object
+      summary: Get a list of users
+      tags:
+      - '[Sample] Users'
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the given information.
+      parameters:
+      - description: User information
+        in: body
+        name: User
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/controller.GetUserResponse'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Create a new user
+      tags:
+      - '[Sample] Users'
+  /sample/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user with the given information.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deletion successful
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: User Not Found
+          schema:
+            type: object
+      summary: Delete a user
+      tags:
+      - '[Sample] Users'
+    get:
+      consumes:
+      - application/json
+      description: Get information of a user with a specific ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/controller.GetUserResponse'
+        "404":
+          description: User Not Found
+          schema:
+            type: object
+      summary: Get specific user information
+      tags:
+      - '[Sample] Users'
+    patch:
+      consumes:
+      - application/json
+      description: Patch a user with the given information.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User information to update
+        in: body
+        name: User
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PatchUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/controller.PatchUserResponse'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: User Not Found
+          schema:
+            type: object
+      summary: Patch a user
+      tags:
+      - '[Sample] Users'
+    put:
+      consumes:
+      - application/json
+      description: Update a user with the given information.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User information to update
+        in: body
+        name: User
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: (Sample) This is a sample description for success response
+            in Swagger UI
+          schema:
+            $ref: '#/definitions/controller.UpdateUserResponse'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Update a user
+      tags:
+      - '[Sample] Users'
 securityDefinitions:
   BasicAuth:
     type: basic

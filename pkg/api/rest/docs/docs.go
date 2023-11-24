@@ -305,7 +305,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInfraRequest"
+                            "$ref": "#/definitions/controller.MigrateInfraRequest"
                         }
                     }
                 ],
@@ -313,7 +313,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully migrated infrastructure on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInfraResponse"
+                            "$ref": "#/definitions/controller.MigrateInfraResponse"
                         }
                     },
                     "404": {
@@ -351,7 +351,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInstanceRequest"
+                            "$ref": "#/definitions/controller.MigrateInstanceRequest"
                         }
                     }
                 ],
@@ -359,7 +359,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully migrated storage on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInstanceResponse"
+                            "$ref": "#/definitions/controller.MigrateInstanceResponse"
                         }
                     },
                     "404": {
@@ -397,7 +397,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateNetworkRequest"
+                            "$ref": "#/definitions/controller.MigrateNetworkRequest"
                         }
                     }
                 ],
@@ -405,7 +405,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully migrated network on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateNetworkResponse"
+                            "$ref": "#/definitions/controller.MigrateNetworkResponse"
                         }
                     },
                     "404": {
@@ -443,7 +443,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateStorageRequest"
+                            "$ref": "#/definitions/controller.MigrateStorageRequest"
                         }
                     }
                 ],
@@ -451,7 +451,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully migrated storage on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateStorageResponse"
+                            "$ref": "#/definitions/controller.MigrateStorageResponse"
                         }
                     },
                     "404": {
@@ -755,7 +755,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/recommendation.RecommendInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
                     }
                 ],
@@ -763,7 +763,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully recommended an appropriate infrastructure for cloud migration",
                         "schema": {
-                            "$ref": "#/definitions/recommendation.RecommendInfraResponse"
+                            "$ref": "#/definitions/controller.RecommendInfraResponse"
                         }
                     },
                     "404": {
@@ -776,6 +776,249 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/sample/users": {
+            "get": {
+                "description": "Get information of all users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Get a list of users",
+                "responses": {
+                    "200": {
+                        "description": "(sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUsersResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User information",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/sample/users/{id}": {
+            "get": {
+                "description": "Get information of a user with a specific ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Get specific user information",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Update a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User information to update",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.UpdateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deletion successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Patch a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Patch a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User information to update",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.PatchUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.PatchUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
                         }
                     }
                 }
@@ -957,7 +1200,46 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.MigrateInfraRequest": {
+        "controller.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.GetUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.GetUsersResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MyUser"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -995,12 +1277,12 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.TbVmDynamicReq"
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
                     }
                 }
             }
         },
-        "migration.MigrateInfraResponse": {
+        "controller.MigrateInfraResponse": {
             "type": "object",
             "properties": {
                 "configureCloudAdaptiveNetwork": {
@@ -1051,7 +1333,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "statusCount": {
-                    "$ref": "#/definitions/migration.StatusCountInfo"
+                    "$ref": "#/definitions/model.StatusCountInfo"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1072,12 +1354,12 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.TbVmInfo"
+                        "$ref": "#/definitions/model.TbVmInfo"
                     }
                 }
             }
         },
-        "migration.MigrateInstanceRequest": {
+        "controller.MigrateInstanceRequest": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1097,7 +1379,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.MigrateInstanceResponse": {
+        "controller.MigrateInstanceResponse": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1117,7 +1399,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.MigrateNetworkRequest": {
+        "controller.MigrateNetworkRequest": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1135,12 +1417,12 @@ const docTemplate = `{
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.Subnet"
+                        "$ref": "#/definitions/model.Subnet"
                     }
                 }
             }
         },
-        "migration.MigrateNetworkResponse": {
+        "controller.MigrateNetworkResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1158,12 +1440,12 @@ const docTemplate = `{
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.Subnet"
+                        "$ref": "#/definitions/model.Subnet"
                     }
                 }
             }
         },
-        "migration.MigrateStorageRequest": {
+        "controller.MigrateStorageRequest": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1183,7 +1465,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.MigrateStorageResponse": {
+        "controller.MigrateStorageResponse": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1203,7 +1485,117 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.RegionInfo": {
+        "controller.PatchUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PatchUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendInfraRequest": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UpdateUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MyUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RegionInfo": {
             "type": "object",
             "properties": {
                 "region": {
@@ -1214,7 +1606,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.SpiderVMInfo": {
+        "model.SpiderVMInfo": {
             "type": "object",
             "properties": {
                 "cspid": {
@@ -1286,7 +1678,7 @@ const docTemplate = `{
                     "description": "ex) {us-east1, us-east1-c} or {ap-northeast-2}",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.RegionInfo"
+                            "$ref": "#/definitions/model.RegionInfo"
                         }
                     ]
                 },
@@ -1351,7 +1743,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.StatusCountInfo": {
+        "model.StatusCountInfo": {
             "type": "object",
             "properties": {
                 "countCreating": {
@@ -1400,7 +1792,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.Subnet": {
+        "model.Subnet": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1420,7 +1812,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.TbVmDynamicReq": {
+        "model.TbVmDynamicReq": {
             "type": "object",
             "required": [
                 "commonImage",
@@ -1474,7 +1866,7 @@ const docTemplate = `{
                 }
             }
         },
-        "migration.TbVmInfo": {
+        "model.TbVmInfo": {
             "type": "object",
             "properties": {
                 "connectionConfig": {
@@ -1489,7 +1881,7 @@ const docTemplate = `{
                     "example": "2022-11-10 23:00:00"
                 },
                 "cspViewVmDetail": {
-                    "$ref": "#/definitions/migration.SpiderVMInfo"
+                    "$ref": "#/definitions/model.SpiderVMInfo"
                 },
                 "dataDiskIds": {
                     "type": "array",
@@ -1545,7 +1937,7 @@ const docTemplate = `{
                     "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.RegionInfo"
+                            "$ref": "#/definitions/model.RegionInfo"
                         }
                     ]
                 },
@@ -1602,46 +1994,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "vmUserPassword": {
-                    "type": "string"
-                }
-            }
-        },
-        "recommendation.RecommendInfraRequest": {
-            "type": "object",
-            "properties": {
-                "compute": {
-                    "type": "string"
-                },
-                "disk": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "securityGroup": {
-                    "type": "string"
-                },
-                "virtualMachine": {
-                    "type": "string"
-                }
-            }
-        },
-        "recommendation.RecommendInfraResponse": {
-            "type": "object",
-            "properties": {
-                "compute": {
-                    "type": "string"
-                },
-                "disk": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "securityGroup": {
-                    "type": "string"
-                },
-                "virtualMachine": {
                     "type": "string"
                 }
             }

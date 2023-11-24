@@ -298,7 +298,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInfraRequest"
+                            "$ref": "#/definitions/controller.MigrateInfraRequest"
                         }
                     }
                 ],
@@ -306,7 +306,7 @@
                     "200": {
                         "description": "Successfully migrated infrastructure on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInfraResponse"
+                            "$ref": "#/definitions/controller.MigrateInfraResponse"
                         }
                     },
                     "404": {
@@ -344,7 +344,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInstanceRequest"
+                            "$ref": "#/definitions/controller.MigrateInstanceRequest"
                         }
                     }
                 ],
@@ -352,7 +352,7 @@
                     "200": {
                         "description": "Successfully migrated storage on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateInstanceResponse"
+                            "$ref": "#/definitions/controller.MigrateInstanceResponse"
                         }
                     },
                     "404": {
@@ -390,7 +390,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateNetworkRequest"
+                            "$ref": "#/definitions/controller.MigrateNetworkRequest"
                         }
                     }
                 ],
@@ -398,7 +398,7 @@
                     "200": {
                         "description": "Successfully migrated network on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateNetworkResponse"
+                            "$ref": "#/definitions/controller.MigrateNetworkResponse"
                         }
                     },
                     "404": {
@@ -436,7 +436,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateStorageRequest"
+                            "$ref": "#/definitions/controller.MigrateStorageRequest"
                         }
                     }
                 ],
@@ -444,7 +444,7 @@
                     "200": {
                         "description": "Successfully migrated storage on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/migration.MigrateStorageResponse"
+                            "$ref": "#/definitions/controller.MigrateStorageResponse"
                         }
                     },
                     "404": {
@@ -748,7 +748,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/recommendation.RecommendInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
                     }
                 ],
@@ -756,7 +756,7 @@
                     "200": {
                         "description": "Successfully recommended an appropriate infrastructure for cloud migration",
                         "schema": {
-                            "$ref": "#/definitions/recommendation.RecommendInfraResponse"
+                            "$ref": "#/definitions/controller.RecommendInfraResponse"
                         }
                     },
                     "404": {
@@ -769,6 +769,249 @@
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/sample/users": {
+            "get": {
+                "description": "Get information of all users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Get a list of users",
+                "responses": {
+                    "200": {
+                        "description": "(sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUsersResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User information",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/sample/users/{id}": {
+            "get": {
+                "description": "Get information of a user with a specific ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Get specific user information",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Update a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User information to update",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.UpdateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deletion successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "Patch a user with the given information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Sample] Users"
+                ],
+                "summary": "Patch a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User information to update",
+                        "name": "User",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.PatchUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "schema": {
+                            "$ref": "#/definitions/controller.PatchUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "User Not Found",
+                        "schema": {
+                            "type": "object"
                         }
                     }
                 }
@@ -950,7 +1193,46 @@
                 }
             }
         },
-        "migration.MigrateInfraRequest": {
+        "controller.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.GetUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.GetUsersResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MyUser"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -988,12 +1270,12 @@
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.TbVmDynamicReq"
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
                     }
                 }
             }
         },
-        "migration.MigrateInfraResponse": {
+        "controller.MigrateInfraResponse": {
             "type": "object",
             "properties": {
                 "configureCloudAdaptiveNetwork": {
@@ -1044,7 +1326,7 @@
                     "type": "string"
                 },
                 "statusCount": {
-                    "$ref": "#/definitions/migration.StatusCountInfo"
+                    "$ref": "#/definitions/model.StatusCountInfo"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1065,12 +1347,12 @@
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.TbVmInfo"
+                        "$ref": "#/definitions/model.TbVmInfo"
                     }
                 }
             }
         },
-        "migration.MigrateInstanceRequest": {
+        "controller.MigrateInstanceRequest": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1090,7 +1372,7 @@
                 }
             }
         },
-        "migration.MigrateInstanceResponse": {
+        "controller.MigrateInstanceResponse": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1110,7 +1392,7 @@
                 }
             }
         },
-        "migration.MigrateNetworkRequest": {
+        "controller.MigrateNetworkRequest": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1128,12 +1410,12 @@
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.Subnet"
+                        "$ref": "#/definitions/model.Subnet"
                     }
                 }
             }
         },
-        "migration.MigrateNetworkResponse": {
+        "controller.MigrateNetworkResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1151,12 +1433,12 @@
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/migration.Subnet"
+                        "$ref": "#/definitions/model.Subnet"
                     }
                 }
             }
         },
-        "migration.MigrateStorageRequest": {
+        "controller.MigrateStorageRequest": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1176,7 +1458,7 @@
                 }
             }
         },
-        "migration.MigrateStorageResponse": {
+        "controller.MigrateStorageResponse": {
             "type": "object",
             "properties": {
                 "NetworkId": {
@@ -1196,7 +1478,117 @@
                 }
             }
         },
-        "migration.RegionInfo": {
+        "controller.PatchUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PatchUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendInfraRequest": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "type": "string"
+                },
+                "disk": {
+                    "type": "string"
+                },
+                "network": {
+                    "type": "string"
+                },
+                "securityGroup": {
+                    "type": "string"
+                },
+                "virtualMachine": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UpdateUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MyUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RegionInfo": {
             "type": "object",
             "properties": {
                 "region": {
@@ -1207,7 +1599,7 @@
                 }
             }
         },
-        "migration.SpiderVMInfo": {
+        "model.SpiderVMInfo": {
             "type": "object",
             "properties": {
                 "cspid": {
@@ -1279,7 +1671,7 @@
                     "description": "ex) {us-east1, us-east1-c} or {ap-northeast-2}",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.RegionInfo"
+                            "$ref": "#/definitions/model.RegionInfo"
                         }
                     ]
                 },
@@ -1344,7 +1736,7 @@
                 }
             }
         },
-        "migration.StatusCountInfo": {
+        "model.StatusCountInfo": {
             "type": "object",
             "properties": {
                 "countCreating": {
@@ -1393,7 +1785,7 @@
                 }
             }
         },
-        "migration.Subnet": {
+        "model.Subnet": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1413,7 +1805,7 @@
                 }
             }
         },
-        "migration.TbVmDynamicReq": {
+        "model.TbVmDynamicReq": {
             "type": "object",
             "required": [
                 "commonImage",
@@ -1467,7 +1859,7 @@
                 }
             }
         },
-        "migration.TbVmInfo": {
+        "model.TbVmInfo": {
             "type": "object",
             "properties": {
                 "connectionConfig": {
@@ -1482,7 +1874,7 @@
                     "example": "2022-11-10 23:00:00"
                 },
                 "cspViewVmDetail": {
-                    "$ref": "#/definitions/migration.SpiderVMInfo"
+                    "$ref": "#/definitions/model.SpiderVMInfo"
                 },
                 "dataDiskIds": {
                     "type": "array",
@@ -1538,7 +1930,7 @@
                     "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/migration.RegionInfo"
+                            "$ref": "#/definitions/model.RegionInfo"
                         }
                     ]
                 },
@@ -1595,46 +1987,6 @@
                     "type": "string"
                 },
                 "vmUserPassword": {
-                    "type": "string"
-                }
-            }
-        },
-        "recommendation.RecommendInfraRequest": {
-            "type": "object",
-            "properties": {
-                "compute": {
-                    "type": "string"
-                },
-                "disk": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "securityGroup": {
-                    "type": "string"
-                },
-                "virtualMachine": {
-                    "type": "string"
-                }
-            }
-        },
-        "recommendation.RecommendInfraResponse": {
-            "type": "object",
-            "properties": {
-                "compute": {
-                    "type": "string"
-                },
-                "disk": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "securityGroup": {
-                    "type": "string"
-                },
-                "virtualMachine": {
                     "type": "string"
                 }
             }
