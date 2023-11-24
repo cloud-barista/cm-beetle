@@ -23,7 +23,7 @@ import (
 	"time"
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/route"
 
 	"crypto/subtle"
 	"fmt"
@@ -66,6 +66,21 @@ const (
 )
 
 // RunServer func start Rest API server
+
+// @title CM-Beetle REST API
+// @version latest
+// @description CM-Beetle REST API
+
+// @contact.name API Support
+// @contact.url http://cloud-barista.github.io
+// @contact.email contact-to-cloud-barista@googlegroups.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath /beetle
+
+// @securityDefinitions.basic BasicAuth
 func RunServer(port string) {
 
 	e := echo.New()
@@ -78,12 +93,6 @@ func RunServer(port string) {
 
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
-
-	// Route for system management
-	e.GET("/beetle/swagger/*", echoSwagger.WrapHandler)
-	// e.GET("/beetle/swaggerActive", rest_common.RestGetSwagger)
-	e.GET("/beetle/health", rest_common.RestGetHealth)
-	e.GET("/beetle/httpVersion", rest_common.RestCheckHTTPVersion)
 
 	allowedOrigins := os.Getenv("ALLOW_ORIGINS")
 	if allowedOrigins == "" {
@@ -130,24 +139,26 @@ func RunServer(port string) {
 	fmt.Printf(infoColor, website)
 	fmt.Println("\n \n ")
 
-	// Route to infrastructure recommendation for cloud migration
-	v1 := e.Group("/beetle")
-	{
-		// API for infrastructure recommendation for cloud migration
-		recomm := v1.Group("/recommendation")
+	// Route for system management
+	e.GET("/beetle/swagger/*", echoSwagger.WrapHandler)
+	// e.GET("/beetle/swaggerActive", rest_common.RestGetSwagger)
+	e.GET("/beetle/health", rest_common.RestGetHealth)
+	e.GET("/beetle/httpVersion", rest_common.RestCheckHTTPVersion)
 
-		recomm.POST("/infra", controller.RecommendInfra)
+	// Beetle API group which has /beetle as prefix
+	groupBase := e.Group("/beetle")
 
-		// API for migration
-		mig := v1.Group("/migration")
+	// Sample API group (for developers to add new API)
+	groupSample := groupBase.Group("/sample")
+	route.RegisterSampleRoutes(groupSample)
 
-		mig.POST("/infra", controller.MigrateInfra)
+	// Recommendation API group
+	groupRecommendation := groupBase.Group("/recommendation")
+	route.RegisterRecommendationRoutes(groupRecommendation)
 
-		mig.POST("/infra/network", controller.MigrateInfra)
-		mig.POST("/infra/storage", controller.MigrateInfra)
-		mig.POST("/infra/instance", controller.MigrateInfra)
-
-	}
+	// Migration API group
+	groupMigration := groupBase.Group("/migration")
+	route.RegisterMigrationRoutes(groupMigration)
 
 	// Route
 	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)
