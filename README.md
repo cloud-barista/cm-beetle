@@ -77,13 +77,13 @@ git clone https://github.com/cloud-barista/cm-beetle.git ${HOME}/cm-beetle
 #### Build CM-Beetle
 
 ```bash
-cd ${HOME}/cm-beetle/pkg
+cd ${HOME}/cm-beetle
 make
 ```
 
 (Optional) Update Swagger API document
 ```bash
-cd ${HOME}/cm-beetle/pkg
+cd ${HOME}/cm-beetle
 make swag
 ```
 
@@ -95,7 +95,7 @@ go install github.com/swaggo/swag/cmd/swag@latest
 #### Run CM-Beetle binary
 
 ```bash
-cd ${HOME}/cm-beetle/pkg
+cd ${HOME}/cm-beetle
 make run
 ```
 
