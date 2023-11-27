@@ -9,7 +9,7 @@ import (
 func RegisterSampleRoutes(g *echo.Group) {
 	g.GET("/users", controller.GetUsers)
 	g.GET("/users/:id", controller.GetUser)
-	// g.POST("/users", controller.CreateUser)
-	// g.PUT("/users/:id", controller.UpdateUser)
-	// g.DELETE("/users/:id", controller.DeleteUser)
+	g.POST("/users", controller.CreateUser)
+	g.PUT("/users/:id", controller.UpdateUser)
+	g.DELETE("/users/:id", controller.DeleteUser)
 }
