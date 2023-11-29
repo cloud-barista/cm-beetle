@@ -85,20 +85,6 @@ func init() {
 
 // Main Body
 
-// @title CM-Beetle REST API
-// @version latest
-// @description CM-Beetle REST API
-
-// @contact.name API Support
-// @contact.url http://cloud-barista.github.io
-// @contact.email contact-to-cloud-barista@googlegroups.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @BasePath /beetle
-
-// @securityDefinitions.basic BasicAuth
 func main() {
 	fmt.Println("")
 
@@ -145,7 +131,7 @@ func main() {
 	fmt.Println("")
 	fmt.Println("[Setup SQL Database]")
 
-	err := os.MkdirAll("../meta_db/dat/", os.ModePerm)
+	err := os.MkdirAll("./meta_db/dat/", os.ModePerm)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

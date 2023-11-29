@@ -14,7 +14,7 @@ RUN apk add --no-cache build-base
 
 ADD . /go/src/github.com/cloud-barista/cm-beetle
 
-WORKDIR /go/src/github.com/cloud-barista/cm-beetle/pkg
+WORKDIR /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle
 
 RUN go build -ldflags '-w -extldflags "-static"' -tags cm-beetle -o cm-beetle -v
 
@@ -27,7 +27,7 @@ FROM ubuntu:latest as prod
 # use bash
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-WORKDIR /app/src
+WORKDIR /app
 
 # COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/assets/ /app/assets/
 
@@ -35,7 +35,7 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scr
 
 # COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
 
-COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/pkg/cm-beetle /app/pkg/
+COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle /app/
 
 #RUN /bin/bash -c "source /app/conf/setup.env"
 ENV CMBEETLE_ROOT /app
@@ -68,6 +68,6 @@ ENV SELF_ENDPOINT localhost:8056
 # Swagger UI API document file path 
 ENV API_DOC_PATH /app/pkg/api/rest/docs/swagger.json
 
-ENTRYPOINT [ "/app/pkg/cm-beetle" ]
+ENTRYPOINT [ "/app/cm-beetle" ]
 
 EXPOSE 8056

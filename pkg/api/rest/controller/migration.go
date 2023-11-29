@@ -11,31 +11,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration is to handle REST API for migration
-package migration
+// Package controller has handlers and their request/response bodies for migration APIs
+package controller
 
 import (
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
 )
 
-type Handlers struct {
-}
-
 type MigrateInfraRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
 	// mcis.TbMcisDynamicReq
 
-	TbMcisDynamicReq
+	model.TbMcisDynamicReq
 }
 
 type MigrateInfraResponse struct {
-	TbMcisInfo
+	model.TbMcisInfo
 }
 
 // MigrateInfra godoc
@@ -49,7 +47,7 @@ type MigrateInfraResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /migration/infra [post]
-func (rh *Handlers) MigrateInfra(c echo.Context) error {
+func MigrateInfra(c echo.Context) error {
 
 	// [Note] Input section
 	req := &MigrateInfraRequest{}
@@ -82,7 +80,7 @@ func (rh *Handlers) MigrateInfra(c echo.Context) error {
 
 }
 
-func createVMInfra(nsId string, infraModel *TbMcisDynamicReq) (TbMcisInfo, error) {
+func createVMInfra(nsId string, infraModel *model.TbMcisDynamicReq) (model.TbMcisInfo, error) {
 
 	client := resty.New()
 	client.SetBasicAuth("default", "default")
@@ -97,7 +95,7 @@ func createVMInfra(nsId string, infraModel *TbMcisDynamicReq) (TbMcisInfo, error
 	requestBody := *infraModel
 
 	// Set response body
-	responseBody := TbMcisInfo{}
+	responseBody := model.TbMcisInfo{}
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -114,7 +112,7 @@ func createVMInfra(nsId string, infraModel *TbMcisDynamicReq) (TbMcisInfo, error
 
 	if err != nil {
 		// common.CBLog.Error(err)
-		return TbMcisInfo{}, err
+		return model.TbMcisInfo{}, err
 	}
 
 	return responseBody, nil
@@ -122,29 +120,12 @@ func createVMInfra(nsId string, infraModel *TbMcisDynamicReq) (TbMcisInfo, error
 
 ////////////////////////
 
-type Network struct {
-	Name          string `json:"name"`
-	Id            string `json:"id"`
-	IPv4CIDRBlock string `json:"ipv4CidrBlock"`
-	IPv6CIDRBlock string `json:"ipv6CidrBlock"`
-}
-
-type Subnet struct {
-	Network
-	ParentNetworkId string `json:"parentNetworkId"`
-}
-
-type DummyNetwork struct {
-	Network
-	Subnets []Subnet `json:"subnets"`
-}
-
 type MigrateNetworkRequest struct {
-	DummyNetwork
+	model.DummyNetwork
 }
 
 type MigrateNetworkResponse struct {
-	DummyNetwork
+	model.DummyNetwork
 }
 
 // MigrateNetwork godoc
@@ -158,7 +139,7 @@ type MigrateNetworkResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /migration/infra/network [post]
-func (rh *Handlers) MigrateNetwork(c echo.Context) error {
+func MigrateNetwork(c echo.Context) error {
 
 	// [Note] Input section
 	req := &MigrateNetworkRequest{}
@@ -198,24 +179,12 @@ func (rh *Handlers) MigrateNetwork(c echo.Context) error {
 
 ////////////////////////
 
-type Storage struct {
-	Name string `json:"name"`
-	Id   string `json:"id"`
-	Type string `json:"type"`
-	Size string `json:"size"`
-}
-
-type DummyStorage struct {
-	Storage
-	NetworkID string `json:"NetworkId"`
-}
-
 type MigrateStorageRequest struct {
-	DummyStorage
+	model.DummyStorage
 }
 
 type MigrateStorageResponse struct {
-	DummyStorage
+	model.DummyStorage
 }
 
 // MigrateStorage godoc
@@ -229,7 +198,7 @@ type MigrateStorageResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /migration/infra/storage [post]
-func (rh *Handlers) MigrateStorage(c echo.Context) error {
+func MigrateStorage(c echo.Context) error {
 
 	// [Note] Input section
 	req := &MigrateStorageRequest{}
@@ -269,24 +238,12 @@ func (rh *Handlers) MigrateStorage(c echo.Context) error {
 
 ////////////////////////
 
-type Instance struct {
-	Name string `json:"name"`
-	Id   string `json:"id"`
-	Spec string `json:"type"`
-	OS   string `json:"os"`
-}
-
-type DummyInstance struct {
-	Instance
-	NetworkID string `json:"NetworkId"`
-}
-
 type MigrateInstanceRequest struct {
-	DummyInstance
+	model.DummyInstance
 }
 
 type MigrateInstanceResponse struct {
-	DummyInstance
+	model.DummyInstance
 }
 
 // MigrateInstance godoc
@@ -300,7 +257,7 @@ type MigrateInstanceResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /migration/infra/instance [post]
-func (rh *Handlers) MigrateInstance(c echo.Context) error {
+func MigrateInstance(c echo.Context) error {
 
 	// [Note] Input section
 	req := &MigrateInstanceRequest{}
