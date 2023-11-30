@@ -16,7 +16,7 @@ Computing Infrastructure Migration framework (codename: cm-beetle) is going to s
 ## Execution and development environment
 
 - Operating system (OS): 
-    - Ubuntu 20.04
+    - Ubuntu 22.04
 - Languages: 
     - Go: 1.19
     - Python: 3.8.10
@@ -42,17 +42,21 @@ sudo apt install make gcc git
 ```
 2. Install Go
 
-To install Go v1.19+, see [Go all releases](https://golang.org/dl/) and [Download and install](https://go.dev/doc/install)
+Note - **Install the latest stable version of Go** for CM-Beetle contribution/development since backward compatibility is supported.
+For example, install Go 1.21.4, which is stable version on 2023-11-30, even though `go.mod` says `go 1.19`. (In the opposite case, you will encounter a build error.)
 
-Example - Go 1.19 installtion 
+Example - Install Go 1.21.4, see [Go all releases](https://golang.org/dl/) and [Download and install](https://go.dev/doc/install)
 
 ```bash
+# Set Go version
+GO_VERSION=1.21.4
+
 # Get Go archive
-wget https://go.dev/dl/go1.19.linux-amd64.tar.gz
+wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
 
 # Remove any previous Go installation and
 # Extract the archive into /usr/local/
-sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.19.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 
 # Append /usr/local/go/bin to .bashrc
 echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
@@ -64,17 +68,20 @@ source ~/.bashrc
 # Verify the installation
 echo $GOPATH
 go version
+
 ```
 
 #### Download source code
 
-1. Clone CM-Beetle repository
+Clone CM-Beetle repository
 
 ```bash
 git clone https://github.com/cloud-barista/cm-beetle.git ${HOME}/cm-beetle
 ```
 
 #### Build CM-Beetle
+
+Build CM-Beetle source code
 
 ```bash
 cd ${HOME}/cm-beetle
@@ -94,12 +101,22 @@ go install github.com/swaggo/swag/cmd/swag@latest
 
 #### Run CM-Beetle binary
 
+Set enviroment variable (See [setup.env](https://github.com/cloud-barista/cm-beetle/blob/main/conf/setup.env)) 
+
+```bash
+source ./conf/setup.env
+```
+
+Run CM-Beetle server
+
 ```bash
 cd ${HOME}/cm-beetle
 make run
 ```
 
 #### Health-check CM-Beetle
+
+Check if CM-Beetle is running
 
 ```bash
 curl http://localhost:8056/beetle/health
@@ -122,6 +139,9 @@ cloudbaristaorg/cm-beetle:latest
 ```
 
 #### Health-check CM-Beetle
+
+Check if CM-Beetle is running
+
 ```bash
 curl http://localhost:8056/beetle/health
 
