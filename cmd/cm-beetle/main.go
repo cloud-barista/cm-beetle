@@ -24,18 +24,16 @@ import (
 	//_ "github.com/go-sql-driver/mysql"
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
-)
 
-// init for main
-func init() {
-	// profile := "cloud_conf"
-	// setConfig(profile)
-}
+	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+)
 
 // setConfig get cloud settings from a config file
 // func setConfig(profile string) {
@@ -86,7 +84,8 @@ func init() {
 // Main Body
 
 func main() {
-	fmt.Println("")
+
+	log.Info().Msg("CM-Beetle server has started successfully.")
 
 	// giving a default value of "8056"
 	port := flag.String("port", "8056", "port number for the restapiserver to listen to")

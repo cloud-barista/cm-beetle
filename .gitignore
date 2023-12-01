@@ -55,6 +55,7 @@ pkg/rttmap.csv
 .idea/
 .vscode/
 
+*.log
 log/
 *.history
 
