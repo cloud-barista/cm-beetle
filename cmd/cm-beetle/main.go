@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -24,7 +23,6 @@ import (
 	//_ "github.com/go-sql-driver/mysql"
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -33,9 +31,10 @@ import (
 
 	// Black import (_) is for running a package's init() function without using its other contents.
 	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/rs/zerolog/log"
 )
 
-// setConfig get cloud settings from a config file
+// // setConfig get cloud settings from a config file
 // func setConfig(profile string) {
 // 	viper.AddConfigPath(".")       // optionally look for config in the working directory
 // 	viper.AddConfigPath("./conf/") // optionally look for config in the working directory/conf/
@@ -85,28 +84,17 @@ import (
 
 func main() {
 
-	log.Info().Msg("CM-Beetle server has started successfully.")
+	log.Info().Msg("starting CM-Beetle server")
 
-	// giving a default value of "8056"
+	// Set the default port number "8056" for the REST API server to listen on
 	port := flag.String("port", "8056", "port number for the restapiserver to listen to")
 	flag.Parse()
 
-	// validate arguments from flag
-	validationFlag := true
-	// validation: port
-	// set validationFlag to false if your number is not in [1-65535] range
-	if portInt, err := strconv.Atoi(*port); err == nil {
-		if portInt < 1 || portInt > 65535 {
-			validationFlag = false
-		}
-	} else {
-		validationFlag = false
+	// Validate port
+	if portInt, err := strconv.Atoi(*port); err != nil || portInt < 1 || portInt > 65535 {
+		log.Fatal().Msgf("%s is not a valid port number. Please retry with a valid port number (ex: -port=[1-65535]).", *port)
 	}
-	if !validationFlag {
-		fmt.Printf("%s is not a valid port number.\n", *port)
-		fmt.Printf("Please retry with a valid port number (ex: -port=[1-65535]).\n")
-		os.Exit(1)
-	}
+	log.Debug().Msgf("port number: %s", *port)
 
 	common.SpiderRestUrl = common.NVL(os.Getenv("SPIDER_REST_URL"), "http://localhost:1024/spider")
 	common.DragonflyRestUrl = common.NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
@@ -127,25 +115,25 @@ func main() {
 	//masterConfigInfos = confighandler.GetMasterConfigInfos()
 
 	//Setup database (meta_db/dat/cmbeetle.s3db)
-	fmt.Println("")
-	fmt.Println("[Setup SQL Database]")
-
+	log.Info().Msg("setting SQL Database")
 	err := os.MkdirAll("./meta_db/dat/", os.ModePerm)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Error().Err(err).Msg("error creating directory")
 	}
+	log.Debug().Msgf("database file path: %s", "./meta_db/dat/cmbeetle.s3db")
 
+	// Watch config file changes
 	go func() {
 		viper.WatchConfig()
 		viper.OnConfigChange(func(e fsnotify.Event) {
-			fmt.Println("Config file changed:", e.Name)
+			log.Debug().Str("file", e.Name).Msg("config file changed")
 			err := viper.ReadInConfig()
 			if err != nil { // Handle errors reading the config file
-				panic(fmt.Errorf("fatal error config file: %w", err))
+				log.Fatal().Err(err).Msg("fatal error in config file")
 			}
 			err = viper.Unmarshal(&common.RuntimeConf)
 			if err != nil {
-				panic(err)
+				log.Panic().Err(err).Msg("error unmarshaling runtime configuration")
 			}
 		})
 	}()
