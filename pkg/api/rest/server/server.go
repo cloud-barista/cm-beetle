@@ -16,7 +16,6 @@ package server
 
 import (
 	"context"
-	"log"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -38,6 +37,10 @@ import (
 	// echo-swagger middleware
 	_ "github.com/cloud-barista/cm-beetle/pkg/api/rest/docs"
 	echoSwagger "github.com/swaggo/echo-swagger"
+
+	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/rs/zerolog/log"
 )
 
 //var masterConfigInfos confighandler.MASTERCONFIGTYPE
@@ -83,6 +86,8 @@ const (
 // @securityDefinitions.basic BasicAuth
 func RunServer(port string) {
 
+	log.Info().Msg("Setting CM-Beetle REST API server")
+
 	e := echo.New()
 
 	// Middleware
@@ -96,10 +101,10 @@ func RunServer(port string) {
 
 	allowedOrigins := os.Getenv("ALLOW_ORIGINS")
 	if allowedOrigins == "" {
-		log.Fatal("ALLOW_ORIGINS env variable for CORS is " + allowedOrigins +
+		log.Fatal().Msg("allow_ORIGINS env variable for CORS is " + allowedOrigins +
 			". Please provide a proper value and source setup.env again. EXITING...")
-		// allowedOrigins = "*"
 	}
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{allowedOrigins},
 		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
@@ -215,6 +220,7 @@ func RunServer(port string) {
 		<-gracefulShutdownContext.Done()
 
 		fmt.Println("\n[Stop] CM-Beetle REST Server")
+		log.Info().Msg("stopping CM-Beetle REST Server")
 		ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 		defer cancel()
 
@@ -223,6 +229,7 @@ func RunServer(port string) {
 		}
 	}(&wg)
 
+	log.Info().Msg("starting CM-Beetle REST API server")
 	port = fmt.Sprintf(":%s", port)
 	if err := e.Start(port); err != nil && err != http.ErrServerClosed {
 		e.Logger.Panic("shuttig down the server")
