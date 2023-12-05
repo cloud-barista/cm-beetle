@@ -110,11 +110,11 @@ API handler 및 Request/response body를 만들기 위해 `controller/sample.go`
 자세한 내용을 [swaggo/swag](https://github.com/swaggo/swag)을 참고하시기 바랍니다.
 
 기본적으로, **1 Handler, 1 Request body, 1 Response body인 틀을 구성하고자 했으며**,  
-GET method와 같이 Request body를 필요로 하지 않는 에우는 예는 Reqeust body를 정의하지 않았습니다. 
+GET method와 같이 Request body를 필요로 하지 않는 경우에는 Reqeust body를 정의하지 않았습니다. 
 
 위 1-1-1 구성을 유지하면서, Request/response body와 model이 연관되도록 Go 언어의 struct embedding을 적용하고 있습니다. 
 자세한 내용은 아래 POST 예시를 참고하시기 바랍니다.
-- Struct embedding: 객체 프로그래밍에서 서브클래스와 유사한 개념으로 하나의 구조체를 다른 구조체 내에 포함시킬 수 있다. 
+- Struct embedding: 객체 프로그래밍에서 서브클래스와 유사한 개념으로 하나의 구조체를 다른 구조체 내에 포함시킬 수 있습니다.
 
 #### GET method
 
@@ -122,7 +122,7 @@ REST API에서 GET method의 경우 Request body를 필요로 하지 않아 Requ
 `GET /beetle/sample/users`의 Response body는 User들로 구성된 리스트입니다.
 
 `GET /beetle/sample/users` 요청을 다루는 GetUsers handler가 정의되어 있고, 
-상단에 API 문서 생성을 위한 주석이 추가되어 있습니다.
+상단에 API 문서 생성을 위한 Annotation 이 주석으로 추가되어 있습니다.
 
 ```go
 // [Note]
@@ -158,9 +158,9 @@ func GetUsers(c echo.Context) error {
 REST API에서 POST method의 경우 Request body와 Request body를 필요로 합니다. 
 1 Handler, 1 Request body, 1 Response body 구성을 유지하고 있습니다. 
 
-Request body `CreateUserRequest`와 Response body `CreateUserResponse` 모두에 `model.MyUser` 구조체를 임베딩하여 상호 연관되게 만들었습니다.
+Request body `CreateUserRequest`와 Response body `CreateUserResponse` 모두에 `model.MyUser` 구조체를 임베딩하여 상호 연관되도록 만들었습니다.
 
-예를 들어, 아래 예제 코드의 두 구조체는 이름만 다를 뿐 멤버 데이터가 같습니다.
+예를 들어, 아래 예제 코드의 두 구조체는 이름만 다르고 멤버 데이터는 같습니다.
 
 ```go
 // [Note]
@@ -218,16 +218,16 @@ type MyUser struct {
 
 ### REST API 문서 생성
 
-미리 작성해둔 Swagger declarative comments format (annotaion)을 바탕으로 API documentation을 생성/업데이트한다.
+미리 작성해둔 Swagger declarative comments format (annotaion)을 바탕으로 API documentation을 생성/업데이트 합니다.
 
-swag가 설치되어 있지 않다면 아래 명령어를 통해 설치한다.
+swag가 설치되어 있지 않다면 아래 명령어를 통해 설치합니다.
 
 (Optional) If you got an error because of missing `swag`, install `swag`:
 ```bash
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
-아래 명령을 수행하여 API documentation을 생성한다.
+아래 명령을 수행하여 API documentation을 생성합니다.
 `/pkg/api/rest/docs` 에 문서가 생성된다.
 
 Update Swagger API document
@@ -244,6 +244,7 @@ REST API 문서를 확인하기 위해 아래 명령들을 순차적으로 실�
 Setup environment variables
 ```bash
 cd ${HOME}/cm-beetle
+source conf/setup.env
 ```
 
 Build server
