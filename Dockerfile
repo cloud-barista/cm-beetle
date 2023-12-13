@@ -16,13 +16,14 @@ ADD . /go/src/github.com/cloud-barista/cm-beetle
 
 WORKDIR /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle
 
-RUN go build -ldflags '-w -extldflags "-static"' -tags cm-beetle -o cm-beetle -v
+# NOTE - "make prod" executes the commannd, "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s -w' -o cm-beetle"
+RUN make prod
 
 #############################################################
 ## Stage 2 - Application Setup
 ##############################################################
 
-FROM ubuntu:latest as prod
+FROM ubuntu:22.04 as prod
 
 # use bash
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
