@@ -55,7 +55,7 @@ jobs:
         uses: "pascalgn/automerge-action@v0.15.6"
         env:
           GITHUB_TOKEN: "${{ secrets.CR_PAT }}"
-          LOG: "TRACE"  # or "DEBUG"
+          LOG: "DEBUG" # or "TRACE"
           MERGE_LABELS: "approved,!wip,!hold"
           MERGE_REMOVE_LABELS: ""
           MERGE_METHOD: "merge"
