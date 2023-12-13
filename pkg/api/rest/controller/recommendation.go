@@ -15,10 +15,16 @@ limitations under the License.
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/source/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
+
+	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/rs/zerolog/log"
 )
 
 type Infrastructure struct {
@@ -30,7 +36,7 @@ type Infrastructure struct {
 }
 
 type RecommendInfraRequest struct {
-	Infrastructure
+	infra.Infra
 }
 
 type RecommendInfraResponse struct {
@@ -53,26 +59,28 @@ func RecommendInfra(c echo.Context) error {
 	// Input
 	req := &RecommendInfraRequest{}
 	if err := c.Bind(req); err != nil {
-		return err
+		log.Error().Err(err).Msg("Failed to bind a request body")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	fmt.Print(req.Network)
-	fmt.Print(req.Disk)
-	fmt.Print(req.Compute)
-	fmt.Print(req.SecurityGroup)
-	fmt.Print(req.VirtualMachine)
+	log.Debug().Msgf("RequestBody: %v\n", req)
+	log.Debug().Msgf("req.Infra.Compute: %v\n", req.Infra.Compute)
+	// log.Debug().Msgf("req.Infra.Network: %v\n", req.Infra.Network)
+	// log.Debug().Msgf("req.Infra.GPU: %v\n", req.Infra.GPU)
+	// fmt.Print(req.Network)
+	// fmt.Print(req.GPU)
 
-	res := &RecommendInfraResponse{}
 	// Process
+	recommendedInfra, err := recommendation.Recommend(req.Infra)
+	recommendedInfra.Name = "RecommendedInfra01"
 
 	// Ouput
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to recommend an appropriate infrastructure for cloud migration")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusNotFound, res)
+	}
 
-	// if err != nil {
-	// 	common.CBLog.Error(err)
-	// 	mapA := map[string]string{"message": err.Error()}
-	// 	return c.JSON(http.StatusInternalServerError, &mapA)
-	// }
-
-	return c.JSON(http.StatusOK, res)
-
+	return c.JSON(http.StatusOK, recommendedInfra)
 }
