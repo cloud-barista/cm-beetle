@@ -11,9 +11,9 @@ jobs:
     # Apply this job if it is a PR and by OWNER with '/approve' comment
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/approve') }}
     
-    # This job runs on Ubuntu-latest (Ubuntu 20.04 LTS checked on 2022-09-06)
+    # This job runs on Ubuntu-latest (Ubuntu 22.04 LTS checked on 2023-12-13)
     # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       # Check the commenter is a member of the maintainer team of this repo
       - name: Extract Repository Name
