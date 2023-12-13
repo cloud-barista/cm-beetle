@@ -341,15 +341,7 @@ definitions:
   controller.RecommendInfraRequest:
     properties:
       compute:
-        type: string
-      disk:
-        type: string
-      network:
-        type: string
-      securityGroup:
-        type: string
-      virtualMachine:
-        type: string
+        $ref: '#/definitions/infra.Compute'
     type: object
   controller.RecommendInfraResponse:
     properties:
@@ -381,6 +373,115 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  infra.CPU:
+    properties:
+      cache:
+        description: KB
+        type: integer
+      cores:
+        description: ea
+        type: integer
+      cpus:
+        description: ea
+        type: integer
+      model:
+        type: string
+      speed:
+        description: MHz
+        type: integer
+      threads:
+        description: ea
+        type: integer
+      vendor:
+        type: string
+    type: object
+  infra.Compute:
+    properties:
+      compute_resource:
+        $ref: '#/definitions/infra.ComputeResource'
+      os:
+        $ref: '#/definitions/infra.System'
+    type: object
+  infra.ComputeResource:
+    properties:
+      cpu:
+        $ref: '#/definitions/infra.CPU'
+      memory:
+        $ref: '#/definitions/infra.Memory'
+      storage:
+        items:
+          $ref: '#/definitions/infra.Storage'
+        type: array
+    type: object
+  infra.Kernel:
+    properties:
+      architecture:
+        type: string
+      release:
+        type: string
+      version:
+        type: string
+    type: object
+  infra.Memory:
+    properties:
+      size:
+        description: MB
+        type: integer
+      speed:
+        description: MHz
+        type: integer
+      type:
+        type: string
+    type: object
+  infra.Node:
+    properties:
+      hostname:
+        type: string
+      hypervisor:
+        type: string
+      machineid:
+        type: string
+      timezone:
+        type: string
+    type: object
+  infra.OS:
+    properties:
+      architecture:
+        type: string
+      name:
+        type: string
+      release:
+        type: string
+      vendor:
+        type: string
+      version:
+        type: string
+    type: object
+  infra.Storage:
+    properties:
+      driver:
+        type: string
+      model:
+        type: string
+      name:
+        type: string
+      serial:
+        type: string
+      size:
+        description: GB
+        type: integer
+      vendor:
+        type: string
+    type: object
+  infra.System:
+    properties:
+      kernel:
+        $ref: '#/definitions/infra.Kernel'
+      node:
+        $ref: '#/definitions/infra.Node'
+      os:
+        $ref: '#/definitions/infra.OS'
     type: object
   model.MyUser:
     properties:
