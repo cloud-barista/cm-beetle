@@ -1517,19 +1517,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "compute": {
-                    "type": "string"
-                },
-                "disk": {
-                    "type": "string"
-                },
-                "network": {
-                    "type": "string"
-                },
-                "securityGroup": {
-                    "type": "string"
-                },
-                "virtualMachine": {
-                    "type": "string"
+                    "$ref": "#/definitions/infra.Compute"
                 }
             }
         },
@@ -1578,6 +1566,170 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "infra.CPU": {
+            "type": "object",
+            "properties": {
+                "cache": {
+                    "description": "KB",
+                    "type": "integer"
+                },
+                "cores": {
+                    "description": "ea",
+                    "type": "integer"
+                },
+                "cpus": {
+                    "description": "ea",
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "speed": {
+                    "description": "MHz",
+                    "type": "integer"
+                },
+                "threads": {
+                    "description": "ea",
+                    "type": "integer"
+                },
+                "vendor": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.Compute": {
+            "type": "object",
+            "properties": {
+                "compute_resource": {
+                    "$ref": "#/definitions/infra.ComputeResource"
+                },
+                "os": {
+                    "$ref": "#/definitions/infra.System"
+                }
+            }
+        },
+        "infra.ComputeResource": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/infra.CPU"
+                },
+                "memory": {
+                    "$ref": "#/definitions/infra.Memory"
+                },
+                "storage": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.Storage"
+                    }
+                }
+            }
+        },
+        "infra.Kernel": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "type": "string"
+                },
+                "release": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.Memory": {
+            "type": "object",
+            "properties": {
+                "size": {
+                    "description": "MB",
+                    "type": "integer"
+                },
+                "speed": {
+                    "description": "MHz",
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.Node": {
+            "type": "object",
+            "properties": {
+                "hostname": {
+                    "type": "string"
+                },
+                "hypervisor": {
+                    "type": "string"
+                },
+                "machineid": {
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.OS": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "release": {
+                    "type": "string"
+                },
+                "vendor": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.Storage": {
+            "type": "object",
+            "properties": {
+                "driver": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "serial": {
+                    "type": "string"
+                },
+                "size": {
+                    "description": "GB",
+                    "type": "integer"
+                },
+                "vendor": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.System": {
+            "type": "object",
+            "properties": {
+                "kernel": {
+                    "$ref": "#/definitions/infra.Kernel"
+                },
+                "node": {
+                    "$ref": "#/definitions/infra.Node"
+                },
+                "os": {
+                    "$ref": "#/definitions/infra.OS"
                 }
             }
         },
