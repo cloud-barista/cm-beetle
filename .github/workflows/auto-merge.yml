@@ -53,10 +53,9 @@ jobs:
       # AutoMerging if this PR has MERGE_LABELS: approved, lgtm (not wip, hold)
       - name: automerge-lgtm-approved
         uses: "pascalgn/automerge-action@v0.15.6"
-        with:
-          args: "--trace"
         env:
           GITHUB_TOKEN: "${{ secrets.CR_PAT }}"
+          LOG: "TRACE"  # or "DEBUG"
           MERGE_LABELS: "approved,!wip,!hold"
           MERGE_REMOVE_LABELS: ""
           MERGE_METHOD: "merge"
