@@ -23,6 +23,7 @@ import (
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/route"
+	"github.com/spf13/viper"
 
 	"crypto/subtle"
 	"fmt"
@@ -39,6 +40,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 
 	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/config"
 	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
@@ -99,7 +101,7 @@ func RunServer(port string) {
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
-	allowedOrigins := os.Getenv("ALLOW_ORIGINS")
+	allowedOrigins := viper.GetString("api.allow.origins")
 	if allowedOrigins == "" {
 		log.Fatal().Msg("allow_ORIGINS env variable for CORS is " + allowedOrigins +
 			". Please provide a proper value and source setup.env again. EXITING...")
@@ -111,10 +113,10 @@ func RunServer(port string) {
 	}))
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
-	enableAuth := os.Getenv("ENABLE_AUTH") == "true"
+	enableAuth := viper.GetString("api.auth.enabled") == "true"
 
-	apiUser := os.Getenv("API_USERNAME")
-	apiPass := os.Getenv("API_PASSWORD")
+	apiUser := viper.GetString("api.username")
+	apiPass := viper.GetString("api.password")
 
 	if enableAuth {
 		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
@@ -189,7 +191,7 @@ func RunServer(port string) {
 	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
 	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
-	selfEndpoint := os.Getenv("SELF_ENDPOINT")
+	selfEndpoint := viper.GetString("self.endpoint")
 	apidashboard := " http://" + selfEndpoint + "/beetle/swagger/index.html"
 
 	if enableAuth {
