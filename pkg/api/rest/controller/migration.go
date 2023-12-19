@@ -23,6 +23,10 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
+
+	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/rs/zerolog/log"
 )
 
 type MigrateInfraRequest struct {
@@ -55,9 +59,8 @@ func MigrateInfra(c echo.Context) error {
 		return err
 	}
 
-	fmt.Printf("RequestBody: %v\n", req)
-	fmt.Print(req)
-	fmt.Print(req.TbMcisDynamicReq)
+	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("req.TbMcisDynamicReq: %v\n", req.TbMcisDynamicReq)
 
 	// [Note] Process section
 	// Call CB-Tumblebug API, which can be "/mcisDynamic"
@@ -65,11 +68,11 @@ func MigrateInfra(c echo.Context) error {
 	nsId := "ns01"
 	result, err := createVMInfra(nsId, &req.TbMcisDynamicReq)
 
-	fmt.Print(result)
+	log.Trace().Msgf("result: %v\n", result)
 
 	// [Note] Ouput section
 	if err != nil {
-		common.CBLog.Error(err)
+		log.Error().Err(err).Msg("Failed to create VM infrastructure")
 		mapA := map[string]string{"message": err.Error()}
 		return c.JSON(http.StatusInternalServerError, &mapA)
 	}
@@ -147,9 +150,8 @@ func MigrateNetwork(c echo.Context) error {
 		return err
 	}
 
-	fmt.Printf("RequestBody: %v\n", req)
-	fmt.Print(req)
-	fmt.Print(req.DummyNetwork)
+	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("req.DummyNetwork: %v\n", req.DummyNetwork)
 
 	// [Note] Process section
 	// Something to process here like,
@@ -157,8 +159,8 @@ func MigrateNetwork(c echo.Context) error {
 	// Calls external APIs and so on
 
 	res := &MigrateNetworkResponse{}
-	fmt.Print(res)
-	fmt.Print(res.DummyNetwork)
+	log.Trace().Msgf("res: %v\n", res)
+	log.Trace().Msgf("res.DummyNetwork: %v\n", res.DummyNetwork)
 
 	// This is an intentionally created variable.
 	// You will have to delete this later.
@@ -166,7 +168,7 @@ func MigrateNetwork(c echo.Context) error {
 
 	// [Note] Ouput section
 	if err != nil {
-		common.CBLog.Error(err)
+		log.Error().Err(err).Msg("Failed to migrate network on a cloud platform")
 		mapA := map[string]string{"message": err.Error()}
 		return c.JSON(http.StatusInternalServerError, &mapA)
 	}
@@ -206,9 +208,8 @@ func MigrateStorage(c echo.Context) error {
 		return err
 	}
 
-	fmt.Printf("RequestBody: %v\n", req)
-	fmt.Print(req)
-	fmt.Print(req.DummyStorage)
+	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("req.DummyStorage: %v\n", req.DummyStorage)
 
 	// [Note] Process section
 	// Something to process here like,
@@ -216,8 +217,8 @@ func MigrateStorage(c echo.Context) error {
 	// Calls external APIs and so on
 
 	res := &MigrateStorageResponse{}
-	fmt.Print(res)
-	fmt.Print(res.DummyStorage)
+	log.Trace().Msgf("res: %v\n", res)
+	log.Trace().Msgf("res.DummyStorage: %v\n", res.DummyStorage)
 
 	// This is an intentionally created variable.
 	// You will have to delete this later.
@@ -225,7 +226,7 @@ func MigrateStorage(c echo.Context) error {
 
 	// [Note] Ouput section
 	if err != nil {
-		common.CBLog.Error(err)
+		log.Error().Err(err).Msg("Failed to migrate storage on a cloud platform")
 		mapA := map[string]string{"message": err.Error()}
 		return c.JSON(http.StatusInternalServerError, &mapA)
 	}
@@ -265,9 +266,8 @@ func MigrateInstance(c echo.Context) error {
 		return err
 	}
 
-	fmt.Printf("RequestBody: %v\n", req)
-	fmt.Print(req)
-	fmt.Print(req.DummyInstance)
+	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("req.DummyInstance: %v\n", req.DummyInstance)
 
 	// [Note] Process section
 	// Something to process here like,
@@ -275,8 +275,8 @@ func MigrateInstance(c echo.Context) error {
 	// Calls external APIs and so on
 
 	res := &MigrateInstanceResponse{}
-	fmt.Print(res)
-	fmt.Print(res.DummyInstance)
+	log.Trace().Msgf("res: %v\n", res)
+	log.Trace().Msgf("res.DummyInstance: %v\n", res.DummyInstance)
 
 	// This is an intentionally created variable.
 	// You will have to delete this later.
@@ -284,7 +284,7 @@ func MigrateInstance(c echo.Context) error {
 
 	// [Note] Ouput section
 	if err != nil {
-		common.CBLog.Error(err)
+		log.Error().Err(err).Msg("Failed to migrate instance on a cloud platform")
 		mapA := map[string]string{"message": err.Error()}
 		return c.JSON(http.StatusInternalServerError, &mapA)
 	}

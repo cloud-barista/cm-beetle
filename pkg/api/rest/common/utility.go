@@ -116,7 +116,7 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Failure 500 {object} common.SimpleMsg
 // // @Router /swaggerActive [get]
 // func RestGetSwagger(c echo.Context) error {
-// 	docFile := os.Getenv("API_DOC_PATH")
+// 	docFile := os.Getenv("APIDOC_PATH")
 
 // 	f, err := os.Open(docFile)
 // 	if err != nil {

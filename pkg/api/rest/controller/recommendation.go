@@ -64,12 +64,10 @@ func RecommendInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	log.Debug().Msgf("RequestBody: %v\n", req)
-	log.Debug().Msgf("req.Infra.Compute: %v\n", req.Infra.Compute)
-	// log.Debug().Msgf("req.Infra.Network: %v\n", req.Infra.Network)
-	// log.Debug().Msgf("req.Infra.GPU: %v\n", req.Infra.GPU)
-	// fmt.Print(req.Network)
-	// fmt.Print(req.GPU)
+	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("req.Infra.Compute: %v\n", req.Infra.Compute)
+	// log.Trace().Msgf("req.Infra.Network: %v\n", req.Infra.Network)
+	// log.Trace().Msgf("req.Infra.GPU: %v\n", req.Infra.GPU)
 
 	// Process
 	recommendedInfra, err := recommendation.Recommend(req.Infra)

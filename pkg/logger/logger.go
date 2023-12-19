@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	_ "github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -15,6 +17,10 @@ var (
 )
 
 func init() {
+
+	// Set config values
+	logLevel := viper.GetString("loglevel")
+	env := viper.GetString("node.env")
 
 	// Set the global logger to use JSON format.
 	zerolog.TimeFieldFormat = time.RFC3339
@@ -32,7 +38,6 @@ func init() {
 	}
 
 	// Set the log level
-	logLevel := os.Getenv("CM_BEETLE_LOG_LEVEL")
 	var level zerolog.Level
 	switch logLevel {
 	case "trace":
@@ -50,7 +55,7 @@ func init() {
 	case "panic":
 		level = zerolog.PanicLevel
 	default:
-		log.Warn().Msgf("Invalid CM_BEETLE_LOG_LEVEL value: %s. Using default value: info", logLevel)
+		log.Warn().Msgf("Invalid LOGLEVEL value: %s. Using default value: info", logLevel)
 		level = zerolog.InfoLevel
 	}
 
@@ -60,8 +65,6 @@ func init() {
 	log.Logger = *logger
 
 	// Check the execution environment from the environment variable
-	env := os.Getenv("CM_BEETLE_APP_ENV")
-
 	// Log a message
 	log.Info().
 		Str("logLevel", level.String()).
@@ -88,6 +91,9 @@ func init() {
 // Create a new logger
 func NewLogger(level zerolog.Level) *zerolog.Logger {
 
+	// Set config values
+	env := viper.GetString("node.env")
+
 	// Multi-writer setup: logs to both file and console
 	multi := zerolog.MultiLevelWriter(
 		sharedLogFile,
@@ -97,8 +103,6 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 	var logger zerolog.Logger
 
 	// Check the execution environment from the environment variable
-	env := os.Getenv("CM_BEETLE_APP_ENV")
-
 	// Configure the log output
 	if env == "production" {
 		// Apply multi-writer to the global logger
@@ -130,38 +134,40 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 // Get log file configuration from environment variables
 func getLogFileConfig() (string, int, int, int, bool) {
 
+	// Set config values
+	logFilePath := viper.GetString("logfile.path")
+	maxSize, err := strconv.Atoi(viper.GetString("logfile.maxsize"))
+	maxBackups, err := strconv.Atoi(viper.GetString("logfile.maxbackups"))
+	maxAge, err := strconv.Atoi(viper.GetString("logfile.maxage"))
+	compress, err := strconv.ParseBool(viper.GetString("logfile.compress"))
+
 	// Default: cm-beetle.log
-	logFilePath := os.Getenv("CM_BEETLE_LOG_PATH")
 	if logFilePath == "" {
-		log.Info().Msg("CM_BEETLE_LOG_PATH is not set. Using default value: cm-beetle.log")
+		log.Warn().Msg("LOGFILE_PATH is not set. Using default value: cm-beetle.log")
 		logFilePath = "cm-beetle.log"
 	}
 
 	// Default: 10 MB
-	maxSize, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_SIZE"))
 	if err != nil {
-		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_SIZE value: %s. Using default value: 10 MB", os.Getenv("CM_BEETLE_LOG_MAX_SIZE"))
+		log.Warn().Msgf("Invalid LOGFILE_MAXSIZE value: %s. Using default value: 10 MB", viper.GetString("logfile.maxsize"))
 		maxSize = 10
 	}
 
 	// Default: 3 backups
-	maxBackups, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_BACKUPS"))
 	if err != nil {
-		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_BACKUPS value: %s. Using default value: 3 backups", os.Getenv("CM_BEETLE_LOG_MAX_BACKUPS"))
+		log.Warn().Msgf("Invalid LOGFILE_MAXBACKUPS value: %s. Using default value: 3 backups", viper.GetString("logfile.maxbackups"))
 		maxBackups = 3
 	}
 
 	// Default: 30 days
-	maxAge, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_AGE"))
 	if err != nil {
-		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_AGE value: %s. Using default value: 30 days", os.Getenv("CM_BEETLE_LOG_MAX_AGE"))
+		log.Warn().Msgf("Invalid LOGFILE_MAXAGE value: %s. Using default value: 30 days", viper.GetString("logfile.maxage"))
 		maxAge = 30
 	}
 
 	// Default: false
-	compress, err := strconv.ParseBool(os.Getenv("CM_BEETLE_LOG_COMPRESS"))
 	if err != nil {
-		log.Warn().Msgf("Invalid CM_BEETLE_LOG_COMPRESS value: %s. Using default value: false", os.Getenv("CM_BEETLE_LOG_COMPRESS"))
+		log.Warn().Msgf("Invalid LOGFILE_COMPRESS value: %s. Using default value: false", viper.GetString("logfile.compress"))
 		compress = false
 	}
 
