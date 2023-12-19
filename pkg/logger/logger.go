@@ -10,77 +10,91 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+var (
+	sharedLogFile *lumberjack.Logger
+)
+
 func init() {
 
 	// Set the global logger to use JSON format.
 	zerolog.TimeFieldFormat = time.RFC3339
 
-	// Get log-related environment variables
-	// Default: cm-beetle.log
-	logFilePath := os.Getenv("CM_BEETLE_LOG_PATH")
-	if logFilePath == "" {
-		logFilePath = "cm-beetle.log"
-	}
+	// Get log file configuration from environment variables
+	logFilePath, maxSize, maxBackups, maxAge, compress := getLogFileConfig()
 
-	// Default: 10 MB
-	maxSize, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_SIZE"))
-	if err != nil {
-		log.Fatal().Msg("Invalid CM_BEETLE_LOG_MAX_SIZE value")
+	// Initialize a shared log file with lumberjack to manage log rotation
+	sharedLogFile = &lumberjack.Logger{
+		Filename:   logFilePath,
+		MaxSize:    maxSize,
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,
+		Compress:   compress,
 	}
-
-	// Default: 3 backups
-	maxBackups, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_BACKUPS"))
-	if err != nil {
-		log.Fatal().Msg("Invalid CM_BEETLE_LOG_MAX_BACKUPS value")
-	}
-
-	// Default: 30 days
-	maxAge, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_AGE"))
-	if err != nil {
-		log.Fatal().Msg("Invalid CM_BEETLE_LOG_MAX_AGE value")
-	}
-
-	// Default: false
-	compress, err := strconv.ParseBool(os.Getenv("CM_BEETLE_LOG_COMPRESS"))
-	if err != nil {
-		log.Fatal().Msg("Invalid CM_BEETLE_LOG_COMPRESS value")
-	}
-
-	// lumberjack log file setup (lumberjack is used for log rotation)
-	logFile := &lumberjack.Logger{
-		Filename:   logFilePath, // log file path
-		MaxSize:    maxSize,     // max size in megabytes before log is rotated
-		MaxBackups: maxBackups,  // max number of old log files to keep
-		MaxAge:     maxAge,      // max number of days to retain log files
-		Compress:   compress,    // compress/logrotate log files
-	}
-
-	// Multi-writer setup: logs to both file and console
-	multi := zerolog.MultiLevelWriter(
-		logFile,
-		zerolog.ConsoleWriter{Out: os.Stdout},
-	)
 
 	// Set the log level
 	logLevel := os.Getenv("CM_BEETLE_LOG_LEVEL")
+	var level zerolog.Level
 	switch logLevel {
 	case "trace":
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+		level = zerolog.TraceLevel
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		level = zerolog.DebugLevel
 	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		level = zerolog.InfoLevel
 	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		level = zerolog.WarnLevel
 	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		level = zerolog.ErrorLevel
 	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+		level = zerolog.FatalLevel
 	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
+		level = zerolog.PanicLevel
 	default:
-		log.Fatal().Msgf("Invalid CM_BEETLE_LOG_LEVEL value: %s", logLevel)
+		log.Warn().Msgf("Invalid CM_BEETLE_LOG_LEVEL value: %s. Using default value: info", logLevel)
+		level = zerolog.InfoLevel
 	}
+
+	logger := NewLogger(level)
+
+	// Set global logger
+	log.Logger = *logger
+
+	// Check the execution environment from the environment variable
+	env := os.Getenv("CM_BEETLE_APP_ENV")
+
+	// Log a message
+	log.Info().
+		Str("logLevel", level.String()).
+		Str("logFilePath", sharedLogFile.Filename).
+		Str("env", env).
+		Int("maxSize", maxSize).
+		Int("maxBackups", maxBackups).
+		Int("maxAge", maxAge).
+		Bool("compress", compress).
+		Msg("Global logger initialized")
+
+	if env == "production" {
+		log.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Msg("Single-write setup (logs to file only)")
+	} else {
+		log.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Multi-writes setup (logs to both file and console)")
+	}
+}
+
+// Create a new logger
+func NewLogger(level zerolog.Level) *zerolog.Logger {
+
+	// Multi-writer setup: logs to both file and console
+	multi := zerolog.MultiLevelWriter(
+		sharedLogFile,
+		zerolog.ConsoleWriter{Out: os.Stdout},
+	)
+
+	var logger zerolog.Logger
 
 	// Check the execution environment from the environment variable
 	env := os.Getenv("CM_BEETLE_APP_ENV")
@@ -88,31 +102,68 @@ func init() {
 	// Configure the log output
 	if env == "production" {
 		// Apply multi-writer to the global logger
-		log.Logger = zerolog.New(logFile).With().Timestamp().Caller().Logger()
+		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
 	} else {
 		// Apply file to the global logger
-		log.Logger = zerolog.New(multi).With().Timestamp().Caller().Logger()
+		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
 	}
 
 	// Log a message
-	log.Info().
-		Str("logLevel", logLevel).
-		Str("logFilePath", logFilePath).
-		Str("env", env).
-		Int("maxSize", maxSize).
-		Int("maxBackups", maxBackups).
-		Int("maxAge", maxAge).
-		Bool("compress", compress).
-		Msg("Logger initialized")
+	logger.Info().
+		Str("logLevel", level.String()).
+		Msg("New logger created")
 
 	if env == "production" {
-		log.Info().
-			Str("logFilePath", logFilePath).
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
 			Msg("Single-write setup (logs to file only)")
 	} else {
-		log.Info().
-			Str("logFilePath", logFilePath).
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
 			Str("ConsoleWriter", "os.Stdout").
 			Msg("Multi-writes setup (logs to both file and console)")
 	}
+
+	return &logger
+}
+
+// Get log file configuration from environment variables
+func getLogFileConfig() (string, int, int, int, bool) {
+
+	// Default: cm-beetle.log
+	logFilePath := os.Getenv("CM_BEETLE_LOG_PATH")
+	if logFilePath == "" {
+		log.Info().Msg("CM_BEETLE_LOG_PATH is not set. Using default value: cm-beetle.log")
+		logFilePath = "cm-beetle.log"
+	}
+
+	// Default: 10 MB
+	maxSize, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_SIZE"))
+	if err != nil {
+		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_SIZE value: %s. Using default value: 10 MB", os.Getenv("CM_BEETLE_LOG_MAX_SIZE"))
+		maxSize = 10
+	}
+
+	// Default: 3 backups
+	maxBackups, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_BACKUPS"))
+	if err != nil {
+		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_BACKUPS value: %s. Using default value: 3 backups", os.Getenv("CM_BEETLE_LOG_MAX_BACKUPS"))
+		maxBackups = 3
+	}
+
+	// Default: 30 days
+	maxAge, err := strconv.Atoi(os.Getenv("CM_BEETLE_LOG_MAX_AGE"))
+	if err != nil {
+		log.Warn().Msgf("Invalid CM_BEETLE_LOG_MAX_AGE value: %s. Using default value: 30 days", os.Getenv("CM_BEETLE_LOG_MAX_AGE"))
+		maxAge = 30
+	}
+
+	// Default: false
+	compress, err := strconv.ParseBool(os.Getenv("CM_BEETLE_LOG_COMPRESS"))
+	if err != nil {
+		log.Warn().Msgf("Invalid CM_BEETLE_LOG_COMPRESS value: %s. Using default value: false", os.Getenv("CM_BEETLE_LOG_COMPRESS"))
+		compress = false
+	}
+
+	return logFilePath, maxSize, maxBackups, maxAge, compress
 }
