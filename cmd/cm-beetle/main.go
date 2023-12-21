@@ -30,57 +30,10 @@ import (
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
 
 	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/config"
 	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
-
-// // setConfig get cloud settings from a config file
-// func setConfig(profile string) {
-// 	viper.AddConfigPath(".")       // optionally look for config in the working directory
-// 	viper.AddConfigPath("./conf/") // optionally look for config in the working directory/conf/
-// 	viper.AddConfigPath("../conf/")
-// 	viper.SetConfigName(profile)
-// 	viper.SetConfigType("yaml")
-// 	err := viper.ReadInConfig()
-// 	if err != nil { // Handle errors reading the config filemak
-// 		panic(fmt.Errorf("fatal error config file: %w", err))
-// 	}
-// 	err = viper.Unmarshal(&common.RuntimeConf)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// const mrttArrayXMax = 300
-// 	// const mrttArrayYMax = 300
-// 	// common.RuntimeLatancyMap = make([][]string, mrttArrayXMax)
-
-// 	// cloudlatencymap.csv
-// 	file, fileErr := os.Open("../assets/cloudlatencymap.csv")
-// 	if fileErr != nil {
-// 		common.CBLog.Error(fileErr)
-// 		panic(fileErr)
-// 	}
-// 	defer file.Close()
-
-// 	rdr := csv.NewReader(bufio.NewReader(file))
-// 	common.RuntimeLatancyMap, _ = rdr.ReadAll()
-
-// 	for i, v := range common.RuntimeLatancyMap {
-// 		if i == 0 {
-// 			continue
-// 		}
-// 		if v[0] == "" {
-// 			break
-// 		}
-// 		common.RuntimeLatancyMapIndex[v[0]] = i
-// 	}
-
-// 	//fmt.Printf("RuntimeLatancyMap: %v\n\n", common.RuntimeLatancyMap)
-// 	//fmt.Printf("[RuntimeLatancyMapIndex]\n %v\n", common.RuntimeLatancyMapIndex)
-
-// }
-
-// Main Body
 
 func main() {
 
@@ -147,14 +100,6 @@ func main() {
 		restServer.RunServer(*port)
 		wg.Done()
 	}()
-
-	// Note: Deprecated gRPC server
-	// Start gRPC Server
-	// go func() {
-	// 	grpcServer.RunServer()
-	// 	wg.Done()
-	// }()
-	// fmt.Println("RuntimeConf: ", common.RuntimeConf.Cloud)
 
 	wg.Wait()
 }

@@ -136,10 +136,6 @@ func getLogFileConfig() (string, int, int, int, bool) {
 
 	// Set config values
 	logFilePath := viper.GetString("logfile.path")
-	maxSize, err := strconv.Atoi(viper.GetString("logfile.maxsize"))
-	maxBackups, err := strconv.Atoi(viper.GetString("logfile.maxbackups"))
-	maxAge, err := strconv.Atoi(viper.GetString("logfile.maxage"))
-	compress, err := strconv.ParseBool(viper.GetString("logfile.compress"))
 
 	// Default: cm-beetle.log
 	if logFilePath == "" {
@@ -148,24 +144,28 @@ func getLogFileConfig() (string, int, int, int, bool) {
 	}
 
 	// Default: 10 MB
+	maxSize, err := strconv.Atoi(viper.GetString("logfile.maxsize"))
 	if err != nil {
 		log.Warn().Msgf("Invalid LOGFILE_MAXSIZE value: %s. Using default value: 10 MB", viper.GetString("logfile.maxsize"))
 		maxSize = 10
 	}
 
 	// Default: 3 backups
+	maxBackups, err := strconv.Atoi(viper.GetString("logfile.maxbackups"))
 	if err != nil {
 		log.Warn().Msgf("Invalid LOGFILE_MAXBACKUPS value: %s. Using default value: 3 backups", viper.GetString("logfile.maxbackups"))
 		maxBackups = 3
 	}
 
 	// Default: 30 days
+	maxAge, err := strconv.Atoi(viper.GetString("logfile.maxage"))
 	if err != nil {
 		log.Warn().Msgf("Invalid LOGFILE_MAXAGE value: %s. Using default value: 30 days", viper.GetString("logfile.maxage"))
 		maxAge = 30
 	}
 
 	// Default: false
+	compress, err := strconv.ParseBool(viper.GetString("logfile.compress"))
 	if err != nil {
 		log.Warn().Msgf("Invalid LOGFILE_COMPRESS value: %s. Using default value: false", viper.GetString("logfile.compress"))
 		compress = false
