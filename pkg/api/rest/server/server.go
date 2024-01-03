@@ -22,6 +22,7 @@ import (
 	"time"
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/route"
 	"github.com/spf13/viper"
 
@@ -96,53 +97,7 @@ func RunServer(port string) {
 	// e.Use(middleware.Logger()) // default logger middleware in echo
 
 	// Custom logger middleware with zerolog
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogError:         true,
-		LogRequestID:     true,
-		LogRemoteIP:      true,
-		LogHost:          true,
-		LogMethod:        true,
-		LogURI:           true,
-		LogUserAgent:     true,
-		LogStatus:        true,
-		LogLatency:       true,
-		LogContentLength: true,
-		LogResponseSize:  true,
-		// HandleError:      true, // forwards error to the global error handler, so it can decide appropriate status code
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			if v.Error == nil {
-				log.Info().
-					Str("id", v.RequestID).
-					Str("remote_ip", v.RemoteIP).
-					Str("host", v.Host).
-					Str("method", v.Method).
-					Str("URI", v.URI).
-					Str("user_agent", v.UserAgent).
-					Int("status", v.Status).
-					Int64("latency", v.Latency.Nanoseconds()).
-					Str("latency_human", v.Latency.String()).
-					Str("bytes_in", v.ContentLength).
-					Int64("bytes_out", v.ResponseSize).
-					Msg("request")
-			} else {
-				log.Error().
-					Err(v.Error).
-					Str("id", v.RequestID).
-					Str("remote_ip", v.RemoteIP).
-					Str("host", v.Host).
-					Str("method", v.Method).
-					Str("URI", v.URI).
-					Str("user_agent", v.UserAgent).
-					Int("status", v.Status).
-					Int64("latency", v.Latency.Nanoseconds()).
-					Str("latency_human", v.Latency.String()).
-					Str("bytes_in", v.ContentLength).
-					Int64("bytes_out", v.ResponseSize).
-					Msg("request error")
-			}
-			return nil
-		},
-	}))
+	e.Use(middlewares.Zerologger())
 
 	e.Use(middleware.Recover())
 	// limit the application to 20 requests/sec using the default in-memory store
