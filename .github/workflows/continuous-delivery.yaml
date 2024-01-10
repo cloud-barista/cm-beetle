@@ -12,24 +12,24 @@ on:
   # A "push" event is occurred after the pull request "close" event with "merged" true condition.
   # The "push" event could replace "merged" event.
   push:
-    # branches:
-    #   - main
-    # # workflow trigger button
-    # workflow_dispatch:
+    branches:
+      - main
     tags:
       # Only trigger on semver shaped tags.
-      - "v*.*.*" 
+      - "v*.*.*"
     paths-ignore:
       - '.github/**'
+      - 'docs/**'
+      - 'scripts/**'
       - '**.md'
-      - '.all-contributorsrc'
       - '.gitignore'
       - 'LICENSE'
       - 'CODEOWNERS'
-      - 'assets/**'
-      - 'scripts/**'
-      - 'src/testclient/scripts/**'
-      - 'docs/**'
+      # - '.all-contributorsrc'
+      # - 'assets/**'
+      # - 'src/testclient/scripts/**'
+    # workflow trigger button
+  # workflow_dispatch:
 
 env:
   DOCKER_REGISTRY_NAME: cloudbaristaorg
@@ -64,14 +64,18 @@ jobs:
             # image name for GitHub Container Registry (GHCR)
             ghcr.io/${{env.GHCR_REGISTRY_NAME}}/${{env.IMAGE_NAME}}
           tags: |
+            # See `tags` input: https://github.com/docker/metadata-action?tab=readme-ov-file#tags-input
             ## Tags for a push tag event
             # minimal (e.g., 1.2.3)
             type=semver,enable=true,pattern={{version}}
             # type=semver,pattern={{major}}.{{minor}}
             ## Tags for a push branch event
-            # minimal (short sha) 
-            # type=sha,enable=true,format=short                        
-            ## Other types (currently the followings may be out of scope)
+            # Tags to reflect the last commit of the active branch
+            type=edge,enable=true,branch=main
+            ## Other types (currently the followings may be out of scope in this project)
+            ## Tags for a push branch event
+            # minimal (short sha)
+            # type=sha,enable=true,format=short            
             ## Tags for a push or pull_request event
             # type=ref,event=branch
             # type=ref,event=tag
