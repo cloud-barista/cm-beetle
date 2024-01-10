@@ -10,7 +10,7 @@ require (
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-playground/validator/v10 v10.16.0
-	github.com/go-resty/resty/v2 v2.10.0
+	github.com/go-resty/resty/v2 v2.11.0
 	github.com/labstack/echo/v4 v4.11.3
 	github.com/libvirt/libvirt-go-xml v7.4.0+incompatible
 	github.com/mattn/go-sqlite3 v1.14.17
