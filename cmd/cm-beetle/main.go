@@ -20,6 +20,11 @@ import (
 	"strconv"
 	"sync"
 
+	// Black import (_) is for running a package's init() function without using its other contents.
+	_ "github.com/cloud-barista/cm-beetle/pkg/config"
+	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/rs/zerolog/log"
+
 	//_ "github.com/go-sql-driver/mysql"
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/mattn/go-sqlite3"
@@ -28,11 +33,6 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
-
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {

@@ -68,31 +68,19 @@ func init() {
 	// Log a message
 	log.Info().
 		Str("logLevel", level.String()).
-		Str("logFilePath", sharedLogFile.Filename).
 		Str("env", env).
 		Int("maxSize", maxSize).
 		Int("maxBackups", maxBackups).
 		Int("maxAge", maxAge).
 		Bool("compress", compress).
 		Msg("Global logger initialized")
-
-	if env == "production" {
-		log.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Msg("Single-write setup (logs to file only)")
-	} else {
-		log.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Str("ConsoleWriter", "os.Stdout").
-			Msg("Multi-writes setup (logs to both file and console)")
-	}
 }
 
 // Create a new logger
 func NewLogger(level zerolog.Level) *zerolog.Logger {
 
 	// Set config values
-	env := viper.GetString("node.env")
+	logwriter := viper.GetString("logwriter")
 
 	// Multi-writer setup: logs to both file and console
 	multi := zerolog.MultiLevelWriter(
@@ -104,29 +92,39 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 
 	// Check the execution environment from the environment variable
 	// Configure the log output
-	if env == "production" {
-		// Apply multi-writer to the global logger
-		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
-	} else {
+	if logwriter == "both" {
 		// Apply file to the global logger
 		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Multi-writes setup (logs to both file and console)")
+	} else if logwriter == "file" {
+		// Apply file writer to the global logger
+		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Msg("Single-write setup (logs to file only)")
+	} else if logwriter == "stdout" {
+		// Apply ConsoleWriter to the global logger
+		logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).Level(level).With().Timestamp().Caller().Logger()
+		logger.Info().
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Single-write setup (logs to console only)")
+	} else {
+		log.Warn().Msgf("Invalid LOGWRITER value: %s. Using default value: both", logwriter)
+		// Apply multi-writer to the global logger
+		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Multi-writes setup (logs to both file and console)")
 	}
 
 	// Log a message
 	logger.Info().
 		Str("logLevel", level.String()).
 		Msg("New logger created")
-
-	if env == "production" {
-		logger.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Msg("Single-write setup (logs to file only)")
-	} else {
-		logger.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Str("ConsoleWriter", "os.Stdout").
-			Msg("Multi-writes setup (logs to both file and console)")
-	}
 
 	return &logger
 }

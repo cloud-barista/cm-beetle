@@ -44,7 +44,9 @@ pkg/api/rest/docs/swagger.json
 pkg/api/rest/docs/swagger.yaml
 
 # Config file for CM-Beetle
-conf/
+!conf/
+conf/*
+!conf/template-*
 conf/credentials.conf
 
 # Runtime files
