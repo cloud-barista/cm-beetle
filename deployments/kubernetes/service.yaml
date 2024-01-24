@@ -1,0 +1,14 @@
+# Service object for the cb-tumblebug
+apiVersion: v1
+kind: Service
+metadata:
+  name: cm-beetle-svc
+  namespace: cloud-barista
+spec:
+  ports:
+    - name: cm-beetle-service-port
+      port: 8056 # Expose this port externally
+      targetPort: 8056 # Port on the pod
+  selector:
+    app: cm-beetle
+  type: LoadBalancer
