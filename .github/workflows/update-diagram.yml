@@ -38,11 +38,10 @@ jobs:
           fi
           
           # Copy and overwrite the file
-          cp ./diagram.svg "$DEST_DIR/visualizing-the-codebase.svg"
+          mv ./diagram.svg "$DEST_DIR/visualizing-the-codebase.svg"
 
           # Stage the diagram to commit
-          cd docs/diagrams/
-          git add -v visualizing-the-codebase.svg
+          git add -v ./docs/diagrams/visualizing-the-codebase.svg
           
       - name: Create Pull Request
         id: create-pull-request
