@@ -63,11 +63,9 @@ jobs:
           labels: |
             documentation
             automated pr
-          assignees: cloud-barista/cm-beetle-maintainer
-          reviewers: cloud-barista/cm-beetle-maintainer
-          team-reviewers: |
-            owners
-            maintainers
+          # assignees: cloud-barista/cm-beetle-maintainer
+          # reviewers: cloud-barista/cm-beetle-maintainer
+          team-reviewers: cloud-barista/cm-beetle-maintainer
           draft: false
 
       - name: Check outputs
