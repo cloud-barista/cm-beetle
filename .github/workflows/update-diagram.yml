@@ -14,9 +14,9 @@ jobs:
 
       - name: Update diagram
         # id: make_diagram
-        uses: githubocto/repo-visualizer@0.7.1
+        uses: githubocto/repo-visualizer@0.9.1
         with:
-          output_file: "docs/diagrams/visualizing-the-codebase.svg"
+          output_file: "diagram.svg"
           excluded_paths: "ignore,.github"
           should_push: false          # Not to create a new commit 
           # artifact_name: "diagrams"   # Save the diagram to the artifact
@@ -29,6 +29,18 @@ jobs:
 
       - name: Add the updated diagram
         run: |
+          # Destination directory
+          DEST_DIR="./docs/diagrams"
+          
+          # Check if the destination directory exists, if not create it
+          if [ ! -d "$DEST_DIR" ]; then
+              mkdir -p "$DEST_DIR"
+          fi
+          
+          # Copy and overwrite the file
+          cp ./diagram.svg "$DEST_DIR/visualizing-the-codebase.svg"
+
+          # Stage the diagram to commit
           cd docs/diagrams/
           git add -v visualizing-the-codebase.svg
           
