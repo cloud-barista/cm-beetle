@@ -47,7 +47,7 @@ jobs:
         id: create-pull-request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.CR_PAT }}
+          token: ${{ secrets.UPDATE_SWAGGER_DOC_PAT  }}
           commit-message: Update diagram to visualize the codebase
           committer: cb-bot <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
