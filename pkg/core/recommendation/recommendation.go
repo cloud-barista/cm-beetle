@@ -58,9 +58,9 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 	// (example) select the instance spec with the with similar or appropriate number of cores from a list of instance specs
 
 	// Sample code
-	if source.Compute.ComputeResource.CPU.Cores == 1 && source.Compute.ComputeResource.Memory.Size == 2 {
-		targetVM.CommonSpec = "aws-ap-northeast-2-t2-small"
-	}
+	// if source.Compute.ComputeResource.CPU.Cores == 1 && source.Compute.ComputeResource.Memory.Size == 2 {
+	targetVM.CommonSpec = "aws-ap-northeast-2-t3-small"
+	// }
 
 	// Instance with deafult values
 	targetInfra := model.TbMcisDynamicReq{
