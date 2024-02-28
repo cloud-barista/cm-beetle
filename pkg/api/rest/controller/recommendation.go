@@ -71,7 +71,7 @@ func RecommendInfra(c echo.Context) error {
 
 	// Process
 	recommendedInfra, err := recommendation.Recommend(req.Infra)
-	recommendedInfra.Name = "RecommendedInfra01"
+	recommendedInfra.Name = "recomm-infra01"
 
 	// Ouput
 	if err != nil {
