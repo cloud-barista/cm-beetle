@@ -1,8 +1,6 @@
 package recommendation
 
 import (
-	"strings"
-
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/source/infra"
 )
@@ -33,14 +31,14 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 
 	// Instance with deafult values
 	targetVM := model.TbVmDynamicReq{
-		ConnectionName: "string",
+		ConnectionName: "",
 		Description:    "Description",
 		Label:          "DynamicVM",
-		Name:           "RecommVM01",
+		Name:           "recomm-vm",
 		RootDiskSize:   "default",
 		RootDiskType:   "default",
-		SubGroupSize:   "3",
-		VmUserPassword: "string",
+		SubGroupSize:   "1",
+		VmUserPassword: "",
 	}
 
 	// Match source and target
@@ -49,8 +47,8 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 	// (example) lower case and remove space
 	// (example) select common image from a list of images with the lower cased OS name
 	// Sample code
-	lowerCaseOSName := strings.ToLower(source.Compute.OS.OS.Name)
-	targetVM.CommonImage = lowerCaseOSName
+	// lowerCaseOSName := strings.ToLower(source.Compute.OS.OS.Name)
+	targetVM.CommonImage = "ubuntu22.04"
 
 	// Do something
 	// Do something for matching instance spec
@@ -64,7 +62,7 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 
 	// Instance with deafult values
 	targetInfra := model.TbMcisDynamicReq{
-		Description:     "Made in CB-TB",
+		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
 		Label:           "DynamicVM",
 		Name:            "",
@@ -72,7 +70,6 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 		Vm:              []model.TbVmDynamicReq{},
 	}
 
-	targetInfra.Name = "RecommInfra01"
 	targetInfra.Vm = append(targetInfra.Vm, targetVM)
 
 	return targetInfra, nil
