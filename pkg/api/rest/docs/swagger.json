@@ -1516,21 +1516,44 @@
         },
         "controller.RecommendInfraResponse": {
             "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
             "properties": {
-                "compute": {
-                    "type": "string"
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
                 },
-                "disk": {
-                    "type": "string"
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "yes",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
                 },
-                "network": {
-                    "type": "string"
+                "label": {
+                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "type": "string",
+                    "example": "DynamicVM"
                 },
-                "securityGroup": {
-                    "type": "string"
+                "name": {
+                    "type": "string",
+                    "example": "mcis01"
                 },
-                "virtualMachine": {
-                    "type": "string"
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                    }
                 }
             }
         },
