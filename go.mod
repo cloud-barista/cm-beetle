@@ -7,7 +7,7 @@ toolchain go1.21.4
 require (
 	github.com/cloud-barista/cb-store v0.7.1
 	github.com/cloud-barista/cm-honeybee v0.0.0-20231212101859-53110c631d7f
-	github.com/docker/docker v24.0.7+incompatible
+	github.com/docker/docker v24.0.9+incompatible
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-resty/resty/v2 v2.11.0
