@@ -1,11 +1,11 @@
 package recommendation
 
 import (
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/source/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 )
 
-func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
+func Recommend(source infra.Infra) (cloudmodel.TbMcisDynamicReq, error) {
 
 	// {
 	// 	"description": "Made in CB-TB",
@@ -30,7 +30,7 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 	// }
 
 	// Instance with deafult values
-	targetVM := model.TbVmDynamicReq{
+	targetVM := cloudmodel.TbVmDynamicReq{
 		ConnectionName: "",
 		Description:    "Description",
 		Label:          "DynamicVM",
@@ -61,13 +61,13 @@ func Recommend(source infra.Infra) (model.TbMcisDynamicReq, error) {
 	// }
 
 	// Instance with deafult values
-	targetInfra := model.TbMcisDynamicReq{
+	targetInfra := cloudmodel.TbMcisDynamicReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
 		Label:           "DynamicVM",
 		Name:            "",
 		SystemLabel:     "",
-		Vm:              []model.TbVmDynamicReq{},
+		Vm:              []cloudmodel.TbVmDynamicReq{},
 	}
 
 	targetInfra.Vm = append(targetInfra.Vm, targetVM)

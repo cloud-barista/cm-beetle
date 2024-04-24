@@ -16,8 +16,8 @@ clean:
 prod:
 	cd cmd/cm-beetle && $(MAKE) prod
 
-source-model:
-	cd pkg/api/rest/model && $(MAKE) source-model
+onprem-model:
+	cd pkg/api/rest/model && $(MAKE) onprem-model
 
 swag swagger:
 	cd pkg/ && $(MAKE) swag

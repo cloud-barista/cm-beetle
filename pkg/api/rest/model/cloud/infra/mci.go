@@ -11,8 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package model has structs for migration APIs
-package model
+// Package cloudmodel has structs for cloud migration
+package cloudmodel
 
 import (
 	"time"
