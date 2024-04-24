@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
@@ -33,11 +33,11 @@ type MigrateInfraRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
 	// mcis.TbMcisDynamicReq
 
-	model.TbMcisDynamicReq
+	cloudmodel.TbMcisDynamicReq
 }
 
 type MigrateInfraResponse struct {
-	model.TbMcisInfo
+	cloudmodel.TbMcisInfo
 }
 
 // MigrateInfra godoc
@@ -83,7 +83,7 @@ func MigrateInfra(c echo.Context) error {
 
 }
 
-func createVMInfra(nsId string, infraModel *model.TbMcisDynamicReq) (model.TbMcisInfo, error) {
+func createVMInfra(nsId string, infraModel *cloudmodel.TbMcisDynamicReq) (cloudmodel.TbMcisInfo, error) {
 
 	client := resty.New()
 	client.SetBasicAuth("default", "default")
@@ -98,7 +98,7 @@ func createVMInfra(nsId string, infraModel *model.TbMcisDynamicReq) (model.TbMci
 	requestBody := *infraModel
 
 	// Set response body
-	responseBody := model.TbMcisInfo{}
+	responseBody := cloudmodel.TbMcisInfo{}
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -115,7 +115,7 @@ func createVMInfra(nsId string, infraModel *model.TbMcisDynamicReq) (model.TbMci
 
 	if err != nil {
 		// common.CBLog.Error(err)
-		return model.TbMcisInfo{}, err
+		return cloudmodel.TbMcisInfo{}, err
 	}
 
 	return responseBody, nil
@@ -124,11 +124,11 @@ func createVMInfra(nsId string, infraModel *model.TbMcisDynamicReq) (model.TbMci
 ////////////////////////
 
 type MigrateNetworkRequest struct {
-	model.DummyNetwork
+	cloudmodel.DummyNetwork
 }
 
 type MigrateNetworkResponse struct {
-	model.DummyNetwork
+	cloudmodel.DummyNetwork
 }
 
 // MigrateNetwork godoc
@@ -182,11 +182,11 @@ func MigrateNetwork(c echo.Context) error {
 ////////////////////////
 
 type MigrateStorageRequest struct {
-	model.DummyStorage
+	cloudmodel.DummyStorage
 }
 
 type MigrateStorageResponse struct {
-	model.DummyStorage
+	cloudmodel.DummyStorage
 }
 
 // MigrateStorage godoc
@@ -240,11 +240,11 @@ func MigrateStorage(c echo.Context) error {
 ////////////////////////
 
 type MigrateInstanceRequest struct {
-	model.DummyInstance
+	cloudmodel.DummyInstance
 }
 
 type MigrateInstanceResponse struct {
-	model.DummyInstance
+	cloudmodel.DummyInstance
 }
 
 // MigrateInstance godoc

@@ -1026,6 +1026,409 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "cloudmodel.RegionInfo": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.SpiderVMInfo": {
+            "type": "object",
+            "properties": {
+                "cspid": {
+                    "description": "VM ID given by CSP (required for registering VM)",
+                    "type": "string"
+                },
+                "dataDiskIIDs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.IID"
+                    }
+                },
+                "dataDiskNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "iid": {
+                    "description": "Fields for response",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.IID"
+                        }
+                    ]
+                },
+                "imageIId": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "imageName": {
+                    "type": "string"
+                },
+                "imageType": {
+                    "type": "string"
+                },
+                "keyPairIId": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "keyPairName": {
+                    "type": "string"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Fields for request",
+                    "type": "string"
+                },
+                "networkInterface": {
+                    "description": "ex) eth0",
+                    "type": "string"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RegionInfo"
+                        }
+                    ]
+                },
+                "rootDeviceName": {
+                    "description": "\"/dev/sda1\", ...",
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", \"50\", \"1000\" (GB)",
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "description": "\"SSD(gp2)\", \"Premium SSD\", ...",
+                    "type": "string"
+                },
+                "securityGroupIIds": {
+                    "description": "AWS, ex) sg-0b7452563e1121bb6",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.IID"
+                    }
+                },
+                "securityGroupNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sshaccessPoint": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "subnetIID": {
+                    "description": "AWS, ex) subnet-8c4a53e4",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.IID"
+                        }
+                    ]
+                },
+                "subnetName": {
+                    "type": "string"
+                },
+                "vmspecName": {
+                    "description": "Fields for both request and response",
+                    "type": "string"
+                },
+                "vmuserId": {
+                    "description": "ex) user1",
+                    "type": "string"
+                },
+                "vmuserPasswd": {
+                    "type": "string"
+                },
+                "vpcIID": {
+                    "$ref": "#/definitions/common.IID"
+                },
+                "vpcname": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.StatusCountInfo": {
+            "type": "object",
+            "properties": {
+                "countCreating": {
+                    "description": "CountCreating is for counting Creating",
+                    "type": "integer"
+                },
+                "countFailed": {
+                    "description": "CountFailed is for counting Failed",
+                    "type": "integer"
+                },
+                "countRebooting": {
+                    "description": "CountRebooting is for counting Rebooting",
+                    "type": "integer"
+                },
+                "countResuming": {
+                    "description": "CountResuming is for counting Resuming",
+                    "type": "integer"
+                },
+                "countRunning": {
+                    "description": "CountRunning is for counting Running",
+                    "type": "integer"
+                },
+                "countSuspended": {
+                    "description": "CountSuspended is for counting Suspended",
+                    "type": "integer"
+                },
+                "countSuspending": {
+                    "description": "CountSuspending is for counting Suspending",
+                    "type": "integer"
+                },
+                "countTerminated": {
+                    "description": "CountTerminated is for counting Terminated",
+                    "type": "integer"
+                },
+                "countTerminating": {
+                    "description": "CountTerminating is for counting Terminating",
+                    "type": "integer"
+                },
+                "countTotal": {
+                    "description": "CountTotal is for Total VMs",
+                    "type": "integer"
+                },
+                "countUndefined": {
+                    "description": "CountUndefined is for counting Undefined",
+                    "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.Subnet": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ipv4CidrBlock": {
+                    "type": "string"
+                },
+                "ipv6CidrBlock": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentNetworkId": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbVmDynamicReq": {
+            "type": "object",
+            "required": [
+                "commonImage",
+                "commonSpec"
+            ],
+            "properties": {
+                "commonImage": {
+                    "description": "CommonImage is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ubuntu18.04"
+                },
+                "commonSpec": {
+                    "description": "CommonSpec is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws-ap-northeast-2-t2-small"
+                },
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "DynamicVM"
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbVmInfo": {
+            "type": "object",
+            "properties": {
+                "connectionConfig": {
+                    "$ref": "#/definitions/common.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "Created time",
+                    "type": "string",
+                    "example": "2022-11-10 23:00:00"
+                },
+                "cspViewVmDetail": {
+                    "$ref": "#/definitions/cloudmodel.SpiderVMInfo"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "idByCSP": {
+                    "description": "CSP managed ID or Name",
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/common.GeoLocation"
+                },
+                "monAgentStatus": {
+                    "description": "Montoring agent status",
+                    "type": "string",
+                    "example": "[installed, notInstalled, failed]"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "networkAgentStatus": {
+                    "description": "NetworkAgent status",
+                    "type": "string",
+                    "example": "[notInstalled, installing, installed, failed]"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RegionInfo"
+                        }
+                    ]
+                },
+                "rootDeviceName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "sshPort": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Required by CB-Tumblebug",
+                    "type": "string"
+                },
+                "subGroupId": {
+                    "description": "defined if the VM is in a group",
+                    "type": "string"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserAccount": {
+                    "type": "string"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
         "common.ConfigInfo": {
             "type": "object",
             "properties": {
@@ -1277,7 +1680,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
                     }
                 }
             }
@@ -1333,7 +1736,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "statusCount": {
-                    "$ref": "#/definitions/model.StatusCountInfo"
+                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1354,7 +1757,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVmInfo"
+                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
                     }
                 }
             }
@@ -1417,7 +1820,7 @@ const docTemplate = `{
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Subnet"
+                        "$ref": "#/definitions/cloudmodel.Subnet"
                     }
                 }
             }
@@ -1440,7 +1843,7 @@ const docTemplate = `{
                 "subnets": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Subnet"
+                        "$ref": "#/definitions/cloudmodel.Subnet"
                     }
                 }
             }
@@ -1559,7 +1962,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
                     }
                 }
             }
@@ -1766,409 +2169,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.RegionInfo": {
-            "type": "object",
-            "properties": {
-                "region": {
-                    "type": "string"
-                },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.SpiderVMInfo": {
-            "type": "object",
-            "properties": {
-                "cspid": {
-                    "description": "VM ID given by CSP (required for registering VM)",
-                    "type": "string"
-                },
-                "dataDiskIIDs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.IID"
-                    }
-                },
-                "dataDiskNames": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "iid": {
-                    "description": "Fields for response",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/common.IID"
-                        }
-                    ]
-                },
-                "imageIId": {
-                    "$ref": "#/definitions/common.IID"
-                },
-                "imageName": {
-                    "type": "string"
-                },
-                "imageType": {
-                    "type": "string"
-                },
-                "keyPairIId": {
-                    "$ref": "#/definitions/common.IID"
-                },
-                "keyPairName": {
-                    "type": "string"
-                },
-                "keyValueList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.KeyValue"
-                    }
-                },
-                "name": {
-                    "description": "Fields for request",
-                    "type": "string"
-                },
-                "networkInterface": {
-                    "description": "ex) eth0",
-                    "type": "string"
-                },
-                "privateDNS": {
-                    "type": "string"
-                },
-                "privateIP": {
-                    "type": "string"
-                },
-                "publicDNS": {
-                    "type": "string"
-                },
-                "publicIP": {
-                    "type": "string"
-                },
-                "region": {
-                    "description": "ex) {us-east1, us-east1-c} or {ap-northeast-2}",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.RegionInfo"
-                        }
-                    ]
-                },
-                "rootDeviceName": {
-                    "description": "\"/dev/sda1\", ...",
-                    "type": "string"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", \"50\", \"1000\" (GB)",
-                    "type": "string"
-                },
-                "rootDiskType": {
-                    "description": "\"SSD(gp2)\", \"Premium SSD\", ...",
-                    "type": "string"
-                },
-                "securityGroupIIds": {
-                    "description": "AWS, ex) sg-0b7452563e1121bb6",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.IID"
-                    }
-                },
-                "securityGroupNames": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "sshaccessPoint": {
-                    "type": "string"
-                },
-                "startTime": {
-                    "type": "string"
-                },
-                "subnetIID": {
-                    "description": "AWS, ex) subnet-8c4a53e4",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/common.IID"
-                        }
-                    ]
-                },
-                "subnetName": {
-                    "type": "string"
-                },
-                "vmspecName": {
-                    "description": "Fields for both request and response",
-                    "type": "string"
-                },
-                "vmuserId": {
-                    "description": "ex) user1",
-                    "type": "string"
-                },
-                "vmuserPasswd": {
-                    "type": "string"
-                },
-                "vpcIID": {
-                    "$ref": "#/definitions/common.IID"
-                },
-                "vpcname": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.StatusCountInfo": {
-            "type": "object",
-            "properties": {
-                "countCreating": {
-                    "description": "CountCreating is for counting Creating",
-                    "type": "integer"
-                },
-                "countFailed": {
-                    "description": "CountFailed is for counting Failed",
-                    "type": "integer"
-                },
-                "countRebooting": {
-                    "description": "CountRebooting is for counting Rebooting",
-                    "type": "integer"
-                },
-                "countResuming": {
-                    "description": "CountResuming is for counting Resuming",
-                    "type": "integer"
-                },
-                "countRunning": {
-                    "description": "CountRunning is for counting Running",
-                    "type": "integer"
-                },
-                "countSuspended": {
-                    "description": "CountSuspended is for counting Suspended",
-                    "type": "integer"
-                },
-                "countSuspending": {
-                    "description": "CountSuspending is for counting Suspending",
-                    "type": "integer"
-                },
-                "countTerminated": {
-                    "description": "CountTerminated is for counting Terminated",
-                    "type": "integer"
-                },
-                "countTerminating": {
-                    "description": "CountTerminating is for counting Terminating",
-                    "type": "integer"
-                },
-                "countTotal": {
-                    "description": "CountTotal is for Total VMs",
-                    "type": "integer"
-                },
-                "countUndefined": {
-                    "description": "CountUndefined is for counting Undefined",
-                    "type": "integer"
-                }
-            }
-        },
-        "model.Subnet": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "ipv4CidrBlock": {
-                    "type": "string"
-                },
-                "ipv6CidrBlock": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parentNetworkId": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.TbVmDynamicReq": {
-            "type": "object",
-            "required": [
-                "commonImage",
-                "commonSpec"
-            ],
-            "properties": {
-                "commonImage": {
-                    "description": "CommonImage is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "ubuntu18.04"
-                },
-                "commonSpec": {
-                    "description": "CommonSpec is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "aws-ap-northeast-2-t2-small"
-                },
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Description"
-                },
-                "label": {
-                    "type": "string",
-                    "example": "DynamicVM"
-                },
-                "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1-1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "example": "default, TYPE1, ..."
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
-                },
-                "vmUserPassword": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.TbVmInfo": {
-            "type": "object",
-            "properties": {
-                "connectionConfig": {
-                    "$ref": "#/definitions/common.ConnConfig"
-                },
-                "connectionName": {
-                    "type": "string"
-                },
-                "createdTime": {
-                    "description": "Created time",
-                    "type": "string",
-                    "example": "2022-11-10 23:00:00"
-                },
-                "cspViewVmDetail": {
-                    "$ref": "#/definitions/model.SpiderVMInfo"
-                },
-                "dataDiskIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "idByCSP": {
-                    "description": "CSP managed ID or Name",
-                    "type": "string"
-                },
-                "imageId": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "location": {
-                    "$ref": "#/definitions/common.GeoLocation"
-                },
-                "monAgentStatus": {
-                    "description": "Montoring agent status",
-                    "type": "string",
-                    "example": "[installed, notInstalled, failed]"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "networkAgentStatus": {
-                    "description": "NetworkAgent status",
-                    "type": "string",
-                    "example": "[notInstalled, installing, installed, failed]"
-                },
-                "privateDNS": {
-                    "type": "string"
-                },
-                "privateIP": {
-                    "type": "string"
-                },
-                "publicDNS": {
-                    "type": "string"
-                },
-                "publicIP": {
-                    "type": "string"
-                },
-                "region": {
-                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.RegionInfo"
-                        }
-                    ]
-                },
-                "rootDeviceName": {
-                    "type": "string"
-                },
-                "rootDiskSize": {
-                    "type": "string"
-                },
-                "rootDiskType": {
-                    "type": "string"
-                },
-                "securityGroupIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "specId": {
-                    "type": "string"
-                },
-                "sshKeyId": {
-                    "type": "string"
-                },
-                "sshPort": {
-                    "type": "string"
-                },
-                "status": {
-                    "description": "Required by CB-Tumblebug",
-                    "type": "string"
-                },
-                "subGroupId": {
-                    "description": "defined if the VM is in a group",
-                    "type": "string"
-                },
-                "subnetId": {
-                    "type": "string"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "vNetId": {
-                    "type": "string"
-                },
-                "vmUserAccount": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
                     "type": "string"
                 }
             }

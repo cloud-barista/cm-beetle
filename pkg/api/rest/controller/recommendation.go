@@ -17,8 +17,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/source/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -41,7 +41,7 @@ type RecommendInfraRequest struct {
 }
 
 type RecommendInfraResponse struct {
-	model.TbMcisDynamicReq
+	cloudmodel.TbMcisDynamicReq
 }
 
 // RecommendInfra godoc

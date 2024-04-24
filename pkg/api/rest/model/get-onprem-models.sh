@@ -4,7 +4,7 @@
 REPO_URL="https://github.com/cloud-barista/cm-honeybee.git"
 BRANCH="main"
 MODEL_DIR="model"
-TARGET_DIR="./source"
+TARGET_DIR="./onprem"
 README_FILE="./README.md"
 
 # Check if the cm-honeybee directory exists, and delete it if it does
@@ -28,12 +28,12 @@ cd ..
 
 # Write synchronization details to README file
 {
-    echo "## Source Model Synchronization Details"
+    echo "## Model synchronization for on-premise"
     echo ""
     echo "### Synchronization Date"
     echo "- Date: $(date)"
     echo ""
-    echo "### Source Repository Details"
+    echo "### Repository Details"
     echo "- Repository: [cloud-barista/cm-honeybee]($REPO_URL)"
     echo "- Branch: $BRANCH"
     echo "- Latest Commit Hash: $LATEST_COMMIT_HASH"
@@ -41,7 +41,8 @@ cd ..
     echo "### Usage Instructions"
     echo "- Update the models with the command below:"
     echo "  \`\`\`"
-    echo "  make source-model"
+    echo "  "
+    echo "  make onprem-model"
     echo "  \`\`\`"
     echo "- This command synchronizes the models to the latest versions."
     echo "- Do not edit these files directly as they are managed automatically."

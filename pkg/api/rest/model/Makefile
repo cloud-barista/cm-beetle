@@ -1,3 +1,3 @@
-source-model:
-	@echo "Get source models"
-	./get-source-models.sh
+onprem-model:
+	@echo "Get models for on-premise"
+	./get-onprem-models.sh
