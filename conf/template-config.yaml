@@ -20,7 +20,7 @@ cbtumblebug:
 
 ## Logger configuration
 logfile:
-  # Set log file path (default logfile path: ./cm-beetle.log) 
+  # Set log file path (default logfile path: ./cm-beetle.log)
   path: ./cm-beetle.log
   maxsize: 10
   maxbackups: 3
@@ -49,11 +49,11 @@ api:
   # Set API_ALLOW_ORIGINS (ex: https://cloud-barista.org,http://localhost:8080 or * for all)
   allow:
     origins: "*"
-  
+
   # Set API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
   auth:
     enabled: true
-  
+
   username: default
   password: default
 
@@ -66,7 +66,7 @@ self:
   endpoint: localhost:8056
 
 ## Environment variables that you don't need to touch
-# Swagger UI API document file path 
+# Swagger UI API document file path
 apidoc:
-  # export APIDOC_PATH=$CMBEETLE_ROOT/src/api/rest/docs/swagger.json
+  # export APIDOC_PATH=$CMBEETLE_ROOT/api/swagger.json
   path: # To be set in runtime (based on cmbeetle.root)

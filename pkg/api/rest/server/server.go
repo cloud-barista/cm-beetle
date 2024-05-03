@@ -37,7 +37,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	// echo-swagger middleware
-	_ "github.com/cloud-barista/cm-beetle/pkg/api/rest/docs"
+	_ "github.com/cloud-barista/cm-beetle/api"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
 	// Black import (_) is for running a package's init() function without using its other contents.
