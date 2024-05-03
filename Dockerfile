@@ -37,6 +37,7 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scr
 # COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
 
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle /app/
+COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 
 ## Set system endpoints
 ENV CMBEETLE_ROOT /app
@@ -82,7 +83,7 @@ ENV SELF_ENDPOINT localhost:8056
 
 ## Environment variables that you don't need to touch
 # Swagger UI API document file path 
-ENV APIDOC_PATH /app/pkg/api/rest/docs/swagger.json
+ENV APIDOC_PATH /app/api/swagger.json
 
 ENTRYPOINT [ "/app/cm-beetle" ]
 
