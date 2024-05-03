@@ -937,29 +937,6 @@ paths:
       summary: Get config
       tags:
       - '[Admin] System environment'
-  /health:
-    get:
-      consumes:
-      - application/json
-      description: Check Beetle is alive
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/common.SimpleMsg'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/common.SimpleMsg'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/common.SimpleMsg'
-      summary: Check Beetle is alive
-      tags:
-      - '[Admin] System management'
   /httpVersion:
     get:
       consumes:
@@ -1283,6 +1260,25 @@ paths:
       summary: Update namespace
       tags:
       - '[Namespace] Namespace management'
+  /readyz:
+    get:
+      consumes:
+      - application/json
+      description: Check Beetle is ready
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Check Beetle is ready
+      tags:
+      - '[Admin] System management'
   /recommendation/infra:
     post:
       consumes:

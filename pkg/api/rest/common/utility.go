@@ -64,22 +64,24 @@ func Validate(c echo.Context, params []string) error {
 	return nil
 }
 
-// RestGetHealth func is for checking Beetle server health.
-// RestGetHealth godoc
-// @Summary Check Beetle is alive
-// @Description Check Beetle is alive
+// RestGetReadyz func check if CM-Beetle server is ready or not.
+// RestGetReadyz godoc
+// @Summary Check Beetle is ready
+// @Description Check Beetle is ready
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} common.SimpleMsg
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
-// @Router /health [get]
-func RestGetHealth(c echo.Context) error {
-	okMessage := common.SimpleMsg{}
-	okMessage.Message = "CM-Beetle API server is running"
-
-	return c.JSON(http.StatusOK, &okMessage)
+// @Failure 503 {object} common.SimpleMsg
+// @Router /readyz [get]
+func RestGetReadyz(c echo.Context) error {
+	message := common.SimpleMsg{}
+	message.Message = "CM-Beetle is ready"
+	if !common.SystemReady {
+		message.Message = "CM-Beetle is NOT ready"
+		return c.JSON(http.StatusServiceUnavailable, &message)
+	}
+	return c.JSON(http.StatusOK, &message)
 }
 
 // RestCheckHTTPVersion godoc

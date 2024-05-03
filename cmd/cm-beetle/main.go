@@ -35,9 +35,13 @@ import (
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
 )
 
+func init() {
+	common.SystemReady = false
+}
+
 func main() {
 
-	log.Info().Msg("starting CM-Beetle server")
+	log.Info().Msg("CM-Beetle server is starting...")
 
 	// Set the default port number "8056" for the REST API server to listen on
 	port := flag.String("port", "8056", "port number for the restapiserver to listen to")
