@@ -32,7 +32,6 @@ jobs:
 
       - name: Update Swagger doc
         run: |
-          cd pkg/
           make swag
 
       # - name: Commit generated Swagger docs
@@ -43,7 +42,7 @@ jobs:
 
       - name: Force-Add Swagger doc files
         run: |
-          cd pkg/api/rest/docs/
+          cd api/
           git add -f -v docs.go swagger.json swagger.yaml
 
       - name: Create Pull Request
