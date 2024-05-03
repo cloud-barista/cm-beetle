@@ -24,6 +24,7 @@ import (
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/route"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/spf13/viper"
 
 	"crypto/subtle"
@@ -96,7 +97,7 @@ const (
 // @securityDefinitions.basic BasicAuth
 func RunServer(port string) {
 
-	log.Info().Msg("Setting CM-Beetle REST API server")
+	log.Info().Msg("CM-Beetle REST API server is starting...")
 
 	e := echo.New()
 
@@ -134,7 +135,7 @@ func RunServer(port string) {
 		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			// Skip authentication for some routes that do not require authentication
 			Skipper: func(c echo.Context) bool {
-				if c.Path() == "/beetle/health" ||
+				if c.Path() == "/beetle/readyz" ||
 					c.Path() == "/beetle/httpVersion" {
 					return true
 				}
@@ -159,10 +160,16 @@ func RunServer(port string) {
 	fmt.Println("\n \n ")
 
 	// Route for system management
-	e.GET("/beetle/swagger/*", echoSwagger.WrapHandler)
-
+	// e.GET("/beetle/swagger/*", echoSwagger.WrapHandler)
 	// e.GET("/beetle/swaggerActive", rest_common.RestGetSwagger)
-	e.GET("/beetle/health", rest_common.RestGetHealth)
+	swaggerRedirect := func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")
+	}
+	e.GET("/beetle/api", swaggerRedirect)
+	e.GET("/beetle/api/", swaggerRedirect)
+	e.GET("/beetle/api/*", echoSwagger.WrapHandler)
+
+	e.GET("/beetle/readyz", rest_common.RestGetReadyz)
 	e.GET("/beetle/httpVersion", rest_common.RestCheckHTTPVersion)
 
 	// Beetle API group which has /beetle as prefix
@@ -205,7 +212,7 @@ func RunServer(port string) {
 	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
 	selfEndpoint := viper.GetString("self.endpoint")
-	apidashboard := " http://" + selfEndpoint + "/beetle/swagger/index.html"
+	apidashboard := " http://" + selfEndpoint + "/beetle/api"
 
 	if enableAuth {
 		fmt.Println(" Access to API dashboard" + " (username: " + apiUser + " / password: " + apiPass + ")")
@@ -234,21 +241,24 @@ func RunServer(port string) {
 		// Block until a signal is triggered
 		<-gracefulShutdownContext.Done()
 
-		fmt.Println("\n[Stop] CM-Beetle REST API server")
-		log.Info().Msg("stopping CM-Beetle REST API server")
+		log.Info().Msg("Stopping CM-Beetle REST API server")
 		ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
 		defer cancel()
 
 		if err := e.Shutdown(ctx); err != nil {
+			log.Error().Err(err).Msg("Error when graceful shutting down CM-Beetle API server")
 			e.Logger.Panic(err)
 		}
 	}(&wg)
 
-	log.Info().Msg("starting CM-Beetle REST API server")
 	port = fmt.Sprintf(":%s", port)
+	common.SystemReady = true
 	if err := e.Start(port); err != nil && err != http.ErrServerClosed {
-		e.Logger.Panic("shuttig down the server")
+		log.Error().Err(err).Msg("Error when starting CM-Beetle API server")
+		e.Logger.Panic("Shuttig down the server: ", err)
 	}
+
+	log.Info().Msg("CM-Beetle REST API server is started.")
 
 	wg.Wait()
 }

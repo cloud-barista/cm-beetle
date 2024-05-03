@@ -31,6 +31,9 @@ type IdList struct {
 	IdList []string `json:"output"`
 }
 
+// SystemReady is global variable for checking SystemReady status
+var SystemReady bool
+
 // CB-Store
 var CBLog *logrus.Logger
 var CBStore icbs.Store
