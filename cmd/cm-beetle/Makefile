@@ -1,5 +1,5 @@
 default:
-	go build -o cm-beetle
+	go build -v -o cm-beetle
 cc:
 	GOOS=linux GOARCH=arm go build -o cm-beetle-arm
 run:

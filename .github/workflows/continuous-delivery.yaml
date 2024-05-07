@@ -18,17 +18,17 @@ on:
       # Only trigger on semver shaped tags.
       - "v*.*.*"
     paths-ignore:
-      - '.github/**'
-      - 'docs/**'
-      - 'scripts/**'
-      - '**.md'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'CODEOWNERS'
+      - ".github/**"
+      - "docs/**"
+      - "scripts/**"
+      - "**.md"
+      - ".gitignore"
+      - "LICENSE"
+      - "CODEOWNERS"
       # - '.all-contributorsrc'
       # - 'assets/**'
       # - 'src/testclient/scripts/**'
-    # workflow trigger button
+  # workflow trigger button
   # workflow_dispatch:
 
 env:
@@ -42,7 +42,7 @@ jobs:
     # Job name is "Publish a container image"
     name: Publish a container image
 
-    if: github.repository == 'cloud-barista/cm-beetle'
+    if: github.repository_owner == 'cloud-barista'
 
     # This job runs on Ubuntu-latest (Ubuntu 22.04 LTS checked on 2023-12-13)
     # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
