@@ -17,8 +17,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -28,13 +29,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Infrastructure struct {
-	Network        string
-	Disk           string
-	Compute        string
-	SecurityGroup  string
-	VirtualMachine string
-}
+// type Infrastructure struct {
+// 	Network        string
+// 	Disk           string
+// 	Compute        string
+// 	SecurityGroup  string
+// 	VirtualMachine string
+// }
 
 type RecommendInfraRequest struct {
 	infra.Infra

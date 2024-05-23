@@ -2120,6 +2120,35 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/infra.NVIDIA"
                     }
+                },
+                "memory": {
+                    "$ref": "#/definitions/infra.Memory"
+                },
+                "root_disk": {
+                    "$ref": "#/definitions/infra.Disk"
+                }
+            }
+        },
+        "infra.Connection": {
+            "type": "object",
+            "properties": {
+                "keypair": {
+                    "$ref": "#/definitions/infra.Keypair"
+                }
+            }
+        },
+        "infra.Disk": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "size": {
+                    "description": "GB",
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },

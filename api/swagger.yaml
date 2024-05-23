@@ -768,6 +768,25 @@ definitions:
         items:
           $ref: '#/definitions/infra.NVIDIA'
         type: array
+      memory:
+        $ref: '#/definitions/infra.Memory'
+      root_disk:
+        $ref: '#/definitions/infra.Disk'
+    type: object
+  infra.Connection:
+    properties:
+      keypair:
+        $ref: '#/definitions/infra.Keypair'
+    type: object
+  infra.Disk:
+    properties:
+      label:
+        type: string
+      size:
+        description: GB
+        type: integer
+      type:
+        type: string
     type: object
   infra.Kernel:
     properties:

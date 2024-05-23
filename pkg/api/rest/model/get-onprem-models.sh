@@ -3,7 +3,7 @@
 # Set the repository URL and the target directories
 REPO_URL="https://github.com/cloud-barista/cm-honeybee.git"
 BRANCH="main"
-MODEL_DIR="model"
+MODEL_DIR="agent/pkg/api/rest/model/onprem"
 TARGET_DIR="./onprem"
 README_FILE="./README.md"
 
