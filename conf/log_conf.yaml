@@ -8,11 +8,11 @@ cblog:
   loglevel: error # If loopcheck is true, You can set this online.
 
   ## true | false
-  logfile: true 
+  logfile: true
 
 ## Config for File Output ##
 logfileinfo:
-  filename: $BEETLE_ROOT/log/cblogs.log
+  filename: $CMBEETLE_ROOT/log/cblogs.log
   maxsize: 10 # megabytes
   maxbackups: 50
   maxage: 31 # days
