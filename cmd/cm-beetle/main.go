@@ -53,8 +53,9 @@ func main() {
 	}
 	log.Debug().Msgf("port number: %s", *port)
 
-	common.SpiderRestUrl = common.NVL(os.Getenv("SPIDER_REST_URL"), "http://localhost:1024/spider")
-	common.DragonflyRestUrl = common.NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
+	// common.SpiderRestUrl = common.NVL(os.Getenv("SPIDER_REST_URL"), "http://localhost:1024/spider")
+	// common.DragonflyRestUrl = common.NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
+	common.TumblebugRestUrl = common.NVL(os.Getenv("TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
 	common.DBUrl = common.NVL(os.Getenv("DB_URL"), "localhost:3306")
 	common.DBDatabase = common.NVL(os.Getenv("DB_DATABASE"), "cb_beetle")
 	common.DBUser = common.NVL(os.Getenv("DB_USER"), "cb_beetle")

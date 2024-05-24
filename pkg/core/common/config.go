@@ -136,12 +136,15 @@ func UpdateGlobalVariable(id string) error {
 	}
 
 	switch id {
-	case StrSpiderRestUrl:
-		SpiderRestUrl = configInfo.Value
-		fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
-	case StrDragonflyRestUrl:
-		DragonflyRestUrl = configInfo.Value
-		fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+	// case StrSpiderRestUrl:
+	// 	SpiderRestUrl = configInfo.Value
+	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
+	// case StrDragonflyRestUrl:
+	// 	DragonflyRestUrl = configInfo.Value
+	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+	case StrTumblebugRestUrl:
+		TumblebugRestUrl = configInfo.Value
+		fmt.Println("<TUMBELBUG_REST_URL> " + TumblebugRestUrl)
 	case StrDBUrl:
 		DBUrl = configInfo.Value
 		fmt.Println("<DB_URL> " + DBUrl)
@@ -167,12 +170,15 @@ func UpdateGlobalVariable(id string) error {
 func InitConfig(id string) error {
 
 	switch id {
-	case StrSpiderRestUrl:
-		SpiderRestUrl = NVL(os.Getenv("SPIDER_REST_URL"), "http://localhost:1024/spider")
-		fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
-	case StrDragonflyRestUrl:
-		DragonflyRestUrl = NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
-		fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+	// case StrSpiderRestUrl:
+	// 	SpiderRestUrl = NVL(os.Getenv("SPIDER_REST_URL"), "http://localhost:1024/spider")
+	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
+	// case StrDragonflyRestUrl:
+	// 	DragonflyRestUrl = NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
+	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+	case StrTumblebugRestUrl:
+		TumblebugRestUrl = NVL(os.Getenv("TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
+		fmt.Println("<TUMBLEBUG_REST_URL> " + TumblebugRestUrl)
 	case StrDBUrl:
 		DBUrl = NVL(os.Getenv("DB_URL"), "localhost:3306")
 		fmt.Println("<DB_URL> " + DBUrl)
