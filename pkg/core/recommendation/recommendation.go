@@ -77,7 +77,7 @@ func Recommend(source infra.Infra) (cloudmodel.TbMcisDynamicReq, error) {
 	url = fmt.Sprintf("%s/mcisRecommendVm", epTumblebug)
 
 	// Set the deployment plan
-	reqRecommVm := mcis.DeploymentPlan{}
+	reqRecommVm := new(mcis.DeploymentPlan)
 	resRecommVm := new(mcir.TbSpecInfo)
 
 	err = common.ExecuteHttpRequest(
@@ -85,8 +85,8 @@ func Recommend(source infra.Infra) (cloudmodel.TbMcisDynamicReq, error) {
 		method,
 		url,
 		nil,
-		common.SetUseBody(reqRecommVm),
-		&reqRecommVm,
+		common.SetUseBody(*reqRecommVm),
+		reqRecommVm,
 		resRecommVm,
 		common.VeryShortDuration,
 	)
