@@ -1915,6 +1915,15 @@ const docTemplate = `{
             "properties": {
                 "compute": {
                     "$ref": "#/definitions/infra.Compute"
+                },
+                "gpu": {
+                    "$ref": "#/definitions/infra.GPU"
+                },
+                "network": {
+                    "$ref": "#/definitions/network.Network"
+                },
+                "storage": {
+                    "$ref": "#/definitions/infra.Storage"
                 }
             }
         },
@@ -2004,12 +2013,12 @@ const docTemplate = `{
                     "description": "ea",
                     "type": "integer"
                 },
-                "model": {
-                    "type": "string"
-                },
-                "speed": {
+                "max_speed": {
                     "description": "MHz",
                     "type": "integer"
+                },
+                "model": {
+                    "type": "string"
                 },
                 "threads": {
                     "description": "ea",
@@ -2026,6 +2035,12 @@ const docTemplate = `{
                 "compute_resource": {
                     "$ref": "#/definitions/infra.ComputeResource"
                 },
+                "connection": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.Connection"
+                    }
+                },
                 "os": {
                     "$ref": "#/definitions/infra.System"
                 }
@@ -2037,13 +2052,73 @@ const docTemplate = `{
                 "cpu": {
                     "$ref": "#/definitions/infra.CPU"
                 },
+                "data_disk": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.Disk"
+                    }
+                },
                 "memory": {
                     "$ref": "#/definitions/infra.Memory"
                 },
-                "storage": {
+                "root_disk": {
+                    "$ref": "#/definitions/infra.Disk"
+                }
+            }
+        },
+        "infra.Connection": {
+            "type": "object",
+            "properties": {
+                "keypair": {
+                    "$ref": "#/definitions/infra.Keypair"
+                }
+            }
+        },
+        "infra.DRM": {
+            "type": "object",
+            "properties": {
+                "driver_date": {
+                    "type": "string"
+                },
+                "driver_description": {
+                    "type": "string"
+                },
+                "driver_name": {
+                    "type": "string"
+                },
+                "driver_version": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.Disk": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "size": {
+                    "description": "GB",
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.GPU": {
+            "type": "object",
+            "properties": {
+                "drm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/infra.Storage"
+                        "$ref": "#/definitions/infra.DRM"
+                    }
+                },
+                "nvidia": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.NVIDIA"
                     }
                 }
             }
@@ -2062,6 +2137,20 @@ const docTemplate = `{
                 }
             }
         },
+        "infra.Keypair": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "private_key": {
+                    "type": "string"
+                },
+                "public_key": {
+                    "type": "string"
+                }
+            }
+        },
         "infra.Memory": {
             "type": "object",
             "properties": {
@@ -2075,6 +2164,101 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "infra.MountPoint": {
+            "type": "object",
+            "properties": {
+                "mounted_information": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.MountedInformation"
+                    }
+                }
+            }
+        },
+        "infra.MountedInformation": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string"
+                },
+                "filesystem": {
+                    "type": "string"
+                },
+                "option": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.NVIDIA": {
+            "type": "object",
+            "properties": {
+                "device_attribute": {
+                    "$ref": "#/definitions/infra.NVIDIADeviceAttribute"
+                },
+                "performance": {
+                    "$ref": "#/definitions/infra.NVIDIAPerformance"
+                }
+            }
+        },
+        "infra.NVIDIADeviceAttribute": {
+            "type": "object",
+            "properties": {
+                "cuda_version": {
+                    "type": "string"
+                },
+                "driver_version": {
+                    "type": "string"
+                },
+                "gpu_uuid": {
+                    "type": "string"
+                },
+                "product_architecture": {
+                    "type": "string"
+                },
+                "product_brand": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "infra.NVIDIAPerformance": {
+            "type": "object",
+            "properties": {
+                "bar1_memory_total": {
+                    "description": "mb",
+                    "type": "integer"
+                },
+                "bar1_memory_usage": {
+                    "description": "percent",
+                    "type": "integer"
+                },
+                "bar1_memory_used": {
+                    "description": "mb",
+                    "type": "integer"
+                },
+                "fb_memory_total": {
+                    "description": "mb",
+                    "type": "integer"
+                },
+                "fb_memory_usage": {
+                    "description": "percent",
+                    "type": "integer"
+                },
+                "fb_memory_used": {
+                    "description": "mb",
+                    "type": "integer"
+                },
+                "gpu_usage": {
+                    "description": "percent",
+                    "type": "integer"
                 }
             }
         },
@@ -2118,24 +2302,8 @@ const docTemplate = `{
         "infra.Storage": {
             "type": "object",
             "properties": {
-                "driver": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "serial": {
-                    "type": "string"
-                },
-                "size": {
-                    "description": "GB",
-                    "type": "integer"
-                },
-                "vendor": {
-                    "type": "string"
+                "mount_point": {
+                    "$ref": "#/definitions/infra.MountPoint"
                 }
             }
         },
@@ -2164,6 +2332,246 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "network.CSP": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "nlb": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.NLB"
+                    }
+                },
+                "security_group": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.SecurityGroup"
+                    }
+                },
+                "vpc": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.VPC"
+                    }
+                }
+            }
+        },
+        "network.DNS": {
+            "type": "object",
+            "properties": {
+                "dns_server": {
+                    "description": "IPv4 or IPv6 DNS Server Addresses",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "network.FirewallRule": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "allow, deny",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "inbound, outbound",
+                    "type": "string"
+                },
+                "dst": {
+                    "type": "string"
+                },
+                "dst_ports": {
+                    "type": "string"
+                },
+                "priority": {
+                    "description": "Lower has higher priority",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "TCP, UDP, ICMP",
+                    "type": "string"
+                },
+                "src": {
+                    "type": "string"
+                },
+                "src_ports": {
+                    "type": "string"
+                }
+            }
+        },
+        "network.Host": {
+            "type": "object",
+            "properties": {
+                "dns": {
+                    "$ref": "#/definitions/network.DNS"
+                },
+                "firewall_rule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.FirewallRule"
+                    }
+                },
+                "network_interface": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.NIC"
+                    }
+                },
+                "route": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.Route"
+                    }
+                }
+            }
+        },
+        "network.NIC": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "gateway": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "interface": {
+                    "type": "string"
+                },
+                "mac_address": {
+                    "type": "string"
+                },
+                "mtu": {
+                    "type": "integer"
+                }
+            }
+        },
+        "network.NLB": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "health_checker": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "listener": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "target_group": {
+                    "type": "string"
+                }
+            }
+        },
+        "network.Network": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "$ref": "#/definitions/network.CSP"
+                },
+                "host": {
+                    "$ref": "#/definitions/network.Host"
+                }
+            }
+        },
+        "network.Route": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string"
+                },
+                "netmask": {
+                    "type": "string"
+                },
+                "next_hop": {
+                    "type": "string"
+                }
+            }
+        },
+        "network.SecurityGroup": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "firewall_rule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.FirewallRule"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vnet_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "network.Subnet": {
+            "type": "object",
+            "properties": {
+                "ipv4_cidr": {
+                    "description": "IPv4 Network Address with CIDR Prefix Length",
+                    "type": "string"
+                },
+                "ipv6_cidr": {
+                    "description": "IPv6 Network Address with CIDR Prefix Length",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "network.VPC": {
+            "type": "object",
+            "properties": {
+                "address_space": {
+                    "description": "IPv4 CIDR or IPv6 CIDR",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dns_server": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.DNS"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "subnet": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/network.Subnet"
+                    }
                 }
             }
         }
