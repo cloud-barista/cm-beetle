@@ -1,8 +1,16 @@
 package recommendation
 
 import (
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"fmt"
+	"os"
+
+	"github.com/cloud-barista/cb-tumblebug/src/core/mcir"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/zerolog/log"
 )
 
 func Recommend(source infra.Infra) (cloudmodel.TbMcisDynamicReq, error) {
@@ -28,6 +36,66 @@ func Recommend(source infra.Infra) (cloudmodel.TbMcisDynamicReq, error) {
 	// 		}
 	// 	]
 	// }
+
+	// Extract server info from source computing infra info
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := os.Getenv("API_USERNAME")
+	apiPass := os.Getenv("API_PASSWORD")
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set endpoint
+	epTumblebug := common.TumblebugRestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/readyz", epTumblebug)
+	reqReadyz := common.NoBody
+	resReadyz := new(common.SimpleMsg)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(reqReadyz),
+		&reqReadyz,
+		resReadyz,
+		common.VeryShortDuration,
+	)
+
+	if err != nil {
+		log.Err(err).Msg("")
+		return cloudmodel.TbMcisDynamicReq{}, err
+	}
+	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
+
+	// Recommand VMs
+
+	method = "POST"
+	url = fmt.Sprintf("%s/mcisRecommendVm", epTumblebug)
+
+	// Set the deployment plan
+	reqRecommVm := mcis.DeploymentPlan{}
+	resRecommVm := new(mcir.TbSpecInfo)
+
+	err = common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(reqRecommVm),
+		&reqRecommVm,
+		resRecommVm,
+		common.VeryShortDuration,
+	)
+
+	if err != nil {
+		log.Err(err).Msg("")
+		return cloudmodel.TbMcisDynamicReq{}, err
+	}
+	log.Debug().Msgf("resRearesRecommVmdyz: %+v", resRecommVm)
 
 	// Instance with deafult values
 	targetVM := cloudmodel.TbVmDynamicReq{
