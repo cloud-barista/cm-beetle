@@ -2,9 +2,9 @@ package infra
 
 type OS struct {
 	Name         string `json:"name"`
-	Vendor       string `json:"vendor"`
+	Vendor       string `json:"vendor" validate:"required"`
 	Version      string `json:"version"`
-	Release      string `json:"release"`
+	Release      string `json:"release" validate:"required"`
 	Architecture string `json:"architecture"`
 }
 
@@ -22,7 +22,7 @@ type Node struct {
 }
 
 type System struct {
-	OS     OS     `json:"os"`
+	OS     OS     `json:"os" validate:"required"`
 	Kernel Kernel `json:"kernel"`
 	Node   Node   `json:"node"`
 }
@@ -30,17 +30,17 @@ type System struct {
 type CPU struct {
 	Vendor   string `json:"vendor"`
 	Model    string `json:"model"`
-	MaxSpeed uint   `json:"max_speed"` // MHz
-	Cache    uint   `json:"cache"`     // KB
-	Cpus     uint   `json:"cpus"`      // ea
-	Cores    uint   `json:"cores"`     // ea
-	Threads  uint   `json:"threads"`   // ea
+	MaxSpeed uint   `json:"max_speed"`                   // MHz
+	Cache    uint   `json:"cache"`                       // KB
+	Cpus     uint   `json:"cpus" validate:"required"`    // ea
+	Cores    uint   `json:"cores" validate:"required"`   // ea
+	Threads  uint   `json:"threads" validate:"required"` // ea
 }
 
 type Memory struct {
 	Type  string `json:"type"`
-	Speed uint   `json:"speed"` // MHz
-	Size  uint   `json:"size"`  // MB
+	Speed uint   `json:"speed"`                    // MHz
+	Size  uint   `json:"size" validate:"required"` // MB
 }
 
 type Disk struct {
@@ -50,8 +50,8 @@ type Disk struct {
 }
 
 type ComputeResource struct {
-	CPU      CPU    `json:"cpu"`
-	Memory   Memory `json:"memory"`
+	CPU      CPU    `json:"cpu" validate:"required"`
+	Memory   Memory `json:"memory" validate:"required"`
 	RootDisk Disk   `json:"root_disk"`
 	DataDisk []Disk `json:"data_disk"`
 }
@@ -69,7 +69,7 @@ type Connection struct {
 }
 
 type Compute struct {
-	OS              System          `json:"os"`
-	ComputeResource ComputeResource `json:"compute_resource"`
+	OS              System          `json:"os" validate:"required"`
+	ComputeResource ComputeResource `json:"compute_resource" validate:"required"`
 	Connection      []Connection    `json:"connection"`
 }

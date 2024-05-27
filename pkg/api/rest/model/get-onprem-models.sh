@@ -18,8 +18,11 @@ git clone -b $BRANCH --single-branch $REPO_URL
 # Remove previous target directory
 rm -rf $TARGET_DIR
 
+# Create the target directory if it doesn't exist
+mkdir -p $TARGET_DIR
+
 # Copy the model directory contents to the target directory
-cp -r cm-honeybee/agent/pkg/api/rest/$MODEL_DIR/* $TARGET_DIR/
+cp -r cm-honeybee/$MODEL_DIR/* $TARGET_DIR/
 
 # Get the latest commit hash
 cd cm-honeybee
