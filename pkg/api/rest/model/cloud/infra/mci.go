@@ -29,35 +29,33 @@ import (
 // 	VirtualMachine string
 // }
 
-// TbMcisDynamicReq is sturct for requirements to create MCIS dynamically (with default resource option)
-type TbMcisDynamicReq struct {
-	Name string `json:"name" validate:"required" example:"mcis01"`
-
+// InfraMigrationReq is sturct for requirements to create MCIS dynamically (with default resource option)
+type InfraMigrationReq struct {
+	Description string `json:"description" example:"the infrastructure created for migration"`
+	Name        string `json:"name" validate:"required" example:"mig01"`
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
 	InstallMonAgent string `json:"installMonAgent" example:"no" default:"yes" enums:"yes,no"` // yes or no
 
 	// Label is for describing the mcis in a keyword (any string can be used)
-	Label string `json:"label" example:"DynamicVM" default:""`
+	Label string `json:"label" example:"rehosting infra" default:""`
 
 	// SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
 
-	Description string `json:"description" example:"Made in CB-TB"`
-
-	Vm []TbVmDynamicReq `json:"vm" validate:"required"`
+	Vm []HostMigrationReq `json:"vm" validate:"required"`
 }
 
-// TbVmDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
-type TbVmDynamicReq struct {
+// HostMigrationReq is struct to get requirements to create a new server instance dynamically (with default resource option)
+type HostMigrationReq struct {
 	// VM name or subGroup name if is (not empty) && (> 0). If it is a group, actual VM name will be generated with -N postfix.
 	Name string `json:"name" example:"g1-1"`
 
 	// if subGroupSize is (not empty) && (> 0), subGroup will be gernetad. VMs will be created accordingly.
 	SubGroupSize string `json:"subGroupSize" example:"3" default:""`
 
-	Label string `json:"label" example:"DynamicVM"`
+	Label string `json:"label" example:"rehosted virtual machine"`
 
-	Description string `json:"description" example:"Description"`
+	Description string `json:"description" example:"description"`
 
 	// CommonSpec is field for id of a spec in common namespace
 	CommonSpec string `json:"commonSpec" validate:"required" example:"aws-ap-northeast-2-t2-small"`

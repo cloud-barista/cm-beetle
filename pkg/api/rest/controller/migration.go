@@ -17,11 +17,11 @@ package controller
 import (
 	"fmt"
 	"net/http"
-	"time"
 
+	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/go-resty/resty/v2"
+	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 
 	// Black import (_) is for running a package's init() function without using its other contents.
@@ -33,7 +33,7 @@ type MigrateInfraRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
 	// mcis.TbMcisDynamicReq
 
-	cloudmodel.TbMcisDynamicReq
+	cloudmodel.InfraMigrationReq
 }
 
 type MigrateInfraResponse struct {
@@ -42,255 +42,359 @@ type MigrateInfraResponse struct {
 
 // MigrateInfra godoc
 // @Summary Migrate an infrastructure on a cloud platform
-// @Description It migrates an infrastructure on a cloud platform. Infrastructure includes network, storage, compute, and so on.
+// @Description It migrates an infrastructure on a cloud platform.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
+// @Param nsId path string true "Namespace ID"
 // @Param InfrastructureInfo body MigrateInfraRequest true "Specify network, disk, compute, security group, virtual machine, etc."
 // @Success 200 {object} MigrateInfraResponse "Successfully migrated infrastructure on a cloud platform"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Failure 404 {object} model.Response
+// @Failure 500 {object} model.Response
 // @Router /migration/infra [post]
 func MigrateInfra(c echo.Context) error {
 
 	// [Note] Input section
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		err := fmt.Errorf("invalid request, namespace ID (nsId: %s) is required", nsId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
 	req := &MigrateInfraRequest{}
 	if err := c.Bind(req); err != nil {
 		return err
 	}
 
 	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.TbMcisDynamicReq: %v\n", req.TbMcisDynamicReq)
+	log.Trace().Msgf("req.TbMcisDynamicReq: %v\n", req.InfraMigrationReq)
 
-	// [Note] Process section
-	// Call CB-Tumblebug API, which can be "/mcisDynamic"
-	// Default nsId is "ns01"
-	nsId := "ns01"
-	result, err := createVMInfra(nsId, &req.TbMcisDynamicReq)
+	nsInfo, err := common.GetNamespace(nsId)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get the namespace")
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
 
-	log.Trace().Msgf("result: %v\n", result)
+	if nsInfo.Id == "" {
+		err := fmt.Errorf("not found the namespace (nsId: %s), create a namespace first", nsId)
+		log.Error().Err(err).Msg("")
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// Create the VM infrastructure for migration
+	infraInfo, err := migration.CreateVMInfra(nsId, &req.InfraMigrationReq)
+
+	log.Trace().Msgf("infraInfo: %v\n", infraInfo)
 
 	// [Note] Ouput section
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create VM infrastructure")
-		mapA := map[string]string{"message": err.Error()}
-		return c.JSON(http.StatusInternalServerError, &mapA)
+		log.Error().Err(err).Msg("failed to create VM infrastructure")
+
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	res := result
-
+	res := infraInfo
 	return c.JSON(http.StatusOK, res)
 
 }
 
-func createVMInfra(nsId string, infraModel *cloudmodel.TbMcisDynamicReq) (cloudmodel.TbMcisInfo, error) {
-
-	client := resty.New()
-	client.SetBasicAuth("default", "default")
-	method := "POST"
-
-	// CB-Tumblebug API endpoint
-	cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
-	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mcisDynamic", nsId)
-	// url := fmt.Sprintf("%s/ns/{nsId}/mcisDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
-
-	// Set request body
-	requestBody := *infraModel
-
-	// Set response body
-	responseBody := cloudmodel.TbMcisInfo{}
-
-	client.SetTimeout(5 * time.Minute)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(requestBody),
-		&requestBody,
-		&responseBody,
-		common.MediumDuration,
-	)
-
-	if err != nil {
-		// common.CBLog.Error(err)
-		return cloudmodel.TbMcisInfo{}, err
-	}
-
-	return responseBody, nil
-}
-
-////////////////////////
-
-type MigrateNetworkRequest struct {
-	cloudmodel.DummyNetwork
-}
-
-type MigrateNetworkResponse struct {
-	cloudmodel.DummyNetwork
-}
-
-// MigrateNetwork godoc
-// @Summary (Skeleton) Migrate network on a cloud platform
-// @Description It migrates network on a cloud platform. Network includes name, ID, IPv4 CIDR block, IPv6 CIDR block, and so on.
+// GetInfra godoc
+// @Summary Get the migrated infrastructure on a cloud platform
+// @Description It gets the migrated infrastructure on a cloud platform.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param NetworkInfo body MigrateNetworkRequest true "Specify name, IPv4 CIDR block, etc."
-// @Success 200 {object} MigrateNetworkResponse "Successfully migrated network on a cloud platform"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
-// @Router /migration/infra/network [post]
-func MigrateNetwork(c echo.Context) error {
+// @Param nsId path string true "a namespace ID"
+// @Param infraId path string true "a infrastructure ID created for migration"
+// @Success 200 {object} MigrateInfraResponse "Successfully got the migrated infrastructure on a cloud platform"
+// @Failure 404 {object} model.Response
+// @Failure 500 {object} model.Response
+// @Router /migration/infra/{infraId} [get]
+func GetInfra(c echo.Context) error {
 
 	// [Note] Input section
-	req := &MigrateNetworkRequest{}
-	if err := c.Bind(req); err != nil {
-		return err
+	nsId := c.Param("vsId")
+	if nsId == "" {
+		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.DummyNetwork: %v\n", req.DummyNetwork)
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		err := fmt.Errorf("invalid request, the infrastructure ID (infraId: %s) is required", infraId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
 
 	// [Note] Process section
-	// Something to process here like,
-	// Perform some functions,
-	// Calls external APIs and so on
-
-	res := &MigrateNetworkResponse{}
-	log.Trace().Msgf("res: %v\n", res)
-	log.Trace().Msgf("res.DummyNetwork: %v\n", res.DummyNetwork)
-
-	// This is an intentionally created variable.
-	// You will have to delete this later.
-	var err error = nil
-
-	// [Note] Ouput section
+	vmInfraInfo, err := migration.GetVMInfra(nsId, infraId)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to migrate network on a cloud platform")
-		mapA := map[string]string{"message": err.Error()}
-		return c.JSON(http.StatusInternalServerError, &mapA)
+		log.Error().Err(err).Msg("failed to get the migrated infrastructure")
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	return c.JSON(http.StatusOK, res)
-
+	// [Note] Ouput section
+	return c.JSON(http.StatusOK, vmInfraInfo)
 }
 
-////////////////////////
-
-////////////////////////
-
-type MigrateStorageRequest struct {
-	cloudmodel.DummyStorage
-}
-
-type MigrateStorageResponse struct {
-	cloudmodel.DummyStorage
-}
-
-// MigrateStorage godoc
-// @Summary (Skeleton) Migrate storage on a cloud platform
-// @Description It migrates storage on a cloud platform. Storage includes name, ID, type, size, and so on.
+// DeleteInfra godoc
+// @Summary Delete the migrated infrastructure on a cloud platform
+// @Description It deletes the migrated infrastructure on a cloud platform.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param StorageInfo body MigrateStorageRequest true "Specify name, type, size, affiliated Network ID, and so on."
-// @Success 200 {object} MigrateStorageResponse "Successfully migrated storage on a cloud platform"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
-// @Router /migration/infra/storage [post]
-func MigrateStorage(c echo.Context) error {
+// @Param nsId path string true "a namespace ID"
+// @Param infraId path string true "a infrastructure ID created for migration"
+// @Success 200 {object} model.Response "Successfully deleted the migrated infrastructure on a cloud platform"
+// @Failure 404 {object} model.Response
+// @Failure 500 {object} model.Response
+// @Router /migration/infra/{infraId} [delete]
+func DeleteInfra(c echo.Context) error {
 
 	// [Note] Input section
-	req := &MigrateStorageRequest{}
-	if err := c.Bind(req); err != nil {
-		return err
+	nsId := c.Param("vsId")
+	if nsId == "" {
+		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.DummyStorage: %v\n", req.DummyStorage)
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		err := fmt.Errorf("invalid request, the infrastructure ID (infraId: %s) is required", infraId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
 
 	// [Note] Process section
-	// Something to process here like,
-	// Perform some functions,
-	// Calls external APIs and so on
+	retMsg, err := migration.DeleteVMInfra(nsId, infraId)
 
-	res := &MigrateStorageResponse{}
-	log.Trace().Msgf("res: %v\n", res)
-	log.Trace().Msgf("res.DummyStorage: %v\n", res.DummyStorage)
-
-	// This is an intentionally created variable.
-	// You will have to delete this later.
-	var err error = nil
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete the migrated infrastructure")
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, res)
+	}
 
 	// [Note] Ouput section
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to migrate storage on a cloud platform")
-		mapA := map[string]string{"message": err.Error()}
-		return c.JSON(http.StatusInternalServerError, &mapA)
+	res := model.Response{
+		Success: true,
+		Text:    retMsg.Message,
 	}
 
 	return c.JSON(http.StatusOK, res)
-
 }
 
 ////////////////////////
 
-////////////////////////
+// type MigrateNetworkRequest struct {
+// 	cloudmodel.DummyNetwork
+// }
 
-type MigrateInstanceRequest struct {
-	cloudmodel.DummyInstance
-}
+// type MigrateNetworkResponse struct {
+// 	cloudmodel.DummyNetwork
+// }
 
-type MigrateInstanceResponse struct {
-	cloudmodel.DummyInstance
-}
+// // MigrateNetwork godoc
+// // @Summary (Skeleton) Migrate network on a cloud platform
+// // @Description It migrates network on a cloud platform. Network includes name, ID, IPv4 CIDR block, IPv6 CIDR block, and so on.
+// // @Tags [Migration] Infrastructure
+// // @Accept  json
+// // @Produce  json
+// // @Param NetworkInfo body MigrateNetworkRequest true "Specify name, IPv4 CIDR block, etc."
+// // @Success 200 {object} MigrateNetworkResponse "Successfully migrated network on a cloud platform"
+// // @Failure 404 {object} common.SimpleMsg
+// // @Failure 500 {object} common.SimpleMsg
+// // @Router /migration/infra/network [post]
+// func MigrateNetwork(c echo.Context) error {
 
-// MigrateInstance godoc
-// @Summary (Skeleton) Migrate instance on a cloud platform
-// @Description It migrates instance on a cloud platform. Storage includes name, spec, OS, and so on.
-// @Tags [Migration] Infrastructure
-// @Accept  json
-// @Produce  json
-// @Param InstanceInfo body MigrateInstanceRequest true "Specify name, spec, OS, and so on."
-// @Success 200 {object} MigrateInstanceResponse "Successfully migrated storage on a cloud platform"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
-// @Router /migration/infra/instance [post]
-func MigrateInstance(c echo.Context) error {
+// 	// [Note] Input section
+// 	req := &MigrateNetworkRequest{}
+// 	if err := c.Bind(req); err != nil {
+// 		return err
+// 	}
 
-	// [Note] Input section
-	req := &MigrateInstanceRequest{}
-	if err := c.Bind(req); err != nil {
-		return err
-	}
+// 	log.Trace().Msgf("req: %v\n", req)
+// 	log.Trace().Msgf("req.DummyNetwork: %v\n", req.DummyNetwork)
 
-	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.DummyInstance: %v\n", req.DummyInstance)
+// 	// [Note] Process section
+// 	// Something to process here like,
+// 	// Perform some functions,
+// 	// Calls external APIs and so on
 
-	// [Note] Process section
-	// Something to process here like,
-	// Perform some functions,
-	// Calls external APIs and so on
+// 	res := &MigrateNetworkResponse{}
+// 	log.Trace().Msgf("res: %v\n", res)
+// 	log.Trace().Msgf("res.DummyNetwork: %v\n", res.DummyNetwork)
 
-	res := &MigrateInstanceResponse{}
-	log.Trace().Msgf("res: %v\n", res)
-	log.Trace().Msgf("res.DummyInstance: %v\n", res.DummyInstance)
+// 	// This is an intentionally created variable.
+// 	// You will have to delete this later.
+// 	var err error = nil
 
-	// This is an intentionally created variable.
-	// You will have to delete this later.
-	var err error = nil
+// 	// [Note] Ouput section
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("Failed to migrate network on a cloud platform")
+// 		mapA := map[string]string{"message": err.Error()}
+// 		return c.JSON(http.StatusInternalServerError, &mapA)
+// 	}
 
-	// [Note] Ouput section
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to migrate instance on a cloud platform")
-		mapA := map[string]string{"message": err.Error()}
-		return c.JSON(http.StatusInternalServerError, &mapA)
-	}
+// 	return c.JSON(http.StatusOK, res)
 
-	return c.JSON(http.StatusOK, res)
+// }
 
-}
+// ////////////////////////
 
-////////////////////////
+// ////////////////////////
+
+// type MigrateStorageRequest struct {
+// 	cloudmodel.DummyStorage
+// }
+
+// type MigrateStorageResponse struct {
+// 	cloudmodel.DummyStorage
+// }
+
+// // MigrateStorage godoc
+// // @Summary (Skeleton) Migrate storage on a cloud platform
+// // @Description It migrates storage on a cloud platform. Storage includes name, ID, type, size, and so on.
+// // @Tags [Migration] Infrastructure
+// // @Accept  json
+// // @Produce  json
+// // @Param StorageInfo body MigrateStorageRequest true "Specify name, type, size, affiliated Network ID, and so on."
+// // @Success 200 {object} MigrateStorageResponse "Successfully migrated storage on a cloud platform"
+// // @Failure 404 {object} common.SimpleMsg
+// // @Failure 500 {object} common.SimpleMsg
+// // @Router /migration/infra/storage [post]
+// func MigrateStorage(c echo.Context) error {
+
+// 	// [Note] Input section
+// 	req := &MigrateStorageRequest{}
+// 	if err := c.Bind(req); err != nil {
+// 		return err
+// 	}
+
+// 	log.Trace().Msgf("req: %v\n", req)
+// 	log.Trace().Msgf("req.DummyStorage: %v\n", req.DummyStorage)
+
+// 	// [Note] Process section
+// 	// Something to process here like,
+// 	// Perform some functions,
+// 	// Calls external APIs and so on
+
+// 	res := &MigrateStorageResponse{}
+// 	log.Trace().Msgf("res: %v\n", res)
+// 	log.Trace().Msgf("res.DummyStorage: %v\n", res.DummyStorage)
+
+// 	// This is an intentionally created variable.
+// 	// You will have to delete this later.
+// 	var err error = nil
+
+// 	// [Note] Ouput section
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("Failed to migrate storage on a cloud platform")
+// 		mapA := map[string]string{"message": err.Error()}
+// 		return c.JSON(http.StatusInternalServerError, &mapA)
+// 	}
+
+// 	return c.JSON(http.StatusOK, res)
+
+// }
+
+// ////////////////////////
+
+// ////////////////////////
+
+// type MigrateInstanceRequest struct {
+// 	cloudmodel.DummyInstance
+// }
+
+// type MigrateInstanceResponse struct {
+// 	cloudmodel.DummyInstance
+// }
+
+// // MigrateInstance godoc
+// // @Summary (Skeleton) Migrate instance on a cloud platform
+// // @Description It migrates instance on a cloud platform. Storage includes name, spec, OS, and so on.
+// // @Tags [Migration] Infrastructure
+// // @Accept  json
+// // @Produce  json
+// // @Param InstanceInfo body MigrateInstanceRequest true "Specify name, spec, OS, and so on."
+// // @Success 200 {object} MigrateInstanceResponse "Successfully migrated storage on a cloud platform"
+// // @Failure 404 {object} common.SimpleMsg
+// // @Failure 500 {object} common.SimpleMsg
+// // @Router /migration/infra/instance [post]
+// func MigrateInstance(c echo.Context) error {
+
+// 	// [Note] Input section
+// 	req := &MigrateInstanceRequest{}
+// 	if err := c.Bind(req); err != nil {
+// 		return err
+// 	}
+
+// 	log.Trace().Msgf("req: %v\n", req)
+// 	log.Trace().Msgf("req.DummyInstance: %v\n", req.DummyInstance)
+
+// 	// [Note] Process section
+// 	// Something to process here like,
+// 	// Perform some functions,
+// 	// Calls external APIs and so on
+
+// 	res := &MigrateInstanceResponse{}
+// 	log.Trace().Msgf("res: %v\n", res)
+// 	log.Trace().Msgf("res.DummyInstance: %v\n", res.DummyInstance)
+
+// 	// This is an intentionally created variable.
+// 	// You will have to delete this later.
+// 	var err error = nil
+
+// 	// [Note] Ouput section
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("Failed to migrate instance on a cloud platform")
+// 		mapA := map[string]string{"message": err.Error()}
+// 		return c.JSON(http.StatusInternalServerError, &mapA)
+// 	}
+
+// 	return c.JSON(http.StatusOK, res)
+
+// }
+
+// ////////////////////////

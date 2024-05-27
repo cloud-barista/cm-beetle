@@ -38,11 +38,11 @@ import (
 // }
 
 type RecommendInfraRequest struct {
-	infra.Infra
+	Servers []infra.Infra `json:"servers" validate:"required"`
 }
 
 type RecommendInfraResponse struct {
-	cloudmodel.TbMcisDynamicReq
+	cloudmodel.InfraMigrationReq
 }
 
 // RecommendInfra godoc
@@ -67,13 +67,10 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.Infra.Compute: %v\n", req.Infra.Compute)
-	// log.Trace().Msgf("req.Infra.Network: %v\n", req.Infra.Network)
-	// log.Trace().Msgf("req.Infra.GPU: %v\n", req.Infra.GPU)
 
 	// Process
-	recommendedInfra, err := recommendation.Recommend(req.Infra)
-	recommendedInfra.Name = "recomm-infra01"
+	recommendedInfra, err := recommendation.Recommend(req.Servers)
+	recommendedInfra.Name = "recommended-target-infra-model01"
 
 	// Ouput
 	if err != nil {

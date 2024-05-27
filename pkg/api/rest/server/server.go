@@ -179,6 +179,10 @@ func RunServer(port string) {
 	groupSample := groupBase.Group("/sample")
 	route.RegisterSampleRoutes(groupSample)
 
+	// Sample API group (for developers to add new API)
+	groupNamespace := groupBase.Group("/ns")
+	route.RegisterNamespaceRoutes(groupNamespace)
+
 	// Recommendation API group
 	groupRecommendation := groupBase.Group("/recommendation")
 	route.RegisterRecommendationRoutes(groupRecommendation)
