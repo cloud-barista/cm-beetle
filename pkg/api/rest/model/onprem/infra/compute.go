@@ -28,13 +28,13 @@ type System struct {
 }
 
 type CPU struct {
-	Vendor  string `json:"vendor"`
-	Model   string `json:"model"`
-	Speed   uint   `json:"speed"`   // MHz
-	Cache   uint   `json:"cache"`   // KB
-	Cpus    uint   `json:"cpus"`    // ea
-	Cores   uint   `json:"cores"`   // ea
-	Threads uint   `json:"threads"` // ea
+	Vendor   string `json:"vendor"`
+	Model    string `json:"model"`
+	MaxSpeed uint   `json:"max_speed"` // MHz
+	Cache    uint   `json:"cache"`     // KB
+	Cpus     uint   `json:"cpus"`      // ea
+	Cores    uint   `json:"cores"`     // ea
+	Threads  uint   `json:"threads"`   // ea
 }
 
 type Memory struct {
@@ -43,22 +43,33 @@ type Memory struct {
 	Size  uint   `json:"size"`  // MB
 }
 
-type Storage struct {
-	Name   string `json:"name"`
-	Driver string `json:"driver"`
-	Vendor string `json:"vendor"`
-	Model  string `json:"model"`
-	Serial string `json:"serial"`
-	Size   uint   `json:"size"` // GB
+type Disk struct {
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Size  uint   `json:"size"` // GB
 }
 
 type ComputeResource struct {
-	CPU     CPU       `json:"cpu"`
-	Memory  Memory    `json:"memory"`
-	Storage []Storage `json:"storage"`
+	CPU      CPU    `json:"cpu"`
+	Memory   Memory `json:"memory"`
+	RootDisk Disk   `json:"root_disk"`
+	DataDisk []Disk `json:"data_disk"`
+}
+
+// Keypair TODO
+type Keypair struct {
+	Name       string `json:"name"`
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+}
+
+// Connection TODO
+type Connection struct {
+	Keypair Keypair `json:"keypair"`
 }
 
 type Compute struct {
 	OS              System          `json:"os"`
 	ComputeResource ComputeResource `json:"compute_resource"`
+	Connection      []Connection    `json:"connection"`
 }

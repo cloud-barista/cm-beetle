@@ -626,6 +626,12 @@ definitions:
     properties:
       compute:
         $ref: '#/definitions/infra.Compute'
+      gpu:
+        $ref: '#/definitions/infra.GPU'
+      network:
+        $ref: '#/definitions/network.Network'
+      storage:
+        $ref: '#/definitions/infra.Storage'
     type: object
   controller.RecommendInfraResponse:
     properties:
@@ -691,11 +697,11 @@ definitions:
       cpus:
         description: ea
         type: integer
-      model:
-        type: string
-      speed:
+      max_speed:
         description: MHz
         type: integer
+      model:
+        type: string
       threads:
         description: ea
         type: integer
@@ -706,6 +712,10 @@ definitions:
     properties:
       compute_resource:
         $ref: '#/definitions/infra.ComputeResource'
+      connection:
+        items:
+          $ref: '#/definitions/infra.Connection'
+        type: array
       os:
         $ref: '#/definitions/infra.System'
     type: object
@@ -713,11 +723,50 @@ definitions:
     properties:
       cpu:
         $ref: '#/definitions/infra.CPU'
+      data_disk:
+        items:
+          $ref: '#/definitions/infra.Disk'
+        type: array
       memory:
         $ref: '#/definitions/infra.Memory'
-      storage:
+      root_disk:
+        $ref: '#/definitions/infra.Disk'
+    type: object
+  infra.Connection:
+    properties:
+      keypair:
+        $ref: '#/definitions/infra.Keypair'
+    type: object
+  infra.DRM:
+    properties:
+      driver_date:
+        type: string
+      driver_description:
+        type: string
+      driver_name:
+        type: string
+      driver_version:
+        type: string
+    type: object
+  infra.Disk:
+    properties:
+      label:
+        type: string
+      size:
+        description: GB
+        type: integer
+      type:
+        type: string
+    type: object
+  infra.GPU:
+    properties:
+      drm:
         items:
-          $ref: '#/definitions/infra.Storage'
+          $ref: '#/definitions/infra.DRM'
+        type: array
+      nvidia:
+        items:
+          $ref: '#/definitions/infra.NVIDIA'
         type: array
     type: object
   infra.Kernel:
@@ -727,6 +776,15 @@ definitions:
       release:
         type: string
       version:
+        type: string
+    type: object
+  infra.Keypair:
+    properties:
+      name:
+        type: string
+      private_key:
+        type: string
+      public_key:
         type: string
     type: object
   infra.Memory:
@@ -739,6 +797,70 @@ definitions:
         type: integer
       type:
         type: string
+    type: object
+  infra.MountPoint:
+    properties:
+      mounted_information:
+        items:
+          $ref: '#/definitions/infra.MountedInformation'
+        type: array
+    type: object
+  infra.MountedInformation:
+    properties:
+      destination:
+        type: string
+      filesystem:
+        type: string
+      option:
+        type: string
+      source:
+        type: string
+    type: object
+  infra.NVIDIA:
+    properties:
+      device_attribute:
+        $ref: '#/definitions/infra.NVIDIADeviceAttribute'
+      performance:
+        $ref: '#/definitions/infra.NVIDIAPerformance'
+    type: object
+  infra.NVIDIADeviceAttribute:
+    properties:
+      cuda_version:
+        type: string
+      driver_version:
+        type: string
+      gpu_uuid:
+        type: string
+      product_architecture:
+        type: string
+      product_brand:
+        type: string
+      product_name:
+        type: string
+    type: object
+  infra.NVIDIAPerformance:
+    properties:
+      bar1_memory_total:
+        description: mb
+        type: integer
+      bar1_memory_usage:
+        description: percent
+        type: integer
+      bar1_memory_used:
+        description: mb
+        type: integer
+      fb_memory_total:
+        description: mb
+        type: integer
+      fb_memory_usage:
+        description: percent
+        type: integer
+      fb_memory_used:
+        description: mb
+        type: integer
+      gpu_usage:
+        description: percent
+        type: integer
     type: object
   infra.Node:
     properties:
@@ -766,19 +888,8 @@ definitions:
     type: object
   infra.Storage:
     properties:
-      driver:
-        type: string
-      model:
-        type: string
-      name:
-        type: string
-      serial:
-        type: string
-      size:
-        description: GB
-        type: integer
-      vendor:
-        type: string
+      mount_point:
+        $ref: '#/definitions/infra.MountPoint'
     type: object
   infra.System:
     properties:
@@ -797,6 +908,165 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  network.CSP:
+    properties:
+      name:
+        type: string
+      nlb:
+        items:
+          $ref: '#/definitions/network.NLB'
+        type: array
+      security_group:
+        items:
+          $ref: '#/definitions/network.SecurityGroup'
+        type: array
+      vpc:
+        items:
+          $ref: '#/definitions/network.VPC'
+        type: array
+    type: object
+  network.DNS:
+    properties:
+      dns_server:
+        description: IPv4 or IPv6 DNS Server Addresses
+        items:
+          type: string
+        type: array
+    type: object
+  network.FirewallRule:
+    properties:
+      action:
+        description: allow, deny
+        type: string
+      direction:
+        description: inbound, outbound
+        type: string
+      dst:
+        type: string
+      dst_ports:
+        type: string
+      priority:
+        description: Lower has higher priority
+        type: integer
+      protocol:
+        description: TCP, UDP, ICMP
+        type: string
+      src:
+        type: string
+      src_ports:
+        type: string
+    type: object
+  network.Host:
+    properties:
+      dns:
+        $ref: '#/definitions/network.DNS'
+      firewall_rule:
+        items:
+          $ref: '#/definitions/network.FirewallRule'
+        type: array
+      network_interface:
+        items:
+          $ref: '#/definitions/network.NIC'
+        type: array
+      route:
+        items:
+          $ref: '#/definitions/network.Route'
+        type: array
+    type: object
+  network.NIC:
+    properties:
+      address:
+        items:
+          type: string
+        type: array
+      gateway:
+        items:
+          type: string
+        type: array
+      interface:
+        type: string
+      mac_address:
+        type: string
+      mtu:
+        type: integer
+    type: object
+  network.NLB:
+    properties:
+      description:
+        type: string
+      health_checker:
+        type: string
+      id:
+        type: string
+      listener:
+        type: string
+      name:
+        type: string
+      target_group:
+        type: string
+    type: object
+  network.Network:
+    properties:
+      csp:
+        $ref: '#/definitions/network.CSP'
+      host:
+        $ref: '#/definitions/network.Host'
+    type: object
+  network.Route:
+    properties:
+      destination:
+        type: string
+      netmask:
+        type: string
+      next_hop:
+        type: string
+    type: object
+  network.SecurityGroup:
+    properties:
+      description:
+        type: string
+      firewall_rule:
+        items:
+          $ref: '#/definitions/network.FirewallRule'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      vnet_id:
+        type: string
+    type: object
+  network.Subnet:
+    properties:
+      ipv4_cidr:
+        description: IPv4 Network Address with CIDR Prefix Length
+        type: string
+      ipv6_cidr:
+        description: IPv6 Network Address with CIDR Prefix Length
+        type: string
+      name:
+        type: string
+    type: object
+  network.VPC:
+    properties:
+      address_space:
+        description: IPv4 CIDR or IPv6 CIDR
+        items:
+          type: string
+        type: array
+      dns_server:
+        items:
+          $ref: '#/definitions/network.DNS'
+        type: array
+      id:
+        type: string
+      region:
+        type: string
+      subnet:
+        items:
+          $ref: '#/definitions/network.Subnet'
+        type: array
     type: object
 info:
   contact:
