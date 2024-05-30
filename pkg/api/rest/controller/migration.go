@@ -46,7 +46,6 @@ type MigrateInfraResponse struct {
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param nsId path string true "Namespace ID"
 // @Param InfrastructureInfo body MigrateInfraRequest true "Specify network, disk, compute, security group, virtual machine, etc."
 // @Success 200 {object} MigrateInfraResponse "Successfully migrated infrastructure on a cloud platform"
 // @Failure 404 {object} model.Response
@@ -55,16 +54,17 @@ type MigrateInfraResponse struct {
 func MigrateInfra(c echo.Context) error {
 
 	// [Note] Input section
-	nsId := c.Param("nsId")
-	if nsId == "" {
-		err := fmt.Errorf("invalid request, namespace ID (nsId: %s) is required", nsId)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
+	// nsId := c.Param("nsId")
+	// if nsId == "" {
+	// 	err := fmt.Errorf("invalid request, namespace ID (nsId: %s) is required", nsId)
+	// 	log.Warn().Msg(err.Error())
+	// 	res := model.Response{
+	// 		Success: false,
+	// 		Text:    err.Error(),
+	// 	}
+	// 	return c.JSON(http.StatusBadRequest, res)
+	// }
+	nsId := common.DefaulNamespaceId
 
 	req := &MigrateInfraRequest{}
 	if err := c.Bind(req); err != nil {
@@ -76,12 +76,14 @@ func MigrateInfra(c echo.Context) error {
 
 	nsInfo, err := common.GetNamespace(nsId)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get the namespace")
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
+		// [temporary code block] Create a namespace as a default
+		log.Warn().Msgf("failed to get the namespace (nsId: %s)", nsId)
+		log.Info().Msg("create a namespace as a default (nsId: ns-mig01)")
+		nsReq := common.NsReq{
+			Name: common.DefaulNamespaceId,
 		}
-		return c.JSON(http.StatusInternalServerError, res)
+		nsInfo, err = common.CreateNamespace(nsReq)
+
 	}
 
 	if nsInfo.Id == "" {
@@ -121,7 +123,6 @@ func MigrateInfra(c echo.Context) error {
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param nsId path string true "a namespace ID"
 // @Param infraId path string true "a infrastructure ID created for migration"
 // @Success 200 {object} MigrateInfraResponse "Successfully got the migrated infrastructure on a cloud platform"
 // @Failure 404 {object} model.Response
@@ -130,16 +131,17 @@ func MigrateInfra(c echo.Context) error {
 func GetInfra(c echo.Context) error {
 
 	// [Note] Input section
-	nsId := c.Param("vsId")
-	if nsId == "" {
-		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
+	// nsId := c.Param("nsId")
+	// if nsId == "" {
+	// 	err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
+	// 	log.Warn().Msg(err.Error())
+	// 	res := model.Response{
+	// 		Success: false,
+	// 		Text:    err.Error(),
+	// 	}
+	// 	return c.JSON(http.StatusBadRequest, res)
+	// }
+	nsId := common.DefaulNamespaceId
 
 	infraId := c.Param("infraId")
 	if infraId == "" {
@@ -173,7 +175,6 @@ func GetInfra(c echo.Context) error {
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param nsId path string true "a namespace ID"
 // @Param infraId path string true "a infrastructure ID created for migration"
 // @Success 200 {object} model.Response "Successfully deleted the migrated infrastructure on a cloud platform"
 // @Failure 404 {object} model.Response
@@ -182,16 +183,17 @@ func GetInfra(c echo.Context) error {
 func DeleteInfra(c echo.Context) error {
 
 	// [Note] Input section
-	nsId := c.Param("vsId")
-	if nsId == "" {
-		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
+	// nsId := c.Param("nsId")
+	// if nsId == "" {
+	// 	err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
+	// 	log.Warn().Msg(err.Error())
+	// 	res := model.Response{
+	// 		Success: false,
+	// 		Text:    err.Error(),
+	// 	}
+	// 	return c.JSON(http.StatusBadRequest, res)
+	// }
+	nsId := common.DefaulNamespaceId
 
 	infraId := c.Param("infraId")
 	if infraId == "" {

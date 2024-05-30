@@ -73,13 +73,6 @@ const docTemplate = `{
                 "summary": "Migrate an infrastructure on a cloud platform",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Namespace ID",
-                        "name": "nsId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Specify network, disk, compute, security group, virtual machine, etc.",
                         "name": "InfrastructureInfo",
                         "in": "body",
@@ -127,13 +120,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "a namespace ID",
-                        "name": "nsId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "a infrastructure ID created for migration",
                         "name": "infraId",
                         "in": "path",
@@ -176,13 +162,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "a namespace ID",
-                        "name": "nsId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
                         "description": "a infrastructure ID created for migration",
                         "name": "infraId",
                         "in": "path",
@@ -221,7 +200,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Namespace] Namespace management"
+                    "[Namespace] Namespace management (To be used)"
                 ],
                 "summary": "List all namespaces or namespaces' ID",
                 "responses": {
@@ -269,7 +248,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Namespace] Namespace management"
+                    "[Namespace] Namespace management (To be used)"
                 ],
                 "summary": "Create namespace",
                 "parameters": [
@@ -315,7 +294,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Namespace] Namespace management"
+                    "[Namespace] Namespace management (To be used)"
                 ],
                 "summary": "Get namespace",
                 "parameters": [
@@ -358,7 +337,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Namespace] Namespace management"
+                    "[Namespace] Namespace management (To be used)"
                 ],
                 "summary": "Delete namespace",
                 "parameters": [

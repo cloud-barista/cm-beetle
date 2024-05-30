@@ -48,7 +48,7 @@ import (
 // // RestDelAllNs godoc
 // // @Summary Delete all namespaces
 // // @Description Delete all namespaces
-// // @Tags [Namespace] Namespace management
+// // @Tags [Namespace] Namespace management (To be used)
 // // @Accept  json
 // // @Produce  json
 // // @Success 200 {object} common.SimpleMsg
@@ -68,7 +68,7 @@ import (
 // RestDeleteNs godoc
 // @Summary Delete namespace
 // @Description Delete namespace
-// @Tags [Namespace] Namespace management
+// @Tags [Namespace] Namespace management (To be used)
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(ns01)
@@ -110,7 +110,7 @@ type JSONResult struct {
 // RestGetAllNs godoc
 // @Summary List all namespaces or namespaces' ID
 // @Description List all namespaces or namespaces' ID
-// @Tags [Namespace] Namespace management
+// @Tags [Namespace] Namespace management (To be used)
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} JSONResult{[DEFAULT]=RestGetAllNsResponse,[ID]=common.IdList} "Different return structures by the given option param"
@@ -137,7 +137,7 @@ func RestGetAllNs(c echo.Context) error {
 // RestGetNs godoc
 // @Summary Get namespace
 // @Description Get namespace
-// @Tags [Namespace] Namespace management
+// @Tags [Namespace] Namespace management (To be used)
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(ns01)
@@ -172,7 +172,7 @@ func RestGetNs(c echo.Context) error {
 // RestPostNs godoc
 // @Summary Create namespace
 // @Description Create namespace
-// @Tags [Namespace] Namespace management
+// @Tags [Namespace] Namespace management (To be used)
 // @Accept  json
 // @Produce  json
 // @Param nsReq body common.NsReq true "Details for a new namespace"
@@ -205,7 +205,7 @@ func RestPostNs(c echo.Context) error {
 // // RestPutNs godoc
 // // @Summary Update namespace
 // // @Description Update namespace
-// // @Tags [Namespace] Namespace management
+// // @Tags [Namespace] Namespace management (To be used)
 // // @Accept  json
 // // @Produce  json
 // // @Param nsId path string true "Namespace ID" default(ns01)
