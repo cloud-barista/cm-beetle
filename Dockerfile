@@ -17,7 +17,7 @@ WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 COPY go.mod go.sum go.work go.work.sum LICENSE Makefile ./
 COPY api ./api
 COPY cmd/cm-beetle ./cmd/cm-beetle
-# COPY conf ./conf
+COPY conf ./conf
 COPY pkg ./pkg
 COPY scripts ./scripts
 
@@ -37,7 +37,7 @@ WORKDIR /app
 
 ## Copy the Pre-built binary and necessary files from the previous stage
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scripts/
-# COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
+COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle /app/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 
