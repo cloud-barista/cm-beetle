@@ -50,6 +50,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
 
 	// Set a deployment plan to recommand virtual machines
+	// Ref: https://github.com/cloud-barista/cb-tumblebug/discussions/1234
 	planDocstring := `{
 	"filter": {
 		"policy": [
@@ -57,11 +58,11 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 				"condition": [
 					{
 						"operand": "%d",
-						"operator": "<="
+						"operator": ">="
 					},
 					{
 						"operand": "%d",
-						"operator": ">="
+						"operator": "<="
 					}
 				],
 				"metric": "vCPU"
@@ -70,11 +71,11 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 				"condition": [
 					{
 						"operand": "%d",
-						"operator": "<="
+						"operator": ">="
 					},
 					{
 						"operand": "%d",
-						"operator": ">="
+						"operator": "<="
 					}
 				],
 				"metric": "memoryGiB"
@@ -82,7 +83,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			{
 				"condition": [
 					{
-					"operand": "%s"
+						"operand": "%s"
 					}
 				],
 				"metric": "providerName"
@@ -90,14 +91,21 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			{
 				"condition": [
 					{
-					"operand": "%s"
+						"operand": "%s"
 					}
 				],
 				"metric": "regionName"
 			}
 		]
 	},
-	"limit": "5"
+	"limit": "5",
+	"priority": {
+		"policy": [
+			{
+				"metric": "performance"
+			}
+		]
+	}
 }`
 
 	// A target infrastructure by recommendation
@@ -112,17 +120,15 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 	// Recommand VMs
 	for _, server := range srcInfra {
-		method := "POST"
-		url := fmt.Sprintf("%s/mcisRecommendVm", epTumblebug)
 
 		// Extract server info from source computing infra info
 		cores := server.Compute.ComputeResource.CPU.Cores
 		memory := MBtoGiB(float64(server.Compute.ComputeResource.Memory.Size))
 
-		coreUpperLimit := cores + 1
+		coreUpperLimit := cores << 1
 		var coreLowerLimit uint
 		if cores > 1 {
-			coreLowerLimit = cores - 1
+			coreLowerLimit = cores >> 1
 		} else {
 			coreLowerLimit = 1
 		}
@@ -145,34 +151,39 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 		log.Debug().
 			Uint("coreUpperLimit", coreUpperLimit).
 			Uint("coreLowerLimit", coreLowerLimit).
-			Uint32("memoryUpperLimit", memoryUpperLimit).
-			Uint32("memoryLowerLimit", memoryLowerLimit).
+			Uint32("memoryUpperLimit (GiB)", memoryUpperLimit).
+			Uint32("memoryLowerLimit (GiB)", memoryLowerLimit).
 			Str("providerName", providerName).
 			Str("regionName", regionName).
 			Str("osNameWithVersion", osNameWithVersion).
 			Msg("Source computing infrastructure info")
 
-		// Set a deployment plan with the server info
-		plan := fmt.Sprintf(planDocstring,
-			coreUpperLimit,
+		// To search proper VMs with the server info, set a deployment plan
+		planToSearchProperVm := fmt.Sprintf(planDocstring,
 			coreLowerLimit,
-			memoryUpperLimit,
+			coreUpperLimit,
 			memoryLowerLimit,
+			memoryUpperLimit,
 			providerName,
 			regionName,
 		)
 
+		////////////////////////////////////////
+		// Search and set a target VM spec
+		method := "POST"
+		url := fmt.Sprintf("%s/mcisRecommendVm", epTumblebug)
+
 		// Request body
 		reqRecommVm := new(mcis.DeploymentPlan)
-		err := json.Unmarshal([]byte(plan), reqRecommVm)
+		err := json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
 		if err != nil {
 			log.Err(err).Msg("")
 			return cloudmodel.InfraMigrationReq{}, err
 		}
-		log.Debug().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
+		log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
 
 		// Response body
-		resRecommVm := new(mcir.TbSpecInfo)
+		resRecommVmList := []mcir.TbSpecInfo{}
 
 		err = common.ExecuteHttpRequest(
 			client,
@@ -181,7 +192,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			nil,
 			common.SetUseBody(*reqRecommVm),
 			reqRecommVm,
-			resRecommVm,
+			&resRecommVmList,
 			common.VeryShortDuration,
 		)
 
@@ -189,19 +200,64 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			log.Err(err).Msg("")
 			return cloudmodel.InfraMigrationReq{}, err
 		}
-		log.Debug().Msgf("resRecommVm: %+v", resRecommVm)
 
-		// Set target VM
+		numRecommenedVm := len(resRecommVmList)
+
+		log.Debug().Msgf("the number of recommended VM specs: %d (for the inserted PM/VM with spec (cores: %d, memory (GiB): %d))", numRecommenedVm, cores, memory)
+		log.Trace().Msgf("recommendedVmList for the inserted PM/VM with spec (cores: %d, memory (GiB): %d): %+v", cores, memory, resRecommVmList)
+
+		if numRecommenedVm == 0 {
+			log.Warn().Msgf("no VM spec recommended for the inserted PM/VM with spec (cores: %d, memory (GiB): %d)", cores, memory)
+			continue
+		}
+		log.Debug().Msgf("select the 1st recommended virtual machine: %+v", resRecommVmList[0])
+		recommendedSpec := resRecommVmList[0].Id
+
+		name := fmt.Sprintf("rehosted-%s-%s", server.Compute.OS.Node.Hostname, server.Compute.OS.Node.Machineid)
+
+		////////////////////////////////////////
+		// Search and set target OS image (e.g. ubuntu22.04)
+		method = "POST"
+		url = fmt.Sprintf("%s/mcisDynamicCheckRequest", epTumblebug)
+
+		// Request body
+		reqMcisDynamicCheck := new(mcis.McisConnectionConfigCandidatesReq)
+		reqMcisDynamicCheck.CommonSpecs = []string{recommendedSpec}
+
+		// Response body
+		resMcisDynamicCheck := new(mcis.CheckMcisDynamicReqInfo)
+
+		err = common.ExecuteHttpRequest(
+			client,
+			method,
+			url,
+			nil,
+			common.SetUseBody(*reqMcisDynamicCheck),
+			reqMcisDynamicCheck,
+			resMcisDynamicCheck,
+			common.VeryShortDuration,
+		)
+
+		if err != nil {
+			log.Err(err).Msg("")
+			return cloudmodel.InfraMigrationReq{}, err
+		}
+
+		log.Trace().Msgf("resMcisDynamicCheck: %+v", resMcisDynamicCheck)
+
+		// candidateImages := resMcisDynamicCheck.ReqCheck[0].Image
+
+		// [TBD] Select VM image by TextSimilarity
+
 		image := fmt.Sprintf("%s+%s+%s", providerName, regionName, osNameWithVersion)
-		spec := resRecommVm.CspSpecName
 
 		vm := cloudmodel.HostMigrationReq{
 			ConnectionName: "",
 			CommonImage:    image,
-			CommonSpec:     spec,
+			CommonSpec:     recommendedSpec,
 			Description:    "a recommended virtual machine",
-			Label:          "rehosted virtual machine",
-			Name:           "recomm-vm",
+			Label:          "rehosted",
+			Name:           name,
 			RootDiskSize:   "default",
 			RootDiskType:   "default",
 			SubGroupSize:   "1",

@@ -1313,7 +1313,7 @@ paths:
             type: object
       summary: Get a list of users
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
     post:
       consumes:
       - application/json
@@ -1339,7 +1339,7 @@ paths:
             type: object
       summary: Create a new user
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
   /sample/users/{id}:
     delete:
       consumes:
@@ -1368,7 +1368,7 @@ paths:
             type: object
       summary: Delete a user
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
     get:
       consumes:
       - application/json
@@ -1393,7 +1393,7 @@ paths:
             type: object
       summary: Get specific user information
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
     patch:
       consumes:
       - application/json
@@ -1428,7 +1428,7 @@ paths:
             type: object
       summary: Patch a user
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
     put:
       consumes:
       - application/json
@@ -1459,7 +1459,7 @@ paths:
             type: object
       summary: Update a user
       tags:
-      - '[Sample] Users'
+      - '[Sample API] Users'
 securityDefinitions:
   BasicAuth:
     type: basic

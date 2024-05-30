@@ -472,7 +472,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get a list of users",
                 "responses": {
@@ -499,7 +499,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Create a new user",
                 "parameters": [
@@ -539,7 +539,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get specific user information",
                 "parameters": [
@@ -575,7 +575,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Update a user",
                 "parameters": [
@@ -620,7 +620,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Delete a user",
                 "parameters": [
@@ -662,7 +662,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Patch a user",
                 "parameters": [

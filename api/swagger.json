@@ -465,7 +465,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get a list of users",
                 "responses": {
@@ -492,7 +492,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Create a new user",
                 "parameters": [
@@ -532,7 +532,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get specific user information",
                 "parameters": [
@@ -568,7 +568,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Update a user",
                 "parameters": [
@@ -613,7 +613,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Delete a user",
                 "parameters": [
@@ -655,7 +655,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Patch a user",
                 "parameters": [
