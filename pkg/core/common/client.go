@@ -15,12 +15,17 @@ limitations under the License.
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 )
 
 // CacheItem is a struct to store cached item
@@ -29,9 +34,15 @@ type CacheItem[T any] struct {
 	ExpiresAt time.Time
 }
 
+// clientCache is a map for cache items of intenal calls
 var clientCache = sync.Map{}
 
+// clientRequestCounter is a map for request counters of intenal calls
+var clientRequestCounter = sync.Map{}
+
 const (
+	// VeryShortDuration is a duration for very short-term cache
+	VeryShortDuration = 1 * time.Second
 	// ShortDuration is a duration for short-term cache
 	ShortDuration = 2 * time.Second
 	// MediumDuration is a duration for medium-term cache
@@ -51,6 +62,33 @@ func SetUseBody(requestBody interface{}) bool {
 	return true
 }
 
+// limitConcurrentRequests limits the number of Concurrent requests to the given limit
+func limitConcurrentRequests(requestKey string, limit int) bool {
+	count, _ := clientRequestCounter.LoadOrStore(requestKey, 0)
+	currentCount := count.(int)
+
+	if currentCount >= limit {
+		fmt.Printf("[%s] requests for %s \n", currentCount, requestKey)
+		return false
+	}
+
+	clientRequestCounter.Store(requestKey, currentCount+1)
+	return true
+}
+
+// requestDone decreases the request counter
+func requestDone(requestKey string) {
+	count, _ := clientRequestCounter.Load(requestKey)
+	if count == nil {
+		return
+	}
+	currentCount := count.(int)
+
+	if currentCount > 0 {
+		clientRequestCounter.Store(requestKey, currentCount-1)
+	}
+}
+
 // ExecuteHttpRequest performs the HTTP request and fills the result (var requestBody interface{} = nil for empty body)
 func ExecuteHttpRequest[B any, T any](
 	client *resty.Client,
@@ -64,7 +102,7 @@ func ExecuteHttpRequest[B any, T any](
 ) error {
 
 	// Generate cache key for GET method only
-	cacheKey := ""
+	requestKey := ""
 	if method == "GET" {
 
 		if useBody {
@@ -74,16 +112,16 @@ func ExecuteHttpRequest[B any, T any](
 				return fmt.Errorf("JSON marshaling failed: %w", err)
 			}
 			// Create cache key using both URL and body
-			cacheKey = fmt.Sprintf("%s_%s_%s", method, url, string(bodyString))
+			requestKey = fmt.Sprintf("%s_%s_%s", method, url, string(bodyString))
 		} else {
 			// Create cache key using only URL
-			cacheKey = fmt.Sprintf("%s_%s", method, url)
+			requestKey = fmt.Sprintf("%s_%s", method, url)
 		}
 
-		if item, found := clientCache.Load(cacheKey); found {
+		if item, found := clientCache.Load(requestKey); found {
 			cachedItem := item.(CacheItem[T]) // Generic type
 			if time.Now().Before(cachedItem.ExpiresAt) {
-				fmt.Println("Cache hit! Expires: ", time.Now().Sub(cachedItem.ExpiresAt))
+				log.Trace().Msgf("Cache hit! Expires: %v", time.Now().Sub(cachedItem.ExpiresAt))
 				*result = cachedItem.Response
 				//val := reflect.ValueOf(result).Elem()
 				//cachedVal := reflect.ValueOf(cachedItem.Response)
@@ -91,14 +129,42 @@ func ExecuteHttpRequest[B any, T any](
 
 				return nil
 			} else {
-				fmt.Println("Cache item expired!")
-				clientCache.Delete(cacheKey)
+				log.Trace().Msg("Cache item expired!")
+				clientCache.Delete(requestKey)
+			}
+		}
+
+		// Limit the number of concurrent requests
+		concurrencyLimit := 10
+		retryWait := 5 * time.Second
+		retryLimit := 3
+		retryCount := 0
+		// try to wait for the upcomming cached result when sending que is full
+		for {
+			if !limitConcurrentRequests(requestKey, concurrencyLimit) {
+				if retryCount >= retryLimit {
+					log.Debug().Msgf("Too many same requests: %s\n", requestKey)
+					return fmt.Errorf("Too many same requests: %s", requestKey)
+				}
+				time.Sleep(retryWait)
+
+				if item, found := clientCache.Load(requestKey); found {
+					cachedItem := item.(CacheItem[T])
+					*result = cachedItem.Response
+					// release the request count for parallel requests limit
+					requestDone(requestKey)
+					log.Debug().Msg("Got the cached result while waiting")
+					return nil
+				}
+				retryCount++
+			} else {
+				break
 			}
 		}
 	}
 
 	// Perform the HTTP request using Resty
-	client.SetDebug(true)
+	//client.SetDebug(true)
 	// SetAllowGetMethodPayload should be set to true for GET method to allow payload
 	// NOTE: Need to removed when cb-spider api is stopped to use GET method with payload
 	client.SetAllowGetMethodPayload(true)
@@ -130,11 +196,17 @@ func ExecuteHttpRequest[B any, T any](
 	}
 
 	if err != nil {
+		if method == "GET" {
+			requestDone(requestKey)
+		}
 		return fmt.Errorf("[Error from: %s] Message: %s", url, err.Error())
 	}
 
 	if resp.IsError() {
-		return fmt.Errorf("[Error from: %s] Status code: %s", url, resp.Status())
+		if method == "GET" {
+			requestDone(requestKey)
+		}
+		return fmt.Errorf("[Error from: %s] Status code: %s, Message: %s", url, resp.Status(), resp.Body())
 	}
 
 	// Update the cache for GET method only
@@ -143,14 +215,151 @@ func ExecuteHttpRequest[B any, T any](
 		//val := reflect.ValueOf(result).Elem()
 		//newCacheItem := val.Interface()
 
+		// release the request count for parallel requests limit
+		requestDone(requestKey)
+
 		// Check if result is nil
 		if result == nil {
-			fmt.Println("Warning: result is nil, not caching.")
+			log.Trace().Msg("Fesult is nil, not caching")
 		} else {
-			clientCache.Store(cacheKey, CacheItem[T]{Response: *result, ExpiresAt: time.Now().Add(cacheDuration)})
-			fmt.Println("Cached successfully!")
+			clientCache.Store(requestKey, CacheItem[T]{Response: *result, ExpiresAt: time.Now().Add(cacheDuration)})
+			log.Trace().Msg("Cached successfully!")
 		}
 	}
 
 	return nil
 }
+
+// RequestInfo stores the essential details of an HTTP request.
+type RequestInfo struct {
+	Method string            `json:"method"`         // HTTP method (GET, POST, etc.), indicating the request's action type.
+	URL    string            `json:"url"`            // The URL the request is made to.
+	Header map[string]string `json:"header"`         // Key-value pairs of the request headers.
+	Body   interface{}       `json:"body,omitempty"` // Optional: request body
+}
+
+// RequestDetails contains detailed information about an HTTP request and its processing status.
+type RequestDetails struct {
+	StartTime     time.Time   `json:"startTime"`     // The time when the request was received by the server.
+	EndTime       time.Time   `json:"endTime"`       // The time when the request was fully processed.
+	Status        string      `json:"status"`        // The current status of the request (e.g., "Handling", "Error", "Success").
+	RequestInfo   RequestInfo `json:"requestInfo"`   // Extracted information about the request.
+	ResponseData  interface{} `json:"responseData"`  // The data sent back in response to the request.
+	ErrorResponse string      `json:"errorResponse"` // A message describing any error that occurred during request processing.
+}
+
+// RequestMap is a map for request details
+var RequestMap = sync.Map{}
+
+// ExtractRequestInfo extracts necessary information from http.Request
+func ExtractRequestInfo(r *http.Request) RequestInfo {
+	headerInfo := make(map[string]string)
+	for name, headers := range r.Header {
+		headerInfo[name] = headers[0]
+	}
+
+	//var bodyString string
+	var bodyObject interface{}
+	if r.Body != nil { // Check if the body is not nil
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err == nil {
+			//bodyString = string(bodyBytes)
+			json.Unmarshal(bodyBytes, &bodyObject) // Try to unmarshal to a JSON object
+
+			// Important: Write the body back for further processing
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
+	}
+
+	return RequestInfo{
+		Method: r.Method,
+		URL:    r.URL.String(),
+		Header: headerInfo,
+		Body:   bodyObject, // Use the JSON object if parsing was successful, otherwise it's nil
+	}
+}
+
+// StartRequestWithLog initializes request tracking details
+func StartRequestWithLog(c echo.Context) (string, error) {
+	reqID := c.Request().Header.Get("x-request-id")
+	if reqID == "" {
+		reqID = fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+	if _, ok := RequestMap.Load(reqID); ok {
+		return reqID, fmt.Errorf("The x-request-id is already in use")
+	}
+
+	details := RequestDetails{
+		StartTime:   time.Now(),
+		Status:      "Handling",
+		RequestInfo: ExtractRequestInfo(c.Request()),
+	}
+	RequestMap.Store(reqID, details)
+	return reqID, nil
+}
+
+// EndRequestWithLog updates the request details and sends the final response.
+func EndRequestWithLog(c echo.Context, reqID string, err error, responseData interface{}) error {
+	if v, ok := RequestMap.Load(reqID); ok {
+		details := v.(RequestDetails)
+		details.EndTime = time.Now()
+
+		c.Response().Header().Set("X-Request-ID", reqID)
+
+		if err != nil {
+			details.Status = "Error"
+			details.ErrorResponse = err.Error()
+			RequestMap.Store(reqID, details)
+			if responseData == nil {
+				return c.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+			} else {
+				return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+			}
+		}
+
+		details.Status = "Success"
+		details.ResponseData = responseData
+		RequestMap.Store(reqID, details)
+		return c.JSON(http.StatusOK, responseData)
+	}
+
+	return c.JSON(http.StatusNotFound, map[string]string{"message": "Invalid Request ID"})
+}
+
+// // ForwardRequestToAny forwards the given request to the specified path
+// func ForwardRequestToAny(reqPath string, method string, requestBody interface{}) (interface{}, error) {
+// 	client := resty.New()
+// 	var callResult interface{}
+
+// 	url := SpiderRestUrl + "/" + reqPath
+
+// 	var requestBodyBytes []byte
+// 	var ok bool
+// 	if requestBodyBytes, ok = requestBody.([]byte); !ok {
+// 		return nil, fmt.Errorf("requestBody is not []byte type")
+// 	}
+
+// 	var requestBodyMap map[string]interface{}
+// 	err := json.Unmarshal(requestBodyBytes, &requestBodyMap)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("JSON unmarshal error: %v", err)
+// 	}
+
+// 	err = ExecuteHttpRequest(
+// 		client,
+// 		method,
+// 		url,
+// 		nil,
+// 		SetUseBody(requestBodyMap),
+// 		&requestBodyMap,
+// 		&callResult,
+// 		MediumDuration,
+// 	)
+
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("")
+// 		return nil, err
+// 	}
+
+// 	return callResult, nil
+// }

@@ -23,198 +23,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/config": {
-            "get": {
-                "description": "List all configs",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Admin] System environment"
-                ],
-                "summary": "List all configs",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.RestGetAllConfigResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create or Update config (SPIDER_REST_URL, DRAGONFLY_REST_URL, ...)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Admin] System environment"
-                ],
-                "summary": "Create or Update config",
-                "parameters": [
-                    {
-                        "description": "Key and Value for configuration",
-                        "name": "config",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/common.ConfigReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.ConfigInfo"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Init all configs",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Admin] System environment"
-                ],
-                "summary": "Init all configs",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            }
-        },
-        "/config/{configId}": {
-            "get": {
-                "description": "Get config",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Admin] System environment"
-                ],
-                "summary": "Get config",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Config ID",
-                        "name": "configId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.ConfigInfo"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Init config",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Admin] System environment"
-                ],
-                "summary": "Init config",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Config ID",
-                        "name": "configId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.ConfigInfo"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            }
-        },
         "/httpVersion": {
             "get": {
                 "description": "Checks and logs the HTTP version of the incoming request to the server console.",
@@ -252,7 +60,7 @@ const docTemplate = `{
         },
         "/migration/infra": {
             "post": {
-                "description": "It migrates an infrastructure on a cloud platform. Infrastructure includes network, storage, compute, and so on.",
+                "description": "It migrates an infrastructure on a cloud platform.",
                 "consumes": [
                     "application/json"
                 ],
@@ -264,6 +72,13 @@ const docTemplate = `{
                 ],
                 "summary": "Migrate an infrastructure on a cloud platform",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Specify network, disk, compute, security group, virtual machine, etc.",
                         "name": "InfrastructureInfo",
@@ -284,21 +99,21 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
             }
         },
-        "/migration/infra/instance": {
-            "post": {
-                "description": "It migrates instance on a cloud platform. Storage includes name, spec, OS, and so on.",
+        "/migration/infra/{infraId}": {
+            "get": {
+                "description": "It gets the migrated infrastructure on a cloud platform.",
                 "consumes": [
                     "application/json"
                 ],
@@ -308,43 +123,46 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "(Skeleton) Migrate instance on a cloud platform",
+                "summary": "Get the migrated infrastructure on a cloud platform",
                 "parameters": [
                     {
-                        "description": "Specify name, spec, OS, and so on.",
-                        "name": "InstanceInfo",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.MigrateInstanceRequest"
-                        }
+                        "type": "string",
+                        "description": "a namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "a infrastructure ID created for migration",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully migrated storage on a cloud platform",
+                        "description": "Successfully got the migrated infrastructure on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateInstanceResponse"
+                            "$ref": "#/definitions/controller.MigrateInfraResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
-            }
-        },
-        "/migration/infra/network": {
-            "post": {
-                "description": "It migrates network on a cloud platform. Network includes name, ID, IPv4 CIDR block, IPv6 CIDR block, and so on.",
+            },
+            "delete": {
+                "description": "It deletes the migrated infrastructure on a cloud platform.",
                 "consumes": [
                     "application/json"
                 ],
@@ -354,81 +172,40 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "(Skeleton) Migrate network on a cloud platform",
+                "summary": "Delete the migrated infrastructure on a cloud platform",
                 "parameters": [
                     {
-                        "description": "Specify name, IPv4 CIDR block, etc.",
-                        "name": "NetworkInfo",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.MigrateNetworkRequest"
-                        }
+                        "type": "string",
+                        "description": "a namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "a infrastructure ID created for migration",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully migrated network on a cloud platform",
+                        "description": "Successfully deleted the migrated infrastructure on a cloud platform",
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateNetworkResponse"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            }
-        },
-        "/migration/infra/storage": {
-            "post": {
-                "description": "It migrates storage on a cloud platform. Storage includes name, ID, type, size, and so on.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Migration] Infrastructure"
-                ],
-                "summary": "(Skeleton) Migrate storage on a cloud platform",
-                "parameters": [
-                    {
-                        "description": "Specify name, type, size, affiliated Network ID, and so on.",
-                        "name": "StorageInfo",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.MigrateStorageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully migrated storage on a cloud platform",
-                        "schema": {
-                            "$ref": "#/definitions/controller.MigrateStorageResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.Response"
                         }
                     }
                 }
@@ -447,17 +224,6 @@ const docTemplate = `{
                     "[Namespace] Namespace management"
                 ],
                 "summary": "List all namespaces or namespaces' ID",
-                "parameters": [
-                    {
-                        "enum": [
-                            "id"
-                        ],
-                        "type": "string",
-                        "description": "Option",
-                        "name": "option",
-                        "in": "query"
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "Different return structures by the given option param",
@@ -537,33 +303,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "description": "Delete all namespaces",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Namespace] Namespace management"
-                ],
-                "summary": "Delete all namespaces",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
             }
         },
         "/ns/{nsId}": {
@@ -587,58 +326,6 @@ const docTemplate = `{
                         "name": "nsId",
                         "in": "path",
                         "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.NsInfo"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update namespace",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Namespace] Namespace management"
-                ],
-                "summary": "Update namespace",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "ns01",
-                        "description": "Namespace ID",
-                        "name": "nsId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Details to update existing namespace",
-                        "name": "namespace",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/common.NsReq"
-                        }
                     }
                 ],
                 "responses": {
@@ -785,7 +472,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get a list of users",
                 "responses": {
@@ -812,7 +499,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Create a new user",
                 "parameters": [
@@ -852,7 +539,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Get specific user information",
                 "parameters": [
@@ -888,7 +575,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Update a user",
                 "parameters": [
@@ -933,7 +620,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Delete a user",
                 "parameters": [
@@ -975,7 +662,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample] Users"
+                    "[Sample API] Users"
                 ],
                 "summary": "Patch a user",
                 "parameters": [
@@ -1020,6 +707,60 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "cloudmodel.HostMigrationReq": {
+            "type": "object",
+            "required": [
+                "commonImage",
+                "commonSpec"
+            ],
+            "properties": {
+                "commonImage": {
+                    "description": "CommonImage is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ubuntu18.04"
+                },
+                "commonSpec": {
+                    "description": "CommonSpec is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws-ap-northeast-2-t2-small"
+                },
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "description"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "rehosted virtual machine"
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.RegionInfo": {
             "type": "object",
             "properties": {
@@ -1217,80 +958,6 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.Subnet": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "ipv4CidrBlock": {
-                    "type": "string"
-                },
-                "ipv6CidrBlock": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parentNetworkId": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.TbVmDynamicReq": {
-            "type": "object",
-            "required": [
-                "commonImage",
-                "commonSpec"
-            ],
-            "properties": {
-                "commonImage": {
-                    "description": "CommonImage is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "ubuntu18.04"
-                },
-                "commonSpec": {
-                    "description": "CommonSpec is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "aws-ap-northeast-2-t2-small"
-                },
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Description"
-                },
-                "label": {
-                    "type": "string",
-                    "example": "DynamicVM"
-                },
-                "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1-1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "example": "default, TYPE1, ..."
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
-                },
-                "vmUserPassword": {
-                    "type": "string"
-                }
-            }
-        },
         "cloudmodel.TbVmInfo": {
             "type": "object",
             "properties": {
@@ -1423,36 +1090,6 @@ const docTemplate = `{
                 }
             }
         },
-        "common.ConfigInfo": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "SPIDER_REST_URL"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "SPIDER_REST_URL"
-                },
-                "value": {
-                    "type": "string",
-                    "example": "http://localhost:1024/spider"
-                }
-            }
-        },
-        "common.ConfigReq": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "example": "SPIDER_REST_URL"
-                },
-                "value": {
-                    "type": "string",
-                    "example": "http://localhost:1024/spider"
-                }
-            }
-        },
         "common.ConnConfig": {
             "type": "object",
             "properties": {
@@ -1564,18 +1201,6 @@ const docTemplate = `{
                 }
             }
         },
-        "common.RestGetAllConfigResponse": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "description": "Name string     ` + "`" + `json:\"name\"` + "`" + `",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.ConfigInfo"
-                    }
-                }
-            }
-        },
         "common.RestGetAllNsResponse": {
             "type": "object",
             "properties": {
@@ -1645,7 +1270,7 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string",
-                    "example": "Made in CB-TB"
+                    "example": "the infrastructure created for migration"
                 },
                 "installMonAgent": {
                     "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
@@ -1660,11 +1285,11 @@ const docTemplate = `{
                 "label": {
                     "description": "Label is for describing the mcis in a keyword (any string can be used)",
                     "type": "string",
-                    "example": "DynamicVM"
+                    "example": "rehosting infra"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mcis01"
+                    "example": "mig01"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1674,7 +1299,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
+                        "$ref": "#/definitions/cloudmodel.HostMigrationReq"
                     }
                 }
             }
@@ -1756,132 +1381,6 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.MigrateInstanceRequest": {
-            "type": "object",
-            "properties": {
-                "NetworkId": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "os": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.MigrateInstanceResponse": {
-            "type": "object",
-            "properties": {
-                "NetworkId": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "os": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.MigrateNetworkRequest": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "ipv4CidrBlock": {
-                    "type": "string"
-                },
-                "ipv6CidrBlock": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "subnets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.Subnet"
-                    }
-                }
-            }
-        },
-        "controller.MigrateNetworkResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "ipv4CidrBlock": {
-                    "type": "string"
-                },
-                "ipv6CidrBlock": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "subnets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.Subnet"
-                    }
-                }
-            }
-        },
-        "controller.MigrateStorageRequest": {
-            "type": "object",
-            "properties": {
-                "NetworkId": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "size": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.MigrateStorageResponse": {
-            "type": "object",
-            "properties": {
-                "NetworkId": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "size": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
         "controller.PatchUserRequest": {
             "type": "object",
             "properties": {
@@ -1912,18 +1411,15 @@ const docTemplate = `{
         },
         "controller.RecommendInfraRequest": {
             "type": "object",
+            "required": [
+                "servers"
+            ],
             "properties": {
-                "compute": {
-                    "$ref": "#/definitions/infra.Compute"
-                },
-                "gpu": {
-                    "$ref": "#/definitions/infra.GPU"
-                },
-                "network": {
-                    "$ref": "#/definitions/network.Network"
-                },
-                "storage": {
-                    "$ref": "#/definitions/infra.Storage"
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/infra.Infra"
+                    }
                 }
             }
         },
@@ -1936,7 +1432,7 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string",
-                    "example": "Made in CB-TB"
+                    "example": "the infrastructure created for migration"
                 },
                 "installMonAgent": {
                     "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
@@ -1951,11 +1447,11 @@ const docTemplate = `{
                 "label": {
                     "description": "Label is for describing the mcis in a keyword (any string can be used)",
                     "type": "string",
-                    "example": "DynamicVM"
+                    "example": "rehosting infra"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mcis01"
+                    "example": "mig01"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1965,7 +1461,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
+                        "$ref": "#/definitions/cloudmodel.HostMigrationReq"
                     }
                 }
             }
@@ -2000,6 +1496,11 @@ const docTemplate = `{
         },
         "infra.CPU": {
             "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
             "properties": {
                 "cache": {
                     "description": "KB",
@@ -2031,6 +1532,10 @@ const docTemplate = `{
         },
         "infra.Compute": {
             "type": "object",
+            "required": [
+                "compute_resource",
+                "os"
+            ],
             "properties": {
                 "compute_resource": {
                     "$ref": "#/definitions/infra.ComputeResource"
@@ -2048,6 +1553,10 @@ const docTemplate = `{
         },
         "infra.ComputeResource": {
             "type": "object",
+            "required": [
+                "cpu",
+                "memory"
+            ],
             "properties": {
                 "cpu": {
                     "$ref": "#/definitions/infra.CPU"
@@ -2123,6 +1632,23 @@ const docTemplate = `{
                 }
             }
         },
+        "infra.Infra": {
+            "type": "object",
+            "properties": {
+                "compute": {
+                    "$ref": "#/definitions/infra.Compute"
+                },
+                "gpu": {
+                    "$ref": "#/definitions/infra.GPU"
+                },
+                "network": {
+                    "$ref": "#/definitions/network.Network"
+                },
+                "storage": {
+                    "$ref": "#/definitions/infra.Storage"
+                }
+            }
+        },
         "infra.Kernel": {
             "type": "object",
             "properties": {
@@ -2153,6 +1679,9 @@ const docTemplate = `{
         },
         "infra.Memory": {
             "type": "object",
+            "required": [
+                "size"
+            ],
             "properties": {
                 "size": {
                     "description": "MB",
@@ -2281,6 +1810,10 @@ const docTemplate = `{
         },
         "infra.OS": {
             "type": "object",
+            "required": [
+                "release",
+                "vendor"
+            ],
             "properties": {
                 "architecture": {
                     "type": "string"
@@ -2309,6 +1842,9 @@ const docTemplate = `{
         },
         "infra.System": {
             "type": "object",
+            "required": [
+                "os"
+            ],
             "properties": {
                 "kernel": {
                     "$ref": "#/definitions/infra.Kernel"
@@ -2332,6 +1868,31 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.Response": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "Any details"
+                },
+                "list": {
+                    "type": "array",
+                    "items": {}
+                },
+                "object": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Any text"
                 }
             }
         },

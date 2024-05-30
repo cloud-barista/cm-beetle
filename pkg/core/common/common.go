@@ -38,8 +38,9 @@ var SystemReady bool
 var CBLog *logrus.Logger
 var CBStore icbs.Store
 
-var SpiderRestUrl string
-var DragonflyRestUrl string
+// var SpiderRestUrl string
+// var DragonflyRestUrl string
+var TumblebugRestUrl string
 var DBUrl string
 var DBDatabase string
 var DBUser string
@@ -50,8 +51,9 @@ var err error
 var ORM *xorm.Engine
 
 const (
-	StrSpiderRestUrl              string = "SPIDER_REST_URL"
-	StrDragonflyRestUrl           string = "DRAGONFLY_REST_URL"
+	// StrSpiderRestUrl              string = "SPIDER_REST_URL"
+	// StrDragonflyRestUrl           string = "DRAGONFLY_REST_URL"
+	StrTumblebugRestUrl           string = "TUMBLEBUG_REST_URL"
 	StrDBUrl                      string = "DB_URL"
 	StrDBDatabase                 string = "DB_DATABASE"
 	StrDBUser                     string = "DB_USER"

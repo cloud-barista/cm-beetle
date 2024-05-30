@@ -17,8 +17,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -28,20 +29,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Infrastructure struct {
-	Network        string
-	Disk           string
-	Compute        string
-	SecurityGroup  string
-	VirtualMachine string
-}
+// type Infrastructure struct {
+// 	Network        string
+// 	Disk           string
+// 	Compute        string
+// 	SecurityGroup  string
+// 	VirtualMachine string
+// }
 
 type RecommendInfraRequest struct {
-	infra.Infra
+	Servers []infra.Infra `json:"servers" validate:"required"`
 }
 
 type RecommendInfraResponse struct {
-	cloudmodel.TbMcisDynamicReq
+	cloudmodel.InfraMigrationReq
 }
 
 // RecommendInfra godoc
@@ -66,13 +67,10 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.Infra.Compute: %v\n", req.Infra.Compute)
-	// log.Trace().Msgf("req.Infra.Network: %v\n", req.Infra.Network)
-	// log.Trace().Msgf("req.Infra.GPU: %v\n", req.Infra.GPU)
 
 	// Process
-	recommendedInfra, err := recommendation.Recommend(req.Infra)
-	recommendedInfra.Name = "recomm-infra01"
+	recommendedInfra, err := recommendation.Recommend(req.Servers)
+	recommendedInfra.Name = "recommended-target-infra-model01"
 
 	// Ouput
 	if err != nil {

@@ -14,6 +14,17 @@ limitations under the License.
 // Package migration is to privision targat multi-cloud infra for migration
 package migration
 
+import (
+	"fmt"
+	"os"
+	"time"
+
+	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/go-resty/resty/v2"
+	"github.com/rs/zerolog/log"
+)
+
 //"log"
 
 //csv file handling
@@ -83,6 +94,132 @@ const (
 
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
+
+func CreateVMInfra(nsId string, infraModel *cloudmodel.InfraMigrationReq) (cloudmodel.TbMcisInfo, error) {
+
+	client := resty.New()
+	client.SetBasicAuth("default", "default")
+	method := "POST"
+
+	// CB-Tumblebug API endpoint
+	cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
+	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mcisDynamic", nsId)
+	// url := fmt.Sprintf("%s/ns/{nsId}/mcisDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
+
+	// Set request body
+	requestBody := *infraModel
+
+	// Set response body
+	responseBody := cloudmodel.TbMcisInfo{}
+
+	client.SetTimeout(5 * time.Minute)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		&responseBody,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		// common.CBLog.Error(err)
+		return cloudmodel.TbMcisInfo{}, err
+	}
+
+	return responseBody, nil
+}
+
+func GetVMInfra(nsId, infraId string) (cloudmodel.TbMcisInfo, error) {
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := os.Getenv("API_USERNAME")
+	apiPass := os.Getenv("API_PASSWORD")
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set endpoint
+	epTumblebug := common.TumblebugRestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mcis/%s", epTumblebug, nsId, infraId)
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	responseBody := new(cloudmodel.TbMcisInfo)
+
+	client.SetTimeout(5 * time.Minute)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		responseBody,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
+		return cloudmodel.TbMcisInfo{}, err
+	}
+
+	return *responseBody, nil
+}
+
+func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := os.Getenv("API_USERNAME")
+	apiPass := os.Getenv("API_PASSWORD")
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set endpoint
+	epTumblebug := common.TumblebugRestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mcis/%s", epTumblebug, nsId, infraId)
+	options := "option=force"
+	if options != "" {
+		url += "?" + options
+	}
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	responseBody := new(common.SimpleMsg)
+
+	client.SetTimeout(5 * time.Minute)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		responseBody,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to delete the infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
+		return common.SimpleMsg{}, err
+	}
+
+	return *responseBody, nil
+}
 
 // // RegionInfo is struct for region information
 // type RegionInfo struct {

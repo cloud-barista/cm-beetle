@@ -31,7 +31,7 @@ type GetUsersResponse struct {
 // GetUsers godoc
 // @Summary Get a list of users
 // @Description Get information of all users.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} GetUsersResponse "(sample) This is a sample description for success response in Swagger UI"
@@ -60,7 +60,7 @@ type GetUserResponse struct {
 // GetUser godoc
 // @Summary Get specific user information
 // @Description Get information of a user with a specific ID.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
@@ -98,7 +98,7 @@ type CreateUserResponse struct {
 // CreateUser godoc
 // @Summary Create a new user
 // @Description Create a new user with the given information.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Param User body CreateUserRequest true "User information"
@@ -132,7 +132,7 @@ type UpdateUserResponse struct {
 // UpdateUser godoc
 // @Summary Update a user
 // @Description Update a user with the given information.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
@@ -172,7 +172,7 @@ type PatchUserResponse struct {
 // PatchUser godoc
 // @Summary Patch a user
 // @Description Patch a user with the given information.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
@@ -207,7 +207,7 @@ func PatchUser(c echo.Context) error {
 // DeleteUser godoc
 // @Summary Delete a user
 // @Description Delete a user with the given information.
-// @Tags [Sample] Users
+// @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
