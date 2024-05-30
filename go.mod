@@ -1,11 +1,11 @@
 module github.com/cloud-barista/cm-beetle
 
-go 1.22.3
+go 1.21.6
 
 require (
 	github.com/cloud-barista/cb-store v0.8.0
 	github.com/cloud-barista/cb-tumblebug v0.8.12
-	github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240522171320-cb61f875f480
+	github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240530070023-ee1c0a77fbf7
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.17.0
