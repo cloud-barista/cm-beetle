@@ -271,11 +271,11 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			CommonImage:    vmOsImageId,
 			CommonSpec:     recommendedSpec,
 			Description:    "a recommended virtual machine",
-			Label:          "rehosted",
+			Label:          "DynamicVM",
 			Name:           name,
-			RootDiskSize:   "default",
-			RootDiskType:   "default",
-			SubGroupSize:   "1",
+			RootDiskSize:   "",
+			RootDiskType:   "",
+			SubGroupSize:   "",
 			VmUserPassword: "",
 		}
 

@@ -78,7 +78,7 @@ func MigrateInfra(c echo.Context) error {
 	if err != nil {
 		// [temporary code block] Create a namespace as a default
 		log.Warn().Msgf("failed to get the namespace (nsId: %s)", nsId)
-		log.Info().Msg("create a namespace as a default (nsId: ns-mig01)")
+		log.Info().Msgf("create a namespace as a default (nsId: %s)", common.DefaulNamespaceId)
 		nsReq := common.NsReq{
 			Name: common.DefaulNamespaceId,
 		}
