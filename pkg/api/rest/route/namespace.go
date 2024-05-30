@@ -1,8 +1,9 @@
 package route
 
 import (
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 	"github.com/labstack/echo/v4"
+
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 )
 
 // /beetle/ns/*

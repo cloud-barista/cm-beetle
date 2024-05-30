@@ -1030,11 +1030,6 @@ paths:
       - application/json
       description: It migrates an infrastructure on a cloud platform.
       parameters:
-      - description: Namespace ID
-        in: path
-        name: nsId
-        required: true
-        type: string
       - description: Specify network, disk, compute, security group, virtual machine,
           etc.
         in: body
@@ -1066,11 +1061,6 @@ paths:
       - application/json
       description: It deletes the migrated infrastructure on a cloud platform.
       parameters:
-      - description: a namespace ID
-        in: path
-        name: nsId
-        required: true
-        type: string
       - description: a infrastructure ID created for migration
         in: path
         name: infraId
@@ -1100,11 +1090,6 @@ paths:
       - application/json
       description: It gets the migrated infrastructure on a cloud platform.
       parameters:
-      - description: a namespace ID
-        in: path
-        name: nsId
-        required: true
-        type: string
       - description: a infrastructure ID created for migration
         in: path
         name: infraId
@@ -1157,7 +1142,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: List all namespaces or namespaces' ID
       tags:
-      - '[Namespace] Namespace management'
+      - '[Namespace] Namespace management (To be used)'
     post:
       consumes:
       - application/json
@@ -1186,7 +1171,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Create namespace
       tags:
-      - '[Namespace] Namespace management'
+      - '[Namespace] Namespace management (To be used)'
   /ns/{nsId}:
     delete:
       consumes:
@@ -1212,7 +1197,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Delete namespace
       tags:
-      - '[Namespace] Namespace management'
+      - '[Namespace] Namespace management (To be used)'
     get:
       consumes:
       - application/json
@@ -1241,7 +1226,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Get namespace
       tags:
-      - '[Namespace] Namespace management'
+      - '[Namespace] Namespace management (To be used)'
   /readyz:
     get:
       consumes:

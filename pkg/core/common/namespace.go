@@ -24,6 +24,8 @@ import (
 	//"github.com/cloud-barista/cm-beetle/src/core/mcis"
 )
 
+var DefaulNamespaceId = "mig-ns01"
+
 type NsReq struct {
 	Name        string `json:"name" example:"ns01"`
 	Description string `json:"description" example:"Description for this namespace"`
