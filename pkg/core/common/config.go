@@ -23,6 +23,13 @@ import (
 	cbstore_utils "github.com/cloud-barista/cb-store/utils"
 )
 
+// Location is structure for location information
+type Location struct {
+	Display   string  `mapstructure:"display" json:"display"`
+	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
+	Longitude float64 `mapstructure:"longitude" json:"longitude"`
+}
+
 // RuntimeLatancyMap is global variable for LatancyMap
 var RuntimeLatancyMap = [][]string{}
 

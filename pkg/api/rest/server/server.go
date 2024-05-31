@@ -104,8 +104,13 @@ func RunServer(port string) {
 	// Middleware
 	// e.Use(middleware.Logger()) // default logger middleware in echo
 
+	APILogSkipPatterns := [][]string{
+		{"/beetle/api"},
+		// {"/mcis", "option=status"},
+	}
+
 	// Custom logger middleware with zerolog
-	e.Use(middlewares.Zerologger())
+	e.Use(middlewares.Zerologger(APILogSkipPatterns))
 
 	e.Use(middleware.Recover())
 	// limit the application to 20 requests/sec using the default in-memory store

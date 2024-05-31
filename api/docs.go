@@ -733,6 +733,7 @@ const docTemplate = `{
                 "subGroupSize": {
                     "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
                     "type": "string",
+                    "default": "1",
                     "example": "3"
                 },
                 "vmUserPassword": {
@@ -977,7 +978,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "location": {
-                    "$ref": "#/definitions/common.GeoLocation"
+                    "$ref": "#/definitions/common.Location"
                 },
                 "monAgentStatus": {
                     "description": "Montoring agent status",
@@ -1150,6 +1151,20 @@ const docTemplate = `{
                 }
             }
         },
+        "common.Location": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
         "common.NsInfo": {
             "type": "object",
             "properties": {
@@ -1268,7 +1283,7 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mig01"
+                    "example": "cloud-infra01"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
@@ -1430,7 +1445,7 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mig01"
+                    "example": "cloud-infra01"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",

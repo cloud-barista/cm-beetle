@@ -38,6 +38,7 @@ definitions:
         example: default, TYPE1, ...
         type: string
       subGroupSize:
+        default: "1"
         description: if subGroupSize is (not empty) && (> 0), subGroup will be gernetad.
           VMs will be created accordingly.
         example: "3"
@@ -209,7 +210,7 @@ definitions:
       label:
         type: string
       location:
-        $ref: '#/definitions/common.GeoLocation'
+        $ref: '#/definitions/common.Location'
       monAgentStatus:
         description: Montoring agent status
         example: '[installed, notInstalled, failed]'
@@ -324,6 +325,15 @@ definitions:
       value:
         type: string
     type: object
+  common.Location:
+    properties:
+      display:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
   common.NsInfo:
     properties:
       description:
@@ -404,7 +414,7 @@ definitions:
         example: rehosting infra
         type: string
       name:
-        example: mig01
+        example: cloud-infra01
         type: string
       systemLabel:
         description: SystemLabel is for describing the mcis in a keyword (any string
@@ -527,7 +537,7 @@ definitions:
         example: rehosting infra
         type: string
       name:
-        example: mig01
+        example: cloud-infra01
         type: string
       systemLabel:
         description: SystemLabel is for describing the mcis in a keyword (any string

@@ -113,7 +113,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 	targetInfra := cloudmodel.InfraMigrationReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
-		Label:           "DynamicVM",
+		Label:           "rehosted-infra",
 		Name:            "",
 		SystemLabel:     "",
 		Vm:              []cloudmodel.HostMigrationReq{},
@@ -271,7 +271,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 			CommonImage:    vmOsImageId,
 			CommonSpec:     recommendedSpec,
 			Description:    "a recommended virtual machine",
-			Label:          "DynamicVM",
+			Label:          "rehosted-vm",
 			Name:           name,
 			RootDiskSize:   "",
 			RootDiskType:   "",
