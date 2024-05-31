@@ -31,8 +31,7 @@ import (
 
 // InfraMigrationReq is sturct for requirements to create MCIS dynamically (with default resource option)
 type InfraMigrationReq struct {
-	Description string `json:"description" example:"the infrastructure created for migration"`
-	Name        string `json:"name" validate:"required" example:"mig01"`
+	Name string `json:"name" validate:"required" example:"cloud-infra01"`
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
 	InstallMonAgent string `json:"installMonAgent" example:"no" default:"yes" enums:"yes,no"` // yes or no
 
@@ -41,6 +40,8 @@ type InfraMigrationReq struct {
 
 	// SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
+
+	Description string `json:"description" example:"the infrastructure created for migration"`
 
 	Vm []HostMigrationReq `json:"vm" validate:"required"`
 }
@@ -51,7 +52,7 @@ type HostMigrationReq struct {
 	Name string `json:"name" example:"g1-1"`
 
 	// if subGroupSize is (not empty) && (> 0), subGroup will be gernetad. VMs will be created accordingly.
-	SubGroupSize string `json:"subGroupSize" example:"3" default:""`
+	SubGroupSize string `json:"subGroupSize" example:"3" default:"1"`
 
 	Label string `json:"label" example:"rehosted virtual machine"`
 
@@ -65,7 +66,7 @@ type HostMigrationReq struct {
 	RootDiskType string `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."`  // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	RootDiskSize string `json:"rootDiskSize,omitempty" example:"default, 30, 42, ..."` // "default", Integer (GB): ["50", ..., "1000"]
 
-	VmUserPassword string `json:"vmUserPassword" default:""`
+	VmUserPassword string `json:"vmUserPassword,omitempty" default:""`
 	// if ConnectionName is given, the VM tries to use associtated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" default:""`
@@ -166,7 +167,7 @@ type TbVmInfo struct {
 	// defined if the VM is in a group
 	SubGroupId string `json:"subGroupId"`
 
-	Location common.GeoLocation `json:"location"`
+	Location common.Location `json:"location"`
 
 	// Required by CB-Tumblebug
 	Status       string `json:"status"`

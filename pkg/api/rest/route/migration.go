@@ -8,7 +8,9 @@ import (
 // /beetle/migration/*
 func RegisterMigrationRoutes(g *echo.Group) {
 	g.POST("/infra", controller.MigrateInfra)
-	g.POST("/infra/network", controller.MigrateInfra)
-	g.POST("/infra/storage", controller.MigrateInfra)
-	g.POST("/infra/instance", controller.MigrateInfra)
+	g.GET("/infra/:infraId", controller.GetInfra)
+	g.DELETE("/infra/:infraId", controller.DeleteInfra)
+	// g.POST("/infra/network", controller.MigrateInfra)
+	// g.POST("/infra/storage", controller.MigrateInfra)
+	// g.POST("/infra/instance", controller.MigrateInfra)
 }

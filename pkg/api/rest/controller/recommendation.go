@@ -70,7 +70,7 @@ func RecommendInfra(c echo.Context) error {
 
 	// Process
 	recommendedInfra, err := recommendation.Recommend(req.Servers)
-	recommendedInfra.Name = "recommended-target-infra-model01"
+	recommendedInfra.Name = "cloud-infra01"
 
 	// Ouput
 	if err != nil {

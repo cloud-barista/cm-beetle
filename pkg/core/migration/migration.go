@@ -186,10 +186,10 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 	// set endpoint
 	epTumblebug := common.TumblebugRestUrl
 
-	// check readyz
-	method := "GET"
+	// delete the infrastructure with terminate option
+	method := "DELETE"
 	url := fmt.Sprintf("%s/ns/%s/mcis/%s", epTumblebug, nsId, infraId)
-	options := "option=force"
+	options := "option=terminate"
 	if options != "" {
 		url += "?" + options
 	}
@@ -210,6 +210,38 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 		common.SetUseBody(requestBody),
 		&requestBody,
 		responseBody,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to delete the infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
+		return common.SimpleMsg{}, err
+	}
+
+	// delete the infrastructure with terminate option
+	method = "DELETE"
+	url = fmt.Sprintf("%s/ns/%s/defaultResources", epTumblebug, nsId)
+	options = ""
+	if options != "" {
+		url += "?" + options
+	}
+
+	// Set request body
+	requestBody = common.NoBody
+
+	// Set response body
+	resDeleteDefaultResources := new(common.IdList)
+
+	client.SetTimeout(5 * time.Minute)
+
+	err = common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		resDeleteDefaultResources,
 		common.MediumDuration,
 	)
 
