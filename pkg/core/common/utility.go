@@ -15,9 +15,7 @@ limitations under the License.
 package common
 
 import (
-	"bufio"
 	"math/rand"
-	"os"
 	"regexp"
 	"runtime"
 	"strings"
@@ -28,7 +26,6 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 )
@@ -217,7 +214,7 @@ func GenChildResourceKey(nsId string, resourceType string, parentResourceId stri
 }
 
 // mcirIds is struct for containing id and name of each MCIR type
-type mcirIds struct { // Beetle
+type mcirIds struct { // Tumblebug
 	CspImageId           string
 	CspImageName         string
 	CspCustomImageId     string
@@ -308,99 +305,139 @@ func GetCspResourceId(nsId string, resourceType string, resourceId string) (stri
 	}
 }
 
-// ConnConfig is struct for containing a CB-Spider struct for connection config
-type ConnConfig struct { // Spider
+// ConnConfig is struct for containing modified CB-Spider struct for connection config
+type ConnConfig struct {
+	ConfigName           string         `json:"configName"`
+	ProviderName         string         `json:"providerName"`
+	DriverName           string         `json:"driverName"`
+	CredentialName       string         `json:"credentialName"`
+	CredentialHolder     string         `json:"credentialHolder"`
+	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
+	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo"`
+	RegionDetail         RegionDetail   `json:"regionDetail"`
+	RegionRepresentative bool           `json:"regionRepresentative"`
+	Verified             bool           `json:"verified"`
+}
+
+// SpiderConnConfig is struct for containing a CB-Spider struct for connection config
+type SpiderConnConfig struct {
 	ConfigName     string
 	ProviderName   string
 	DriverName     string
 	CredentialName string
 	RegionName     string
-	Location       GeoLocation
 }
 
-// GeoLocation is struct for geographical location
-type GeoLocation struct {
-	Latitude     string `json:"latitude"`
-	Longitude    string `json:"longitude"`
-	BriefAddr    string `json:"briefAddr"`
-	CloudType    string `json:"cloudType"`
-	NativeRegion string `json:"nativeRegion"`
+// CloudDriverInfo is struct for containing a CB-Spider struct for cloud driver info
+type CloudDriverInfo struct {
+	DriverName        string
+	ProviderName      string
+	DriverLibFileName string
 }
 
-// GetCloudLocation is to get location of clouds (need error handling)
-func GetCloudLocation(cloudType string, nativeRegion string) GeoLocation {
-
-	location := GeoLocation{}
-
-	if cloudType == "" || nativeRegion == "" {
-
-		// need error handling instead of assigning default value
-		location.CloudType = "ufc"
-		location.NativeRegion = "ufc"
-		location.BriefAddr = "South Korea (Seoul)"
-		location.Latitude = "37.4767"
-		location.Longitude = "126.8841"
-
-		return location
-	}
-
-	key := "/cloudtype/" + cloudType + "/region/" + nativeRegion
-
-	//fmt.Printf("[GetCloudLocation] KEY: %+v\n", key)
-
-	keyValue, err := CBStore.Get(key)
-
-	if err != nil {
-		CBLog.Error(err)
-		return location
-	}
-
-	if keyValue == nil {
-		file, fileErr := os.Open("../assets/cloudlocation.csv")
-		defer file.Close()
-		if fileErr != nil {
-			CBLog.Error(fileErr)
-			return location
-		}
-
-		rdr := csv.NewReader(bufio.NewReader(file))
-		rows, _ := rdr.ReadAll()
-		for i, row := range rows {
-			keyLoc := "/cloudtype/" + rows[i][0] + "/region/" + rows[i][1]
-			location.CloudType = rows[i][0]
-			location.NativeRegion = rows[i][1]
-			location.BriefAddr = rows[i][2]
-			location.Latitude = rows[i][3]
-			location.Longitude = rows[i][4]
-			valLoc, _ := json.Marshal(location)
-			dbErr := CBStore.Put(keyLoc, string(valLoc))
-			if dbErr != nil {
-				CBLog.Error(dbErr)
-				return location
-			}
-			for j := range row {
-				fmt.Printf("%s ", rows[i][j])
-			}
-			fmt.Println()
-		}
-		keyValue, err = CBStore.Get(key)
-		if err != nil {
-			CBLog.Error(err)
-			return location
-		}
-	}
-
-	if keyValue != nil {
-		fmt.Printf("[GetCloudLocation] %+v %+v\n", keyValue.Key, keyValue.Value)
-		err = json.Unmarshal([]byte(keyValue.Value), &location)
-		if err != nil {
-			CBLog.Error(err)
-			return location
-		}
-	}
-
-	return location
+// CredentialReq is struct for containing a struct for credential request
+type CredentialReq struct {
+	CredentialHolder string     `json:"credentialHolder"`
+	ProviderName     string     `json:"providerName"`
+	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
 }
+
+// CredentialInfo is struct for containing a struct for credential info
+type CredentialInfo struct {
+	CredentialName   string     `json:"credentialName"`
+	CredentialHolder string     `json:"credentialHolder"`
+	ProviderName     string     `json:"providerName"`
+	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
+}
+
+// SpiderRegionZoneInfo is struct for containing region struct of CB-Spider
+type SpiderRegionZoneInfo struct {
+	RegionName        string     // ex) "region01"
+	ProviderName      string     // ex) "GCP"
+	KeyValueInfoList  []KeyValue // ex) { {region, us-east1}, {zone, us-east1-c} }
+	AvailableZoneList []string
+}
+
+// RegionZoneInfo is struct for containing region struct
+type RegionZoneInfo struct {
+	AssignedRegion string `json:"assignedRegion"`
+	AssignedZone   string `json:"assignedZone"`
+}
+
+// // GetCloudLocation is to get location of clouds (need error handling)
+// func GetCloudLocation(cloudType string, nativeRegion string) GeoLocation {
+
+// 	location := GeoLocation{}
+
+// 	if cloudType == "" || nativeRegion == "" {
+
+// 		// need error handling instead of assigning default value
+// 		location.CloudType = "ufc"
+// 		location.NativeRegion = "ufc"
+// 		location.BriefAddr = "South Korea (Seoul)"
+// 		location.Latitude = "37.4767"
+// 		location.Longitude = "126.8841"
+
+// 		return location
+// 	}
+
+// 	key := "/cloudtype/" + cloudType + "/region/" + nativeRegion
+
+// 	//fmt.Printf("[GetCloudLocation] KEY: %+v\n", key)
+
+// 	keyValue, err := CBStore.Get(key)
+
+// 	if err != nil {
+// 		CBLog.Error(err)
+// 		return location
+// 	}
+
+// 	if keyValue == nil {
+// 		file, fileErr := os.Open("../assets/cloudlocation.csv")
+// 		defer file.Close()
+// 		if fileErr != nil {
+// 			CBLog.Error(fileErr)
+// 			return location
+// 		}
+
+// 		rdr := csv.NewReader(bufio.NewReader(file))
+// 		rows, _ := rdr.ReadAll()
+// 		for i, row := range rows {
+// 			keyLoc := "/cloudtype/" + rows[i][0] + "/region/" + rows[i][1]
+// 			location.CloudType = rows[i][0]
+// 			location.NativeRegion = rows[i][1]
+// 			location.BriefAddr = rows[i][2]
+// 			location.Latitude = rows[i][3]
+// 			location.Longitude = rows[i][4]
+// 			valLoc, _ := json.Marshal(location)
+// 			dbErr := CBStore.Put(keyLoc, string(valLoc))
+// 			if dbErr != nil {
+// 				CBLog.Error(dbErr)
+// 				return location
+// 			}
+// 			for j := range row {
+// 				fmt.Printf("%s ", rows[i][j])
+// 			}
+// 			fmt.Println()
+// 		}
+// 		keyValue, err = CBStore.Get(key)
+// 		if err != nil {
+// 			CBLog.Error(err)
+// 			return location
+// 		}
+// 	}
+
+// 	if keyValue != nil {
+// 		fmt.Printf("[GetCloudLocation] %+v %+v\n", keyValue.Key, keyValue.Value)
+// 		err = json.Unmarshal([]byte(keyValue.Value), &location)
+// 		if err != nil {
+// 			CBLog.Error(err)
+// 			return location
+// 		}
+// 	}
+
+// 	return location
+// }
 
 // // GetConnConfig is func to get connection config from CB-Spider
 // func GetConnConfig(ConnConfigName string) (ConnConfig, error) {

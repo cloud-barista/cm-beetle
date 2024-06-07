@@ -276,29 +276,24 @@ definitions:
     properties:
       configName:
         type: string
+      credentialHolder:
+        type: string
       credentialName:
         type: string
       driverName:
         type: string
-      location:
-        $ref: '#/definitions/common.GeoLocation'
       providerName:
         type: string
-      regionName:
+      regionDetail:
+        $ref: '#/definitions/common.RegionDetail'
+      regionRepresentative:
+        type: boolean
+      regionZoneInfo:
+        $ref: '#/definitions/common.RegionZoneInfo'
+      regionZoneInfoName:
         type: string
-    type: object
-  common.GeoLocation:
-    properties:
-      briefAddr:
-        type: string
-      cloudType:
-        type: string
-      latitude:
-        type: string
-      longitude:
-        type: string
-      nativeRegion:
-        type: string
+      verified:
+        type: boolean
     type: object
   common.IID:
     properties:
@@ -353,6 +348,28 @@ definitions:
         type: string
       name:
         example: ns01
+        type: string
+    type: object
+  common.RegionDetail:
+    properties:
+      description:
+        type: string
+      location:
+        $ref: '#/definitions/common.Location'
+      regionId:
+        type: string
+      regionName:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  common.RegionZoneInfo:
+    properties:
+      assignedRegion:
+        type: string
+      assignedZone:
         type: string
     type: object
   common.RestGetAllNsResponse:

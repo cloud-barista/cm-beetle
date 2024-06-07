@@ -23,12 +23,43 @@ import (
 	cbstore_utils "github.com/cloud-barista/cb-store/utils"
 )
 
+// CloudInfo is structure for cloud information
+type CloudInfo struct {
+	CSPs map[string]CSPDetail `mapstructure:"cloud" json:"csps"`
+}
+
+// CSPDetail is structure for CSP information
+type CSPDetail struct {
+	Description string                  `mapstructure:"description" json:"description"`
+	Driver      string                  `mapstructure:"driver" json:"driver"`
+	Links       []string                `mapstructure:"link" json:"links"`
+	Regions     map[string]RegionDetail `mapstructure:"region" json:"regions"`
+}
+
+// RegionDetail is structure for region information
+type RegionDetail struct {
+	RegionId    string   `mapstructure:"id" json:"regionId"`
+	RegionName  string   `mapstructure:"regionName" json:"regionName"`
+	Description string   `mapstructure:"description" json:"description"`
+	Location    Location `mapstructure:"location" json:"location"`
+	Zones       []string `mapstructure:"zone" json:"zones"`
+}
+
 // Location is structure for location information
 type Location struct {
 	Display   string  `mapstructure:"display" json:"display"`
 	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
 	Longitude float64 `mapstructure:"longitude" json:"longitude"`
 }
+
+// RuntimeCloudInfo is global variable for CloudInfo
+var RuntimeCloudInfo = CloudInfo{}
+
+type Credential struct {
+	Credentialholder map[string]map[string]map[string]string `yaml:"credentialholder"`
+}
+
+var RuntimeCredential = Credential{}
 
 // RuntimeLatancyMap is global variable for LatancyMap
 var RuntimeLatancyMap = [][]string{}

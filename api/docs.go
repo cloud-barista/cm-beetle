@@ -1076,40 +1076,32 @@ const docTemplate = `{
                 "configName": {
                     "type": "string"
                 },
+                "credentialHolder": {
+                    "type": "string"
+                },
                 "credentialName": {
                     "type": "string"
                 },
                 "driverName": {
                     "type": "string"
                 },
-                "location": {
-                    "$ref": "#/definitions/common.GeoLocation"
-                },
                 "providerName": {
                     "type": "string"
                 },
-                "regionName": {
-                    "type": "string"
-                }
-            }
-        },
-        "common.GeoLocation": {
-            "type": "object",
-            "properties": {
-                "briefAddr": {
+                "regionDetail": {
+                    "$ref": "#/definitions/common.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/common.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
                     "type": "string"
                 },
-                "cloudType": {
-                    "type": "string"
-                },
-                "latitude": {
-                    "type": "string"
-                },
-                "longitude": {
-                    "type": "string"
-                },
-                "nativeRegion": {
-                    "type": "string"
+                "verified": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1192,6 +1184,40 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "ns01"
+                }
+            }
+        },
+        "common.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/common.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "common.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
                 }
             }
         },
