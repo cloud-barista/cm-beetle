@@ -39,9 +39,9 @@ pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*
 
 # Swagger docs for REST APIs
-pkg/api/rest/docs/docs.go
-pkg/api/rest/docs/swagger.json
-pkg/api/rest/docs/swagger.yaml
+# api/docs.go
+# api/swagger.json
+# api/swagger.yaml
 
 # Config file for CM-Beetle
 !conf/

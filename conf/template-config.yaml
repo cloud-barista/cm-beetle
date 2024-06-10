@@ -1,27 +1,27 @@
 ## Set system endpoints
-cmbeetle:
+beetle:
   root: # To be set in runtime
 
 cbstore:
-  root: # To be set in runtime (based on cmbeetle.root)
+  root: # To be set in runtime (based on beetle.root)
 
 cblog:
-  root: # To be set in runtime (based on cmbeetle.root)
+  root: # To be set in runtime (based on beetle.root)
 
-cbspider:
-  callmethod: REST
+spider:
+  call_method: REST
   rest:
     url: http://localhost:1024/spider
 
-cbtumblebug:
-  callmethod: REST
+tumblebug:
+  call_method: REST
   rest:
     url: http://localhost:1323/tumblebug
 
 ## Logger configuration
 logfile:
-  # Set log file path (default logfile path: ./cm-beetle.log)
-  path: ./cm-beetle.log
+  # Set log file path (default logfile path: ./beetle.log)
+  path: ./beetle.log
   maxsize: 10
   maxbackups: 3
   maxage: 30
@@ -68,5 +68,5 @@ self:
 ## Environment variables that you don't need to touch
 # Swagger UI API document file path
 apidoc:
-  # export APIDOC_PATH=$CMBEETLE_ROOT/api/swagger.json
-  path: # To be set in runtime (based on cmbeetle.root)
+  # export APIDOC_PATH=$BEETLE_ROOT/api/swagger.json
+  path: # To be set in runtime (based on beetle.root)

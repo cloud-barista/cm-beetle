@@ -135,10 +135,10 @@ func getLogFileConfig() (string, int, int, int, bool) {
 	// Set config values
 	logFilePath := viper.GetString("logfile.path")
 
-	// Default: cm-beetle.log
+	// Default: beetle.log
 	if logFilePath == "" {
-		log.Warn().Msg("LOGFILE_PATH is not set. Using default value: cm-beetle.log")
-		logFilePath = "cm-beetle.log"
+		log.Warn().Msg("LOGFILE_PATH is not set. Using default value: beetle.log")
+		logFilePath = "beetle.log"
 	}
 
 	// Default: 10 MB

@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cm-beetle-deployment
-  namespace: cloud-barista  # Change this to your desired namespace
+  namespace: cloud-barista # Change this to your desired namespace
 spec:
   replicas: 1
   selector:
@@ -16,18 +16,28 @@ spec:
         app: cm-beetle
     spec:
       containers:
-      - name: cm-beetle
-        image: ghcr.io/cloud-barista/cm-beetle:latest
-        ports:
-        - containerPort: 8056
-        env:
-          - name: API_USERNAME
-            value: "default"
-          - name: API_PASSWORD
-            value: "default"
-          - name: AUTOCONTROL_DURATION_MS
-            value: "10000"
-          - name: SELF_ENDPOINT
-            value: "localhost:1323"
-          - name: API_DOC_PATH
-            value: "/app/pkg/api/rest/docs/swagger.json"
+        - name: cm-beetle
+          image: ghcr.io/cloud-barista/cm-beetle:latest
+          ports:
+            - containerPort: 8056
+          env:
+            - name: BEETLE_ROOT
+              value: "/app"
+            - name: CBLOG_ROOT
+              value: "/app"
+            - name: CBLOG_ROOT
+              value: "/app"
+            - name: TUMBLEBUG_CALL_METHOD
+              value: "REST"
+            - name: TUMBLEBUG_REST_URL
+              value: "http://localhost:1323/tumblebug"
+            - name: API_USERNAME
+              value: "default"
+            - name: API_PASSWORD
+              value: "default"
+            - name: AUTOCONTROL_DURATION_MS
+              value: "10000"
+            - name: SELF_ENDPOINT
+              value: "localhost:8056"
+            - name: API_DOC_PATH
+              value: "/app/api/swagger.json"
