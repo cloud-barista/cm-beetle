@@ -1,8 +1,9 @@
 ### Config Package
 
 #### Overview
+
 The `config` package manages configurations in Go applications,
-ensuring compatibility between `config.yaml` and `setup.env`. 
+ensuring compatibility between `config.yaml` and `setup.env`.
 `setup.env` is used to setup environment variables.
 
 Note - When both environment variables and config.yaml settings are present,
@@ -13,15 +14,16 @@ the package prioritizes environment variables, overriding equivalent settings in
 The below configurations are compatible in this project.
 
 - `setup.env` contains:
-    ```
-    export LOGFILE_PATH=cm-beetle.log
-    ```
+
+  ```
+  export LOGFILE_PATH=beetle.log
+  ```
 
 - `config.yaml` has:
-    ```yaml
-    logfile:
-        path: ./cm-beetle.log
-    ```
+  ```yaml
+  logfile:
+    path: ./beetle.log
+  ```
 
 #### How to use it
 

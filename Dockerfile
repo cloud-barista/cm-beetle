@@ -43,20 +43,20 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 
 ## Set environment variables 
 # Set system endpoints
-ENV CMBEETLE_ROOT=/app \
+ENV BEETLE_ROOT=/app \
     CBSTORE_ROOT=/app \
     CBLOG_ROOT=/app
 
-# ENV CBSPIDER_CALLMETHOD REST \
-#     CBSPIDER_REST_URL http://cb-spider:1024/spider
+# ENV SPIDER_CALL_METHOD REST \
+#     SPIDER_REST_URL http://cb-spider:1024/spider
 
-ENV CBTUMBLEBUG_CALLMETHOD=REST \
-    CBTUMBLEBUG_REST_URL=http://localhost:1323/tumblebug
+ENV TUMBLEBUG_CALL_METHOD=REST \
+    TUMBLEBUG_REST_URL=http://localhost:1323/tumblebug
 
 ## Logger configuration
-# Set log file path (default logfile path: ./cm-beetle.log) 
+# Set log file path (default logfile path: ./beetle.log) 
 # Set log level, such as trace, debug info, warn, error, fatal, and panic
-ENV LOGFILE_PATH=$CMBEETLE_ROOT/log/cm-beetle.log \
+ENV LOGFILE_PATH=$BEETLE_ROOT/log/beetle.log \
     LOGFILE_MAXSIZE=10 \
     LOGFILE_MAXBACKUPS=3 \
     LOGFILE_MAXAGE=30 \

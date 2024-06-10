@@ -47,7 +47,7 @@ func Init() {
 	viper.AutomaticEnv()
 
 	// Values set in runtime
-	if viper.GetString("cmbeetle.root") == "" {
+	if viper.GetString("beetle.root") == "" {
 		fmt.Println("find project root by using project name")
 		log.Println("find project root by using project name")
 
@@ -69,10 +69,10 @@ func Init() {
 		log.Printf("project root directory: %s\n", projectRoot)
 
 		// Set the binary path
-		viper.Set("cmbeetle.root", projectRoot)
+		viper.Set("beetle.root", projectRoot)
 		viper.Set("cbstore.root", projectRoot)
 		viper.Set("cblog.root", projectRoot)
-		viper.Set("apidoc.path", projectRoot+"/pkg/api/rest/docs/swagger.json")
+		viper.Set("apidoc.path", projectRoot+"/api/swagger.json")
 	}
 
 	// Recursively print all keys and values in Viper

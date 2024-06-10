@@ -221,13 +221,13 @@ func InitConfig(id string) error {
 		DBUrl = NVL(os.Getenv("DB_URL"), "localhost:3306")
 		fmt.Println("<DB_URL> " + DBUrl)
 	case StrDBDatabase:
-		DBDatabase = NVL(os.Getenv("DB_DATABASE"), "cb_beetle")
+		DBDatabase = NVL(os.Getenv("DB_DATABASE"), "cm_beetle")
 		fmt.Println("<DB_DATABASE> " + DBDatabase)
 	case StrDBUser:
-		DBUser = NVL(os.Getenv("DB_USER"), "cb_beetle")
+		DBUser = NVL(os.Getenv("DB_USER"), "cm_beetle")
 		fmt.Println("<DB_USER> " + DBUser)
 	case StrDBPassword:
-		DBPassword = NVL(os.Getenv("DB_PASSWORD"), "cb_beetle")
+		DBPassword = NVL(os.Getenv("DB_PASSWORD"), "cm_beetle")
 		fmt.Println("<DB_PASSWORD> " + DBPassword)
 	case StrAutocontrolDurationMs:
 		AutocontrolDurationMs = NVL(os.Getenv("AUTOCONTROL_DURATION_MS"), "10000")

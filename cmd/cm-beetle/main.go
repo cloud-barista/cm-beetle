@@ -57,9 +57,9 @@ func main() {
 	// common.DragonflyRestUrl = common.NVL(os.Getenv("DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
 	common.TumblebugRestUrl = common.NVL(os.Getenv("TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
 	common.DBUrl = common.NVL(os.Getenv("DB_URL"), "localhost:3306")
-	common.DBDatabase = common.NVL(os.Getenv("DB_DATABASE"), "cb_beetle")
-	common.DBUser = common.NVL(os.Getenv("DB_USER"), "cb_beetle")
-	common.DBPassword = common.NVL(os.Getenv("DB_PASSWORD"), "cb_beetle")
+	common.DBDatabase = common.NVL(os.Getenv("DB_DATABASE"), "cm_beetle")
+	common.DBUser = common.NVL(os.Getenv("DB_USER"), "cm_beetle")
+	common.DBPassword = common.NVL(os.Getenv("DB_PASSWORD"), "cm_beetle")
 	common.AutocontrolDurationMs = common.NVL(os.Getenv("AUTOCONTROL_DURATION_MS"), "10000")
 
 	// load the latest configuration from DB (if exist)
