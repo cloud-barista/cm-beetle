@@ -3,7 +3,6 @@ package recommendation
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 
@@ -14,14 +13,15 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("API_USERNAME")
-	apiPass := os.Getenv("API_PASSWORD")
+	apiUser := viper.GetString("api.username")
+	apiPass := viper.GetString("api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
@@ -260,7 +260,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 		log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 		// Select VM OS image via LevenshteinDistance-based text similarity
-		delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]"}
+		delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
 		delimiters2 := delimiters1
 		vmOsImageId := FindBestVmOsImage(keywords, delimiters1, resMcisDynamicCheck.ReqCheck[0].Image, delimiters2)
 
@@ -301,7 +301,7 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []mcir.T
 	var highestScore float64
 
 	for _, image := range vmImages {
-		score := calculateSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
+		score := CalculateSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImageID = image.Id
@@ -314,27 +314,37 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []mcir.T
 	return bestVmOsImageID
 }
 
-// calculateSimilarity calculates the similarity between two texts based on word similarities
-func calculateSimilarity(text1 string, delimiters1 []string, text2 string, delimiters2 []string) float64 {
+// CalculateSimilarity calculates the similarity between two texts based on word similarities
+func CalculateSimilarity(text1 string, delimiters1 []string, text2 string, delimiters2 []string) float64 {
+
 	words1 := splitToArray(text1, delimiters1)
 	words2 := splitToArray(text2, delimiters2)
+
+	log.Trace().Msgf("From text 1: %s", text1)
+	log.Trace().Msgf("To word array 1: %v", words1)
+	log.Trace().Msgf("From text 2: %s", text2)
+	log.Trace().Msgf("To word array 2: %v", words2)
 
 	// Calculate the similarity between two texts based on word similarities
 	totalSimilarity := 0.0
 	for _, word1 := range words1 {
 		bestMatch := 0.0
+		bestMatchWord := ""
 		for _, word2 := range words2 {
-			similarity := wordSimilarity(word1, word2)
+			// similarity := CalculateSimilarityByLevenshteinDistance(word1, word2)
+			similarity := CalculateSimilarityBySequenceMatcher(word1, word2)
 			if similarity > bestMatch {
 				bestMatch = similarity
-			}
+				bestMatchWord = word2
 
-			totalSimilarity += activateByReLU(bestMatch, 0.3)
+			}
 		}
+		log.Trace().Msgf("Best match for '%s': '%s' (similarity: %.2f)", word1, bestMatchWord, bestMatch)
+		totalSimilarity += activateByReLU(bestMatch, 0.5)
 	}
 
 	// Normalize by the number of words
-	return totalSimilarity / float64(len(words1))
+	return totalSimilarity // / float64(len(words1))
 }
 
 func splitToArray(text string, delimiters []string) []string {
@@ -348,22 +358,39 @@ func splitToArray(text string, delimiters []string) []string {
 	text = strings.ToLower(text)
 
 	// Create a regular expression pattern for the delimiters
-	pattern := strings.Join(delimiters, "|")
+	escapedDelimiters := make([]string, len(delimiters))
+	for i, d := range delimiters {
+		escapedDelimiters[i] = regexp.QuoteMeta(d)
+	}
+	pattern := strings.Join(escapedDelimiters, "|")
 	re := regexp.MustCompile(pattern)
 
 	// Split text by the delimiters
 	arr := re.Split(text, -1)
 
-	return arr
+	// Remove empty strings resulting from the split
+	result := []string{}
+	for _, str := range arr {
+		if str != "" {
+			result = append(result, str)
+		}
+	}
+
+	return result
 }
 
-// wordSimilarity calculates the similarity between two words based on Levenshtein distance
-func wordSimilarity(word1, word2 string) float64 {
+// CalculateSimilarityByLevenshteinDistance calculates the similarity between two words based on Levenshtein distance
+func CalculateSimilarityByLevenshteinDistance(word1, word2 string) float64 {
 	maxLen := float64(max(len(word1), len(word2)))
 	if maxLen == 0 {
 		return 1.0
 	}
 	return 1.0 - float64(LevenshteinDistance(word1, word2))/maxLen
+}
+
+// CalculateSimilarityBySequenceMatcher calculates the similarity between two words based on Levenshtein distance
+func CalculateSimilarityBySequenceMatcher(word1, word2 string) float64 {
+	return SequenceMatcher(word1, word2)
 }
 
 // activateByReLU applies a ReLU function that activates if the similarity is greater than a threshold
@@ -419,6 +446,37 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// longestCommonSubstring finds the longest common substring between two strings.
+func longestCommonSubstring(s1, s2 string) string {
+	l1, l2 := len(s1), len(s2)
+	matrix := make([][]int, l1+1)
+	for i := range matrix {
+		matrix[i] = make([]int, l2+1)
+	}
+
+	longest := 0
+	endIndex := l1
+	for i := 1; i <= l1; i++ {
+		for j := 1; j <= l2; j++ {
+			if s1[i-1] == s2[j-1] {
+				matrix[i][j] = matrix[i-1][j-1] + 1
+				if matrix[i][j] > longest {
+					longest = matrix[i][j]
+					endIndex = i
+				}
+			}
+		}
+	}
+
+	return s1[endIndex-longest : endIndex]
+}
+
+// SequenceMatcher calculates the similarity ratio between two strings.
+func SequenceMatcher(text1, text2 string) float64 {
+	lcs := longestCommonSubstring(text1, text2)
+	return 2.0 * float64(len(lcs)) / float64(len(text1)+len(text2))
 }
 
 // // JaccardSimilarity calculates the Jaccard similarity between two strings

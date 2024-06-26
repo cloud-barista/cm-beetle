@@ -16,8 +16,12 @@ github.com/chzyer/readline v1.5.0/go.mod h1:x22KAscuvRqlLoK9CsoYsmxoXZMMFVyOl86c
 github.com/chzyer/test v0.0.0-20210722231415-061457976a23/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cloud-barista/cb-log v0.8.0 h1:ArWCs1EgpoD3ZnBgcC4cAw5ufI/JHmFKfJswlv4whgk=
 github.com/cloud-barista/cb-log v0.8.0/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
+github.com/cloud-barista/cb-log v0.8.2 h1:hPCbLj6TW6m9UWlq002sDuGgxKFVp68w4V3k493+MxY=
+github.com/cloud-barista/cb-log v0.8.2/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
 github.com/cloud-barista/cb-store v0.8.0 h1:0K47YEf+K3wx18D+m0XirlDbdTz229XxsTXw6WACjRA=
 github.com/cloud-barista/cb-store v0.8.0/go.mod h1:6NuA5TdeVRExd59ULXv6LEhm4EE0ODn9L820g4VqApo=
+github.com/cloud-barista/cb-store v0.8.2 h1:7excW7SX0Xw9Xxo0xO4HkndjOYonh4z6mFzNqYN3XH4=
+github.com/cloud-barista/cb-store v0.8.2/go.mod h1:GBTRuOApzMWSENFSgIPtrbWUKSwP30bn90gWE0ENUD8=
 github.com/cloud-barista/cb-tumblebug v0.8.12 h1:uc5aOI9q5XhMq7GQ9s7WyWyLoxtklcqib/gdDaSgumw=
 github.com/cloud-barista/cb-tumblebug v0.8.12/go.mod h1:yOwgw7jXqMdSSgC2g0TvgCG1WyXNw6Q7J6JGfbsqEOw=
 github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240530070023-ee1c0a77fbf7 h1:4r7YI8FlWfk2H/H+fICupvzEjCP+4cCkqG5CMzvhDdo=
