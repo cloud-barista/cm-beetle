@@ -3,7 +3,7 @@ module github.com/cloud-barista/cm-beetle
 go 1.21.6
 
 require (
-	github.com/cloud-barista/cb-store v0.8.0
+	github.com/cloud-barista/cb-store v0.8.2
 	github.com/cloud-barista/cb-tumblebug v0.8.12
 	github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240530070023-ee1c0a77fbf7
 	github.com/docker/docker v26.1.3+incompatible
@@ -26,7 +26,7 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
-	github.com/cloud-barista/cb-log v0.8.0 // indirect
+	github.com/cloud-barista/cb-log v0.8.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
