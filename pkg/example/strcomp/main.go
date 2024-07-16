@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
+	"github.com/cloud-barista/cm-beetle/pkg/strcomp"
 )
 
 func main() {
@@ -15,15 +15,28 @@ func main() {
 		{"22.04", "22.04.1"},
 		{"22.04", "20.04"},
 		{"20.04", "18.04"},
-		{"x86_64", "amd64"},
+		{"x86_64", "x86_64"},
+		{"amd64", "x86_64"},
+		{"x64", "x86_64"},
+		{"x86", "i386"},
+		{"x86", "i686"},
+		{"i686", "i386"},
+		{"32bit", "i386"},
+		{"amd64", "arm64"},
+		{"arm64", "arm64"},
+		{"aarch64", "arm64"},
+		{"armv8", "arm64"},
+		{"armv7", "armv7"},
+		{"arm", "armv7"},
+		{"amd32", "i386"},
 		{"hvm-ssd", "ssd"},
 		{"hvm-ssd", "hdd"},
 	}
 
 	for _, set := range compareWordSet {
 		fmt.Printf("Comparing '%s' with '%s':\n", set.str1, set.str2)
-		fmt.Printf(" - LevenshteinDistance, Similarity ratio: %.2f\n", recommendation.CalculateSimilarityByLevenshteinDistance(set.str1, set.str2))
-		fmt.Printf(" - SequenceMatcher, Similarity ratio: %.2f\n", recommendation.CalculateSimilarityBySequenceMatcher(set.str1, set.str2))
+		fmt.Printf(" - LevenshteinDistance, Similarity ratio: %.2f\n", strcomp.CalculateSimilarityByLevenshteinDistance(set.str1, set.str2))
+		fmt.Printf(" - SequenceMatcher, Similarity ratio: %.2f\n", strcomp.CalculateSimilarityBySequenceMatcher(set.str1, set.str2))
 		fmt.Println("--------------------------------------------------------")
 	}
 
@@ -34,15 +47,16 @@ func main() {
 	}
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
-	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
+	delimiters1 := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
 	delimiters2 := delimiters1
 
 	for _, image := range vmImages {
 		fmt.Printf("Comparing keywords with VM Image:\n")
 		fmt.Printf("Keywords: '%s'\n", keywords)
 		fmt.Printf("VM Image: '%s'\n", image)
-		score := recommendation.CalculateSimilarity(keywords, delimiters1, image, delimiters2)
+		score := strcomp.CalculateSimilarity(keywords, delimiters1, image, delimiters2)
 		fmt.Printf(" - Similarity Score: %.2f\n", score)
 		fmt.Println("--------------------------------------------------------")
 	}
+
 }
