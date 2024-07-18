@@ -64,6 +64,10 @@ func Validate(c echo.Context, params []string) error {
 	return nil
 }
 
+type SimpleMessage struct {
+	common.SimpleMsg
+}
+
 // RestGetReadyz func check if CM-Beetle server is ready or not.
 // RestGetReadyz godoc
 // @Summary Check Beetle is ready
@@ -71,11 +75,11 @@ func Validate(c echo.Context, params []string) error {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} common.SimpleMsg
-// @Failure 503 {object} common.SimpleMsg
+// @Success 200 {object} SimpleMessage
+// @Failure 503 {object} SimpleMessage
 // @Router /readyz [get]
 func RestGetReadyz(c echo.Context) error {
-	message := common.SimpleMsg{}
+	message := SimpleMessage{}
 	message.Message = "CM-Beetle is ready"
 	if !common.SystemReady {
 		message.Message = "CM-Beetle is NOT ready"
@@ -90,16 +94,16 @@ func RestGetReadyz(c echo.Context) error {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} common.SimpleMsg
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} SimpleMessage
+// @Failure 404 {object} SimpleMessage
+// @Failure 500 {object} SimpleMessage
 // @Router /httpVersion [get]
 func RestCheckHTTPVersion(c echo.Context) error {
 	// Access the *http.Request object from the echo.Context
 	req := c.Request()
 
 	// Determine the HTTP protocol version of the request
-	okMessage := common.SimpleMsg{}
+	okMessage := SimpleMessage{}
 	okMessage.Message = req.Proto
 
 	return c.JSON(http.StatusOK, &okMessage)
@@ -113,9 +117,9 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Tags [Admin] System management
 // // @Accept  json
 // // @Produce  json
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Success 200 {object} SimpleMessage
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /swaggerActive [get]
 // func RestGetSwagger(c echo.Context) error {
 // 	docFile := os.Getenv("APIDOC_PATH")
@@ -145,8 +149,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Produce  json
 // // @Param connConfigName path string true "Name of connection config (cloud config)"
 // // @Success 200 {object} common.ConnConfig
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /connConfig/{connConfigName} [get]
 // func RestGetConnConfig(c echo.Context) error {
 
@@ -170,8 +174,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Success 200 {object} common.ConnConfigList
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /connConfig [get]
 // func RestGetConnConfigList(c echo.Context) error {
 
@@ -195,8 +199,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Produce  json
 // // @Param regionName path string true "Name of region to retrieve"
 // // @Success 200 {object} common.Region
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /region/{regionName} [get]
 // func RestGetRegion(c echo.Context) error {
 
@@ -221,8 +225,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Success 200 {object} common.RegionList
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /region [get]
 // func RestGetRegionList(c echo.Context) error {
 
@@ -250,9 +254,9 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Param key query string true "retrieve objects by key"
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Success 200 {object} SimpleMessage
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /objects [get]
 // func RestGetObjects(c echo.Context) error {
 // 	parentKey := c.QueryParam("key")
@@ -276,9 +280,9 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Param key query string true "get object value by key"
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Success 200 {object} SimpleMessage
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /object [get]
 // func RestGetObject(c echo.Context) error {
 // 	parentKey := c.QueryParam("key")
@@ -303,9 +307,9 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Param key query string true "delete object value by key"
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Success 200 {object} SimpleMessage
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /object [delete]
 // func RestDeleteObject(c echo.Context) error {
 // 	parentKey := c.QueryParam("key")
@@ -332,9 +336,9 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Param key query string true "Delete child objects based on the given key string"
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Success 200 {object} SimpleMessage
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /objects [delete]
 // func RestDeleteObjects(c echo.Context) error {
 // 	parentKey := c.QueryParam("key")
@@ -362,8 +366,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Produce  json
 // // @Param connectionName body RestInspectResourcesRequest true "Specify connectionName and resource type"
 // // @Success 200 {object} mcis.InspectResource
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /inspectResources [post]
 // func RestInspectResources(c echo.Context) error {
 
@@ -399,8 +403,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Accept  json
 // // @Produce  json
 // // @Success 200 {object} mcis.InspectResourceAllResult
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /inspectResourcesOverview [get]
 // func RestInspectResourcesOverview(c echo.Context) error {
 // 	content, err := mcis.InspectResourcesOverview()
@@ -429,8 +433,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Param option query string false "Option to specify resourceType" Enums(onlyVm, exceptVm)
 // // @Param mcisFlag query string false "Flag to show VMs in a collective MCIS form (y,n)" Enums(y, n) default(y)
 // // @Success 200 {object} mcis.RegisterResourceResult
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /registerCspResources [post]
 // func RestRegisterCspNativeResources(c echo.Context) error {
 
@@ -469,8 +473,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // // @Param option query string false "Option to specify resourceType" Enums(onlyVm, exceptVm)
 // // @Param mcisFlag query string false "Flag to show VMs in a collective MCIS form (y,n)" Enums(y, n) default(y)
 // // @Success 200 {object} mcis.RegisterResourceAllResult
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
+// // @Failure 404 {object} SimpleMessage
+// // @Failure 500 {object} SimpleMessage
 // // @Router /registerCspResourcesAll [post]
 // func RestRegisterCspNativeResourcesAll(c echo.Context) error {
 

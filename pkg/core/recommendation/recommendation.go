@@ -7,8 +7,12 @@ import (
 
 	"github.com/cloud-barista/cb-tumblebug/src/core/mcir"
 	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
-	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+
+	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+
+	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
+	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/strcomp"
 	"github.com/go-resty/resty/v2"
@@ -16,7 +20,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
+// func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
+func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -46,7 +51,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 	if err != nil {
 		log.Err(err).Msg("")
-		return cloudmodel.InfraMigrationReq{}, err
+		return mcis.TbMcisDynamicReq{}, err
 	}
 	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
 
@@ -110,13 +115,13 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 }`
 
 	// A target infrastructure by recommendation
-	targetInfra := cloudmodel.InfraMigrationReq{
+	targetInfra := mcis.TbMcisDynamicReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
 		Label:           "rehosted-infra",
 		Name:            "",
 		SystemLabel:     "",
-		Vm:              []cloudmodel.HostMigrationReq{},
+		Vm:              []mcis.TbVmDynamicReq{},
 	}
 
 	// Recommand VMs
@@ -179,7 +184,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 		err := json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
 		if err != nil {
 			log.Err(err).Msg("")
-			return cloudmodel.InfraMigrationReq{}, err
+			return mcis.TbMcisDynamicReq{}, err
 		}
 		log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
 
@@ -199,7 +204,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 		if err != nil {
 			log.Err(err).Msg("")
-			return cloudmodel.InfraMigrationReq{}, err
+			return mcis.TbMcisDynamicReq{}, err
 		}
 
 		numRecommenedVm := len(resRecommVmList)
@@ -242,7 +247,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 		if err != nil {
 			log.Err(err).Msg("")
-			return cloudmodel.InfraMigrationReq{}, err
+			return mcis.TbMcisDynamicReq{}, err
 		}
 
 		log.Trace().Msgf("resMcisDynamicCheck: %+v", resMcisDynamicCheck)
@@ -266,7 +271,7 @@ func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
 
 		// vmOsImage := fmt.Sprintf("%s+%s+%s", providerName, regionName, osNameWithVersion)
 
-		vm := cloudmodel.HostMigrationReq{
+		vm := mcis.TbVmDynamicReq{
 			ConnectionName: "",
 			CommonImage:    vmOsImageId,
 			CommonSpec:     recommendedSpec,

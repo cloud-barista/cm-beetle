@@ -17,8 +17,10 @@ package controller
 import (
 	"net/http"
 
-	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -42,7 +44,7 @@ type RecommendInfraRequest struct {
 }
 
 type RecommendInfraResponse struct {
-	cloudmodel.InfraMigrationReq
+	mcis.TbMcisDynamicReq
 }
 
 // RecommendInfra godoc

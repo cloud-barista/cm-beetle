@@ -80,21 +80,6 @@ const (
 )
 
 // RunServer func start Rest API server
-
-// @title CM-Beetle REST API
-// @version latest
-// @description CM-Beetle REST API
-
-// @contact.name API Support
-// @contact.url http://cloud-barista.github.io
-// @contact.email contact-to-cloud-barista@googlegroups.com
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @BasePath /beetle
-
-// @securityDefinitions.basic BasicAuth
 func RunServer(port string) {
 
 	log.Info().Msg("CM-Beetle REST API server is starting...")
