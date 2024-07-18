@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // Package common is to handle REST API for common funcitonalities
-package common
+package controller
 
 import (
 	"fmt"
@@ -22,48 +22,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
-
-// func RestCheckNs(c echo.Context) error {
-
-// 	if err := Validate(c, []string{"nsId"}); err != nil {
-// 		common.CBLog.Error(err)
-// 		return SendMessage(c, http.StatusNotFound, err.Error())
-// 	}
-
-// 	nsId := c.Param("nsId")
-// 	err := common.CheckString(nsId)
-// 	if err != nil {
-// 		common.CBLog.Error(err)
-// 		return err
-// 	}
-// 	exists, err := common.CheckNs(nsId)
-// 	if err != nil {
-// 		common.CBLog.Error(err)
-// 		return SendMessage(c, http.StatusNotFound, err.Error())
-// 	}
-
-// 	return SendExistence(c, http.StatusOK, exists)
-// }
-
-// // RestDelAllNs godoc
-// // @Summary Delete all namespaces
-// // @Description Delete all namespaces
-// // @Tags [Namespace] Namespace management (To be used)
-// // @Accept  json
-// // @Produce  json
-// // @Success 200 {object} common.SimpleMsg
-// // @Failure 404 {object} common.SimpleMsg
-// // @Router /ns [delete]
-// func RestDelAllNs(c echo.Context) error {
-
-// 	err := common.DelAllNs()
-// 	if err != nil {
-// 		common.CBLog.Error(err)
-// 		return SendMessage(c, http.StatusBadRequest, err.Error())
-// 	}
-
-// 	return SendMessage(c, http.StatusOK, "All namespaces has been deleted")
-// }
 
 // RestDeleteNs godoc
 // @Summary Delete namespace
@@ -100,20 +58,13 @@ func RestDeleteNs(c echo.Context) error {
 
 }
 
-// JSONResult's data field will be overridden by the specific type
-type JSONResult struct {
-	//Code    int          `json:"code" `
-	//Message string       `json:"message"`
-	//Data    interface{}  `json:"data"`
-}
-
 // RestGetAllNs godoc
 // @Summary List all namespaces or namespaces' ID
 // @Description List all namespaces or namespaces' ID
 // @Tags [Namespace] Namespace management (To be used)
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} JSONResult{[DEFAULT]=RestGetAllNsResponse,[ID]=common.IdList} "Different return structures by the given option param"
+// @Success 200 {object} common.RestGetAllNsResponse "Different return structures by the given option param"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /ns [get]
@@ -141,7 +92,7 @@ func RestGetAllNs(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(ns01)
-// @Success 200 {object} common.NsInfo
+// @Success 200 {object} common.NsInfo "Namespace information"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /ns/{nsId} [get]
@@ -201,28 +152,3 @@ func RestPostNs(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, nsInfo)
 }
-
-// // RestPutNs godoc
-// // @Summary Update namespace
-// // @Description Update namespace
-// // @Tags [Namespace] Namespace management (To be used)
-// // @Accept  json
-// // @Produce  json
-// // @Param nsId path string true "Namespace ID" default(ns01)
-// // @Param namespace body common.NsReq true "Details to update existing namespace"
-// // @Success 200 {object} common.NsInfo
-// // @Failure 404 {object} common.SimpleMsg
-// // @Failure 500 {object} common.SimpleMsg
-// // @Router /ns/{nsId} [put]
-// func RestPutNs(c echo.Context) error {
-// 	u := &common.NsReq{}
-// 	if err := c.Bind(u); err != nil {
-// 		return SendMessage(c, http.StatusBadRequest, err.Error())
-// 	}
-
-// 	content, err := common.UpdateNs(c.Param("nsId"), u)
-// 	if err != nil {
-// 		return SendMessage(c, http.StatusBadRequest, err.Error())
-// 	}
-// 	return Send(c, http.StatusOK, content)
-// }

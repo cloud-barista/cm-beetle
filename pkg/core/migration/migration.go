@@ -19,7 +19,8 @@ import (
 	"os"
 	"time"
 
-	cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
@@ -95,7 +96,7 @@ const (
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
-func CreateVMInfra(nsId string, infraModel *cloudmodel.InfraMigrationReq) (cloudmodel.TbMcisInfo, error) {
+func CreateVMInfra(nsId string, infraModel *mcis.TbMcisDynamicReq) (mcis.TbMcisInfo, error) {
 
 	client := resty.New()
 	client.SetBasicAuth("default", "default")
@@ -110,7 +111,7 @@ func CreateVMInfra(nsId string, infraModel *cloudmodel.InfraMigrationReq) (cloud
 	requestBody := *infraModel
 
 	// Set response body
-	responseBody := cloudmodel.TbMcisInfo{}
+	responseBody := mcis.TbMcisInfo{}
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -127,13 +128,13 @@ func CreateVMInfra(nsId string, infraModel *cloudmodel.InfraMigrationReq) (cloud
 
 	if err != nil {
 		// common.CBLog.Error(err)
-		return cloudmodel.TbMcisInfo{}, err
+		return mcis.TbMcisInfo{}, err
 	}
 
 	return responseBody, nil
 }
 
-func GetVMInfra(nsId, infraId string) (cloudmodel.TbMcisInfo, error) {
+func GetVMInfra(nsId, infraId string) (mcis.TbMcisInfo, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -152,7 +153,7 @@ func GetVMInfra(nsId, infraId string) (cloudmodel.TbMcisInfo, error) {
 	requestBody := common.NoBody
 
 	// Set response body
-	responseBody := new(cloudmodel.TbMcisInfo)
+	responseBody := new(mcis.TbMcisInfo)
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -169,7 +170,7 @@ func GetVMInfra(nsId, infraId string) (cloudmodel.TbMcisInfo, error) {
 
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return cloudmodel.TbMcisInfo{}, err
+		return mcis.TbMcisInfo{}, err
 	}
 
 	return *responseBody, nil

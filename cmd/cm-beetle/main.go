@@ -32,12 +32,27 @@ import (
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
-	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest/server"
+	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest"
 )
 
 func init() {
 	common.SystemReady = false
 }
+
+// @title CM-Beetle REST API
+// @version latest
+// @description CM-Beetle REST API
+
+// @contact.name API Support
+// @contact.url http://cloud-barista.github.io
+// @contact.email contact-to-cloud-barista@googlegroups.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath /beetle
+
+// @securityDefinitions.basic BasicAuth
 
 func main() {
 

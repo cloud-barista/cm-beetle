@@ -1,15 +1,14 @@
 package route
 
 import (
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/labstack/echo/v4"
-
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 )
 
 // /beetle/ns/*
 func RegisterNamespaceRoutes(g *echo.Group) {
-	g.POST("", common.RestPostNs)
-	g.GET("", common.RestGetAllNs)
-	g.GET("/:nsId", common.RestGetNs)
-	g.DELETE("/:nsId", common.RestDeleteNs)
+	g.POST("", controller.RestPostNs)
+	g.GET("", controller.RestGetAllNs)
+	g.GET("/:nsId", controller.RestGetNs)
+	g.DELETE("/:nsId", controller.RestDeleteNs)
 }
