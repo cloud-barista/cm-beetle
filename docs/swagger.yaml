@@ -1,20 +1,6 @@
 basePath: /beetle
 definitions:
-  common.RestGetAllNsResponse:
-    properties:
-      ns:
-        description: Name string     `json:"name"`
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo'
-        type: array
-    type: object
-  common.SimpleMessage:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
-  controller.CreateUserRequest:
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser:
     properties:
       email:
         type: string
@@ -23,170 +9,22 @@ definitions:
       name:
         type: string
     type: object
-  controller.GetUserResponse:
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
     properties:
-      email:
+      details:
+        example: Any details
         type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.GetUsersResponse:
-    properties:
-      users:
-        items:
-          $ref: '#/definitions/model.MyUser'
+      list:
+        items: {}
         type: array
-    type: object
-  controller.MigrateInfraRequest:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        description: Label is for describing the mcis in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
-      name:
-        example: mcis01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
-    type: object
-  controller.MigrateInfraResponse:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        description: Label is for describing the mcis in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
-      name:
-        example: mcis01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
-    type: object
-  controller.PatchUserRequest:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.PatchUserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.RecommendInfraRequest:
-    properties:
-      servers:
-        items:
-          $ref: '#/definitions/infra.Infra'
-        type: array
-    required:
-    - servers
-    type: object
-  controller.RecommendInfraResponse:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        description: Label is for describing the mcis in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
-      name:
-        example: mcis01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
-    type: object
-  controller.UpdateUserRequest:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.UpdateUserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
         type: string
     type: object
   github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo:
@@ -204,6 +42,14 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  github_com_cloud-barista_cm-beetle_pkg_core_common.RestGetAllNsResponse:
+    properties:
+      ns:
+        description: Name string     `json:"name"`
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo'
+        type: array
     type: object
   github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg:
     properties:
@@ -504,33 +350,6 @@ definitions:
     - commonImage
     - commonSpec
     type: object
-  model.MyUser:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  model.Response:
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
-        type: boolean
-      text:
-        example: Any text
-        type: string
-    type: object
   network.CSP:
     properties:
       name:
@@ -690,6 +509,187 @@ definitions:
           $ref: '#/definitions/network.Subnet'
         type: array
     type: object
+  pkg_api_rest_common.SimpleMessage:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  pkg_api_rest_controller.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pkg_api_rest_controller.GetUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pkg_api_rest_controller.GetUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser'
+        type: array
+    type: object
+  pkg_api_rest_controller.MigrateInfraRequest:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        description: Label is for describing the mcis in a keyword (any string can
+          be used)
+        example: DynamicVM
+        type: string
+      name:
+        example: mcis01
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the mcis in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/mcis.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  pkg_api_rest_controller.MigrateInfraResponse:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        description: Label is for describing the mcis in a keyword (any string can
+          be used)
+        example: DynamicVM
+        type: string
+      name:
+        example: mcis01
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the mcis in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/mcis.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  pkg_api_rest_controller.PatchUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pkg_api_rest_controller.PatchUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pkg_api_rest_controller.RecommendInfraRequest:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/infra.Infra'
+        type: array
+    required:
+    - servers
+    type: object
+  pkg_api_rest_controller.RecommendInfraResponse:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        description: Label is for describing the mcis in a keyword (any string can
+          be used)
+        example: DynamicVM
+        type: string
+      name:
+        example: mcis01
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the mcis in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/mcis.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  pkg_api_rest_controller.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  pkg_api_rest_controller.UpdateUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
 info:
   contact:
     email: contact-to-cloud-barista@googlegroups.com
@@ -714,15 +714,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/pkg_api_rest_common.SimpleMessage'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/pkg_api_rest_common.SimpleMessage'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/pkg_api_rest_common.SimpleMessage'
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] System management'
@@ -738,22 +738,22 @@ paths:
         name: InfrastructureInfo
         required: true
         schema:
-          $ref: '#/definitions/controller.MigrateInfraRequest'
+          $ref: '#/definitions/pkg_api_rest_controller.MigrateInfraRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully migrated infrastructure on a cloud platform
           schema:
-            $ref: '#/definitions/controller.MigrateInfraResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Migrate an infrastructure on a cloud platform
       tags:
       - '[Migration] Infrastructure'
@@ -775,15 +775,15 @@ paths:
           description: Successfully deleted the migrated infrastructure on a cloud
             platform
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Delete the migrated infrastructure on a cloud platform
       tags:
       - '[Migration] Infrastructure'
@@ -803,15 +803,15 @@ paths:
         "200":
           description: Successfully got the migrated infrastructure on a cloud platform
           schema:
-            $ref: '#/definitions/controller.MigrateInfraResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/model.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Get the migrated infrastructure on a cloud platform
       tags:
       - '[Migration] Infrastructure'
@@ -826,7 +826,7 @@ paths:
         "200":
           description: Different return structures by the given option param
           schema:
-            $ref: '#/definitions/common.RestGetAllNsResponse'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.RestGetAllNsResponse'
         "404":
           description: Not Found
           schema:
@@ -933,11 +933,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/pkg_api_rest_common.SimpleMessage'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/pkg_api_rest_common.SimpleMessage'
       summary: Check Beetle is ready
       tags:
       - '[Admin] System management'
@@ -954,7 +954,7 @@ paths:
         name: UserInfrastructure
         required: true
         schema:
-          $ref: '#/definitions/controller.RecommendInfraRequest'
+          $ref: '#/definitions/pkg_api_rest_controller.RecommendInfraRequest'
       produces:
       - application/json
       responses:
@@ -962,7 +962,7 @@ paths:
           description: Successfully recommended an appropriate infrastructure for
             cloud migration
           schema:
-            $ref: '#/definitions/controller.RecommendInfraResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.RecommendInfraResponse'
         "404":
           description: Not Found
           schema:
@@ -986,7 +986,7 @@ paths:
           description: (sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/controller.GetUsersResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.GetUsersResponse'
         "404":
           description: User Not Found
           schema:
@@ -1004,7 +1004,7 @@ paths:
         name: User
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateUserRequest'
+          $ref: '#/definitions/pkg_api_rest_controller.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -1012,7 +1012,7 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/controller.GetUserResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.GetUserResponse'
         "400":
           description: Invalid Request
           schema:
@@ -1066,7 +1066,7 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/controller.GetUserResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.GetUserResponse'
         "404":
           description: User Not Found
           schema:
@@ -1089,7 +1089,7 @@ paths:
         name: User
         required: true
         schema:
-          $ref: '#/definitions/controller.PatchUserRequest'
+          $ref: '#/definitions/pkg_api_rest_controller.PatchUserRequest'
       produces:
       - application/json
       responses:
@@ -1097,7 +1097,7 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/controller.PatchUserResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.PatchUserResponse'
         "400":
           description: Invalid Request
           schema:
@@ -1124,7 +1124,7 @@ paths:
         name: User
         required: true
         schema:
-          $ref: '#/definitions/controller.UpdateUserRequest'
+          $ref: '#/definitions/pkg_api_rest_controller.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -1132,7 +1132,7 @@ paths:
           description: (Sample) This is a sample description for success response
             in Swagger UI
           schema:
-            $ref: '#/definitions/controller.UpdateUserResponse'
+            $ref: '#/definitions/pkg_api_rest_controller.UpdateUserResponse'
         "400":
           description: Invalid Request
           schema:
