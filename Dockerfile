@@ -28,7 +28,7 @@ RUN make prod
 ## Stage 2 - Application Setup
 ##############################################################
 
-FROM ubuntu:22.04 as prod
+FROM ubuntu:22.04 AS prod
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 

@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+# Makefile for CM-Beetle in Cloud-Barista.
 
 MODULE_NAME := cm-beetle
 PROJECT_NAME := github.com/cloud-barista/$(MODULE_NAME)
