@@ -10,23 +10,48 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
+// type KeyValue struct {
+// 	Key   string
+// 	Value string
+// }
+//
+// type Store interface {
+//     InitDB() error
+//     InitData() error
+//     Put(key string, value string) error
+//     Get(key string) (*KeyValue, error)
+//     GetList(key string, sortAscend bool) ([]*KeyValue, error)
+//     Delete(key string) error
+//     Close() error
+
+//     // --- management, nutsdb only
+//     Merge() error
+// }
+
 // KeyValueStore defines the interface for EtcdStore operations.
 // This interface ensures that the EtcdStore struct implements all necessary methods for interacting with etcd.
 type KeyValueStore interface {
-	CreateSession(ctx context.Context) (*concurrency.Session, error)
-	CloseSession(session *concurrency.Session) error
-	Lock(ctx context.Context, session *concurrency.Session, lockKey string) (*concurrency.Mutex, error)
-	Unlock(ctx context.Context, mutex *concurrency.Mutex) error
-	Put(ctx context.Context, key, value string) error
-	Get(ctx context.Context, key string) (string, error)
-	GetList(ctx context.Context, prefix string) ([]string, error)
-	Delete(ctx context.Context, key string) error
+	NewSession(ctx context.Context) (*concurrency.Session, error)
+	NewLock(ctx context.Context, session *concurrency.Session, lockKey string) (*concurrency.Mutex, error)
+	Put(key, value string) error
+	PutWith(ctx context.Context, key, value string) error
+	Get(key string) (string, error)
+	GetWith(ctx context.Context, key string) (string, error)
+	GetList(keyPrefix string) ([]string, error)
+	GetListWith(ctx context.Context, keyPrefix string) ([]string, error)
+	Delete(key string) error
+	DeleteWith(ctx context.Context, key string) error
 	Close() error
+	// CloseSession(session *concurrency.Session) error
+	// Unlock(ctx context.Context, mutex *concurrency.Mutex) error
+	// GetSortedList(keyPrefix string, sortBy clientv3.SortTarget, order clientv3.SortOrder) ([]string, error)
+	// GetSortedListWith(ctx context.Context, keyPrefix string, sortBy clientv3.SortTarget, order clientv3.SortOrder) ([]string, error)
 }
 
 // EtcdStore represents an etcd client.
 type EtcdStore struct {
 	cli *clientv3.Client
+	ctx context.Context
 }
 
 // Config holds the configuration for EtcdStore.
@@ -42,7 +67,7 @@ var (
 
 // NewEtcdStore creates a new instance of EtcdStore (singleton).
 // It initializes the etcd client with the provided configuration and ensures only one instance is created.
-func NewEtcdStore(config Config) (KeyValueStore, error) {
+func NewEtcdStore(ctx context.Context, config Config) (KeyValueStore, error) {
 	var err error
 	once.Do(func() {
 		cli, cliErr := clientv3.New(clientv3.Config{
@@ -54,8 +79,13 @@ func NewEtcdStore(config Config) (KeyValueStore, error) {
 			return
 		}
 
+		if ctx == nil {
+			ctx = context.Background()
+		}
+
 		instance = &EtcdStore{
 			cli: cli,
+			ctx: ctx,
 		}
 	})
 
@@ -70,21 +100,15 @@ func GetEtcdStore() *EtcdStore {
 	return instance
 }
 
-// CreateSession creates a new etcd session.
+// OpenSession creates a new etcd session.
 // A session is needed for acquiring locks.
-func (s *EtcdStore) CreateSession(ctx context.Context) (*concurrency.Session, error) {
+func (s *EtcdStore) NewSession(ctx context.Context) (*concurrency.Session, error) {
 	return concurrency.NewSession(s.cli)
 }
 
-// CloseSession closes the given etcd session.
-// It's important to close sessions to release resources.
-func (s *EtcdStore) CloseSession(session *concurrency.Session) error {
-	return session.Close()
-}
-
-// Lock acquires a lock on the given key and returns the mutex.
+// NewLock acquires a lock on the given key and returns the mutex.
 // It uses the provided session to ensure the lock's lifecycle is tied to the session.
-func (s *EtcdStore) Lock(ctx context.Context, session *concurrency.Session, lockKey string) (*concurrency.Mutex, error) {
+func (s *EtcdStore) NewLock(ctx context.Context, session *concurrency.Session, lockKey string) (*concurrency.Mutex, error) {
 	mutex := concurrency.NewMutex(session, lockKey)
 	err := mutex.Lock(ctx)
 	if err != nil {
@@ -93,15 +117,13 @@ func (s *EtcdStore) Lock(ctx context.Context, session *concurrency.Session, lock
 	return mutex, nil
 }
 
-// Unlock releases the given lock.
-// It is important to release the lock to allow other clients to acquire it.
-func (s *EtcdStore) Unlock(ctx context.Context, mutex *concurrency.Mutex) error {
-	return mutex.Unlock(ctx)
+// Put stores a key-value pair in etcd.
+func (s *EtcdStore) Put(key, value string) error {
+	return s.PutWith(s.ctx, key, value)
 }
 
-// Put stores a key-value pair in etcd.
-// It uses the etcd client to perform a Put operation.
-func (s *EtcdStore) Put(ctx context.Context, key, value string) error {
+// PutWith stores a key-value pair in etcd using the provided context.
+func (s *EtcdStore) PutWith(ctx context.Context, key, value string) error {
 	_, err := s.cli.Put(ctx, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to put key-value: %w", err)
@@ -109,9 +131,13 @@ func (s *EtcdStore) Put(ctx context.Context, key, value string) error {
 	return nil
 }
 
-// Get retrieves the value for a given key from etcd.
-// If the key is not found, it returns an error.
-func (s *EtcdStore) Get(ctx context.Context, key string) (string, error) {
+// Get retrieves the value for a given key from etcd without using a context.
+func (s *EtcdStore) Get(key string) (string, error) {
+	return s.GetWith(s.ctx, key)
+}
+
+// GetWith retrieves the value for a given key from etcd using the provided context.
+func (s *EtcdStore) GetWith(ctx context.Context, key string) (string, error) {
 	resp, err := s.cli.Get(ctx, key)
 	if err != nil {
 		return "", fmt.Errorf("failed to get key: %w", err)
@@ -122,12 +148,20 @@ func (s *EtcdStore) Get(ctx context.Context, key string) (string, error) {
 	return string(resp.Kvs[0].Value), nil
 }
 
-// GetList retrieves multiple values for keys with the given prefix from etcd.
-// It returns a slice of values corresponding to the keys with the given prefix.
-func (s *EtcdStore) GetList(ctx context.Context, keyPrefix string) ([]string, error) {
-	resp, err := s.cli.Get(ctx, keyPrefix, clientv3.WithPrefix())
+// GetListWith retrieves multiple values for keys with the given keyPrefix from etcd.
+func (s *EtcdStore) GetList(keyPrefix string) ([]string, error) {
+	return s.GetListWith(s.ctx, keyPrefix)
+}
+
+// GetListWith retrieves multiple values for keys with the given keyPrefix from etcd using the provided context.
+func (s *EtcdStore) GetListWith(ctx context.Context, keyPrefix string) ([]string, error) {
+	// ascending by key as a default sort order
+	optAscendByKey := clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend)
+
+	// Get all values with the given keyPrefix
+	resp, err := s.cli.Get(ctx, keyPrefix, clientv3.WithPrefix(), optAscendByKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get list with prefix: %w", err)
+		return nil, fmt.Errorf("failed to get list with keyPrefix: %w", err)
 	}
 
 	values := make([]string, len(resp.Kvs))
@@ -137,9 +171,33 @@ func (s *EtcdStore) GetList(ctx context.Context, keyPrefix string) ([]string, er
 	return values, nil
 }
 
-// Delete removes a key-value pair from etcd.
-// It uses the etcd client to perform a Delete operation.
-func (s *EtcdStore) Delete(ctx context.Context, key string) error {
+// GetSortedList retrieves multiple values for keys with the given keyPrefix, sortBy, and order from etcd.
+func (s *EtcdStore) GetSortedList(keyPrefix string, sortBy clientv3.SortTarget, order clientv3.SortOrder) ([]string, error) {
+	return s.GetSortedListWith(s.ctx, keyPrefix, sortBy, order)
+}
+
+// GetSortedListWith retrieves multiple values for keys with  the given keyPrefix, sortBy, and order from etcd using the provided context.
+func (s *EtcdStore) GetSortedListWith(ctx context.Context, keyPrefix string, sortBy clientv3.SortTarget, order clientv3.SortOrder) ([]string, error) {
+	sortOp := clientv3.WithSort(sortBy, order)
+	resp, err := s.cli.Get(ctx, keyPrefix, clientv3.WithPrefix(), sortOp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get list with keyPrefix: %w", err)
+	}
+
+	values := make([]string, len(resp.Kvs))
+	for i, kv := range resp.Kvs {
+		values[i] = string(kv.Value)
+	}
+	return values, nil
+}
+
+// Delete removes a key-value pair from etcd without using a context.
+func (s *EtcdStore) Delete(key string) error {
+	return s.DeleteWith(s.ctx, key)
+}
+
+// DeleteWith removes a key-value pair from etcd using the provided context.
+func (s *EtcdStore) DeleteWith(ctx context.Context, key string) error {
 	_, err := s.cli.Delete(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to delete key: %w", err)
@@ -152,3 +210,15 @@ func (s *EtcdStore) Delete(ctx context.Context, key string) error {
 func (s *EtcdStore) Close() error {
 	return s.cli.Close()
 }
+
+// // CloseSession closes the given etcd session.
+// // It's important to close sessions to release resources.
+// func (s *EtcdStore) CloseSession(session *concurrency.Session) error {
+// 	return session.Close()
+// }
+
+// // Unlock releases the given lock.
+// // It is important to release the lock to allow other clients to acquire it.
+// func (s *EtcdStore) Unlock(ctx context.Context, mutex *concurrency.Mutex) error {
+// 	return mutex.Unlock(ctx)
+// }

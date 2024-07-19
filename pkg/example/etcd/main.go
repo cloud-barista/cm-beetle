@@ -19,19 +19,20 @@ func main() {
 	}
 
 	// Create EtcdStore instance (singleton)
-	store, err := etcd.NewEtcdStore(config)
+	ctx := context.Background()
+	store, err := etcd.NewEtcdStore(ctx, config)
 	if err != nil {
 		log.Fatalf("Failed to create EtcdStore: %v", err)
 	}
 	defer store.Close()
 
-	ctx := context.Background() // Create context for etcd operations
+	ctx2 := context.Background() // Create context for etcd operations
 
 	// Basic CRUD operations test
-	basicCRUDTest(ctx, store)
+	basicCRUDTest(ctx2, store)
 
 	// Race condition test
-	raceConditionTest(ctx, store)
+	raceConditionTest(ctx2, store)
 
 	fmt.Println("All operations completed successfully!")
 }
@@ -41,14 +42,14 @@ func basicCRUDTest(ctx context.Context, store etcd.KeyValueStore) {
 	value := "Hello, Etcd!"
 
 	// Put (Store) a key-value pair
-	err := store.Put(ctx, key, value)
+	err := store.PutWith(ctx, key, value)
 	if err != nil {
 		log.Fatalf("Failed to put key-value: %v", err)
 	}
 	fmt.Printf("Successfully put key '%s' with value '%s'\n", key, value)
 
 	// Get (Retrieve) the value
-	retrievedValue, err := store.Get(ctx, key)
+	retrievedValue, err := store.GetWith(ctx, key)
 	if err != nil {
 		log.Fatalf("Failed to get value: %v", err)
 	}
@@ -56,28 +57,28 @@ func basicCRUDTest(ctx context.Context, store etcd.KeyValueStore) {
 
 	// Update the value
 	newValue := "Updated Etcd Value"
-	err = store.Put(ctx, key, newValue)
+	err = store.PutWith(ctx, key, newValue)
 	if err != nil {
 		log.Fatalf("Failed to update value: %v", err)
 	}
 	fmt.Printf("Successfully updated key '%s' with new value '%s'\n", key, newValue)
 
 	// Get (Retrieve) the updated value
-	retrievedValue, err = store.Get(ctx, key)
+	retrievedValue, err = store.GetWith(ctx, key)
 	if err != nil {
 		log.Fatalf("Failed to get updated value: %v", err)
 	}
 	fmt.Printf("Retrieved updated value for key '%s': %s\n", key, retrievedValue)
 
 	// Delete the key-value pair
-	err = store.Delete(ctx, key)
+	err = store.DeleteWith(ctx, key)
 	if err != nil {
 		log.Fatalf("Failed to delete key: %v", err)
 	}
 	fmt.Printf("Successfully deleted key '%s'\n", key)
 
 	// Verify deletion
-	_, err = store.Get(ctx, key)
+	_, err = store.GetWith(ctx, key)
 	if err != nil {
 		fmt.Printf("As expected, failed to get deleted key '%s': %v\n", key, err)
 	} else {
@@ -93,7 +94,7 @@ func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
 	goroutines := 5
 
 	// Initialize the key with 0
-	err := store.Put(ctx, key, "0")
+	err := store.PutWith(ctx, key, "0")
 	if err != nil {
 		log.Fatalf("Failed to initialize key: %v", err)
 	}
@@ -107,43 +108,57 @@ func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
 			defer wg.Done()
 
 			// Create a persistent session
-			session, err := store.CreateSession(ctx)
+			session, err := store.NewSession(ctx)
 			if err != nil {
 				log.Fatalf("Failed to create etcd session: %v", err)
 			}
-			defer store.CloseSession(session)
+			defer session.Close()
+
+			// Get Lock
+			lockKey := key
+			// lock, err := store.NewLock(ctx, session, lockKey)
+			lock, err := store.NewLock(ctx, session, lockKey)
+			if err != nil {
+				log.Fatalf("Failed to get lock: %v", err)
+			}
 
 			for j := 0; j < iterations; j++ {
 
-				// Lock
-				lockKey := key
-				mutex, err := store.Lock(ctx, session, lockKey)
+				err = lock.Lock(ctx)
 				if err != nil {
 					log.Printf("Failed to acquire lock: %v", err)
 					continue
 				}
 
 				// Get current value, increment, and put new value within the lock
-				value, err := store.Get(ctx, key)
+				value, err := store.GetWith(ctx, key)
 				if err != nil {
 					log.Printf("Failed to get value: %v", err)
-					store.Unlock(ctx, mutex)
+					// Unlock
+					err = lock.Unlock(ctx)
+					if err != nil {
+						log.Printf("Failed to release lock: %v", err)
+					}
 					continue
 				}
 
 				intValue, _ := strconv.Atoi(value)
 				newValue := fmt.Sprintf("%d", intValue+1)
 
-				err = store.Put(ctx, key, newValue)
+				err = store.PutWith(ctx, key, newValue)
 				if err != nil {
 					log.Printf("Failed to put value: %v", err)
-					store.Unlock(ctx, mutex)
+					// Unlock
+					err = lock.Unlock(ctx)
+					if err != nil {
+						log.Printf("Failed to release lock: %v", err)
+					}
 					continue
 				}
 				log.Printf("Put value: %s", newValue)
 
 				// Unlock
-				err = store.Unlock(ctx, mutex)
+				err = lock.Unlock(ctx)
 				if err != nil {
 					log.Printf("Failed to release lock: %v", err)
 					continue
@@ -155,7 +170,7 @@ func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
 	wg.Wait()
 
 	// Verify the final value
-	finalValue, err := store.Get(ctx, key)
+	finalValue, err := store.GetWith(ctx, key)
 	if err != nil {
 		log.Fatalf("Failed to get final value: %v", err)
 	}
@@ -169,5 +184,5 @@ func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
 	fmt.Printf("Race condition test finished. Final value: %s\n", finalValue)
 
 	// Clean up
-	store.Delete(ctx, key)
+	store.DeleteWith(ctx, key)
 }
