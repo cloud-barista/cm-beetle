@@ -10,7 +10,7 @@ import (
 	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
-// Etcd represents an etcd client.
+// Etcd represents an etcd.
 type Etcd struct {
 	cli *clientv3.Client
 	ctx context.Context
@@ -236,6 +236,26 @@ func (s *Etcd) GetSortedKvListWith(ctx context.Context, keyPrefix string, sortBy
 		kvs = append(kvs, KeyValue{Key: string(kv.Key), Value: string(kv.Value)})
 	}
 	return kvs, nil
+}
+
+// WatchKey watches for changes on the given key.
+func (s *Etcd) WatchKey(key string) clientv3.WatchChan {
+	return s.WatchKeyWith(s.ctx, key)
+}
+
+// WatchKeyWith watches for changes on the given key using the provided context.
+func (s *Etcd) WatchKeyWith(ctx context.Context, key string) clientv3.WatchChan {
+	return s.cli.Watch(ctx, key)
+}
+
+// WatchKeys watches for changes on keys with the given keyPrefix.
+func (s *Etcd) WatchKeys(keyPrefix string) clientv3.WatchChan {
+	return s.WatchKeysWith(s.ctx, keyPrefix)
+}
+
+// WatchKeysWith watches for changes on keys with the given keyPrefix using the provided context.
+func (s *Etcd) WatchKeysWith(ctx context.Context, keyPrefix string) clientv3.WatchChan {
+	return s.cli.Watch(ctx, keyPrefix, clientv3.WithPrefix())
 }
 
 // Close closes the etcd client.

@@ -81,7 +81,7 @@ require (
 	github.com/xujiajun/utils v0.0.0-20220904132955-5f7c5b914235 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.14 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.14
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect

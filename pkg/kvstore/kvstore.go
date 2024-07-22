@@ -36,6 +36,10 @@ type Store interface {
 	GetKvMapWith(ctx context.Context, keyPrefix string) (KeyValueMap, error)
 	Delete(key string) error
 	DeleteWith(ctx context.Context, key string) error
+	WatchKey(key string) clientv3.WatchChan
+	WatchKeyWith(ctx context.Context, key string) clientv3.WatchChan
+	WatchKeys(keyPrefix string) clientv3.WatchChan
+	WatchKeysWith(ctx context.Context, keyPrefix string) clientv3.WatchChan
 	Close() error
 	// CloseSession(session *concurrency.Session) error
 	// Unlock(ctx context.Context, mutex *concurrency.Mutex) error

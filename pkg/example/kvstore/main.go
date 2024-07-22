@@ -20,37 +20,62 @@ func main() {
 
 	// Create EtcdStore instance (singleton)
 	ctx := context.Background()
-	etcdcli, err := kvstore.NewEtcd(ctx, config)
+	etcd, err := kvstore.NewEtcd(ctx, config)
 	if err != nil {
 		log.Fatalf("Failed to create EtcdStore: %v", err)
 	}
-	defer etcdcli.Close()
+	defer etcd.Close()
 
-	ctx2 := context.Background() // Create context for etcd operations
+	// ctx2 := context.Background() // Create context for etcd operations
 
-	// Basic CRUD operations test
-	fmt.Println("\n## Basic CRUD operations test")
-	ExampleBasicCRUDTest(ctx2, etcdcli)
+	// // Basic CRUD operations test
+	// fmt.Println("\n## Basic CRUD operations test")
+	// ExampleBasicCRUDTest(ctx2, etcd)
 
-	// Race condition test
-	fmt.Println("\n## ExampleRaceConditionTest")
-	ExampleRaceConditionTest(ctx2, etcdcli)
+	// // Race condition test
+	// fmt.Println("\n## ExampleRaceConditionTest")
+	// ExampleRaceConditionTest(ctx2, etcd)
 
-	// FilterKVsBy example
-	fmt.Println("\n## FilterKVsBy example")
-	ExampleFilterKVsBy()
+	// // FilterKVsBy example
+	// fmt.Println("\n## FilterKVsBy example")
+	// ExampleFilterKVsBy()
 
-	// ExtractIDsFromKey example
-	fmt.Println("\n## ExtractIDsFromKey example")
-	ExampleExtractIDsFromKey()
+	// // ExtractIDsFromKey example
+	// fmt.Println("\n## ExtractIDsFromKey example")
+	// ExampleExtractIDsFromKey()
 
-	// ContainsIDs example
-	fmt.Println("\n## ContainsIDs example")
-	ExampleContainsIDs()
+	// // ContainsIDs example
+	// fmt.Println("\n## ContainsIDs example")
+	// ExampleContainsIDs()
 
-	// BuildKey example
-	fmt.Println("\n## BuildKey example")
-	ExampleBuildKey()
+	// // BuildKey example
+	// fmt.Println("\n## BuildKey example")
+	// ExampleBuildKey()
+
+	// Watch operations example
+	fmt.Println("\n## Watch operations example")
+
+	var wg sync.WaitGroup
+	ctx3, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// goroutine to watch a single key
+	wg.Add(1)
+	go watchSingleKey(ctx3, &wg, etcd)
+
+	// goroutine to watch keys
+	wg.Add(1)
+	go watchMultipleKeys(ctx3, &wg, etcd)
+
+	// goroutine to update values
+	wg.Add(1)
+	go changeValues(ctx3, &wg, etcd)
+
+	// Wait for 10 seconds and then cancel the context to stop the goroutines
+	time.Sleep(10 * time.Second)
+	cancel()
+
+	// Wait for all goroutines to finish
+	wg.Wait()
 
 	fmt.Println("\nAll operations completed successfully!")
 }
@@ -299,4 +324,69 @@ func ExampleBuildKey() {
 	key := kvstore.BuildKey(ids)
 	fmt.Println(key)
 	// Output: /ns/ns01/mcis/ns02/type3/id3
+}
+
+func watchSingleKey(ctx context.Context, wg *sync.WaitGroup, store kvstore.Store) {
+	defer wg.Done()
+	watchChan := store.WatchKeyWith(ctx, "mykey")
+	for {
+		select {
+		case resp, ok := <-watchChan:
+			if !ok {
+				fmt.Println("Watch channel closed")
+				return
+			}
+			for _, ev := range resp.Events {
+				fmt.Printf("Single key watch - Type: %s Key:%s Value:%s\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+			}
+		case <-ctx.Done():
+			fmt.Println("Single key watch cancelled")
+			return
+		}
+	}
+}
+
+func watchMultipleKeys(ctx context.Context, wg *sync.WaitGroup, store kvstore.Store) {
+	defer wg.Done()
+	watchChan := store.WatchKeysWith(ctx, "myprefix")
+	for {
+		select {
+		case resp, ok := <-watchChan:
+			if !ok {
+				fmt.Println("Watch channel closed")
+				return
+			}
+			for _, ev := range resp.Events {
+				fmt.Printf("Multiple keys watch - Type: %s Key:%s Value:%s\n", ev.Type, ev.Kv.Key, ev.Kv.Value)
+			}
+		case <-ctx.Done():
+			fmt.Println("Multiple keys watch cancelled")
+			return
+		}
+	}
+}
+
+func changeValues(ctx context.Context, wg *sync.WaitGroup, store kvstore.Store) {
+	defer wg.Done()
+	for i := 0; ; i++ {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Change values cancelled")
+			return
+		default:
+			// Update value with a single key
+			err := store.PutWith(ctx, "mykey", fmt.Sprintf("value%d", i))
+			if err != nil {
+				log.Printf("Error putting mykey: %v", err)
+			}
+
+			// Update values with multiple keys
+			err = store.PutWith(ctx, fmt.Sprintf("myprefix/key%d", i), fmt.Sprintf("prefixvalue%d", i))
+			if err != nil {
+				log.Printf("Error putting myprefix/key%d: %v", i, err)
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
