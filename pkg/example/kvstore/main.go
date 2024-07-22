@@ -8,36 +8,54 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloud-barista/cm-beetle/pkg/etcd"
+	"github.com/cloud-barista/cm-beetle/pkg/kvstore"
 )
 
 func main() {
 	// EtcdStore configuration
-	config := etcd.Config{
+	config := kvstore.Config{
 		Endpoints:   []string{"localhost:2379"}, // Replace with your etcd server endpoints
 		DialTimeout: 5 * time.Second,
 	}
 
 	// Create EtcdStore instance (singleton)
 	ctx := context.Background()
-	store, err := etcd.NewEtcdStore(ctx, config)
+	etcdcli, err := kvstore.NewEtcd(ctx, config)
 	if err != nil {
 		log.Fatalf("Failed to create EtcdStore: %v", err)
 	}
-	defer store.Close()
+	defer etcdcli.Close()
 
 	ctx2 := context.Background() // Create context for etcd operations
 
 	// Basic CRUD operations test
-	basicCRUDTest(ctx2, store)
+	fmt.Println("\n## Basic CRUD operations test")
+	ExampleBasicCRUDTest(ctx2, etcdcli)
 
 	// Race condition test
-	raceConditionTest(ctx2, store)
+	fmt.Println("\n## ExampleRaceConditionTest")
+	ExampleRaceConditionTest(ctx2, etcdcli)
 
-	fmt.Println("All operations completed successfully!")
+	// FilterKVsBy example
+	fmt.Println("\n## FilterKVsBy example")
+	ExampleFilterKVsBy()
+
+	// ExtractIDsFromKey example
+	fmt.Println("\n## ExtractIDsFromKey example")
+	ExampleExtractIDsFromKey()
+
+	// ContainsIDs example
+	fmt.Println("\n## ContainsIDs example")
+	ExampleContainsIDs()
+
+	// BuildKey example
+	fmt.Println("\n## BuildKey example")
+	ExampleBuildKey()
+
+	fmt.Println("\nAll operations completed successfully!")
 }
 
-func basicCRUDTest(ctx context.Context, store etcd.KeyValueStore) {
+func ExampleBasicCRUDTest(ctx context.Context, store kvstore.Store) {
 	key := "test_key"
 	value := "Hello, Etcd!"
 
@@ -86,7 +104,7 @@ func basicCRUDTest(ctx context.Context, store etcd.KeyValueStore) {
 	}
 }
 
-func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
+func ExampleRaceConditionTest(ctx context.Context, store kvstore.Store) {
 	fmt.Println("Starting race condition test...")
 
 	key := "race_test_key"
@@ -185,4 +203,100 @@ func raceConditionTest(ctx context.Context, store etcd.KeyValueStore) {
 
 	// Clean up
 	store.DeleteWith(ctx, key)
+}
+
+// ExampleFilterKVsBy demonstrates the usage of the FilterKVsBy function
+// with various key values and different levels of depth.
+func ExampleFilterKVsBy() {
+	kvs := kvstore.KeyValueMap{
+		"/ns/ns01/mcis/mcis02":           "value1",
+		"/ns/ns01/mcis/mcis03":           "value2",
+		"/ns/ns04/mcis/mcis02":           "value3",
+		"/ns/ns01":                       "value4",
+		"/ns/ns04/mcis/mcis05/vpc/vpc01": "value5",
+		"/ns/ns01/mcis/mcis07":           "value6",
+	}
+
+	// Case 1: Filter by ns=ns01 and mcis=id2
+	prefixkey1 := "/ns/ns01/mcis/mcis02"
+	filteredKVs1 := kvstore.FilterKVsBy(kvs, prefixkey1)
+	fmt.Println("Filtered by ns=ns01 and mcis=mcis02:")
+	for key, value := range filteredKVs1 {
+		fmt.Println(key, value)
+	}
+	// Output: /ns/ns01/mcis/mcis02 value1
+	// Output: /ns/ns01/mcis/mcis03 value2
+	// Output: /ns/ns04/mcis/mcis02 value3
+	// Output: /ns/ns01/mcis/mcis07 value6
+
+	// Case 2: Filter by ns=ns01
+	prefixkey2 := "/ns/ns01"
+	filteredKVs2 := kvstore.FilterKVsBy(kvs, prefixkey2)
+	fmt.Println("Filtered by ns=ns01:")
+	for key, value := range filteredKVs2 {
+		fmt.Println(key, value)
+	}
+	// Output: /ns/ns01 value4
+
+	// Case 3: Filter by ns=ns04, mcis=mcis05, and vpc=vpc01
+	prefixkey3 := "/ns/ns04/mcis/mcis05/vpc/vpc01"
+	filteredKVs3 := kvstore.FilterKVsBy(kvs, prefixkey3)
+	fmt.Println("Filtered by type3=id5:")
+	for key, value := range filteredKVs3 {
+		fmt.Println(key, value)
+	}
+	// Output: /ns/ns04/mcis/mcis05/vpc/vpc01 value5
+}
+
+func ExampleExtractIDsFromKey() {
+
+	key := "/ns/ns01/mcis/mcis02/vpc/vpc03"
+
+	ids, err := kvstore.ExtractIDsFromKey(key, "ns", "mcis", "vpc")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println(ids)
+
+	key2 := "/ns/ns01/mcis/mcis02/SOMETHINGADDED/vpc/vpc03"
+
+	ids, err = kvstore.ExtractIDsFromKey(key2, "ns", "mcis", "vpc")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Println(ids)
+	// Output: [ns01 id2 id3]
+}
+
+func ExampleContainsIDs() {
+	key := "/ns/ns01/mcis/mcis02/vpc/vpc03"
+
+	ids := map[string]string{
+		"ns":   "ns01",
+		"mcis": "mcis02",
+	}
+
+	contains := kvstore.ContainsIDs(key, ids)
+	fmt.Println(contains)
+
+	key2 := "/ns/ns01/mcis/mcis02/SOMETHINGADDED/vpc/vpc03"
+
+	contains = kvstore.ContainsIDs(key2, ids)
+	fmt.Println(contains)
+	// Output: true
+}
+
+func ExampleBuildKey() {
+	ids := map[string]string{
+		"ns":   "ns01",
+		"mcis": "mcis02",
+		"vpc":  "vpc03",
+	}
+
+	key := kvstore.BuildKey(ids)
+	fmt.Println(key)
+	// Output: /ns/ns01/mcis/ns02/type3/id3
 }
