@@ -1,19 +1,36 @@
-package kvstore
+package kvutil
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/cloud-barista/cm-beetle/pkg/kvstore/kvstore"
 )
 
-// FilterKVsBy filters a KeyValue map based on the given prefix key.
+// FilterKvMapBy filters a KeyValue map based on the given prefix key.
 // It returns a new KeyValue map containing only the key-value pairs that match the prefix criteria.
-func FilterKVsBy(kvs KeyValueMap, prefixKey string) KeyValueMap {
-	result := make(KeyValueMap)
+func FilterKvMapBy(kvs kvstore.KeyValueMap, prefixKey string) kvstore.KeyValueMap {
+	result := make(kvstore.KeyValueMap)
 	prefix := strings.TrimSuffix(prefixKey, "/")
 
 	for key, value := range kvs {
 		if strings.HasPrefix(key, prefix) && hasOnlyNextSegment(prefix, key) {
 			result[key] = value
+		}
+	}
+
+	return result
+}
+
+// FilterKvListBy filters a slice of KeyValue pairs based on the given prefix key.
+// It returns a new slice containing only the key-value pairs that match the prefix criteria.
+func FilterKvListBy(kvs []kvstore.KeyValue, prefixKey string) []kvstore.KeyValue {
+	result := make([]kvstore.KeyValue, 0)
+	prefix := strings.TrimSuffix(prefixKey, "/")
+
+	for _, kv := range kvs {
+		if strings.HasPrefix(kv.Key, prefix) && hasOnlyNextSegment(prefix, kv.Key) {
+			result = append(result, kv)
 		}
 	}
 
@@ -64,15 +81,16 @@ func ContainsIDs(key string, ids map[string]string) bool {
 	return true
 }
 
-// BuildKey constructs a key from given ID types and values.
-// It returns a string representing the constructed key.
-func BuildKey(ids map[string]string) string {
-	var parts []string
-	for idType, idValue := range ids {
-		parts = append(parts, idType, idValue)
-	}
-	return "/" + strings.Join(parts, "/")
-}
+// [May not needed]
+// // BuildKeyBy constructs a key from given ID types and values.
+// // It returns a string representing the constructed key.
+// func BuildKeyBy(ids map[string]string) string {
+// 	var parts []string
+// 	for idType, idValue := range ids {
+// 		parts = append(parts, idType, idValue)
+// 	}
+// 	return "/" + strings.Join(parts, "/")
+// }
 
 // indexOf finds the index of a string in a slice.
 // It returns the index if found, or -1 if not found.
