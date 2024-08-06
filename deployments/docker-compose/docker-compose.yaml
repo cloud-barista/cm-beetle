@@ -1,0 +1,217 @@
+services:
+  # etcd
+  etcd:
+    image: gcr.io/etcd-development/etcd:v3.5.14
+    container_name: etcd
+    ports:
+      - target: 2379      # Port assinged to etcd in the container
+        published: 2379   # Port to be exposed to the host
+        protocol: tcp     # Protocol of the port     
+      - target: 2380      # Port assinged to etcd in the container
+        published: 2380   # Port to be exposed to the host
+        protocol: tcp     # Protocol of the port
+    volumes: 
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/etcd/data:/etcd-data
+    entrypoint: /usr/local/bin/etcd
+    command:
+      - --name
+      - s1
+      - --data-dir
+      - /etcd-data
+      - --listen-client-urls
+      - http://0.0.0.0:2379
+      - --advertise-client-urls
+      - http://0.0.0.0:2379
+      - --listen-peer-urls
+      - http://0.0.0.0:2380
+      - --initial-advertise-peer-urls
+      - http://0.0.0.0:2380
+      - --initial-cluster
+      - s1=http://0.0.0.0:2380
+      - --initial-cluster-token
+      - tkn
+      - --initial-cluster-state
+      - new
+      - --log-level
+      - info
+      - --logger
+      - zap
+      - --log-outputs
+      - stderr
+      - --auth-token
+      - simple
+    healthcheck: # for etcd
+      test: [ "CMD", "/usr/local/bin/etcd", "--version"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # etcd-conf
+  etcd-conf:
+    image: alpine:latest
+    container_name: etcd-conf
+    depends_on:
+      - etcd
+    volumes:
+      - ./etcd/:/scripts/etcd/
+    environment:
+      - ETCD_VERSION_TAG=v3.5.14
+      - ETCD_ENDPOINTS=http://etcd:2379
+      - ETCD_PATH=/tmp/etcd-download-test
+      - ETCD_AUTH_ENABLED=true
+      - ETCD_ROOT_PASSWORD=default
+      - ETCD_ADMIN_USERNAME=default
+      - ETCD_ADMIN_PASSWORD=default
+    command: sh -c "sh /scripts/etcd/etcd-conf.sh"
+    healthcheck: # for etcd-conf
+      test: ["CMD", "test", "-f", "/tmp/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # CB-Spider
+  cb-spider:
+    image: cloudbaristaorg/cb-spider:0.9.0
+    container_name: cb-spider
+    platform: linux/amd64
+    ports:
+      - target: 1024
+        published: 1024
+        protocol: tcp  
+    volumes:
+      # - ./conf/log_conf.yaml:/root/go/src/github.com/cloud-barista/cb-spider/conf/log_conf.yaml
+      # - ./conf/store_conf.yaml:/root/go/src/github.com/cloud-barista/cb-spider/conf/store_conf.yaml
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+    environment:
+      - PLUGIN_SW=OFF
+      - SERVER_ADDRESS=localhost
+      # if you leave these values empty, REST Auth will be disabled.
+      # - API_USERNAME=
+      # - API_PASSWORD=
+      - SPIDER_LOG_LEVEL=error
+      - SPIDER_HISCALL_LOG_LEVEL=error
+      - ID_TRANSFORM_MODE=ON
+    healthcheck: # for CB-Spider
+      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # CB-Tumblebug
+  cb-tumblebug:
+    image: cloudbaristaorg/cb-tumblebug:0.9.2
+    container_name: cb-tumblebug
+    platform: linux/amd64
+    ports:
+      - target: 1323
+        published: 1323
+        protocol: tcp
+    depends_on: 
+      - cb-spider
+      - etcd-conf
+    volumes:
+      # - ./conf/:/app/conf/
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/log/:/app/log/
+    environment:
+      # - TB_ROOT_PATH=/app
+      - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
+      - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
+      # - TB_SQLITE_URL=localhost:3306 
+      # - TB_SQLITE_DATABASE=cb_tumblebug 
+      # - TB_SQLITE_USER=cb_tumblebug 
+      # - TB_SQLITE_PASSWORD=cb_tumblebug 
+      - TB_ETCD_ENDPOINTS=http://etcd:2379
+      # - TB_ETCD_AUTH_ENABLED=true
+      # - TB_ETCD_USERNAME=default
+      # - TB_ETCD_PASSWORD=default
+      # - TB_ALLOW_ORIGINS=*
+      # - TB_AUTH_ENABLED=true
+      # - TB_API_USERNAME=default
+      # - TB_API_PASSWORD=default
+      # - TB_AUTOCONTROL_DURATION_MS=10000
+      - TB_SELF_ENDPOINT=localhost:1323
+      # - TB_DEFAULT_NAMESPACE=ns01
+      # - TB_DEFAULT_CREDENTIALHOLDER=admin
+      # - TB_LOGFILE_PATH=/app/log/tumblebug.log
+      # - TB_LOGFILE_MAXSIZE=10
+      # - TB_LOGFILE_MAXBACKUPS=3
+      # - TB_LOGFILE_MAXAGE=30
+      # - TB_LOGFILE_COMPRESS=false
+      # - TB_LOGLEVEL=debug
+      # - TB_LOGWRITER=both
+      # - TB_NODE_ENV=development
+    healthcheck: # for CB-Tumblebug
+      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # cm-beetle
+  cm-beetle:
+    image: cloudbaristaorg/cm-beetle:0.2.0
+    pull_policy: missing
+    build:
+      context: ${COMPOSE_PROJECT_ROOT}
+      dockerfile: Dockerfile
+    container_name: cm-beetle
+    ports:
+      - target: 8056
+        published: 8056
+        protocol: tcp
+    depends_on:
+      - cb-tumblebug
+    volumes:
+      - ${COMPOSE_PROJECT_ROOT}/conf/:/app/conf/
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cm-beetle-container/log/:/app/log/
+    environment:
+      # - BEETLE_ROOT=/app
+      # - BEETLE_CBSTORE_ROOT=/app
+      # - BEETLE_CBLOG_ROOT=/app
+      - BEETLE_TUMBLEBUG_REST_URL=http://cb-tumblebug:1323/tumblebug
+      # - BEETLE_LOGFILE_PATH=/app/log/beetle.log
+      # - BEETLE_LOGFILE_MAXSIZE=10
+      # - BEETLE_LOGFILE_MAXBACKUPS=3
+      # - BEETLE_LOGFILE_MAXAGE=30
+      # - BEETLE_LOGFILE_COMPRESS=false
+      # - BEETLE_LOGLEVEL=debug
+      # - BEETLE_LOGWRITER=both
+      # - BEETLE_NODE_ENV=development
+      # - BEETLE_SQLITE_URL=localhost:3306
+      # - BEETLE_SQLITE_DATABASE=cm_beetle
+      # - BEETLE_SQLITE_USER=cm_beetle
+      # - BEETLE_SQLITE_PASSWORD=cm_beetle
+      # - BEETLE_API_ALLOW_ORIGINS=*
+      # - BEETLE_API_AUTH_ENABLED=true
+      # - BEETLE_API_USERNAME=default
+      # - BEETLE_API_PASSWORD=default
+      # - BEETLE_AUTOCONTROL_DURATION_MS=10000
+      - BEETLE_SELF_ENDPOINT=localhost:8056
+    healthcheck: # for CM-Beetle
+      test: [ "CMD", "curl", "-f", "http://localhost:1323/beetle/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # cb-mapui (optionally use)
+  cb-mapui:
+    image: cloudbaristaorg/cb-mapui:0.9.0
+    container_name: cb-mapui
+    ports:
+      - target: 1324
+        published: 1324
+        protocol: tcp
+    # depends_on:
+    #   - cb-tumblebug
+    healthcheck: # for cb-mapui
+      test: ["CMD", "nc", "-vz", "localhost", "1324"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
