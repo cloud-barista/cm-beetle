@@ -138,8 +138,8 @@ func GetVMInfra(nsId, infraId string) (mcis.TbMcisInfo, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("API_USERNAME")
-	apiPass := os.Getenv("API_PASSWORD")
+	apiUser := os.Getenv("BEETLE_API_USERNAME")
+	apiPass := os.Getenv("BEETLE_API_PASSWORD")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
@@ -180,8 +180,8 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("API_USERNAME")
-	apiPass := os.Getenv("API_PASSWORD")
+	apiUser := os.Getenv("BEETLE_API_USERNAME")
+	apiPass := os.Getenv("BEETLE_PI_PASSWORD")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint

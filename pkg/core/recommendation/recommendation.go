@@ -25,8 +25,8 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := viper.GetString("api.username")
-	apiPass := viper.GetString("api.password")
+	apiUser := viper.GetString("beetle.api.username")
+	apiPass := viper.GetString("beetle.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint

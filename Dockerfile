@@ -44,51 +44,43 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 ## Set environment variables 
 # Set system endpoints
 ENV BEETLE_ROOT=/app \
-    CBSTORE_ROOT=/app \
-    CBLOG_ROOT=/app
+    BEETLE_CBSTORE_ROOT=/app \
+    BEETLE_CBLOG_ROOT=/app 
 
-# ENV SPIDER_CALL_METHOD REST \
-#     SPIDER_REST_URL http://cb-spider:1024/spider
-
-ENV TUMBLEBUG_CALL_METHOD=REST \
-    TUMBLEBUG_REST_URL=http://localhost:1323/tumblebug
+ENV BEETLE_TUMBLEBUG_REST_URL=http://localhost:1323/tumblebug
 
 ## Logger configuration
 # Set log file path (default logfile path: ./beetle.log) 
 # Set log level, such as trace, debug info, warn, error, fatal, and panic
-ENV LOGFILE_PATH=$BEETLE_ROOT/log/beetle.log \
-    LOGFILE_MAXSIZE=10 \
-    LOGFILE_MAXBACKUPS=3 \
-    LOGFILE_MAXAGE=30 \
-    LOGFILE_COMPRESS=false \
-    LOGLEVEL=info
+ENV BEETLE_LOGFILE_PATH=/app/log/beetle.log \
+    BEETLE_LOGFILE_MAXSIZE=10 \
+    BEETLE_LOGFILE_MAXBACKUPS=3 \
+    BEETLE_LOGFILE_MAXAGE=30 \
+    BEETLE_LOGFILE_COMPRESS=false \
+    BEETLE_LOGLEVEL=info
 
 # Set execution environment, such as development or production
-ENV NODE_ENV=production
+ENV BEETLE_NODE_ENV=production
 
 ## Set internal DB config (SQLlite)
-ENV DB_URL=localhost:3306 \
-    DB_DATABASE=cm_beetle \
-    DB_USER=cm_beetle \
-    DB_PASSWORD=cm_beetle
+ENV BEETLE_SQLITE_URL=localhost:3306 \
+    BEETLE_SQLITE_DATABASE=cm_beetle \
+    BEETLE_SQLITE_USER=cm_beetle \
+    BEETLE_SQLITE_PASSWORD=cm_beetle
 
 ## Set API access config
 # API_ALLOW_ORIGINS (ex: https://cloud-barista.org,xxx.xxx.xxx.xxx or * for all)
 # Set ENABLE_AUTH=true currently for basic auth for all routes (i.e., url or path)
-ENV API_ALLOW_ORIGINS=* \
-    API_AUTH_ENABLED=true \
-    API_USERNAME=default \
-    API_PASSWORD=default
+ENV BEETLE_API_ALLOW_ORIGINS=* \
+    BEETLE_API_AUTH_ENABLED=true \
+    BEETLE_API_USERNAME=default \
+    BEETLE_API_PASSWORD=default
 
 ## Set period for auto control goroutine invocation
-ENV AUTOCONTROL_DURATION_MS=10000
+ENV BEETLE_AUTOCONTROL_DURATION_MS=10000
 
 ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
-ENV SELF_ENDPOINT=localhost:8056
-
-## Environment variables that you don't need to touch
-# Swagger UI API document file path 
-ENV APIDOC_PATH=/app/api/swagger.json
+ENV BEETLE_SELF_ENDPOINT=localhost:8056
 
 ENTRYPOINT [ "/app/cm-beetle" ]
 

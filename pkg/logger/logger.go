@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/cloud-barista/cm-beetle/pkg/config"
@@ -18,9 +19,17 @@ var (
 
 func init() {
 
+	// Map environment variable names to config file key names
+	// envPrefix := "BEETLE"
+	// viper.SetEnvPrefix(envPrefix)
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+
+	viper.AutomaticEnv()
+
 	// Set config values
-	logLevel := viper.GetString("loglevel")
-	env := viper.GetString("node.env")
+	logLevel := viper.GetString("beetle.loglevel")
+	env := viper.GetString("beetle.node.env")
 
 	// Set the global logger to use JSON format.
 	zerolog.TimeFieldFormat = time.RFC3339
@@ -55,7 +64,7 @@ func init() {
 	case "panic":
 		level = zerolog.PanicLevel
 	default:
-		log.Warn().Msgf("Invalid LOGLEVEL value: %s. Using default value: info", logLevel)
+		log.Warn().Msgf("Invalid BEETLE_LOGLEVEL value: %s. Using default value: info", logLevel)
 		level = zerolog.InfoLevel
 	}
 
@@ -80,7 +89,7 @@ func init() {
 func NewLogger(level zerolog.Level) *zerolog.Logger {
 
 	// Set config values
-	logwriter := viper.GetString("logwriter")
+	logwriter := viper.GetString("beetle.logwriter")
 
 	// Multi-writer setup: logs to both file and console
 	multi := zerolog.MultiLevelWriter(
@@ -95,36 +104,38 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 	if logwriter == "both" {
 		// Apply file to the global logger
 		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
-		logger.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Str("ConsoleWriter", "os.Stdout").
-			Msg("Multi-writes setup (logs to both file and console)")
 	} else if logwriter == "file" {
 		// Apply file writer to the global logger
 		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
-		logger.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Msg("Single-write setup (logs to file only)")
 	} else if logwriter == "stdout" {
 		// Apply ConsoleWriter to the global logger
 		logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).Level(level).With().Timestamp().Caller().Logger()
-		logger.Info().
-			Str("ConsoleWriter", "os.Stdout").
-			Msg("Single-write setup (logs to console only)")
 	} else {
-		log.Warn().Msgf("Invalid LOGWRITER value: %s. Using default value: both", logwriter)
+		log.Warn().Msgf("Invalid BEETLE_LOGWRITER value: %s. Using default value: both", logwriter)
 		// Apply multi-writer to the global logger
 		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
-		logger.Info().
-			Str("logFilePath", sharedLogFile.Filename).
-			Str("ConsoleWriter", "os.Stdout").
-			Msg("Multi-writes setup (logs to both file and console)")
 	}
 
 	// Log a message
 	logger.Info().
 		Str("logLevel", level.String()).
 		Msg("New logger created")
+
+	if logwriter == "file" {
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Msg("Single-write setup (logs to file only)")
+
+	} else if logwriter == "stdout" {
+		logger.Info().
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Single-write setup (logs to console only)")
+	} else {
+		logger.Info().
+			Str("logFilePath", sharedLogFile.Filename).
+			Str("ConsoleWriter", "os.Stdout").
+			Msg("Multi-writes setup (logs to both file and console)")
+	}
 
 	return &logger
 }
@@ -133,39 +144,39 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 func getLogFileConfig() (string, int, int, int, bool) {
 
 	// Set config values
-	logFilePath := viper.GetString("logfile.path")
+	logFilePath := viper.GetString("beetle.logfile.path")
 
-	// Default: beetle.log
+	// Default: ./log/tumblebug.log
 	if logFilePath == "" {
-		log.Warn().Msg("LOGFILE_PATH is not set. Using default value: beetle.log")
-		logFilePath = "beetle.log"
+		log.Warn().Msg("BEETLE_LOGFILE_PATH is not set. Using default value: ./log/tumblebug.log")
+		logFilePath = "./log/tumblebug.log"
 	}
 
 	// Default: 10 MB
-	maxSize, err := strconv.Atoi(viper.GetString("logfile.maxsize"))
+	maxSize, err := strconv.Atoi(viper.GetString("beetle.logfile.maxsize"))
 	if err != nil {
-		log.Warn().Msgf("Invalid LOGFILE_MAXSIZE value: %s. Using default value: 10 MB", viper.GetString("logfile.maxsize"))
+		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXSIZE value: %s. Using default value: 10 MB", viper.GetString("beetle.logfile.maxsize"))
 		maxSize = 10
 	}
 
 	// Default: 3 backups
-	maxBackups, err := strconv.Atoi(viper.GetString("logfile.maxbackups"))
+	maxBackups, err := strconv.Atoi(viper.GetString("beetle.logfile.maxbackups"))
 	if err != nil {
-		log.Warn().Msgf("Invalid LOGFILE_MAXBACKUPS value: %s. Using default value: 3 backups", viper.GetString("logfile.maxbackups"))
+		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXBACKUPS value: %s. Using default value: 3 backups", viper.GetString("beetle.logfile.maxbackups"))
 		maxBackups = 3
 	}
 
 	// Default: 30 days
-	maxAge, err := strconv.Atoi(viper.GetString("logfile.maxage"))
+	maxAge, err := strconv.Atoi(viper.GetString("beetle.logfile.maxage"))
 	if err != nil {
-		log.Warn().Msgf("Invalid LOGFILE_MAXAGE value: %s. Using default value: 30 days", viper.GetString("logfile.maxage"))
+		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXAGE value: %s. Using default value: 30 days", viper.GetString("beetle.logfile.maxage"))
 		maxAge = 30
 	}
 
 	// Default: false
-	compress, err := strconv.ParseBool(viper.GetString("logfile.compress"))
+	compress, err := strconv.ParseBool(viper.GetString("beetle.logfile.compress"))
 	if err != nil {
-		log.Warn().Msgf("Invalid LOGFILE_COMPRESS value: %s. Using default value: false", viper.GetString("logfile.compress"))
+		log.Warn().Msgf("Invalid BEETLE_LOGFILE_COMPRESS value: %s. Using default value: false", viper.GetString("beetle.logfile.compress"))
 		compress = false
 	}
 
