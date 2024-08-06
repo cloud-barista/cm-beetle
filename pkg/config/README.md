@@ -41,7 +41,7 @@ import (
 )
 
 func main() {
-    logFilePath := viper.GetString("logfile.path")
+    logFilePath := viper.GetString("beetle.logfile.path")
     // Application logic follows
 }
 ```

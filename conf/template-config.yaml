@@ -2,71 +2,60 @@
 beetle:
   root: # To be set in runtime
 
-cbstore:
-  root: # To be set in runtime (based on beetle.root)
+  cbstore:
+    root: # To be set in runtime (based on beetle.root)
 
-cblog:
-  root: # To be set in runtime (based on beetle.root)
+  cblog:
+    root: # To be set in runtime (based on beetle.root)
 
-spider:
-  call_method: REST
-  rest:
-    url: http://localhost:1024/spider
+  ## Set Tumblebug API endpoint
+  tumblebug:
+    rest:
+      url: http://localhost:1323/tumblebug
 
-tumblebug:
-  call_method: REST
-  rest:
-    url: http://localhost:1323/tumblebug
+  ## Logger configuration
+  logfile:
+    # Set log file path (default logfile path: ./beetle.log)
+    path: ./beetle.log
+    maxsize: 10
+    maxbackups: 3
+    maxage: 30
+    compress: false
 
-## Logger configuration
-logfile:
-  # Set log file path (default logfile path: ./beetle.log)
-  path: ./beetle.log
-  maxsize: 10
-  maxbackups: 3
-  maxage: 30
-  compress: false
+  # Set log level, such as trace, debug info, warn, error, fatal, and panic
+  loglevel: debug
 
-# Set log level, such as trace, debug info, warn, error, fatal, and panic
-loglevel: debug
+  # Set log writer, such as file, stdout, or both
+  logwriter: both
 
-# Set log writer, such as file, stdout, or both
-logwriter: both
+  # Set execution environment, such as development or production
+  node:
+    env: development
 
-# Set execution environment, such as development or production
-node:
-  env: development
+  ## Set internal DB config (SQLlite)
+  db:
+    url: localhost:3306
+    database: cm_beetle
+    user: cm_beetle
+    password: cm_beetle
 
-## Set internal DB config (SQLlite)
-db:
-  url: localhost:3306
-  database: cm_beetle
-  user: cm_beetle
-  password: cm_beetle
+  ## Set API access config
+  api:
+    # Set API_ALLOW_ORIGINS (ex: https://cloud-barista.org,http://localhost:8080 or * for all)
+    allow:
+      origins: "*"
 
-## Set API access config
-api:
-  # Set API_ALLOW_ORIGINS (ex: https://cloud-barista.org,http://localhost:8080 or * for all)
-  allow:
-    origins: "*"
+    # Set API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
+    auth:
+      enabled: true
 
-  # Set API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
-  auth:
-    enabled: true
+    username: default
+    password: default
 
-  username: default
-  password: default
+  ## Set period for auto control goroutine invocation
+  autocontrol:
+    duration_ms: 10000
 
-## Set period for auto control goroutine invocation
-autocontrol:
-  duration_ms: 10000
-
-## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
-self:
-  endpoint: localhost:8056
-
-## Environment variables that you don't need to touch
-# Swagger UI API document file path
-apidoc:
-  # export APIDOC_PATH=$BEETLE_ROOT/api/swagger.json
-  path: # To be set in runtime (based on beetle.root)
+  ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
+  self:
+    endpoint: localhost:8056

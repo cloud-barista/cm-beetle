@@ -70,14 +70,13 @@ func Init() {
 
 		// Set the binary path
 		viper.Set("beetle.root", projectRoot)
-		viper.Set("cbstore.root", projectRoot)
-		viper.Set("cblog.root", projectRoot)
-		viper.Set("apidoc.path", projectRoot+"/api/swagger.json")
+		viper.Set("beetle.cbstore.root", projectRoot)
+		viper.Set("beetle.cblog.root", projectRoot)
 	}
 
 	// Recursively print all keys and values in Viper
 	settings := viper.AllSettings()
-	if viper.GetString("node.env") == "development" {
+	if viper.GetString("beetle.node.env") == "development" {
 		recursivePrintMap(settings, "")
 	}
 }

@@ -104,7 +104,7 @@ func RunServer(port string) {
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
-	allowedOrigins := viper.GetString("api.allow.origins")
+	allowedOrigins := viper.GetString("beetle.api.allow.origins")
 	if allowedOrigins == "" {
 		log.Fatal().Msg("allow_ORIGINS env variable for CORS is " + allowedOrigins +
 			". Please provide a proper value and source setup.env again. EXITING...")
@@ -116,10 +116,10 @@ func RunServer(port string) {
 	}))
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
-	enableAuth := viper.GetString("api.auth.enabled") == "true"
+	enableAuth := viper.GetString("beetle.api.auth.enabled") == "true"
 
-	apiUser := viper.GetString("api.username")
-	apiPass := viper.GetString("api.password")
+	apiUser := viper.GetString("beetle.api.username")
+	apiPass := viper.GetString("beetle.api.password")
 
 	if enableAuth {
 		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
@@ -205,7 +205,7 @@ func RunServer(port string) {
 	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
 	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
-	selfEndpoint := viper.GetString("self.endpoint")
+	selfEndpoint := viper.GetString("beetle.self.endpoint")
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"
 
 	if enableAuth {
@@ -214,7 +214,7 @@ func RunServer(port string) {
 	fmt.Printf(noticeColor, apidashboard)
 	fmt.Println("\n ")
 
-	// A context for graceful shutdown (It is based on the signal package)selfEndpoint := os.Getenv("SELF_ENDPOINT")
+	// A context for graceful shutdown (It is based on the signal package)selfEndpoint := os.Getenv("BEETLE_SELF_ENDPOINT")
 	// NOTE -
 	// Use os.Interrupt Ctrl+C or Ctrl+Break on Windows
 	// Use syscall.KILL for Kill(can't be caught or ignored) (POSIX)

@@ -23,21 +23,17 @@ spec:
           env:
             - name: BEETLE_ROOT
               value: "/app"
-            - name: CBLOG_ROOT
+            - name: BEETLE_CBLOG_ROOT
               value: "/app"
-            - name: CBLOG_ROOT
+            - name: BEETLE_CBLOG_ROOT
               value: "/app"
-            - name: TUMBLEBUG_CALL_METHOD
-              value: "REST"
-            - name: TUMBLEBUG_REST_URL
+            - name: BEETLE_TUMBLEBUG_REST_URL
               value: "http://localhost:1323/tumblebug"
-            - name: API_USERNAME
+            - name: BEETLE_API_USERNAME
               value: "default"
-            - name: API_PASSWORD
+            - name: BEETLE_API_PASSWORD
               value: "default"
-            - name: AUTOCONTROL_DURATION_MS
+            - name: BEETLE_AUTOCONTROL_DURATION_MS
               value: "10000"
-            - name: SELF_ENDPOINT
+            - name: BEETLE_SELF_ENDPOINT
               value: "localhost:8056"
-            - name: API_DOC_PATH
-              value: "/app/api/swagger.json"
