@@ -26,7 +26,8 @@ Computing Infrastructure Migration framework (codename: cm-beetle) is going to s
 
 ## How to run and use CM-Beetle
 
-See [the discussion #73](https://github.com/cloud-barista/cm-beetle/discussions/73)
+1. [How to run and use the CM-Beetle](https://github.com/cloud-barista/cm-beetle/discussions/73)
+2. [How to deploy CM-Beetle, along with its related components](https://github.com/cloud-barista/cm-beetle/discussions/105)
 
 ---
 
