@@ -2,131 +2,123 @@ package logger
 
 import (
 	"os"
-	"strconv"
-	"strings"
-	"time"
+	"sync"
 
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
 	sharedLogFile *lumberjack.Logger
+	once          sync.Once
 )
 
-func init() {
-
-	// Map environment variable names to config file key names
-	// envPrefix := "BEETLE"
-	// viper.SetEnvPrefix(envPrefix)
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
-
-	viper.AutomaticEnv()
-
-	// Set config values
-	logLevel := viper.GetString("beetle.loglevel")
-	env := viper.GetString("beetle.node.env")
-
-	// Set the global logger to use JSON format.
-	zerolog.TimeFieldFormat = time.RFC3339
-
-	// Get log file configuration from environment variables
-	logFilePath, maxSize, maxBackups, maxAge, compress := getLogFileConfig()
-
-	// Initialize a shared log file with lumberjack to manage log rotation
-	sharedLogFile = &lumberjack.Logger{
-		Filename:   logFilePath,
-		MaxSize:    maxSize,
-		MaxBackups: maxBackups,
-		MaxAge:     maxAge,
-		Compress:   compress,
-	}
-
-	// Set the log level
-	var level zerolog.Level
-	switch logLevel {
-	case "trace":
-		level = zerolog.TraceLevel
-	case "debug":
-		level = zerolog.DebugLevel
-	case "info":
-		level = zerolog.InfoLevel
-	case "warn":
-		level = zerolog.WarnLevel
-	case "error":
-		level = zerolog.ErrorLevel
-	case "fatal":
-		level = zerolog.FatalLevel
-	case "panic":
-		level = zerolog.PanicLevel
-	default:
-		log.Warn().Msgf("Invalid BEETLE_LOGLEVEL value: %s. Using default value: info", logLevel)
-		level = zerolog.InfoLevel
-	}
-
-	logger := NewLogger(level)
-
-	// Set global logger
-	log.Logger = *logger
-
-	// Check the execution environment from the environment variable
-	// Log a message
-	log.Info().
-		Str("logLevel", level.String()).
-		Str("env", env).
-		Int("maxSize", maxSize).
-		Int("maxBackups", maxBackups).
-		Int("maxAge", maxAge).
-		Bool("compress", compress).
-		Msg("Global logger initialized")
+type Config struct {
+	LogLevel    string
+	LogWriter   string
+	LogFilePath string
+	MaxSize     int
+	MaxBackups  int
+	MaxAge      int
+	Compress    bool
 }
 
-// Create a new logger
-func NewLogger(level zerolog.Level) *zerolog.Logger {
-
-	// Set config values
-	logwriter := viper.GetString("beetle.logwriter")
-
-	// Multi-writer setup: logs to both file and console
-	multi := zerolog.MultiLevelWriter(
-		sharedLogFile,
-		zerolog.ConsoleWriter{Out: os.Stdout},
-	)
-
-	var logger zerolog.Logger
-
-	// Check the execution environment from the environment variable
-	// Configure the log output
-	if logwriter == "both" {
-		// Apply file to the global logger
-		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
-	} else if logwriter == "file" {
-		// Apply file writer to the global logger
-		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
-	} else if logwriter == "stdout" {
-		// Apply ConsoleWriter to the global logger
-		logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).Level(level).With().Timestamp().Caller().Logger()
-	} else {
-		log.Warn().Msgf("Invalid BEETLE_LOGWRITER value: %s. Using default value: both", logwriter)
-		// Apply multi-writer to the global logger
-		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
+// NewLogger initializes a new logger with default values if not provided
+func NewLogger(config Config) *zerolog.Logger {
+	// Apply default values if not provided
+	if config.LogLevel == "" {
+		config.LogLevel = "debug"
+	}
+	if config.LogWriter == "" {
+		config.LogWriter = "console"
+	}
+	if config.LogFilePath == "" {
+		config.LogFilePath = "./log/app.log"
+	}
+	if config.MaxSize == 0 {
+		config.MaxSize = 10 // in MB
+	}
+	if config.MaxBackups == 0 {
+		config.MaxBackups = 3
+	}
+	if config.MaxAge == 0 {
+		config.MaxAge = 30 // in days
 	}
 
-	// Log a message
+	// Initialize shared log file for log rotation once
+	once.Do(func() {
+		sharedLogFile = &lumberjack.Logger{
+			Filename:   config.LogFilePath,
+			MaxSize:    config.MaxSize,
+			MaxBackups: config.MaxBackups,
+			MaxAge:     config.MaxAge,
+			Compress:   config.Compress,
+		}
+	})
+
+	level := getLogLevel(config.LogLevel)
+	logger := configureWriter(config.LogWriter, level)
+
+	// Log a message to confirm logger setup
 	logger.Info().
 		Str("logLevel", level.String()).
 		Msg("New logger created")
 
-	if logwriter == "file" {
+	return logger
+}
+
+// getLogLevel returns the zerolog.Level based on the string level
+func getLogLevel(logLevel string) zerolog.Level {
+	switch logLevel {
+	case "trace":
+		return zerolog.TraceLevel
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	case "panic":
+		return zerolog.PanicLevel
+	default:
+		log.Warn().Msgf("Invalid log level: %s. Using default value: info", logLevel)
+		return zerolog.InfoLevel
+	}
+}
+
+// configureWriter sets up the logger based on the writer type
+func configureWriter(logWriter string, level zerolog.Level) *zerolog.Logger {
+	var logger zerolog.Logger
+	multi := zerolog.MultiLevelWriter(sharedLogFile, zerolog.ConsoleWriter{Out: os.Stdout})
+
+	switch logWriter {
+	case "both":
+		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
+	case "file":
+		logger = zerolog.New(sharedLogFile).Level(level).With().Timestamp().Caller().Logger()
+	case "stdout":
+		logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).Level(level).With().Timestamp().Caller().Logger()
+	default:
+		log.Warn().Msgf("Invalid log writer: %s. Using default value: both", logWriter)
+		logger = zerolog.New(multi).Level(level).With().Timestamp().Caller().Logger()
+	}
+
+	logSetupInfo(logger, logWriter)
+	return &logger
+}
+
+// logSetupInfo logs the logger setup details
+func logSetupInfo(logger zerolog.Logger, logWriter string) {
+	if logWriter == "file" {
 		logger.Info().
 			Str("logFilePath", sharedLogFile.Filename).
 			Msg("Single-write setup (logs to file only)")
-
-	} else if logwriter == "stdout" {
+	} else if logWriter == "stdout" {
 		logger.Info().
 			Str("ConsoleWriter", "os.Stdout").
 			Msg("Single-write setup (logs to console only)")
@@ -136,49 +128,4 @@ func NewLogger(level zerolog.Level) *zerolog.Logger {
 			Str("ConsoleWriter", "os.Stdout").
 			Msg("Multi-writes setup (logs to both file and console)")
 	}
-
-	return &logger
-}
-
-// Get log file configuration from environment variables
-func getLogFileConfig() (string, int, int, int, bool) {
-
-	// Set config values
-	logFilePath := viper.GetString("beetle.logfile.path")
-
-	// Default: ./log/tumblebug.log
-	if logFilePath == "" {
-		log.Warn().Msg("BEETLE_LOGFILE_PATH is not set. Using default value: ./log/tumblebug.log")
-		logFilePath = "./log/tumblebug.log"
-	}
-
-	// Default: 10 MB
-	maxSize, err := strconv.Atoi(viper.GetString("beetle.logfile.maxsize"))
-	if err != nil {
-		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXSIZE value: %s. Using default value: 10 MB", viper.GetString("beetle.logfile.maxsize"))
-		maxSize = 10
-	}
-
-	// Default: 3 backups
-	maxBackups, err := strconv.Atoi(viper.GetString("beetle.logfile.maxbackups"))
-	if err != nil {
-		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXBACKUPS value: %s. Using default value: 3 backups", viper.GetString("beetle.logfile.maxbackups"))
-		maxBackups = 3
-	}
-
-	// Default: 30 days
-	maxAge, err := strconv.Atoi(viper.GetString("beetle.logfile.maxage"))
-	if err != nil {
-		log.Warn().Msgf("Invalid BEETLE_LOGFILE_MAXAGE value: %s. Using default value: 30 days", viper.GetString("beetle.logfile.maxage"))
-		maxAge = 30
-	}
-
-	// Default: false
-	compress, err := strconv.ParseBool(viper.GetString("beetle.logfile.compress"))
-	if err != nil {
-		log.Warn().Msgf("Invalid BEETLE_LOGFILE_COMPRESS value: %s. Using default value: false", viper.GetString("beetle.logfile.compress"))
-		compress = false
-	}
-
-	return logFilePath, maxSize, maxBackups, maxAge, compress
 }

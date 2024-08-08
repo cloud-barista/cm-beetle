@@ -20,9 +20,8 @@ import (
 	"strconv"
 	"sync"
 
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
+	"github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -36,7 +35,23 @@ import (
 )
 
 func init() {
+
 	common.SystemReady = false
+
+	config.Init()
+
+	logger := logger.NewLogger(logger.Config{
+		LogLevel:    viper.GetString("beetle.log.level"),
+		LogWriter:   viper.GetString("beetle.log.writer"),
+		LogFilePath: viper.GetString("beetle.logfile.path"),
+		MaxSize:     viper.GetInt("beetle.logfile.maxsize"),
+		MaxBackups:  viper.GetInt("beetle.logfile.maxbackups"),
+		MaxAge:      viper.GetInt("beetle.logfile.maxage"),
+		Compress:    viper.GetBool("beetle.logfile.compress"),
+	})
+
+	// Set global logger
+	log.Logger = *logger
 }
 
 // @title CM-Beetle REST API

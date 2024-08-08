@@ -14,8 +14,8 @@ beetle:
 
   ## Logger configuration
   logfile:
-    # Set log file path (default logfile path: ./beetle.log)
-    path: ./beetle.log
+    # Set log file path (default logfile path: ./log/beetle.log)
+    path: ./log/beetle.log
     maxsize: 10
     maxbackups: 3
     maxage: 30

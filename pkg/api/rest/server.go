@@ -41,9 +41,6 @@ import (
 	_ "github.com/cloud-barista/cm-beetle/api"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
 
