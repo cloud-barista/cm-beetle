@@ -2,6 +2,9 @@ package logger
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
+	"strconv"
 	"sync"
 
 	"github.com/rs/zerolog"
@@ -22,6 +25,23 @@ type Config struct {
 	MaxBackups  int
 	MaxAge      int
 	Compress    bool
+}
+
+func init() {
+
+	// For consistent log format across different running environments (e.g., local, Docker, Kubernetes)
+	// Set the caller field to the relative path from the project root
+	_, b, _, _ := runtime.Caller(0)
+	projectRoot := filepath.Join(filepath.Dir(b), "../../") // predict the project root directory from the current file having init() function
+
+	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+		// relative path from the project root
+		relPath, err := filepath.Rel(projectRoot, file)
+		if err != nil {
+			return filepath.Base(file) + ":" + strconv.Itoa(line) // return the original file path with line number if the relative path cannot be resolved
+		}
+		return relPath + ":" + strconv.Itoa(line)
+	}
 }
 
 // NewLogger initializes a new logger with default values if not provided
@@ -54,6 +74,21 @@ func NewLogger(config Config) *zerolog.Logger {
 			MaxBackups: config.MaxBackups,
 			MaxAge:     config.MaxAge,
 			Compress:   config.Compress,
+		}
+
+		// Ensure the log file exists before changing its permissions
+		if _, err := os.Stat(config.LogFilePath); os.IsNotExist(err) {
+			// Create the log file if it does not exist
+			file, err := os.Create(config.LogFilePath)
+			if err != nil {
+				log.Fatal().Msgf("Failed to create log file: %v", err)
+			}
+			file.Close()
+		}
+
+		// Change file permissions to -rw-r--r--
+		if err := os.Chmod(config.LogFilePath, 0644); err != nil {
+			log.Fatal().Msgf("Failed to change file permissions: %v", err)
 		}
 	})
 
