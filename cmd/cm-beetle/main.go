@@ -19,10 +19,11 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
+	"github.com/cloud-barista/cm-beetle/pkg/logger"
+	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 
 	//_ "github.com/go-sql-driver/mysql"
@@ -35,8 +36,88 @@ import (
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest"
 )
 
+// NoOpLogger is an implementation of resty.Logger that discards all logs.
+type NoOpLogger struct{}
+
+func (n *NoOpLogger) Errorf(format string, v ...interface{}) {}
+func (n *NoOpLogger) Warnf(format string, v ...interface{})  {}
+func (n *NoOpLogger) Debugf(format string, v ...interface{}) {}
+
 func init() {
+
 	common.SystemReady = false
+
+	// Initialize the configuration from "config.yaml" file or environment variables
+	config.Init()
+
+	// Initialize the logger
+	logger := logger.NewLogger(logger.Config{
+		LogLevel:    viper.GetString("beetle.loglevel"),
+		LogWriter:   viper.GetString("beetle.logwriter"),
+		LogFilePath: viper.GetString("beetle.logfile.path"),
+		MaxSize:     viper.GetInt("beetle.logfile.maxsize"),
+		MaxBackups:  viper.GetInt("beetle.logfile.maxbackups"),
+		MaxAge:      viper.GetInt("beetle.logfile.maxage"),
+		Compress:    viper.GetBool("beetle.logfile.compress"),
+	})
+
+	// Set the global logger
+	log.Logger = *logger
+
+	// Check Tumblebug readiness
+	tumblebugRestUrl := viper.GetString("beetle.tumblebug.rest.url")
+	url := tumblebugRestUrl + "/readyz"
+	isReady, err := checkReadiness(url)
+
+	if err != nil || !isReady {
+		log.Fatal().Err(err).Msg("Tumblebug is not ready. Exiting...")
+	}
+
+	log.Info().Msg("Tumblebug is ready. Initializing Beetle...")
+
+}
+
+func checkReadiness(url string) (bool, error) {
+	// Create a new resty client
+	client := resty.New()
+
+	// Disable Resty default logging by setting a no-op logger
+	client.SetLogger(&NoOpLogger{})
+
+	// Set for retries
+	retryMaxAttempts := 20
+	retryWaitTime := 3 * time.Second
+	retryMaxWaitTime := 80 * time.Second
+	// Configure retries
+	client.
+		// Set retry count to non zero to enable retries
+		SetRetryCount(retryMaxAttempts).
+		// You can override initial retry wait time.
+		// Default is 100 milliseconds.
+		SetRetryWaitTime(retryWaitTime).
+		// MaxWaitTime can be overridden as well.
+		// Default is 2 seconds.
+		SetRetryMaxWaitTime(retryMaxWaitTime).
+		// SetRetryAfter sets callback to calculate wait time between retries.
+		// Default (nil) implies exponential backoff with jitter
+		SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
+			attempt := resp.Request.Attempt // Current attempt number
+			maxAttempts := retryMaxAttempts // Maximum attempt number
+
+			log.Info().Msgf("check readiness by %s. Attempt %d/%d.",
+				resp.Request.URL, attempt, maxAttempts)
+
+			// Always retry after the calculated wait time
+			return retryWaitTime, nil
+		})
+
+	resp, err := client.R().Get(url)
+
+	if err != nil || resp.IsError() {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // @title CM-Beetle REST API

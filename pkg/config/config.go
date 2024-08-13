@@ -11,10 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
-	Init()
-}
-
 func Init() {
 	viper.AddConfigPath("../../conf/") // config for development
 	viper.AddConfigPath(".")           // config for production optionally looking for the configuration in the working directory

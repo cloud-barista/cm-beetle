@@ -26,8 +26,6 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
 

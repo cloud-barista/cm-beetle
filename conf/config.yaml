@@ -8,14 +8,41 @@ beetle:
   cblog:
     root: # To be set in runtime (based on beetle.root)
 
+  ## Set API access config
+  api:
+    # Set API_ALLOW_ORIGINS (ex: https://cloud-barista.org,http://localhost:8080 or * for all)
+    allow:
+      origins: "*"
+
+    # Set API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
+    auth:
+      enabled: true
+
+    username: default
+    password: default
+
+  ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
+  self:
+    endpoint: localhost:8056
+
   tumblebug:
     rest:
       url: http://localhost:1323/tumblebug
+    api:
+      username: default
+      password: default
+
+  ## Set internal DB config (SQLlite)
+  db:
+    url: localhost:3306
+    database: cm_beetle
+    user: cm_beetle
+    password: cm_beetle
 
   ## Logger configuration
   logfile:
-    # Set log file path (default logfile path: ./beetle.log)
-    path: ./beetle.log
+    # Set log file path (default logfile path: ./log/beetle.log)
+    path: ./log/beetle.log
     maxsize: 10
     maxbackups: 3
     maxage: 30
@@ -31,30 +58,6 @@ beetle:
   node:
     env: development
 
-  ## Set internal DB config (SQLlite)
-  db:
-    url: localhost:3306
-    database: cm_beetle
-    user: cm_beetle
-    password: cm_beetle
-
-  ## Set API access config
-  api:
-    # Set API_ALLOW_ORIGINS (ex: https://cloud-barista.org,http://localhost:8080 or * for all)
-    allow:
-      origins: "*"
-
-    # Set API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
-    auth:
-      enabled: true
-
-    username: default
-    password: default
-
   ## Set period for auto control goroutine invocation
   autocontrol:
     duration_ms: 10000
-
-  ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
-  self:
-    endpoint: localhost:8056

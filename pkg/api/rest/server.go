@@ -15,15 +15,18 @@ limitations under the License.
 package server
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/route"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/spf13/viper"
 
@@ -32,6 +35,7 @@ import (
 	"os"
 
 	"net/http"
+	"net/url"
 
 	// REST API (echo)
 	"github.com/labstack/echo/v4"
@@ -41,9 +45,6 @@ import (
 	_ "github.com/cloud-barista/cm-beetle/api"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
-	// Black import (_) is for running a package's init() function without using its other contents.
-	_ "github.com/cloud-barista/cm-beetle/pkg/config"
-	_ "github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
 
@@ -150,36 +151,65 @@ func RunServer(port string) {
 	fmt.Println("\n \n ")
 
 	// Route for system management
-	// e.GET("/beetle/swagger/*", echoSwagger.WrapHandler)
-	// e.GET("/beetle/swaggerActive", rest_common.RestGetSwagger)
 	swaggerRedirect := func(c echo.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")
 	}
-	e.GET("/beetle/api", swaggerRedirect)
-	e.GET("/beetle/api/", swaggerRedirect)
-	e.GET("/beetle/api/*", echoSwagger.WrapHandler)
-
-	e.GET("/beetle/readyz", rest_common.RestGetReadyz)
-	e.GET("/beetle/httpVersion", rest_common.RestCheckHTTPVersion)
 
 	// Beetle API group which has /beetle as prefix
-	groupBase := e.Group("/beetle")
+	gBeetle := e.Group("/beetle")
+	gBeetle.GET("/api", swaggerRedirect)
+	gBeetle.GET("/api/", swaggerRedirect)
+	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
 
-	// Sample API group (for developers to add new API)
-	groupSample := groupBase.Group("/sample")
-	route.RegisterSampleRoutes(groupSample)
+	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
+	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
 
-	// Sample API group (for developers to add new API)
-	groupNamespace := groupBase.Group("/ns")
-	route.RegisterNamespaceRoutes(groupNamespace)
+	target := viper.GetString("beetle.tumblebug.rest.url")
+	url, err := url.Parse(target)
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+
+	// proxy middleware to forward the specified requests to the target server
+	gBeetle.Use(middlewares.Proxy(middlewares.ProxyConfig{
+		URL: url,
+		Rewrite: map[string]string{
+			"/ns":   "/ns",
+			"/ns/*": "/ns/$1",
+		},
+		ModifyResponse: func(res *http.Response) error {
+			resBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				return err
+			}
+
+			resBody := strings.TrimSuffix(string(resBytes), "\n")
+			log.Debug().Msgf("[Proxy] response from %s: %s", res.Request.URL, resBody)
+
+			res.Body = io.NopCloser(bytes.NewReader(resBytes))
+			return nil
+		},
+	}))
+
+	// Namespace API group
+	// gNamespace := gBeetle.Group("/ns")
+	// gNamespace.POST("", controller.RestPostNs)
+	// gNamespace.GET("", controller.RestGetAllNs)
+	// gNamespace.GET("/:nsId", controller.RestGetNs)
+	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
 
 	// Recommendation API group
-	groupRecommendation := groupBase.Group("/recommendation")
-	route.RegisterRecommendationRoutes(groupRecommendation)
+	gRecommendation := gBeetle.Group("/recommendation")
+	gRecommendation.POST("/infra", controller.RecommendInfra)
 
 	// Migration API group
-	groupMigration := groupBase.Group("/migration")
-	route.RegisterMigrationRoutes(groupMigration)
+	gMigration := gBeetle.Group("/migration")
+	gMigration.POST("/infra", controller.MigrateInfra)
+	gMigration.GET("/infra/:infraId", controller.GetInfra)
+	gMigration.DELETE("/infra/:infraId", controller.DeleteInfra)
+	// gMigration.POST("/infra/network", controller.MigrateInfra)
+	// gMigration.POST("/infra/storage", controller.MigrateInfra)
+	// gMigration.POST("/infra/instance", controller.MigrateInfra)
 
 	// Route
 	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)
@@ -205,6 +235,15 @@ func RunServer(port string) {
 	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
 	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
+	// Sample API group (for developers to add new API)
+	gSample := gBeetle.Group("/sample")
+	gSample.GET("/users", controller.GetUsers)
+	gSample.GET("/users/:id", controller.GetUser)
+	gSample.POST("/users", controller.CreateUser)
+	gSample.PUT("/users/:id", controller.UpdateUser)
+	gSample.DELETE("/users/:id", controller.DeleteUser)
+
+	// Start API server
 	selfEndpoint := viper.GetString("beetle.self.endpoint")
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"
 
