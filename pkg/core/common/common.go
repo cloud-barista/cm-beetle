@@ -17,12 +17,12 @@ package common
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	icbs "github.com/cloud-barista/cb-store/interfaces"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"xorm.io/xorm"
 )
 
@@ -214,8 +214,8 @@ type RestGetAllNsResponse struct {
 func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
@@ -273,8 +273,8 @@ func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
 func GetAllNamespaces() (RestGetAllNsResponse, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
@@ -332,8 +332,8 @@ func GetAllNamespaces() (RestGetAllNsResponse, error) {
 func GetNamespace(nsId string) (NsInfo, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
@@ -391,8 +391,8 @@ func GetNamespace(nsId string) (NsInfo, error) {
 func DeleteNamespace(nsId string) (SimpleMsg, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	// set endpoint
