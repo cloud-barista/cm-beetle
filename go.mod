@@ -1,6 +1,6 @@
 module github.com/cloud-barista/cm-beetle
 
-go 1.21.6
+go 1.23.0
 
 require (
 	github.com/cloud-barista/cb-store v0.8.2

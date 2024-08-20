@@ -2,29 +2,30 @@
 ## Stage 1 - Go Build
 ##############################################################
 
-FROM golang:1.21.6-bookworm AS builder
+FROM golang:1.23.0-bookworm AS builder
 
-# Installing necessary packages
-# make for Makefile support
-# sqlite3 and libsqlite3-dev for SQLite support
-# build-essential for common build requirements
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    make gcc sqlite3 libsqlite3-dev build-essential && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV GO111MODULE=on
 
 # Set the Current Working Directory inside the container
 WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 
-# Copy only necessary files
-COPY go.mod go.sum go.work go.work.sum LICENSE Makefile ./
+# Copy dependency files to the container
+COPY go.mod go.sum go.work go.work.sum LICENSE ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
+
+# Copy some necessary files to the container
 COPY api ./api
 COPY cmd/cm-beetle ./cmd/cm-beetle
 COPY conf ./conf
 COPY pkg ./pkg
 COPY scripts ./scripts
 
-# NOTE - "make prod" executes the commannd, "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s -w' -o cm-beetle"
-RUN make prod
+# Build the Go app
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    cd cmd/cm-beetle && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -tags cm-beetle -v -o cm-beetle main.go
 
 #############################################################
 ## Stage 2 - Application Setup
@@ -37,10 +38,16 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
+# Installing necessary packages and cleaning up
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 ## Copy the Pre-built binary and necessary files from the previous stage
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scripts/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
-COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle /app/
+COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle/cm-beetle /app/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 
 ## Set environment variables 

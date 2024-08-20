@@ -173,7 +173,7 @@ services:
       # - BEETLE_ROOT=/app
       # - BEETLE_CBSTORE_ROOT=/app
       # - BEETLE_CBLOG_ROOT=/app
-      - BEETLE_TUMBLEBUG_REST_URL=http://cb-tumblebug:1323/tumblebug
+      - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       # - BEETLE_LOGFILE_PATH=/app/log/beetle.log
       # - BEETLE_LOGFILE_MAXSIZE=10
       # - BEETLE_LOGFILE_MAXBACKUPS=3

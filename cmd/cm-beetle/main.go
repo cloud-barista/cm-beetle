@@ -65,8 +65,8 @@ func init() {
 	log.Logger = *logger
 
 	// Check Tumblebug readiness
-	tumblebugRestUrl := viper.GetString("beetle.tumblebug.rest.url")
-	url := tumblebugRestUrl + "/readyz"
+	tumblebugEp := viper.GetString("beetle.tumblebug.endpoint")
+	url := tumblebugEp + "/tumblebug/readyz"
 	isReady, err := checkReadiness(url)
 
 	if err != nil || !isReady {

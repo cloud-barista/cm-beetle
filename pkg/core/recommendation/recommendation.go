@@ -14,7 +14,7 @@ import (
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/cloud-barista/cm-beetle/pkg/strcomp"
+	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
@@ -306,7 +306,7 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []mcir.T
 	var highestScore float64
 
 	for _, image := range vmImages {
-		score := strcomp.CalculateSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
+		score := similarity.CalculateSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImageID = image.Id

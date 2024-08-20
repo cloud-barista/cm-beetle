@@ -59,7 +59,7 @@ prod: ## Build the binary file for production
 # Note - You can find possible platforms by 'go tool dist list' for GOOS and GOARCH
 # Note - Using the -ldflags parameter can help set variable values at compile time.
 # Note - Using the -s and -w linker flags can strip the debugging information.	
-	@cd cmd/$(MODULE_NAME) && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -a -ldflags '-s -w' -o $(MODULE_NAME) main.go
+	@cd cmd/$(MODULE_NAME) && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -ldflags '-s -w' -tags $(MODULE_NAME) -v -o $(MODULE_NAME) main.go
 	@echo "Build finished!"
 
 run: build ## Run the built binary
@@ -79,6 +79,18 @@ clean: ## Remove previous build
 	@rm -f api/docs.go api/swagger.*
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
 	@echo "Cleaned!"
+
+compose-up: ## Up services by docker compose
+	@echo "Starting services by docker compose..."
+	@cd deployments/docker-compose && docker compose up
+
+compose-build-up: ## Build and up services by docker compose
+	@echo "Building and starting services by docker compose..."
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
+
+compose-down: ## Down services by docker compose
+	@echo "Removing services by docker compose..."
+	@cd deployments/docker-compose && docker compose down	
 
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

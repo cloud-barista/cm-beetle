@@ -127,7 +127,9 @@ func RunServer(port string) {
 			// Skip authentication for some routes that do not require authentication
 			Skipper: func(c echo.Context) bool {
 				if c.Path() == "/beetle/readyz" ||
-					c.Path() == "/beetle/httpVersion" {
+					c.Path() == "/beetle/httpVersion" ||
+					strings.HasPrefix(c.Path(), "/tumblebug") {
+					log.Debug().Msgf("Skip authentication for %s", c.Path())
 					return true
 				}
 				return false
@@ -150,32 +152,21 @@ func RunServer(port string) {
 	fmt.Printf(infoColor, website)
 	fmt.Println("\n \n ")
 
-	// Route for system management
-	swaggerRedirect := func(c echo.Context) error {
-		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")
-	}
+	// The router group for Tumblebug wrapper, which has /tumblebug as prefix
+	gTumblebug := e.Group("/tumblebug")
 
-	// Beetle API group which has /beetle as prefix
-	gBeetle := e.Group("/beetle")
-	gBeetle.GET("/api", swaggerRedirect)
-	gBeetle.GET("/api/", swaggerRedirect)
-	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
-
-	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
-	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
-
-	target := viper.GetString("beetle.tumblebug.rest.url")
+	// Set the target server for the proxy
+	target := viper.GetString("beetle.tumblebug.endpoint")
 	url, err := url.Parse(target)
 	if err != nil {
 		e.Logger.Fatal(err)
 	}
 
 	// proxy middleware to forward the specified requests to the target server
-	gBeetle.Use(middlewares.Proxy(middlewares.ProxyConfig{
+	gTumblebug.Use(middlewares.Proxy(middlewares.ProxyConfig{
 		URL: url,
 		Rewrite: map[string]string{
-			"/ns":   "/ns",
-			"/ns/*": "/ns/$1",
+			"/*": "/$1",
 		},
 		ModifyResponse: func(res *http.Response) error {
 			resBytes, err := io.ReadAll(res.Body)
@@ -190,6 +181,20 @@ func RunServer(port string) {
 			return nil
 		},
 	}))
+
+	// Route for system management
+	swaggerRedirect := func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")
+	}
+
+	// Beetle API group which has /beetle as prefix
+	gBeetle := e.Group("/beetle")
+	gBeetle.GET("/api", swaggerRedirect)
+	gBeetle.GET("/api/", swaggerRedirect)
+	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
+
+	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
+	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
 
 	// Namespace API group
 	// gNamespace := gBeetle.Group("/ns")
