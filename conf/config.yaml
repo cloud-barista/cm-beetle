@@ -26,8 +26,7 @@ beetle:
     endpoint: localhost:8056
 
   tumblebug:
-    rest:
-      url: http://localhost:1323/tumblebug
+    endpoint: http://localhost:1323
     api:
       username: default
       password: default
