@@ -2,13 +2,15 @@
 ## Stage 1 - Go Build
 ##############################################################
 
-FROM golang:1.21.6-alpine AS builder
+FROM golang:1.21.6-bookworm AS builder
 
 # Installing necessary packages
 # make for Makefile support
-# sqlite-libs and sqlite-dev for SQLite support
-# build-base for common build requirements
-RUN apk add --no-cache make gcc sqlite-libs sqlite-dev build-base
+# sqlite3 and libsqlite3-dev for SQLite support
+# build-essential for common build requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make gcc sqlite3 libsqlite3-dev build-essential && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the Current Working Directory inside the container
 WORKDIR /go/src/github.com/cloud-barista/cm-beetle
