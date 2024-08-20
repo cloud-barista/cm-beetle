@@ -1,13 +1,5 @@
 basePath: /beetle
 definitions:
-  common.RestGetAllNsResponse:
-    properties:
-      ns:
-        description: Name string     `json:"name"`
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo'
-        type: array
-    type: object
   common.SimpleMessage:
     properties:
       message:
@@ -186,22 +178,6 @@ definitions:
         type: string
       id:
         type: integer
-      name:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo:
-    properties:
-      description:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_core_common.NsReq:
-    properties:
-      description:
-        type: string
       name:
         type: string
     type: object
@@ -815,113 +791,6 @@ paths:
       summary: Get the migrated infrastructure on a cloud platform
       tags:
       - '[Migration] Infrastructure'
-  /ns:
-    get:
-      consumes:
-      - application/json
-      description: List all namespaces or namespaces' ID
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Different return structures by the given option param
-          schema:
-            $ref: '#/definitions/common.RestGetAllNsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-      summary: List all namespaces or namespaces' ID
-      tags:
-      - '[Namespace] Namespace management (To be used)'
-    post:
-      consumes:
-      - application/json
-      description: Create namespace
-      parameters:
-      - description: Details for a new namespace
-        in: body
-        name: nsReq
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsReq'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-      summary: Create namespace
-      tags:
-      - '[Namespace] Namespace management (To be used)'
-  /ns/{nsId}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete namespace
-      parameters:
-      - default: ns01
-        description: Namespace ID
-        in: path
-        name: nsId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-      summary: Delete namespace
-      tags:
-      - '[Namespace] Namespace management (To be used)'
-    get:
-      consumes:
-      - application/json
-      description: Get namespace
-      parameters:
-      - default: ns01
-        description: Namespace ID
-        in: path
-        name: nsId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Namespace information
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.NsInfo'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-      summary: Get namespace
-      tags:
-      - '[Namespace] Namespace management (To be used)'
   /readyz:
     get:
       consumes:

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/strcomp"
+	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 )
 
 func main() {
@@ -35,8 +35,8 @@ func main() {
 
 	for _, set := range compareWordSet {
 		fmt.Printf("Comparing '%s' with '%s':\n", set.str1, set.str2)
-		fmt.Printf(" - LevenshteinDistance, Similarity ratio: %.2f\n", strcomp.CalculateSimilarityByLevenshteinDistance(set.str1, set.str2))
-		fmt.Printf(" - SequenceMatcher, Similarity ratio: %.2f\n", strcomp.CalculateSimilarityBySequenceMatcher(set.str1, set.str2))
+		fmt.Printf(" - LevenshteinDistance, Similarity ratio: %.2f\n", similarity.CalculateSimilarityByLevenshteinDistance(set.str1, set.str2))
+		fmt.Printf(" - SequenceMatcher, Similarity ratio: %.2f\n", similarity.CalculateSimilarityBySequenceMatcher(set.str1, set.str2))
 		fmt.Println("--------------------------------------------------------")
 	}
 
@@ -54,7 +54,7 @@ func main() {
 		fmt.Printf("Comparing keywords with VM Image:\n")
 		fmt.Printf("Keywords: '%s'\n", keywords)
 		fmt.Printf("VM Image: '%s'\n", image)
-		score := strcomp.CalculateSimilarity(keywords, delimiters1, image, delimiters2)
+		score := similarity.CalculateSimilarity(keywords, delimiters1, image, delimiters2)
 		fmt.Printf(" - Similarity Score: %.2f\n", score)
 		fmt.Println("--------------------------------------------------------")
 	}

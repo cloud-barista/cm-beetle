@@ -1,4 +1,4 @@
-package strcomp
+package similarity
 
 import (
 	"regexp"
@@ -6,6 +6,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
+
+/*
+Infra similarity calculation methods.
+Methods for comparing similar infrastructure information using text similarity.
+When direct comparison is difficult, predefined maps are used to assess similarity.
+*/
 
 // Predefined architecture map
 var archMap = map[string]string{
@@ -137,6 +143,12 @@ func CalculateSimilarityByMapAndSequenceMatcher(word1, word2 string) float64 {
 func CalculateSimilarityBySequenceMatcher(word1, word2 string) float64 {
 	return SequenceMatcher(word1, word2)
 }
+
+/*
+Text similarity calculation methods.
+Methods for measuring how similar two pieces of text are.
+Useful for tasks like matching, searching, and deduplication.
+*/
 
 // SequenceMatcher similarity by finding the longest substring that two texts have in common.
 // It has relatively high complexity. Comparing large strings can take a lot of time.
