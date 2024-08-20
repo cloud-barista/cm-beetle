@@ -2,7 +2,7 @@
 ## Stage 1 - Go Build
 ##############################################################
 
-FROM golang:1.21.6-alpine AS builder
+FROM golang:1.21.6-bookworm AS builder
 
 # Installing necessary packages
 # make for Makefile support
