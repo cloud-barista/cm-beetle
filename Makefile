@@ -21,7 +21,7 @@ dependency: ## Get dependencies
 lint: dependency ## Lint the files
 	@echo "Running linter..."
 	@if [ ! -f "$(GOPATH)/bin/golangci-lint" ] && [ ! -f "$(shell go env GOROOT)/bin/golangci-lint" ]; then \
-		$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+		$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.2; \
 	fi
 	@golangci-lint run -E contextcheck -D unused
 	@echo "Linter finished!"
