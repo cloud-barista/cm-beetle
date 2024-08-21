@@ -580,23 +580,23 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "description": "Label is for describing the mci in a keyword (any string can be used)",
                     "type": "string",
                     "example": "DynamicVM"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mcis01"
+                    "example": "mci01"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 },
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/mcis.TbVmDynamicReq"
+                        "$ref": "#/definitions/mci.TbVmDynamicReq"
                     }
                 }
             }
@@ -623,23 +623,23 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "description": "Label is for describing the mci in a keyword (any string can be used)",
                     "type": "string",
                     "example": "DynamicVM"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mcis01"
+                    "example": "mci01"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 },
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/mcis.TbVmDynamicReq"
+                        "$ref": "#/definitions/mci.TbVmDynamicReq"
                     }
                 }
             }
@@ -708,23 +708,23 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mcis in a keyword (any string can be used)",
+                    "description": "Label is for describing the mci in a keyword (any string can be used)",
                     "type": "string",
                     "example": "DynamicVM"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mcis01"
+                    "example": "mci01"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mcis in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 },
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/mcis.TbVmDynamicReq"
+                        "$ref": "#/definitions/mci.TbVmDynamicReq"
                     }
                 }
             }
@@ -1129,7 +1129,7 @@ const docTemplate = `{
                 }
             }
         },
-        "mcis.TbVmDynamicReq": {
+        "mci.TbVmDynamicReq": {
             "type": "object",
             "required": [
                 "commonImage",
@@ -1176,7 +1176,7 @@ const docTemplate = `{
                     "example": "default, TYPE1, ..."
                 },
                 "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be gernetad. VMs will be created accordingly.",
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
                     "type": "string",
                     "default": "1",
                     "example": "3"

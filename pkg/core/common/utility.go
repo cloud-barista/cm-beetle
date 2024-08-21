@@ -30,7 +30,7 @@ import (
 	"fmt"
 )
 
-// MCIS utilities
+// MCI utilities
 
 // SimpleMsg is struct for JSON Simple message
 type SimpleMsg struct {
@@ -127,13 +127,13 @@ func ChangeIdString(name string) string {
 	return changedString
 }
 
-// GenMcisKey is func to generate a key used in keyValue store
-func GenMcisKey(nsId string, mcisId string, vmId string) string {
+// GenMciKey is func to generate a key used in keyValue store
+func GenMciKey(nsId string, mciId string, vmId string) string {
 
 	if vmId != "" {
-		return "/ns/" + nsId + "/mcis/" + mcisId + "/vm/" + vmId
-	} else if mcisId != "" {
-		return "/ns/" + nsId + "/mcis/" + mcisId
+		return "/ns/" + nsId + "/mci/" + mciId + "/vm/" + vmId
+	} else if mciId != "" {
+		return "/ns/" + nsId + "/mci/" + mciId
 	} else if nsId != "" {
 		return "/ns/" + nsId
 	} else {
@@ -142,19 +142,19 @@ func GenMcisKey(nsId string, mcisId string, vmId string) string {
 
 }
 
-// GenMcisSubGroupKey is func to generate a key from subGroupId used in keyValue store
-func GenMcisSubGroupKey(nsId string, mcisId string, groupId string) string {
+// GenMciSubGroupKey is func to generate a key from subGroupId used in keyValue store
+func GenMciSubGroupKey(nsId string, mciId string, groupId string) string {
 
-	return "/ns/" + nsId + "/mcis/" + mcisId + "/subgroup/" + groupId
+	return "/ns/" + nsId + "/mci/" + mciId + "/subgroup/" + groupId
 
 }
 
-// GenMcisPolicyKey is func to generate Mcis policy key
-func GenMcisPolicyKey(nsId string, mcisId string, vmId string) string {
+// GenMciPolicyKey is func to generate Mci policy key
+func GenMciPolicyKey(nsId string, mciId string, vmId string) string {
 	if vmId != "" {
-		return "/ns/" + nsId + "/policy/mcis/" + mcisId + "/vm/" + vmId
-	} else if mcisId != "" {
-		return "/ns/" + nsId + "/policy/mcis/" + mcisId
+		return "/ns/" + nsId + "/policy/mci/" + mciId + "/vm/" + vmId
+	} else if mciId != "" {
+		return "/ns/" + nsId + "/policy/mci/" + mciId
 	} else if nsId != "" {
 		return "/ns/" + nsId
 	} else {

@@ -28,11 +28,11 @@ func main() {
 			},
 		}),
 		Skipper: func(c echo.Context) bool {
-			// Skip url patterns that start with /beetle/ns/mcis
+			// Skip url patterns that start with /beetle/ns/mci
 			path := c.Request().URL.Path
 			if strings.HasPrefix(path, "/beetle/ns/") {
 				parts := strings.Split(path, "/")
-				if len(parts) > 3 && parts[3] == "mcis" {
+				if len(parts) > 3 && parts[3] == "mci" {
 					return true
 				}
 			}

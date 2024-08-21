@@ -64,7 +64,6 @@ func Proxy(config ProxyConfig) echo.MiddlewareFunc {
 			},
 		}),
 		Skipper: func(c echo.Context) bool {
-			// Skip url patterns that start with /beetle/ns/mcis
 			path := c.Request().URL.Path
 			query := c.Request().URL.RawQuery
 			for _, patterns := range config.SkipPatterns {

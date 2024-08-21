@@ -46,21 +46,21 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mcis in a keyword (any string can
+        description: Label is for describing the mci in a keyword (any string can
           be used)
         example: DynamicVM
         type: string
       name:
-        example: mcis01
+        example: mci01
         type: string
       systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
+        description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
       vm:
         items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
+          $ref: '#/definitions/mci.TbVmDynamicReq'
         type: array
     required:
     - name
@@ -81,21 +81,21 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mcis in a keyword (any string can
+        description: Label is for describing the mci in a keyword (any string can
           be used)
         example: DynamicVM
         type: string
       name:
-        example: mcis01
+        example: mci01
         type: string
       systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
+        description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
       vm:
         items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
+          $ref: '#/definitions/mci.TbVmDynamicReq'
         type: array
     required:
     - name
@@ -143,21 +143,21 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mcis in a keyword (any string can
+        description: Label is for describing the mci in a keyword (any string can
           be used)
         example: DynamicVM
         type: string
       name:
-        example: mcis01
+        example: mci01
         type: string
       systemLabel:
-        description: SystemLabel is for describing the mcis in a keyword (any string
+        description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
       vm:
         items:
-          $ref: '#/definitions/mcis.TbVmDynamicReq'
+          $ref: '#/definitions/mci.TbVmDynamicReq'
         type: array
     required:
     - name
@@ -429,7 +429,7 @@ definitions:
     required:
     - os
     type: object
-  mcis.TbVmDynamicReq:
+  mci.TbVmDynamicReq:
     properties:
       commonImage:
         description: CommonImage is field for id of a image in common namespace
@@ -470,7 +470,7 @@ definitions:
         type: string
       subGroupSize:
         default: "1"
-        description: if subGroupSize is (not empty) && (> 0), subGroup will be gernetad.
+        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
           VMs will be created accordingly.
         example: "3"
         type: string

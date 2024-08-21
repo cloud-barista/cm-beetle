@@ -20,7 +20,7 @@ import (
 
 	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
@@ -31,13 +31,13 @@ import (
 
 type MigrateInfraRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
-	// mcis.TbMcisDynamicReq
+	// mci.TbMciDynamicReq
 
-	mcis.TbMcisDynamicReq
+	mci.TbMciDynamicReq
 }
 
 type MigrateInfraResponse struct {
-	mcis.TbMcisDynamicReq
+	mci.TbMciDynamicReq
 }
 
 // MigrateInfra godoc
@@ -72,7 +72,7 @@ func MigrateInfra(c echo.Context) error {
 	}
 
 	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.TbMcisDynamicReq: %v\n", req.TbMcisDynamicReq)
+	log.Trace().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
 
 	nsInfo, err := common.GetNamespace(nsId)
 	if err != nil {
@@ -97,7 +97,7 @@ func MigrateInfra(c echo.Context) error {
 	}
 
 	// Create the VM infrastructure for migration
-	infraInfo, err := migration.CreateVMInfra(nsId, &req.TbMcisDynamicReq)
+	infraInfo, err := migration.CreateVMInfra(nsId, &req.TbMciDynamicReq)
 
 	log.Trace().Msgf("infraInfo: %v\n", infraInfo)
 

@@ -14,7 +14,7 @@ When direct comparison is difficult, predefined maps are used to assess similari
 */
 
 // Predefined architecture map
-var archMap = map[string]string{
+var archDict = map[string]string{
 	"x86_64":  "amd64",
 	"x64":     "amd64",
 	"amd64":   "amd64",
@@ -33,36 +33,42 @@ var archMap = map[string]string{
 }
 
 // Accessor to ensure archMap immutability
-func GetArch(key string) (string, bool) {
-	value, ok := archMap[key]
+func LookupArch(key string) (string, bool) {
+	value, ok := archDict[key]
 	return value, ok
 }
 
 // Predefined architecture bit map
-var archBitMap = map[string]string{
+var archBitDict = map[string]string{
 	"64bit": "64",
 	"32bit": "32",
 }
 
 // Accessor to ensure archBitMap immutability
-func GetArchBit(key string) (string, bool) {
-	value, ok := archBitMap[key]
+func LookupArchBit(key string) (string, bool) {
+	value, ok := archBitDict[key]
 	return value, ok
 }
 
-// ActivateByThresholdReLU applies a ReLU function that activates if the similarity is greater than a threshold
-func ActivateByThresholdReLU(similarity, threshold float64) float64 {
+// ReLUWithThreshold applies a ReLU function that activates if the similarity is greater than a threshold
+func ReLUWithThreshold(similarity, threshold float64) float64 {
 	if similarity > threshold {
 		return similarity
 	}
 	return 0.0
 }
 
-// CalculateSimilarity calculates the similarity between two texts based on word similarities
-func CalculateSimilarity(text1 string, delimiters1 []string, text2 string, delimiters2 []string) float64 {
+// CalcResourceSimilarity uses multiple methods to calculate the similarity
+// between two texts of resource information.
+// The example of multiple methods includes:
+// - Dictionary-based similarity (e.g., architecture map mapping)
+// - Word-level similarity (e.g., SequenceMatcher)
+// - Lexical similarity (e.g., Jaccard similarity)
+// - Edit distance-based similarity (e.g., Levenshtein distance)
+func CalcResourceSimilarity(text1 string, delimiters1 []string, text2 string, delimiters2 []string) float64 {
 
-	words1 := splitToArray(text1, delimiters1)
-	words2 := splitToArray(text2, delimiters2)
+	words1 := SplitText(text1, delimiters1)
+	words2 := SplitText(text2, delimiters2)
 
 	log.Trace().Msgf("From text 1: %s", text1)
 	log.Trace().Msgf("To word array 1: %v", words1)
@@ -75,7 +81,20 @@ func CalculateSimilarity(text1 string, delimiters1 []string, text2 string, delim
 		bestMatch := 0.0
 		bestMatchWord := ""
 		for _, word2 := range words2 {
-			similarity := CalculateSimilarityByMapAndSequenceMatcher(word1, word2)
+			similarity := 0.0
+
+			// Check if the words are mapped in the predefined architecture map
+			if mapped, ok := LookupArch(word1); ok && mapped == word2 {
+				similarity = 1.0
+			}
+			if mapped, ok := LookupArch(word2); ok && mapped == word1 {
+				similarity = 1.0
+			}
+
+			// if not mapped, calculate the similarity based on SequenceMatcher
+			similarity = NormalizedSequenceMatcher(word1, word2)
+
+			// Check if the similarity is the best match
 			if similarity > bestMatch {
 				bestMatch = similarity
 				bestMatchWord = word2
@@ -83,7 +102,7 @@ func CalculateSimilarity(text1 string, delimiters1 []string, text2 string, delim
 			}
 		}
 
-		activatedValue := ActivateByThresholdReLU(bestMatch, 0.5)
+		activatedValue := ReLUWithThreshold(bestMatch, 0.5)
 		if activatedValue > 0 {
 			log.Trace().Msgf("Best match for '%s': '%s' (similarity: %.2f)", word1, bestMatchWord, bestMatch)
 			totalSimilarity += activatedValue
@@ -94,7 +113,8 @@ func CalculateSimilarity(text1 string, delimiters1 []string, text2 string, delim
 	return totalSimilarity / float64(len(words1))
 }
 
-func splitToArray(text string, delimiters []string) []string {
+// SplitText splits a text into words array using delimiters
+func SplitText(text string, delimiters []string) []string {
 
 	if len(delimiters) == 0 {
 		log.Warn().Msg("warning: delimiters empty. delimiters are empty. Using space (' ') as default delimiter.")
@@ -126,34 +146,16 @@ func splitToArray(text string, delimiters []string) []string {
 	return result
 }
 
-func CalculateSimilarityByMapAndSequenceMatcher(word1, word2 string) float64 {
-	// Check if the words are mapped in the predefined architecture map
-	if mapped, ok := GetArch(word1); ok && mapped == word2 {
-		return 1.0
-	}
-	if mapped, ok := GetArch(word2); ok && mapped == word1 {
-		return 1.0
-	}
-
-	// if not mapped, calculate the similarity based on SequenceMatcher
-	return SequenceMatcher(word1, word2)
-}
-
-// CalculateSimilarityBySequenceMatcher calculates the similarity between two words based on SequenceMatcher
-func CalculateSimilarityBySequenceMatcher(word1, word2 string) float64 {
-	return SequenceMatcher(word1, word2)
-}
-
 /*
 Text similarity calculation methods.
 Methods for measuring how similar two pieces of text are.
 Useful for tasks like matching, searching, and deduplication.
 */
 
-// SequenceMatcher similarity by finding the longest substring that two texts have in common.
+// NormalizedSequenceMatcher similarity by finding the longest substring that two texts have in common.
 // It has relatively high complexity. Comparing large strings can take a lot of time.
 // It is not suitable for measuring similarity of non-text data (e.g. numbers).
-func SequenceMatcher(text1, text2 string) float64 {
+func NormalizedSequenceMatcher(text1, text2 string) float64 {
 	lcs := longestCommonSubstring(text1, text2)
 	return 2.0 * float64(len(lcs)) / float64(len(text1)+len(text2))
 }
@@ -183,8 +185,8 @@ func longestCommonSubstring(s1, s2 string) string {
 	return s1[endIndex-longest : endIndex]
 }
 
-// CalculateSimilarityByLevenshteinDistance calculates the similarity between two words based on Levenshtein distance
-func CalculateSimilarityByLevenshteinDistance(word1, word2 string) float64 {
+// NormalizedLevenshteinDistance normalizes the Levenshtein distance score to a similarity score between 0 and 1.
+func NormalizedLevenshteinDistance(word1, word2 string) float64 {
 	maxLen := float64(max(len(word1), len(word2)))
 	if maxLen == 0 {
 		return 1.0
