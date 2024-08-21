@@ -92,7 +92,7 @@ func RunServer(port string) {
 
 	APILogSkipPatterns := [][]string{
 		{"/beetle/api"},
-		// {"/mcis", "option=status"},
+		// {"/mci", "option=status"},
 	}
 
 	// Custom logger middleware with zerolog

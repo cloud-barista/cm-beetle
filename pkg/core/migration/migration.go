@@ -19,7 +19,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
@@ -96,7 +96,7 @@ const (
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
-func CreateVMInfra(nsId string, infraModel *mcis.TbMcisDynamicReq) (mcis.TbMcisInfo, error) {
+func CreateVMInfra(nsId string, infraModel *mci.TbMciDynamicReq) (mci.TbMciInfo, error) {
 
 	client := resty.New()
 	client.SetBasicAuth("default", "default")
@@ -104,14 +104,14 @@ func CreateVMInfra(nsId string, infraModel *mcis.TbMcisDynamicReq) (mcis.TbMcisI
 
 	// CB-Tumblebug API endpoint
 	cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
-	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mcisDynamic", nsId)
-	// url := fmt.Sprintf("%s/ns/{nsId}/mcisDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
+	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mciDynamic", nsId)
+	// url := fmt.Sprintf("%s/ns/{nsId}/mciDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
 
 	// Set request body
 	requestBody := *infraModel
 
 	// Set response body
-	responseBody := mcis.TbMcisInfo{}
+	responseBody := mci.TbMciInfo{}
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -128,13 +128,13 @@ func CreateVMInfra(nsId string, infraModel *mcis.TbMcisDynamicReq) (mcis.TbMcisI
 
 	if err != nil {
 		// common.CBLog.Error(err)
-		return mcis.TbMcisInfo{}, err
+		return mci.TbMciInfo{}, err
 	}
 
 	return responseBody, nil
 }
 
-func GetVMInfra(nsId, infraId string) (mcis.TbMcisInfo, error) {
+func GetVMInfra(nsId, infraId string) (mci.TbMciInfo, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -147,13 +147,13 @@ func GetVMInfra(nsId, infraId string) (mcis.TbMcisInfo, error) {
 
 	// check readyz
 	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mcis/%s", epTumblebug, nsId, infraId)
+	url := fmt.Sprintf("%s/ns/%s/mci/%s", epTumblebug, nsId, infraId)
 
 	// Set request body
 	requestBody := common.NoBody
 
 	// Set response body
-	responseBody := new(mcis.TbMcisInfo)
+	responseBody := new(mci.TbMciInfo)
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -170,7 +170,7 @@ func GetVMInfra(nsId, infraId string) (mcis.TbMcisInfo, error) {
 
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return mcis.TbMcisInfo{}, err
+		return mci.TbMciInfo{}, err
 	}
 
 	return *responseBody, nil
@@ -189,7 +189,7 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 
 	// delete the infrastructure with terminate option
 	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s/mcis/%s", epTumblebug, nsId, infraId)
+	url := fmt.Sprintf("%s/ns/%s/mci/%s", epTumblebug, nsId, infraId)
 	options := "option=terminate"
 	if options != "" {
 		url += "?" + options

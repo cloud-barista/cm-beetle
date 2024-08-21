@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
 	"github.com/cloud-barista/cb-tumblebug/src/core/mcir"
-	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 
@@ -21,7 +21,7 @@ import (
 )
 
 // func Recommend(srcInfra []infra.Infra) (cloudmodel.InfraMigrationReq, error) {
-func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
+func Recommend(srcInfra []infra.Infra) (mci.TbMciDynamicReq, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -51,7 +51,7 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 
 	if err != nil {
 		log.Err(err).Msg("")
-		return mcis.TbMcisDynamicReq{}, err
+		return mci.TbMciDynamicReq{}, err
 	}
 	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
 
@@ -115,13 +115,13 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 }`
 
 	// A target infrastructure by recommendation
-	targetInfra := mcis.TbMcisDynamicReq{
+	targetInfra := mci.TbMciDynamicReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
 		Label:           "rehosted-infra",
 		Name:            "",
 		SystemLabel:     "",
-		Vm:              []mcis.TbVmDynamicReq{},
+		Vm:              []mci.TbVmDynamicReq{},
 	}
 
 	// Recommand VMs
@@ -177,14 +177,14 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 		////////////////////////////////////////
 		// Search and set a target VM spec
 		method := "POST"
-		url := fmt.Sprintf("%s/mcisRecommendVm", epTumblebug)
+		url := fmt.Sprintf("%s/mciRecommendVm", epTumblebug)
 
 		// Request body
-		reqRecommVm := new(mcis.DeploymentPlan)
+		reqRecommVm := new(mci.DeploymentPlan)
 		err := json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
 		if err != nil {
 			log.Err(err).Msg("")
-			return mcis.TbMcisDynamicReq{}, err
+			return mci.TbMciDynamicReq{}, err
 		}
 		log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
 
@@ -204,7 +204,7 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 
 		if err != nil {
 			log.Err(err).Msg("")
-			return mcis.TbMcisDynamicReq{}, err
+			return mci.TbMciDynamicReq{}, err
 		}
 
 		numRecommenedVm := len(resRecommVmList)
@@ -225,34 +225,34 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 		////////////////////////////////////////
 		// Search and set target VM image (e.g. ubuntu22.04)
 		method = "POST"
-		url = fmt.Sprintf("%s/mcisDynamicCheckRequest", epTumblebug)
+		url = fmt.Sprintf("%s/mciDynamicCheckRequest", epTumblebug)
 
 		// Request body
-		reqMcisDynamicCheck := new(mcis.McisConnectionConfigCandidatesReq)
-		reqMcisDynamicCheck.CommonSpecs = []string{recommendedSpec}
+		reqMciDynamicCheck := new(mci.MciConnectionConfigCandidatesReq)
+		reqMciDynamicCheck.CommonSpecs = []string{recommendedSpec}
 
 		// Response body
-		resMcisDynamicCheck := new(mcis.CheckMcisDynamicReqInfo)
+		resMciDynamicCheck := new(mci.CheckMciDynamicReqInfo)
 
 		err = common.ExecuteHttpRequest(
 			client,
 			method,
 			url,
 			nil,
-			common.SetUseBody(*reqMcisDynamicCheck),
-			reqMcisDynamicCheck,
-			resMcisDynamicCheck,
+			common.SetUseBody(*reqMciDynamicCheck),
+			reqMciDynamicCheck,
+			resMciDynamicCheck,
 			common.VeryShortDuration,
 		)
 
 		if err != nil {
 			log.Err(err).Msg("")
-			return mcis.TbMcisDynamicReq{}, err
+			return mci.TbMciDynamicReq{}, err
 		}
 
-		log.Trace().Msgf("resMcisDynamicCheck: %+v", resMcisDynamicCheck)
+		log.Trace().Msgf("resMciDynamicCheck: %+v", resMciDynamicCheck)
 
-		if len(resMcisDynamicCheck.ReqCheck) == 0 {
+		if len(resMciDynamicCheck.ReqCheck) == 0 {
 			log.Warn().Msg("no VM OS image recommended for the inserted PM/VM")
 			continue
 		}
@@ -267,11 +267,11 @@ func Recommend(srcInfra []infra.Infra) (mcis.TbMcisDynamicReq, error) {
 		// Select VM OS image via LevenshteinDistance-based text similarity
 		delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
 		delimiters2 := delimiters1
-		vmOsImageId := FindBestVmOsImage(keywords, delimiters1, resMcisDynamicCheck.ReqCheck[0].Image, delimiters2)
+		vmOsImageId := FindBestVmOsImage(keywords, delimiters1, resMciDynamicCheck.ReqCheck[0].Image, delimiters2)
 
 		// vmOsImage := fmt.Sprintf("%s+%s+%s", providerName, regionName, osNameWithVersion)
 
-		vm := mcis.TbVmDynamicReq{
+		vm := mci.TbVmDynamicReq{
 			ConnectionName: "",
 			CommonImage:    vmOsImageId,
 			CommonSpec:     recommendedSpec,
@@ -306,7 +306,7 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []mcir.T
 	var highestScore float64
 
 	for _, image := range vmImages {
-		score := similarity.CalculateSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
+		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.CspImageName, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImageID = image.Id

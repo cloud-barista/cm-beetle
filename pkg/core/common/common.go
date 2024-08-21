@@ -76,7 +76,7 @@ const (
 	StrDataDisk                   string = "dataDisk"
 	StrNLB                        string = "nlb"
 	StrVM                         string = "vm"
-	StrMCIS                       string = "mcis"
+	StrMCI                       string = "mci"
 	StrDefaultResourceName        string = "-systemdefault-"
 	// StrFirewallRule               string = "firewallRule"
 

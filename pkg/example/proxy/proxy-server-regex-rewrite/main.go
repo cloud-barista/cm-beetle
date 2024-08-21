@@ -23,9 +23,9 @@ func main() {
 
 	// 정규 표현식 경로 재작성 설정
 	regexRewrite := map[*regexp.Regexp]string{
-		regexp.MustCompile(`^/beetle/ns$`):             "/tumblebug/ns",
-		regexp.MustCompile(`^/beetle/ns/([^/]+)$`):     "/tumblebug/ns/$1",
-		regexp.MustCompile(`^/beetle/ns/([^/]+)/mcis`): "",
+		regexp.MustCompile(`^/beetle/ns$`):            "/tumblebug/ns",
+		regexp.MustCompile(`^/beetle/ns/([^/]+)$`):    "/tumblebug/ns/$1",
+		regexp.MustCompile(`^/beetle/ns/([^/]+)/mci`): "",
 	}
 
 	e.Use(middleware.ProxyWithConfig(middleware.ProxyConfig{
@@ -49,7 +49,7 @@ func main() {
 	}))
 
 	// 무시할 경로에 대한 핸들러 추가
-	e.Any("/beetle/ns/:nsId/mcis/*", func(c echo.Context) error {
+	e.Any("/beetle/ns/:nsId/mci/*", func(c echo.Context) error {
 		return c.String(http.StatusNotFound, "Not Found")
 	})
 

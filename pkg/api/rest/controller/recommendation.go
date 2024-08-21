@@ -19,7 +19,7 @@ import (
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
-	"github.com/cloud-barista/cb-tumblebug/src/core/mcis"
+	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
 	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -42,7 +42,7 @@ type RecommendInfraRequest struct {
 }
 
 type RecommendInfraResponse struct {
-	mcis.TbMcisDynamicReq
+	mci.TbMciDynamicReq
 }
 
 // RecommendInfra godoc
