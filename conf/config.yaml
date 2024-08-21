@@ -42,7 +42,7 @@ beetle:
   logfile:
     # Set log file path (default logfile path: ./log/beetle.log)
     path: ./log/beetle.log
-    maxsize: 10
+    maxsize: 1000
     maxbackups: 3
     maxage: 30
     compress: false
