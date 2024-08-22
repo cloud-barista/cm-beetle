@@ -74,7 +74,6 @@ func init() {
 	}
 
 	log.Info().Msg("Tumblebug is ready. Initializing Beetle...")
-
 }
 
 func checkReadiness(url string) (bool, error) {
@@ -135,6 +134,9 @@ func checkReadiness(url string) (bool, error) {
 
 // @securityDefinitions.basic BasicAuth
 
+// @externalDocs.description  ▶▶▶ CB-Tumblebug REST API
+// @externalDocs.url http://localhost:8056/tumblebug/api/index.html
+
 func main() {
 
 	log.Info().Msg("CM-Beetle server is starting...")
@@ -151,7 +153,7 @@ func main() {
 
 	// common.SpiderRestUrl = common.NVL(os.Getenv("BEETLE_SPIDER_REST_URL"), "http://localhost:1024/spider")
 	// common.DragonflyRestUrl = common.NVL(os.Getenv("BEETLE_DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
-	common.TumblebugRestUrl = common.NVL(os.Getenv("BEETLE_TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
+	common.TumblebugRestUrl = common.NVL(os.Getenv("BEETLE_TUMBLEBUG_ENDPOINT"), "http://localhost:1323") + "/tumblebug"
 	common.DBUrl = common.NVL(os.Getenv("BEETLE_SQLITE_URL"), "localhost:3306")
 	common.DBDatabase = common.NVL(os.Getenv("BEETLE_SQLITE_DATABASE"), "cm_beetle")
 	common.DBUser = common.NVL(os.Getenv("BEETLE_SQLITE_USER"), "cm_beetle")
@@ -191,6 +193,21 @@ func main() {
 			}
 		})
 	}()
+
+	// Create the default namespace
+	log.Debug().Msgf("creating the default namespace (%s)", common.DefaulNamespaceId)
+	nsInfo, err := common.GetNamespace(common.DefaulNamespaceId)
+	if err != nil {
+		log.Debug().Msgf("not found, the default namespace (nsId: %s)", common.DefaulNamespaceId)
+		nsReq := common.NsReq{
+			Name: common.DefaulNamespaceId,
+		}
+		nsInfo, err = common.CreateNamespace(nsReq)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create a namespace")
+		}
+	}
+	log.Info().Msgf("the default namespace (nsId: %s)", nsInfo.Id)
 
 	// Launch API servers (REST)
 	wg := new(sync.WaitGroup)

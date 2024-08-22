@@ -62,7 +62,7 @@ ENV BEETLE_TUMBLEBUG_REST_URL=http://localhost:1323/tumblebug
 # Set log file path (default logfile path: ./beetle.log) 
 # Set log level, such as trace, debug info, warn, error, fatal, and panic
 ENV BEETLE_LOGFILE_PATH=/app/log/beetle.log \
-    BEETLE_LOGFILE_MAXSIZE=10 \
+    BEETLE_LOGFILE_MAXSIZE=1000 \
     BEETLE_LOGFILE_MAXBACKUPS=3 \
     BEETLE_LOGFILE_MAXAGE=30 \
     BEETLE_LOGFILE_COMPRESS=false \

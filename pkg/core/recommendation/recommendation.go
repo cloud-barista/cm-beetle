@@ -32,29 +32,6 @@ func Recommend(srcInfra []infra.Infra) (mci.TbMciDynamicReq, error) {
 	// set endpoint
 	epTumblebug := common.TumblebugRestUrl
 
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-	reqReadyz := common.NoBody
-	resReadyz := new(common.SimpleMsg)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqReadyz),
-		&reqReadyz,
-		resReadyz,
-		common.VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return mci.TbMciDynamicReq{}, err
-	}
-	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
-
 	// Set a deployment plan to recommand virtual machines
 	// Ref: https://github.com/cloud-barista/cb-tumblebug/discussions/1234
 	planDocstring := `{
@@ -118,7 +95,7 @@ func Recommend(srcInfra []infra.Infra) (mci.TbMciDynamicReq, error) {
 	targetInfra := mci.TbMciDynamicReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
-		Label:           "rehosted-infra",
+		Label:           "rehosted-mci",
 		Name:            "",
 		SystemLabel:     "",
 		Vm:              []mci.TbVmDynamicReq{},

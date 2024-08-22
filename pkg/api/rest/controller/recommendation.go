@@ -46,22 +46,22 @@ type RecommendInfraResponse struct {
 }
 
 // RecommendInfra godoc
-// @Summary Recommend an appropriate infrastructure for cloud migration
-// @Description It recommends a cloud infrastructure most similar to the input. Infrastructure includes network, storage, compute, and so on.
+// @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+// @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfrastructure body RecommendInfraRequest true "Specify network, disk, compute, security group, virtual machine, etc."
-// @Success 200 {object} RecommendInfraResponse "Successfully recommended an appropriate infrastructure for cloud migration"
+// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
+// @Success 200 {object} RecommendInfraResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/infra [post]
+// @Router /recommendation/mci [post]
 func RecommendInfra(c echo.Context) error {
 
 	// Input
 	req := &RecommendInfraRequest{}
 	if err := c.Bind(req); err != nil {
-		log.Error().Err(err).Msg("Failed to bind a request body")
+		log.Error().Err(err).Msg("failed to bind a request body")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, res)
 	}
@@ -70,11 +70,11 @@ func RecommendInfra(c echo.Context) error {
 
 	// Process
 	recommendedInfra, err := recommendation.Recommend(req.Servers)
-	recommendedInfra.Name = "cloud-infra01"
+	recommendedInfra.Name = "mmci01"
 
 	// Ouput
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to recommend an appropriate infrastructure for cloud migration")
+		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusNotFound, res)
 	}

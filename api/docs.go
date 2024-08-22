@@ -58,9 +58,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/infra": {
+        "/migration/ns/{nsId}/mci": {
             "post": {
-                "description": "It migrates an infrastructure on a cloud platform.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
                 "consumes": [
                     "application/json"
                 ],
@@ -70,11 +70,19 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure on a cloud platform",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
                 "parameters": [
                     {
-                        "description": "Specify network, disk, compute, security group, virtual machine, etc.",
-                        "name": "InfrastructureInfo",
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Specify the information for the targeted mulci-cloud infrastructure (MCI)",
+                        "name": "mciInfo",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -84,7 +92,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully migrated infrastructure on a cloud platform",
+                        "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraResponse"
                         }
@@ -104,9 +112,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/infra/{infraId}": {
+        "/migration/ns/{nsId}/mci/{mciId}": {
             "get": {
-                "description": "It gets the migrated infrastructure on a cloud platform.",
+                "description": "Get the migrated multi-cloud infrastructure (MCI)",
                 "consumes": [
                     "application/json"
                 ],
@@ -116,19 +124,28 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Get the migrated infrastructure on a cloud platform",
+                "summary": "Get the migrated multi-cloud infrastructure (MCI)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "a infrastructure ID created for migration",
-                        "name": "infraId",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mmci01",
+                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
+                        "name": "mciId",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully got the migrated infrastructure on a cloud platform",
+                        "description": "The migrated multi-cloud infrastructure (MCI) information",
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraResponse"
                         }
@@ -148,7 +165,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "It deletes the migrated infrastructure on a cloud platform.",
+                "description": "Delete the migrated mult-cloud infrastructure (MCI)",
                 "consumes": [
                     "application/json"
                 ],
@@ -158,19 +175,28 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Delete the migrated infrastructure on a cloud platform",
+                "summary": "Delete the migrated mult-cloud infrastructure (MCI)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "a infrastructure ID created for migration",
-                        "name": "infraId",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mmci01",
+                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
+                        "name": "mciId",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted the migrated infrastructure on a cloud platform",
+                        "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
                             "$ref": "#/definitions/model.Response"
                         }
@@ -219,9 +245,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/infra": {
+        "/recommendation/mci": {
             "post": {
-                "description": "It recommends a cloud infrastructure most similar to the input. Infrastructure includes network, storage, compute, and so on.",
+                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
                 "consumes": [
                     "application/json"
                 ],
@@ -231,11 +257,11 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "Recommend an appropriate infrastructure for cloud migration",
+                "summary": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
                 "parameters": [
                     {
-                        "description": "Specify network, disk, compute, security group, virtual machine, etc.",
-                        "name": "UserInfrastructure",
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -245,7 +271,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully recommended an appropriate infrastructure for cloud migration",
+                        "description": "The result of recommended infrastructure",
                         "schema": {
                             "$ref": "#/definitions/controller.RecommendInfraResponse"
                         }
@@ -1470,6 +1496,10 @@ const docTemplate = `{
         "BasicAuth": {
             "type": "basic"
         }
+    },
+    "externalDocs": {
+        "description": "▶▶▶ CB-Tumblebug REST API",
+        "url": "http://localhost:8056/tumblebug/api/index.html"
     }
 }`
 

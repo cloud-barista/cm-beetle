@@ -84,7 +84,7 @@ compose-up: ## Up services by docker compose
 	@echo "Starting services by docker compose..."
 	@cd deployments/docker-compose && docker compose up
 
-compose-build-up: ## Build and up services by docker compose
+compose-build-up: swag ## Build and up services by docker compose
 	@echo "Building and starting services by docker compose..."
 	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
 
