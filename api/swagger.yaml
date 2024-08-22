@@ -666,6 +666,9 @@ definitions:
           $ref: '#/definitions/network.Subnet'
         type: array
     type: object
+externalDocs:
+  description: ▶▶▶ CB-Tumblebug REST API
+  url: http://localhost:8056/tumblebug/api/index.html
 info:
   contact:
     email: contact-to-cloud-barista@googlegroups.com
@@ -702,16 +705,22 @@ paths:
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] System management'
-  /migration/infra:
+  /migration/ns/{nsId}/mci:
     post:
       consumes:
       - application/json
-      description: It migrates an infrastructure on a cloud platform.
+      description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
       parameters:
-      - description: Specify network, disk, compute, security group, virtual machine,
-          etc.
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Specify the information for the targeted mulci-cloud infrastructure
+          (MCI)
         in: body
-        name: InfrastructureInfo
+        name: mciInfo
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateInfraRequest'
@@ -719,7 +728,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully migrated infrastructure on a cloud platform
+          description: Successfully migrated to the multi-cloud infrastructure
           schema:
             $ref: '#/definitions/controller.MigrateInfraResponse'
         "404":
@@ -730,26 +739,33 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Migrate an infrastructure on a cloud platform
+      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
-  /migration/infra/{infraId}:
+  /migration/ns/{nsId}/mci/{mciId}:
     delete:
       consumes:
       - application/json
-      description: It deletes the migrated infrastructure on a cloud platform.
+      description: Delete the migrated mult-cloud infrastructure (MCI)
       parameters:
-      - description: a infrastructure ID created for migration
+      - default: mig01
+        description: Namespace ID
         in: path
-        name: infraId
+        name: nsId
+        required: true
+        type: string
+      - default: mmci01
+        description: Migrated Multi-Cloud Infrastructure (MCI) ID
+        in: path
+        name: mciId
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully deleted the migrated infrastructure on a cloud
-            platform
+          description: The result of deleting the migrated multi-cloud infrastructure
+            (MCI)
           schema:
             $ref: '#/definitions/model.Response'
         "404":
@@ -760,24 +776,31 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Delete the migrated infrastructure on a cloud platform
+      summary: Delete the migrated mult-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
     get:
       consumes:
       - application/json
-      description: It gets the migrated infrastructure on a cloud platform.
+      description: Get the migrated multi-cloud infrastructure (MCI)
       parameters:
-      - description: a infrastructure ID created for migration
+      - default: mig01
+        description: Namespace ID
         in: path
-        name: infraId
+        name: nsId
+        required: true
+        type: string
+      - default: mmci01
+        description: Migrated Multi-Cloud Infrastructure (MCI) ID
+        in: path
+        name: mciId
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully got the migrated infrastructure on a cloud platform
+          description: The migrated multi-cloud infrastructure (MCI) information
           schema:
             $ref: '#/definitions/controller.MigrateInfraResponse'
         "404":
@@ -788,7 +811,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.Response'
-      summary: Get the migrated infrastructure on a cloud platform
+      summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
   /readyz:
@@ -810,17 +833,16 @@ paths:
       summary: Check Beetle is ready
       tags:
       - '[Admin] System management'
-  /recommendation/infra:
+  /recommendation/mci:
     post:
       consumes:
       - application/json
-      description: It recommends a cloud infrastructure most similar to the input.
-        Infrastructure includes network, storage, compute, and so on.
+      description: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
+        migration
       parameters:
-      - description: Specify network, disk, compute, security group, virtual machine,
-          etc.
+      - description: Specify the your infrastructure to be migrated
         in: body
-        name: UserInfrastructure
+        name: UserInfra
         required: true
         schema:
           $ref: '#/definitions/controller.RecommendInfraRequest'
@@ -828,8 +850,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully recommended an appropriate infrastructure for
-            cloud migration
+          description: The result of recommended infrastructure
           schema:
             $ref: '#/definitions/controller.RecommendInfraResponse'
         "404":
@@ -840,7 +861,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
-      summary: Recommend an appropriate infrastructure for cloud migration
+      summary: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
+        migration
       tags:
       - '[Recommendation] Infrastructure'
   /sample/users:

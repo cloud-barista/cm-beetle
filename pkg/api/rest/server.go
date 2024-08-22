@@ -92,6 +92,7 @@ func RunServer(port string) {
 
 	APILogSkipPatterns := [][]string{
 		{"/beetle/api"},
+		{"/tumblebug/api"},
 		// {"/mci", "option=status"},
 	}
 
@@ -175,24 +176,27 @@ func RunServer(port string) {
 			}
 
 			resBody := strings.TrimSuffix(string(resBytes), "\n")
-			log.Debug().Msgf("[Proxy] response from %s: %s", res.Request.URL, resBody)
+			log.Debug().Msgf("[Proxy] response from %s", res.Request.URL)
+			log.Trace().Msgf("[Proxy] response body: %s", resBody)
 
 			res.Body = io.NopCloser(bytes.NewReader(resBytes))
 			return nil
 		},
 	}))
 
-	// Route for system management
+	// Beetle API group which has /beetle as prefix
+	gBeetle := e.Group("/beetle")
+
+	// Swagger API docs
 	swaggerRedirect := func(c echo.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")
 	}
-
-	// Beetle API group which has /beetle as prefix
-	gBeetle := e.Group("/beetle")
 	gBeetle.GET("/api", swaggerRedirect)
 	gBeetle.GET("/api/", swaggerRedirect)
+
 	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
 
+	// System management APIs
 	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
 	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
 
@@ -205,16 +209,16 @@ func RunServer(port string) {
 
 	// Recommendation API group
 	gRecommendation := gBeetle.Group("/recommendation")
-	gRecommendation.POST("/infra", controller.RecommendInfra)
+	gRecommendation.POST("/mci", controller.RecommendInfra)
 
 	// Migration API group
 	gMigration := gBeetle.Group("/migration")
-	gMigration.POST("/infra", controller.MigrateInfra)
-	gMigration.GET("/infra/:infraId", controller.GetInfra)
-	gMigration.DELETE("/infra/:infraId", controller.DeleteInfra)
-	// gMigration.POST("/infra/network", controller.MigrateInfra)
-	// gMigration.POST("/infra/storage", controller.MigrateInfra)
-	// gMigration.POST("/infra/instance", controller.MigrateInfra)
+	gMigration.POST("/ns/:nsId/mci", controller.MigrateInfra)
+	gMigration.GET("/ns/:nsId/mci/:mciId", controller.GetInfra)
+	gMigration.DELETE("/ns/:nsId/mci/:mciId", controller.DeleteInfra)
+	// gMigration.POST("/ns/:nsId/mci/network", controller.MigrateInfra)
+	// gMigration.POST("/ns/:nsId/mci/storage", controller.MigrateInfra)
+	// gMigration.POST("/ns/:nsId/mci/instance", controller.MigrateInfra)
 
 	// Route
 	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)

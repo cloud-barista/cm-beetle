@@ -76,7 +76,7 @@ const (
 	StrDataDisk                   string = "dataDisk"
 	StrNLB                        string = "nlb"
 	StrVM                         string = "vm"
-	StrMCI                       string = "mci"
+	StrMCI                        string = "mci"
 	StrDefaultResourceName        string = "-systemdefault-"
 	// StrFirewallRule               string = "firewallRule"
 
@@ -190,7 +190,7 @@ func CreateImageTable() error {
 }
 */
 
-var DefaulNamespaceId = "ns-mig01"
+var DefaulNamespaceId = "mig01"
 
 // NsReq is struct for namespace creation
 type NsReq struct {
@@ -221,32 +221,9 @@ func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
 	// set endpoint
 	epTumblebug := TumblebugRestUrl
 
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-	reqReadyz := NoBody
-	resReadyz := new(SimpleMsg)
-
-	err := ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqReadyz),
-		&reqReadyz,
-		resReadyz,
-		VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return NsInfo{}, err
-	}
-	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
-
-	// check readyz
-	method = "POST"
-	url = fmt.Sprintf("%s/ns", epTumblebug)
+	// create namespace
+	method := "POST"
+	url := fmt.Sprintf("%s/ns", epTumblebug)
 	reqNs := nsInfo
 	resNs := new(NsInfo)
 
@@ -280,32 +257,9 @@ func GetAllNamespaces() (RestGetAllNsResponse, error) {
 	// set endpoint
 	epTumblebug := TumblebugRestUrl
 
-	// check readyz
+	// Get all namespaces
 	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-	reqReadyz := NoBody
-	resReadyz := new(SimpleMsg)
-
-	err := ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqReadyz),
-		&reqReadyz,
-		resReadyz,
-		VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return RestGetAllNsResponse{}, err
-	}
-	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
-
-	// check readyz
-	method = "GET"
-	url = fmt.Sprintf("%s/ns", epTumblebug)
+	url := fmt.Sprintf("%s/ns", epTumblebug)
 	reqNs := NoBody
 	resAllNs := new(RestGetAllNsResponse)
 
@@ -339,32 +293,9 @@ func GetNamespace(nsId string) (NsInfo, error) {
 	// set endpoint
 	epTumblebug := TumblebugRestUrl
 
-	// check readyz
+	// try to get namespace
 	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-	reqReadyz := NoBody
-	resReadyz := new(SimpleMsg)
-
-	err := ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqReadyz),
-		&reqReadyz,
-		resReadyz,
-		VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return NsInfo{}, err
-	}
-	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
-
-	// check readyz
-	method = "GET"
-	url = fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
+	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
 	reqNs := NoBody
 	resNsInfo := new(NsInfo)
 
@@ -398,32 +329,9 @@ func DeleteNamespace(nsId string) (SimpleMsg, error) {
 	// set endpoint
 	epTumblebug := TumblebugRestUrl
 
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-	reqReadyz := NoBody
-	resReadyz := new(SimpleMsg)
-
-	err := ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqReadyz),
-		&reqReadyz,
-		resReadyz,
-		VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return SimpleMsg{}, err
-	}
-	log.Debug().Msgf("resReadyz: %+v", resReadyz.Message)
-
-	// check readyz
-	method = "DELETE"
-	url = fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
+	// delete namespace
+	method := "DELETE"
+	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
 	reqNs := NoBody
 	resMsg := new(SimpleMsg)
 
