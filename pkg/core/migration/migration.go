@@ -99,13 +99,8 @@ const DefaultSystemLabel string = "Managed by CM-Beetle"
 func CreateVMInfra(nsId string, infraModel *mci.TbMciDynamicReq) (mci.TbMciInfo, error) {
 
 	client := resty.New()
-	// client.SetBasicAuth("default", "default")
-	// apiUser := viper.GetString("beetle.api.username")
-	// apiPass := viper.GetString("beetle.api.password")
-	// apiUser := viper.GetString("beetle.tumblebug.api.username")
-	// apiPass := viper.GetString("beetle.tumblebug.api.password")
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
 	client.SetBasicAuth(apiUser, apiPass)
 
 	method := "POST"
