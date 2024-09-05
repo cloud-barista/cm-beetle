@@ -24,6 +24,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 //"log"
