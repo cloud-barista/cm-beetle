@@ -24,6 +24,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
 
 //"log"
@@ -99,11 +100,15 @@ const DefaultSystemLabel string = "Managed by CM-Beetle"
 func CreateVMInfra(nsId string, infraModel *mci.TbMciDynamicReq) (mci.TbMciInfo, error) {
 
 	client := resty.New()
-	client.SetBasicAuth("default", "default")
+	apiUser := viper.GetString("beetle.tumblebug.api.username")
+	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	client.SetBasicAuth(apiUser, apiPass)
+
 	method := "POST"
 
 	// CB-Tumblebug API endpoint
-	cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
+	//cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
+	cbTumblebugApiEndpoint := common.TumblebugRestUrl
 	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mciDynamic", nsId)
 	// url := fmt.Sprintf("%s/ns/{nsId}/mciDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
 
