@@ -16,12 +16,12 @@ package main
 
 import (
 	"flag"
-	"os"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
+	"github.com/cloud-barista/cm-beetle/pkg/lkvstore"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
@@ -52,22 +52,27 @@ func init() {
 
 	// Initialize the logger
 	logger := logger.NewLogger(logger.Config{
-		LogLevel:    viper.GetString("beetle.loglevel"),
-		LogWriter:   viper.GetString("beetle.logwriter"),
-		LogFilePath: viper.GetString("beetle.logfile.path"),
-		MaxSize:     viper.GetInt("beetle.logfile.maxsize"),
-		MaxBackups:  viper.GetInt("beetle.logfile.maxbackups"),
-		MaxAge:      viper.GetInt("beetle.logfile.maxage"),
-		Compress:    viper.GetBool("beetle.logfile.compress"),
+		LogLevel:    config.Beetle.LogLevel,
+		LogWriter:   config.Beetle.LogWriter,
+		LogFilePath: config.Beetle.LogFile.Path,
+		MaxSize:     config.Beetle.LogFile.MaxSize,
+		MaxBackups:  config.Beetle.LogFile.MaxBackups,
+		MaxAge:      config.Beetle.LogFile.MaxAge,
+		Compress:    config.Beetle.LogFile.Compress,
 	})
 
 	// Set the global logger
 	log.Logger = *logger
 
+	// Initialize the local key-value store with the specified file path
+	dbFilePath := config.Beetle.LKVStore.Path
+	lkvstore.Init(lkvstore.Config{
+		DbFilePath: dbFilePath,
+	})
+
 	// Check Tumblebug readiness
-	tumblebugEp := viper.GetString("beetle.tumblebug.endpoint")
-	url := tumblebugEp + "/tumblebug/readyz"
-	isReady, err := checkReadiness(url)
+	apiUrl := config.Tumblebug.RestUrl + "/readyz"
+	isReady, err := checkReadiness(apiUrl)
 
 	if err != nil || !isReady {
 		log.Fatal().Err(err).Msg("Tumblebug is not ready. Exiting...")
@@ -139,7 +144,24 @@ func checkReadiness(url string) (bool, error) {
 
 func main() {
 
-	log.Info().Msg("CM-Beetle server is starting...")
+	log.Info().Msg("preparing to run CM-Beetle server...")
+
+	// Load the state from the file back into the key-value store
+	if err := lkvstore.LoadLkvStore(); err != nil {
+		log.Error().Err(err).Msgf("error loading data from the lkvstore (file).")
+	}
+
+	log.Info().Msg("successfully load data from the lkvstore (file).")
+
+	defer func() {
+		// Save the current state of the key-value store to file
+		if err := lkvstore.SaveLkvStore(); err != nil {
+			log.Error().Err(err).Msgf("error saving data to the lkvstore (file).")
+		}
+		log.Info().Msg("successfully save data to the lkvstore (file).")
+	}()
+
+	log.Info().Msg("Setting CM-Beetle REST API server...")
 
 	// Set the default port number "8056" for the REST API server to listen on
 	port := flag.String("port", "8056", "port number for the restapiserver to listen to")
@@ -151,33 +173,6 @@ func main() {
 	}
 	log.Debug().Msgf("port number: %s", *port)
 
-	// common.SpiderRestUrl = common.NVL(os.Getenv("BEETLE_SPIDER_REST_URL"), "http://localhost:1024/spider")
-	// common.DragonflyRestUrl = common.NVL(os.Getenv("BEETLE_DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
-	common.TumblebugRestUrl = common.NVL(os.Getenv("BEETLE_TUMBLEBUG_ENDPOINT"), "http://localhost:1323") + "/tumblebug"
-	common.DBUrl = common.NVL(os.Getenv("BEETLE_SQLITE_URL"), "localhost:3306")
-	common.DBDatabase = common.NVL(os.Getenv("BEETLE_SQLITE_DATABASE"), "cm_beetle")
-	common.DBUser = common.NVL(os.Getenv("BEETLE_SQLITE_USER"), "cm_beetle")
-	common.DBPassword = common.NVL(os.Getenv("BEETLE_SQLITE_PASSWORD"), "cm_beetle")
-	common.AutocontrolDurationMs = common.NVL(os.Getenv("BEETLE_AUTOCONTROL_DURATION_MS"), "10000")
-
-	// load the latest configuration from DB (if exist)
-	// fmt.Println("")
-	// fmt.Println("[Update system environment]")
-	// common.UpdateGlobalVariable(common.StrDragonflyRestUrl)
-	// common.UpdateGlobalVariable(common.StrSpiderRestUrl)
-	// common.UpdateGlobalVariable(common.StrAutocontrolDurationMs)
-
-	// load config
-	//masterConfigInfos = confighandler.GetMasterConfigInfos()
-
-	//Setup database (meta_db/dat/cmbeetle.s3db)
-	log.Info().Msg("setting SQL Database")
-	err := os.MkdirAll("./meta_db/dat/", os.ModePerm)
-	if err != nil {
-		log.Error().Err(err).Msg("error creating directory")
-	}
-	log.Debug().Msgf("database file path: %s", "./meta_db/dat/cmbeetle.s3db")
-
 	// Watch config file changes
 	go func() {
 		viper.WatchConfig()
@@ -187,10 +182,13 @@ func main() {
 			if err != nil { // Handle errors reading the config file
 				log.Fatal().Err(err).Msg("fatal error in config file")
 			}
-			err = viper.Unmarshal(&common.RuntimeConf)
+			err = viper.Unmarshal(&config.RuntimeConfig)
 			if err != nil {
 				log.Panic().Err(err).Msg("error unmarshaling runtime configuration")
 			}
+			config.Beetle = config.RuntimeConfig.Beetle
+			config.Beetle.Tumblebug.RestUrl = config.Beetle.Tumblebug.Endpoint + "/tumblebug"
+			config.Tumblebug = config.Beetle.Tumblebug
 		})
 	}()
 

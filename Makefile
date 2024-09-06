@@ -80,13 +80,13 @@ clean: ## Remove previous build
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
 	@echo "Cleaned!"
 
+compose: swag ## Build and up services by docker compose
+	@echo "Building and starting services by docker compose..."
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
+
 compose-up: ## Up services by docker compose
 	@echo "Starting services by docker compose..."
 	@cd deployments/docker-compose && docker compose up
-
-compose-build-up: swag ## Build and up services by docker compose
-	@echo "Building and starting services by docker compose..."
-	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
 
 compose-down: ## Down services by docker compose
 	@echo "Removing services by docker compose..."
