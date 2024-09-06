@@ -283,13 +283,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
@@ -555,6 +555,15 @@ const docTemplate = `{
                 }
             }
         },
+        "common.SimpleMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
         "controller.CreateUserRequest": {
             "type": "object",
             "properties": {
@@ -632,7 +641,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/mci.TbVmDynamicReq"
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
                     }
                 }
             }
@@ -675,7 +684,7 @@ const docTemplate = `{
                 "vm": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/mci.TbVmDynamicReq"
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
                     }
                 }
             }
@@ -724,44 +733,15 @@ const docTemplate = `{
         },
         "controller.RecommendInfraResponse": {
             "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
             "properties": {
                 "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
+                    "type": "string"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
+                "status": {
+                    "type": "string"
                 },
-                "label": {
-                    "description": "Label is for describing the mci in a keyword (any string can be used)",
-                    "type": "string",
-                    "example": "DynamicVM"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/mci.TbVmDynamicReq"
-                    }
+                "targetInfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
                 }
             }
         },
@@ -790,15 +770,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
                 }
             }
         },
@@ -1165,7 +1136,89 @@ const docTemplate = `{
                 }
             }
         },
-        "mci.TbVmDynamicReq": {
+        "model.MyUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Response": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "Any details"
+                },
+                "list": {
+                    "type": "array",
+                    "items": {}
+                },
+                "object": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Any text"
+                }
+            }
+        },
+        "model.TbMciDynamicReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the mci in a keyword (any string can be used)",
+                    "type": "string",
+                    "example": "DynamicVM"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "model.TbVmDynamicReq": {
             "type": "object",
             "required": [
                 "commonImage",
@@ -1219,45 +1272,6 @@ const docTemplate = `{
                 },
                 "vmUserPassword": {
                     "type": "string"
-                }
-            }
-        },
-        "model.MyUser": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.Response": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string",
-                    "example": "Any details"
-                },
-                "list": {
-                    "type": "array",
-                    "items": {}
-                },
-                "object": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "text": {
-                    "type": "string",
-                    "example": "Any text"
                 }
             }
         },

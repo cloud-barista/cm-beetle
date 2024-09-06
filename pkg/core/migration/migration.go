@@ -16,15 +16,14 @@ package migration
 
 import (
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 //"log"
@@ -97,26 +96,25 @@ const (
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
-func CreateVMInfra(nsId string, infraModel *mci.TbMciDynamicReq) (mci.TbMciInfo, error) {
+func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.TbMciInfo, error) {
 
 	client := resty.New()
-	apiUser := viper.GetString("beetle.tumblebug.api.username")
-	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	method := "POST"
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
 
-	// CB-Tumblebug API endpoint
-	//cbTumblebugApiEndpoint := "http://localhost:1323/tumblebug"
-	cbTumblebugApiEndpoint := common.TumblebugRestUrl
-	url := cbTumblebugApiEndpoint + fmt.Sprintf("/ns/%s/mciDynamic", nsId)
+	method := "POST"
+	url := epTumblebug + fmt.Sprintf("/ns/%s/mciDynamic", nsId)
 	// url := fmt.Sprintf("%s/ns/{nsId}/mciDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
 
 	// Set request body
 	requestBody := *infraModel
 
 	// Set response body
-	responseBody := mci.TbMciInfo{}
+	responseBody := tbmodel.TbMciInfo{}
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -133,22 +131,22 @@ func CreateVMInfra(nsId string, infraModel *mci.TbMciDynamicReq) (mci.TbMciInfo,
 
 	if err != nil {
 		// common.CBLog.Error(err)
-		return mci.TbMciInfo{}, err
+		return tbmodel.TbMciInfo{}, err
 	}
 
 	return responseBody, nil
 }
 
-func GetVMInfra(nsId, infraId string) (mci.TbMciInfo, error) {
+func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_API_PASSWORD")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := common.TumblebugRestUrl
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// check readyz
 	method := "GET"
@@ -158,7 +156,7 @@ func GetVMInfra(nsId, infraId string) (mci.TbMciInfo, error) {
 	requestBody := common.NoBody
 
 	// Set response body
-	responseBody := new(mci.TbMciInfo)
+	responseBody := new(tbmodel.TbMciInfo)
 
 	client.SetTimeout(5 * time.Minute)
 
@@ -175,7 +173,7 @@ func GetVMInfra(nsId, infraId string) (mci.TbMciInfo, error) {
 
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return mci.TbMciInfo{}, err
+		return tbmodel.TbMciInfo{}, err
 	}
 
 	return *responseBody, nil
@@ -185,12 +183,12 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := os.Getenv("BEETLE_API_USERNAME")
-	apiPass := os.Getenv("BEETLE_PI_PASSWORD")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := common.TumblebugRestUrl
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// delete the infrastructure with terminate option
 	method := "DELETE"
