@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	cbstore_utils "github.com/cloud-barista/cb-store/utils"
 	uid "github.com/rs/xid"
 
 	"gopkg.in/yaml.v2"
@@ -235,134 +234,134 @@ type mcirIds struct { // Tumblebug
 	ConnectionName string
 }
 
-// GetCspResourceId is func to retrieve CSP native resource ID
-func GetCspResourceId(nsId string, resourceType string, resourceId string) (string, error) {
-	key := GenResourceKey(nsId, resourceType, resourceId)
-	if key == "/invalidKey" {
-		return "", fmt.Errorf("invalid nsId or resourceType or resourceId")
-	}
-	keyValue, err := CBStore.Get(key)
-	if err != nil {
-		CBLog.Error(err)
-		return "", err
-	}
-	if keyValue == nil {
-		//CBLog.Error(err)
-		// if there is no matched value for the key, return empty string. Error will be handled in a parent function
-		return "", fmt.Errorf("cannot find the key " + key)
-	}
+// // GetCspResourceId is func to retrieve CSP native resource ID
+// func GetCspResourceId(nsId string, resourceType string, resourceId string) (string, error) {
+// 	key := GenResourceKey(nsId, resourceType, resourceId)
+// 	if key == "/invalidKey" {
+// 		return "", fmt.Errorf("invalid nsId or resourceType or resourceId")
+// 	}
+// 	keyValue, err := CBStore.Get(key)
+// 	if err != nil {
+// 		CBLog.Error(err)
+// 		return "", err
+// 	}
+// 	if keyValue == nil {
+// 		//CBLog.Error(err)
+// 		// if there is no matched value for the key, return empty string. Error will be handled in a parent function
+// 		return "", fmt.Errorf("cannot find the key " + key)
+// 	}
 
-	switch resourceType {
-	case StrImage:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspImageId, nil
-	case StrCustomImage:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspCustomImageName, nil
-	case StrSSHKey:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspSshKeyName, nil
-	case StrSpec:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspSpecName, nil
-	case StrVNet:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspVNetName, nil // contains CspSubnetId
-	// case "subnet":
-	// 	content := subnetInfo{}
-	// 	json.Unmarshal([]byte(keyValue.Value), &content)
-	// 	return content.CspSubnetId
-	case StrSecurityGroup:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspSecurityGroupName, nil
-	case StrDataDisk:
-		content := mcirIds{}
-		json.Unmarshal([]byte(keyValue.Value), &content)
-		return content.CspDataDiskName, nil
-	/*
-		case "publicIp":
-			content := mcirIds{}
-			json.Unmarshal([]byte(keyValue.Value), &content)
-			return content.CspPublicIpName
-		case "vNic":
-			content := mcirIds{}
-			err = json.Unmarshal([]byte(keyValue.Value), &content)
-			if err != nil {
-				CBLog.Error(err)
-				// if there is no matched value for the key, return empty string. Error will be handled in a parent function
-				return ""
-			}
-			return content.CspVNicName
-	*/
-	default:
-		return "", fmt.Errorf("invalid resourceType")
-	}
-}
+// 	switch resourceType {
+// 	case StrImage:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspImageId, nil
+// 	case StrCustomImage:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspCustomImageName, nil
+// 	case StrSSHKey:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspSshKeyName, nil
+// 	case StrSpec:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspSpecName, nil
+// 	case StrVNet:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspVNetName, nil // contains CspSubnetId
+// 	// case "subnet":
+// 	// 	content := subnetInfo{}
+// 	// 	json.Unmarshal([]byte(keyValue.Value), &content)
+// 	// 	return content.CspSubnetId
+// 	case StrSecurityGroup:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspSecurityGroupName, nil
+// 	case StrDataDisk:
+// 		content := mcirIds{}
+// 		json.Unmarshal([]byte(keyValue.Value), &content)
+// 		return content.CspDataDiskName, nil
+// 	/*
+// 		case "publicIp":
+// 			content := mcirIds{}
+// 			json.Unmarshal([]byte(keyValue.Value), &content)
+// 			return content.CspPublicIpName
+// 		case "vNic":
+// 			content := mcirIds{}
+// 			err = json.Unmarshal([]byte(keyValue.Value), &content)
+// 			if err != nil {
+// 				CBLog.Error(err)
+// 				// if there is no matched value for the key, return empty string. Error will be handled in a parent function
+// 				return ""
+// 			}
+// 			return content.CspVNicName
+// 	*/
+// 	default:
+// 		return "", fmt.Errorf("invalid resourceType")
+// 	}
+// }
 
-// ConnConfig is struct for containing modified CB-Spider struct for connection config
-type ConnConfig struct {
-	ConfigName           string         `json:"configName"`
-	ProviderName         string         `json:"providerName"`
-	DriverName           string         `json:"driverName"`
-	CredentialName       string         `json:"credentialName"`
-	CredentialHolder     string         `json:"credentialHolder"`
-	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
-	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo"`
-	RegionDetail         RegionDetail   `json:"regionDetail"`
-	RegionRepresentative bool           `json:"regionRepresentative"`
-	Verified             bool           `json:"verified"`
-}
+// // ConnConfig is struct for containing modified CB-Spider struct for connection config
+// type ConnConfig struct {
+// 	ConfigName           string         `json:"configName"`
+// 	ProviderName         string         `json:"providerName"`
+// 	DriverName           string         `json:"driverName"`
+// 	CredentialName       string         `json:"credentialName"`
+// 	CredentialHolder     string         `json:"credentialHolder"`
+// 	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
+// 	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo"`
+// 	RegionDetail         RegionDetail   `json:"regionDetail"`
+// 	RegionRepresentative bool           `json:"regionRepresentative"`
+// 	Verified             bool           `json:"verified"`
+// }
 
-// SpiderConnConfig is struct for containing a CB-Spider struct for connection config
-type SpiderConnConfig struct {
-	ConfigName     string
-	ProviderName   string
-	DriverName     string
-	CredentialName string
-	RegionName     string
-}
+// // SpiderConnConfig is struct for containing a CB-Spider struct for connection config
+// type SpiderConnConfig struct {
+// 	ConfigName     string
+// 	ProviderName   string
+// 	DriverName     string
+// 	CredentialName string
+// 	RegionName     string
+// }
 
-// CloudDriverInfo is struct for containing a CB-Spider struct for cloud driver info
-type CloudDriverInfo struct {
-	DriverName        string
-	ProviderName      string
-	DriverLibFileName string
-}
+// // CloudDriverInfo is struct for containing a CB-Spider struct for cloud driver info
+// type CloudDriverInfo struct {
+// 	DriverName        string
+// 	ProviderName      string
+// 	DriverLibFileName string
+// }
 
-// CredentialReq is struct for containing a struct for credential request
-type CredentialReq struct {
-	CredentialHolder string     `json:"credentialHolder"`
-	ProviderName     string     `json:"providerName"`
-	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
-}
+// // CredentialReq is struct for containing a struct for credential request
+// type CredentialReq struct {
+// 	CredentialHolder string     `json:"credentialHolder"`
+// 	ProviderName     string     `json:"providerName"`
+// 	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
+// }
 
-// CredentialInfo is struct for containing a struct for credential info
-type CredentialInfo struct {
-	CredentialName   string     `json:"credentialName"`
-	CredentialHolder string     `json:"credentialHolder"`
-	ProviderName     string     `json:"providerName"`
-	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
-}
+// // CredentialInfo is struct for containing a struct for credential info
+// type CredentialInfo struct {
+// 	CredentialName   string     `json:"credentialName"`
+// 	CredentialHolder string     `json:"credentialHolder"`
+// 	ProviderName     string     `json:"providerName"`
+// 	KeyValueInfoList []KeyValue `json:"keyValueInfoList"`
+// }
 
-// SpiderRegionZoneInfo is struct for containing region struct of CB-Spider
-type SpiderRegionZoneInfo struct {
-	RegionName        string     // ex) "region01"
-	ProviderName      string     // ex) "GCP"
-	KeyValueInfoList  []KeyValue // ex) { {region, us-east1}, {zone, us-east1-c} }
-	AvailableZoneList []string
-}
+// // SpiderRegionZoneInfo is struct for containing region struct of CB-Spider
+// type SpiderRegionZoneInfo struct {
+// 	RegionName        string     // ex) "region01"
+// 	ProviderName      string     // ex) "GCP"
+// 	KeyValueInfoList  []KeyValue // ex) { {region, us-east1}, {zone, us-east1-c} }
+// 	AvailableZoneList []string
+// }
 
-// RegionZoneInfo is struct for containing region struct
-type RegionZoneInfo struct {
-	AssignedRegion string `json:"assignedRegion"`
-	AssignedZone   string `json:"assignedZone"`
-}
+// // RegionZoneInfo is struct for containing region struct
+// type RegionZoneInfo struct {
+// 	AssignedRegion string `json:"assignedRegion"`
+// 	AssignedZone   string `json:"assignedZone"`
+// }
 
 // // GetCloudLocation is to get location of clouds (need error handling)
 // func GetCloudLocation(cloudType string, nativeRegion string) GeoLocation {
@@ -749,77 +748,77 @@ func NVL(str string, def string) string {
 	return str
 }
 
-// GetChildIdList is func to get child id list from given key
-func GetChildIdList(key string) []string {
+// // GetChildIdList is func to get child id list from given key
+// func GetChildIdList(key string) []string {
 
-	keyValue, _ := CBStore.GetList(key, true)
-	keyValue = cbstore_utils.GetChildList(keyValue, key)
+// 	keyValue, _ := CBStore.GetList(key, true)
+// 	keyValue = cbstore_utils.GetChildList(keyValue, key)
 
-	var childIdList []string
-	for _, v := range keyValue {
-		childIdList = append(childIdList, strings.TrimPrefix(v.Key, key+"/"))
+// 	var childIdList []string
+// 	for _, v := range keyValue {
+// 		childIdList = append(childIdList, strings.TrimPrefix(v.Key, key+"/"))
 
-	}
-	for _, v := range childIdList {
-		fmt.Println("<" + v + "> \n")
-	}
-	fmt.Println("===============================================")
-	return childIdList
+// 	}
+// 	for _, v := range childIdList {
+// 		fmt.Println("<" + v + "> \n")
+// 	}
+// 	fmt.Println("===============================================")
+// 	return childIdList
 
-}
+// }
 
-// GetObjectList is func to return IDs of each child objects that has the same key
-func GetObjectList(key string) []string {
+// // GetObjectList is func to return IDs of each child objects that has the same key
+// func GetObjectList(key string) []string {
 
-	keyValue, _ := CBStore.GetList(key, true)
+// 	keyValue, _ := CBStore.GetList(key, true)
 
-	var childIdList []string
-	for _, v := range keyValue {
-		childIdList = append(childIdList, v.Key)
-	}
+// 	var childIdList []string
+// 	for _, v := range keyValue {
+// 		childIdList = append(childIdList, v.Key)
+// 	}
 
-	fmt.Println("===============================================")
-	return childIdList
+// 	fmt.Println("===============================================")
+// 	return childIdList
 
-}
+// }
 
-// GetObjectValue is func to return the object value
-func GetObjectValue(key string) (string, error) {
+// // GetObjectValue is func to return the object value
+// func GetObjectValue(key string) (string, error) {
 
-	keyValue, err := CBStore.Get(key)
-	if err != nil {
-		CBLog.Error(err)
-		return "", err
-	}
-	if keyValue == nil {
-		return "", nil
-	}
-	return keyValue.Value, nil
-}
+// 	keyValue, err := CBStore.Get(key)
+// 	if err != nil {
+// 		CBLog.Error(err)
+// 		return "", err
+// 	}
+// 	if keyValue == nil {
+// 		return "", nil
+// 	}
+// 	return keyValue.Value, nil
+// }
 
-// DeleteObject is func to delete the object
-func DeleteObject(key string) error {
+// // DeleteObject is func to delete the object
+// func DeleteObject(key string) error {
 
-	err := CBStore.Delete(key)
-	if err != nil {
-		CBLog.Error(err)
-		return err
-	}
-	return nil
-}
+// 	err := CBStore.Delete(key)
+// 	if err != nil {
+// 		CBLog.Error(err)
+// 		return err
+// 	}
+// 	return nil
+// }
 
-// DeleteObjects is func to delete objects
-func DeleteObjects(key string) error {
-	keyValue, _ := CBStore.GetList(key, true)
-	for _, v := range keyValue {
-		err := CBStore.Delete(v.Key)
-		if err != nil {
-			CBLog.Error(err)
-			return err
-		}
-	}
-	return nil
-}
+// // DeleteObjects is func to delete objects
+// func DeleteObjects(key string) error {
+// 	keyValue, _ := CBStore.GetList(key, true)
+// 	for _, v := range keyValue {
+// 		err := CBStore.Delete(v.Key)
+// 		if err != nil {
+// 			CBLog.Error(err)
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func CheckElement(a string, list []string) bool {
 	for _, b := range list {

@@ -14,329 +14,232 @@ limitations under the License.
 // Package common is to include common methods for managing multi-cloud infra
 package common
 
-import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"strings"
+// import (
+// 	"encoding/json"
+// 	"fmt"
 
-	cbstore_utils "github.com/cloud-barista/cb-store/utils"
-)
+// 	"github.com/cloud-barista/cm-beetle/pkg/lkvstore"
+// 	"github.com/rs/zerolog/log"
+// )
 
-// CloudInfo is structure for cloud information
-type CloudInfo struct {
-	CSPs map[string]CSPDetail `mapstructure:"cloud" json:"csps"`
-}
+// // swagger:request ConfigReq
+// type ConfigReq struct {
+// 	Name  string `json:"name" example:"SPIDER_REST_URL"`
+// 	Value string `json:"value" example:"http://localhost:1024/spider"`
+// }
 
-// CSPDetail is structure for CSP information
-type CSPDetail struct {
-	Description string                  `mapstructure:"description" json:"description"`
-	Driver      string                  `mapstructure:"driver" json:"driver"`
-	Links       []string                `mapstructure:"link" json:"links"`
-	Regions     map[string]RegionDetail `mapstructure:"region" json:"regions"`
-}
+// // swagger:response ConfigInfo
+// type ConfigInfo struct {
+// 	Id    string `json:"id" example:"SPIDER_REST_URL"`
+// 	Name  string `json:"name" example:"SPIDER_REST_URL"`
+// 	Value string `json:"value" example:"http://localhost:1024/spider"`
+// }
 
-// RegionDetail is structure for region information
-type RegionDetail struct {
-	RegionId    string   `mapstructure:"id" json:"regionId"`
-	RegionName  string   `mapstructure:"regionName" json:"regionName"`
-	Description string   `mapstructure:"description" json:"description"`
-	Location    Location `mapstructure:"location" json:"location"`
-	Zones       []string `mapstructure:"zone" json:"zones"`
-}
+// func UpdateConfig(u *ConfigReq) (ConfigInfo, error) {
 
-// Location is structure for location information
-type Location struct {
-	Display   string  `mapstructure:"display" json:"display"`
-	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
-	Longitude float64 `mapstructure:"longitude" json:"longitude"`
-}
+// 	if u.Name == "" {
+// 		return ConfigInfo{}, fmt.Errorf("The provided name is empty.")
+// 	}
 
-// RuntimeCloudInfo is global variable for CloudInfo
-var RuntimeCloudInfo = CloudInfo{}
+// 	content := ConfigInfo{}
+// 	content.Id = u.Name
+// 	content.Name = u.Name
+// 	content.Value = u.Value
 
-type Credential struct {
-	Credentialholder map[string]map[string]map[string]string `yaml:"credentialholder"`
-}
+// 	key := "/config/" + content.Id
+// 	//mapA := map[string]string{"name": content.Name, "description": content.Description}
+// 	val, _ := json.Marshal(content)
+// 	lkvstore.Put(key, string(val))
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("")
+// 		return content, err
+// 	}
+// 	keyValue, exists := lkvstore.GetKv(key)
+// 	if !exists {
+// 		err := fmt.Errorf("Failed to put the config with key: " + key)
+// 		log.Error().Err(err).Msg("")
+// 		return content, err
+// 	}
 
-var RuntimeCredential = Credential{}
+// 	log.Info().Msgf("UpdateConfig(); Key: " + keyValue.Key + "\nValue: " + keyValue.Value)
 
-// RuntimeLatancyMap is global variable for LatancyMap
-var RuntimeLatancyMap = [][]string{}
+// 	UpdateGlobalVariable(content.Id)
 
-// RuntimeLatancyMapIndex is global variable for LatancyMap (index)
-var RuntimeLatancyMapIndex = make(map[string]int)
+// 	return content, nil
+// }
 
-// RuntimeConf is global variable for cloud config
-var RuntimeConf = RuntimeConfig{}
+// func UpdateGlobalVariable(id string) error {
 
-// RuntimeConfig is structure for global variable for cloud config
-type RuntimeConfig struct {
-	Cloud Cloud `yaml:"cloud"`
-	Nlbsw Nlbsw `yaml:"nlbsw"`
-}
+// 	configInfo, err := GetConfig(id)
+// 	if err != nil {
+// 		//CBLog.Error(err)
+// 		return err
+// 	}
 
-// Cloud is structure for cloud settings per CSP
-type Cloud struct {
-	Common    CloudSetting `yaml:"common"`
-	Aws       CloudSetting `yaml:"aws"`
-	Azure     CloudSetting `yaml:"azure"`
-	Gcp       CloudSetting `yaml:"gcp"`
-	Alibaba   CloudSetting `yaml:"alibaba"`
-	Tencent   CloudSetting `yaml:"tencent"`
-	Ibm       CloudSetting `yaml:"ibm"`
-	Openstack CloudSetting `yaml:"openstack"`
-	Cloudit   CloudSetting `yaml:"cloudit"`
-}
+// 	switch id {
+// 	// case StrSpiderRestUrl:
+// 	// 	SpiderRestUrl = configInfo.Value
+// 	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
+// 	// case StrDragonflyRestUrl:
+// 	// 	DragonflyRestUrl = configInfo.Value
+// 	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+// 	case StrTumblebugRestUrl:
+// 		TumblebugRestUrl = configInfo.Value
+// 		fmt.Println("<TUMBELBUG_REST_URL> " + TumblebugRestUrl)
+// 	case StrDBUrl:
+// 		DBUrl = configInfo.Value
+// 		fmt.Println("<DB_URL> " + DBUrl)
+// 	case StrDBDatabase:
+// 		DBDatabase = configInfo.Value
+// 		fmt.Println("<DB_DATABASE> " + DBDatabase)
+// 	case StrDBUser:
+// 		DBUser = configInfo.Value
+// 		fmt.Println("<DB_USER> " + DBUser)
+// 	case StrDBPassword:
+// 		DBPassword = configInfo.Value
+// 		fmt.Println("<DB_PASSWORD> " + DBPassword)
+// 	case StrAutocontrolDurationMs:
+// 		AutocontrolDurationMs = configInfo.Value
+// 		fmt.Println("<AUTOCONTROL_DURATION_MS> " + AutocontrolDurationMs)
+// 	default:
 
-// CloudSetting is structure for cloud settings per CSP in details
-type CloudSetting struct {
-	Enable string     `yaml:"enable"`
-	Nlb    NlbSetting `yaml:"nlb"`
-}
+// 	}
 
-// NlbSetting is structure for NLB setting
-type NlbSetting struct {
-	Enable    string `yaml:"enable"`
-	Interval  string `yaml:"interval"`
-	Timeout   string `yaml:"timeout"`
-	Threshold string `yaml:"threshold"`
-}
+// 	return nil
+// }
 
-// Nlbsw is structure for NLB setting
-type Nlbsw struct {
-	Sw                      string `yaml:"sw"`
-	Version                 string `yaml:"version"`
-	CommandNlbPrepare       string `yaml:"commandNlbPrepare"`
-	CommandNlbDeploy        string `yaml:"commandNlbDeploy"`
-	CommandNlbAddTargetNode string `yaml:"commandNlbAddTargetNode"`
-	CommandNlbApplyConfig   string `yaml:"commandNlbApplyConfig"`
-	NlbMciCommonSpec       string `yaml:"nlbMciCommonSpec"`
-	NlbMciCommonImage      string `yaml:"nlbMciCommonImage"`
-	NlbMciSubGroupSize     string `yaml:"nlbMciSubGroupSize"`
-}
+// func InitConfig(id string) error {
 
-// type DataDiskCmd string
-const (
-	AttachDataDisk    string = "attach"
-	DetachDataDisk    string = "detach"
-	AvailableDataDisk string = "available"
-)
+// 	switch id {
+// 	// case StrSpiderRestUrl:
+// 	// 	SpiderRestUrl = NVL(os.Getenv("BEETLE_SPIDER_REST_URL"), "http://localhost:1024/spider")
+// 	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
+// 	// case StrDragonflyRestUrl:
+// 	// 	DragonflyRestUrl = NVL(os.Getenv("BEETLE_DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
+// 	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
+// 	case StrTumblebugRestUrl:
+// 		TumblebugRestUrl = NVL(os.Getenv("BEETLE_TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
+// 		fmt.Println("<BEETLE_TUMBLEBUG_REST_URL> " + TumblebugRestUrl)
+// 	case StrDBUrl:
+// 		DBUrl = NVL(os.Getenv("BEETLE_SQLITE_URL"), "localhost:3306")
+// 		fmt.Println("<BEETLE_SQLITE_URL> " + DBUrl)
+// 	case StrDBDatabase:
+// 		DBDatabase = NVL(os.Getenv("BEETLE_SQLITE_DATABASE"), "cm_beetle")
+// 		fmt.Println("<BEETLE_SQLITE_DATABASE> " + DBDatabase)
+// 	case StrDBUser:
+// 		DBUser = NVL(os.Getenv("BEETLE_SQLITE_USER"), "cm_beetle")
+// 		fmt.Println("<BEETLE_SQLITE_USER> " + DBUser)
+// 	case StrDBPassword:
+// 		DBPassword = NVL(os.Getenv("BEETLE_SQLITE_PASSWORD"), "cm_beetle")
+// 		fmt.Println("<BEETLE_SQLITE_PASSWORD> " + DBPassword)
+// 	case StrAutocontrolDurationMs:
+// 		AutocontrolDurationMs = NVL(os.Getenv("BEETLE_AUTOCONTROL_DURATION_MS"), "10000")
+// 		fmt.Println("<BEETLE_AUTOCONTROL_DURATION_MS> " + AutocontrolDurationMs)
+// 	default:
 
-// swagger:request ConfigReq
-type ConfigReq struct {
-	Name  string `json:"name" example:"SPIDER_REST_URL"`
-	Value string `json:"value" example:"http://localhost:1024/spider"`
-}
+// 	}
 
-// swagger:response ConfigInfo
-type ConfigInfo struct {
-	Id    string `json:"id" example:"SPIDER_REST_URL"`
-	Name  string `json:"name" example:"SPIDER_REST_URL"`
-	Value string `json:"value" example:"http://localhost:1024/spider"`
-}
+// 	check, err := CheckConfig(id)
 
-func UpdateConfig(u *ConfigReq) (ConfigInfo, error) {
+// 	if check && err == nil {
+// 		fmt.Println("[Init config] " + id)
+// 		key := "/config/" + id
 
-	if u.Name == "" {
-		return ConfigInfo{}, fmt.Errorf("The provided name is empty.")
-	}
+// 		lkvstore.Delete(key)
+// 		// if err != nil {
+// 		// 	CBLog.Error(err)
+// 		// 	return err
+// 		// }
+// 	}
 
-	content := ConfigInfo{}
-	content.Id = u.Name
-	content.Name = u.Name
-	content.Value = u.Value
+// 	return nil
+// }
 
-	key := "/config/" + content.Id
-	//mapA := map[string]string{"name": content.Name, "description": content.Description}
-	val, _ := json.Marshal(content)
-	err := CBStore.Put(key, string(val))
-	if err != nil {
-		CBLog.Error(err)
-		return content, err
-	}
-	keyValue, _ := CBStore.Get(key)
-	fmt.Println("UpdateConfig(); ===========================")
-	fmt.Println("UpdateConfig(); Key: " + keyValue.Key + "\nValue: " + keyValue.Value)
-	fmt.Println("UpdateConfig(); ===========================")
+// func GetConfig(id string) (ConfigInfo, error) {
 
-	UpdateGlobalVariable(content.Id)
+// 	res := ConfigInfo{}
 
-	return content, nil
-}
+// 	check, err := CheckConfig(id)
 
-func UpdateGlobalVariable(id string) error {
+// 	if !check {
+// 		errMsg := fmt.Errorf("dose not exist, the config ID: %s", id)
+// 		log.Error().Err(errMsg).Msg("")
+// 		return res, err
+// 	}
 
-	configInfo, err := GetConfig(id)
-	if err != nil {
-		//CBLog.Error(err)
-		return err
-	}
+// 	if err != nil {
+// 		temp := ConfigInfo{}
+// 		log.Error().Err(err)
+// 		return temp, err
+// 	}
 
-	switch id {
-	// case StrSpiderRestUrl:
-	// 	SpiderRestUrl = configInfo.Value
-	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
-	// case StrDragonflyRestUrl:
-	// 	DragonflyRestUrl = configInfo.Value
-	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
-	case StrTumblebugRestUrl:
-		TumblebugRestUrl = configInfo.Value
-		fmt.Println("<TUMBELBUG_REST_URL> " + TumblebugRestUrl)
-	case StrDBUrl:
-		DBUrl = configInfo.Value
-		fmt.Println("<DB_URL> " + DBUrl)
-	case StrDBDatabase:
-		DBDatabase = configInfo.Value
-		fmt.Println("<DB_DATABASE> " + DBDatabase)
-	case StrDBUser:
-		DBUser = configInfo.Value
-		fmt.Println("<DB_USER> " + DBUser)
-	case StrDBPassword:
-		DBPassword = configInfo.Value
-		fmt.Println("<DB_PASSWORD> " + DBPassword)
-	case StrAutocontrolDurationMs:
-		AutocontrolDurationMs = configInfo.Value
-		fmt.Println("<AUTOCONTROL_DURATION_MS> " + AutocontrolDurationMs)
-	default:
+// 	fmt.Println("[Get config] " + id)
+// 	key := "/config/" + id
 
-	}
+// 	keyValue, exist := lkvstore.GetKv(key)
+// 	if !exist {
+// 		errMsg := fmt.Errorf("dose not exist, the config ID: %s", id)
+// 		log.Error().Err(errMsg).Msg("")
+// 		return res, errMsg
+// 	}
 
-	return nil
-}
+// 	log.Debug().Msgf("GetConfig(); Key: " + keyValue.Key + "\nValue: " + keyValue.Value)
 
-func InitConfig(id string) error {
+// 	err = json.Unmarshal([]byte(keyValue.Value), &res)
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("")
+// 		return res, err
+// 	}
+// 	return res, nil
+// }
 
-	switch id {
-	// case StrSpiderRestUrl:
-	// 	SpiderRestUrl = NVL(os.Getenv("BEETLE_SPIDER_REST_URL"), "http://localhost:1024/spider")
-	// 	fmt.Println("<SPIDER_REST_URL> " + SpiderRestUrl)
-	// case StrDragonflyRestUrl:
-	// 	DragonflyRestUrl = NVL(os.Getenv("BEETLE_DRAGONFLY_REST_URL"), "http://localhost:9090/dragonfly")
-	// 	fmt.Println("<DRAGONFLY_REST_URL> " + DragonflyRestUrl)
-	case StrTumblebugRestUrl:
-		TumblebugRestUrl = NVL(os.Getenv("BEETLE_TUMBLEBUG_REST_URL"), "http://localhost:1323/tumblebug")
-		fmt.Println("<BEETLE_TUMBLEBUG_REST_URL> " + TumblebugRestUrl)
-	case StrDBUrl:
-		DBUrl = NVL(os.Getenv("BEETLE_SQLITE_URL"), "localhost:3306")
-		fmt.Println("<BEETLE_SQLITE_URL> " + DBUrl)
-	case StrDBDatabase:
-		DBDatabase = NVL(os.Getenv("BEETLE_SQLITE_DATABASE"), "cm_beetle")
-		fmt.Println("<BEETLE_SQLITE_DATABASE> " + DBDatabase)
-	case StrDBUser:
-		DBUser = NVL(os.Getenv("BEETLE_SQLITE_USER"), "cm_beetle")
-		fmt.Println("<BEETLE_SQLITE_USER> " + DBUser)
-	case StrDBPassword:
-		DBPassword = NVL(os.Getenv("BEETLE_SQLITE_PASSWORD"), "cm_beetle")
-		fmt.Println("<BEETLE_SQLITE_PASSWORD> " + DBPassword)
-	case StrAutocontrolDurationMs:
-		AutocontrolDurationMs = NVL(os.Getenv("BEETLE_AUTOCONTROL_DURATION_MS"), "10000")
-		fmt.Println("<BEETLE_AUTOCONTROL_DURATION_MS> " + AutocontrolDurationMs)
-	default:
+// func ListConfig() ([]ConfigInfo, error) {
+// 	fmt.Println("[List config]")
+// 	key := "/config"
+// 	fmt.Println(key)
 
-	}
+// 	keyValue, err := CBStore.GetList(key, true)
+// 	keyValue = cbstore_utils.GetChildList(keyValue, key)
 
-	check, err := CheckConfig(id)
+// 	if err != nil {
+// 		CBLog.Error(err)
+// 		return nil, err
+// 	}
+// 	if keyValue != nil {
+// 		res := []ConfigInfo{}
+// 		for _, v := range keyValue {
+// 			tempObj := ConfigInfo{}
+// 			err = json.Unmarshal([]byte(v.Value), &tempObj)
+// 			if err != nil {
+// 				CBLog.Error(err)
+// 				return nil, err
+// 			}
+// 			res = append(res, tempObj)
+// 		}
+// 		return res, nil
+// 		//return true, nil
+// 	}
+// 	return nil, nil // When err == nil && keyValue == nil
+// }
 
-	if check && err == nil {
-		fmt.Println("[Init config] " + id)
-		key := "/config/" + id
+// func ListConfigId() []string {
 
-		CBStore.Delete(key)
-		// if err != nil {
-		// 	CBLog.Error(err)
-		// 	return err
-		// }
-	}
+// 	fmt.Println("[List config]")
+// 	key := "/config"
+// 	fmt.Println(key)
 
-	return nil
-}
+// 	keyValue, _ := CBStore.GetList(key, true)
 
-func GetConfig(id string) (ConfigInfo, error) {
-
-	res := ConfigInfo{}
-
-	check, err := CheckConfig(id)
-
-	if !check {
-		errString := "The config " + id + " does not exist."
-		err := fmt.Errorf(errString)
-		return res, err
-	}
-
-	if err != nil {
-		temp := ConfigInfo{}
-		CBLog.Error(err)
-		return temp, err
-	}
-
-	fmt.Println("[Get config] " + id)
-	key := "/config/" + id
-
-	keyValue, err := CBStore.Get(key)
-	if err != nil {
-		//CBLog.Error(err)
-		return res, err
-	}
-
-	fmt.Println("<" + keyValue.Key + "> " + keyValue.Value)
-
-	err = json.Unmarshal([]byte(keyValue.Value), &res)
-	if err != nil {
-		CBLog.Error(err)
-		return res, err
-	}
-	return res, nil
-}
-
-func ListConfig() ([]ConfigInfo, error) {
-	fmt.Println("[List config]")
-	key := "/config"
-	fmt.Println(key)
-
-	keyValue, err := CBStore.GetList(key, true)
-	keyValue = cbstore_utils.GetChildList(keyValue, key)
-
-	if err != nil {
-		CBLog.Error(err)
-		return nil, err
-	}
-	if keyValue != nil {
-		res := []ConfigInfo{}
-		for _, v := range keyValue {
-			tempObj := ConfigInfo{}
-			err = json.Unmarshal([]byte(v.Value), &tempObj)
-			if err != nil {
-				CBLog.Error(err)
-				return nil, err
-			}
-			res = append(res, tempObj)
-		}
-		return res, nil
-		//return true, nil
-	}
-	return nil, nil // When err == nil && keyValue == nil
-}
-
-func ListConfigId() []string {
-
-	fmt.Println("[List config]")
-	key := "/config"
-	fmt.Println(key)
-
-	keyValue, _ := CBStore.GetList(key, true)
-
-	var configList []string
-	for _, v := range keyValue {
-		configList = append(configList, strings.TrimPrefix(v.Key, "/config/"))
-	}
-	for _, v := range configList {
-		fmt.Println("<" + v + "> \n")
-	}
-	fmt.Println("===============================================")
-	return configList
-
-}
+// 	var configList []string
+// 	for _, v := range keyValue {
+// 		configList = append(configList, strings.TrimPrefix(v.Key, "/config/"))
+// 	}
+// 	for _, v := range configList {
+// 		fmt.Println("<" + v + "> \n")
+// 	}
+// 	fmt.Println("===============================================")
+// 	return configList
+// }
 
 /*
 func DelAllConfig() error {
@@ -360,29 +263,28 @@ func DelAllConfig() error {
 }
 */
 
-func InitAllConfig() error {
-	fmt.Printf("InitAllConfig() called;")
+// func InitAllConfig() error {
+// 	fmt.Printf("InitAllConfig() called;")
 
-	configIdList := ListConfigId()
+// 	configIdList := ListConfigId()
 
-	for _, v := range configIdList {
-		InitConfig(v)
-	}
-	return nil
-}
+// 	for _, v := range configIdList {
+// 		InitConfig(v)
+// 	}
+// 	return nil
+// }
 
-func CheckConfig(id string) (bool, error) {
+// func CheckConfig(id string) (bool, error) {
 
-	if id == "" {
-		err := fmt.Errorf("CheckConfig failed; configId given is null.")
-		return false, err
-	}
+// 	if id == "" {
+// 		err := fmt.Errorf("invalid config ID: %s.", id)
+// 		log.Error().Err(err).Msg("")
+// 		return false, err
+// 	}
 
-	key := "/config/" + id
+// 	key := "/config/" + id
 
-	keyValue, _ := CBStore.Get(key)
-	if keyValue != nil {
-		return true, nil
-	}
-	return false, nil
-}
+// 	_, exist := lkvstore.GetKv(key)
+
+// 	return exist, nil
+// }

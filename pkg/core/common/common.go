@@ -18,11 +18,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	icbs "github.com/cloud-barista/cb-store/interfaces"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"xorm.io/xorm"
 )
 
@@ -39,8 +37,8 @@ type IdList struct {
 var SystemReady bool
 
 // CB-Store
-var CBLog *logrus.Logger
-var CBStore icbs.Store
+// var CBLog *logrus.Logger
+// var CBStore icbs.Store
 
 // var SpiderRestUrl string
 // var DragonflyRestUrl string
@@ -214,12 +212,12 @@ type RestGetAllNsResponse struct {
 func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := viper.GetString("beetle.tumblebug.api.username")
-	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := TumblebugRestUrl
+	// set API endpoint
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// create namespace
 	method := "POST"
@@ -250,12 +248,12 @@ func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
 func GetAllNamespaces() (RestGetAllNsResponse, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := viper.GetString("beetle.tumblebug.api.username")
-	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := TumblebugRestUrl
+	// set API endpoint
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// Get all namespaces
 	method := "GET"
@@ -286,12 +284,12 @@ func GetAllNamespaces() (RestGetAllNsResponse, error) {
 func GetNamespace(nsId string) (NsInfo, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := viper.GetString("beetle.tumblebug.api.username")
-	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := TumblebugRestUrl
+	// set API endpoint
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// try to get namespace
 	method := "GET"
@@ -322,12 +320,12 @@ func GetNamespace(nsId string) (NsInfo, error) {
 func DeleteNamespace(nsId string) (SimpleMsg, error) {
 	// Initialize resty client with basic auth
 	client := resty.New()
-	apiUser := viper.GetString("beetle.tumblebug.api.username")
-	apiPass := viper.GetString("beetle.tumblebug.api.password")
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set endpoint
-	epTumblebug := TumblebugRestUrl
+	// set API endpoint
+	epTumblebug := config.Tumblebug.RestUrl
 
 	// delete namespace
 	method := "DELETE"

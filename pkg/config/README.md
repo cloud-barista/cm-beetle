@@ -27,21 +27,30 @@ The below configurations are compatible in this project.
 
 #### How to use it
 
-- Use a blank import in your package (e.g., main, logger, and so on)
 - Get a value using Viper
 
 Note - It's just my preference. `config.Init()` can be used.
 
 ```go
+// Package main is the starting point of CM-Beetle
+package main
+
 import (
     // other packages
 
-    // Loads configurations from setup.env and config.yaml
-    _ "github.com/cloud-barista/cm-beetle/pkg/config"
+    "github.com/cloud-barista/cm-beetle/pkg/config"
 )
 
+func init() {
+
+	common.SystemReady = false
+
+	// Initialize the configuration from "config.yaml" file or environment variables
+	config.Init()
+
+}
+
 func main() {
-    logFilePath := viper.GetString("beetle.logfile.path")
     // Application logic follows
 }
 ```

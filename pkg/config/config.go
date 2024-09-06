@@ -11,70 +11,141 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	RuntimeConfig Config
+	Beetle        BeetleConfig
+	Tumblebug     TumblebugConfig
+)
+
+type Config struct {
+	Beetle BeetleConfig `mapstructure:"beetle"`
+}
+
+type BeetleConfig struct {
+	Root        string            `mapstructure:"root"`
+	Self        SelfConfig        `mapstructure:"self"`
+	API         ApiConfig         `mapstructure:"api"`
+	LKVStore    LkvStoreConfig    `mapstructure:"lkvstore"`
+	LogFile     LogfileConfig     `mapstructure:"logfile"`
+	LogLevel    string            `mapstructure:"loglevel"`
+	LogWriter   string            `mapstructure:"logwriter"`
+	Node        NodeConfig        `mapstructure:"node"`
+	AutoControl AutoControlConfig `mapstructure:"autocontrol"`
+	Tumblebug   TumblebugConfig   `mapstructure:"tumblebug"`
+}
+
+type SelfConfig struct {
+	Endpoint string `mapstructure:"endpoint"`
+}
+
+type ApiConfig struct {
+	Allow    AllowConfig `mapstructure:"allow"`
+	Auth     AuthConfig  `mapstructure:"auth"`
+	Username string      `mapstructure:"username"`
+	Password string      `mapstructure:"password"`
+}
+
+type AllowConfig struct {
+	Origins string `mapstructure:"origins"`
+}
+type AuthConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type LkvStoreConfig struct {
+	Path string `mapstructure:"path"`
+}
+
+type LogfileConfig struct {
+	Path       string `mapstructure:"path"`
+	MaxSize    int    `mapstructure:"maxsize"`
+	MaxBackups int    `mapstructure:"maxbackups"`
+	MaxAge     int    `mapstructure:"maxage"`
+	Compress   bool   `mapstructure:"compress"`
+}
+
+type NodeConfig struct {
+	Env string `mapstructure:"env"`
+}
+
+type AutoControlConfig struct {
+	DurationMilliSec int `mapstructure:"duration_ms"`
+}
+
+type TumblebugConfig struct {
+	Endpoint string             `mapstructure:"endpoint"`
+	RestUrl  string             `mapstructure:"resturl"`
+	API      TumblebugApiConfig `mapstructure:"api"`
+}
+
+type TumblebugApiConfig struct {
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+}
+
 func Init() {
-	viper.AddConfigPath("../../conf/") // config for development
-	viper.AddConfigPath(".")           // config for production optionally looking for the configuration in the working directory
-	viper.AddConfigPath("./conf/")     // config for production optionally looking for the configuration in the working directory/conf/
+	viper.AddConfigPath("../../conf/") // for development
+	viper.AddConfigPath(".")           // for production
+	viper.AddConfigPath("./conf/")     // for production
 	viper.SetConfigType("yaml")
 	viper.SetConfigName("config")
 
-	// Load main configuration
-	viper.SetConfigName("config")
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("no main config file, using default settings: %s\n", err)
-		log.Printf("no main config file, using default settings: %s", err)
+		log.Printf("No main config file, using default settings: %s", err)
 	}
 
-	// Load secrets configuration
-	// viper.SetConfigName("secrets")
-	// err = viper.MergeInConfig() // Merge in the secrets config
-	// if err != nil {
-	// 	fmt.Printf("no reading secrets config file: %s\n", err)
-	// 	log.Fatalf("no reading secrets config file: %s", err)
-	// }
+	// Explicitly bind environment variables to configuration keys
+	bindEnvironmentVariables()
 
-	// Map environment variable names to config file key names
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
-
-	// NOTE - the environment variable has higher priority than the config file
-	// Automatically recognize environment variables
 	viper.AutomaticEnv()
 
-	// Values set in runtime
 	if viper.GetString("beetle.root") == "" {
-		fmt.Println("find project root by using project name")
-		log.Println("find project root by using project name")
+		log.Println("Finding project root by using project name")
 
-		projectName := "cm-beetle"
-		// Get the executable path
-		execPath, err := os.Executable()
-		if err != nil {
-			fmt.Printf("Error getting executable path: %v\n", err)
-			log.Fatalf("Error getting executable path: %v", err)
-		}
-		execDir := filepath.Dir(execPath)
-		projectRoot, err := checkProjectRootInParentDirectory(projectName, execDir)
-		if err != nil {
-			fmt.Printf("set current directory as project root directory (%v)\n", err)
-			log.Printf("set current directory as project root directory (%v)", err)
-			projectRoot = execDir
-		}
-		fmt.Printf("project root directory: %s\n", projectRoot)
-		log.Printf("project root directory: %s\n", projectRoot)
-
-		// Set the binary path
+		projectRoot := findProjectRoot("cm-beetle")
 		viper.Set("beetle.root", projectRoot)
-		viper.Set("beetle.cbstore.root", projectRoot)
-		viper.Set("beetle.cblog.root", projectRoot)
 	}
 
-	// Recursively print all keys and values in Viper
-	settings := viper.AllSettings()
-	if viper.GetString("beetle.node.env") == "development" {
+	if err := viper.Unmarshal(&RuntimeConfig); err != nil {
+		log.Fatalf("Unable to decode into struct: %v", err)
+	}
+	Beetle = RuntimeConfig.Beetle
+	Beetle.Tumblebug.RestUrl = Beetle.Tumblebug.Endpoint + "/tumblebug"
+	Tumblebug = Beetle.Tumblebug
+
+	// Print settings if in development mode
+	if Beetle.Node.Env == "development" {
+		settings := viper.AllSettings()
 		recursivePrintMap(settings, "")
 	}
+}
+
+// NVL is func for null value logic
+func NVL(str string, def string) string {
+	if len(str) == 0 {
+		return def
+	}
+	return str
+}
+
+func findProjectRoot(projectName string) string {
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Error getting executable path: %v", err)
+	}
+	execDir := filepath.Dir(execPath)
+	projectRoot, err := checkProjectRootInParentDirectory(projectName, execDir)
+	if err != nil {
+		fmt.Printf("Set current directory as project root directory (%v)\n", err)
+		log.Printf("Set current directory as project root directory (%v)", err)
+		projectRoot = execDir
+	}
+	fmt.Printf("Project root directory: %s\n", projectRoot)
+	log.Printf("Project root directory: %s\n", projectRoot)
+	return projectRoot
 }
 
 func checkProjectRootInParentDirectory(projectName string, execDir string) (string, error) {
@@ -104,4 +175,27 @@ func recursivePrintMap(m map[string]interface{}, prefix string) {
 			log.Printf("Key: %s, Value: %v\n", fullKey, v)
 		}
 	}
+}
+
+func bindEnvironmentVariables() {
+	// Explicitly bind environment variables to configuration keys
+	viper.BindEnv("beetle.root", "BEETLE_ROOT")
+	viper.BindEnv("beetle.self.endpoint", "BEETLE_SELF_ENDPOINT")
+	viper.BindEnv("beetle.api.allow.origins", "BEETLE_API_ALLOW_ORIGINS")
+	viper.BindEnv("beetle.api.auth.enabled", "BEETLE_API_AUTH_ENABLED")
+	viper.BindEnv("beetle.api.username", "BEETLE_API_USERNAME")
+	viper.BindEnv("beetle.api.password", "BEETLE_API_PASSWORD")
+	viper.BindEnv("beetle.lkvstore.path", "BEETLE_LKVSTORE_PATH")
+	viper.BindEnv("beetle.logfile.path", "BEETLE_LOGFILE_PATH")
+	viper.BindEnv("beetle.logfile.maxsize", "BEETLE_LOGFILE_MAXSIZE")
+	viper.BindEnv("beetle.logfile.maxbackups", "BEETLE_LOGFILE_MAXBACKUPS")
+	viper.BindEnv("beetle.logfile.maxage", "BEETLE_LOGFILE_MAXAGE")
+	viper.BindEnv("beetle.logfile.compress", "BEETLE_LOGFILE_COMPRESS")
+	viper.BindEnv("beetle.loglevel", "BEETLE_LOGLEVEL")
+	viper.BindEnv("beetle.logwriter", "BEETLE_LOGWRITER")
+	viper.BindEnv("beetle.node.env", "BEETLE_NODE_ENV")
+	viper.BindEnv("beetle.autocontrol.duration_ms", "BEETLE_AUTOCONTROL_DURATION_MS")
+	viper.BindEnv("beetle.tumblebug.endpoint", "BEETLE_TUMBLEBUG_ENDPOINT")
+	viper.BindEnv("beetle.tumblebug.api.username", "BEETLE_TUMBLEBUG_API_USERNAME")
+	viper.BindEnv("beetle.tumblebug.api.password", "BEETLE_TUMBLEBUG_API_PASSWORD")
 }
