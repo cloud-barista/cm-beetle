@@ -46,6 +46,7 @@ type RecommendInfraResponse struct {
 }
 
 // RecommendInfra godoc
+// @ID RecommendInfra
 // @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Tags [Recommendation] Infrastructure

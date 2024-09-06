@@ -29,6 +29,7 @@ type GetUsersResponse struct {
 }
 
 // GetUsers godoc
+// @ID GetUsers
 // @Summary Get a list of users
 // @Description Get information of all users.
 // @Tags [Sample API] Users
@@ -58,6 +59,7 @@ type GetUserResponse struct {
 }
 
 // GetUser godoc
+// @ID GetUser
 // @Summary Get specific user information
 // @Description Get information of a user with a specific ID.
 // @Tags [Sample API] Users
@@ -96,6 +98,7 @@ type CreateUserResponse struct {
 }
 
 // CreateUser godoc
+// @ID CreateUser
 // @Summary Create a new user
 // @Description Create a new user with the given information.
 // @Tags [Sample API] Users
@@ -130,6 +133,7 @@ type UpdateUserResponse struct {
 }
 
 // UpdateUser godoc
+// @ID UpdateUser
 // @Summary Update a user
 // @Description Update a user with the given information.
 // @Tags [Sample API] Users
@@ -170,6 +174,7 @@ type PatchUserResponse struct {
 }
 
 // PatchUser godoc
+// @ID PatchUser
 // @Summary Patch a user
 // @Description Patch a user with the given information.
 // @Tags [Sample API] Users
@@ -205,6 +210,7 @@ func PatchUser(c echo.Context) error {
 // No ResponseBody required for "DELETE /users/{id}"
 
 // DeleteUser godoc
+// @ID DeleteUser
 // @Summary Delete a user
 // @Description Delete a user with the given information.
 // @Tags [Sample API] Users

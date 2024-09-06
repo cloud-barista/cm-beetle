@@ -40,6 +40,7 @@ type MigrateInfraResponse struct {
 }
 
 // MigrateInfra godoc
+// @ID MigrateInfra
 // @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI)
 // @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI)
 // @Tags [Migration] Infrastructure
@@ -97,6 +98,7 @@ func MigrateInfra(c echo.Context) error {
 }
 
 // GetInfra godoc
+// @ID GetInfra
 // @Summary Get the migrated multi-cloud infrastructure (MCI)
 // @Description Get the migrated multi-cloud infrastructure (MCI)
 // @Tags [Migration] Infrastructure
@@ -150,6 +152,7 @@ func GetInfra(c echo.Context) error {
 }
 
 // DeleteInfra godoc
+// @ID DeleteInfra
 // @Summary Delete the migrated mult-cloud infrastructure (MCI)
 // @Description Delete the migrated mult-cloud infrastructure (MCI)
 // @Tags [Migration] Infrastructure

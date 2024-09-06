@@ -71,6 +71,7 @@ const docTemplate = `{
                     "[Migration] Infrastructure"
                 ],
                 "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
+                "operationId": "MigrateInfra",
                 "parameters": [
                     {
                         "type": "string",
@@ -125,6 +126,7 @@ const docTemplate = `{
                     "[Migration] Infrastructure"
                 ],
                 "summary": "Get the migrated multi-cloud infrastructure (MCI)",
+                "operationId": "GetInfra",
                 "parameters": [
                     {
                         "type": "string",
@@ -176,6 +178,7 @@ const docTemplate = `{
                     "[Migration] Infrastructure"
                 ],
                 "summary": "Delete the migrated mult-cloud infrastructure (MCI)",
+                "operationId": "DeleteInfra",
                 "parameters": [
                     {
                         "type": "string",
@@ -258,6 +261,7 @@ const docTemplate = `{
                     "[Recommendation] Infrastructure"
                 ],
                 "summary": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
+                "operationId": "RecommendInfra",
                 "parameters": [
                     {
                         "description": "Specify the your infrastructure to be migrated",
@@ -304,6 +308,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Get a list of users",
+                "operationId": "GetUsers",
                 "responses": {
                     "200": {
                         "description": "(sample) This is a sample description for success response in Swagger UI",
@@ -331,6 +336,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Create a new user",
+                "operationId": "CreateUser",
                 "parameters": [
                     {
                         "description": "User information",
@@ -371,6 +377,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Get specific user information",
+                "operationId": "GetUser",
                 "parameters": [
                     {
                         "type": "integer",
@@ -407,6 +414,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Update a user",
+                "operationId": "UpdateUser",
                 "parameters": [
                     {
                         "type": "integer",
@@ -452,6 +460,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Delete a user",
+                "operationId": "DeleteUser",
                 "parameters": [
                     {
                         "type": "integer",
@@ -494,6 +503,7 @@ const docTemplate = `{
                     "[Sample API] Users"
                 ],
                 "summary": "Patch a user",
+                "operationId": "PatchUser",
                 "parameters": [
                     {
                         "type": "integer",
