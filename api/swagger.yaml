@@ -710,6 +710,7 @@ paths:
       consumes:
       - application/json
       description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+      operationId: MigrateInfra
       parameters:
       - default: mig01
         description: Namespace ID
@@ -747,6 +748,7 @@ paths:
       consumes:
       - application/json
       description: Delete the migrated mult-cloud infrastructure (MCI)
+      operationId: DeleteInfra
       parameters:
       - default: mig01
         description: Namespace ID
@@ -783,6 +785,7 @@ paths:
       consumes:
       - application/json
       description: Get the migrated multi-cloud infrastructure (MCI)
+      operationId: GetInfra
       parameters:
       - default: mig01
         description: Namespace ID
@@ -839,6 +842,7 @@ paths:
       - application/json
       description: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
         migration
+      operationId: RecommendInfra
       parameters:
       - description: Specify the your infrastructure to be migrated
         in: body
@@ -870,6 +874,7 @@ paths:
       consumes:
       - application/json
       description: Get information of all users.
+      operationId: GetUsers
       produces:
       - application/json
       responses:
@@ -889,6 +894,7 @@ paths:
       consumes:
       - application/json
       description: Create a new user with the given information.
+      operationId: CreateUser
       parameters:
       - description: User information
         in: body
@@ -916,6 +922,7 @@ paths:
       consumes:
       - application/json
       description: Delete a user with the given information.
+      operationId: DeleteUser
       parameters:
       - description: User ID
         in: path
@@ -944,6 +951,7 @@ paths:
       consumes:
       - application/json
       description: Get information of a user with a specific ID.
+      operationId: GetUser
       parameters:
       - description: User ID
         in: path
@@ -969,6 +977,7 @@ paths:
       consumes:
       - application/json
       description: Patch a user with the given information.
+      operationId: PatchUser
       parameters:
       - description: User ID
         in: path
@@ -1004,6 +1013,7 @@ paths:
       consumes:
       - application/json
       description: Update a user with the given information.
+      operationId: UpdateUser
       parameters:
       - description: User ID
         in: path
