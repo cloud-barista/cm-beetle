@@ -19,7 +19,7 @@ import (
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
-	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
+
 	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -42,7 +42,7 @@ type RecommendInfraRequest struct {
 }
 
 type RecommendInfraResponse struct {
-	mci.TbMciDynamicReq
+	recommendation.RecommendedInfraInfo
 }
 
 // RecommendInfra godoc
@@ -70,8 +70,8 @@ func RecommendInfra(c echo.Context) error {
 	log.Trace().Msgf("req: %v\n", req)
 
 	// Process
-	recommendedInfra, err := recommendation.Recommend(req.Servers)
-	recommendedInfra.Name = "mmci01"
+	recommendedInfraInfo, err := recommendation.Recommend(req.Servers)
+	recommendedInfraInfo.TargetInfra.Name = "mmci01"
 
 	// Ouput
 	if err != nil {
@@ -80,5 +80,5 @@ func RecommendInfra(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, res)
 	}
 
-	return c.JSON(http.StatusOK, recommendedInfra)
+	return c.JSON(http.StatusOK, recommendedInfraInfo)
 }

@@ -6,6 +6,12 @@ definitions:
         example: Any message
         type: string
     type: object
+  common.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
   controller.CreateUserRequest:
     properties:
       email:
@@ -60,7 +66,7 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/mci.TbVmDynamicReq'
+          $ref: '#/definitions/model.TbVmDynamicReq'
         type: array
     required:
     - name
@@ -95,7 +101,7 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/mci.TbVmDynamicReq'
+          $ref: '#/definitions/model.TbVmDynamicReq'
         type: array
     required:
     - name
@@ -131,37 +137,11 @@ definitions:
   controller.RecommendInfraResponse:
     properties:
       description:
-        example: Made in CB-TB
         type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
+      status:
         type: string
-      label:
-        description: Label is for describing the mci in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
-      name:
-        example: mci01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/mci.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
+      targetInfra:
+        $ref: '#/definitions/model.TbMciDynamicReq'
     type: object
   controller.UpdateUserRequest:
     properties:
@@ -179,12 +159,6 @@ definitions:
       id:
         type: integer
       name:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg:
-    properties:
-      message:
-        example: Any message
         type: string
     type: object
   infra.CPU:
@@ -429,7 +403,69 @@ definitions:
     required:
     - os
     type: object
-  mci.TbVmDynamicReq:
+  model.MyUser:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.Response:
+    properties:
+      details:
+        example: Any details
+        type: string
+      list:
+        items: {}
+        type: array
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
+        type: string
+    type: object
+  model.TbMciDynamicReq:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        description: Label is for describing the mci in a keyword (any string can
+          be used)
+        example: DynamicVM
+        type: string
+      name:
+        example: mci01
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/model.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  model.TbVmDynamicReq:
     properties:
       commonImage:
         description: CommonImage is field for id of a image in common namespace
@@ -479,33 +515,6 @@ definitions:
     required:
     - commonImage
     - commonSpec
-    type: object
-  model.MyUser:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  model.Response:
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
-        type: boolean
-      text:
-        example: Any text
-        type: string
     type: object
   network.CSP:
     properties:
@@ -860,11 +869,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_core_common.SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
         migration
       tags:

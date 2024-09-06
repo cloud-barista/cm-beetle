@@ -101,7 +101,7 @@ def get_disk_info():
         ("Free (GB)", bytes_to_gb(disk_info.free)),
         ("Used (GB)", bytes_to_gb(disk_info.used)),
         ("Read Count", disk_io.read_count),
-        ("Write Count", disk_io.write_count)
+        ("Write Count", disk_io.write_count),
         # ("Partitions", partition_info),
         # ("File System Types", ', '.join([p.fstype for p in partitions]))
     ]
@@ -286,9 +286,9 @@ def main():
 
     print("\nAdvanced Network Information:")
     print(advanced_network_table)
-    system_info[
-        "Advanced Network"
-    ] = advanced_network_data  # Add to system info dictionary
+    system_info["Advanced Network"] = (
+        advanced_network_data  # Add to system info dictionary
+    )
 
     # Fetch process information
     process_table = PrettyTable()

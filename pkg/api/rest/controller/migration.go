@@ -20,7 +20,7 @@ import (
 
 	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	"github.com/cloud-barista/cb-tumblebug/src/core/mci"
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
@@ -32,11 +32,11 @@ type MigrateInfraRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
 	// mci.TbMciDynamicReq
 
-	mci.TbMciDynamicReq
+	tbmodel.TbMciDynamicReq
 }
 
 type MigrateInfraResponse struct {
-	mci.TbMciDynamicReq
+	tbmodel.TbMciDynamicReq
 }
 
 // MigrateInfra godoc

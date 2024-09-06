@@ -2,11 +2,9 @@
 beetle:
   root: # To be set in runtime
 
-  cbstore:
-    root: # To be set in runtime (based on beetle.root)
-
-  cblog:
-    root: # To be set in runtime (based on beetle.root)
+  ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
+  self:
+    endpoint: localhost:8056
 
   ## Set API access config
   api:
@@ -21,22 +19,9 @@ beetle:
     username: default
     password: default
 
-  ## Set SELF_ENDPOINT, to access Swagger API dashboard outside (Ex: export SELF_ENDPOINT=x.x.x.x:8056)
-  self:
-    endpoint: localhost:8056
-
-  tumblebug:
-    endpoint: http://localhost:1323
-    api:
-      username: default
-      password: default
-
-  ## Set internal DB config (SQLlite)
-  db:
-    url: localhost:3306
-    database: cm_beetle
-    user: cm_beetle
-    password: cm_beetle
+  ## Set internal DB config (lkvstore: local key-value store)
+  lkvstore:
+    path: ./db/beetle.db
 
   ## Logger configuration
   logfile:
@@ -60,3 +45,10 @@ beetle:
   ## Set period for auto control goroutine invocation
   autocontrol:
     duration_ms: 10000
+
+  ## Set Tumblebug access config
+  tumblebug:
+    endpoint: http://localhost:1323
+    api:
+      username: default
+      password: default

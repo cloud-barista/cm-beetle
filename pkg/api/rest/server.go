@@ -27,8 +27,8 @@ import (
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/spf13/viper"
 
 	"crypto/subtle"
 	"fmt"
@@ -106,9 +106,9 @@ func RunServer(port string) {
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
-	allowedOrigins := viper.GetString("beetle.api.allow.origins")
+	allowedOrigins := config.Beetle.API.Allow.Origins
 	if allowedOrigins == "" {
-		log.Fatal().Msg("allow_ORIGINS env variable for CORS is " + allowedOrigins +
+		log.Fatal().Msg("ALLOW_ORIGINS env variable for CORS is " + allowedOrigins +
 			". Please provide a proper value and source setup.env again. EXITING...")
 	}
 
@@ -118,11 +118,10 @@ func RunServer(port string) {
 	}))
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
-	enableAuth := viper.GetString("beetle.api.auth.enabled") == "true"
+	enableAuth := config.Beetle.API.Auth.Enabled
 
-	apiUser := viper.GetString("beetle.api.username")
-	apiPass := viper.GetString("beetle.api.password")
-
+	apiUser := config.Beetle.API.Username
+	apiPass := config.Beetle.API.Password
 	if enableAuth {
 		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			// Skip authentication for some routes that do not require authentication
@@ -130,7 +129,7 @@ func RunServer(port string) {
 				if c.Path() == "/beetle/readyz" ||
 					c.Path() == "/beetle/httpVersion" ||
 					strings.HasPrefix(c.Path(), "/tumblebug") {
-					log.Debug().Msgf("Skip authentication for %s", c.Path())
+					// log.Debug().Msgf("Skip authentication for %s", c.Path())
 					return true
 				}
 				return false
@@ -157,7 +156,7 @@ func RunServer(port string) {
 	gTumblebug := e.Group("/tumblebug")
 
 	// Set the target server for the proxy
-	target := viper.GetString("beetle.tumblebug.endpoint")
+	target := config.Tumblebug.Endpoint
 	url, err := url.Parse(target)
 	if err != nil {
 		e.Logger.Fatal(err)
@@ -253,7 +252,7 @@ func RunServer(port string) {
 	gSample.DELETE("/users/:id", controller.DeleteUser)
 
 	// Start API server
-	selfEndpoint := viper.GetString("beetle.self.endpoint")
+	selfEndpoint := config.Beetle.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"
 
 	if enableAuth {
