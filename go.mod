@@ -2,9 +2,12 @@ module github.com/cloud-barista/cm-beetle
 
 go 1.23.0
 
+// Keep this for cm-model contributors
+// replace github.com/cloud-barista/cm-model => ../cm-model
+
 require (
-	github.com/cloud-barista/cb-tumblebug v0.9.10
-	github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240704080504-526db6b80b90
+	github.com/cloud-barista/cb-tumblebug v0.9.11
+	github.com/cloud-barista/cm-model v0.0.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1
@@ -70,5 +73,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
+	modernc.org/libc v1.50.9 // indirect
+	modernc.org/sqlite v1.29.10 // indirect
 	xorm.io/builder v0.3.13 // indirect
 )
