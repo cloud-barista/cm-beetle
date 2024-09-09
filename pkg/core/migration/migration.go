@@ -224,11 +224,11 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 
 	// delete the infrastructure with terminate option
 	method = "DELETE"
-	url = fmt.Sprintf("%s/ns/%s/defaultResources", epTumblebug, nsId)
-	options = ""
-	if options != "" {
-		url += "?" + options
-	}
+	url = fmt.Sprintf("%s/ns/%s/sharedResources", epTumblebug, nsId)
+	// options = ""
+	// if options != "" {
+	// 	url += "?" + options
+	// }
 
 	// Set request body
 	requestBody = common.NoBody

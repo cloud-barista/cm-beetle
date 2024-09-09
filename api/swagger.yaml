@@ -127,9 +127,11 @@ definitions:
     type: object
   controller.RecommendInfraRequest:
     properties:
+      network:
+        $ref: '#/definitions/onprem.NetworkProperty'
       servers:
         items:
-          $ref: '#/definitions/infra.Infra'
+          $ref: '#/definitions/onprem.ServerProperty'
         type: array
     required:
     - servers
@@ -160,248 +162,6 @@ definitions:
         type: integer
       name:
         type: string
-    type: object
-  infra.CPU:
-    properties:
-      cache:
-        description: KB
-        type: integer
-      cores:
-        description: ea
-        type: integer
-      cpus:
-        description: ea
-        type: integer
-      max_speed:
-        description: MHz
-        type: integer
-      model:
-        type: string
-      threads:
-        description: ea
-        type: integer
-      vendor:
-        type: string
-    required:
-    - cores
-    - cpus
-    - threads
-    type: object
-  infra.Compute:
-    properties:
-      compute_resource:
-        $ref: '#/definitions/infra.ComputeResource'
-      connection:
-        items:
-          $ref: '#/definitions/infra.Connection'
-        type: array
-      os:
-        $ref: '#/definitions/infra.System'
-    required:
-    - compute_resource
-    - os
-    type: object
-  infra.ComputeResource:
-    properties:
-      cpu:
-        $ref: '#/definitions/infra.CPU'
-      data_disk:
-        items:
-          $ref: '#/definitions/infra.Disk'
-        type: array
-      memory:
-        $ref: '#/definitions/infra.Memory'
-      root_disk:
-        $ref: '#/definitions/infra.Disk'
-    required:
-    - cpu
-    - memory
-    type: object
-  infra.Connection:
-    properties:
-      keypair:
-        $ref: '#/definitions/infra.Keypair'
-    type: object
-  infra.DRM:
-    properties:
-      driver_date:
-        type: string
-      driver_description:
-        type: string
-      driver_name:
-        type: string
-      driver_version:
-        type: string
-    type: object
-  infra.Disk:
-    properties:
-      label:
-        type: string
-      size:
-        description: GB
-        type: integer
-      type:
-        type: string
-    type: object
-  infra.GPU:
-    properties:
-      drm:
-        items:
-          $ref: '#/definitions/infra.DRM'
-        type: array
-      nvidia:
-        items:
-          $ref: '#/definitions/infra.NVIDIA'
-        type: array
-    type: object
-  infra.Infra:
-    properties:
-      compute:
-        $ref: '#/definitions/infra.Compute'
-      gpu:
-        $ref: '#/definitions/infra.GPU'
-      network:
-        $ref: '#/definitions/network.Network'
-      storage:
-        $ref: '#/definitions/infra.Storage'
-    type: object
-  infra.Kernel:
-    properties:
-      architecture:
-        type: string
-      release:
-        type: string
-      version:
-        type: string
-    type: object
-  infra.Keypair:
-    properties:
-      name:
-        type: string
-      private_key:
-        type: string
-      public_key:
-        type: string
-    type: object
-  infra.Memory:
-    properties:
-      size:
-        description: MB
-        type: integer
-      speed:
-        description: MHz
-        type: integer
-      type:
-        type: string
-    required:
-    - size
-    type: object
-  infra.MountPoint:
-    properties:
-      mounted_information:
-        items:
-          $ref: '#/definitions/infra.MountedInformation'
-        type: array
-    type: object
-  infra.MountedInformation:
-    properties:
-      destination:
-        type: string
-      filesystem:
-        type: string
-      option:
-        type: string
-      source:
-        type: string
-    type: object
-  infra.NVIDIA:
-    properties:
-      device_attribute:
-        $ref: '#/definitions/infra.NVIDIADeviceAttribute'
-      performance:
-        $ref: '#/definitions/infra.NVIDIAPerformance'
-    type: object
-  infra.NVIDIADeviceAttribute:
-    properties:
-      cuda_version:
-        type: string
-      driver_version:
-        type: string
-      gpu_uuid:
-        type: string
-      product_architecture:
-        type: string
-      product_brand:
-        type: string
-      product_name:
-        type: string
-    type: object
-  infra.NVIDIAPerformance:
-    properties:
-      bar1_memory_total:
-        description: mb
-        type: integer
-      bar1_memory_usage:
-        description: percent
-        type: integer
-      bar1_memory_used:
-        description: mb
-        type: integer
-      fb_memory_total:
-        description: mb
-        type: integer
-      fb_memory_usage:
-        description: percent
-        type: integer
-      fb_memory_used:
-        description: mb
-        type: integer
-      gpu_usage:
-        description: percent
-        type: integer
-    type: object
-  infra.Node:
-    properties:
-      hostname:
-        type: string
-      hypervisor:
-        type: string
-      machineid:
-        type: string
-      timezone:
-        type: string
-    type: object
-  infra.OS:
-    properties:
-      architecture:
-        type: string
-      name:
-        type: string
-      release:
-        type: string
-      vendor:
-        type: string
-      version:
-        type: string
-    required:
-    - release
-    - vendor
-    type: object
-  infra.Storage:
-    properties:
-      mount_point:
-        $ref: '#/definitions/infra.MountPoint'
-    type: object
-  infra.System:
-    properties:
-      kernel:
-        $ref: '#/definitions/infra.Kernel'
-      node:
-        $ref: '#/definitions/infra.Node'
-      os:
-        $ref: '#/definitions/infra.OS'
-    required:
-    - os
     type: object
   model.MyUser:
     properties:
@@ -516,164 +276,148 @@ definitions:
     - commonImage
     - commonSpec
     type: object
-  network.CSP:
+  onprem.CpuProperty:
     properties:
-      name:
+      architecture:
+        example: x86_64
         type: string
-      nlb:
-        items:
-          $ref: '#/definitions/network.NLB'
-        type: array
-      security_group:
-        items:
-          $ref: '#/definitions/network.SecurityGroup'
-        type: array
-      vpc:
-        items:
-          $ref: '#/definitions/network.VPC'
-        type: array
-    type: object
-  network.DNS:
-    properties:
-      dns_server:
-        description: IPv4 or IPv6 DNS Server Addresses
-        items:
-          type: string
-        type: array
-    type: object
-  network.FirewallRule:
-    properties:
-      action:
-        description: allow, deny
-        type: string
-      direction:
-        description: inbound, outbound
-        type: string
-      dst:
-        type: string
-      dst_ports:
-        type: string
-      priority:
-        description: Lower has higher priority
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
         type: integer
-      protocol:
-        description: TCP, UDP, ICMP
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
         type: string
-      src:
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
         type: string
-      src_ports:
-        type: string
+    required:
+    - cores
+    - cpus
+    - threads
     type: object
-  network.Host:
+  onprem.DiskProperty:
     properties:
-      dns:
-        $ref: '#/definitions/network.DNS'
-      firewall_rule:
-        items:
-          $ref: '#/definitions/network.FirewallRule'
-        type: array
-      network_interface:
-        items:
-          $ref: '#/definitions/network.NIC'
-        type: array
-      route:
-        items:
-          $ref: '#/definitions/network.Route'
-        type: array
-    type: object
-  network.NIC:
-    properties:
-      address:
-        items:
-          type: string
-        type: array
-      gateway:
-        items:
-          type: string
-        type: array
-      interface:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
         type: string
-      mac_address:
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onprem.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onprem.NetworkInterfaceProperty:
+    properties:
+      ipAddress:
+        type: string
+      macAddress:
         type: string
       mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
         type: integer
+    required:
+    - ipAddress
     type: object
-  network.NLB:
+  onprem.NetworkProperty:
     properties:
-      description:
+      gateway:
+        description: Gateway IP address
+        example: 172.26.240.0/20
         type: string
-      health_checker:
-        type: string
+    type: object
+  onprem.OsProperty:
+    properties:
       id:
+        example: ubuntu
         type: string
-      listener:
+      idLike:
+        example: debian
         type: string
       name:
+        example: Ubuntu
         type: string
-      target_group:
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
         type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
     type: object
-  network.Network:
+  onprem.ServerProperty:
     properties:
-      csp:
-        $ref: '#/definitions/network.CSP'
-      host:
-        $ref: '#/definitions/network.Host'
-    type: object
-  network.Route:
-    properties:
-      destination:
-        type: string
-      netmask:
-        type: string
-      next_hop:
-        type: string
-    type: object
-  network.SecurityGroup:
-    properties:
-      description:
-        type: string
-      firewall_rule:
+      cpu:
+        $ref: '#/definitions/onprem.CpuProperty'
+      dataDisks:
         items:
-          $ref: '#/definitions/network.FirewallRule'
+          $ref: '#/definitions/onprem.DiskProperty'
         type: array
-      id:
+      hostname:
         type: string
-      name:
-        type: string
-      vnet_id:
-        type: string
-    type: object
-  network.Subnet:
-    properties:
-      ipv4_cidr:
-        description: IPv4 Network Address with CIDR Prefix Length
-        type: string
-      ipv6_cidr:
-        description: IPv6 Network Address with CIDR Prefix Length
-        type: string
-      name:
-        type: string
-    type: object
-  network.VPC:
-    properties:
-      address_space:
-        description: IPv4 CIDR or IPv6 CIDR
+      interfaces:
         items:
-          type: string
+          $ref: '#/definitions/onprem.NetworkInterfaceProperty'
         type: array
-      dns_server:
-        items:
-          $ref: '#/definitions/network.DNS'
-        type: array
-      id:
-        type: string
-      region:
-        type: string
-      subnet:
-        items:
-          $ref: '#/definitions/network.Subnet'
-        type: array
+      memory:
+        $ref: '#/definitions/onprem.MemoryProperty'
+      os:
+        $ref: '#/definitions/onprem.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onprem.DiskProperty'
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API

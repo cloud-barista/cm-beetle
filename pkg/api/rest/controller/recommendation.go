@@ -20,7 +20,8 @@ import (
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
-	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
+	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
+	onprem "github.com/cloud-barista/cm-model/infra/onprem"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -38,7 +39,8 @@ import (
 // }
 
 type RecommendInfraRequest struct {
-	Servers []infra.Infra `json:"servers" validate:"required"`
+	// Servers []infra.Infra `json:"servers" validate:"required"`
+	onprem.OnPremInfra
 }
 
 type RecommendInfraResponse struct {
@@ -70,7 +72,7 @@ func RecommendInfra(c echo.Context) error {
 	log.Trace().Msgf("req: %v\n", req)
 
 	// Process
-	recommendedInfraInfo, err := recommendation.Recommend(req.Servers)
+	recommendedInfraInfo, err := recommendation.Recommend(req.OnPremInfra)
 	recommendedInfraInfo.TargetInfra.Name = "mmci01"
 
 	// Ouput

@@ -9,8 +9,10 @@ import (
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 
-	"github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
+	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
+
+	onprem "github.com/cloud-barista/cm-model/infra/onprem"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -19,7 +21,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
+func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 
 	var emptyResp RecommendedInfraInfo
 	var recommendedInfraInfo RecommendedInfraInfo
@@ -103,7 +105,7 @@ func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
 }`
 
 	// Recommand VMs
-	for _, server := range srcInfra {
+	for _, server := range srcInfra.Servers {
 
 		// Set VM info
 		recommendedVm := tbmodel.TbVmDynamicReq{
@@ -112,7 +114,7 @@ func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
 			CommonSpec:     "", // Search and set an appropriate VM spec
 			Description:    "a recommended virtual machine",
 			Label:          "rehosted-vm",
-			Name:           fmt.Sprintf("rehosted-%s", server.Compute.OS.Node.Hostname),
+			Name:           fmt.Sprintf("rehosted-%s", server.Hostname),
 			RootDiskSize:   "", // TBD
 			RootDiskType:   "", // TBD
 			SubGroupSize:   "",
@@ -124,11 +126,11 @@ func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
 		*/
 
 		// Extract server info from source computing infra info
-		cores := server.Compute.ComputeResource.CPU.Cores
-		memory := MBtoGiB(float64(server.Compute.ComputeResource.Memory.Size))
+		cores := server.CPU.Cores
+		memory := MBtoGiB(float64(server.Memory.TotalSize))
 
 		coresMax := cores << 1
-		var coresMin uint
+		var coresMin uint32
 		if cores > 1 {
 			coresMin = cores >> 1
 		} else {
@@ -146,13 +148,12 @@ func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
 		providerName := "aws"
 		regionName := "ap-northeast-2"
 
-		osVendor := server.Compute.OS.OS.Vendor
-		osVersion := server.Compute.OS.OS.Release
-		osNameWithVersion := strings.ToLower(osVendor + osVersion)
+		osNameAndVersion := server.OS.Name + " " + server.OS.Version
+		osNameWithVersion := strings.ToLower(osNameAndVersion)
 
 		log.Debug().
-			Uint("coreLowerLimit", coresMin).
-			Uint("coreUpperLimit", coresMax).
+			Uint32("coreLowerLimit", coresMin).
+			Uint32("coreUpperLimit", coresMax).
 			Uint32("memoryLowerLimit (GiB)", memoryMin).
 			Uint32("memoryUpperLimit (GiB)", memoryMax).
 			Str("providerName", providerName).
@@ -265,10 +266,10 @@ func Recommend(srcInfra []infra.Infra) (RecommendedInfraInfo, error) {
 		}
 
 		keywords := fmt.Sprintf("%s %s %s %s",
-			server.Compute.OS.OS.Vendor,
-			server.Compute.OS.OS.Version,
-			server.Compute.OS.OS.Architecture,
-			server.Compute.ComputeResource.RootDisk.Type)
+			server.OS.Name,
+			server.OS.Version,
+			server.CPU.Architecture,
+			server.RootDisk.Type)
 		log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 		// Select VM OS image via LevenshteinDistance-based text similarity

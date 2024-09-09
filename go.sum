@@ -4,10 +4,10 @@ gitea.com/xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a h1:lSA0F4e9A2NcQSqGq
 gitea.com/xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a/go.mod h1:EXuID2Zs0pAQhH8yz+DNjUbjppKQzKFAn28TMYPB6IU=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
-github.com/cloud-barista/cb-tumblebug v0.9.10 h1:mnXLczjwi6FMwmrZ0n1LMdvFfDFKbz9MJp3jHDJ78Zk=
-github.com/cloud-barista/cb-tumblebug v0.9.10/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
-github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240704080504-526db6b80b90 h1:qGFG4sMqwKw06Y0ZzK4L2Bm6M/WHNnLQGZ3r6qUAhR8=
-github.com/cloud-barista/cm-honeybee/agent v0.0.0-20240704080504-526db6b80b90/go.mod h1:+h6UB1Z2qrpfizIillcppLuh8zRlmjLSpkl63XGi1Wc=
+github.com/cloud-barista/cb-tumblebug v0.9.11 h1:PLqQ+OD4+Nec1xTHJ3Qde7C74t2XiY5D43UemMg838A=
+github.com/cloud-barista/cb-tumblebug v0.9.11/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
+github.com/cloud-barista/cm-model v0.0.1 h1:tcj5KHacQYuoLgvcuFoA+Cp23pbQg1xoAYNGtVRJXiU=
+github.com/cloud-barista/cm-model v0.0.1/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

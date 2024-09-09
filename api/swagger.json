@@ -716,10 +716,13 @@
                 "servers"
             ],
             "properties": {
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
                 "servers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/infra.Infra"
+                        "$ref": "#/definitions/onprem.ServerProperty"
                     }
                 }
             }
@@ -763,369 +766,6 @@
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "infra.CPU": {
-            "type": "object",
-            "required": [
-                "cores",
-                "cpus",
-                "threads"
-            ],
-            "properties": {
-                "cache": {
-                    "description": "KB",
-                    "type": "integer"
-                },
-                "cores": {
-                    "description": "ea",
-                    "type": "integer"
-                },
-                "cpus": {
-                    "description": "ea",
-                    "type": "integer"
-                },
-                "max_speed": {
-                    "description": "MHz",
-                    "type": "integer"
-                },
-                "model": {
-                    "type": "string"
-                },
-                "threads": {
-                    "description": "ea",
-                    "type": "integer"
-                },
-                "vendor": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.Compute": {
-            "type": "object",
-            "required": [
-                "compute_resource",
-                "os"
-            ],
-            "properties": {
-                "compute_resource": {
-                    "$ref": "#/definitions/infra.ComputeResource"
-                },
-                "connection": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/infra.Connection"
-                    }
-                },
-                "os": {
-                    "$ref": "#/definitions/infra.System"
-                }
-            }
-        },
-        "infra.ComputeResource": {
-            "type": "object",
-            "required": [
-                "cpu",
-                "memory"
-            ],
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/infra.CPU"
-                },
-                "data_disk": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/infra.Disk"
-                    }
-                },
-                "memory": {
-                    "$ref": "#/definitions/infra.Memory"
-                },
-                "root_disk": {
-                    "$ref": "#/definitions/infra.Disk"
-                }
-            }
-        },
-        "infra.Connection": {
-            "type": "object",
-            "properties": {
-                "keypair": {
-                    "$ref": "#/definitions/infra.Keypair"
-                }
-            }
-        },
-        "infra.DRM": {
-            "type": "object",
-            "properties": {
-                "driver_date": {
-                    "type": "string"
-                },
-                "driver_description": {
-                    "type": "string"
-                },
-                "driver_name": {
-                    "type": "string"
-                },
-                "driver_version": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.Disk": {
-            "type": "object",
-            "properties": {
-                "label": {
-                    "type": "string"
-                },
-                "size": {
-                    "description": "GB",
-                    "type": "integer"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.GPU": {
-            "type": "object",
-            "properties": {
-                "drm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/infra.DRM"
-                    }
-                },
-                "nvidia": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/infra.NVIDIA"
-                    }
-                }
-            }
-        },
-        "infra.Infra": {
-            "type": "object",
-            "properties": {
-                "compute": {
-                    "$ref": "#/definitions/infra.Compute"
-                },
-                "gpu": {
-                    "$ref": "#/definitions/infra.GPU"
-                },
-                "network": {
-                    "$ref": "#/definitions/network.Network"
-                },
-                "storage": {
-                    "$ref": "#/definitions/infra.Storage"
-                }
-            }
-        },
-        "infra.Kernel": {
-            "type": "object",
-            "properties": {
-                "architecture": {
-                    "type": "string"
-                },
-                "release": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.Keypair": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "private_key": {
-                    "type": "string"
-                },
-                "public_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.Memory": {
-            "type": "object",
-            "required": [
-                "size"
-            ],
-            "properties": {
-                "size": {
-                    "description": "MB",
-                    "type": "integer"
-                },
-                "speed": {
-                    "description": "MHz",
-                    "type": "integer"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.MountPoint": {
-            "type": "object",
-            "properties": {
-                "mounted_information": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/infra.MountedInformation"
-                    }
-                }
-            }
-        },
-        "infra.MountedInformation": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "type": "string"
-                },
-                "filesystem": {
-                    "type": "string"
-                },
-                "option": {
-                    "type": "string"
-                },
-                "source": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.NVIDIA": {
-            "type": "object",
-            "properties": {
-                "device_attribute": {
-                    "$ref": "#/definitions/infra.NVIDIADeviceAttribute"
-                },
-                "performance": {
-                    "$ref": "#/definitions/infra.NVIDIAPerformance"
-                }
-            }
-        },
-        "infra.NVIDIADeviceAttribute": {
-            "type": "object",
-            "properties": {
-                "cuda_version": {
-                    "type": "string"
-                },
-                "driver_version": {
-                    "type": "string"
-                },
-                "gpu_uuid": {
-                    "type": "string"
-                },
-                "product_architecture": {
-                    "type": "string"
-                },
-                "product_brand": {
-                    "type": "string"
-                },
-                "product_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.NVIDIAPerformance": {
-            "type": "object",
-            "properties": {
-                "bar1_memory_total": {
-                    "description": "mb",
-                    "type": "integer"
-                },
-                "bar1_memory_usage": {
-                    "description": "percent",
-                    "type": "integer"
-                },
-                "bar1_memory_used": {
-                    "description": "mb",
-                    "type": "integer"
-                },
-                "fb_memory_total": {
-                    "description": "mb",
-                    "type": "integer"
-                },
-                "fb_memory_usage": {
-                    "description": "percent",
-                    "type": "integer"
-                },
-                "fb_memory_used": {
-                    "description": "mb",
-                    "type": "integer"
-                },
-                "gpu_usage": {
-                    "description": "percent",
-                    "type": "integer"
-                }
-            }
-        },
-        "infra.Node": {
-            "type": "object",
-            "properties": {
-                "hostname": {
-                    "type": "string"
-                },
-                "hypervisor": {
-                    "type": "string"
-                },
-                "machineid": {
-                    "type": "string"
-                },
-                "timezone": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.OS": {
-            "type": "object",
-            "required": [
-                "release",
-                "vendor"
-            ],
-            "properties": {
-                "architecture": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "release": {
-                    "type": "string"
-                },
-                "vendor": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "infra.Storage": {
-            "type": "object",
-            "properties": {
-                "mount_point": {
-                    "$ref": "#/definitions/infra.MountPoint"
-                }
-            }
-        },
-        "infra.System": {
-            "type": "object",
-            "required": [
-                "os"
-            ],
-            "properties": {
-                "kernel": {
-                    "$ref": "#/definitions/infra.Kernel"
-                },
-                "node": {
-                    "$ref": "#/definitions/infra.Node"
-                },
-                "os": {
-                    "$ref": "#/definitions/infra.OS"
                 }
             }
         },
@@ -1268,243 +908,200 @@
                 }
             }
         },
-        "network.CSP": {
+        "onprem.CpuProperty": {
             "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
             "properties": {
-                "name": {
-                    "type": "string"
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
                 },
-                "nlb": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.NLB"
-                    }
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
                 },
-                "security_group": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.SecurityGroup"
-                    }
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
                 },
-                "vpc": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.VPC"
-                    }
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
                 }
             }
         },
-        "network.DNS": {
+        "onprem.DiskProperty": {
             "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
             "properties": {
-                "dns_server": {
-                    "description": "IPv4 or IPv6 DNS Server Addresses",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "network.FirewallRule": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "description": "allow, deny",
-                    "type": "string"
-                },
-                "direction": {
-                    "description": "inbound, outbound",
-                    "type": "string"
-                },
-                "dst": {
-                    "type": "string"
-                },
-                "dst_ports": {
-                    "type": "string"
-                },
-                "priority": {
-                    "description": "Lower has higher priority",
+                "available": {
+                    "description": "Unit GiB",
                     "type": "integer"
                 },
-                "protocol": {
-                    "description": "TCP, UDP, ICMP",
+                "label": {
                     "type": "string"
                 },
-                "src": {
-                    "type": "string"
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
                 },
-                "src_ports": {
-                    "type": "string"
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
                 }
             }
         },
-        "network.Host": {
+        "onprem.MemoryProperty": {
             "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
             "properties": {
-                "dns": {
-                    "$ref": "#/definitions/network.DNS"
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
                 },
-                "firewall_rule": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.FirewallRule"
-                    }
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
                 },
-                "network_interface": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.NIC"
-                    }
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
                 },
-                "route": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.Route"
-                    }
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
                 }
             }
         },
-        "network.NIC": {
+        "onprem.NetworkInterfaceProperty": {
             "type": "object",
+            "required": [
+                "ipAddress"
+            ],
             "properties": {
-                "address": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "gateway": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "interface": {
+                "ipAddress": {
                     "type": "string"
                 },
-                "mac_address": {
+                "macAddress": {
                     "type": "string"
                 },
                 "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
                     "type": "integer"
                 }
             }
         },
-        "network.NLB": {
+        "onprem.NetworkProperty": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "health_checker": {
-                    "type": "string"
-                },
+                "gateway": {
+                    "description": "Gateway IP address",
+                    "type": "string",
+                    "example": "172.26.240.0/20"
+                }
+            }
+        },
+        "onprem.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "ubuntu"
                 },
-                "listener": {
-                    "type": "string"
+                "idLike": {
+                    "type": "string",
+                    "example": "debian"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Ubuntu"
                 },
-                "target_group": {
-                    "type": "string"
+                "prettyName": {
+                    "description": "Pretty name",
+                    "type": "string",
+                    "example": "Ubuntu 22.04.3 LTS"
+                },
+                "version": {
+                    "description": "Full version string",
+                    "type": "string",
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                },
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
                 }
             }
         },
-        "network.Network": {
+        "onprem.ServerProperty": {
             "type": "object",
             "properties": {
-                "csp": {
-                    "$ref": "#/definitions/network.CSP"
+                "cpu": {
+                    "$ref": "#/definitions/onprem.CpuProperty"
                 },
-                "host": {
-                    "$ref": "#/definitions/network.Host"
-                }
-            }
-        },
-        "network.Route": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "type": "string"
-                },
-                "netmask": {
-                    "type": "string"
-                },
-                "next_hop": {
-                    "type": "string"
-                }
-            }
-        },
-        "network.SecurityGroup": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "firewall_rule": {
+                "dataDisks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/network.FirewallRule"
+                        "$ref": "#/definitions/onprem.DiskProperty"
                     }
                 },
-                "id": {
+                "hostname": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "vnet_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "network.Subnet": {
-            "type": "object",
-            "properties": {
-                "ipv4_cidr": {
-                    "description": "IPv4 Network Address with CIDR Prefix Length",
-                    "type": "string"
-                },
-                "ipv6_cidr": {
-                    "description": "IPv6 Network Address with CIDR Prefix Length",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "network.VPC": {
-            "type": "object",
-            "properties": {
-                "address_space": {
-                    "description": "IPv4 CIDR or IPv6 CIDR",
+                "interfaces": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/onprem.NetworkInterfaceProperty"
                     }
                 },
-                "dns_server": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.DNS"
-                    }
+                "memory": {
+                    "$ref": "#/definitions/onprem.MemoryProperty"
                 },
-                "id": {
-                    "type": "string"
+                "os": {
+                    "$ref": "#/definitions/onprem.OsProperty"
                 },
-                "region": {
-                    "type": "string"
-                },
-                "subnet": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/network.Subnet"
-                    }
+                "rootDisk": {
+                    "$ref": "#/definitions/onprem.DiskProperty"
                 }
             }
         }
