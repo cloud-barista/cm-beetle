@@ -5,8 +5,17 @@ It can be useful for extracting and referencing the configuration of the source 
 This script helps to quickly understand the current state of the system and diagnose issues.
 It is useful for checking and referencing the configuration of the source computing environment for the cloud migrator project.
 
+## Prerequisites
+
+Ensure the apt packages are intstalled.
+
+```bash
+sudo apt-get install python3-dev
+```
+
 ## Tested on
-- `Python 3.8.10`
+
+- `Python 3.10.12`
 - `pip 20.0.2`
 
 ## Dependencies
@@ -18,7 +27,22 @@ It is useful for checking and referencing the configuration of the source comput
 - `GPUtil`
 - `distro`
 
+### Setup venv (optional)
+
+```bash
+cd [PROJECT_ROOT]/scripts/system-info
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Note - deactivate venv
+
+```bash
+deactivate
+```
+
 ### Install dependencies
+
 ```bash
 pip3 install -r requirements.txt
 ```
@@ -32,6 +56,7 @@ python3 system_info.py
 ## Features
 
 ### 1. OS Information Collection
+
 Collects OS name, version, architecture, platform, boot time, currently logged-in user, kernel version, and distribution information.
 
 ```python
@@ -45,6 +70,7 @@ def get_os_info():
 ```
 
 ### 2. CPU Information Collection
+
 Collects CPU brand, core count, current frequency, context switches, interrupts, architecture, user time, system time, and idle time.
 
 ```python
@@ -58,6 +84,7 @@ def get_cpu_info():
 ```
 
 ### 3. Memory Information Collection
+
 Collects total memory, available memory, used memory, cached memory, and swap memory information.
 
 ```python
@@ -71,6 +98,7 @@ def get_memory_info():
 ```
 
 ### 4. Disk Information Collection
+
 Collects total disk capacity, available capacity, used capacity, read and write count.
 
 ```python
@@ -84,6 +112,7 @@ def get_disk_info():
 ```
 
 ### 5. Network Information Collection
+
 Collects host name, IP address, MAC address, active network interfaces, gateway, and DNS information.
 
 ```python
@@ -97,6 +126,7 @@ def get_network_info():
 ```
 
 ### 6. Advanced Network Information Collection
+
 Collects IP address, netmask, broadcast, and MAC address of each network interface.
 
 ```python
@@ -107,6 +137,7 @@ def get_advanced_network_info():
 ```
 
 ### 7. GPU Information Collection
+
 Collects GPU name and driver version (if GPUtil is installed).
 
 ```python
@@ -117,6 +148,7 @@ def get_gpu_info():
 ```
 
 ### 8. Graphic Card Information Collection
+
 Collects VGA compatible controller information.
 
 ```python
@@ -126,6 +158,7 @@ def get_graphic_card_info():
 ```
 
 ### 9. Process Information Collection
+
 Collects information on all running processes and users on the system.
 
 ```python
@@ -136,6 +169,7 @@ def get_process_info():
 ```
 
 ### 10. Data Saving
+
 Saves all collected system information to a YAML file.
 
 ```python
@@ -145,9 +179,11 @@ def save_to_yaml(data):
 ```
 
 ## Output
+
 The collected information is printed to the console in a neat table format, and is also saved to a `system_info.yaml` file.
 
 Example
+
 ```
 System Information:
 +-------+--------------+-----------------------+----------------------------------------------------------+
