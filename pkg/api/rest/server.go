@@ -103,6 +103,12 @@ func RunServer(port string) {
 	// limit the application to 20 requests/sec using the default in-memory store
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20)))
 
+	// Custom middleware to issue request ID and details
+	e.Use(middlewares.RequestIdAndDetailsIssuer)
+
+	// Custom middleware for tracing
+	e.Use(middlewares.TracingMiddleware)
+
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 

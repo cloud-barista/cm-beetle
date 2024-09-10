@@ -36,6 +36,14 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check HTTP version of incoming request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -89,6 +97,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -143,6 +157,12 @@ const docTemplate = `{
                         "name": "mciId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -195,6 +215,12 @@ const docTemplate = `{
                         "name": "mciId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -232,6 +258,14 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check Beetle is ready",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -271,6 +305,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -309,6 +349,14 @@ const docTemplate = `{
                 ],
                 "summary": "Get a list of users",
                 "operationId": "GetUsers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "(sample) This is a sample description for success response in Swagger UI",
@@ -346,6 +394,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.CreateUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -385,6 +439,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -431,6 +491,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.UpdateUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -468,6 +534,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -520,6 +592,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.PatchUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {

@@ -440,6 +440,11 @@ paths:
       - application/json
       description: Checks and logs the HTTP version of the incoming request to the
         server console.
+      parameters:
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -478,6 +483,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateInfraRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -514,6 +523,10 @@ paths:
         in: path
         name: mciId
         required: true
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
         type: string
       produces:
       - application/json
@@ -552,6 +565,10 @@ paths:
         name: mciId
         required: true
         type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -575,6 +592,11 @@ paths:
       consumes:
       - application/json
       description: Check Beetle is ready
+      parameters:
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -603,6 +625,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.RecommendInfraRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -628,6 +654,11 @@ paths:
       - application/json
       description: Get information of all users.
       operationId: GetUsers
+      parameters:
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -655,6 +686,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.CreateUserRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -682,6 +717,10 @@ paths:
         name: id
         required: true
         type: integer
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -711,6 +750,10 @@ paths:
         name: id
         required: true
         type: integer
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -743,6 +786,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.PatchUserRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
@@ -779,6 +826,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.UpdateUserRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
       produces:
       - application/json
       responses:
