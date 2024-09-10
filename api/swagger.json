@@ -29,6 +29,14 @@
                     "[Admin] System management"
                 ],
                 "summary": "Check HTTP version of incoming request",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -82,6 +90,12 @@
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -136,6 +150,12 @@
                         "name": "mciId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -188,6 +208,12 @@
                         "name": "mciId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -225,6 +251,14 @@
                     "[Admin] System management"
                 ],
                 "summary": "Check Beetle is ready",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -264,6 +298,12 @@
                         "schema": {
                             "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -302,6 +342,14 @@
                 ],
                 "summary": "Get a list of users",
                 "operationId": "GetUsers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "(sample) This is a sample description for success response in Swagger UI",
@@ -339,6 +387,12 @@
                         "schema": {
                             "$ref": "#/definitions/controller.CreateUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -378,6 +432,12 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -424,6 +484,12 @@
                         "schema": {
                             "$ref": "#/definitions/controller.UpdateUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -461,6 +527,12 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -513,6 +585,12 @@
                         "schema": {
                             "$ref": "#/definitions/controller.PatchUserRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
                     }
                 ],
                 "responses": {

@@ -12,6 +12,31 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// Define context keys
+type contextKey string
+
+const (
+	TraceIdKey contextKey = "traceId"
+	SpanIdKey  contextKey = "spanId"
+)
+
+// Define TracingHook struct
+type TracingHook struct{}
+
+// Run method: Executed when a log event occurs
+func (h TracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	ctx := e.GetCtx()
+	traceID := ctx.Value(TraceIdKey)
+	spanID := ctx.Value(SpanIdKey)
+
+	if traceID != nil {
+		e.Str(string(TraceIdKey), traceID.(string))
+	}
+	if spanID != nil {
+		e.Str(string(SpanIdKey), spanID.(string))
+	}
+}
+
 var (
 	sharedLogFile *lumberjack.Logger
 	once          sync.Once
@@ -94,6 +119,9 @@ func NewLogger(config Config) *zerolog.Logger {
 
 	level := getLogLevel(config.LogLevel)
 	logger := configureWriter(config.LogWriter, level)
+
+	// Add tracing hook to the logger
+	logger.Hook(TracingHook{})
 
 	// Log a message to confirm logger setup
 	logger.Info().

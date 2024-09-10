@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 )
@@ -75,10 +76,15 @@ type SimpleMessage struct {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
+// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /readyz [get]
 func RestGetReadyz(c echo.Context) error {
+
+	ctx := c.Request().Context()                    // Get context
+	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace
+
 	message := SimpleMessage{}
 	message.Message = "CM-Beetle is ready"
 	if !common.SystemReady {
@@ -94,6 +100,7 @@ func RestGetReadyz(c echo.Context) error {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
+// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} SimpleMessage
 // @Failure 404 {object} SimpleMessage
 // @Failure 500 {object} SimpleMessage
