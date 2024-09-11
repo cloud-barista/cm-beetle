@@ -205,6 +205,9 @@ func RunServer(port string) {
 	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
 	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
 
+	// Test utility APIs
+	gBeetle.GET("/test/tracing", rest_common.RestGetTestTracing)
+
 	// Namespace API group
 	// gNamespace := gBeetle.Group("/ns")
 	// gNamespace.POST("", controller.RestPostNs)

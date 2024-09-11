@@ -38,20 +38,30 @@ func TracingMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		ctx = context.WithValue(ctx, logger.SpanIdKey, spanId)
 
 		// Create a logger with trace_id and span_id and store it in the context
-		logger := log.With().Str(string(logger.TraceIdKey), traceId).Str(string(logger.SpanIdKey), spanId).Logger()
-		ctx = logger.WithContext(ctx)
+		childLogger := log.With().Str(string(logger.TraceIdKey), traceId).Str(string(logger.SpanIdKey), spanId).Logger()
+		ctx = childLogger.WithContext(ctx)
 
 		// Set the context in the request
 		c.SetRequest(c.Request().WithContext(ctx))
 
 		// [Tracing log] when the request is received
-		log.Ctx(ctx).Info().Msg("[tracing] receive request")
+		traceLogger := logger.GetTraceLogger()
+
+		traceLogger.Trace().
+			Str(string(logger.TraceIdKey), traceId).
+			Str(string(logger.SpanIdKey), spanId).
+			Str("URI", c.Request().RequestURI).
+			Msg("[tracing] receive request")
 
 		// [Tracing log] before the response is sent
 		// Hooks: Before Response
 		c.Response().Before(func() {
 			// Log the request details
-			log.Ctx(ctx).Info().Msg("[tracing] send response")
+			traceLogger.Trace().
+				Str(string(logger.TraceIdKey), traceId).
+				Str(string(logger.SpanIdKey), spanId).
+				Str("URI", c.Request().RequestURI).
+				Msg("[tracing] send response")
 		})
 
 		// Call the next handler
