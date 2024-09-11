@@ -621,6 +621,43 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/test/tracing": {
+            "get": {
+                "description": "Test tracing to Tumblebug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Test] Utility"
+                ],
+                "summary": "Test tracing to Tumblebug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "x-request-id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMessage"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMessage"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

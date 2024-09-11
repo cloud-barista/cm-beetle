@@ -15,13 +15,18 @@ limitations under the License.
 package common
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 
+	"github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/logger"
 )
 
 var validate *validator.Validate
@@ -114,6 +119,67 @@ func RestCheckHTTPVersion(c echo.Context) error {
 	okMessage.Message = req.Proto
 
 	return c.JSON(http.StatusOK, &okMessage)
+}
+
+// RestGetTestTracingToTumblebug godoc
+// @Summary Test tracing to Tumblebug
+// @Description Test tracing to Tumblebug
+// @Tags [Test] Utility
+// @Accept  json
+// @Produce  json
+// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} SimpleMessage
+// @Failure 503 {object} SimpleMessage
+// @Router /test/tracing [get]
+func RestGetTestTracing(c echo.Context) error {
+
+	ctx := c.Request().Context()                    // Get context
+	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// Search and set a target VM spec
+	method := "GET"
+	url := fmt.Sprintf("%s/readyz", epTumblebug)
+
+	// Headers
+	headers := map[string]string{
+		"x-request-id": ctx.Value(logger.TraceIdKey).(string),
+	}
+
+	// Request body
+	tbReqt := common.NoBody
+
+	// Response body
+	tbResp := model.SimpleMsg{}
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		headers,
+		common.SetUseBody(tbReqt),
+		&tbReqt,
+		&tbResp,
+		common.VeryShortDuration,
+	)
+
+	resp := SimpleMessage{}
+	if err != nil {
+		log.Err(err).Msg("")
+		return c.JSON(http.StatusInternalServerError, resp)
+	}
+
+	resp.Message = tbResp.Message
+
+	return c.JSON(http.StatusOK, resp)
 }
 
 // /*

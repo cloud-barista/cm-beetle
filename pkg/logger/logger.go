@@ -40,6 +40,7 @@ func (h TracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 var (
 	sharedLogFile *lumberjack.Logger
 	once          sync.Once
+	traceLogger   zerolog.Logger
 )
 
 type Config struct {
@@ -82,7 +83,7 @@ func NewLogger(config Config) *zerolog.Logger {
 		config.LogFilePath = "./log/app.log"
 	}
 	if config.MaxSize == 0 {
-		config.MaxSize = 100 // in MB
+		config.MaxSize = 1000 // in MB
 	}
 	if config.MaxBackups == 0 {
 		config.MaxBackups = 3
@@ -115,6 +116,10 @@ func NewLogger(config Config) *zerolog.Logger {
 		if err := os.Chmod(config.LogFilePath, 0644); err != nil {
 			log.Fatal().Msgf("Failed to change file permissions: %v", err)
 		}
+
+		// traceLogger = zerolog.New(sharedLogFile).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+		traceLogger = zerolog.New(sharedLogFile).Level(zerolog.TraceLevel).With().Timestamp().Logger()
+		traceLogger.Hook(TracingHook{})
 	})
 
 	level := getLogLevel(config.LogLevel)
@@ -129,6 +134,11 @@ func NewLogger(config Config) *zerolog.Logger {
 		Msg("New logger created")
 
 	return logger
+}
+
+// GetTraceLogger returns the trace logger
+func GetTraceLogger() *zerolog.Logger {
+	return &traceLogger
 }
 
 // getLogLevel returns the zerolog.Level based on the string level

@@ -845,6 +845,30 @@ paths:
       summary: Update a user
       tags:
       - '[Sample API] Users'
+  /test/tracing:
+    get:
+      consumes:
+      - application/json
+      description: Test tracing to Tumblebug
+      parameters:
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: x-request-id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMessage'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/common.SimpleMessage'
+      summary: Test tracing to Tumblebug
+      tags:
+      - '[Test] Utility'
 securityDefinitions:
   BasicAuth:
     type: basic
