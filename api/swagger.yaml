@@ -420,13 +420,13 @@ definitions:
         $ref: '#/definitions/onprem.DiskProperty'
     type: object
 externalDocs:
-  description: ▶▶▶ CB-Tumblebug REST API
+  description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
   url: http://localhost:8056/tumblebug/api/index.html
+host: localhost:8056
 info:
   contact:
-    email: contact-to-cloud-barista@googlegroups.com
     name: API Support
-    url: http://cloud-barista.github.io
+    url: https://github.com/cloud-barista/cm-beetle/issues/new/choose
   description: CM-Beetle REST API
   license:
     name: Apache 2.0
@@ -440,6 +440,7 @@ paths:
       - application/json
       description: Checks and logs the HTTP version of the incoming request to the
         server console.
+      operationId: CheckHTTPVersion
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
@@ -592,6 +593,7 @@ paths:
       consumes:
       - application/json
       description: Check Beetle is ready
+      operationId: GetReadyz
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
@@ -850,6 +852,7 @@ paths:
       consumes:
       - application/json
       description: Test tracing to Tumblebug
+      operationId: TestTracing
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header

@@ -74,8 +74,8 @@ type SimpleMessage struct {
 	common.SimpleMsg
 }
 
-// RestGetReadyz func check if CM-Beetle server is ready or not.
-// RestGetReadyz godoc
+// GetReadyz godoc
+// @ID GetReadyz
 // @Summary Check Beetle is ready
 // @Description Check Beetle is ready
 // @Tags [Admin] System management
@@ -85,7 +85,7 @@ type SimpleMessage struct {
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /readyz [get]
-func RestGetReadyz(c echo.Context) error {
+func GetReadyz(c echo.Context) error {
 
 	ctx := c.Request().Context()                    // Get context
 	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace
@@ -99,7 +99,8 @@ func RestGetReadyz(c echo.Context) error {
 	return c.JSON(http.StatusOK, &message)
 }
 
-// RestCheckHTTPVersion godoc
+// CheckHTTPVersion godoc
+// @ID CheckHTTPVersion
 // @Summary Check HTTP version of incoming request
 // @Description Checks and logs the HTTP version of the incoming request to the server console.
 // @Tags [Admin] System management
@@ -110,7 +111,7 @@ func RestGetReadyz(c echo.Context) error {
 // @Failure 404 {object} SimpleMessage
 // @Failure 500 {object} SimpleMessage
 // @Router /httpVersion [get]
-func RestCheckHTTPVersion(c echo.Context) error {
+func CheckHTTPVersion(c echo.Context) error {
 	// Access the *http.Request object from the echo.Context
 	req := c.Request()
 
@@ -121,7 +122,8 @@ func RestCheckHTTPVersion(c echo.Context) error {
 	return c.JSON(http.StatusOK, &okMessage)
 }
 
-// RestGetTestTracingToTumblebug godoc
+// TestTracing godoc
+// @ID TestTracing
 // @Summary Test tracing to Tumblebug
 // @Description Test tracing to Tumblebug
 // @Tags [Test] Utility
@@ -131,7 +133,7 @@ func RestCheckHTTPVersion(c echo.Context) error {
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /test/tracing [get]
-func RestGetTestTracing(c echo.Context) error {
+func TestTracing(c echo.Context) error {
 
 	ctx := c.Request().Context()                    // Get context
 	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace

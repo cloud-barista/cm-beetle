@@ -202,11 +202,11 @@ func RunServer(port string) {
 	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
 
 	// System management APIs
-	gBeetle.GET("/readyz", rest_common.RestGetReadyz)
-	gBeetle.GET("/httpVersion", rest_common.RestCheckHTTPVersion)
+	gBeetle.GET("/readyz", rest_common.GetReadyz)
+	gBeetle.GET("/httpVersion", rest_common.CheckHTTPVersion)
 
 	// Test utility APIs
-	gBeetle.GET("/test/tracing", rest_common.RestGetTestTracing)
+	gBeetle.GET("/test/tracing", rest_common.TestTracing)
 
 	// Namespace API group
 	// gNamespace := gBeetle.Group("/ns")
@@ -217,6 +217,10 @@ func RunServer(port string) {
 
 	// Recommendation API group
 	gRecommendation := gBeetle.Group("/recommendation")
+	// Custom middleware to check if the Tumblebug is initialized
+	gRecommendation.Use(middlewares.TumblebugInitChecker)
+
+	// Recommendation APIs
 	gRecommendation.POST("/mci", controller.RecommendInfra)
 
 	// Migration API group

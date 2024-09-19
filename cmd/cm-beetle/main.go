@@ -127,19 +127,20 @@ func checkReadiness(url string) (bool, error) {
 // @title CM-Beetle REST API
 // @version latest
 // @description CM-Beetle REST API
+// // @termsOfService none
 
 // @contact.name API Support
-// @contact.url http://cloud-barista.github.io
-// @contact.email contact-to-cloud-barista@googlegroups.com
+// @contact.url https://github.com/cloud-barista/cm-beetle/issues/new/choose
 
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
+// @host localhost:8056
 // @BasePath /beetle
 
 // @securityDefinitions.basic BasicAuth
 
-// @externalDocs.description  ▶▶▶ CB-Tumblebug REST API
+// @externalDocs.description ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
 // @externalDocs.url http://localhost:8056/tumblebug/api/index.html
 
 func main() {
