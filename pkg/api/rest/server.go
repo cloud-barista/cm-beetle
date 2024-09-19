@@ -217,6 +217,10 @@ func RunServer(port string) {
 
 	// Recommendation API group
 	gRecommendation := gBeetle.Group("/recommendation")
+	// Custom middleware to check if the Tumblebug is initialized
+	gRecommendation.Use(middlewares.TumblebugInitChecker)
+
+	// Recommendation APIs
 	gRecommendation.POST("/mci", controller.RecommendInfra)
 
 	// Migration API group
