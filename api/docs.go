@@ -11,8 +11,7 @@ const docTemplate = `{
         "title": "{{.Title}}",
         "contact": {
             "name": "API Support",
-            "url": "http://cloud-barista.github.io",
-            "email": "contact-to-cloud-barista@googlegroups.com"
+            "url": "https://github.com/cloud-barista/cm-beetle/issues/new/choose"
         },
         "license": {
             "name": "Apache 2.0",
@@ -36,6 +35,7 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check HTTP version of incoming request",
+                "operationId": "CheckHTTPVersion",
                 "parameters": [
                     {
                         "type": "string",
@@ -258,6 +258,7 @@ const docTemplate = `{
                     "[Admin] System management"
                 ],
                 "summary": "Check Beetle is ready",
+                "operationId": "GetReadyz",
                 "parameters": [
                     {
                         "type": "string",
@@ -635,6 +636,7 @@ const docTemplate = `{
                     "[Test] Utility"
                 ],
                 "summary": "Test tracing to Tumblebug",
+                "operationId": "TestTracing",
                 "parameters": [
                     {
                         "type": "string",
@@ -1234,7 +1236,7 @@ const docTemplate = `{
         }
     },
     "externalDocs": {
-        "description": "▶▶▶ CB-Tumblebug REST API",
+        "description": "▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)",
         "url": "http://localhost:8056/tumblebug/api/index.html"
     }
 }`
@@ -1242,7 +1244,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "latest",
-	Host:             "",
+	Host:             "localhost:8056",
 	BasePath:         "/beetle",
 	Schemes:          []string{},
 	Title:            "CM-Beetle REST API",

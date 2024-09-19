@@ -5,8 +5,7 @@
         "title": "CM-Beetle REST API",
         "contact": {
             "name": "API Support",
-            "url": "http://cloud-barista.github.io",
-            "email": "contact-to-cloud-barista@googlegroups.com"
+            "url": "https://github.com/cloud-barista/cm-beetle/issues/new/choose"
         },
         "license": {
             "name": "Apache 2.0",
@@ -14,6 +13,7 @@
         },
         "version": "latest"
     },
+    "host": "localhost:8056",
     "basePath": "/beetle",
     "paths": {
         "/httpVersion": {
@@ -29,6 +29,7 @@
                     "[Admin] System management"
                 ],
                 "summary": "Check HTTP version of incoming request",
+                "operationId": "CheckHTTPVersion",
                 "parameters": [
                     {
                         "type": "string",
@@ -251,6 +252,7 @@
                     "[Admin] System management"
                 ],
                 "summary": "Check Beetle is ready",
+                "operationId": "GetReadyz",
                 "parameters": [
                     {
                         "type": "string",
@@ -628,6 +630,7 @@
                     "[Test] Utility"
                 ],
                 "summary": "Test tracing to Tumblebug",
+                "operationId": "TestTracing",
                 "parameters": [
                     {
                         "type": "string",
@@ -1227,7 +1230,7 @@
         }
     },
     "externalDocs": {
-        "description": "▶▶▶ CB-Tumblebug REST API",
+        "description": "▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)",
         "url": "http://localhost:8056/tumblebug/api/index.html"
     }
 }
