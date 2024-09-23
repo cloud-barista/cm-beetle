@@ -21,7 +21,78 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
+func isSupportedCSP(csp string) bool {
+	supportedCSPs := map[string]bool{
+		"aws":   true,
+		"azure": true,
+		"gcp":   true,
+		// "alibaba": true,
+		// "tencent": true,
+		// "ibm":   true,
+		"ncp": true,
+		// "nhn": true,
+		// "kt": true,
+		// "openstack": true,
+	}
+
+	return supportedCSPs[csp]
+}
+
+func IsValidProviderAndRegion(provider string, region string) (bool, error) {
+
+	isValid := false
+
+	providerName := strings.ToLower(provider)
+	regionName := strings.ToLower(region)
+
+	supportedCsp := isSupportedCSP(providerName)
+
+	if !supportedCsp {
+		err := fmt.Errorf("not supported yet (provider: %s)", providerName)
+		log.Warn().Msgf(err.Error())
+		return isValid, err
+	}
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// [via Tumblebug] Check if the provider and region are valid
+	method := "GET"
+	url := fmt.Sprintf("%s/provider/%s/region/%s", epTumblebug, providerName, regionName)
+
+	// Request body
+	tbReqt := common.NoBody
+	tbResp := tbmodel.RegionDetail{}
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(tbReqt),
+		&tbReqt,
+		&tbResp,
+		common.VeryShortDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		return isValid, err
+	}
+
+	isValid = true
+
+	return isValid, nil
+}
+
+// Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+func Recommend(desiredProvider string, desiredRegion string, srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 
 	var emptyResp RecommendedInfraInfo
 	var recommendedInfraInfo RecommendedInfraInfo
@@ -30,7 +101,6 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 	recommendedInfraInfo.TargetInfra = tbmodel.TbMciDynamicReq{
 		Description:     "A cloud infra recommended by CM-Beetle",
 		InstallMonAgent: "no",
-		Label:           "rehosted-mci",
 		Name:            "",
 		SystemLabel:     "",
 		Vm:              []tbmodel.TbVmDynamicReq{},
@@ -113,7 +183,6 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 			CommonImage:    "", // Search and set an appropriate VM OS image
 			CommonSpec:     "", // Search and set an appropriate VM spec
 			Description:    "a recommended virtual machine",
-			Label:          "rehosted-vm",
 			Name:           fmt.Sprintf("rehosted-%s", server.Hostname),
 			RootDiskSize:   "", // TBD
 			RootDiskType:   "", // TBD
@@ -145,8 +214,8 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 			memoryMin = 1
 		}
 
-		providerName := "aws"
-		regionName := "ap-northeast-2"
+		providerName := desiredProvider
+		regionName := desiredRegion
 
 		osNameAndVersion := server.OS.Name + " " + server.OS.Version
 		osNameWithVersion := strings.ToLower(osNameAndVersion)
@@ -180,7 +249,7 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 		reqRecommVm := new(tbmodel.DeploymentPlan)
 		err := json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
 		if err != nil {
-			log.Err(err).Msg("")
+			log.Error().Err(err).Msg("")
 			return emptyResp, err
 		}
 		log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
@@ -200,7 +269,7 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 		)
 
 		if err != nil {
-			log.Err(err).Msg("")
+			log.Error().Err(err).Msg("")
 			return emptyResp, err
 		}
 
@@ -247,14 +316,14 @@ func Recommend(srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
 		)
 
 		if err != nil {
-			log.Err(err).Msg("")
+			log.Error().Err(err).Msg("")
 			return emptyResp, err
 		}
 
 		// for pretty logging
 		prettyImages, err := json.MarshalIndent(resMciDynamicCheck.ReqCheck[0].Image, "", "  ")
 		if err != nil {
-			log.Err(err).Msg("failed to marshal response")
+			log.Error().Err(err).Msg("failed to marshal response")
 			return emptyResp, err
 		}
 		log.Debug().Msgf("resMciDynamicCheck.ReqCheck[0].Image: %s", prettyImages)
@@ -335,12 +404,12 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []tbmode
 	var highestScore float64 = 0.0
 
 	for _, image := range vmImages {
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.Description, imgDelimiters)
+		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.GuestOS, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImageID = image.Id
 		}
-		log.Debug().Msgf("VmImageName: %s, score: %f", image.Description, score)
+		log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", image.GuestOS, score, image.Description)
 
 	}
 	log.Debug().Msgf("bestVmOsImageID: %s, highestScore: %f", bestVmOsImageID, highestScore)

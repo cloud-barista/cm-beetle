@@ -96,6 +96,7 @@ const (
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
+// Create a VM infrastructure for migration
 func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.TbMciInfo, error) {
 
 	client := resty.New()
@@ -130,13 +131,14 @@ func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.Tb
 	)
 
 	if err != nil {
-		// common.CBLog.Error(err)
+		log.Error().Err(err).Msgf("failed to create/migrate the infrastructure (nsId: %s)", nsId)
 		return tbmodel.TbMciInfo{}, err
 	}
 
 	return responseBody, nil
 }
 
+// Get the migrated VM infrastructure
 func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 
 	// Initialize resty client with basic auth
@@ -179,7 +181,8 @@ func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 	return *responseBody, nil
 }
 
-func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
+// Delete the migrated VM infrastructure
+func DeleteVMInfra(nsId, infraId, action string) (common.SimpleMsg, error) {
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -193,9 +196,8 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 	// delete the infrastructure with terminate option
 	method := "DELETE"
 	url := fmt.Sprintf("%s/ns/%s/mci/%s", epTumblebug, nsId, infraId)
-	options := "option=terminate"
-	if options != "" {
-		url += "?" + options
+	if action != "" {
+		url += "?option=" + action
 	}
 
 	// Set request body
@@ -222,13 +224,11 @@ func DeleteVMInfra(nsId, infraId string) (common.SimpleMsg, error) {
 		return common.SimpleMsg{}, err
 	}
 
+	time.Sleep(5 * time.Second)
+
 	// delete the infrastructure with terminate option
 	method = "DELETE"
 	url = fmt.Sprintf("%s/ns/%s/sharedResources", epTumblebug, nsId)
-	// options = ""
-	// if options != "" {
-	// 	url += "?" + options
-	// }
 
 	// Set request body
 	requestBody = common.NoBody

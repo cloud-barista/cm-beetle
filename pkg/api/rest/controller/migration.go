@@ -48,14 +48,14 @@ type MigrateInfraResponse struct {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} MigrateInfraResponse "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mci [post]
 func MigrateInfra(c echo.Context) error {
 
-	// [Note] Input section
+	// [Input]
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		err := fmt.Errorf("invalid request, namespace ID (nsId: %s) is required", nsId)
@@ -76,13 +76,13 @@ func MigrateInfra(c echo.Context) error {
 	log.Trace().Msgf("req: %v\n", req)
 	log.Trace().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
 
-	// [Note] Process section
+	// [Process]
 	// Create the VM infrastructure for migration
 	mciInfo, err := migration.CreateVMInfra(nsId, &req.TbMciDynamicReq)
 
 	log.Trace().Msgf("mciInfo: %v\n", mciInfo)
 
-	// [Note] Ouput section
+	// [Output]
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create VM infrastructure")
 
@@ -107,14 +107,14 @@ func MigrateInfra(c echo.Context) error {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} MigrateInfraResponse "The migrated multi-cloud infrastructure (MCI) information"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mci/{mciId} [get]
 func GetInfra(c echo.Context) error {
 
-	// [Note] Input section
+	// [Input]
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
@@ -138,7 +138,7 @@ func GetInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	// [Note] Process section
+	// [Process]
 	vmInfraInfo, err := migration.GetVMInfra(nsId, mciId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure")
@@ -149,7 +149,7 @@ func GetInfra(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	// [Note] Ouput section
+	// [Ouput]
 	return c.JSON(http.StatusOK, vmInfraInfo)
 }
 
@@ -162,14 +162,15 @@ func GetInfra(c echo.Context) error {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param action query string false "Action for deletion" Enums(terminate,force) default(terminate)
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} model.Response "The result of deleting the migrated multi-cloud infrastructure (MCI)"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mci/{mciId} [delete]
 func DeleteInfra(c echo.Context) error {
 
-	// [Note] Input section
+	// [Input]
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		err := fmt.Errorf("invalid request, the namespace ID (nsId: %s) is required", nsId)
@@ -193,8 +194,19 @@ func DeleteInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	// [Note] Process section
-	retMsg, err := migration.DeleteVMInfra(nsId, mciId)
+	action := c.QueryParam("action")
+	if action != "" && action != "terminate" && action != "force" {
+		err := fmt.Errorf("invalid request, the action (action: %s) is invalid", action)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// [Process]
+	retMsg, err := migration.DeleteVMInfra(nsId, mciId, action)
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete the migrated multi-cloud infrastructure")
@@ -205,7 +217,7 @@ func DeleteInfra(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	// [Note] Ouput section
+	// [Ouput]
 	res := model.Response{
 		Success: true,
 		Text:    retMsg.Message,
@@ -237,7 +249,7 @@ func DeleteInfra(c echo.Context) error {
 // // @Router /migration/infra/network [post]
 // func MigrateNetwork(c echo.Context) error {
 
-// 	// [Note] Input section
+// 	// [Input]
 // 	req := &MigrateNetworkRequest{}
 // 	if err := c.Bind(req); err != nil {
 // 		return err
@@ -246,7 +258,7 @@ func DeleteInfra(c echo.Context) error {
 // 	log.Trace().Msgf("req: %v\n", req)
 // 	log.Trace().Msgf("req.DummyNetwork: %v\n", req.DummyNetwork)
 
-// 	// [Note] Process section
+// 	// [Process]
 // 	// Something to process here like,
 // 	// Perform some functions,
 // 	// Calls external APIs and so on
@@ -259,7 +271,7 @@ func DeleteInfra(c echo.Context) error {
 // 	// You will have to delete this later.
 // 	var err error = nil
 
-// 	// [Note] Ouput section
+// 	// [Ouput]
 // 	if err != nil {
 // 		log.Error().Err(err).Msg("Failed to migrate network on a cloud platform")
 // 		mapA := map[string]string{"message": err.Error()}
@@ -295,7 +307,7 @@ func DeleteInfra(c echo.Context) error {
 // // @Router /migration/infra/storage [post]
 // func MigrateStorage(c echo.Context) error {
 
-// 	// [Note] Input section
+// 	// [Input]
 // 	req := &MigrateStorageRequest{}
 // 	if err := c.Bind(req); err != nil {
 // 		return err
@@ -304,7 +316,7 @@ func DeleteInfra(c echo.Context) error {
 // 	log.Trace().Msgf("req: %v\n", req)
 // 	log.Trace().Msgf("req.DummyStorage: %v\n", req.DummyStorage)
 
-// 	// [Note] Process section
+// 	// [Process]
 // 	// Something to process here like,
 // 	// Perform some functions,
 // 	// Calls external APIs and so on
@@ -317,7 +329,7 @@ func DeleteInfra(c echo.Context) error {
 // 	// You will have to delete this later.
 // 	var err error = nil
 
-// 	// [Note] Ouput section
+// 	// [Ouput]
 // 	if err != nil {
 // 		log.Error().Err(err).Msg("Failed to migrate storage on a cloud platform")
 // 		mapA := map[string]string{"message": err.Error()}
@@ -353,7 +365,7 @@ func DeleteInfra(c echo.Context) error {
 // // @Router /migration/infra/instance [post]
 // func MigrateInstance(c echo.Context) error {
 
-// 	// [Note] Input section
+// 	// [Input]
 // 	req := &MigrateInstanceRequest{}
 // 	if err := c.Bind(req); err != nil {
 // 		return err
@@ -362,7 +374,7 @@ func DeleteInfra(c echo.Context) error {
 // 	log.Trace().Msgf("req: %v\n", req)
 // 	log.Trace().Msgf("req.DummyInstance: %v\n", req.DummyInstance)
 
-// 	// [Note] Process section
+// 	// [Process]
 // 	// Something to process here like,
 // 	// Perform some functions,
 // 	// Calls external APIs and so on
@@ -375,7 +387,7 @@ func DeleteInfra(c echo.Context) error {
 // 	// You will have to delete this later.
 // 	var err error = nil
 
-// 	// [Note] Ouput section
+// 	// [Ouput]
 // 	if err != nil {
 // 		log.Error().Err(err).Msg("Failed to migrate instance on a cloud platform")
 // 		mapA := map[string]string{"message": err.Error()}

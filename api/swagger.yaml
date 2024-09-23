@@ -52,10 +52,10 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mci in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
       name:
         example: mci01
         type: string
@@ -87,10 +87,10 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mci in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
       name:
         example: mci01
         type: string
@@ -127,14 +127,18 @@ definitions:
     type: object
   controller.RecommendInfraRequest:
     properties:
-      network:
-        $ref: '#/definitions/onprem.NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/onprem.ServerProperty'
-        type: array
+      desiredProvider:
+        example: aws
+        type: string
+      desiredRegion:
+        example: ap-northeast-2
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onprem.OnPremInfra'
     required:
-    - servers
+    - desiredProvider
+    - desiredRegion
+    - onpremiseInfraModel
     type: object
   controller.RecommendInfraResponse:
     properties:
@@ -205,10 +209,10 @@ definitions:
         example: "no"
         type: string
       label:
-        description: Label is for describing the mci in a keyword (any string can
-          be used)
-        example: DynamicVM
-        type: string
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
       name:
         example: mci01
         type: string
@@ -244,8 +248,10 @@ definitions:
         example: Description
         type: string
       label:
-        example: DynamicVM
-        type: string
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
       name:
         description: VM name or subGroup name if is (not empty) && (> 0). If it is
           a group, actual VM name will be generated with -N postfix.
@@ -353,22 +359,56 @@ definitions:
     type: object
   onprem.NetworkInterfaceProperty:
     properties:
-      ipAddress:
-        type: string
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
       macAddress:
+        description: MAC address
         type: string
       mtu:
         description: Maximum Transmission Unit (MTU) in bytes
         type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
     required:
-    - ipAddress
+    - name
     type: object
   onprem.NetworkProperty:
     properties:
-      gateway:
-        description: Gateway IP address
-        example: 172.26.240.0/20
-        type: string
+      ipv4Networks:
+        example:
+        - 172.26.240.0/20
+        items:
+          type: string
+        type: array
+      ipv6Networks:
+        description: TBD
+        items:
+          type: string
+        type: array
+    type: object
+  onprem.OnPremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onprem.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onprem.ServerProperty'
+        type: array
+    required:
+    - servers
     type: object
   onprem.OsProperty:
     properties:
@@ -398,6 +438,33 @@ definitions:
     required:
     - prettyName
     type: object
+  onprem.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
   onprem.ServerProperty:
     properties:
       cpu:
@@ -418,6 +485,10 @@ definitions:
         $ref: '#/definitions/onprem.OsProperty'
       rootDisk:
         $ref: '#/definitions/onprem.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onprem.RouteProperty'
+        type: array
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
@@ -444,7 +515,7 @@ paths:
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -486,7 +557,7 @@ paths:
           $ref: '#/definitions/controller.MigrateInfraRequest'
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -525,9 +596,17 @@ paths:
         name: mciId
         required: true
         type: string
+      - default: terminate
+        description: Action for deletion
+        enum:
+        - terminate
+        - force
+        in: query
+        name: action
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -568,7 +647,7 @@ paths:
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -597,7 +676,7 @@ paths:
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -629,7 +708,7 @@ paths:
           $ref: '#/definitions/controller.RecommendInfraRequest'
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -659,7 +738,7 @@ paths:
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -690,7 +769,7 @@ paths:
           $ref: '#/definitions/controller.CreateUserRequest'
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -721,7 +800,7 @@ paths:
         type: integer
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -754,7 +833,7 @@ paths:
         type: integer
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -790,7 +869,7 @@ paths:
           $ref: '#/definitions/controller.PatchUserRequest'
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -830,7 +909,7 @@ paths:
           $ref: '#/definitions/controller.UpdateUserRequest'
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json
@@ -856,7 +935,7 @@ paths:
       parameters:
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
-        name: x-request-id
+        name: X-Request-Id
         type: string
       produces:
       - application/json

@@ -75,7 +75,7 @@ cloud:
       threshold: "3"
     k8scluster:
       enable: "n"
-  cloudit	:
+  cloudit:
     enable: "y"
     nlb:
       enable: "n"

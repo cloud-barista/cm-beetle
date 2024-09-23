@@ -6,8 +6,12 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/cloud-barista/cb-tumblebug v0.9.11 h1:PLqQ+OD4+Nec1xTHJ3Qde7C74t2XiY5D43UemMg838A=
 github.com/cloud-barista/cb-tumblebug v0.9.11/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
+github.com/cloud-barista/cb-tumblebug v0.9.12 h1:FjjALvPzql3RtloYN+fNkrFhIdZ5RSUryfh8r06hWW8=
+github.com/cloud-barista/cb-tumblebug v0.9.12/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
 github.com/cloud-barista/cm-model v0.0.1 h1:tcj5KHacQYuoLgvcuFoA+Cp23pbQg1xoAYNGtVRJXiU=
 github.com/cloud-barista/cm-model v0.0.1/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
+github.com/cloud-barista/cm-model v0.0.2 h1:6qxrkENlGurVs20rywKoT7L8OlvK4KWegIpJHaPJN3M=
+github.com/cloud-barista/cm-model v0.0.2/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
