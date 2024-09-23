@@ -35,7 +35,7 @@ type GetUsersResponse struct {
 // @Tags [Sample API] Users
 // @Accept  json
 // @Produce  json
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} GetUsersResponse "(sample) This is a sample description for success response in Swagger UI"
 // @Failure 404 {object} object "User Not Found"
 // @Router /sample/users [get]
@@ -67,7 +67,7 @@ type GetUserResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 404 {object} object "User Not Found"
 // @Router /sample/users/{id} [get]
@@ -107,7 +107,7 @@ type CreateUserResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param User body CreateUserRequest true "User information"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 201 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
 // @Router /sample/users [post]
@@ -144,7 +144,7 @@ type UpdateUserResponse struct {
 // @Produce  json
 // @Param id path int true "User ID"
 // @Param User body UpdateUserRequest true "User information to update"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 201 {object} UpdateUserResponse "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
 // @Router /sample/users/{id} [put]
@@ -186,7 +186,7 @@ type PatchUserResponse struct {
 // @Produce  json
 // @Param id path int true "User ID"
 // @Param User body PatchUserRequest true "User information to update"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} PatchUserResponse "(Sample) This is a sample description for success response in Swagger UI"
 // @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} object "User Not Found"
@@ -222,7 +222,7 @@ func PatchUser(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param id path int true "User ID"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {string} string "User deletion successful"
 // @Failure 400 {object} object "Invalid Request"
 // @Failure 404 {object} object "User Not Found"

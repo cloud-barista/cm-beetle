@@ -40,7 +40,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -101,7 +101,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -161,7 +161,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -217,9 +217,20 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "terminate",
+                            "force"
+                        ],
+                        "type": "string",
+                        "default": "terminate",
+                        "description": "Action for deletion",
+                        "name": "action",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -263,7 +274,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -310,7 +321,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -354,7 +365,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -399,7 +410,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -444,7 +455,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -496,7 +507,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -539,7 +550,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -597,7 +608,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -641,7 +652,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "x-request-id",
+                        "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
@@ -742,9 +753,11 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mci in a keyword (any string can be used)",
-                    "type": "string",
-                    "example": "DynamicVM"
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string",
@@ -785,9 +798,11 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mci in a keyword (any string can be used)",
-                    "type": "string",
-                    "example": "DynamicVM"
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string",
@@ -837,17 +852,21 @@ const docTemplate = `{
         "controller.RecommendInfraRequest": {
             "type": "object",
             "required": [
-                "servers"
+                "desiredProvider",
+                "desiredRegion",
+                "onpremiseInfraModel"
             ],
             "properties": {
-                "network": {
-                    "$ref": "#/definitions/onprem.NetworkProperty"
+                "desiredProvider": {
+                    "type": "string",
+                    "example": "aws"
                 },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onprem.ServerProperty"
-                    }
+                "desiredRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onprem.OnPremInfra"
                 }
             }
         },
@@ -954,9 +973,11 @@ const docTemplate = `{
                     "example": "no"
                 },
                 "label": {
-                    "description": "Label is for describing the mci in a keyword (any string can be used)",
-                    "type": "string",
-                    "example": "DynamicVM"
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string",
@@ -1001,8 +1022,11 @@ const docTemplate = `{
                     "example": "Description"
                 },
                 "label": {
-                    "type": "string",
-                    "example": "DynamicVM"
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
@@ -1134,28 +1158,76 @@ const docTemplate = `{
         "onprem.NetworkInterfaceProperty": {
             "type": "object",
             "required": [
-                "ipAddress"
+                "name"
             ],
             "properties": {
-                "ipAddress": {
-                    "type": "string"
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "macAddress": {
+                    "description": "MAC address",
                     "type": "string"
                 },
                 "mtu": {
                     "description": "Maximum Transmission Unit (MTU) in bytes",
                     "type": "integer"
+                },
+                "name": {
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
+                    "type": "string"
                 }
             }
         },
         "onprem.NetworkProperty": {
             "type": "object",
             "properties": {
-                "gateway": {
-                    "description": "Gateway IP address",
-                    "type": "string",
-                    "example": "172.26.240.0/20"
+                "ipv4Networks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "172.26.240.0/20"
+                    ]
+                },
+                "ipv6Networks": {
+                    "description": "TBD",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "onprem.OnPremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onprem.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.ServerProperty"
+                    }
                 }
             }
         },
@@ -1197,6 +1269,43 @@ const docTemplate = `{
                 }
             }
         },
+        "onprem.RouteProperty": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
+                    "type": "string"
+                },
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
+                    "type": "string"
+                },
+                "interface": {
+                    "description": "Network interface associated with the route",
+                    "type": "string"
+                },
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
+                    "type": "string"
+                },
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
+                    "type": "string"
+                }
+            }
+        },
         "onprem.ServerProperty": {
             "type": "object",
             "properties": {
@@ -1226,6 +1335,12 @@ const docTemplate = `{
                 },
                 "rootDisk": {
                     "$ref": "#/definitions/onprem.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onprem.RouteProperty"
+                    }
                 }
             }
         }

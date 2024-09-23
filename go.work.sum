@@ -299,6 +299,8 @@ github.com/cloud-barista/cb-log v0.8.2 h1:hPCbLj6TW6m9UWlq002sDuGgxKFVp68w4V3k49
 github.com/cloud-barista/cb-log v0.8.2/go.mod h1:nGgfTFMPwl1MpCO3FBjexUkNdOYA0BNJoyM9Pd0lMms=
 github.com/cloud-barista/cb-tumblebug v0.0.0-20230724172618-8f225d0127e8 h1:3aao7cE0ntlhJwl4p9RBaFz6ulM2xXq/SGR/xPxfxYc=
 github.com/cloud-barista/cb-tumblebug v0.0.0-20230724172618-8f225d0127e8/go.mod h1:RdSc2Ji06owVW3gwkBlZCSPrmxAyzstCWu9fa0emyco=
+github.com/cloud-barista/cb-tumblebug v0.9.12 h1:FjjALvPzql3RtloYN+fNkrFhIdZ5RSUryfh8r06hWW8=
+github.com/cloud-barista/cb-tumblebug v0.9.12/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
 github.com/cloud-barista/cm-beetle/src v0.0.0-20230724172618-8f225d0127e8/go.mod h1:XQuz7L64MNUu04FmG5gB0z41VcrfaLuQP80EGyQTDgo=
 github.com/cloud-barista/cm-honeybee v0.1.3 h1:G9Gb2NiiDtw9nRn7v56bpUM5FEfyBYJ8kgIKxZJZSkI=
 github.com/cloud-barista/cm-honeybee v0.1.3/go.mod h1:A0Qm1CY4O1hAMxDRnEWjXACztP2D2y/U9GNNJvYzyzM=

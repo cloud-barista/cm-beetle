@@ -39,8 +39,9 @@ import (
 // }
 
 type RecommendInfraRequest struct {
-	// Servers []infra.Infra `json:"servers" validate:"required"`
-	onprem.OnPremInfra
+	DesiredProvider     string             `json:"desiredProvider" validate:"required" example:"aws"`
+	DesiredRegion       string             `json:"desiredRegion" validate:"required" example:"ap-northeast-2"`
+	OnpremiseInfraModel onprem.OnPremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
 type RecommendInfraResponse struct {
@@ -55,28 +56,39 @@ type RecommendInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendInfraResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/mci [post]
 func RecommendInfra(c echo.Context) error {
 
-	// Input
-	req := &RecommendInfraRequest{}
-	if err := c.Bind(req); err != nil {
+	// [Input]
+	reqt := &RecommendInfraRequest{}
+	if err := c.Bind(reqt); err != nil {
 		log.Error().Err(err).Msg("failed to bind a request body")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	log.Trace().Msgf("req: %v\n", req)
+	log.Trace().Msgf("reqt: %v\n", reqt)
 
-	// Process
-	recommendedInfraInfo, err := recommendation.Recommend(req.OnPremInfra)
+	provider := reqt.DesiredProvider
+	region := reqt.DesiredRegion
+	sourceInfra := reqt.OnpremiseInfraModel
+
+	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
+	if !ok {
+		log.Error().Err(err).Msg("failed to validate provider and region")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// [Process]
+	recommendedInfraInfo, err := recommendation.Recommend(provider, region, sourceInfra)
 	recommendedInfraInfo.TargetInfra.Name = "mmci01"
 
-	// Ouput
+	// [Ouput]
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
 		res := common.SimpleMsg{Message: err.Error()}

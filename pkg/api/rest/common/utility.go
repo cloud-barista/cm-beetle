@@ -81,7 +81,7 @@ type SimpleMessage struct {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /readyz [get]
@@ -106,7 +106,7 @@ func GetReadyz(c echo.Context) error {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} SimpleMessage
 // @Failure 404 {object} SimpleMessage
 // @Failure 500 {object} SimpleMessage
@@ -129,7 +129,7 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Tags [Test] Utility
 // @Accept  json
 // @Produce  json
-// @Param x-request-id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /test/tracing [get]
@@ -153,7 +153,7 @@ func TestTracing(c echo.Context) error {
 
 	// Headers
 	headers := map[string]string{
-		"x-request-id": ctx.Value(logger.TraceIdKey).(string),
+		echo.HeaderXRequestID: ctx.Value(logger.TraceIdKey).(string),
 	}
 
 	// Request body
