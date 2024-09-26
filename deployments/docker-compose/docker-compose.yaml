@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.2.1
+    image: cloudbaristaorg/cm-beetle:0.2.2
     container_name: cm-beetle
     pull_policy: missing
     build:
