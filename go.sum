@@ -8,6 +8,8 @@ github.com/cloud-barista/cb-tumblebug v0.9.11 h1:PLqQ+OD4+Nec1xTHJ3Qde7C74t2XiY5
 github.com/cloud-barista/cb-tumblebug v0.9.11/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
 github.com/cloud-barista/cb-tumblebug v0.9.12 h1:FjjALvPzql3RtloYN+fNkrFhIdZ5RSUryfh8r06hWW8=
 github.com/cloud-barista/cb-tumblebug v0.9.12/go.mod h1:uXi+JmmdU+cqcIqpMgfomzZNbNdrLQ+WZgK9ZlOGjY0=
+github.com/cloud-barista/cb-tumblebug v0.9.16 h1:BRpYn+HOpJzC20oD5VMipyslMqePSc0Dx/GR/tefmOc=
+github.com/cloud-barista/cb-tumblebug v0.9.16/go.mod h1:NId135dY2nPhzV69+v1AFLlIjFTD400smoht73lG58c=
 github.com/cloud-barista/cm-model v0.0.1 h1:tcj5KHacQYuoLgvcuFoA+Cp23pbQg1xoAYNGtVRJXiU=
 github.com/cloud-barista/cm-model v0.0.1/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/cm-model v0.0.2 h1:6qxrkENlGurVs20rywKoT7L8OlvK4KWegIpJHaPJN3M=

@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.2.2
+    image: cloudbaristaorg/cm-beetle:0.2.3
     container_name: cm-beetle
     pull_policy: missing
     build:
@@ -55,7 +55,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.9.12
+    image: cloudbaristaorg/cb-tumblebug:0.9.16
     container_name: cb-tumblebug
     # build:
     #   context: .
@@ -157,7 +157,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.9.3
+    image: cloudbaristaorg/cb-spider:0.9.6
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -191,7 +191,7 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.9.6
+    image: cloudbaristaorg/cb-mapui:0.9.8
     container_name: cb-mapui
     # build:
     #   context: ../cb-mapui
