@@ -136,8 +136,6 @@ definitions:
       onpremiseInfraModel:
         $ref: '#/definitions/onprem.OnPremInfra'
     required:
-    - desiredProvider
-    - desiredRegion
     - onpremiseInfraModel
     type: object
   controller.RecommendInfraResponse:
@@ -696,8 +694,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
-        migration
+      description: |-
+        Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
       operationId: RecommendInfra
       parameters:
       - description: Specify the your infrastructure to be migrated
@@ -706,6 +709,21 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.RecommendInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id

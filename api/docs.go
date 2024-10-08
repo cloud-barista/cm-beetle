@@ -296,7 +296,7 @@ const docTemplate = `{
         },
         "/recommendation/mci": {
             "post": {
-                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
+                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -317,6 +317,26 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -852,8 +872,6 @@ const docTemplate = `{
         "controller.RecommendInfraRequest": {
             "type": "object",
             "required": [
-                "desiredProvider",
-                "desiredRegion",
                 "onpremiseInfraModel"
             ],
             "properties": {

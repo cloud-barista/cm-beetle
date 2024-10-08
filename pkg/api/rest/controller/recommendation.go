@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
@@ -39,8 +40,8 @@ import (
 // }
 
 type RecommendInfraRequest struct {
-	DesiredProvider     string             `json:"desiredProvider" validate:"required" example:"aws"`
-	DesiredRegion       string             `json:"desiredRegion" validate:"required" example:"ap-northeast-2"`
+	DesiredProvider     string             `json:"desiredProvider" example:"aws"`
+	DesiredRegion       string             `json:"desiredRegion" example:"ap-northeast-2"`
 	OnpremiseInfraModel onprem.OnPremInfra `json:"onpremiseInfraModel" validate:"required"`
 }
 
@@ -52,16 +53,26 @@ type RecommendInfraResponse struct {
 // @ID RecommendInfra
 // @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+// @Description
+// @Description [Note] `desiredProvider` and `desiredRegion` are required.
+// @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+// @Description
+// @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendInfraResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/mci [post]
 func RecommendInfra(c echo.Context) error {
+
+	desiredProvider := c.QueryParam("desiredProvider")
+	desiredRegion := c.QueryParam("desiredRegion")
 
 	// [Input]
 	reqt := &RecommendInfraRequest{}
@@ -73,8 +84,25 @@ func RecommendInfra(c echo.Context) error {
 
 	log.Trace().Msgf("reqt: %v\n", reqt)
 
+	if reqt.DesiredProvider == "" && desiredProvider == "" {
+		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+	if reqt.DesiredRegion == "" && desiredRegion == "" {
+		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+
 	provider := reqt.DesiredProvider
+	if provider == "" {
+		provider = desiredProvider
+	}
 	region := reqt.DesiredRegion
+	if region == "" {
+		region = desiredRegion
+	}
 	sourceInfra := reqt.OnpremiseInfraModel
 
 	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
