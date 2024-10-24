@@ -16,6 +16,9 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# File DB
+*.db
+
 # vendor dir
 vendor/
 
