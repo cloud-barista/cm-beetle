@@ -22,7 +22,7 @@ import (
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
-	onprem "github.com/cloud-barista/cm-model/infra/onprem"
+	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -40,9 +40,9 @@ import (
 // }
 
 type RecommendInfraRequest struct {
-	DesiredProvider     string             `json:"desiredProvider" example:"aws"`
-	DesiredRegion       string             `json:"desiredRegion" example:"ap-northeast-2"`
-	OnpremiseInfraModel onprem.OnPremInfra `json:"onpremiseInfraModel" validate:"required"`
+	DesiredProvider string `json:"desiredProvider" example:"aws"`
+	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
+	inframodel.OnpremiseInfraModel
 }
 
 type RecommendInfraResponse struct {
@@ -103,7 +103,7 @@ func RecommendInfra(c echo.Context) error {
 	if region == "" {
 		region = desiredRegion
 	}
-	sourceInfra := reqt.OnpremiseInfraModel
+	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
 
 	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
 	if !ok {
