@@ -12,7 +12,7 @@ import (
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
-	onprem "github.com/cloud-barista/cm-model/infra/onprem"
+	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -92,7 +92,7 @@ func IsValidProviderAndRegion(provider string, region string) (bool, error) {
 }
 
 // Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func Recommend(desiredProvider string, desiredRegion string, srcInfra onprem.OnPremInfra) (RecommendedInfraInfo, error) {
+func Recommend(desiredProvider string, desiredRegion string, srcInfra inframodel.OnpremInfra) (RecommendedInfraInfo, error) {
 
 	var emptyResp RecommendedInfraInfo
 	var recommendedInfraInfo RecommendedInfraInfo

@@ -7,7 +7,7 @@ go 1.23.0
 
 require (
 	github.com/cloud-barista/cb-tumblebug v0.9.16
-	github.com/cloud-barista/cm-model v0.0.2
+	github.com/cloud-barista/cm-model v0.0.3
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1

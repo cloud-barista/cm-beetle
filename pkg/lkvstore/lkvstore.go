@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -35,6 +36,11 @@ func Init(config Config) {
 func SaveLkvStore() error {
 	if dbFilePath == "" {
 		return fmt.Errorf("db file path is not set")
+	}
+
+	// Create the directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(dbFilePath), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
 	file, err := os.Create(dbFilePath)
