@@ -29,7 +29,7 @@ func isSupportedCSP(csp string) bool {
 		// "alibaba": true,
 		// "tencent": true,
 		// "ibm":   true,
-		"ncp": true,
+		"ncpvpc": true,
 		// "nhn": true,
 		// "kt": true,
 		// "openstack": true,
@@ -43,6 +43,7 @@ func IsValidProviderAndRegion(provider string, region string) (bool, error) {
 	isValid := false
 
 	providerName := strings.ToLower(provider)
+
 	regionName := strings.ToLower(region)
 
 	supportedCsp := isSupportedCSP(providerName)

@@ -67,6 +67,67 @@ const docTemplate = `{
             }
         },
         "/migration/ns/{nsId}/mci": {
+            "get": {
+                "description": "Get the migrated multi-cloud infrastructure (MCI)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "Get the migrated multi-cloud infrastructure (MCI)",
+                "operationId": "ListInfra",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "info",
+                            "id"
+                        ],
+                        "type": "string",
+                        "default": "info",
+                        "description": "Option for getting the migrated multi-cloud infrastructure",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The info list of the migrated multi-cloud infrastructure (MCI)",
+                        "schema": {
+                            "$ref": "#/definitions/migration.MciInfoList"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
                 "consumes": [
@@ -115,13 +176,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     }
                 }
@@ -175,13 +236,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     }
                 }
@@ -238,19 +299,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/model.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
                         }
                     }
                 }
@@ -746,7 +807,7 @@ const docTemplate = `{
                 "users": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.MyUser"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser"
                     }
                 }
             }
@@ -763,7 +824,7 @@ const docTemplate = `{
                     "example": "Made in CB-TB"
                 },
                 "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
                     "type": "string",
                     "default": "no",
                     "enum": [
@@ -808,7 +869,7 @@ const docTemplate = `{
                     "example": "Made in CB-TB"
                 },
                 "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
                     "type": "string",
                     "default": "no",
                     "enum": [
@@ -927,6 +988,45 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "Any details"
+                },
+                "list": {
+                    "type": "array",
+                    "items": {}
+                },
+                "object": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Any text"
                 }
             }
         },
@@ -1218,42 +1318,179 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MyUser": {
+        "migration.IdList": {
             "type": "object",
             "properties": {
-                "email": {
+                "idList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "migration.MciInfoList": {
+            "type": "object",
+            "properties": {
+                "mci": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbMciInfo"
+                    }
+                }
+            }
+        },
+        "model.ConnConfig": {
+            "type": "object",
+            "properties": {
+                "configName": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
+                "credentialHolder": {
+                    "type": "string"
                 },
-                "name": {
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionDetail": {
+                    "$ref": "#/definitions/model.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/model.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
                     "type": "string"
                 }
             }
         },
-        "model.Response": {
+        "model.Location": {
             "type": "object",
             "properties": {
-                "details": {
-                    "type": "string",
-                    "example": "Any details"
+                "display": {
+                    "type": "string"
                 },
-                "list": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/model.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "zones": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.RegionInfo": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string"
                 },
-                "object": {
-                    "type": "object",
-                    "additionalProperties": true
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
                 },
-                "success": {
-                    "type": "boolean",
-                    "example": true
+                "assignedZone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.StatusCountInfo": {
+            "type": "object",
+            "properties": {
+                "countCreating": {
+                    "description": "CountCreating is for counting Creating",
+                    "type": "integer"
                 },
-                "text": {
-                    "type": "string",
-                    "example": "Any text"
+                "countFailed": {
+                    "description": "CountFailed is for counting Failed",
+                    "type": "integer"
+                },
+                "countRebooting": {
+                    "description": "CountRebooting is for counting Rebooting",
+                    "type": "integer"
+                },
+                "countResuming": {
+                    "description": "CountResuming is for counting Resuming",
+                    "type": "integer"
+                },
+                "countRunning": {
+                    "description": "CountRunning is for counting Running",
+                    "type": "integer"
+                },
+                "countSuspended": {
+                    "description": "CountSuspended is for counting Suspended",
+                    "type": "integer"
+                },
+                "countSuspending": {
+                    "description": "CountSuspending is for counting Suspending",
+                    "type": "integer"
+                },
+                "countTerminated": {
+                    "description": "CountTerminated is for counting Terminated",
+                    "type": "integer"
+                },
+                "countTerminating": {
+                    "description": "CountTerminating is for counting Terminating",
+                    "type": "integer"
+                },
+                "countTotal": {
+                    "description": "CountTotal is for Total VMs",
+                    "type": "integer"
+                },
+                "countUndefined": {
+                    "description": "CountUndefined is for counting Undefined",
+                    "type": "integer"
                 }
             }
         },
@@ -1269,7 +1506,7 @@ const docTemplate = `{
                     "example": "Made in CB-TB"
                 },
                 "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
                     "type": "string",
                     "default": "no",
                     "enum": [
@@ -1298,6 +1535,98 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "model.TbMciInfo": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/model.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVmInfo"
                     }
                 }
             }
@@ -1356,6 +1685,181 @@ const docTemplate = `{
                     "type": "string",
                     "default": "1",
                     "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbVmInfo": {
+            "type": "object",
+            "properties": {
+                "addtionalDetails": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "Created time",
+                    "type": "string",
+                    "example": "2022-11-10 23:00:00"
+                },
+                "cspImageName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "cspSpecName": {
+                    "type": "string"
+                },
+                "cspSshKeyId": {
+                    "type": "string"
+                },
+                "cspSubnetId": {
+                    "type": "string"
+                },
+                "cspVNetId": {
+                    "type": "string"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "location": {
+                    "$ref": "#/definitions/model.Location"
+                },
+                "monAgentStatus": {
+                    "description": "Montoring agent status",
+                    "type": "string",
+                    "example": "[installed, notInstalled, failed]"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "networkAgentStatus": {
+                    "description": "NetworkAgent status",
+                    "type": "string",
+                    "example": "[notInstalled, installing, installed, failed]"
+                },
+                "networkInterface": {
+                    "type": "string"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.RegionInfo"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "rootDeviceName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "sshPort": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Required by CB-Tumblebug",
+                    "type": "string"
+                },
+                "subGroupId": {
+                    "description": "defined if the VM is in a group",
+                    "type": "string"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserName": {
+                    "type": "string"
                 },
                 "vmUserPassword": {
                     "type": "string"
