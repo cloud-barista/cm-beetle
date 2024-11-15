@@ -138,6 +138,115 @@ func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.Tb
 	return responseBody, nil
 }
 
+// List all migrated VM infrastructures
+func ListAllVMInfraInfo(nsId string) (MciInfoList, error) {
+
+	var emptyRet MciInfoList
+	var MciInfoList MciInfoList
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	client.SetTimeout(5 * time.Minute)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		&MciInfoList,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to get the infrastructure info list (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	return MciInfoList, nil
+}
+
+// Get all migrated VM infrastructures
+func ListVMInfraIDs(nsId string, option string) (IdList, error) {
+
+	var emptyRet IdList
+	var idList IdList
+	idList.IdList = make([]string, 0)
+
+	/*
+	 * Validate the input
+	 */
+
+	var queryParams string
+	if option != "id" {
+		log.Error().Msgf("invalid option: %s", option)
+		return emptyRet, fmt.Errorf("invalid option: %s", option)
+	}
+
+	// Set qeury parameters
+	queryParams = "?option=id"
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
+	if queryParams != "" {
+		url += queryParams
+	}
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	tbResp := new(tbmodel.IdList)
+
+	client.SetTimeout(5 * time.Minute)
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		tbResp,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to get the infrastructure IDs (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	// Return the result
+	idList.IdList = append(idList.IdList, tbResp.IdList...)
+
+	return idList, nil
+}
+
 // Get the migrated VM infrastructure
 func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 

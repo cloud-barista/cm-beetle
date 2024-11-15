@@ -226,6 +226,7 @@ func RunServer(port string) {
 	// Migration API group
 	gMigration := gBeetle.Group("/migration")
 	gMigration.POST("/ns/:nsId/mci", controller.MigrateInfra)
+	gMigration.GET("/ns/:nsId/mci", controller.ListInfra)
 	gMigration.GET("/ns/:nsId/mci/:mciId", controller.GetInfra)
 	gMigration.DELETE("/ns/:nsId/mci/:mciId", controller.DeleteInfra)
 	// gMigration.POST("/ns/:nsId/mci/network", controller.MigrateInfra)
