@@ -3,7 +3,7 @@ package migration
 import tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 
 type MciInfoList struct {
-	Mci []tbmodel.TbMciInfo `json:"mci"`
+	Mci []tbmodel.MciStatusInfo `json:"mci"`
 }
 
 type IdList struct {

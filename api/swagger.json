@@ -85,11 +85,11 @@
                     },
                     {
                         "enum": [
-                            "info",
+                            "status",
                             "id"
                         ],
                         "type": "string",
-                        "default": "info",
+                        "default": "status",
                         "description": "Option for getting the migrated multi-cloud infrastructure",
                         "name": "option",
                         "in": "query"
@@ -1329,54 +1329,8 @@
                 "mci": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbMciInfo"
+                        "$ref": "#/definitions/model.MciStatusInfo"
                     }
-                }
-            }
-        },
-        "model.ConnConfig": {
-            "type": "object",
-            "properties": {
-                "configName": {
-                    "type": "string"
-                },
-                "credentialHolder": {
-                    "type": "string"
-                },
-                "credentialName": {
-                    "type": "string"
-                },
-                "driverName": {
-                    "type": "string"
-                },
-                "providerName": {
-                    "type": "string"
-                },
-                "regionDetail": {
-                    "$ref": "#/definitions/model.RegionDetail"
-                },
-                "regionRepresentative": {
-                    "type": "boolean"
-                },
-                "regionZoneInfo": {
-                    "$ref": "#/definitions/model.RegionZoneInfo"
-                },
-                "regionZoneInfoName": {
-                    "type": "string"
-                },
-                "verified": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "model.KeyValue": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
                 }
             }
         },
@@ -1394,48 +1348,60 @@
                 }
             }
         },
-        "model.RegionDetail": {
+        "model.MciStatusInfo": {
             "type": "object",
             "properties": {
-                "description": {
+                "id": {
                     "type": "string"
                 },
-                "location": {
-                    "$ref": "#/definitions/model.Location"
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "example": "[yes, no]"
                 },
-                "regionId": {
-                    "type": "string"
-                },
-                "regionName": {
-                    "type": "string"
-                },
-                "zones": {
-                    "type": "array",
-                    "items": {
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "model.RegionInfo": {
-            "type": "object",
-            "properties": {
-                "region": {
+                },
+                "masterIp": {
+                    "type": "string",
+                    "example": "32.201.134.113"
+                },
+                "masterSSHPort": {
                     "type": "string"
                 },
-                "zone": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.RegionZoneInfo": {
-            "type": "object",
-            "properties": {
-                "assignedRegion": {
+                "masterVmId": {
+                    "type": "string",
+                    "example": "vm-asiaeast1-cb-01"
+                },
+                "name": {
                     "type": "string"
                 },
-                "assignedZone": {
+                "status": {
                     "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/model.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVmStatusInfo"
+                    }
                 }
             }
         },
@@ -1533,98 +1499,6 @@
                 }
             }
         },
-        "model.TbMciInfo": {
-            "type": "object",
-            "properties": {
-                "configureCloudAdaptiveNetwork": {
-                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "yes"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "placementAlgo": {
-                    "type": "string"
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "statusCount": {
-                    "$ref": "#/definitions/model.StatusCountInfo"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.TbVmInfo"
-                    }
-                }
-            }
-        },
         "model.TbVmDynamicReq": {
             "type": "object",
             "required": [
@@ -1685,28 +1559,13 @@
                 }
             }
         },
-        "model.TbVmInfo": {
+        "model.TbVmStatusInfo": {
             "type": "object",
             "properties": {
-                "addtionalDetails": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.KeyValue"
-                    }
-                },
-                "connectionConfig": {
-                    "$ref": "#/definitions/model.ConnConfig"
-                },
-                "connectionName": {
-                    "type": "string"
-                },
                 "createdTime": {
                     "description": "Created time",
                     "type": "string",
                     "example": "2022-11-10 23:00:00"
-                },
-                "cspImageName": {
-                    "type": "string"
                 },
                 "cspResourceId": {
                     "description": "CspResourceId is resource identifier managed by CSP",
@@ -1718,40 +1577,10 @@
                     "type": "string",
                     "example": "we12fawefadf1221edcf"
                 },
-                "cspSpecName": {
-                    "type": "string"
-                },
-                "cspSshKeyId": {
-                    "type": "string"
-                },
-                "cspSubnetId": {
-                    "type": "string"
-                },
-                "cspVNetId": {
-                    "type": "string"
-                },
-                "dataDiskIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
                 "id": {
                     "description": "Id is unique identifier for the object",
                     "type": "string",
                     "example": "aws-ap-southeast-1"
-                },
-                "imageId": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
                 },
                 "location": {
                     "$ref": "#/definitions/model.Location"
@@ -1766,71 +1595,19 @@
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "networkAgentStatus": {
-                    "description": "NetworkAgent status",
-                    "type": "string",
-                    "example": "[notInstalled, installing, installed, failed]"
-                },
-                "networkInterface": {
+                "nativeStatus": {
                     "type": "string"
                 },
-                "privateDNS": {
+                "privateIp": {
                     "type": "string"
                 },
-                "privateIP": {
-                    "type": "string"
-                },
-                "publicDNS": {
-                    "type": "string"
-                },
-                "publicIP": {
-                    "type": "string"
-                },
-                "region": {
-                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.RegionInfo"
-                        }
-                    ]
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
-                    "type": "string"
-                },
-                "rootDeviceName": {
-                    "type": "string"
-                },
-                "rootDiskSize": {
-                    "type": "string"
-                },
-                "rootDiskType": {
-                    "type": "string"
-                },
-                "securityGroupIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "specId": {
-                    "type": "string"
-                },
-                "sshKeyId": {
+                "publicIp": {
                     "type": "string"
                 },
                 "sshPort": {
                     "type": "string"
                 },
                 "status": {
-                    "description": "Required by CB-Tumblebug",
-                    "type": "string"
-                },
-                "subGroupId": {
-                    "description": "defined if the VM is in a group",
-                    "type": "string"
-                },
-                "subnetId": {
                     "type": "string"
                 },
                 "systemMessage": {
@@ -1848,15 +1625,6 @@
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
-                },
-                "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
-                    "type": "string"
                 }
             }
         }

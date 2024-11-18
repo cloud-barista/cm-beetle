@@ -68,19 +68,19 @@ func MigrateInfra(c echo.Context) error {
 	}
 	// nsId := common.DefaulNamespaceId
 
-	req := &MigrateInfraRequest{}
+	req := new(MigrateInfraRequest)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
 
-	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
+	log.Debug().Msgf("req: %v\n", req)
+	log.Debug().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
 
 	// [Process]
 	// Create the VM infrastructure for migration
 	mciInfo, err := migration.CreateVMInfra(nsId, &req.TbMciDynamicReq)
 
-	log.Trace().Msgf("mciInfo: %v\n", mciInfo)
+	log.Debug().Msgf("mciInfo: %v\n", mciInfo)
 
 	// [Output]
 	if err != nil {
@@ -106,7 +106,7 @@ func MigrateInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(info,id) default(info)
+// @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(status,id) default(status)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} migration.IdList "The ID list of The migrated multi-cloud infrastructure (MCI)"
 // @Success 200 {object} migration.MciInfoList "The info list of the migrated multi-cloud infrastructure (MCI)"
@@ -129,7 +129,7 @@ func ListInfra(c echo.Context) error {
 	// nsId := common.DefaulNamespaceId
 
 	option := c.QueryParam("option")
-	if option != "" && option != "info" && option != "id" {
+	if option != "" && option != "status" && option != "id" {
 		err := fmt.Errorf("invalid request, the option (option: %s) is invalid", option)
 		log.Warn().Msg(err.Error())
 		res := model.Response{
@@ -141,7 +141,7 @@ func ListInfra(c echo.Context) error {
 
 	// [Process] List the migrated multi-cloud infrastructures as the option
 	switch option {
-	case "info":
+	case "status":
 		infraInfoList, err := migration.ListAllVMInfraInfo(nsId)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructures")
