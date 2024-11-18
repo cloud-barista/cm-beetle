@@ -68,19 +68,19 @@ func MigrateInfra(c echo.Context) error {
 	}
 	// nsId := common.DefaulNamespaceId
 
-	req := &MigrateInfraRequest{}
+	req := new(MigrateInfraRequest)
 	if err := c.Bind(req); err != nil {
 		return err
 	}
 
-	log.Trace().Msgf("req: %v\n", req)
-	log.Trace().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
+	log.Debug().Msgf("req: %v\n", req)
+	log.Debug().Msgf("req.TbMciDynamicReq: %v\n", req.TbMciDynamicReq)
 
 	// [Process]
 	// Create the VM infrastructure for migration
 	mciInfo, err := migration.CreateVMInfra(nsId, &req.TbMciDynamicReq)
 
-	log.Trace().Msgf("mciInfo: %v\n", mciInfo)
+	log.Debug().Msgf("mciInfo: %v\n", mciInfo)
 
 	// [Output]
 	if err != nil {
@@ -96,6 +96,78 @@ func MigrateInfra(c echo.Context) error {
 	res := mciInfo
 	return c.JSON(http.StatusOK, res)
 
+}
+
+// ListInfra godoc
+// @ID ListInfra
+// @Summary Get the migrated multi-cloud infrastructure (MCI)
+// @Description Get the migrated multi-cloud infrastructure (MCI)
+// @Tags [Migration] Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(status,id) default(status)
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} migration.IdList "The ID list of The migrated multi-cloud infrastructure (MCI)"
+// @Success 200 {object} migration.MciInfoList "The info list of the migrated multi-cloud infrastructure (MCI)"
+// @Failure 404 {object} model.Response
+// @Failure 500 {object} model.Response
+// @Router /migration/ns/{nsId}/mci [get]
+func ListInfra(c echo.Context) error {
+
+	// [Input]
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		err := fmt.Errorf("invalid request, the nanespace ID (nsId: %s) is required", nsId)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	// nsId := common.DefaulNamespaceId
+
+	option := c.QueryParam("option")
+	if option != "" && option != "status" && option != "id" {
+		err := fmt.Errorf("invalid request, the option (option: %s) is invalid", option)
+		log.Warn().Msg(err.Error())
+		res := model.Response{
+			Success: false,
+			Text:    err.Error(),
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// [Process] List the migrated multi-cloud infrastructures as the option
+	switch option {
+	case "status":
+		infraInfoList, err := migration.ListAllVMInfraInfo(nsId)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructures")
+			res := model.Response{
+				Success: false,
+				Text:    err.Error(),
+			}
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+		return c.JSON(http.StatusOK, infraInfoList)
+
+	case "id":
+		idList, err := migration.ListVMInfraIDs(nsId, option)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure IDs")
+			res := model.Response{
+				Success: false,
+				Text:    err.Error(),
+			}
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+
+		return c.JSON(http.StatusOK, idList)
+	}
+
+	return c.JSON(http.StatusInternalServerError, nil)
 }
 
 // GetInfra godoc

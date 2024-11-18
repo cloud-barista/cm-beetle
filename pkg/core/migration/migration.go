@@ -99,6 +99,9 @@ const DefaultSystemLabel string = "Managed by CM-Beetle"
 // Create a VM infrastructure for migration
 func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.TbMciInfo, error) {
 
+	// Set timeout duration
+	timeoutDuration := 40 * time.Minute
+
 	client := resty.New()
 	apiUser := config.Tumblebug.API.Username
 	apiPass := config.Tumblebug.API.Password
@@ -117,7 +120,7 @@ func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.Tb
 	// Set response body
 	responseBody := tbmodel.TbMciInfo{}
 
-	client.SetTimeout(5 * time.Minute)
+	client.SetTimeout(timeoutDuration)
 
 	err := common.ExecuteHttpRequest(
 		client,
@@ -138,8 +141,132 @@ func CreateVMInfra(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.Tb
 	return responseBody, nil
 }
 
+// List all migrated VM infrastructures
+func ListAllVMInfraInfo(nsId string) (MciInfoList, error) {
+
+	// Set timeout duration
+	timeoutDuration := 5 * time.Minute
+
+	var emptyRet MciInfoList
+	var mciInfoList MciInfoList
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// Set qeury parameters
+	queryParams := "?option=status"
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
+	if queryParams != "" {
+		url += queryParams
+	}
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	client.SetTimeout(timeoutDuration)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		&mciInfoList,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to get the infrastructure info list (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	return mciInfoList, nil
+}
+
+// Get all migrated VM infrastructures
+func ListVMInfraIDs(nsId string, option string) (IdList, error) {
+
+	// Set timeout duration
+	timeoutDuration := 5 * time.Minute
+
+	var emptyRet IdList
+	var idList IdList
+	idList.IdList = make([]string, 0)
+
+	/*
+	 * Validate the input
+	 */
+
+	var queryParams string
+	if option != "id" {
+		log.Error().Msgf("invalid option: %s", option)
+		return emptyRet, fmt.Errorf("invalid option: %s", option)
+	}
+
+	// Set qeury parameters
+	queryParams = "?option=id"
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// set Tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+
+	// check readyz
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
+	if queryParams != "" {
+		url += queryParams
+	}
+
+	// Set request body
+	requestBody := common.NoBody
+
+	// Set response body
+	tbResp := new(tbmodel.IdList)
+
+	client.SetTimeout(timeoutDuration)
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(requestBody),
+		&requestBody,
+		tbResp,
+		common.MediumDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to get the infrastructure IDs (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	// Return the result
+	idList.IdList = append(idList.IdList, tbResp.IdList...)
+
+	return idList, nil
+}
+
 // Get the migrated VM infrastructure
 func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
+
+	// Set timeout duration
+	timeoutDuration := 5 * time.Minute
 
 	// Initialize resty client with basic auth
 	client := resty.New()
@@ -160,7 +287,7 @@ func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 	// Set response body
 	responseBody := new(tbmodel.TbMciInfo)
 
-	client.SetTimeout(5 * time.Minute)
+	client.SetTimeout(timeoutDuration)
 
 	err := common.ExecuteHttpRequest(
 		client,
@@ -184,6 +311,9 @@ func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
 // Delete the migrated VM infrastructure
 func DeleteVMInfra(nsId, infraId, action string) (common.SimpleMsg, error) {
 
+	// Set timeout duration
+	timeoutDuration := 40 * time.Minute
+
 	// Initialize resty client with basic auth
 	client := resty.New()
 	apiUser := config.Tumblebug.API.Username
@@ -206,7 +336,7 @@ func DeleteVMInfra(nsId, infraId, action string) (common.SimpleMsg, error) {
 	// Set response body
 	responseBody := new(common.SimpleMsg)
 
-	client.SetTimeout(5 * time.Minute)
+	client.SetTimeout(timeoutDuration)
 
 	err := common.ExecuteHttpRequest(
 		client,
@@ -224,8 +354,7 @@ func DeleteVMInfra(nsId, infraId, action string) (common.SimpleMsg, error) {
 		return common.SimpleMsg{}, err
 	}
 
-	time.Sleep(5 * time.Second)
-
+	time.Sleep(15 * time.Second)
 	// delete the infrastructure with terminate option
 	method = "DELETE"
 	url = fmt.Sprintf("%s/ns/%s/sharedResources", epTumblebug, nsId)
@@ -236,7 +365,7 @@ func DeleteVMInfra(nsId, infraId, action string) (common.SimpleMsg, error) {
 	// Set response body
 	resDeleteDefaultResources := new(common.IdList)
 
-	client.SetTimeout(5 * time.Minute)
+	client.SetTimeout(timeoutDuration)
 
 	err = common.ExecuteHttpRequest(
 		client,

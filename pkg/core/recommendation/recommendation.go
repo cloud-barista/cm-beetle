@@ -29,7 +29,7 @@ func isSupportedCSP(csp string) bool {
 		// "alibaba": true,
 		// "tencent": true,
 		// "ibm":   true,
-		"ncp": true,
+		"ncpvpc": true,
 		// "nhn": true,
 		// "kt": true,
 		// "openstack": true,
@@ -43,6 +43,7 @@ func IsValidProviderAndRegion(provider string, region string) (bool, error) {
 	isValid := false
 
 	providerName := strings.ToLower(provider)
+
 	regionName := strings.ToLower(region)
 
 	supportedCsp := isSupportedCSP(providerName)
@@ -196,7 +197,9 @@ func Recommend(desiredProvider string, desiredRegion string, srcInfra inframodel
 
 		// Extract server info from source computing infra info
 		cores := server.CPU.Cores
-		memory := MBtoGiB(float64(server.Memory.TotalSize))
+
+		// memory := MBtoGiB(float64(server.Memory.TotalSize))
+		memory := uint32(server.Memory.TotalSize)
 
 		coresMax := cores << 1
 		var coresMin uint32

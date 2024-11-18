@@ -105,6 +105,12 @@ func RecommendInfra(c echo.Context) error {
 	}
 	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
 
+	// Replace "ncp" with "ncpvpc"
+	// TODO: improve it when "ncp" and "ncpvpc" are updated.
+	if provider == "ncp" {
+		provider = provider + "vpc"
+	}
+
 	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate provider and region")
