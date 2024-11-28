@@ -149,7 +149,7 @@ func main() {
 
 	// Load the state from the file back into the key-value store
 	if err := lkvstore.LoadLkvStore(); err != nil {
-		log.Error().Err(err).Msgf("error loading data from the lkvstore (file).")
+		log.Warn().Err(err).Msgf("note - the lkvstore (file) may not exist at the initial startup.")
 	}
 
 	log.Info().Msg("successfully load data from the lkvstore (file).")
@@ -197,7 +197,7 @@ func main() {
 	log.Debug().Msgf("creating the default namespace (%s)", common.DefaulNamespaceId)
 	nsInfo, err := common.GetNamespace(common.DefaulNamespaceId)
 	if err != nil {
-		log.Debug().Msgf("not found, the default namespace (nsId: %s)", common.DefaulNamespaceId)
+		log.Debug().Msgf("not found the default namespace (nsId: %s)", common.DefaulNamespaceId)
 		nsReq := common.NsReq{
 			Name: common.DefaulNamespaceId,
 		}
@@ -206,7 +206,7 @@ func main() {
 			log.Error().Err(err).Msg("failed to create a namespace")
 		}
 	}
-	log.Info().Msgf("the default namespace (nsId: %s)", nsInfo.Id)
+	log.Info().Msgf("created the default namespace (nsId: %s)", nsInfo.Id)
 
 	// Launch API servers (REST)
 	wg := new(sync.WaitGroup)
