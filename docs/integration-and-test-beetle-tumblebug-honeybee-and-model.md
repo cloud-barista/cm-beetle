@@ -4,9 +4,9 @@
 
 ### Envrionment
 
-- Beetle v0.2.5
-- cm-model v0.0.3 (Damselfly v0.2.1)
-- Honeybee v0.2.10
+- Beetle v0.3.0
+- cm-model v0.0.3 (Damselfly v0.3.0)
+- Honeybee v0.3.0
 - Tumblebug v0.10.3 (Spider v0.10.0, CB-MapUI v0.10.0)
 
 ### Scenario
