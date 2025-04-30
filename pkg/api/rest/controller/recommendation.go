@@ -24,10 +24,12 @@ import (
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
 
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -49,8 +51,8 @@ type RecommendInfraResponse struct {
 	recommendation.RecommendedInfraInfo
 }
 
-// RecommendInfra godoc
-// @ID RecommendInfra
+// RecommendVMInfra godoc
+// @ID RecommendVMInfra
 // @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description
@@ -58,7 +60,7 @@ type RecommendInfraResponse struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Infrastructure
+// @Tags [Recommendation] Multi-Cloud Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
@@ -69,7 +71,7 @@ type RecommendInfraResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/mci [post]
-func RecommendInfra(c echo.Context) error {
+func RecommendVMInfra(c echo.Context) error {
 
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
@@ -119,7 +121,7 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraInfo, err := recommendation.Recommend(provider, region, sourceInfra)
+	recommendedInfraInfo, err := recommendation.RecommendVM(provider, region, sourceInfra)
 	recommendedInfraInfo.TargetInfra.Name = "mmci01"
 
 	// [Ouput]
@@ -130,4 +132,82 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, recommendedInfraInfo)
+}
+
+// RecommendContainerInfra godoc
+// @ID RecommendContainerInfra
+// @Summary Recommend an appropriate container node infrastructure for container migration
+// @Description Recommend an appropriate container node infrastructure for container-based workloads
+// @Description
+// @Description [Note] `desiredProvider`, `desiredRegion`, and `nsId` are required.
+// @Description - `desiredProvider`, `desiredRegion`, and `nsId` can be set in the query parameter or the request body.
+// @Description - If both are set, the values in the request body take precedence.
+// @Tags [Recommendation] Container Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure (temporarily using VM structure)"
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param nsId query string true "Namespace ID (e.g., ns01)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} []interface{} "The result of recommended container node infrastructure"
+// @Failure 404 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/container [post]
+func RecommendContainerInfra(c echo.Context) error {
+
+	desiredProvider := c.QueryParam("desiredProvider")
+	desiredRegion := c.QueryParam("desiredRegion")
+	nsId := c.QueryParam("nsId")
+
+	reqt := &RecommendInfraRequest{} // ✅ 기존 VM용 요청 구조체를 임시로 사용
+	if err := c.Bind(reqt); err != nil {
+		log.Error().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	if reqt.DesiredProvider == "" && desiredProvider == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' is required"})
+	}
+	if reqt.DesiredRegion == "" && desiredRegion == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredRegion' is required"})
+	}
+	if nsId == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'nsId' is required"})
+	}
+
+	provider := reqt.DesiredProvider
+	if provider == "" {
+		provider = desiredProvider
+	}
+	region := reqt.DesiredRegion
+	if region == "" {
+		region = desiredRegion
+	}
+
+	if provider == "ncp" {
+		provider = provider + "vpc"
+	}
+
+	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
+	if !ok {
+		log.Error().Err(err).Msg("invalid provider or region")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	result, err := recommendation.RecommendContainer(nsId, provider, region)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to call RecommendContainer")
+		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "container recommendation failed"})
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
+// getTumblebugRestClient initializes a reusable Resty client configured for Tumblebug
+func getTumblebugRestClient() *resty.Client {
+	client := resty.New()
+	client.SetBaseURL(config.Tumblebug.RestUrl)
+	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
+	return client
 }

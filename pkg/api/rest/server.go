@@ -221,7 +221,8 @@ func RunServer(port string) {
 	gRecommendation.Use(middlewares.TumblebugInitChecker)
 
 	// Recommendation APIs
-	gRecommendation.POST("/mci", controller.RecommendInfra)
+	gRecommendation.POST("/mci", controller.RecommendVMInfra)
+	gRecommendation.POST("/container", controller.RecommendContainerInfra)
 
 	// Migration API group
 	gMigration := gBeetle.Group("/migration")

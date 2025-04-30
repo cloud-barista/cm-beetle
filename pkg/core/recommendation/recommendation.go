@@ -92,8 +92,8 @@ func IsValidProviderAndRegion(provider string, region string) (bool, error) {
 	return isValid, nil
 }
 
-// Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func Recommend(desiredProvider string, desiredRegion string, srcInfra inframodel.OnpremInfra) (RecommendedInfraInfo, error) {
+// RecommendVM an appropriate multi-cloud infrastructure (MCI) for cloud migration
+func RecommendVM(desiredProvider string, desiredRegion string, srcInfra inframodel.OnpremInfra) (RecommendedInfraInfo, error) {
 
 	var emptyResp RecommendedInfraInfo
 	var recommendedInfraInfo RecommendedInfraInfo
@@ -367,6 +367,61 @@ func Recommend(desiredProvider string, desiredRegion string, srcInfra inframodel
 	}
 
 	return recommendedInfraInfo, nil
+}
+
+// RecommendContainer recommends appropriate K8s node specs for container workloads
+func RecommendContainer(nsId, provider, region string) ([]tbmodel.TbSpecInfo, error) {
+	client := resty.New()
+	client.SetBaseURL(config.Tumblebug.RestUrl)
+	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
+
+	plan := tbmodel.DeploymentPlan{
+    Filter: tbmodel.FilterInfo{
+        Policy: []tbmodel.FilterCondition{
+            {
+                Metric:    "vCPU",
+                Condition: []tbmodel.Operation{{Operator: ">=", Operand: "2"}},
+            },
+            {
+                Metric:    "memoryGiB",
+                Condition: []tbmodel.Operation{{Operator: ">=", Operand: "4"}},
+            },
+            {
+                Metric:    "providerName",
+                Condition: []tbmodel.Operation{{Operand: provider}},
+            },
+            {
+                Metric:    "regionName",
+                Condition: []tbmodel.Operation{{Operand: region}},
+            },
+            {
+                Metric:    "infraType",
+                Condition: []tbmodel.Operation{{Operand: "k8s"}},
+            },
+        },
+    },
+    Priority: tbmodel.PriorityInfo{
+        Policy: []tbmodel.PriorityCondition{
+            {Metric: "performance", Weight: "0.5"},
+            {Metric: "cost", Weight: "0.5"},
+        },
+    },
+    Limit: "5",
+}
+
+	var result []tbmodel.TbSpecInfo
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(plan).
+		SetResult(&result).
+		Post("/k8sClusterRecommendNode")
+
+	if err != nil || resp.IsError() {
+		log.Error().Err(err).Msg("failed to call /k8sClusterRecommendNode")
+		return nil, fmt.Errorf("tumblebug API call failed: %v", err)
+	}
+
+	return result, nil
 }
 
 // Function to check overall status for the entire list of VMs
