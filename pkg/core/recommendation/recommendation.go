@@ -370,57 +370,125 @@ func RecommendVM(desiredProvider string, desiredRegion string, srcInfra inframod
 }
 
 // RecommendContainer recommends appropriate K8s node specs for container workloads
-func RecommendContainer(nsId, provider, region string) ([]tbmodel.TbSpecInfo, error) {
+func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
+	var emptyResp RecommendedInfraInfo
+	var result RecommendedInfraInfo
+	
+	result.TargetInfra = tbmodel.TbMciDynamicReq{
+			Description: "Recommended Kubernetes node configuration by CM-Beetle",
+			Name:        "recommended-k8s-cluster",
+			Vm:          []tbmodel.TbVmDynamicReq{}, // K8s 노드 정보를 담는 필드
+	}
+	
+	// 클라이언트 직접 생성
 	client := resty.New()
 	client.SetBaseURL(config.Tumblebug.RestUrl)
 	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
-
+	
+	// Step 1: 스펙 추천 - k8s 인프라 타입 필터 추가
 	plan := tbmodel.DeploymentPlan{
-    Filter: tbmodel.FilterInfo{
-        Policy: []tbmodel.FilterCondition{
-            {
-                Metric:    "vCPU",
-                Condition: []tbmodel.Operation{{Operator: ">=", Operand: "2"}},
-            },
-            {
-                Metric:    "memoryGiB",
-                Condition: []tbmodel.Operation{{Operator: ">=", Operand: "4"}},
-            },
-            {
-                Metric:    "providerName",
-                Condition: []tbmodel.Operation{{Operand: provider}},
-            },
-            {
-                Metric:    "regionName",
-                Condition: []tbmodel.Operation{{Operand: region}},
-            },
-            {
-                Metric:    "infraType",
-                Condition: []tbmodel.Operation{{Operand: "k8s"}},
-            },
-        },
-    },
-    Priority: tbmodel.PriorityInfo{
-        Policy: []tbmodel.PriorityCondition{
-            {Metric: "performance", Weight: "0.5"},
-            {Metric: "cost", Weight: "0.5"},
-        },
-    },
-    Limit: "5",
-}
-
-	var result []tbmodel.TbSpecInfo
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(plan).
-		SetResult(&result).
-		Post("/k8sClusterRecommendNode")
-
-	if err != nil || resp.IsError() {
-		log.Error().Err(err).Msg("failed to call /k8sClusterRecommendNode")
-		return nil, fmt.Errorf("tumblebug API call failed: %v", err)
+			Filter: tbmodel.FilterInfo{Policy: []tbmodel.FilterCondition{
+					{Metric: "vCPU", Condition: []tbmodel.Operation{{Operator: ">=", Operand: "2"}}},
+					{Metric: "memoryGiB", Condition: []tbmodel.Operation{{Operator: ">=", Operand: "4"}}},
+					{Metric: "providerName", Condition: []tbmodel.Operation{{Operand: provider}}},
+					{Metric: "regionName", Condition: []tbmodel.Operation{{Operand: region}}},
+					{Metric: "infraType", Condition: []tbmodel.Operation{{Operand: "k8s"}}},
+			}},
+			Priority: tbmodel.PriorityInfo{
+					Policy: []tbmodel.PriorityCondition{
+							{Metric: "performance", Weight: "0.5"},
+							{Metric: "cost", Weight: "0.5"},
+					},
+			},
+			Limit: "5",
 	}
-
+	
+	// TbSpecInfo는 스펙 정보를 위한 기존 구조체
+	var specResp []tbmodel.TbSpecInfo
+	resp, err := client.R().
+			SetBody(plan).
+			SetResult(&specResp).
+			Post("/k8sClusterRecommendNode")
+	if err != nil {
+			log.Error().Err(err).Msg("failed to call k8sClusterRecommendNode")
+			return emptyResp, fmt.Errorf("failed to call k8sClusterRecommendNode: %w", err)
+	}
+	
+	if resp.StatusCode() != 200 {
+			log.Error().Int("status", resp.StatusCode()).Msg("k8sClusterRecommendNode returned non-200 status")
+			return emptyResp, fmt.Errorf("k8sClusterRecommendNode returned non-200 status: %d", resp.StatusCode())
+	}
+	
+	if len(specResp) == 0 {
+			log.Warn().Msg("no recommended specs found")
+			result.Status = string(NothingRecommended) 
+			result.Description = "Could not find appropriate K8s node specification."
+			return result, nil
+	}
+	
+	// 각 스펙에 대해 개별적으로 이미지 확인
+	for _, specInfo := range specResp {
+			// Step 2: 해당 스펙에 대한 이미지 가용성 확인 - k8sClusterDynamicCheckRequest API 요청 형식 수정
+			reqCheck := tbmodel.K8sClusterConnectionConfigCandidatesReq{
+					CommonSpecs: []string{specInfo.Id}, // 배열로 전달
+			}
+			
+			var checkResp tbmodel.CheckK8sClusterDynamicReqInfo
+			resp, err = client.R().
+					SetBody(reqCheck).
+					SetResult(&checkResp).
+					Post("/k8sClusterDynamicCheckRequest")
+			
+			if err != nil {
+					log.Error().Err(err).Str("specId", specInfo.Id).Msg("failed to call k8sClusterDynamicCheckRequest")
+					continue // 이 스펙에 대한 이미지 확인 실패 시 다음 스펙으로 진행
+			}
+			
+			if resp.StatusCode() != 200 {
+					log.Error().Int("status", resp.StatusCode()).Str("specId", specInfo.Id).Msg("k8sClusterDynamicCheckRequest returned non-200 status")
+					continue // 이 스펙에 대한 이미지 확인 실패 시 다음 스펙으로 진행
+			}
+			
+			// 결과 처리 - 정확한 응답 구조체 사용
+			if len(checkResp.ReqCheck) == 0 {
+					log.Warn().Str("specId", specInfo.Id).Msg("no compatibility info found for spec")
+					continue
+			}
+			
+			for _, nodeInfo := range checkResp.ReqCheck {
+					commonSpec := specInfo.Id
+					
+					// 이미지 선택
+					if len(nodeInfo.Image) == 0 {
+							log.Warn().Str("spec", commonSpec).Msg("no compatible images found for spec")
+							continue
+					}
+					
+					imageID := "default" // K8s의 경우 일부 CSP에서는 default 이미지 사용
+					if nodeInfo.Image[0].Id != "default" {
+							imageID = nodeInfo.Image[0].Id
+					}
+					
+					// K8s 노드 정보 구성
+					vm := tbmodel.TbVmDynamicReq{
+							Name:        fmt.Sprintf("k8snode-%s", strings.Split(commonSpec, "-")[len(strings.Split(commonSpec, "-"))-1]),
+							CommonSpec:  commonSpec,
+							CommonImage: imageID,
+							Description: "Recommended K8s node",
+					}
+					result.TargetInfra.Vm = append(result.TargetInfra.Vm, vm)
+			}
+	}
+	
+	// 상태 및 설명 정리
+	if len(result.TargetInfra.Vm) > 0 {
+			result.Status = string(FullyRecommended)
+			result.Description = "K8s node configuration recommended."
+	} else {
+			result.Status = string(NothingRecommended)
+			result.Description = "Could not find appropriate K8s node configuration."
+	}
+	
 	return result, nil
 }
 

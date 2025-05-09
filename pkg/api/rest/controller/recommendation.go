@@ -24,12 +24,12 @@ import (
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
 
-	"github.com/cloud-barista/cm-beetle/pkg/config"
+	// "github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
-	"github.com/go-resty/resty/v2"
+	// "github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -136,11 +136,11 @@ func RecommendVMInfra(c echo.Context) error {
 
 // RecommendContainerInfra godoc
 // @ID RecommendContainerInfra
-// @Summary Recommend an appropriate container node infrastructure for container migration
-// @Description Recommend an appropriate container node infrastructure for container-based workloads
+// @Summary Recommend an appropriate container infrastructure for container migration
+// @Description Recommend an appropriate container infrastructure for container-based workloads
 // @Description
-// @Description [Note] `desiredProvider`, `desiredRegion`, and `nsId` are required.
-// @Description - `desiredProvider`, `desiredRegion`, and `nsId` can be set in the query parameter or the request body.
+// @Description [Note] `desiredProvider` and `desiredRegion` are required.
+// @Description - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
 // @Description - If both are set, the values in the request body take precedence.
 // @Tags [Recommendation] Container Infrastructure
 // @Accept  json
@@ -148,19 +148,18 @@ func RecommendVMInfra(c echo.Context) error {
 // @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure (temporarily using VM structure)"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param nsId query string true "Namespace ID (e.g., ns01)"
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} []interface{} "The result of recommended container node infrastructure"
+// @Success 200 {object} RecommendInfraResponse "The result of recommended container infrastructure"
+// @Failure 400 {object} common.SimpleMsg
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/container [post]
+// @Router /recommendation/containerInfra [post]
 func RecommendContainerInfra(c echo.Context) error {
 
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
-	nsId := c.QueryParam("nsId")
 
-	reqt := &RecommendInfraRequest{} // ✅ 기존 VM용 요청 구조체를 임시로 사용
+	reqt := &RecommendInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Error().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
@@ -171,9 +170,6 @@ func RecommendContainerInfra(c echo.Context) error {
 	}
 	if reqt.DesiredRegion == "" && desiredRegion == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredRegion' is required"})
-	}
-	if nsId == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'nsId' is required"})
 	}
 
 	provider := reqt.DesiredProvider
@@ -195,19 +191,11 @@ func RecommendContainerInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
 	}
 
-	result, err := recommendation.RecommendContainer(nsId, provider, region)
+	result, err := recommendation.RecommendContainer(provider, region)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to call RecommendContainer")
 		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "container recommendation failed"})
 	}
 
 	return c.JSON(http.StatusOK, result)
-}
-
-// getTumblebugRestClient initializes a reusable Resty client configured for Tumblebug
-func getTumblebugRestClient() *resty.Client {
-	client := resty.New()
-	client.SetBaseURL(config.Tumblebug.RestUrl)
-	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
-	return client
 }
