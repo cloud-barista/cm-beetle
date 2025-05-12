@@ -222,7 +222,7 @@ func RunServer(port string) {
 
 	// Recommendation APIs
 	gRecommendation.POST("/mci", controller.RecommendVMInfra)
-	gRecommendation.POST("/container", controller.RecommendContainerInfra)
+	gRecommendation.POST("/containerInfra", controller.RecommendContainerInfra)
 
 	// Migration API group
 	gMigration := gBeetle.Group("/migration")
