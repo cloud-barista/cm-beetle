@@ -178,6 +178,7 @@ func RecommendContainerInfra(c echo.Context) error {
 	if region == "" {
 		region = desiredRegion
 	}
+	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
 
 	if provider == "ncp" {
 		provider = provider + "vpc"
@@ -189,7 +190,7 @@ func RecommendContainerInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
 	}
 
-	result, err := recommendation.RecommendContainer(provider, region)
+	result, err := recommendation.RecommendContainer(provider, region, sourceInfra)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to call RecommendContainer")
 		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "container recommendation failed"})
