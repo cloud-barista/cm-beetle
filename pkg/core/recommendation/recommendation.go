@@ -380,7 +380,6 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			Vm:          []tbmodel.TbVmDynamicReq{}, // K8s 노드 정보를 담는 필드
 	}
 	
-	// 클라이언트 직접 생성
 	client := resty.New()
 	client.SetBaseURL(config.Tumblebug.RestUrl)
 	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
