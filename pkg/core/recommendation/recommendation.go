@@ -479,7 +479,6 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			}
 	}
 	
-	// 상태 및 설명 정리
 	if len(result.TargetInfra.Vm) > 0 {
 			result.Status = string(FullyRecommended)
 			result.Description = "K8s node configuration recommended."
