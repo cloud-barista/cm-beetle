@@ -60,7 +60,7 @@ type RecommendInfraResponse struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Multi-Cloud Infrastructure
+// @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
