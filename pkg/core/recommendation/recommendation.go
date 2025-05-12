@@ -440,7 +440,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			
 			if err != nil {
 					log.Error().Err(err).Str("specId", specInfo.Id).Msg("failed to call k8sClusterDynamicCheckRequest")
-					continue // 이 스펙에 대한 이미지 확인 실패 시 다음 스펙으로 진행
+					continue
 			}
 			
 			if resp.StatusCode() != 200 {
