@@ -377,7 +377,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 	result.TargetInfra = tbmodel.TbMciDynamicReq{
 			Description: "Recommended Kubernetes node configuration by CM-Beetle",
 			Name:        "recommended-k8s-cluster",
-			Vm:          []tbmodel.TbVmDynamicReq{}, // K8s 노드 정보를 담는 필드
+			Vm:          []tbmodel.TbVmDynamicReq{}, // a field to contain Kubernetes node information
 	}
 	
 	client := resty.New()
