@@ -448,7 +448,6 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 					continue // 이 스펙에 대한 이미지 확인 실패 시 다음 스펙으로 진행
 			}
 			
-			// 결과 처리 - 정확한 응답 구조체 사용
 			if len(checkResp.ReqCheck) == 0 {
 					log.Warn().Str("specId", specInfo.Id).Msg("no compatibility info found for spec")
 					continue
