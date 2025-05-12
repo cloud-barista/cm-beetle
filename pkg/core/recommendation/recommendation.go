@@ -425,7 +425,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			return result, nil
 	}
 	
-	// 각 스펙에 대해 개별적으로 이미지 확인
+	// Recommend available OS images for Kubernetes node spec
 	for _, specInfo := range specResp {
 			// Step 2: 해당 스펙에 대한 이미지 가용성 확인 - k8sClusterDynamicCheckRequest API 요청 형식 수정
 			reqCheck := tbmodel.K8sClusterConnectionConfigCandidatesReq{
