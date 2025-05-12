@@ -468,7 +468,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 							imageID = nodeInfo.Image[0].Id
 					}
 					
-					// K8s 노드 정보 구성
+					// Set the recommended Kubernetes node spec and OS image to the response body
 					vm := tbmodel.TbVmDynamicReq{
 							Name:        fmt.Sprintf("k8snode-%s", strings.Split(commonSpec, "-")[len(strings.Split(commonSpec, "-"))-1]),
 							CommonSpec:  commonSpec,
