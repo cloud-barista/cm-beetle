@@ -136,16 +136,16 @@ func RecommendVMInfra(c echo.Context) error {
 
 // RecommendContainerInfra godoc
 // @ID RecommendContainerInfra
-// @Summary Recommend an appropriate container infrastructure for container migration
+// @Summary Recommend an appropriate container infrastructure for cloud migration
 // @Description Recommend an appropriate container infrastructure for container-based workloads
 // @Description
 // @Description [Note] `desiredProvider` and `desiredRegion` are required.
 // @Description - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
 // @Description - If both are set, the values in the request body take precedence.
-// @Tags [Recommendation] Container Infrastructure
+// @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure (temporarily using VM structure)"
+// @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
