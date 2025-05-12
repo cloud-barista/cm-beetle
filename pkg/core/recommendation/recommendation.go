@@ -402,7 +402,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			Limit: "5",
 	}
 	
-	// TbSpecInfo는 스펙 정보를 위한 기존 구조체
+	// TbSpecInfo is a response body that contains a list of Kubernetes node specs.
 	var specResp []tbmodel.TbSpecInfo
 	resp, err := client.R().
 			SetBody(plan).
