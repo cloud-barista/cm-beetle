@@ -445,7 +445,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 			
 			if resp.StatusCode() != 200 {
 					log.Error().Int("status", resp.StatusCode()).Str("specId", specInfo.Id).Msg("k8sClusterDynamicCheckRequest returned non-200 status")
-					continue // 이 스펙에 대한 이미지 확인 실패 시 다음 스펙으로 진행
+					continue
 			}
 			
 			if len(checkResp.ReqCheck) == 0 {
