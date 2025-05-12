@@ -384,7 +384,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 	client.SetBaseURL(config.Tumblebug.RestUrl)
 	client.SetBasicAuth(config.Tumblebug.API.Username, config.Tumblebug.API.Password)
 	
-	// Step 1: 스펙 추천 - k8s 인프라 타입 필터 추가
+	// Step 1: Recommend spec for Kubernetes node
 	plan := tbmodel.DeploymentPlan{
 			Filter: tbmodel.FilterInfo{Policy: []tbmodel.FilterCondition{
 					{Metric: "vCPU", Condition: []tbmodel.Operation{{Operator: ">=", Operand: "2"}}},
