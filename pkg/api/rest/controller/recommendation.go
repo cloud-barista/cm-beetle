@@ -28,7 +28,6 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
-	// "github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
