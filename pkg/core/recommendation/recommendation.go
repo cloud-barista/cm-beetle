@@ -463,7 +463,7 @@ func RecommendContainer(provider, region string) (RecommendedInfraInfo, error) {
 							continue
 					}
 					
-					imageID := "default" // K8s의 경우 일부 CSP에서는 default 이미지 사용
+					imageID := "default" // * NOTE: Set to "default" because Some CSP's Kubernetes Service uses default image.
 					if nodeInfo.Image[0].Id != "default" {
 							imageID = nodeInfo.Image[0].Id
 					}
