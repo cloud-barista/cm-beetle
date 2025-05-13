@@ -49,8 +49,8 @@ type RecommendInfraResponse struct {
 	recommendation.RecommendedInfraInfo
 }
 
-// RecommendInfra godoc
-// @ID RecommendInfra
+// RecommendVMInfra godoc
+// @ID RecommendVMInfra
 // @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description
@@ -69,7 +69,7 @@ type RecommendInfraResponse struct {
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/mci [post]
-func RecommendInfra(c echo.Context) error {
+func RecommendVMInfra(c echo.Context) error {
 
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
@@ -119,7 +119,7 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraInfo, err := recommendation.Recommend(provider, region, sourceInfra)
+	recommendedInfraInfo, err := recommendation.RecommendVM(provider, region, sourceInfra)
 	recommendedInfraInfo.TargetInfra.Name = "mmci01"
 
 	// [Ouput]
@@ -130,4 +130,71 @@ func RecommendInfra(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, recommendedInfraInfo)
+}
+
+// RecommendContainerInfra godoc
+// @ID RecommendContainerInfra
+// @Summary Recommend an appropriate container infrastructure for cloud migration
+// @Description Recommend an appropriate container infrastructure for container-based workloads
+// @Description
+// @Description [Note] `desiredProvider` and `desiredRegion` are required.
+// @Description - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
+// @Description - If both are set, the values in the request body take precedence.
+// @Tags [Recommendation] Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} RecommendInfraResponse "The result of recommended container infrastructure"
+// @Failure 400 {object} common.SimpleMsg
+// @Failure 404 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/containerInfra [post]
+func RecommendContainerInfra(c echo.Context) error {
+
+	desiredProvider := c.QueryParam("desiredProvider")
+	desiredRegion := c.QueryParam("desiredRegion")
+
+	reqt := &RecommendInfraRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Error().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	if reqt.DesiredProvider == "" && desiredProvider == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' is required"})
+	}
+	if reqt.DesiredRegion == "" && desiredRegion == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredRegion' is required"})
+	}
+
+	provider := reqt.DesiredProvider
+	if provider == "" {
+		provider = desiredProvider
+	}
+	region := reqt.DesiredRegion
+	if region == "" {
+		region = desiredRegion
+	}
+	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
+
+	if provider == "ncp" {
+		provider = provider + "vpc"
+	}
+
+	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
+	if !ok {
+		log.Error().Err(err).Msg("invalid provider or region")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	result, err := recommendation.RecommendContainer(provider, region, sourceInfra)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to call RecommendContainer")
+		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "container recommendation failed"})
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
