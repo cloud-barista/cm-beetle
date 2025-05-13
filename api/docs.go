@@ -355,6 +355,85 @@ const docTemplate = `{
                 }
             }
         },
+        "/recommendation/containerInfra": {
+            "post": {
+                "description": "Recommend an appropriate container infrastructure for container-based workloads\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If both are set, the values in the request body take precedence.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "Recommend an appropriate container infrastructure for cloud migration",
+                "operationId": "RecommendContainerInfra",
+                "parameters": [
+                    {
+                        "description": "Specify the source container infrastructure",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended container infrastructure",
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/recommendation/mci": {
             "post": {
                 "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
@@ -368,7 +447,7 @@ const docTemplate = `{
                     "[Recommendation] Infrastructure"
                 ],
                 "summary": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
-                "operationId": "RecommendInfra",
+                "operationId": "RecommendVMInfra",
                 "parameters": [
                     {
                         "description": "Specify the your infrastructure to be migrated",
