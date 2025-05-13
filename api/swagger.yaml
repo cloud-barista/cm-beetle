@@ -886,6 +886,65 @@ paths:
       summary: Check Beetle is ready
       tags:
       - '[Admin] System management'
+  /recommendation/containerInfra:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recommend an appropriate container infrastructure for container-based workloads
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
+        - If both are set, the values in the request body take precedence.
+      operationId: RecommendContainerInfra
+      parameters:
+      - description: Specify the source container infrastructure
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The result of recommended container infrastructure
+          schema:
+            $ref: '#/definitions/controller.RecommendInfraResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an appropriate container infrastructure for cloud migration
+      tags:
+      - '[Recommendation] Infrastructure'
   /recommendation/mci:
     post:
       consumes:
@@ -897,7 +956,7 @@ paths:
         - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 
         - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-      operationId: RecommendInfra
+      operationId: RecommendVMInfra
       parameters:
       - description: Specify the your infrastructure to be migrated
         in: body
