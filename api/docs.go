@@ -923,14 +923,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "mci01"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.MciCmdReq"
-                        }
-                    ]
-                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
@@ -975,14 +967,6 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "mci01"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.MciCmdReq"
-                        }
-                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
@@ -1477,27 +1461,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MciCmdReq": {
-            "type": "object",
-            "required": [
-                "command"
-            ],
-            "properties": {
-                "command": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
-                },
-                "userName": {
-                    "type": "string",
-                    "example": "cb-user"
-                }
-            }
-        },
         "model.MciStatusInfo": {
             "type": "object",
             "properties": {
@@ -1635,14 +1598,6 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "mci01"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.MciCmdReq"
-                        }
-                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
