@@ -436,7 +436,7 @@ const docTemplate = `{
         },
         "/recommendation/mci": {
             "post": {
-                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -455,7 +455,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
                         }
                     },
                     {
@@ -468,7 +468,7 @@ const docTemplate = `{
                         "type": "string",
                         "default": "aws",
                         "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredProvider",
+                        "name": "desiredCsp",
                         "in": "query"
                     },
                     {
@@ -489,7 +489,7 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of recommended infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendInfraResponse"
+                            "$ref": "#/definitions/controller.RecommendVmInfraResponse"
                         }
                     },
                     "404": {
@@ -923,6 +923,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "mci01"
                 },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MciCmdReq"
+                        }
+                    ]
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
@@ -967,6 +975,14 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "mci01"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MciCmdReq"
+                        }
+                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
@@ -1029,6 +1045,34 @@ const docTemplate = `{
             }
         },
         "controller.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                }
+            }
+        },
+        "controller.RecommendVmInfraRequest": {
+            "type": "object",
+            "required": [
+                "onpremiseInfraModel"
+            ],
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/recommendation.CspRegionPair"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/inframodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendVmInfraResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1433,6 +1477,27 @@ const docTemplate = `{
                 }
             }
         },
+        "model.MciCmdReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "userName": {
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
         "model.MciStatusInfo": {
             "type": "object",
             "properties": {
@@ -1570,6 +1635,14 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "mci01"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MciCmdReq"
+                        }
+                    ]
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
@@ -1710,6 +1783,19 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "recommendation.CspRegionPair": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
                 }
             }
         }

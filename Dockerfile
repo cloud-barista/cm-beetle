@@ -9,6 +9,16 @@ ENV GO111MODULE=on
 # Set the Current Working Directory inside the container
 WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 
+# When you need to build cm-beetle with pkgs being developed locally,
+# you can use the following guide.
+# For example, this is useful when you are developing cm-beetle and cb-tumblebug at the same time.
+# 1. [On go.mod] Add `replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug`
+# 2. [On shell] Copy cb-tumblebug by `rsync -av --exclude container-volume/ ../cb-tumblebug/ ./cb-tumblebug`
+# 3. [On Dockerfile] Add `COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug`
+# 4. [On shell] Run `make compose`
+# 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
+# COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug
+
 # Copy dependency files to the container
 COPY go.mod go.sum go.work go.work.sum LICENSE ./
 RUN --mount=type=cache,target=/go/pkg/mod \

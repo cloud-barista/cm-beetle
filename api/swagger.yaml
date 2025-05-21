@@ -59,6 +59,10 @@ definitions:
       name:
         example: mci01
         type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/model.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -94,6 +98,10 @@ definitions:
       name:
         example: mci01
         type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/model.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -139,6 +147,24 @@ definitions:
     - onpremiseInfraModel
     type: object
   controller.RecommendInfraResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetInfra:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+    type: object
+  controller.RecommendVmInfraRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/recommendation.CspRegionPair'
+      onpremiseInfraModel:
+        $ref: '#/definitions/inframodel.OnpremInfra'
+    required:
+    - onpremiseInfraModel
+    type: object
+  controller.RecommendVmInfraResponse:
     properties:
       description:
         type: string
@@ -423,6 +449,21 @@ definitions:
       longitude:
         type: number
     type: object
+  model.MciCmdReq:
+    properties:
+      command:
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      userName:
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
   model.MciStatusInfo:
     properties:
       id:
@@ -523,6 +564,10 @@ definitions:
       name:
         example: mci01
         type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/model.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -640,6 +685,15 @@ definitions:
         description: Uid is universally unique identifier for the object, used for
           labelSelector
         example: wef12awefadf1221edcf
+        type: string
+    type: object
+  recommendation.CspRegionPair:
+    properties:
+      csp:
+        example: aws
+        type: string
+      region:
+        example: ap-northeast-2
         type: string
     type: object
 externalDocs:
@@ -952,10 +1006,10 @@ paths:
       description: |-
         Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 
-        [Note] `desiredProvider` and `desiredRegion` are required.
-        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+        [Note] `desiredCsp` and `desiredRegion` are required.
+        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 
-        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
       operationId: RecommendVMInfra
       parameters:
       - description: Specify the your infrastructure to be migrated
@@ -963,7 +1017,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.RecommendInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -972,7 +1026,7 @@ paths:
         - gcp
         - ncp
         in: query
-        name: desiredProvider
+        name: desiredCsp
         type: string
       - default: ap-northeast-2
         description: Region (e.g., ap-northeast-2)
@@ -989,7 +1043,7 @@ paths:
         "200":
           description: The result of recommended infrastructure
           schema:
-            $ref: '#/definitions/controller.RecommendInfraResponse'
+            $ref: '#/definitions/controller.RecommendVmInfraResponse'
         "404":
           description: Not Found
           schema:

@@ -39,13 +39,12 @@ import (
 // 	VirtualMachine string
 // }
 
-type RecommendInfraRequest struct {
-	DesiredProvider string `json:"desiredProvider" example:"aws"`
-	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
+type RecommendVmInfraRequest struct {
+	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
 	inframodel.OnpremiseInfraModel
 }
 
-type RecommendInfraResponse struct {
+type RecommendVmInfraResponse struct {
 	recommendation.RecommendedInfraInfo
 }
 
@@ -54,52 +53,51 @@ type RecommendInfraResponse struct {
 // @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
 // @Description
-// @Description [Note] `desiredProvider` and `desiredRegion` are required.
-// @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+// @Description [Note] `desiredCsp` and `desiredRegion` are required.
+// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
-// @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} RecommendInfraResponse "The result of recommended infrastructure"
+// @Success 200 {object} RecommendVmInfraResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/mci [post]
 func RecommendVMInfra(c echo.Context) error {
 
-	desiredProvider := c.QueryParam("desiredProvider")
+	desiredCsp := c.QueryParam("desiredCsp")
 	desiredRegion := c.QueryParam("desiredRegion")
 
 	// [Input]
-	reqt := &RecommendInfraRequest{}
+	reqt := &RecommendVmInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Error().Err(err).Msg("failed to bind a request body")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, res)
 	}
-
 	log.Trace().Msgf("reqt: %v\n", reqt)
 
-	if reqt.DesiredProvider == "" && desiredProvider == "" {
-		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
+	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
+		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
 		resp := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, resp)
 	}
-	if reqt.DesiredRegion == "" && desiredRegion == "" {
+	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
 		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
 		resp := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, resp)
 	}
 
-	provider := reqt.DesiredProvider
-	if provider == "" {
-		provider = desiredProvider
+	csp := reqt.DesiredCspAndRegionPair.Csp
+	if csp == "" {
+		csp = desiredCsp
 	}
-	region := reqt.DesiredRegion
+	region := reqt.DesiredCspAndRegionPair.Region
 	if region == "" {
 		region = desiredRegion
 	}
@@ -107,20 +105,20 @@ func RecommendVMInfra(c echo.Context) error {
 
 	// Replace "ncp" with "ncpvpc"
 	// TODO: improve it when "ncp" and "ncpvpc" are updated.
-	if provider == "ncp" {
-		provider = provider + "vpc"
+	if csp == "ncp" {
+		csp = csp + "vpc"
 	}
 
-	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
+	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {
-		log.Error().Err(err).Msg("failed to validate provider and region")
+		log.Error().Err(err).Msg("failed to validate CSP and region")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	// [Process]
-	recommendedInfraInfo, err := recommendation.RecommendVM(provider, region, sourceInfra)
-	recommendedInfraInfo.TargetInfra.Name = "mmci01"
+	recommendedInfraInfoList, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
+	// recommendedInfraInfoList.TargetInfra.Name = "mmci01"
 
 	// [Ouput]
 	if err != nil {
@@ -129,7 +127,17 @@ func RecommendVMInfra(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, res)
 	}
 
-	return c.JSON(http.StatusOK, recommendedInfraInfo)
+	return c.JSON(http.StatusOK, recommendedInfraInfoList)
+}
+
+type RecommendInfraRequest struct {
+	DesiredProvider string `json:"desiredProvider" example:"aws"`
+	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
+	inframodel.OnpremiseInfraModel
+}
+
+type RecommendInfraResponse struct {
+	recommendation.RecommendedInfraInfo
 }
 
 // RecommendContainerInfra godoc
@@ -184,7 +192,7 @@ func RecommendContainerInfra(c echo.Context) error {
 		provider = provider + "vpc"
 	}
 
-	ok, err := recommendation.IsValidProviderAndRegion(provider, region)
+	ok, err := recommendation.IsValidCspAndRegion(provider, region)
 	if !ok {
 		log.Error().Err(err).Msg("invalid provider or region")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})

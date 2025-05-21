@@ -11,6 +11,23 @@ const (
 	FullyRecommended     RecommendationStatus = "ok"
 )
 
+type CspRegionPair struct {
+	Csp    string `json:"csp" example:"aws"`
+	Region string `json:"region" example:"ap-northeast-2"`
+}
+
+type RecommendedVmInfraInfo struct {
+	Status        string                  `json:"status"`
+	Description   string                  `json:"description"`
+	TargetVmInfra tbmodel.TbMciDynamicReq `json:"targetVmInfra"`
+}
+
+type RecommendedVmInfraInfoList struct {
+	Description       string                   `json:"description"`
+	Count             int                      `json:"count"`
+	TargetVmInfraList []RecommendedVmInfraInfo `json:"targetVmInfraList"`
+}
+
 type RecommendedInfraInfo struct {
 	Status      string                  `json:"status"`
 	Description string                  `json:"description"`
