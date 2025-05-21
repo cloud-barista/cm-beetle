@@ -59,10 +59,6 @@ definitions:
       name:
         example: mci01
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -98,10 +94,6 @@ definitions:
       name:
         example: mci01
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -449,21 +441,6 @@ definitions:
       longitude:
         type: number
     type: object
-  model.MciCmdReq:
-    properties:
-      command:
-        example:
-        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
-          is: $client_ip'
-        items:
-          type: string
-        type: array
-      userName:
-        example: cb-user
-        type: string
-    required:
-    - command
-    type: object
   model.MciStatusInfo:
     properties:
       id:
@@ -564,10 +541,6 @@ definitions:
       name:
         example: mci01
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
