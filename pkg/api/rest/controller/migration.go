@@ -36,7 +36,7 @@ type MigrateInfraRequest struct {
 }
 
 type MigrateInfraResponse struct {
-	tbmodel.TbMciDynamicReq
+	tbmodel.TbMciInfo
 }
 
 // MigrateInfra godoc

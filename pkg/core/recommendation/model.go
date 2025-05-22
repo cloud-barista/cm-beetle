@@ -28,6 +28,30 @@ type RecommendedVmInfraInfoList struct {
 	TargetVmInfraList []RecommendedVmInfraInfo `json:"targetVmInfraList"`
 }
 
+type RecommendedNetworkInfo struct {
+	Status        string            `json:"status"`
+	Description   string            `json:"description"`
+	TargetNetwork tbmodel.TbVNetReq `json:"targetNetwork"`
+}
+
+type RecommendedNetworkInfoList struct {
+	Description       string                   `json:"description"`
+	Count             int                      `json:"count"`
+	TargetNetworkList []RecommendedNetworkInfo `json:"targetNetworkList"`
+}
+
+type RecommendedSecurityGroupInfo struct {
+	Status              string                     `json:"status"`
+	Description         string                     `json:"description"`
+	TargetSecurityGroup tbmodel.TbSecurityGroupReq `json:"targetSecurityGroup"`
+}
+
+type RecommendedSecurityGroupInfoList struct {
+	Description             string                         `json:"description"`
+	Count                   int                            `json:"count"`
+	TargetSecurityGroupList []RecommendedSecurityGroupInfo `json:"targetSecurityGroupList"`
+}
+
 type RecommendedInfraInfo struct {
 	Status      string                  `json:"status"`
 	Description string                  `json:"description"`

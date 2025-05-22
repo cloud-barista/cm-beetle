@@ -6,11 +6,11 @@ go 1.23.0
 // you can use the following guide.
 // For example, this is useful when you are developing cm-beetle and cb-tumblebug at the same time.
 // 1. [On go.mod] Add `replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug`
-// 2. [On shell] Copy cb-tumblebug by `rsync -av --exclude container-volume/ ../cb-tumblebug/ ./cb-tumblebug`
+// 2. [On shell] Copy cb-tumblebug by `rsync -av --exclude container-volume/ --exclude .git/ ../cb-tumblebug/ ./cb-tumblebug`
 // 3. [On Dockerfile] Add `COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug`
 // 4. [On shell] Run `make compose`
 // 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
-// replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
+replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
 // Keep this for cm-model contributors
 // replace github.com/cloud-barista/cm-model => ../cm-model
