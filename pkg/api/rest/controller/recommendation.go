@@ -117,7 +117,7 @@ func RecommendVMInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraInfoList, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
+	recommendedInfraInfoList, err := recommendation.RecommendVmInfraDynamic(csp, region, sourceInfra)
 	// recommendedInfraInfoList.TargetInfra.Name = "mmci01"
 
 	// [Ouput]

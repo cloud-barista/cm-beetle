@@ -33,7 +33,7 @@ type RecommendNetworkRequest struct {
 }
 
 type RecommendNetworkResponse struct {
-	recommendation.RecommendedNetworkInfoList
+	recommendation.RecommendedNetworkList
 }
 
 // RecommendNetwork godoc
@@ -46,8 +46,8 @@ type RecommendNetworkResponse struct {
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
 // @Tags [Recommendation] Resource
-// @Accept  json
-// @Produce  json
+// @Accept json
+// @Produce	json
 // @Param UserNetwork body RecommendNetworkRequest true "Specify the your network to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
@@ -185,7 +185,7 @@ func recommendNetwork(c echo.Context) (RecommendNetworkResponse, error) {
 	// ? But how to select the super network?
 	// * Currrently, a list of recommended networks is returned.
 
-	recommendedNetworks := []recommendation.RecommendedNetworkInfo{}
+	recommendedNetworks := []recommendation.RecommendedNetwork{}
 	if supernet10 != "" {
 
 		// Set subnets by the CIDR blocks from the source computing infra
@@ -199,11 +199,11 @@ func recommendNetwork(c echo.Context) (RecommendNetworkResponse, error) {
 		}
 
 		// Set the calculated supernet as the vNet
-		tempNetworkInfo := recommendation.RecommendedNetworkInfo{
+		tempNetworkInfo := recommendation.RecommendedNetwork{
 			Status:      "",
 			Description: "Recommended network information",
 			TargetNetwork: tbmodel.TbVNetReq{
-				Name:           "recommended-vnet-10dot",
+				Name:           "vnet-01",
 				Description:    "Recommended vNet for " + netutil.PrivateNetwork10Dot,
 				CidrBlock:      supernet10,
 				SubnetInfoList: subnets,
@@ -226,11 +226,11 @@ func recommendNetwork(c echo.Context) (RecommendNetworkResponse, error) {
 			})
 		}
 
-		tempNetworkInfo := recommendation.RecommendedNetworkInfo{
+		tempNetworkInfo := recommendation.RecommendedNetwork{
 			Status:      "",
 			Description: "Recommended network information",
 			TargetNetwork: tbmodel.TbVNetReq{
-				Name:           "recommended-vnet-172dot",
+				Name:           "vnet-01",
 				Description:    "Recommended vNet for " + netutil.PrivateNetwork172Dot,
 				CidrBlock:      supernet172,
 				SubnetInfoList: subnets,
@@ -253,11 +253,11 @@ func recommendNetwork(c echo.Context) (RecommendNetworkResponse, error) {
 		}
 
 		// Set the calculated supernet as the vNet
-		tempNetworkInfo := recommendation.RecommendedNetworkInfo{
+		tempNetworkInfo := recommendation.RecommendedNetwork{
 			Status:      "",
 			Description: "Recommended network information",
 			TargetNetwork: tbmodel.TbVNetReq{
-				Name:           "recommended-vnet-192dot",
+				Name:           "vnet-01",
 				Description:    "Recommended vNet for " + netutil.PrivateNetwork192Dot,
 				CidrBlock:      supernet192,
 				SubnetInfoList: subnets,
@@ -298,7 +298,7 @@ type FirewallRuleProperty struct { // note: reference command `sudo ufw status v
 }
 
 type RecommendSecurityGroupResponse struct {
-	recommendation.RecommendedSecurityGroupInfoList
+	recommendation.RecommendedSecurityGroupList
 }
 
 // RecommendSecurityGroup godoc
@@ -380,13 +380,13 @@ func recommendSecurityGroup(c echo.Context) (any, error) {
 	// [Process] Recommend the security group
 
 	// Create security group recommendations
-	recommendedSecurityGroups := []recommendation.RecommendedSecurityGroupInfo{}
+	recommendedSecurityGroups := []recommendation.RecommendedSecurityGroup{}
 
 	// ! To be updated with the actual model and real data
 	// ! A list of firewall rules(i.e., firewall table) will be entered (currently, it's a dummy single firewall table)
 
 	// Create a security group for all rules
-	recommendedSecurityGroup := recommendation.RecommendedSecurityGroupInfo{
+	recommendedSecurityGroup := recommendation.RecommendedSecurityGroup{
 		Status:      string(recommendation.FullyRecommended),
 		Description: "Security group containing all firewall rules",
 		TargetSecurityGroup: tbmodel.TbSecurityGroupReq{
@@ -418,7 +418,7 @@ func generateSecurityGroupRules(rules []FirewallRuleProperty) *[]tbmodel.TbFirew
 
 	for _, rule := range rules {
 
-		// Skip 'deny' rules because they are not supported in SecurityGroup
+		// Skip 'deny' rules (note: SecurityGroup does not support adding 'deny' rules)
 		if rule.Action == "deny" {
 			continue
 		}
