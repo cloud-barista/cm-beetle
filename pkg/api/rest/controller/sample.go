@@ -13,232 +13,224 @@ limitations under the License.
 
 package controller
 
-import (
-	"net/http"
-	"strconv"
+// // [Note]
+// // No RequestBody required for "GET /users"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	"github.com/labstack/echo/v4"
-)
+// type GetUsersResponse struct {
+// 	Users []model.MyUser `json:"users"`
+// }
 
-// [Note]
-// No RequestBody required for "GET /users"
+// // GetUsers godoc
+// // @ID GetUsers
+// // @Summary Get a list of users
+// // @Description Get information of all users.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 200 {object} GetUsersResponse "(sample) This is a sample description for success response in Swagger UI"
+// // @Failure 404 {object} object "User Not Found"
+// // @Router /sample/users [get]
+// func GetUsers(c echo.Context) error {
 
-type GetUsersResponse struct {
-	Users []model.MyUser `json:"users"`
-}
+// 	// In this example, hardcoded data is returned
+// 	users := []model.MyUser{
+// 		{ID: 1, Name: "John Doe", Email: "john@example.com"},
+// 		{ID: 2, Name: "Anne Jacqueline Hathaway", Email: "Anne@example.com"},
+// 		{ID: 3, Name: "Robert John Downey Jr.", Email: "Robert@example.com"},
+// 	}
+// 	return c.JSON(http.StatusOK, users)
+// }
 
-// GetUsers godoc
-// @ID GetUsers
-// @Summary Get a list of users
-// @Description Get information of all users.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} GetUsersResponse "(sample) This is a sample description for success response in Swagger UI"
-// @Failure 404 {object} object "User Not Found"
-// @Router /sample/users [get]
-func GetUsers(c echo.Context) error {
+// // [Note]
+// // No RequestBody required for "GET /users"
 
-	// In this example, hardcoded data is returned
-	users := []model.MyUser{
-		{ID: 1, Name: "John Doe", Email: "john@example.com"},
-		{ID: 2, Name: "Anne Jacqueline Hathaway", Email: "Anne@example.com"},
-		{ID: 3, Name: "Robert John Downey Jr.", Email: "Robert@example.com"},
-	}
-	return c.JSON(http.StatusOK, users)
-}
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type GetUserResponse struct {
+// 	model.MyUser
+// }
 
-// [Note]
-// No RequestBody required for "GET /users"
+// // GetUser godoc
+// // @ID GetUser
+// // @Summary Get specific user information
+// // @Description Get information of a user with a specific ID.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param id path int true "User ID"
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 200 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
+// // @Failure 404 {object} object "User Not Found"
+// // @Router /sample/users/{id} [get]
+// func GetUser(c echo.Context) error {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
+// 	}
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type GetUserResponse struct {
-	model.MyUser
-}
+// 	// Implement user retrieval logic (this is a simple example)
+// 	if id != 1 {
+// 		return c.JSON(http.StatusNotFound, "User not found")
+// 	}
 
-// GetUser godoc
-// @ID GetUser
-// @Summary Get specific user information
-// @Description Get information of a user with a specific ID.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param id path int true "User ID"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
-// @Failure 404 {object} object "User Not Found"
-// @Router /sample/users/{id} [get]
-func GetUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid ID format")
-	}
+// 	// In this example, hardcoded data is returned
+// 	user := model.MyUser{ID: 1, Name: "John Doe", Email: "john@example.com"}
+// 	return c.JSON(http.StatusOK, user)
+// }
 
-	// Implement user retrieval logic (this is a simple example)
-	if id != 1 {
-		return c.JSON(http.StatusNotFound, "User not found")
-	}
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type CreateUserRequest struct {
+// 	model.MyUser
+// }
 
-	// In this example, hardcoded data is returned
-	user := model.MyUser{ID: 1, Name: "John Doe", Email: "john@example.com"}
-	return c.JSON(http.StatusOK, user)
-}
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type CreateUserResponse struct {
+// 	model.MyUser
+// }
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type CreateUserRequest struct {
-	model.MyUser
-}
+// // CreateUser godoc
+// // @ID CreateUser
+// // @Summary Create a new user
+// // @Description Create a new user with the given information.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param User body CreateUserRequest true "User information"
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 201 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
+// // @Failure 400 {object} object "Invalid Request"
+// // @Router /sample/users [post]
+// func CreateUser(c echo.Context) error {
+// 	u := new(model.MyUser)
+// 	if err := c.Bind(u); err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid Request")
+// 	}
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type CreateUserResponse struct {
-	model.MyUser
-}
+// 	// Implement user creation logic (this is a simple example)
+// 	u.ID = 100 // Unique ID generation logic needed in actual implementation
 
-// CreateUser godoc
-// @ID CreateUser
-// @Summary Create a new user
-// @Description Create a new user with the given information.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param User body CreateUserRequest true "User information"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 201 {object} GetUserResponse "(Sample) This is a sample description for success response in Swagger UI"
-// @Failure 400 {object} object "Invalid Request"
-// @Router /sample/users [post]
-func CreateUser(c echo.Context) error {
-	u := new(model.MyUser)
-	if err := c.Bind(u); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid Request")
-	}
+// 	return c.JSON(http.StatusCreated, u)
+// }
 
-	// Implement user creation logic (this is a simple example)
-	u.ID = 100 // Unique ID generation logic needed in actual implementation
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type UpdateUserRequest struct {
+// 	model.MyUser
+// }
 
-	return c.JSON(http.StatusCreated, u)
-}
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type UpdateUserResponse struct {
+// 	model.MyUser
+// }
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type UpdateUserRequest struct {
-	model.MyUser
-}
+// // UpdateUser godoc
+// // @ID UpdateUser
+// // @Summary Update a user
+// // @Description Update a user with the given information.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param id path int true "User ID"
+// // @Param User body UpdateUserRequest true "User information to update"
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 201 {object} UpdateUserResponse "(Sample) This is a sample description for success response in Swagger UI"
+// // @Failure 400 {object} object "Invalid Request"
+// // @Router /sample/users/{id} [put]
+// func UpdateUser(c echo.Context) error {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
+// 	}
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type UpdateUserResponse struct {
-	model.MyUser
-}
+// 	u := new(model.MyUser)
+// 	if err := c.Bind(u); err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid request")
+// 	}
 
-// UpdateUser godoc
-// @ID UpdateUser
-// @Summary Update a user
-// @Description Update a user with the given information.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param id path int true "User ID"
-// @Param User body UpdateUserRequest true "User information to update"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 201 {object} UpdateUserResponse "(Sample) This is a sample description for success response in Swagger UI"
-// @Failure 400 {object} object "Invalid Request"
-// @Router /sample/users/{id} [put]
-func UpdateUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid ID format")
-	}
+// 	// Implement user update logic (this is a simple example)
+// 	u.ID = id // Update the information of the user with the corresponding ID in the actual implementation
 
-	u := new(model.MyUser)
-	if err := c.Bind(u); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid request")
-	}
+// 	return c.JSON(http.StatusOK, u)
+// }
 
-	// Implement user update logic (this is a simple example)
-	u.ID = id // Update the information of the user with the corresponding ID in the actual implementation
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type PatchUserRequest struct {
+// 	model.MyUser
+// }
 
-	return c.JSON(http.StatusOK, u)
-}
+// // [Note]
+// // Struct Embedding is used to inherit the fields of MyUser
+// type PatchUserResponse struct {
+// 	model.MyUser
+// }
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type PatchUserRequest struct {
-	model.MyUser
-}
+// // PatchUser godoc
+// // @ID PatchUser
+// // @Summary Patch a user
+// // @Description Patch a user with the given information.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param id path int true "User ID"
+// // @Param User body PatchUserRequest true "User information to update"
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 200 {object} PatchUserResponse "(Sample) This is a sample description for success response in Swagger UI"
+// // @Failure 400 {object} object "Invalid Request"
+// // @Failure 404 {object} object "User Not Found"
+// // @Router /sample/users/{id} [patch]
+// func PatchUser(c echo.Context) error {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
+// 	}
 
-// [Note]
-// Struct Embedding is used to inherit the fields of MyUser
-type PatchUserResponse struct {
-	model.MyUser
-}
+// 	u := new(model.MyUser)
+// 	if err := c.Bind(u); err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid request")
+// 	}
 
-// PatchUser godoc
-// @ID PatchUser
-// @Summary Patch a user
-// @Description Patch a user with the given information.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param id path int true "User ID"
-// @Param User body PatchUserRequest true "User information to update"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} PatchUserResponse "(Sample) This is a sample description for success response in Swagger UI"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "User Not Found"
-// @Router /sample/users/{id} [patch]
-func PatchUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid ID format")
-	}
+// 	// Implement user update logic (this is a simple example)
+// 	u.ID = id // Update the information of the user with the corresponding ID in the actual implementation
 
-	u := new(model.MyUser)
-	if err := c.Bind(u); err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid request")
-	}
+// 	return c.JSON(http.StatusOK, u)
+// }
 
-	// Implement user update logic (this is a simple example)
-	u.ID = id // Update the information of the user with the corresponding ID in the actual implementation
+// // [Note]
+// // No RequestBody required for "DELETE /users/{id}"
 
-	return c.JSON(http.StatusOK, u)
-}
+// // [Note]
+// // No ResponseBody required for "DELETE /users/{id}"
 
-// [Note]
-// No RequestBody required for "DELETE /users/{id}"
+// // DeleteUser godoc
+// // @ID DeleteUser
+// // @Summary Delete a user
+// // @Description Delete a user with the given information.
+// // @Tags [Sample API] Users
+// // @Accept  json
+// // @Produce  json
+// // @Param id path int true "User ID"
+// // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// // @Success 200 {string} string "User deletion successful"
+// // @Failure 400 {object} object "Invalid Request"
+// // @Failure 404 {object} object "User Not Found"
+// // @Router /sample/users/{id} [delete]
+// func DeleteUser(c echo.Context) error {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		return c.JSON(http.StatusBadRequest, "Invalid ID format")
+// 	}
 
-// [Note]
-// No ResponseBody required for "DELETE /users/{id}"
+// 	// Implement user update logic (this is a simple example)
+// 	// In this example, hardcoded data is returned
+// 	user := model.MyUser{ID: 1, Name: "John Doe", Email: "john@example.com"}
+// 	if id != user.ID {
+// 		return c.JSON(http.StatusNotFound, "User not found")
+// 	}
 
-// DeleteUser godoc
-// @ID DeleteUser
-// @Summary Delete a user
-// @Description Delete a user with the given information.
-// @Tags [Sample API] Users
-// @Accept  json
-// @Produce  json
-// @Param id path int true "User ID"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {string} string "User deletion successful"
-// @Failure 400 {object} object "Invalid Request"
-// @Failure 404 {object} object "User Not Found"
-// @Router /sample/users/{id} [delete]
-func DeleteUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "Invalid ID format")
-	}
-
-	// Implement user update logic (this is a simple example)
-	// In this example, hardcoded data is returned
-	user := model.MyUser{ID: 1, Name: "John Doe", Email: "john@example.com"}
-	if id != user.ID {
-		return c.JSON(http.StatusNotFound, "User not found")
-	}
-
-	return c.JSON(http.StatusOK, "User deletion successful")
-}
+// 	return c.JSON(http.StatusOK, "User deletion successful")
+// }

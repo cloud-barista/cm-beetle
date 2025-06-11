@@ -22,9 +22,10 @@ type RecommendedVmInfra struct {
 	Status                  string                       `json:"status"`
 	Description             string                       `json:"description"`
 	TargetVmInfra           tbmodel.TbMciReq             `json:"targetVmInfra"`
-	TargetNetwork           tbmodel.TbVNetReq            `json:"targetNetwork"`
-	TargetVmSpecList        []tbmodel.TbSpecReq          `json:"targetVmSpecList"`
-	TargetVmOsImageList     []tbmodel.TbImageReq         `json:"targetVmOsImageList"`
+	TargetVNet              tbmodel.TbVNetReq            `json:"targetVNet"`
+	TargetSshKey            tbmodel.TbSshKeyReq          `json:"targetSshKey"`
+	TargetVmSpecList        []tbmodel.TbSpecInfo         `json:"targetVmSpecList"`
+	TargetVmOsImageList     []tbmodel.TbImageInfo        `json:"targetVmOsImageList"`
 	TargetSecurityGroupList []tbmodel.TbSecurityGroupReq `json:"targetSecurityGroupList"`
 }
 
@@ -42,19 +43,19 @@ type RecommendedVmInfraDynamicList struct {
 	TargetVmInfraList []RecommendedVmInfraDynamic `json:"targetVmInfraList"`
 }
 
-// RecommendedNetwork represents the recommended network information.
+// RecommendedVNet represents the recommended virtual network information.
 // * May be mainly used this object
-type RecommendedNetwork struct {
-	Status        string            `json:"status"`
-	Description   string            `json:"description"`
-	TargetNetwork tbmodel.TbVNetReq `json:"targetNetwork"`
+type RecommendedVNet struct {
+	Status      string            `json:"status"`
+	Description string            `json:"description"`
+	TargetVNet  tbmodel.TbVNetReq `json:"targetVNet"`
 }
 
-// RecommendedNetworkList represents a list of recommended network information.
-type RecommendedNetworkList struct {
-	Description       string               `json:"description"`
-	Count             int                  `json:"count"`
-	TargetNetworkList []RecommendedNetwork `json:"targetNetworkList"`
+// RecommendedVNetList represents a list of recommended virtual network information.
+type RecommendedVNetList struct {
+	Description    string            `json:"description"`
+	Count          int               `json:"count"`
+	TargetVNetList []RecommendedVNet `json:"targetVNetList"`
 }
 
 // RecommendedSecurityGroup represents the recommended security group information.
@@ -71,32 +72,37 @@ type RecommendedSecurityGroupList struct {
 	TargetSecurityGroupList []RecommendedSecurityGroup `json:"targetSecurityGroupList"`
 }
 
-// RecommendedVmSpec represents the recommended virtual machine specification information.
+// RecommendedVmSpec represents the recommended virtual machine specification information for a single server.
 type RecommendedVmSpec struct {
-	Status       string            `json:"status"`
-	Description  string            `json:"description"`
-	TargetVmSpec tbmodel.TbSpecReq `json:"targetVmSpec"`
+	Status        string               `json:"status"`
+	SourceServer  string               `json:"sourceServer"`
+	Description   string               `json:"description"`
+	Count         int                  `json:"count"`
+	TargetVmSpecs []tbmodel.TbSpecInfo `json:"targetVmSpecs"`
 }
 
-// RecommendedVmSpecList represents a list of recommended virtual machine specification information.
+// RecommendedVmSpecList represents a collection of recommended VM specifications across multiple source servers.
 type RecommendedVmSpecList struct {
-	Description      string              `json:"description"`
-	Count            int                 `json:"count"`
-	TargetVmSpecList []RecommendedVmSpec `json:"targetVmSpecList"`
+	Description           string              `json:"description"`
+	Count                 int                 `json:"count"`
+	RecommendedVmSpecList []RecommendedVmSpec `json:"recommendedVmSpecList"`
 }
 
-// RecommendedVmOsImage represents the recommended virtual machine OS image information.
+// RecommendedVmOsImage represents the recommended virtual machine OS image information for a single server.
 type RecommendedVmOsImage struct {
-	Status          string             `json:"status"`
-	Description     string             `json:"description"`
-	TargetVmOsImage tbmodel.TbImageReq `json:"targetVmOsImage"`
+	Status          string              `json:"status"`
+	SourceServer    string              `json:"sourceServer"`
+	Description     string              `json:"description"`
+	TargetVmOsImage tbmodel.TbImageInfo `json:"targetVmOsImage"`
+	// Count            int                   `json:"count"`
+	// TargetVmOsImages []tbmodel.TbImageInfo `json:"targetVmOsImages"`
 }
 
-// RecommendedVmOsImageList represents a list of recommended virtual machine OS image information.
+// RecommendedVmOsImageList represents a collection of recommended VM OS images across multiple source servers.
 type RecommendedVmOsImageList struct {
-	Description         string                 `json:"description"`
-	Count               int                    `json:"count"`
-	TargetVmOsImageList []RecommendedVmOsImage `json:"targetVmOsImageList"`
+	Description              string                 `json:"description"`
+	Count                    int                    `json:"count"`
+	RecommendedVmOsImageList []RecommendedVmOsImage `json:"recommendedVmOsImageList"`
 }
 
 /*

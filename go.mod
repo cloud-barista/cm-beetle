@@ -10,19 +10,19 @@ go 1.23.0
 // 3. [On Dockerfile] Add `COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug`
 // 4. [On shell] Run `make compose`
 // 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
-replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
+// replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
 // Keep this for cm-model contributors
 // replace github.com/cloud-barista/cm-model => ../cm-model
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.10.6
+	github.com/cloud-barista/cb-tumblebug v0.10.7-0.20250610073645-e8812ed5d2e8
 	github.com/cloud-barista/cm-model v0.0.3
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/labstack/echo/v4 v4.13.3
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/viper v1.19.0
@@ -64,6 +64,8 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.5.6 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
@@ -118,6 +120,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 	k8s.io/api v0.31.3 // indirect
 	k8s.io/apimachinery v0.31.3 // indirect
 	k8s.io/client-go v0.31.3 // indirect

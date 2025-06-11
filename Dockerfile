@@ -17,7 +17,7 @@ WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 # 3. [On Dockerfile] Add `COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug`
 # 4. [On shell] Run `make compose`
 # 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
-COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug
+# COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug
 
 # Copy dependency files to the container
 COPY go.mod go.sum go.work go.work.sum LICENSE ./

@@ -55,21 +55,24 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.10.6
+    image: cloudbaristaorg/cb-tumblebug:edge
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
-    #   dockerfile: Dockerfile    
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network
       - external_network
     ports:
       - 1323:1323
-    depends_on: 
-      - cb-tumblebug-etcd
-      # - cb-tumblebug-etcd-conf
-      - cb-spider      
+    depends_on:
+      cb-tumblebug-etcd:
+        condition: service_started
+      cb-spider:
+        condition: service_started
+      cb-tumblebug-postgres:
+        condition: service_healthy  
     volumes:
       - ./cb-tumblebug/conf/:/app/conf/
       - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
@@ -82,9 +85,14 @@ services:
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
+      - TB_POSTGRES_ENDPOINT=cb-tumblebug-postgres:5432
+      - TB_POSTGRES_DATABASE=cb_tumblebug
+      - TB_POSTGRES_USER=cb_tumblebug
+      - TB_POSTGRES_PASSWORD=cb_tumblebug
       # - TB_SQLITE_URL=localhost:3306 
       # - TB_SQLITE_DATABASE=cb_tumblebug 
       # - TB_SQLITE_USER=cb_tumblebug 
@@ -158,9 +166,32 @@ services:
       retries: 3
       start_period: 10s
 
+  # CB-Tumblebug PostgreSQL
+  # This is used for storing CB-Tumblebug Spec and Image.
+  cb-tumblebug-postgres:
+    image: postgres:16-alpine
+    container_name: cb-tumblebug-postgres
+    restart: always
+    networks:
+      - internal_network
+    ports:
+      - 5432:5432
+    volumes:
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=cb_tumblebug
+      - POSTGRES_PASSWORD=cb_tumblebug
+      - POSTGRES_DB=cb_tumblebug
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.10.2
+    image: cloudbaristaorg/cb-spider:0.10.7
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -178,7 +209,7 @@ services:
       - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - PLUGIN_SW=OFF
-      - SERVER_ADDRESS=localhost
+      - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
       # - API_USERNAME=
       # - API_PASSWORD=
