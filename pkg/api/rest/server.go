@@ -227,10 +227,10 @@ func RunServer(port string) {
 	gRecommendation.POST("/containerInfra", controller.RecommendContainerInfra)
 
 	// Recommedation APIs for resources for VM infrastructure
-	gRecommendation.POST("/resource/networks", controller.RecommendVNet)
-	gRecommendation.POST("/resource/securityGroups", controller.RecommendSecurityGroups)
-	gRecommendation.POST("/resource/vmSpecs", controller.RecommendVmSpecs)
-	gRecommendation.POST("/mcresourcei/vmOsImages", controller.RecommendVmOsImages)
+	gRecommendation.POST("/resources/networks", controller.RecommendVNet)
+	gRecommendation.POST("/resources/securityGroups", controller.RecommendSecurityGroups)
+	gRecommendation.POST("/resources/vmSpecs", controller.RecommendVmSpecs)
+	gRecommendation.POST("/resources/vmOsImages", controller.RecommendVmOsImages)
 
 	/*
 	 * API group for computing infra migration

@@ -1354,7 +1354,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/resource/securityGroups": {
+        "/recommendation/resources/securityGroups": {
             "post": {
                 "description": "Recommend an appropriate security group for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
@@ -1427,7 +1427,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/resource/vNet": {
+        "/recommendation/resources/vNet": {
             "post": {
                 "description": "Recommend an appropriate virtual network for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
@@ -1500,7 +1500,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/resource/vmOsImages": {
+        "/recommendation/resources/vmOsImages": {
             "post": {
                 "description": "Recommend an appropriate OS image for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
@@ -1573,7 +1573,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/resource/vmSpecs": {
+        "/recommendation/resources/vmSpecs": {
             "post": {
                 "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
@@ -1949,6 +1949,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "targetSecurityGroupList": {
@@ -3953,6 +3956,12 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "status": {
                     "type": "string"
                 },
@@ -4007,7 +4016,7 @@ const docTemplate = `{
                 "status": {
                     "type": "string"
                 },
-                "targetVmSpecs": {
+                "targetVmSpecList": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.TbSpecInfo"

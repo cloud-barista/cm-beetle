@@ -358,7 +358,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 		}
 
 		// Check duplicates and append the recommended security groups
-		exists, _ = containSg(recommendedSecurityGroupList, recommendedSg)
+		exists, _, _ = containSg(recommendedSecurityGroupList, recommendedSg)
 		if !exists {
 			// If the security group does not exist, set a name to indicate a dependency between resources.
 			recommendedSg.Name = fmt.Sprintf("mig-sg-%02d", len(recommendedSecurityGroupList)+1)
@@ -1094,14 +1094,33 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	// TODO: To be updated with the actual model and real data
 	// TODO: A list of firewall rules(i.e., firewall table) will be entered (currently, it's a dummy single firewall table)
 
-	sgRules := generateSecurityGroupRules(firewallRules)
+	sgRules := []tbmodel.TbFirewallRuleInfo{}
+	// 1. Set default security group rules if no firewall rules are provided
+	if len(firewallRules) == 0 {
+		log.Warn().Msg("no firewall rules provided, using default rules")
+		// Allow all outbound traffic and deny all inbound traffic
+		// TODO: Check if the default rules are OK.
+		sgRules = []tbmodel.TbFirewallRuleInfo{
+			{
+				Direction:  "outbound",
+				IPProtocol: "all",
+				CIDR:       "0.0.0.0/0", // Allow all outbound traffic
+				FromPort:   "0",
+				ToPort:     "0",
+			},
+		}
+	} else {
+		sgRules = generateSecurityGroupRules(firewallRules)
+	}
 
 	// [Output]
 	// Create a security group for all rules
 	recommendedSecurityGroup = tbmodel.TbSecurityGroupReq{
-		Name:          "INSERT_YOUR_SECURITY_GROUP_NAME", // TODO: Set a name for the security group
-		Description:   "Recommended security group for migration",
-		FirewallRules: sgRules,
+		Name:           "INSERT_YOUR_SECURITY_GROUP_NAME",
+		VNetId:         "INSERT_YOUR_VNET_ID",
+		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
+		Description:    fmt.Sprintf("Recommended security group for %s", server.Hostname),
+		FirewallRules:  &sgRules,
 	}
 
 	log.Debug().Msgf("recommendedSecurityGroup: %+v", recommendedSecurityGroup)
@@ -1109,75 +1128,94 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	return recommendedSecurityGroup, nil
 }
 
-func RecommendSecurityGroups(csp string, region string, servers []inframodel.ServerProperty) ([]tbmodel.TbSecurityGroupReq, error) {
+func RecommendSecurityGroups(csp string, region string, servers []inframodel.ServerProperty) (RecommendedSecurityGroupList, error) {
 
-	var emptyRes = []tbmodel.TbSecurityGroupReq{}
-	var recommendedSecurityGroupList = []tbmodel.TbSecurityGroupReq{}
+	var emptyRet = RecommendedSecurityGroupList{}
+	var recommendedSecurityGroupList = RecommendedSecurityGroupList{}
 
 	// [Input]
 	ok, err := IsValidCspAndRegion(csp, region)
 	if !ok {
 		log.Error().Err(err).Msgf("invalid provider (%s) or region (%s)", csp, region)
-		return emptyRes, err
+		return emptyRet, err
 	}
 
+	// [Process] Recommend the security group for each server
+	var tempRecSgList = []tbmodel.TbSecurityGroupReq{}
+	var targetSecurityGroupList = []RecommendedSecurityGroup{}
 	for _, server := range servers {
 
-		// TODO: To be updated, the security group in onpremise model.
-		// server.FirewallRules = dummyFirewallRules
-
-		firewallRules := dummyFirewallRules
-
-		// Use the provided firewall rules or fall back to dummy data if empty
-		if len(firewallRules) == 0 {
-			log.Warn().Msg("no firewall rules provided, using sample data")
-			firewallRules = dummyFirewallRules
+		// Recommend a security group for the server
+		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, server)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to recommend security group for server: %+v", server)
+			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", server.Hostname)
+			recommendedTargetSg.FirewallRules = nil // No rules if recommendation fails
 		}
 
-		// [Process] Recommend the security group
+		// Check duplicates and append the recommended security group
+		exists, idx, _ := containSg(tempRecSgList, recommendedTargetSg)
 
-		// Create security group recommendations
-		// TODO: To be updated with the actual model and real data
-		// TODO: A list of firewall rules(i.e., firewall table) will be entered (currently, it's a dummy single firewall table)
-
-		sgRules := generateSecurityGroupRules(firewallRules)
-
-		// [Output]
-		// Create a security group for all rules
-		recommendedSecurityGroup := tbmodel.TbSecurityGroupReq{
-			Name:          "INSERT_YOUR_SECURITY_GROUP_NAME", // TODO: Set a name for the security group
-			Description:   "Recommended security group for migration",
-			FirewallRules: sgRules,
-		}
-
-		// Check duplicates
-		exists, _ := containSg(recommendedSecurityGroupList, recommendedSecurityGroup)
-
-		// Append the recommended security group if it does not exist
+		// If not exists, append the recommended security group
+		// If exists, just append the hostname to the existing security group
 		if !exists {
-			// If the security group does not exist, set a name to indicate a dependency between resources.
-			recommendedSecurityGroup.Name = "INSERT_YOUR_SECURITY_GROUP_NAME" // TODO: Set a name for the security group
-			recommendedSecurityGroup.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
-			recommendedSecurityGroup.Description = fmt.Sprintf("Recommended security group for %s", server.Hostname)
+			// Note: This is a temporary list for checking duplicates
+			tempRecSgList = append(tempRecSgList, recommendedTargetSg)
 
-			// * Set a name to indicate a dependency between resources.
-			recommendedSecurityGroup.VNetId = "INSERT_YOUR_VNET_ID" // Set the vNet ID to the security group
+			// Create a temporary recommended security group
+			tempRecommendedSecurityGroup := RecommendedSecurityGroup{
+				SourceServers:       []string{server.Hostname}, // Start with the current server's hostname
+				Description:         fmt.Sprintf("Recommended security group"),
+				TargetSecurityGroup: recommendedTargetSg,
+			}
 
-			// Set the security group to the response body
-			recommendedSecurityGroupList = append(recommendedSecurityGroupList, recommendedSecurityGroup)
+			// Set status
+			if recommendedTargetSg.FirewallRules != nil {
+				tempRecommendedSecurityGroup.Status = string(FullyRecommended)
+			} else {
+				tempRecommendedSecurityGroup.Status = string(NothingRecommended)
+			}
+
+			// Append the recommended security group to the list
+			targetSecurityGroupList = append(targetSecurityGroupList, tempRecommendedSecurityGroup)
+		} else {
+			// Just append the hostname to the existing security group
+			targetSecurityGroupList[idx].SourceServers = append(targetSecurityGroupList[idx].SourceServers, server.Hostname)
 		}
 	}
-	log.Debug().Msgf("recommendedSecurityGroupList: %+v", recommendedSecurityGroupList)
+
+	// [Output]
+	countFailed := 0
+	for _, recSg := range targetSecurityGroupList {
+		if recSg.Status == string(NothingRecommended) {
+			countFailed++
+		}
+	}
+
+	recommendedSecurityGroupList.Count = len(targetSecurityGroupList)
+	if countFailed == recommendedSecurityGroupList.Count {
+		recommendedSecurityGroupList.Status = string(NothingRecommended)
+		recommendedSecurityGroupList.Description = "Nothing recommended security groups (depulicated) for the servers in the source computing infra"
+	} else if countFailed == 0 {
+		recommendedSecurityGroupList.Status = string(FullyRecommended)
+		recommendedSecurityGroupList.Description = "Recommended security groups (depulicated) for the servers in the source computing infra"
+	} else {
+		recommendedSecurityGroupList.Status = string(PartiallyRecommended)
+		recommendedSecurityGroupList.Description = "Partially recommended security groups (depulicated) for the servers in the source computing infra"
+	}
+
+	log.Debug().Msgf("recommendedSecurityGroupList: %+v", tempRecSgList)
 
 	return recommendedSecurityGroupList, nil
 }
 
-func containSg(sgList []tbmodel.TbSecurityGroupReq, sg tbmodel.TbSecurityGroupReq) (bool, tbmodel.TbSecurityGroupReq) {
+func containSg(sgList []tbmodel.TbSecurityGroupReq, sg tbmodel.TbSecurityGroupReq) (bool, int, tbmodel.TbSecurityGroupReq) {
 
 	// Check duplicates and append the recommended security group
 	temp := tbmodel.TbSecurityGroupReq{}
 	exists := false
-	for _, sgItem := range sgList {
+	idx := -1
+	for i, sgItem := range sgList {
 		// Both SGs have rules defined
 		if sgItem.FirewallRules != nil && sg.FirewallRules != nil {
 			// Quick check if they have the same number of rules
@@ -1206,13 +1244,14 @@ func containSg(sgList []tbmodel.TbSecurityGroupReq, sg tbmodel.TbSecurityGroupRe
 				if areAllRulesSame {
 					exists = true
 					temp = sgItem
+					idx = i
 					break
 				}
 			}
 		}
 	}
 
-	return exists, temp
+	return exists, idx, temp
 }
 
 // TODO: To be replaced with the actual model
@@ -1245,7 +1284,7 @@ func formatCIDR(cidr string) string {
 }
 
 // generateSecurityGroupRules converts FirewallRuleProperty to tbmodel.TbFirewallRuleInfo
-func generateSecurityGroupRules(rules []FirewallRuleProperty) *[]tbmodel.TbFirewallRuleInfo {
+func generateSecurityGroupRules(rules []FirewallRuleProperty) []tbmodel.TbFirewallRuleInfo {
 	var tbRules []tbmodel.TbFirewallRuleInfo
 
 	for _, rule := range rules {
@@ -1400,7 +1439,7 @@ func generateSecurityGroupRules(rules []FirewallRuleProperty) *[]tbmodel.TbFirew
 		log.Debug().Msgf("Original FirewallRule: %+v", rule)
 	}
 
-	return &tbRules
+	return tbRules
 }
 
 var dummyFirewallRules = []FirewallRuleProperty{

@@ -118,7 +118,7 @@ func (c *TumblebugClient) CreateNamespace(nsReq tbmodel.NsReq) (tbmodel.NsInfo, 
 		method,
 		url,
 		nil,
-		false,
+		common.SetUseBody(reqBody),
 		&reqBody,
 		&resBody,
 		common.ShortDuration,
@@ -360,7 +360,7 @@ func (c *TumblebugClient) DeleteSecurityGroup(nsId, securityGroupId string) (tbm
 	return resBody, nil
 }
 
-// CreateVmSpec creates a new VM specification in the specified namespace
+// ReadVmSpec retrieves information about a specific VM Spec in the specified namespace
 func (c *TumblebugClient) ReadVmSpec(nsId, vmSpecId string) (tbmodel.TbSpecInfo, error) {
 	log.Debug().Msg("Retrieving VM Spec")
 

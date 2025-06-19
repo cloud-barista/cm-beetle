@@ -55,7 +55,7 @@ type RecommendVNetResponse struct {
 // @Success 200 {object} RecommendVNetResponse "The result of recommended vNet"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/resource/vNet [post]
+// @Router /recommendation/resources/vNet [post]
 func RecommendVNet(c echo.Context) error {
 
 	// [Input]
@@ -149,7 +149,7 @@ type RecommendSecurityGroupResponse struct {
 // @Success 200 {object} RecommendSecurityGroupResponse "The result of recommended security groups"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/resource/securityGroups [post]
+// @Router /recommendation/resources/securityGroups [post]
 func RecommendSecurityGroups(c echo.Context) error {
 
 	// [Input]
@@ -186,22 +186,9 @@ func RecommendSecurityGroups(c echo.Context) error {
 	}
 
 	// [Output]
-	res := RecommendSecurityGroupResponse{}
-	res.Description = "Recommended security group information list"
-	res.Count = len(ret)
+	log.Debug().Msgf("recommendedSecurityGroupsList: %v", ret)
 
-	tempList := []recommendation.RecommendedSecurityGroup{}
-	for _, sg := range ret {
-		tempList = append(tempList, recommendation.RecommendedSecurityGroup{
-			Status:              string(recommendation.FullyRecommended),
-			Description:         sg.Description,
-			TargetSecurityGroup: sg,
-		})
-	}
-	res.TargetSecurityGroupList = tempList
-
-	return c.JSON(http.StatusOK, res)
-
+	return c.JSON(http.StatusOK, ret)
 }
 
 type RecommendVmSpecResponse struct {
@@ -227,7 +214,7 @@ type RecommendVmSpecResponse struct {
 // @Success 200 {object} RecommendVmSpecResponse "The result of recommended VM specifications"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/resource/vmSpecs [post]
+// @Router /recommendation/resources/vmSpecs [post]
 func RecommendVmSpecs(c echo.Context) error {
 
 	// [Input]
@@ -259,11 +246,11 @@ func RecommendVmSpecs(c echo.Context) error {
 
 		// Initialize a temporary RecommendedVmSpec object
 		temp := recommendation.RecommendedVmSpec{
-			SourceServer:  server.Hostname,
-			Description:   fmt.Sprintf("Recommended VM specs for server %d: %s", i+1, server.Hostname),
-			Status:        string(recommendation.NothingRecommended),
-			Count:         0,
-			TargetVmSpecs: []tbmodel.TbSpecInfo{},
+			SourceServer:     server.Hostname,
+			Description:      fmt.Sprintf("Recommended VM specs for server %d: %s", i+1, server.Hostname),
+			Status:           string(recommendation.NothingRecommended),
+			Count:            0,
+			TargetVmSpecList: []tbmodel.TbSpecInfo{},
 		}
 
 		// Recommend VM specs for the server
@@ -283,7 +270,7 @@ func RecommendVmSpecs(c echo.Context) error {
 		// Update the temporary object with the recommended specs
 		temp.Status = string(recommendation.FullyRecommended)
 		temp.Count = count
-		temp.TargetVmSpecs = specList
+		temp.TargetVmSpecList = specList
 		recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
 	}
 
@@ -317,7 +304,7 @@ type RecommendVmOsImageResponse struct {
 // @Success 200 {object} RecommendVmOsImageResponse "The result of recommended VM OS images"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/resource/vmOsImages [post]
+// @Router /recommendation/resources/vmOsImages [post]
 func RecommendVmOsImages(c echo.Context) error {
 	// [Input]
 	var req RecommendVmInfraRequest

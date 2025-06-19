@@ -61,12 +61,14 @@ type RecommendedVNetList struct {
 // RecommendedSecurityGroup represents the recommended security group information.
 type RecommendedSecurityGroup struct {
 	Status              string                     `json:"status"`
+	SourceServers       []string                   `json:"sourceServers"`
 	Description         string                     `json:"description"`
 	TargetSecurityGroup tbmodel.TbSecurityGroupReq `json:"targetSecurityGroup"`
 }
 
 // RecommendedSecurityGroupList represents a list of recommended security group information.
 type RecommendedSecurityGroupList struct {
+	Status                  string                     `json:"status"`
 	Description             string                     `json:"description"`
 	Count                   int                        `json:"count"`
 	TargetSecurityGroupList []RecommendedSecurityGroup `json:"targetSecurityGroupList"`
@@ -74,11 +76,11 @@ type RecommendedSecurityGroupList struct {
 
 // RecommendedVmSpec represents the recommended virtual machine specification information for a single server.
 type RecommendedVmSpec struct {
-	Status        string               `json:"status"`
-	SourceServer  string               `json:"sourceServer"`
-	Description   string               `json:"description"`
-	Count         int                  `json:"count"`
-	TargetVmSpecs []tbmodel.TbSpecInfo `json:"targetVmSpecs"`
+	Status           string               `json:"status"`
+	SourceServer     string               `json:"sourceServer"`
+	Description      string               `json:"description"`
+	Count            int                  `json:"count"`
+	TargetVmSpecList []tbmodel.TbSpecInfo `json:"targetVmSpecList"`
 }
 
 // RecommendedVmSpecList represents a collection of recommended VM specifications across multiple source servers.

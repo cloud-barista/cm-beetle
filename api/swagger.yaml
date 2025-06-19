@@ -190,6 +190,8 @@ definitions:
         type: integer
       description:
         type: string
+      status:
+        type: string
       targetSecurityGroupList:
         items:
           $ref: '#/definitions/recommendation.RecommendedSecurityGroup'
@@ -1644,6 +1646,10 @@ definitions:
     properties:
       description:
         type: string
+      sourceServers:
+        items:
+          type: string
+        type: array
       status:
         type: string
       targetSecurityGroup:
@@ -1679,7 +1685,7 @@ definitions:
         type: string
       status:
         type: string
-      targetVmSpecs:
+      targetVmSpecList:
         items:
           $ref: '#/definitions/model.TbSpecInfo'
         type: array
@@ -2643,7 +2649,7 @@ paths:
         infrastructure) with defaults for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
-  /recommendation/resource/securityGroups:
+  /recommendation/resources/securityGroups:
     post:
       consumes:
       - application/json
@@ -2699,7 +2705,7 @@ paths:
       summary: Recommend an appropriate security group for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
-  /recommendation/resource/vNet:
+  /recommendation/resources/vNet:
     post:
       consumes:
       - application/json
@@ -2755,7 +2761,7 @@ paths:
       summary: Recommend an appropriate virtual network for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
-  /recommendation/resource/vmOsImages:
+  /recommendation/resources/vmOsImages:
     post:
       consumes:
       - application/json
@@ -2811,7 +2817,7 @@ paths:
       summary: Recommend an appropriate OS image for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
-  /recommendation/resource/vmSpecs:
+  /recommendation/resources/vmSpecs:
     post:
       consumes:
       - application/json
