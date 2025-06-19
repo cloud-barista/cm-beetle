@@ -16,7 +16,7 @@ go 1.23.0
 // replace github.com/cloud-barista/cm-model => ../cm-model
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.10.7-0.20250610073645-e8812ed5d2e8
+	github.com/cloud-barista/cb-tumblebug v0.10.7
 	github.com/cloud-barista/cm-model v0.0.3
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
