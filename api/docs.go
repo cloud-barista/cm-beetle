@@ -2136,6 +2136,39 @@ const docTemplate = `{
                 }
             }
         },
+        "inframodel.FirewallRuleProperty": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "e.g., allow, deny",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "e.g., inbound, outbound",
+                    "type": "string"
+                },
+                "dstCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "dstPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
+                    "type": "string"
+                },
+                "srcCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "srcPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                }
+            }
+        },
         "inframodel.MemoryProperty": {
             "type": "object",
             "required": [
@@ -2323,6 +2356,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/inframodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inframodel.FirewallRuleProperty"
                     }
                 },
                 "hostname": {
@@ -2569,6 +2608,7 @@ const docTemplate = `{
                 "x86_64",
                 "x86_32_mac",
                 "x86_64_mac",
+                "s390x",
                 "NA"
             ],
             "x-enum-varnames": [
@@ -2579,6 +2619,7 @@ const docTemplate = `{
                 "X86_64",
                 "X86_32_MAC",
                 "X86_64_MAC",
+                "S390X",
                 "ArchitectureNA"
             ]
         },

@@ -12,8 +12,12 @@ github.com/cloud-barista/cb-tumblebug v0.10.7-0.20250610073645-e8812ed5d2e8 h1:8
 github.com/cloud-barista/cb-tumblebug v0.10.7-0.20250610073645-e8812ed5d2e8/go.mod h1:KuTxDSuYzg/zJTD+3fosbcygL9/OHmF0wnOtf0lVhhE=
 github.com/cloud-barista/cb-tumblebug v0.10.7 h1:W6BFGQ2qboyuoYSrL4yWEXQp/Tz+0ILuJou22HmBHQI=
 github.com/cloud-barista/cb-tumblebug v0.10.7/go.mod h1:KuTxDSuYzg/zJTD+3fosbcygL9/OHmF0wnOtf0lVhhE=
+github.com/cloud-barista/cb-tumblebug v0.10.8 h1:eM0XCxvbg8qZTlsJZlDhvt0OU46aakKNsvNEzj02dmw=
+github.com/cloud-barista/cb-tumblebug v0.10.8/go.mod h1:xCCV7OlRym9NSx8O6CUtkNHEfVwYDUOTjWEclrqwPtw=
 github.com/cloud-barista/cm-model v0.0.3 h1:sYowqaUMw77j2Hmz8nt/pjEA6lfMkGkZ31jNDDPN0Tk=
 github.com/cloud-barista/cm-model v0.0.3/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
+github.com/cloud-barista/cm-model v0.0.4 h1:kKhlFafNka5hXZlsnrN693Bl9KWos+IcSvjInOPvx/8=
+github.com/cloud-barista/cm-model v0.0.4/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/mc-terrarium v0.0.22 h1:64+7gHeqIRAGtW5TClujlKi1WnpvtsgLfu+2RsQdBQg=
 github.com/cloud-barista/mc-terrarium v0.0.22/go.mod h1:AoPhvwiRuWuidNCCIvqUvGxKdPSdjeIkA6K6cMPLT4I=
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=
