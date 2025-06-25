@@ -210,6 +210,7 @@ type RecommendVmSpecResponse struct {
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param machineID query string false "Machine ID (e.g., TBD, xxxxxx)"
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVmSpecResponse "The result of recommended VM specifications"
 // @Failure 404 {object} common.SimpleMsg
@@ -227,6 +228,7 @@ func RecommendVmSpecs(c echo.Context) error {
 
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
+	// machineID := c.QueryParam("machineID")
 
 	// Validate the input
 	if desiredProvider == "" {
@@ -239,44 +241,119 @@ func RecommendVmSpecs(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
 	}
+	// if machineID == "" {
+	// 	err := fmt.Errorf("invalid request: 'machineID' is required")
+	// 	log.Warn().Msg(err.Error())
+	// 	return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	// }
+
+	// // Validate by finding the machine ID in the request body
+	// found := false
+	// machine := inframodel.ServerProperty{}
+	// for _, server := range req.OnpremiseInfraModel.Servers {
+	// 	if server.MachineID == machineID {
+	// 		found = true
+	// 		machine = server
+	// 		break
+	// 	}
+	// }
+	// if !found {
+	// 	err := fmt.Errorf("invalid request: 'machineID' not found in the request body")
+	// 	log.Warn().Msg(err.Error())
+	// 	return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	// }
 
 	// [Process]
 	recommendedVmSpecList := recommendation.RecommendedVmSpecList{}
 	for i, server := range req.OnpremiseInfraModel.Servers {
 
-		// Initialize a temporary RecommendedVmSpec object
-		temp := recommendation.RecommendedVmSpec{
-			SourceServer:     server.Hostname,
-			Description:      fmt.Sprintf("Recommended VM specs for server %d: %s", i+1, server.Hostname),
-			Status:           string(recommendation.NothingRecommended),
-			Count:            0,
-			TargetVmSpecList: []tbmodel.TbSpecInfo{},
-		}
-
 		// Recommend VM specs for the server
 		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, server, 5)
+
 		// Handle errors and empty recommendations
 		if err != nil {
 			log.Error().Err(err).Msg("failed to recommend VM specs")
+
+			temp := recommendation.RecommendedVmSpec{
+				SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
+				Description:   fmt.Sprintf("failed to recommend VM specs for server %d: %s", i+1, server.Hostname),
+				Status:        string(recommendation.NothingRecommended),
+				TargetVmSpec:  tbmodel.TbSpecInfo{},
+			}
 			recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
 			continue
 		}
 		log.Trace().Msgf("specList: %v, count: %d", specList, count)
 		if count == 0 {
 			log.Warn().Msgf("no VM specs recommended for server: %s", server.Hostname)
+
+			temp := recommendation.RecommendedVmSpec{
+				SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
+				Description:   fmt.Sprintf("no VM specs recommended for server %d: %s", i+1, server.Hostname),
+				Status:        string(recommendation.NothingRecommended),
+				TargetVmSpec:  tbmodel.TbSpecInfo{},
+			}
 			recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
 			continue
 		}
-		// Update the temporary object with the recommended specs
-		temp.Status = string(recommendation.FullyRecommended)
-		temp.Count = count
-		temp.TargetVmSpecList = specList
-		recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
+
+		// Recursively check duplicates and append the recommended specs
+		for _, spec := range specList {
+			// Check if the spec already exists in the list
+			exists := false
+			idx := -1
+			for i, existingSpec := range recommendedVmSpecList.RecommendedVmSpecList {
+				if existingSpec.TargetVmSpec.Id == spec.Id {
+					exists = true
+					idx = i
+					break
+				}
+			}
+
+			// If the spec already exists, append the server to the existing list
+			// Otherwise, create a new entry
+			if exists {
+				recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers = append(
+					recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers,
+					server.Hostname, //TODO replace Hostname with MachineID
+				)
+			} else {
+				temp := recommendation.RecommendedVmSpec{
+					Status:        string(recommendation.FullyRecommended),
+					SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
+					Description:   fmt.Sprintf("Recommended VM spec for server %d: %s", i+1, server.Hostname),
+					TargetVmSpec:  spec,
+				}
+				recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
+			}
+		}
 	}
 
 	// [Output]
-	recommendedVmSpecList.Description = "A collection of recommended VM specs across multiple source servers"
+	countFailed := 0
+	for _, spec := range recommendedVmSpecList.RecommendedVmSpecList {
+		if spec.Status == string(recommendation.NothingRecommended) {
+			countFailed++
+		}
+	}
+
 	recommendedVmSpecList.Count = len(recommendedVmSpecList.RecommendedVmSpecList)
+	switch countFailed {
+	case 0:
+		recommendedVmSpecList.Status = string(recommendation.FullyRecommended)
+		recommendedVmSpecList.Description = "Successfully recommended VM specs for all servers in the source infrastructure"
+	case recommendedVmSpecList.Count:
+		recommendedVmSpecList.Status = string(recommendation.NothingRecommended)
+		recommendedVmSpecList.Description = "Unable to recommend any VM specs for the servers in the source infrastructure"
+	default:
+		recommendedVmSpecList.Status = string(recommendation.PartiallyRecommended)
+		recommendedVmSpecList.Description = fmt.Sprintf(
+			"Partially recommended VM specs: successful for %d servers, failed for %d servers",
+			recommendedVmSpecList.Count-countFailed, countFailed,
+		)
+	}
+
+	log.Debug().Msgf("recommendedVmSpecList: %+v", recommendedVmSpecList)
 
 	return c.JSON(http.StatusOK, recommendedVmSpecList)
 }
@@ -333,27 +410,89 @@ func RecommendVmOsImages(c echo.Context) error {
 	recommendedOsImageList := recommendation.RecommendedVmOsImageList{}
 	for i, server := range req.OnpremiseInfraModel.Servers {
 
-		temp := recommendation.RecommendedVmOsImage{
-			Status:          string(recommendation.NothingRecommended),
-			SourceServer:    server.Hostname,
-			Description:     fmt.Sprintf("Recommended VM OS images for server %d: %s", i+1, server.Hostname),
-			TargetVmOsImage: tbmodel.TbImageInfo{},
-		}
+		vmOsImageList, err := recommendation.RecommendVmOsImages(desiredProvider, desiredRegion, server, 3)
 
-		vmOsImage, err := recommendation.RecommendVmOsImage(desiredProvider, desiredRegion, server)
+		// Handle errors and empty recommendations
 		if err != nil {
 			log.Error().Err(err).Msg("failed to recommend VM OS images")
+
+			temp := recommendation.RecommendedVmOsImage{
+				Status:          string(recommendation.NothingRecommended),
+				SourceServers:   []string{server.Hostname}, //TODO replace Hostname with MachineID
+				Description:     fmt.Sprintf("Recommended VM OS images for server %d: %s", i+1, server.Hostname),
+				TargetVmOsImage: tbmodel.TbImageInfo{},
+			}
 			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
 			continue
 		}
-		log.Trace().Msgf("vmOsImage: %v", vmOsImage)
 
-		temp.Status = string(recommendation.FullyRecommended)
-		temp.TargetVmOsImage = vmOsImage
-		recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+		if len(vmOsImageList) == 0 {
+			log.Warn().Msgf("no VM OS images recommended for server: %s", server.Hostname)
+
+			temp := recommendation.RecommendedVmOsImage{
+				Status:          string(recommendation.NothingRecommended),
+				SourceServers:   []string{server.Hostname}, //TODO replace Hostname with MachineID
+				Description:     fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.Hostname),
+				TargetVmOsImage: tbmodel.TbImageInfo{},
+			}
+			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+			continue
+		}
+
+		// Recursively check duplicates and append the recommended OS images
+		for _, vmOsImageAndScore := range vmOsImageList {
+			vmOsImage := vmOsImageAndScore.VmOsImageInfo
+			// Check if the OS image already exists in the list
+			exists := false
+			idx := -1
+			for i, existingOsImage := range recommendedOsImageList.RecommendedVmOsImageList {
+				if existingOsImage.TargetVmOsImage.Id == vmOsImage.Id {
+					exists = true
+					idx = i
+					break
+				}
+			}
+			// If the OS image already exists, append the server to the existing list
+			// Otherwise, create a new entry
+			if exists {
+				recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers = append(
+					recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers,
+					server.Hostname, //TODO replace Hostname with MachineID
+				)
+			} else {
+				temp := recommendation.RecommendedVmOsImage{
+					Status:          string(recommendation.FullyRecommended),
+					SourceServers:   []string{server.Hostname}, //TODO replace Hostname with	 MachineID
+					Description:     fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.Hostname),
+					TargetVmOsImage: vmOsImage,
+				}
+				recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+			}
+		}
 	}
+
 	// [Output]
-	recommendedOsImageList.Description = "A collection of recommended VM OS images across multiple source servers"
+	countFailed := 0
+	for _, osImage := range recommendedOsImageList.RecommendedVmOsImageList {
+		if osImage.Status == string(recommendation.NothingRecommended) {
+			countFailed++
+		}
+	}
 	recommendedOsImageList.Count = len(recommendedOsImageList.RecommendedVmOsImageList)
+	switch countFailed {
+	case 0:
+		recommendedOsImageList.Status = string(recommendation.FullyRecommended)
+		recommendedOsImageList.Description = "Successfully recommended VM OS images for the servers in the source computing infra"
+	case recommendedOsImageList.Count:
+		recommendedOsImageList.Status = string(recommendation.NothingRecommended)
+		recommendedOsImageList.Description = "Unable to recommend any VM OS images for the servers in the source computing infra"
+	default:
+		recommendedOsImageList.Status = string(recommendation.PartiallyRecommended)
+		recommendedOsImageList.Description = fmt.Sprintf(
+			"Partially recommended VM OS images: successful for %d servers, failed for %d servers",
+			recommendedOsImageList.Count-countFailed, countFailed,
+		)
+	}
+
 	return c.JSON(http.StatusOK, recommendedOsImageList)
 }

@@ -1619,6 +1619,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Machine ID (e.g., TBD, xxxxxx)",
+                        "name": "machineID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
                         "name": "X-Request-Id",
                         "in": "header"
@@ -2018,6 +2024,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/recommendation.RecommendedVmOsImage"
                     }
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -2035,6 +2044,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/recommendation.RecommendedVmSpec"
                     }
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -4031,8 +4043,11 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "sourceServer": {
-                    "type": "string"
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "status": {
                     "type": "string"
@@ -4045,23 +4060,20 @@ const docTemplate = `{
         "recommendation.RecommendedVmSpec": {
             "type": "object",
             "properties": {
-                "count": {
-                    "type": "integer"
-                },
                 "description": {
                     "type": "string"
                 },
-                "sourceServer": {
-                    "type": "string"
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "status": {
                     "type": "string"
                 },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.TbSpecInfo"
-                    }
+                "targetVmSpec": {
+                    "$ref": "#/definitions/model.TbSpecInfo"
                 }
             }
         },

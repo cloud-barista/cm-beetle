@@ -234,6 +234,8 @@ definitions:
         items:
           $ref: '#/definitions/recommendation.RecommendedVmOsImage'
         type: array
+      status:
+        type: string
     type: object
   controller.RecommendVmSpecResponse:
     properties:
@@ -245,6 +247,8 @@ definitions:
         items:
           $ref: '#/definitions/recommendation.RecommendedVmSpec'
         type: array
+      status:
+        type: string
     type: object
   github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
     properties:
@@ -1698,8 +1702,10 @@ definitions:
     properties:
       description:
         type: string
-      sourceServer:
-        type: string
+      sourceServers:
+        items:
+          type: string
+        type: array
       status:
         type: string
       targetVmOsImage:
@@ -1707,18 +1713,16 @@ definitions:
     type: object
   recommendation.RecommendedVmSpec:
     properties:
-      count:
-        type: integer
       description:
         type: string
-      sourceServer:
-        type: string
+      sourceServers:
+        items:
+          type: string
+        type: array
       status:
         type: string
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/model.TbSpecInfo'
-        type: array
+      targetVmSpec:
+        $ref: '#/definitions/model.TbSpecInfo'
     type: object
   resource.RestGetAllSecurityGroupResponse:
     properties:
@@ -2880,6 +2884,10 @@ paths:
         description: Region (e.g., ap-northeast-2)
         in: query
         name: desiredRegion
+        type: string
+      - description: Machine ID (e.g., TBD, xxxxxx)
+        in: query
+        name: machineID
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header

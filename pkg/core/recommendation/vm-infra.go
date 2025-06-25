@@ -586,15 +586,15 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 }
 
 // RecommendVmSpecs recommends appropriate VM specs for the given server
-func RecommendVmSpecs(csp string, region string, server inframodel.ServerProperty, max int) (specList []tbmodel.TbSpecInfo, length int, err error) {
+func RecommendVmSpecs(csp string, region string, server inframodel.ServerProperty, limit int) (specList []tbmodel.TbSpecInfo, length int, err error) {
 
 	var emptyResp = []tbmodel.TbSpecInfo{}
 	var vmSpecInfoList = []tbmodel.TbSpecInfo{}
 
-	if max <= 0 {
-		err := fmt.Errorf("invalid max value: %d, set default: 5", max)
+	if limit <= 0 {
+		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
 		log.Warn().Msgf(err.Error())
-		max = 5
+		limit = 5
 	}
 
 	// Initialize resty client with basic auth
@@ -758,9 +758,9 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 	}
 
 	// [Output]
-	// Limit the number of VM specs to the max value
-	if max > numOfVmSpecs {
-		vmSpecInfoList = vmSpecInfoList[:max]
+	// Limit the number of VM specs
+	if limit < numOfVmSpecs {
+		vmSpecInfoList = vmSpecInfoList[:limit]
 	}
 	log.Debug().Msgf("the number of recommended VM specs: %d", len(vmSpecInfoList))
 
@@ -845,17 +845,117 @@ func RecommendVmOsImage(csp string, region string, server inframodel.ServerPrope
 	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
 	delimiters2 := delimiters1
 
-	// TODO: To be updated
-	vmOsImageInfoList := FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
-	log.Debug().Msgf("the number of VM OS images: %d", len(vmOsImageInfoList))
-	for _, vmOsImageInfo := range vmOsImageInfoList {
-		log.Debug().Msgf("(score: %f) OSDistribution: %s / OSArchitecture: %s / DiskType: %s",
-			vmOsImageInfo.SimilarityScore, vmOsImageInfo.VmOsImageInfo.OSDistribution, vmOsImageInfo.VmOsImageInfo.OSArchitecture, vmOsImageInfo.VmOsImageInfo.Details)
-	}
-
 	vmOsImage = FindBestVmOsImage(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
 
 	return vmOsImage, nil
+}
+
+// RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
+func RecommendVmOsImages(csp string, region string, server inframodel.ServerProperty, limit int) ([]VmOsImageInfoAndScore, error) {
+
+	var emptyRes = []VmOsImageInfoAndScore{}
+	var vmOsImageInfoAndScoreList = []VmOsImageInfoAndScore{}
+
+	if limit <= 0 {
+		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
+		log.Warn().Msgf(err.Error())
+		limit = 5
+	}
+
+	// Initialize resty client with basic auth
+	client := resty.New()
+	apiUser := config.Tumblebug.API.Username
+	apiPass := config.Tumblebug.API.Password
+	client.SetBasicAuth(apiUser, apiPass)
+
+	// Set tumblebug rest url
+	epTumblebug := config.Tumblebug.RestUrl
+	method := "POST"
+	nsId := "system" // default
+	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
+
+	// Request body
+	falseValue := false
+	reqSearchImage := tbmodel.SearchImageRequest{
+		DetailSearchKeys:       []string{},
+		IncludeDeprecatedImage: &falseValue,
+		IsGPUImage:             &falseValue,
+		IsKubernetesImage:      &falseValue,
+		IsRegisteredByAsset:    &falseValue,
+		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
+		ProviderName:           csp,
+		RegionName:             region,
+	}
+
+	log.Debug().Msgf("reqSearchImage: %+v", reqSearchImage)
+
+	// Response body
+	resSearchImage := new(tbmodel.SearchImageResponse)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(reqSearchImage),
+		&reqSearchImage,
+		resSearchImage,
+		common.VeryShortDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		return emptyRes, err
+	}
+
+	// for pretty logging
+	prettyImages, err := json.MarshalIndent(resSearchImage.ImageList, "", "  ")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to marshal response")
+		return emptyRes, err
+	}
+	log.Debug().Msgf("len(resSearchImage.ImageList): %d", len(resSearchImage.ImageList))
+	log.Debug().Msgf("resSearchImage.ImageList: %s", prettyImages)
+
+	if resSearchImage.ImageCount == 0 || len(resSearchImage.ImageList) == 0 {
+		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
+		log.Warn().Msgf(err.Error())
+		return emptyRes, err
+	}
+
+	keywords := fmt.Sprintf("%s %s %s %s %s",
+		server.OS.Name,
+		server.OS.VersionID,
+		server.OS.VersionCodename,
+		server.CPU.Architecture,
+		server.RootDisk.Type)
+	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
+
+	// Select VM OS image via LevenshteinDistance-based text similarity
+	delimiters1 := []string{" ", "-", ",", "(", ")", "[", "]", "/"} // "_"
+	delimiters2 := delimiters1
+
+	vmOsImageInfoAndScoreList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
+
+	count := len(vmOsImageInfoAndScoreList)
+	if count == 0 {
+		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
+		log.Warn().Msgf(err.Error())
+		return emptyRes, err
+	}
+
+	// [Output]
+	// Limit the number of VM specs
+	if limit < count {
+		vmOsImageInfoAndScoreList = vmOsImageInfoAndScoreList[:limit]
+	}
+	log.Debug().Msgf("the number of VM OS images: %d", len(vmOsImageInfoAndScoreList))
+	for _, vmOsImageInfo := range vmOsImageInfoAndScoreList {
+		log.Debug().Msgf("(score: %f) OSDistribution: %s / OSArchitecture: %s / DiskType: %s",
+			vmOsImageInfo.SimilarityScore, vmOsImageInfo.VmOsImageInfo.OSDistribution, vmOsImageInfo.VmOsImageInfo.OSArchitecture, vmOsImageInfo.VmOsImageInfo.OSDiskType)
+	}
+
+	return vmOsImageInfoAndScoreList, nil
 }
 
 // RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
@@ -1023,7 +1123,15 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 	var imageInfoList []VmOsImageInfoAndScore
 
 	for _, image := range vmImages {
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.OSDistribution, imgDelimiters)
+
+		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
+			image.OSType,
+			image.OSArchitecture,
+			image.OSDiskType,
+			image.OSDistribution,
+		)
+
+		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
 		imageInfo := VmOsImageInfoAndScore{
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
@@ -1143,8 +1251,8 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 	// [Process] Recommend the security group for each server
 	var tempRecSgList = []tbmodel.TbSecurityGroupReq{}
 	var targetSecurityGroupList = []RecommendedSecurityGroup{}
-	for _, server := range servers {
 
+	for _, server := range servers {
 		// Recommend a security group for the server
 		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, server)
 		if err != nil {
@@ -1165,7 +1273,7 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 			// Create a temporary recommended security group
 			tempRecommendedSecurityGroup := RecommendedSecurityGroup{
 				SourceServers:       []string{server.Hostname}, // Start with the current server's hostname
-				Description:         fmt.Sprintf("Recommended security group"),
+				Description:         "Recommended security group",
 				TargetSecurityGroup: recommendedTargetSg,
 			}
 
@@ -1193,15 +1301,17 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 	}
 
 	recommendedSecurityGroupList.Count = len(targetSecurityGroupList)
-	if countFailed == recommendedSecurityGroupList.Count {
-		recommendedSecurityGroupList.Status = string(NothingRecommended)
-		recommendedSecurityGroupList.Description = "Nothing recommended security groups (depulicated) for the servers in the source computing infra"
-	} else if countFailed == 0 {
+	switch countFailed {
+	case 0:
 		recommendedSecurityGroupList.Status = string(FullyRecommended)
-		recommendedSecurityGroupList.Description = "Recommended security groups (depulicated) for the servers in the source computing infra"
-	} else {
+		recommendedSecurityGroupList.Description = "Successfully recommended and deduplicated security groups for all servers"
+	case recommendedSecurityGroupList.Count:
+		recommendedSecurityGroupList.Status = string(NothingRecommended)
+		recommendedSecurityGroupList.Description = "Unable to recommend any security groups for the servers in the source infrastructure"
+	default:
 		recommendedSecurityGroupList.Status = string(PartiallyRecommended)
-		recommendedSecurityGroupList.Description = "Partially recommended security groups (depulicated) for the servers in the source computing infra"
+		recommendedSecurityGroupList.Description = fmt.Sprintf("Partially recommended security groups: %d of %d server groups have recommendations",
+			recommendedSecurityGroupList.Count-countFailed, recommendedSecurityGroupList.Count)
 	}
 
 	log.Debug().Msgf("recommendedSecurityGroupList: %+v", tempRecSgList)
@@ -1254,17 +1364,6 @@ func containSg(sgList []tbmodel.TbSecurityGroupReq, sg tbmodel.TbSecurityGroupRe
 	return exists, idx, temp
 }
 
-// TODO: To be replaced with the actual model
-type FirewallRuleProperty struct { // note: reference command `sudo ufw status verbose`
-	SrcCIDR   string `json:"srcCIDR,omitempty"`
-	DstCIDR   string `json:"dstCIDR,omitempty"`
-	SrcPorts  string `json:"srcPorts,omitempty"`
-	DstPorts  string `json:"dstPorts,omitempty"`
-	Protocol  string `json:"protocol,omitempty"`  // TCP, UDP, ICMP
-	Direction string `json:"direction,omitempty"` // inbound, outbound
-	Action    string `json:"action,omitempty"`    // allow, deny
-}
-
 // formatCIDR formats the CIDR string:
 // - If it's "anywhere", return "0.0.0.0/0"
 // - If it doesn't have a prefix (like "/24"), add "/32"
@@ -1284,7 +1383,7 @@ func formatCIDR(cidr string) string {
 }
 
 // generateSecurityGroupRules converts FirewallRuleProperty to tbmodel.TbFirewallRuleInfo
-func generateSecurityGroupRules(rules []FirewallRuleProperty) []tbmodel.TbFirewallRuleInfo {
+func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmodel.TbFirewallRuleInfo {
 	var tbRules []tbmodel.TbFirewallRuleInfo
 
 	for _, rule := range rules {
@@ -1442,7 +1541,7 @@ func generateSecurityGroupRules(rules []FirewallRuleProperty) []tbmodel.TbFirewa
 	return tbRules
 }
 
-var dummyFirewallRules = []FirewallRuleProperty{
+var dummyFirewallRules = []inframodel.FirewallRuleProperty{
 	{
 		SrcCIDR:   "0.0.0.0/0",
 		DstCIDR:   "192.168.1.10/32",

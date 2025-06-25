@@ -76,15 +76,15 @@ type RecommendedSecurityGroupList struct {
 
 // RecommendedVmSpec represents the recommended virtual machine specification information for a single server.
 type RecommendedVmSpec struct {
-	Status           string               `json:"status"`
-	SourceServer     string               `json:"sourceServer"`
-	Description      string               `json:"description"`
-	Count            int                  `json:"count"`
-	TargetVmSpecList []tbmodel.TbSpecInfo `json:"targetVmSpecList"`
+	Status        string             `json:"status"`
+	SourceServers []string           `json:"sourceServers"`
+	Description   string             `json:"description"`
+	TargetVmSpec  tbmodel.TbSpecInfo `json:"targetVmSpec"`
 }
 
 // RecommendedVmSpecList represents a collection of recommended VM specifications across multiple source servers.
 type RecommendedVmSpecList struct {
+	Status                string              `json:"status"`
 	Description           string              `json:"description"`
 	Count                 int                 `json:"count"`
 	RecommendedVmSpecList []RecommendedVmSpec `json:"recommendedVmSpecList"`
@@ -93,7 +93,7 @@ type RecommendedVmSpecList struct {
 // RecommendedVmOsImage represents the recommended virtual machine OS image information for a single server.
 type RecommendedVmOsImage struct {
 	Status          string              `json:"status"`
-	SourceServer    string              `json:"sourceServer"`
+	SourceServers   []string            `json:"sourceServers"`
 	Description     string              `json:"description"`
 	TargetVmOsImage tbmodel.TbImageInfo `json:"targetVmOsImage"`
 	// Count            int                   `json:"count"`
@@ -102,6 +102,7 @@ type RecommendedVmOsImage struct {
 
 // RecommendedVmOsImageList represents a collection of recommended VM OS images across multiple source servers.
 type RecommendedVmOsImageList struct {
+	Status                   string                 `json:"status"`
 	Description              string                 `json:"description"`
 	Count                    int                    `json:"count"`
 	RecommendedVmOsImageList []RecommendedVmOsImage `json:"recommendedVmOsImageList"`
