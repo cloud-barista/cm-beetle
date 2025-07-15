@@ -204,15 +204,15 @@ func main() {
 		Password: config.Tumblebug.API.Password,
 	}
 
-	tbclient := tbclient.NewClient(apiConfig)
-	nsInfo, err := tbclient.ReadNamespace(common.DefaulNamespaceId)
+	tbCli := tbclient.NewClient(apiConfig)
+	nsInfo, err := tbCli.ReadNamespace(common.DefaulNamespaceId)
 	if err != nil {
 		log.Debug().Msgf("not found the default namespace (nsId: %s)", common.DefaulNamespaceId)
 		nsReq := tbmodel.NsReq{
 			Name:        common.DefaulNamespaceId,
 			Description: "Default namespace for computing infra migration",
 		}
-		nsInfo, err = tbclient.CreateNamespace(nsReq)
+		nsInfo, err = tbCli.CreateNamespace(nsReq)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create a namespace")
 		}
