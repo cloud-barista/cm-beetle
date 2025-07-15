@@ -8,12 +8,13 @@ import (
 
 	"github.com/cloud-barista/cb-tumblebug/src/core/common/netutil"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-
-	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
+	"github.com/cloud-barista/cm-model/infra/cloudmodel"
 	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
@@ -53,36 +54,18 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 		return isValid, err
 	}
 
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
+	apiConfig := tbclient.ApiConfig{
+		RestUrl:  config.Tumblebug.RestUrl,
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+	}
 
-	// set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
+	tbCli := tbclient.NewClient(apiConfig)
 
-	// [via Tumblebug] Check if the provider and region are valid
-	method := "GET"
-	url := fmt.Sprintf("%s/provider/%s/region/%s", epTumblebug, cspName, regionName)
-
-	// Request body
-	tbReqt := common.NoBody
-	tbResp := tbmodel.RegionDetail{}
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(tbReqt),
-		&tbReqt,
-		&tbResp,
-		common.VeryShortDuration,
-	)
-
+	// Check if the region is valid for the specified CSP
+	_, err := tbCli.ReadRegionInfo(cspName, regionName)
 	if err != nil {
-		log.Error().Err(err).Msg("")
+		log.Warn().Msgf("failed to read region info for CSP %s and region %s: %v", cspName, regionName, err)
 		return isValid, err
 	}
 
@@ -92,18 +75,18 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 }
 
 // RecommendVmInfraWithDefaults an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (RecommendedVmInfraDynamicList, error) {
+func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (cloudmodel.RecommendedVmInfraDynamicList, error) {
 
 	// var emptyResp RecommendedVmInfraInfoList
-	var recommendedVmInfraInfoList RecommendedVmInfraDynamicList
+	var recommendedVmInfraInfoList cloudmodel.RecommendedVmInfraDynamicList
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
 	var max int = 5
 	// Initialize the response body
-	recommendedVmInfraInfoList = RecommendedVmInfraDynamicList{
+	recommendedVmInfraInfoList = cloudmodel.RecommendedVmInfraDynamicList{
 		Description:       "This is a list of recommended target infrastructures. Please review and use them.",
 		Count:             0,
-		TargetVmInfraList: []RecommendedVmInfraDynamic{},
+		TargetVmInfraList: []cloudmodel.RecommendedVmInfraDynamic{},
 	}
 
 	// // Set VM info
@@ -179,22 +162,22 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// log.Debug().Msgf("transposed recommended VM specs and OS images: %+v", transposed)
 
 	// Build response body which includes multiple recommended infrastructures
-	recommenedVmInfraInfoList := []RecommendedVmInfraDynamic{}
+	recommenedVmInfraInfoList := []cloudmodel.RecommendedVmInfraDynamic{}
 
 	for i, vmInfoList := range transposed {
 
-		tempVmInfraInfo := RecommendedVmInfraDynamic{
+		tempVmInfraInfo := cloudmodel.RecommendedVmInfraDynamic{
 			Status:      string(NothingRecommended),
 			Description: "This is a recommended target infrastructure.",
-			TargetVmInfra: tbmodel.TbMciDynamicReq{
+			TargetVmInfra: cloudmodel.TbMciDynamicReq{
 				Name:        fmt.Sprintf("migrated-%02d", i),
 				Description: "a recommended multi-cloud infrastructure",
-				Vm:          []tbmodel.TbVmDynamicReq{},
+				Vm:          []cloudmodel.TbVmDynamicReq{},
 			},
 		}
 
 		for j, vmInfo := range vmInfoList {
-			tempVmReq := tbmodel.TbVmDynamicReq{
+			tempVmReq := cloudmodel.TbVmDynamicReq{
 				ConnectionName: fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
 				CommonImage:    vmInfo.vmOsImageId,
 				CommonSpec:     vmInfo.vmSpecId,
@@ -231,22 +214,22 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 }
 
 // RecommendVmInfra an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (RecommendedVmInfra, error) {
+func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (cloudmodel.RecommendedVmInfra, error) {
 
 	// var emptyResp RecommendedVmInfra
-	var recommendedVmInfra RecommendedVmInfra
+	var recommendedVmInfra cloudmodel.RecommendedVmInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
 	var max int = 5
 
 	// Initialize the response body
-	recommendedVmInfra = RecommendedVmInfra{
+	recommendedVmInfra = cloudmodel.RecommendedVmInfra{
 		Description: "This is a list of recommended target infrastructures. Please review and use them.",
 		Status:      "",
-		TargetVmInfra: tbmodel.TbMciReq{
+		TargetVmInfra: cloudmodel.TbMciReq{
 			Name:        "mmci01",
 			Description: "a recommended multi-cloud infrastructure",
-			Vm:          []tbmodel.TbVmReq{},
+			Vm:          []cloudmodel.TbVmReq{},
 		},
 	}
 
@@ -274,7 +257,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 	// * Set a name to indicate a dependency between resources.
 	recommendedVmInfra.TargetVNet.Name = "mig-vnet-01"
 	recommendedVmInfra.TargetVNet.Description = "a recommended vNet for migration"
-	for i, _ := range recommendedVmInfra.TargetVNet.SubnetInfoList {
+	for i := range recommendedVmInfra.TargetVNet.SubnetInfoList {
 		recommendedVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("mig-subnet-%02d", i+1)
 		recommendedVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
 	}
@@ -289,10 +272,10 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 	// 3. Recommend VM specs, OS images, and security groups, and
 	// recommend VMs by removing duplicates of VM specs, OS images, and security groups and specifying them.
 	// Note: Don't need to register specs and OS images.
-	var recommendedVmList = []tbmodel.TbVmReq{}
-	var recommendedVmSpecList = []tbmodel.TbSpecInfo{}
-	var recommendedVmOsImageList = []tbmodel.TbImageInfo{}
-	var recommendedSecurityGroupList = []tbmodel.TbSecurityGroupReq{}
+	var recommendedVmList = []cloudmodel.TbVmReq{}
+	var recommendedVmSpecList = []cloudmodel.TbSpecInfo{}
+	var recommendedVmOsImageList = []cloudmodel.TbImageInfo{}
+	var recommendedSecurityGroupList = []cloudmodel.TbSecurityGroupReq{}
 
 	for i, server := range srcInfra.Servers {
 
@@ -379,7 +362,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 		// xxx
 
 		// * Set names to indicate a dependency between resources.
-		tempVmReq := tbmodel.TbVmReq{
+		tempVmReq := cloudmodel.TbVmReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.Hostname),
 			SpecId:           selectedVmSpec.Name,
@@ -413,10 +396,10 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 	return recommendedVmInfra, nil
 }
 
-func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) ([]tbmodel.TbVNetReq, error) {
+func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) ([]cloudmodel.TbVNetReq, error) {
 
-	var emptyRes []tbmodel.TbVNetReq
-	var recommendedVNets []tbmodel.TbVNetReq
+	var emptyRes []cloudmodel.TbVNetReq
+	var recommendedVNets []cloudmodel.TbVNetReq
 
 	// [Input]
 	ok, err := IsValidCspAndRegion(csp, region)
@@ -506,9 +489,9 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 
 	if supernet10 != "" {
 		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []tbmodel.TbSubnetReq{}
+		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs10 {
-			tempSubnets = append(tempSubnets, tbmodel.TbSubnetReq{
+			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
 				IPv4_CIDR:   cidr,
@@ -516,7 +499,7 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		}
 
 		// Set the calculated supernet as the tempVNet
-		tempVNet := tbmodel.TbVNetReq{
+		tempVNet := cloudmodel.TbVNetReq{
 			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
 			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
 			Description:    "Recommended vNet for " + netutil.PrivateNetwork10Dot,
@@ -531,16 +514,16 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 	if supernet172 != "" {
 
 		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []tbmodel.TbSubnetReq{}
+		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs172 {
-			tempSubnets = append(tempSubnets, tbmodel.TbSubnetReq{
+			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
 				IPv4_CIDR:   cidr,
 			})
 		}
 
-		tempVNet := tbmodel.TbVNetReq{
+		tempVNet := cloudmodel.TbVNetReq{
 			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
 			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
 			Description:    "Recommended vNet for " + netutil.PrivateNetwork172Dot,
@@ -555,9 +538,9 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 	if supernet192 != "" {
 
 		// Set tempSubnets by the CIDR blocks from the source computing infra
-		tempSubnets := []tbmodel.TbSubnetReq{}
+		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs192 {
-			tempSubnets = append(tempSubnets, tbmodel.TbSubnetReq{
+			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
 				IPv4_CIDR:   cidr,
@@ -565,7 +548,7 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		}
 
 		// Set the calculated supernet as the vNet
-		tempVNet := tbmodel.TbVNetReq{
+		tempVNet := cloudmodel.TbVNetReq{
 			Name:           "INSERT_YOUR_VNET_NAME", // TODO: Set a name for the vNet
 			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
 			Description:    "Recommended vNet for " + netutil.PrivateNetwork192Dot,
@@ -586,25 +569,16 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 }
 
 // RecommendVmSpecs recommends appropriate VM specs for the given server
-func RecommendVmSpecs(csp string, region string, server inframodel.ServerProperty, limit int) (specList []tbmodel.TbSpecInfo, length int, err error) {
+func RecommendVmSpecs(csp string, region string, server inframodel.ServerProperty, limit int) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
 
-	var emptyResp = []tbmodel.TbSpecInfo{}
-	var vmSpecInfoList = []tbmodel.TbSpecInfo{}
+	var emptyResp = []cloudmodel.TbSpecInfo{}
+	// var vmSpecList = []cloudmodel.TbSpecInfo{}
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
 		log.Warn().Msgf(err.Error())
 		limit = 5
 	}
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
 
 	// Set a deployment plan to recommand virtual machines
 	// [Note]
@@ -717,31 +691,14 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 	)
 	log.Debug().Msgf("deployment plan to search proper VMs: %s", planToSearchProperVm)
 
-	// Lookup VM specs
-	method := "POST"
-	url := fmt.Sprintf("%s/mciRecommendVm", epTumblebug)
-
-	// Request body
-	reqRecommVm := new(tbmodel.DeploymentPlan)
-	err = json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
-	if err != nil {
-		log.Error().Err(err).Msg("")
-		return emptyResp, -1, err
+	// Call Tumblebug API to get recommended VM specs
+	apiConfig := tbclient.ApiConfig{
+		RestUrl:  config.Tumblebug.RestUrl,
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
 	}
-	log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
-
-	// Response body
-	err = common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(*reqRecommVm),
-		reqRecommVm,
-		&vmSpecInfoList,
-		common.VeryShortDuration,
-	)
-
+	tbCli := tbclient.NewClient(apiConfig)
+	vmSpecInfoList, err := tbCli.MciRecommendVm(planToSearchProperVm)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyResp, -1, err
@@ -764,56 +721,47 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 	}
 	log.Debug().Msgf("the number of recommended VM specs: %d", len(vmSpecInfoList))
 
-	return vmSpecInfoList, numOfVmSpecs, nil
+	// Convert []tbmodel.TbSpecInfo to []cloudmodel.TbSpecInfo with validation
+	convertedVmSpecList, err := modelconv.ConvertWithValidation[[]tbmodel.TbSpecInfo, []cloudmodel.TbSpecInfo](vmSpecInfoList)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert VM spec list")
+		return emptyResp, -1, err
+	}
+
+	return convertedVmSpecList, numOfVmSpecs, nil
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImage(csp string, region string, server inframodel.ServerProperty) (tbmodel.TbImageInfo, error) {
+func RecommendVmOsImage(csp string, region string, server inframodel.ServerProperty) (cloudmodel.TbImageInfo, error) {
 
-	var emptyRes = tbmodel.TbImageInfo{}
-	var vmOsImage = tbmodel.TbImageInfo{}
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// Set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-	method := "POST"
-	nsId := "system" // default
-	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
+	var emptyRes = cloudmodel.TbImageInfo{}
+	// var vmOsImage = cloudmodel.TbImageInfo{}
 
 	// Request body
 	falseValue := false
-	reqSearchImage := tbmodel.SearchImageRequest{
+	searchImageReq := tbmodel.SearchImageRequest{
 		DetailSearchKeys:       []string{},
 		IncludeDeprecatedImage: &falseValue,
 		IsGPUImage:             &falseValue,
 		IsKubernetesImage:      &falseValue,
 		IsRegisteredByAsset:    &falseValue,
+		OSArchitecture:         tbmodel.OSArchitecture(server.CPU.Architecture),
 		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
 		ProviderName:           csp,
 		RegionName:             region,
 	}
+	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
-	log.Debug().Msgf("reqSearchImage: %+v", reqSearchImage)
+	// Call Tumblebug API to search VM OS images
+	apiConfig := tbclient.ApiConfig{
+		RestUrl:  config.Tumblebug.RestUrl,
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+	}
+	tbCli := tbclient.NewClient(apiConfig)
+	nsId := "system" // default
 
-	// Response body
-	resSearchImage := new(tbmodel.SearchImageResponse)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqSearchImage),
-		&reqSearchImage,
-		resSearchImage,
-		common.VeryShortDuration,
-	)
-
+	resSearchImage, err := tbCli.SearchVmOsImage(nsId, searchImageReq)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRes, err
@@ -845,16 +793,23 @@ func RecommendVmOsImage(csp string, region string, server inframodel.ServerPrope
 	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
 	delimiters2 := delimiters1
 
-	vmOsImage = FindBestVmOsImage(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
+	// Convert model from '[]tbmodel.TbImageInfo' to '[]cloudmodel.TbImageInfo'
+	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.TbImageInfo, []cloudmodel.TbImageInfo](resSearchImage.ImageList)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert VM OS image list")
+		return emptyRes, err
+	}
 
-	return vmOsImage, nil
+	bestVmOsImage := FindBestVmOsImage(keywords, delimiters1, imageList, delimiters2)
+
+	return bestVmOsImage, nil
 }
 
 // RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImages(csp string, region string, server inframodel.ServerProperty, limit int) ([]VmOsImageInfoAndScore, error) {
+func RecommendVmOsImages(csp string, region string, server inframodel.ServerProperty, limit int) ([]VmOsImageInfoWithScore, error) {
 
-	var emptyRes = []VmOsImageInfoAndScore{}
-	var vmOsImageInfoAndScoreList = []VmOsImageInfoAndScore{}
+	var emptyRes = []VmOsImageInfoWithScore{}
+	var vmOsImageInfoAndScoreList = []VmOsImageInfoWithScore{}
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
@@ -862,47 +817,31 @@ func RecommendVmOsImages(csp string, region string, server inframodel.ServerProp
 		limit = 5
 	}
 
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// Set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-	method := "POST"
-	nsId := "system" // default
-	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
-
 	// Request body
 	falseValue := false
-	reqSearchImage := tbmodel.SearchImageRequest{
+	searchImageReq := tbmodel.SearchImageRequest{
 		DetailSearchKeys:       []string{},
 		IncludeDeprecatedImage: &falseValue,
 		IsGPUImage:             &falseValue,
 		IsKubernetesImage:      &falseValue,
 		IsRegisteredByAsset:    &falseValue,
+		OSArchitecture:         tbmodel.OSArchitecture(server.CPU.Architecture),
 		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
 		ProviderName:           csp,
 		RegionName:             region,
 	}
+	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
-	log.Debug().Msgf("reqSearchImage: %+v", reqSearchImage)
+	// Call Tumblebug API to search VM OS images
+	apiConfig := tbclient.ApiConfig{
+		RestUrl:  config.Tumblebug.RestUrl,
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+	}
+	tbCli := tbclient.NewClient(apiConfig)
+	nsId := "system" // default
 
-	// Response body
-	resSearchImage := new(tbmodel.SearchImageResponse)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqSearchImage),
-		&reqSearchImage,
-		resSearchImage,
-		common.VeryShortDuration,
-	)
-
+	resSearchImage, err := tbCli.SearchVmOsImage(nsId, searchImageReq)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRes, err
@@ -935,7 +874,14 @@ func RecommendVmOsImages(csp string, region string, server inframodel.ServerProp
 	delimiters1 := []string{" ", "-", ",", "(", ")", "[", "]", "/"} // "_"
 	delimiters2 := delimiters1
 
-	vmOsImageInfoAndScoreList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
+	// Convert model from '[]tbmodel.TbImageInfo' to '[]cloudmodel.TbImageInfo'
+	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.TbImageInfo, []cloudmodel.TbImageInfo](resSearchImage.ImageList)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert VM OS image list")
+		return emptyRes, err
+	}
+
+	vmOsImageInfoAndScoreList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, imageList, delimiters2)
 
 	count := len(vmOsImageInfoAndScoreList)
 	if count == 0 {
@@ -1062,7 +1008,7 @@ func transposeMatrix[T any](matrix [][]T) [][]T {
 }
 
 // Function to check overall status for the entire list of VMs
-func checkOverallVmStatus(vms []tbmodel.TbVmDynamicReq) string {
+func checkOverallVmStatus(vms []cloudmodel.TbVmDynamicReq) string {
 	allOk := true
 	allNone := true
 
@@ -1093,9 +1039,9 @@ func MBtoGiB(mb float64) uint32 {
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
-func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []tbmodel.TbImageInfo, imgDelimiters []string) tbmodel.TbImageInfo {
+func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) cloudmodel.TbImageInfo {
 
-	var bestVmOsImage tbmodel.TbImageInfo
+	var bestVmOsImage cloudmodel.TbImageInfo
 	var highestScore float64 = 0.0
 
 	for _, image := range vmImages {
@@ -1112,15 +1058,15 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []tbmode
 	return bestVmOsImage
 }
 
-type VmOsImageInfoAndScore struct {
-	VmOsImageInfo   tbmodel.TbImageInfo
+type VmOsImageInfoWithScore struct {
+	VmOsImageInfo   cloudmodel.TbImageInfo
 	SimilarityScore float64
 }
 
 // FindAndSortVmOsImageInfoListBySimilarity finds VM OS images that match the keywords and sorts them by similarity score
-func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []string, vmImages []tbmodel.TbImageInfo, imgDelimiters []string) []VmOsImageInfoAndScore {
+func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) []VmOsImageInfoWithScore {
 
-	var imageInfoList []VmOsImageInfoAndScore
+	var imageInfoList []VmOsImageInfoWithScore
 
 	for _, image := range vmImages {
 
@@ -1132,7 +1078,7 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 		)
 
 		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
-		imageInfo := VmOsImageInfoAndScore{
+		imageInfo := VmOsImageInfoWithScore{
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
 		}
@@ -1173,10 +1119,10 @@ func FindBestVmOsImageId(keywords string, kwDelimiters []string, vmImages []tbmo
 	return bestVmOsImageID
 }
 
-func RecommendSecurityGroup(csp string, region string, server inframodel.ServerProperty) (tbmodel.TbSecurityGroupReq, error) {
+func RecommendSecurityGroup(csp string, region string, server inframodel.ServerProperty) (cloudmodel.TbSecurityGroupReq, error) {
 
-	var emptyRes = tbmodel.TbSecurityGroupReq{}
-	var recommendedSecurityGroup = tbmodel.TbSecurityGroupReq{}
+	var emptyRes = cloudmodel.TbSecurityGroupReq{}
+	var recommendedSecurityGroup = cloudmodel.TbSecurityGroupReq{}
 
 	// [Input]
 	ok, err := IsValidCspAndRegion(csp, region)
@@ -1202,13 +1148,13 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	// TODO: To be updated with the actual model and real data
 	// TODO: A list of firewall rules(i.e., firewall table) will be entered (currently, it's a dummy single firewall table)
 
-	sgRules := []tbmodel.TbFirewallRuleInfo{}
+	sgRules := []cloudmodel.TbFirewallRuleInfo{}
 	// 1. Set default security group rules if no firewall rules are provided
 	if len(firewallRules) == 0 {
 		log.Warn().Msg("no firewall rules provided, using default rules")
 		// Allow all outbound traffic and deny all inbound traffic
 		// TODO: Check if the default rules are OK.
-		sgRules = []tbmodel.TbFirewallRuleInfo{
+		sgRules = []cloudmodel.TbFirewallRuleInfo{
 			{
 				Direction:  "outbound",
 				IPProtocol: "all",
@@ -1223,7 +1169,7 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 
 	// [Output]
 	// Create a security group for all rules
-	recommendedSecurityGroup = tbmodel.TbSecurityGroupReq{
+	recommendedSecurityGroup = cloudmodel.TbSecurityGroupReq{
 		Name:           "INSERT_YOUR_SECURITY_GROUP_NAME",
 		VNetId:         "INSERT_YOUR_VNET_ID",
 		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
@@ -1236,10 +1182,10 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	return recommendedSecurityGroup, nil
 }
 
-func RecommendSecurityGroups(csp string, region string, servers []inframodel.ServerProperty) (RecommendedSecurityGroupList, error) {
+func RecommendSecurityGroups(csp string, region string, servers []inframodel.ServerProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
 
-	var emptyRet = RecommendedSecurityGroupList{}
-	var recommendedSecurityGroupList = RecommendedSecurityGroupList{}
+	var emptyRet = cloudmodel.RecommendedSecurityGroupList{}
+	var recommendedSecurityGroupList = cloudmodel.RecommendedSecurityGroupList{}
 
 	// [Input]
 	ok, err := IsValidCspAndRegion(csp, region)
@@ -1249,8 +1195,8 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 	}
 
 	// [Process] Recommend the security group for each server
-	var tempRecSgList = []tbmodel.TbSecurityGroupReq{}
-	var targetSecurityGroupList = []RecommendedSecurityGroup{}
+	var tempRecSgList = []cloudmodel.TbSecurityGroupReq{}
+	var targetSecurityGroupList = []cloudmodel.RecommendedSecurityGroup{}
 
 	for _, server := range servers {
 		// Recommend a security group for the server
@@ -1271,7 +1217,7 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 			tempRecSgList = append(tempRecSgList, recommendedTargetSg)
 
 			// Create a temporary recommended security group
-			tempRecommendedSecurityGroup := RecommendedSecurityGroup{
+			tempRecommendedSecurityGroup := cloudmodel.RecommendedSecurityGroup{
 				SourceServers:       []string{server.Hostname}, // Start with the current server's hostname
 				Description:         "Recommended security group",
 				TargetSecurityGroup: recommendedTargetSg,
@@ -1319,10 +1265,10 @@ func RecommendSecurityGroups(csp string, region string, servers []inframodel.Ser
 	return recommendedSecurityGroupList, nil
 }
 
-func containSg(sgList []tbmodel.TbSecurityGroupReq, sg tbmodel.TbSecurityGroupReq) (bool, int, tbmodel.TbSecurityGroupReq) {
+func containSg(sgList []cloudmodel.TbSecurityGroupReq, sg cloudmodel.TbSecurityGroupReq) (bool, int, cloudmodel.TbSecurityGroupReq) {
 
 	// Check duplicates and append the recommended security group
-	temp := tbmodel.TbSecurityGroupReq{}
+	temp := cloudmodel.TbSecurityGroupReq{}
 	exists := false
 	idx := -1
 	for i, sgItem := range sgList {
@@ -1383,8 +1329,8 @@ func formatCIDR(cidr string) string {
 }
 
 // generateSecurityGroupRules converts FirewallRuleProperty to tbmodel.TbFirewallRuleInfo
-func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmodel.TbFirewallRuleInfo {
-	var tbRules []tbmodel.TbFirewallRuleInfo
+func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []cloudmodel.TbFirewallRuleInfo {
+	var tbRules []cloudmodel.TbFirewallRuleInfo
 
 	for _, rule := range rules {
 		// Skip 'deny' rules (note: SecurityGroup does not support adding 'deny' rules)
@@ -1427,7 +1373,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 
 				for _, port := range ports {
 					portTrimmed := strings.TrimSpace(port)
-					tbRule := tbmodel.TbFirewallRuleInfo{
+					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
 						IPProtocol: rule.Protocol,
 						CIDR:       srcCIDR,
@@ -1442,7 +1388,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 				// Handle port range with colon notation (e.g., 30000:40000)
 				portRange := strings.Split(rule.DstPorts, ":")
 				if len(portRange) == 2 {
-					tbRule := tbmodel.TbFirewallRuleInfo{
+					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
 						IPProtocol: rule.Protocol,
 						CIDR:       srcCIDR,
@@ -1457,7 +1403,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 				}
 			} else {
 				// Handle single port
-				tbRule := tbmodel.TbFirewallRuleInfo{
+				tbRule := cloudmodel.TbFirewallRuleInfo{
 					Direction:  rule.Direction,
 					IPProtocol: rule.Protocol,
 					CIDR:       srcCIDR,
@@ -1491,7 +1437,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 
 				for _, port := range ports {
 					portTrimmed := strings.TrimSpace(port)
-					tbRule := tbmodel.TbFirewallRuleInfo{
+					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
 						IPProtocol: rule.Protocol,
 						CIDR:       dstCIDR,
@@ -1505,7 +1451,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 				// Handle port range with colon notation
 				portRange := strings.Split(rule.DstPorts, ":")
 				if len(portRange) == 2 {
-					tbRule := tbmodel.TbFirewallRuleInfo{
+					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
 						IPProtocol: rule.Protocol,
 						CIDR:       dstCIDR,
@@ -1520,7 +1466,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []tbmod
 				}
 			} else {
 				// Handle single port
-				tbRule := tbmodel.TbFirewallRuleInfo{
+				tbRule := cloudmodel.TbFirewallRuleInfo{
 					Direction:  rule.Direction,
 					IPProtocol: rule.Protocol,
 					CIDR:       dstCIDR,

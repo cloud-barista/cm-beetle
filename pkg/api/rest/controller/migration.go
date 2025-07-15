@@ -19,11 +19,11 @@ import (
 	"net/http"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+
+	"github.com/cloud-barista/cm-model/infra/cloudmodel"
 
 	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
-	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
 	"github.com/rs/zerolog/log"
@@ -33,11 +33,11 @@ type MigrateInfraWithDefaultsRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
 	// mci.TbMciDynamicReq
 
-	tbmodel.TbMciDynamicReq
+	cloudmodel.TbMciDynamicReq
 }
 
 type MigrateInfraWithDefaultsResponse struct {
-	tbmodel.TbMciInfo
+	cloudmodel.VmInfraInfo
 }
 
 // MigrateInfraWithDefaults godoc
@@ -101,10 +101,11 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 // TODO: Check and dev the request and response bodies for the following API
 
 type MigrateInfraRequest struct {
-	recommendation.RecommendedVmInfra
+	cloudmodel.RecommendedVmInfra
 }
 
 type MigrateInfraResponse struct {
+	cloudmodel.VmInfraInfo
 }
 
 // MigrateInfra godoc
@@ -173,10 +174,10 @@ func MigrateInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(status,id) default(status)
+// @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(id)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} migration.IdList "The ID list of The migrated multi-cloud infrastructure (MCI)"
-// @Success 200 {object} migration.MciInfoList "The info list of the migrated multi-cloud infrastructure (MCI)"
+// @Success 200 {object} cloudmodel.MciInfoList "The info list of the migrated multi-cloud infrastructure (MCI)"
+// @Success 200 {object} cloudmodel.IdList "The ID list of The migrated multi-cloud infrastructure (MCI)"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mci [get]
@@ -196,7 +197,7 @@ func ListInfra(c echo.Context) error {
 	// nsId := common.DefaulNamespaceId
 
 	option := c.QueryParam("option")
-	if option != "" && option != "status" && option != "id" {
+	if option != "" && option != "id" {
 		err := fmt.Errorf("invalid request, the option (option: %s) is invalid", option)
 		log.Warn().Msg(err.Error())
 		res := model.Response{
@@ -208,18 +209,6 @@ func ListInfra(c echo.Context) error {
 
 	// [Process] List the migrated multi-cloud infrastructures as the option
 	switch option {
-	case "status":
-		infraInfoList, err := migration.ListAllVMInfraInfo(nsId)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructures")
-			res := model.Response{
-				Success: false,
-				Text:    err.Error(),
-			}
-			return c.JSON(http.StatusInternalServerError, res)
-		}
-		return c.JSON(http.StatusOK, infraInfoList)
-
 	case "id":
 		idList, err := migration.ListVMInfraIDs(nsId, option)
 		if err != nil {
@@ -232,9 +221,19 @@ func ListInfra(c echo.Context) error {
 		}
 
 		return c.JSON(http.StatusOK, idList)
+	default:
+		infraInfoList, err := migration.ListAllVMInfraInfo(nsId)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructures")
+			res := model.Response{
+				Success: false,
+				Text:    err.Error(),
+			}
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+		return c.JSON(http.StatusOK, infraInfoList)
 	}
-
-	return c.JSON(http.StatusInternalServerError, nil)
+	// return c.JSON(http.StatusInternalServerError, nil)
 }
 
 // GetInfra godoc

@@ -19,12 +19,13 @@ import (
 	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-model/infra/cloudmodel"
+
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
-	"github.com/go-resty/resty/v2"
+	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
 
@@ -99,54 +100,42 @@ const (
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
 // CreateVMInfraWithDefaults Create a VM infrastructure with defaults for the computing infra migration
-func CreateVMInfraWithDefaults(nsId string, infraModel *tbmodel.TbMciDynamicReq) (tbmodel.TbMciInfo, error) {
+func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicReq) (cloudmodel.VmInfraInfo, error) {
 
-	// Set timeout duration
-	timeoutDuration := 40 * time.Minute
-
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set Tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-
-	method := "POST"
-	url := epTumblebug + fmt.Sprintf("/ns/%s/mciDynamic", nsId)
-	// url := fmt.Sprintf("%s/ns/{nsId}/mciDynamic%s", cbTumblebugApiEndpoint, idDetails.IdInSp)
-
-	// Set request body
-	requestBody := *infraModel
-
-	// Set response body
-	responseBody := tbmodel.TbMciInfo{}
-
-	client.SetTimeout(timeoutDuration)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(requestBody),
-		&requestBody,
-		&responseBody,
-		common.MediumDuration,
-	)
-
+	// Initialize Tumblebug client
+	tbApiConfig := tbclient.ApiConfig{
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+		RestUrl:  config.Tumblebug.RestUrl,
+	}
+	tbCli := tbclient.NewClient(tbApiConfig)
+	// Convert the request model from 'cloudmodel.TbMciDynamicReq' to 'tbmodel.TbMciDynamicReq'
+	infraModelConverted, err := modelconv.ConvertWithValidation[cloudmodel.TbMciDynamicReq, tbmodel.TbMciDynamicReq](*infraModel)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create/migrate the infrastructure (nsId: %s)", nsId)
-		return tbmodel.TbMciInfo{}, err
+		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure model (nsId: %s)", nsId)
+		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	return responseBody, nil
+	vmInfraInfo, err := tbCli.CreateMciDynamic(nsId, infraModelConverted)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to migrate the infrastructure (nsId: %s)", nsId)
+		return cloudmodel.VmInfraInfo{}, err
+	}
+
+	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.VmInfraInfo'
+	convertedVmInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.VmInfraInfo](vmInfraInfo)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
+		return cloudmodel.VmInfraInfo{}, err
+	}
+
+	return convertedVmInfraInfo, nil
 }
 
 // CreateVMInfra creates a VM infrastructure for the computing infra migration
-func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmInfra) (tbmodel.TbMciInfo, error) {
+func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra) (cloudmodel.VmInfraInfo, error) {
 
-	emptyRet := tbmodel.TbMciInfo{}
+	emptyRet := cloudmodel.VmInfraInfo{}
 
 	/*
 	 * [Input] Receive and validate the target infrastructure model
@@ -165,14 +154,14 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 		Password: config.Tumblebug.API.Password,
 		RestUrl:  config.Tumblebug.RestUrl,
 	}
-	tbclient := tbclient.NewClient(tbApiConfig)
+	tbCli := tbclient.NewClient(tbApiConfig)
 
 	/*
 	 * [Process] Create a VM infrastructure
 	 */
 	// 1. Check if the namespace exists
 	log.Debug().Msgf("Checking if the namespace exists (nsId: %s)", nsId)
-	_, err = tbclient.ReadNamespace(nsId)
+	_, err = tbCli.ReadNamespace(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to read the namespace (nsId: %s)", nsId)
 		return emptyRet, err
@@ -190,7 +179,14 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 	log.Debug().Msgf("Creating a vNet (nsId: %s, vNetName: %s)", nsId, vNetReq.Name)
 	log.Debug().Msgf("vNetReq: %+v", vNetReq)
 
-	vNetInfo, err := tbclient.CreateVNet(nsId, vNetReq)
+	// Convert model from 'cloudmodel.TbVNetReq' to 'tbmodel.TbVNetReq'
+	tbVNetReq, err := modelconv.ConvertWithValidation[cloudmodel.TbVNetReq, tbmodel.TbVNetReq](vNetReq)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert vNet request (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	vNetInfo, err := tbCli.CreateVNet(nsId, tbVNetReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the vNet (nsId: %s)", nsId)
 		return emptyRet, err
@@ -203,7 +199,15 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 	sshKeyReq := targetInfraModel.TargetSshKey
 	log.Debug().Msgf("Creating a SSH key (nsId: %s, sshKeyName: %s)", nsId, sshKeyReq.Name)
 	log.Debug().Msgf("sshKeyReq: %+v", sshKeyReq)
-	sshKeyInfo, err := tbclient.CreateSshKey(nsId, sshKeyReq)
+
+	// Convert model from 'cloudmodel.TbSshKeyReq' to 'tbmodel.TbSshKeyReq'
+	tbSshKeyReq, err := modelconv.ConvertWithValidation[cloudmodel.TbSshKeyReq, tbmodel.TbSshKeyReq](sshKeyReq)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	sshKeyInfo, err := tbCli.CreateSshKey(nsId, tbSshKeyReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the SSH key (nsId: %s)", nsId)
 		return emptyRet, err
@@ -222,7 +226,14 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 		log.Debug().Msgf("Creating a security group (nsId: %s, sgReq.sgName: %s, sgReq.VNetId: %s, vNetInfo.vNetId: %s)",
 			nsId, sgReq.Name, sgReq.VNetId, vNetInfo.Id)
 
-		sgInfo, err := tbclient.CreateSecurityGroup(nsId, sgReq, "")
+		// Convert model from 'cloudmodel.TbSecurityGroupReq' to 'tbmodel.TbSecurityGroupReq'
+		tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.TbSecurityGroupReq, tbmodel.TbSecurityGroupReq](sgReq)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
+			return emptyRet, err
+		}
+
+		sgInfo, err := tbCli.CreateSecurityGroup(nsId, tbSgReq, "")
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to create the security group (nsId: %s)", nsId)
 			return emptyRet, err
@@ -240,8 +251,15 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 	log.Debug().Msgf("Creating a multi-cloud infrastructure (nsId: %s, mciName: %s)", nsId, mciReq.Name)
 	log.Debug().Msgf("mciReq: %+v", mciReq)
 
+	// Convert model from 'cloudmodel.TbSecurityGroupReq' to 'tbmodel.TbSecurityGroupReq'
+	tbMciReq, err := modelconv.ConvertWithValidation[cloudmodel.TbMciReq, tbmodel.TbMciReq](mciReq)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
 	// Create multi-cloud infrastructure
-	mciInfo, err := tbclient.CreateMci(nsId, mciReq)
+	mciInfo, err := tbCli.CreateMci(nsId, tbMciReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create the multi-cloud infrastructure (nsId: %s)", nsId)
 		return emptyRet, err
@@ -252,175 +270,106 @@ func CreateVMInfra(nsId string, targetInfraModel *recommendation.RecommendedVmIn
 	 * [Output] Return the created multi-cloud infrastructure info
 	 */
 
-	// return emptyRet, fmt.Errorf("CreateVMInfra is not implemented yet")
-	return mciInfo, nil
-}
-
-// List all migrated VM infrastructures
-func ListAllVMInfraInfo(nsId string) (MciInfoList, error) {
-
-	// Set timeout duration
-	timeoutDuration := 5 * time.Minute
-
-	var emptyRet MciInfoList
-	var mciInfoList MciInfoList
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set Tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-
-	// Set qeury parameters
-	queryParams := "?option=status"
-
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
-	if queryParams != "" {
-		url += queryParams
-	}
-
-	// Set request body
-	requestBody := common.NoBody
-
-	// Set response body
-	client.SetTimeout(timeoutDuration)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(requestBody),
-		&requestBody,
-		&mciInfoList,
-		common.MediumDuration,
-	)
-
+	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.VmInfraInfo'
+	mciInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.VmInfraInfo](mciInfo)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to get the infrastructure info list (nsId: %s)", nsId)
+		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
 		return emptyRet, err
 	}
 
-	return mciInfoList, nil
+	// return emptyRet, fmt.Errorf("CreateVMInfra is not implemented yet")
+	return mciInfoConverted, nil
+}
+
+// List all migrated VM infrastructures
+func ListAllVMInfraInfo(nsId string) (cloudmodel.MciInfoList, error) {
+
+	var emptyRet cloudmodel.MciInfoList
+	// var mciInfoList cloudmodel.MciInfoList
+
+	// Initialize Tumblebug client
+	tbApiConfig := tbclient.ApiConfig{
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+		RestUrl:  config.Tumblebug.RestUrl,
+	}
+	tbCli := tbclient.NewClient(tbApiConfig)
+
+	mciInfoList, err := tbCli.ReadAllMci(nsId)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to retrieve all migrated VM infrastructures (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	// Convert the response model from 'tbclient.TbMciInfoList' to 'cloudmodel.MciInfoList'
+	convertedVmInfraInfoList, err := modelconv.ConvertWithValidation[tbclient.TbMciInfoList, cloudmodel.MciInfoList](mciInfoList)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info list (nsId: %s)", nsId)
+		return emptyRet, err
+	}
+
+	return convertedVmInfraInfoList, nil
 }
 
 // Get all migrated VM infrastructures
-func ListVMInfraIDs(nsId string, option string) (IdList, error) {
+func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 
-	// Set timeout duration
-	timeoutDuration := 5 * time.Minute
-
-	var emptyRet IdList
-	var idList IdList
+	var emptyRet cloudmodel.IdList
+	var idList cloudmodel.IdList
 	idList.IdList = make([]string, 0)
 
 	/*
 	 * Validate the input
 	 */
 
-	var queryParams string
 	if option != "id" {
 		log.Error().Msgf("invalid option: %s", option)
 		return emptyRet, fmt.Errorf("invalid option: %s", option)
 	}
 
-	// Set qeury parameters
-	queryParams = "?option=id"
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set Tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci", epTumblebug, nsId)
-	if queryParams != "" {
-		url += queryParams
+	// Initialize Tumblebug client
+	tbApiConfig := tbclient.ApiConfig{
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+		RestUrl:  config.Tumblebug.RestUrl,
 	}
-
-	// Set request body
-	requestBody := common.NoBody
-
-	// Set response body
-	tbResp := new(tbmodel.IdList)
-
-	client.SetTimeout(timeoutDuration)
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(requestBody),
-		&requestBody,
-		tbResp,
-		common.MediumDuration,
-	)
-
+	tbCli := tbclient.NewClient(tbApiConfig)
+	mciIdList, err := tbCli.ReadMciIDs(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure IDs (nsId: %s)", nsId)
 		return emptyRet, err
 	}
 
 	// Return the result
-	idList.IdList = append(idList.IdList, tbResp.IdList...)
+	idList.IdList = append(idList.IdList, mciIdList.IdList...)
 
 	return idList, nil
 }
 
 // Get the migrated VM infrastructure
-func GetVMInfra(nsId, infraId string) (tbmodel.TbMciInfo, error) {
+func GetVMInfra(nsId, infraId string) (cloudmodel.TbMciInfo, error) {
 
-	// Set timeout duration
-	timeoutDuration := 5 * time.Minute
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set Tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-
-	// check readyz
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci/%s", epTumblebug, nsId, infraId)
-
-	// Set request body
-	requestBody := common.NoBody
-
-	// Set response body
-	responseBody := new(tbmodel.TbMciInfo)
-
-	client.SetTimeout(timeoutDuration)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(requestBody),
-		&requestBody,
-		responseBody,
-		common.MediumDuration,
-	)
-
+	// Initialize Tumblebug client
+	tbApiConfig := tbclient.ApiConfig{
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+		RestUrl:  config.Tumblebug.RestUrl,
+	}
+	tbCli := tbclient.NewClient(tbApiConfig)
+	vmInfaInfo, err := tbCli.ReadMci(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return tbmodel.TbMciInfo{}, err
+		return cloudmodel.TbMciInfo{}, err
 	}
 
-	return *responseBody, nil
+	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.TbMciInfo'
+	convertedVmInfaInfo, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.TbMciInfo](vmInfaInfo)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
+		return cloudmodel.TbMciInfo{}, err
+	}
+
+	return convertedVmInfaInfo, nil
 }
 
 // Delete the migrated VM infrastructure
@@ -432,17 +381,17 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		Password: config.Tumblebug.API.Password,
 		RestUrl:  config.Tumblebug.RestUrl,
 	}
-	tbclient := tbclient.NewClient(apiConfig)
+	tbCli := tbclient.NewClient(apiConfig)
 
 	// 1. Read MCI info
-	mciInfo, err := tbclient.ReadMci(nsId, infraId)
+	mciInfo, err := tbCli.ReadMci(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
 	}
 
 	// 2. Delete MCI
-	idList, err := tbclient.DeleteMci(nsId, infraId, option)
+	idList, err := tbCli.DeleteMci(nsId, infraId, option)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to delete the infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
@@ -458,8 +407,8 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		}
 	}
 	// Delete all security groups
-	for sgId, _ := range sgIdMap {
-		msg, err := tbclient.DeleteSecurityGroup(nsId, sgId)
+	for sgId := range sgIdMap {
+		msg, err := tbCli.DeleteSecurityGroup(nsId, sgId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("failed to delete security group (nsId: %s, sgId: %s)", nsId, sgId)
 			// Continue deleting other resources even if this fails
@@ -474,10 +423,10 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		sshKeyIdMap[vm.SshKeyId] = struct{}{}
 	}
 	// Delete all SSH Key
-	for sshKeyId, _ := range sshKeyIdMap {
+	for sshKeyId := range sshKeyIdMap {
 		// Delete SSH Key
 		log.Debug().Msgf("Deleting SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
-		msg, err := tbclient.DeleteSshKey(nsId, sshKeyId)
+		msg, err := tbCli.DeleteSshKey(nsId, sshKeyId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("failed to delete SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
 			// Continue deleting other resources even if this fails
@@ -492,9 +441,9 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		vNetIdMap[vm.VNetId] = struct{}{}
 	}
 	// Delete all vNet
-	for vNetId, _ := range vNetIdMap {
+	for vNetId := range vNetIdMap {
 		log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, action: %s)", nsId, vNetId, "withsubnets")
-		msg, err := tbclient.DeleteVNet(nsId, vNetId, "withsubnets")
+		msg, err := tbCli.DeleteVNet(nsId, vNetId, "withsubnets")
 		if err != nil {
 			log.Warn().Err(err).Msgf("failed to delete VNet (nsId: %s, vNetId: %s)", nsId, vNetId)
 			// Continue deleting other resources even if this fails
@@ -506,7 +455,7 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	time.Sleep(15 * time.Second)
 
 	// 6. Delete shared resources
-	idList, err = tbclient.DeleteSharedResources(nsId)
+	idList, err = tbCli.DeleteSharedResources(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to delete shared resources (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
@@ -524,7 +473,7 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	return ret, nil
 }
 
-func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.RecommendedVmInfra) error {
+func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.RecommendedVmInfra) error {
 
 	// * 1. Validate that name fieleds are not empty
 	if targetVmInfraModel == nil {
@@ -617,11 +566,11 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.
 		Password: config.Tumblebug.API.Password,
 		RestUrl:  config.Tumblebug.RestUrl,
 	}
-	tbclient := tbclient.NewClient(apiConfig)
+	tbCli := tbclient.NewClient(apiConfig)
 
 	// Validate that the vNet exists by the vNet name
 	// For VNet, it's normal if the resource doesn't exist
-	vNetInfo, err := tbclient.ReadVNet(nsId, targetVmInfraModel.TargetVNet.Name)
+	vNetInfo, err := tbCli.ReadVNet(nsId, targetVmInfraModel.TargetVNet.Name)
 	if err != nil {
 		log.Debug().Msgf("the vNet not found (nsId: %s, vNet.Name: %s), which is normal case", nsId, targetVmInfraModel.TargetVNet.Name)
 	}
@@ -632,7 +581,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.
 
 	// Validate that the SSH key exists by the SSH key name
 	// For SSH Key, it's normal if the resource doesn't exist
-	sshKeyInfo, err := tbclient.ReadSshKey(nsId, targetVmInfraModel.TargetSshKey.Name)
+	sshKeyInfo, err := tbCli.ReadSshKey(nsId, targetVmInfraModel.TargetSshKey.Name)
 	if err != nil {
 		log.Debug().Err(err).Msgf("SSH key not found (nsId: %s, sshKey.Name: %s), which is normal case", nsId, targetVmInfraModel.TargetSshKey.Name)
 	}
@@ -643,7 +592,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.
 
 	// Validate that the VM specs exist by the VM spec ID
 	for _, vmSpec := range targetVmInfraModel.TargetVmSpecList {
-		_, err := tbclient.ReadVmSpec("system", vmSpec.Id)
+		_, err := tbCli.ReadVmSpec("system", vmSpec.Id)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to read VM spec (nsId: %s, vmSpecId: %s)", nsId, vmSpec.Id)
 			return fmt.Errorf("failed to read VM spec (nsId: %s, vmSpecId: %s): %w", nsId, vmSpec.Id, err)
@@ -652,7 +601,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.
 
 	// Validate that the VM OS images exist by the VM OS image ID
 	for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-		_, err := tbclient.ReadVmOsImage("system", vmOsImage.Id)
+		_, err := tbCli.ReadVmOsImage("system", vmOsImage.Id)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageId: %s)", nsId, vmOsImage.Id)
 			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageId: %s): %w", nsId, vmOsImage.Id, err)
@@ -662,7 +611,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *recommendation.
 	// Validate that the security groups exist by the security group name
 	// For Security Groups, it's normal if the resources don't exist
 	for _, sg := range targetVmInfraModel.TargetSecurityGroupList {
-		sgInfo, err := tbclient.ReadSecurityGroup(nsId, sg.Name)
+		sgInfo, err := tbCli.ReadSecurityGroup(nsId, sg.Name)
 		if err != nil {
 			log.Debug().Msgf("the security group not found (nsId: %s, sg.Name: %s), which is normal case", nsId, sg.Name)
 		}
