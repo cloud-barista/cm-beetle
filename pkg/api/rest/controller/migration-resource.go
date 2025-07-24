@@ -20,8 +20,8 @@ import (
 	"net/http"
 	"net/url"
 
-	tbresource "github.com/cloud-barista/cb-tumblebug/src/api/rest/server/resource"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	tbresource "github.com/cloud-barista/cb-tumblebug/src/interface/rest/server/resource"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/labstack/echo/v4"

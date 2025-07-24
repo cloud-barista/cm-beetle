@@ -22,8 +22,8 @@ import (
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
-	"github.com/cloud-barista/cm-model/infra/cloudmodel"
-	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -38,7 +38,7 @@ import (
 
 type RecommendVmInfraWithDefaultsRequest struct {
 	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
-	OnpremiseInfraModel     inframodel.OnpremInfra
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
 type RecommendVmInfraWithDefaultsResponse struct {
@@ -131,7 +131,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 
 type RecommendVmInfraRequest struct {
 	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
-	OnpremiseInfraModel     inframodel.OnpremInfra
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
 type RecommendVmInfraResponse struct {
@@ -228,7 +228,7 @@ func RecommendVMInfra(c echo.Context) error {
 type RecommendInfraRequest struct {
 	DesiredProvider string `json:"desiredProvider" example:"aws"`
 	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
-	inframodel.OnpremiseInfraModel
+	onpremmodel.OnpremiseInfraModel
 }
 
 type RecommendInfraResponse struct {

@@ -20,7 +20,7 @@ import (
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 
-	"github.com/cloud-barista/cm-model/infra/cloudmodel"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 
 	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"

@@ -3306,7 +3306,7 @@ const docTemplate = `{
                     "example": "ap-northeast-2"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/inframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
             }
         },
@@ -3368,7 +3368,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/recommendation.CspRegionPair"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/inframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
             }
         },
@@ -3417,7 +3417,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/recommendation.CspRegionPair"
                 },
                 "onpremiseInfraModel": {
-                    "$ref": "#/definitions/inframodel.OnpremInfra"
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
             }
         },
@@ -3500,333 +3500,6 @@ const docTemplate = `{
                 "text": {
                     "type": "string",
                     "example": "Any text"
-                }
-            }
-        },
-        "inframodel.CpuProperty": {
-            "type": "object",
-            "required": [
-                "cores",
-                "cpus",
-                "threads"
-            ],
-            "properties": {
-                "architecture": {
-                    "type": "string",
-                    "example": "x86_64"
-                },
-                "cores": {
-                    "description": "Number of physical cores per CPU",
-                    "type": "integer",
-                    "example": 18
-                },
-                "cpus": {
-                    "description": "Number of physical CPUs (sockets)",
-                    "type": "integer",
-                    "example": 2
-                },
-                "maxSpeed": {
-                    "description": "Maximum speed in GHz",
-                    "type": "number",
-                    "example": 3.6
-                },
-                "model": {
-                    "type": "string",
-                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
-                },
-                "threads": {
-                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
-                    "type": "integer",
-                    "example": 36
-                },
-                "vendor": {
-                    "type": "string",
-                    "example": "GenuineIntel"
-                }
-            }
-        },
-        "inframodel.DiskProperty": {
-            "type": "object",
-            "required": [
-                "label",
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 1024
-                },
-                "type": {
-                    "description": "SSD, HDD",
-                    "type": "string",
-                    "example": "SSD"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "inframodel.FirewallRuleProperty": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "description": "e.g., allow, deny",
-                    "type": "string"
-                },
-                "direction": {
-                    "description": "e.g., inbound, outbound",
-                    "type": "string"
-                },
-                "dstCIDR": {
-                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
-                    "type": "string"
-                },
-                "dstPorts": {
-                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
-                    "type": "string"
-                },
-                "protocol": {
-                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
-                    "type": "string"
-                },
-                "srcCIDR": {
-                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
-                    "type": "string"
-                },
-                "srcPorts": {
-                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
-                    "type": "string"
-                }
-            }
-        },
-        "inframodel.MemoryProperty": {
-            "type": "object",
-            "required": [
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 128
-                },
-                "type": {
-                    "type": "string",
-                    "example": "DDR4"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "inframodel.NetworkInterfaceProperty": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "ipv4CidrBlocks": {
-                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "ipv6CidrBlocks": {
-                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "macAddress": {
-                    "description": "MAC address",
-                    "type": "string"
-                },
-                "mtu": {
-                    "description": "Maximum Transmission Unit (MTU) in bytes",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
-                    "type": "string"
-                },
-                "state": {
-                    "description": "Interface state (e.g., UP, DOWN)",
-                    "type": "string"
-                }
-            }
-        },
-        "inframodel.NetworkProperty": {
-            "type": "object",
-            "properties": {
-                "ipv4Networks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "172.26.240.0/20"
-                    ]
-                },
-                "ipv6Networks": {
-                    "description": "TBD",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "inframodel.OnpremInfra": {
-            "type": "object",
-            "required": [
-                "servers"
-            ],
-            "properties": {
-                "network": {
-                    "$ref": "#/definitions/inframodel.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.ServerProperty"
-                    }
-                }
-            }
-        },
-        "inframodel.OsProperty": {
-            "type": "object",
-            "required": [
-                "prettyName"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "ubuntu"
-                },
-                "idLike": {
-                    "type": "string",
-                    "example": "debian"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ubuntu"
-                },
-                "prettyName": {
-                    "description": "Pretty name",
-                    "type": "string",
-                    "example": "Ubuntu 22.04.3 LTS"
-                },
-                "version": {
-                    "description": "Full version string",
-                    "type": "string",
-                    "example": "22.04.3 LTS (Jammy Jellyfish)"
-                },
-                "versionCodename": {
-                    "type": "string",
-                    "example": "jammy"
-                },
-                "versionId": {
-                    "type": "string",
-                    "example": "22.04"
-                }
-            }
-        },
-        "inframodel.RouteProperty": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination network, expressed in CIDR format",
-                    "type": "string"
-                },
-                "gateway": {
-                    "description": "Gateway address to which packets are forwarded",
-                    "type": "string"
-                },
-                "interface": {
-                    "description": "Network interface associated with the route",
-                    "type": "string"
-                },
-                "linkState": {
-                    "description": "Link state of the route (e.g., UP, DOWN)",
-                    "type": "string"
-                },
-                "metric": {
-                    "description": "Metric value indicating the priority of the route",
-                    "type": "integer"
-                },
-                "protocol": {
-                    "description": "Protocol used to set the route (e.g., kernel, static)",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Scope of the route (e.g., global, link, host)",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "Optionally stores the source address (used for policy-based routing)",
-                    "type": "string"
-                }
-            }
-        },
-        "inframodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/inframodel.CpuProperty"
-                },
-                "dataDisks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.DiskProperty"
-                    }
-                },
-                "firewallTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.FirewallRuleProperty"
-                    }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.NetworkInterfaceProperty"
-                    }
-                },
-                "memory": {
-                    "$ref": "#/definitions/inframodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/inframodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/inframodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.RouteProperty"
-                    }
                 }
             }
         },
@@ -4540,6 +4213,366 @@ const docTemplate = `{
                 },
                 "vmUserPassword": {
                     "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.CpuProperty": {
+            "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "onpremisemodel.DiskProperty": {
+            "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.FirewallRuleProperty": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "e.g., allow, deny",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "e.g., inbound, outbound",
+                    "type": "string"
+                },
+                "dstCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "dstPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
+                    "type": "string"
+                },
+                "srcCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "srcPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.GatewayProperty": {
+            "type": "object",
+            "properties": {
+                "interfaceName": {
+                    "description": "Name of the network interface associated with the gateway",
+                    "type": "string"
+                },
+                "ip": {
+                    "description": "IP address of the gateway",
+                    "type": "string"
+                },
+                "machineId": {
+                    "description": "Unique identifier for the machine (e.g., UUID)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
+                },
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.NetworkDetail": {
+            "type": "object",
+            "properties": {
+                "cidrBlocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "defaultGateways": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.GatewayProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.NetworkInterfaceProperty": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "macAddress": {
+                    "description": "MAC address",
+                    "type": "string"
+                },
+                "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NetworkProperty": {
+            "type": "object",
+            "properties": {
+                "ipv4Networks": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                },
+                "ipv6Networks": {
+                    "description": "TBD",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                        }
+                    ]
+                }
+            }
+        },
+        "onpremisemodel.OnpremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "ubuntu"
+                },
+                "idLike": {
+                    "type": "string",
+                    "example": "debian"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Ubuntu"
+                },
+                "prettyName": {
+                    "description": "Pretty name",
+                    "type": "string",
+                    "example": "Ubuntu 22.04.3 LTS"
+                },
+                "version": {
+                    "description": "Full version string",
+                    "type": "string",
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                },
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
+                }
+            }
+        },
+        "onpremisemodel.RouteProperty": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
+                    "type": "string"
+                },
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
+                    "type": "string"
+                },
+                "interface": {
+                    "description": "Network interface associated with the route",
+                    "type": "string"
+                },
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
+                    "type": "string"
+                },
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.ServerProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "machineId": {
+                    "description": "Unique identifier for the server (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onpremisemodel.OsProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
+                    }
                 }
             }
         },

@@ -20,7 +20,7 @@ import (
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
-	"github.com/cloud-barista/cm-model/infra/cloudmodel"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -92,8 +92,8 @@ func RecommendVNet(c echo.Context) error {
 
 	// [Output]
 	res := RecommendVNetResponse{}
-	res.Description = "Recommended vNet information list"
-	res.Count = len(ret)
+	res.RecommendedVNetList.Description = "Recommended vNet information list"
+	res.RecommendedVNetList.Count = len(ret)
 
 	tempList := []cloudmodel.RecommendedVNet{}
 	for _, vNet := range ret {
@@ -103,7 +103,7 @@ func RecommendVNet(c echo.Context) error {
 			TargetVNet:  vNet,
 		})
 	}
-	res.TargetVNetList = tempList
+	res.RecommendedVNetList.TargetVNetList = tempList
 
 	return c.JSON(http.StatusOK, res)
 }

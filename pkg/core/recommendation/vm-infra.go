@@ -3,6 +3,8 @@ package recommendation
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"net"
 	"sort"
 	"strings"
 
@@ -14,8 +16,8 @@ import (
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
-	"github.com/cloud-barista/cm-model/infra/cloudmodel"
-	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -75,7 +77,7 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 }
 
 // RecommendVmInfraWithDefaults an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (cloudmodel.RecommendedVmInfraDynamicList, error) {
+func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedVmInfraDynamicList, error) {
 
 	// var emptyResp RecommendedVmInfraInfoList
 	var recommendedVmInfraInfoList cloudmodel.RecommendedVmInfraDynamicList
@@ -214,7 +216,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 }
 
 // RecommendVmInfra an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframodel.OnpremInfra) (cloudmodel.RecommendedVmInfra, error) {
+func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedVmInfra, error) {
 
 	// var emptyResp RecommendedVmInfra
 	var recommendedVmInfra cloudmodel.RecommendedVmInfra
@@ -396,7 +398,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra inframod
 	return recommendedVmInfra, nil
 }
 
-func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) ([]cloudmodel.TbVNetReq, error) {
+func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) ([]cloudmodel.TbVNetReq, error) {
 
 	var emptyRes []cloudmodel.TbVNetReq
 	var recommendedVNets []cloudmodel.TbVNetReq
@@ -408,18 +410,29 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		return emptyRes, err
 	}
 
-	// TODO: Validate req if needed
-	//
-
-	// * To be updated, the network in onpremise model.
-	// srcInfra.Network.IPv4Networks
-
-	// TODO: It's a dummy data. It should be replaced with the actual model.
-	cidrBlocks := []string{
-		"192.168.0.0/24",
-		"192.168.1.0/24",
+	if len(srcInfra.Network.IPv4Networks.CidrBlocks) == 0 && len(srcInfra.Network.IPv4Networks.DefaultGateways) == 0 {
+		err := fmt.Errorf("no network information found in the source computing infrastructure")
+		log.Error().Err(err).Msg("failed to recommend a virtual network")
+		return emptyRes, err
 	}
-	srcNetworks := cidrBlocks
+
+	var srcNetworks []string
+	// * Note: srcInfra.Network.IPv4Networks.CidrBlocks is the input from the user (e.g., network admin)
+	if len(srcInfra.Network.IPv4Networks.CidrBlocks) != 0 {
+		srcNetworks = srcInfra.Network.IPv4Networks.CidrBlocks
+	} else if len(srcInfra.Network.IPv4Networks.DefaultGateways) != 0 {
+		// * Note: To estimate the network address space of the source computing infrastructure,
+		// * Source networks are derived by combining the default gateway and network interface information of each server.
+		srcNetworks, err = deriveSourceNetworksFromDefaultGateways(srcInfra)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to derive CIDR blocks from default gateways")
+			return emptyRes, err
+		}
+	} else {
+		log.Warn().Msg("no network information found in the source computing infrastructure")
+		return emptyRes, fmt.Errorf("no network information found in the source computing infrastructure")
+	}
+	log.Debug().Msgf("Source networks (CIDR blocks): %v", srcNetworks)
 
 	// [Process] Recommend the vNet and subnets
 	// * Note:
@@ -432,9 +445,9 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 	// ? If so, is grouping the network segments required?
 
 	// Categorizes the entered CIDR blocks by private network (i.e., 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
-	cidrs10 := []string{}
-	cidrs172 := []string{}
-	cidrs192 := []string{}
+	var cidrs10 []string
+	var cidrs172 []string
+	var cidrs192 []string
 
 	for _, srcNetwork := range srcNetworks {
 		identifiedNet, err := netutil.WhichPrivateNetworkByCidr(srcNetwork)
@@ -442,6 +455,7 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 			log.Warn().Err(err).Msgf("failed to identify the network %s", srcNetwork)
 			continue
 		}
+		log.Debug().Msgf("identified network: %s", identifiedNet)
 
 		switch identifiedNet {
 		case netutil.PrivateNetwork10Dot:
@@ -455,6 +469,9 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 			continue
 		}
 	}
+	log.Debug().Msgf("CIDR blocks for %s: %v", netutil.PrivateNetwork10Dot, cidrs10)
+	log.Debug().Msgf("CIDR blocks for %s: %v", netutil.PrivateNetwork172Dot, cidrs172)
+	log.Debug().Msgf("CIDR blocks for %s: %v", netutil.PrivateNetwork192Dot, cidrs192)
 
 	// Calculate the super network of each group
 	var supernet10, supernet172, supernet192 string = "", "", ""
@@ -483,6 +500,28 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		log.Debug().Msgf("supernet192: %s\n", supernet192)
 	}
 
+	// Estimate the more :D super network for each private network
+	// TODO: Set the number of networks to be included in the super network
+	estimateNumNetworks := 4
+	if len(supernet10) > 0 {
+		supernet10, err = estimateSupernet(supernet10, estimateNumNetworks)
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to estimate supernet for 10.x.x.x")
+		}
+	}
+	if len(supernet172) > 0 {
+		supernet172, err = estimateSupernet(supernet172, estimateNumNetworks)
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to estimate supernet for 172.x.x.x")
+		}
+	}
+	if len(supernet192) > 0 {
+		supernet192, err = estimateSupernet(supernet192, estimateNumNetworks)
+		if err != nil {
+			log.Warn().Err(err).Msg("failed to estimate supernet for 192.x.x.x")
+		}
+	}
+
 	// Select a super network for the vNet
 	// ? But how to select the super network?
 	// * Currrently, a list of recommended networks is returned.
@@ -491,10 +530,16 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		// Set tempSubnets by the CIDR blocks from the source computing infra
 		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs10 {
+			networkAddr, err := toNetworkAddress(cidr)
+			if err != nil {
+				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
+				continue
+			}
+
 			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
-				IPv4_CIDR:   cidr,
+				IPv4_CIDR:   networkAddr,
 			})
 		}
 
@@ -516,10 +561,16 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		// Set tempSubnets by the CIDR blocks from the source computing infra
 		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs172 {
+			networkAddr, err := toNetworkAddress(cidr)
+			if err != nil {
+				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
+				continue
+			}
+
 			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
-				IPv4_CIDR:   cidr,
+				IPv4_CIDR:   networkAddr,
 			})
 		}
 
@@ -540,10 +591,17 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 		// Set tempSubnets by the CIDR blocks from the source computing infra
 		tempSubnets := []cloudmodel.TbSubnetReq{}
 		for _, cidr := range cidrs192 {
+
+			networkAddr, err := toNetworkAddress(cidr)
+			if err != nil {
+				log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
+				continue
+			}
+
 			tempSubnets = append(tempSubnets, cloudmodel.TbSubnetReq{
 				Name:        "INSERT_YOUR_SUBNET_NAME", // TODO: Set a name for the subnet
 				Description: "subnet from source computing infra",
-				IPv4_CIDR:   cidr,
+				IPv4_CIDR:   networkAddr,
 			})
 		}
 
@@ -568,8 +626,145 @@ func RecommendVNet(csp string, region string, srcInfra inframodel.OnpremInfra) (
 	return recommendedVNets, nil
 }
 
+func deriveSourceNetworksFromDefaultGateways(srcInfra onpremmodel.OnpremInfra) ([]string, error) {
+	if len(srcInfra.Network.IPv4Networks.DefaultGateways) == 0 {
+		return nil, fmt.Errorf("no network information found in the source computing infrastructure")
+	}
+
+	var sourceNetworks []string
+	// 1. Find the server that has the same "machine ID" as the gateway
+	for _, gateway := range srcInfra.Network.IPv4Networks.DefaultGateways {
+		for _, server := range srcInfra.Servers {
+			if server.MachineId == gateway.MachineId {
+
+				// 2. Find the network interface that has the same network "name" as the gateway
+				for _, nic := range server.Interfaces {
+					if nic.Name == gateway.InterfaceName {
+
+						// 3. Get "prefix length" from the network interface
+						if nic.IPv4CidrBlocks == nil && len(nic.IPv4CidrBlocks) == 0 {
+							log.Warn().Msgf("no IPv4 CIDR blocks found in the network interface %s of the server %s", nic.Name, server.Hostname)
+							continue
+						}
+
+						cidrBlock := nic.IPv4CidrBlocks[0]
+						_, ipNet, err := net.ParseCIDR(cidrBlock)
+						if err != nil {
+							log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidrBlock)
+							continue
+						}
+
+						prefixLen, _ := ipNet.Mask.Size()
+
+						// 4. Derive the CIDR block from the gateway IP and prefix length
+						gatewayCIDR := fmt.Sprintf("%s/%d", gateway.IP, prefixLen)
+
+						// 5. Append the derived CIDR block to the list
+						sourceNetworks = append(sourceNetworks, gatewayCIDR)
+					}
+				}
+			}
+		}
+	}
+
+	// Deduplicate the source networks
+	sourceNetworks = deduplicateSlice(sourceNetworks)
+
+	return sourceNetworks, nil
+}
+
+func deduplicateSlice[T comparable](slice []T) []T {
+	// Create a map to track unique elements
+	uniqueMap := make(map[T]struct{})
+	for _, item := range slice {
+		uniqueMap[item] = struct{}{}
+	}
+
+	// Convert the map keys back to a slice
+	result := make([]T, 0, len(uniqueMap))
+	for item := range uniqueMap {
+		result = append(result, item)
+	}
+	return result
+}
+
+// estimateSupernet finds the smallest supernet that contains a given number
+// of consecutive networks, starting from a given CIDR.
+func estimateSupernet(startCIDR string, numNetworks int) (string, error) {
+	// 1. Parse the starting CIDR.
+	ip, ipNet, err := net.ParseCIDR(startCIDR)
+	if err != nil {
+		return "", fmt.Errorf("invalid CIDR: %v", err)
+	}
+
+	// Ensure it's an IPv4 address.
+	ipv4 := ip.To4()
+	if ipv4 == nil {
+		return "", fmt.Errorf("only IPv4 addresses are supported")
+	}
+
+	// 2. Calculate the total IP range.
+	// Number of addresses in the start network (e.g., /24 -> 256).
+	prefixLen, bits := ipNet.Mask.Size()
+	numAddressesPerNet := 1 << (bits - prefixLen)
+
+	// Total number of addresses to cover.
+	totalAddresses := numAddressesPerNet * numNetworks
+
+	// Convert the starting IP to an integer for calculation.
+	startIPint := big.NewInt(0)
+	startIPint.SetBytes(ipv4)
+
+	// Calculate the last IP address in the entire range.
+	// Last IP = Start IP + Total Addresses - 1.
+	offset := big.NewInt(int64(totalAddresses - 1))
+	endIPint := big.NewInt(0)
+	endIPint.Add(startIPint, offset)
+
+	// Convert the integer back to a net.IP.
+	firstIP := ipv4
+	lastIP := net.IP(endIPint.Bytes())
+
+	// 3. Find the common supernet.
+	// Iterate from the initial prefix down to 0, finding the first prefix
+	// length where both the first and last IPs belong to the same network.
+	for newPrefixLen := prefixLen; newPrefixLen >= 0; newPrefixLen-- {
+		mask := net.CIDRMask(newPrefixLen, bits)
+		network1 := firstIP.Mask(mask)
+		network2 := lastIP.Mask(mask)
+
+		// If both IPs belong to the same network, we've found our supernet.
+		if network1.Equal(network2) {
+			return (&net.IPNet{IP: network1, Mask: mask}).String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find a common supernet")
+}
+
+func toNetworkAddress(cidr string) (string, error) {
+	_, subnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse CIDR block %s: %v", cidr, err)
+	}
+	return subnet.String(), nil
+}
+
+func toNetworkAddresses(cidrs []string) []string {
+	var subnets []string
+	for _, cidr := range cidrs {
+		subnet, err := toNetworkAddress(cidr)
+		if err != nil {
+			log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
+			continue
+		}
+		subnets = append(subnets, subnet)
+	}
+	return subnets
+}
+
 // RecommendVmSpecs recommends appropriate VM specs for the given server
-func RecommendVmSpecs(csp string, region string, server inframodel.ServerProperty, limit int) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
+func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProperty, limit int) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
 
 	var emptyResp = []cloudmodel.TbSpecInfo{}
 	// var vmSpecList = []cloudmodel.TbSpecInfo{}
@@ -645,9 +840,6 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 
 	// Get server info from source computing infra info
 	cores := server.CPU.Cores
-	// memory := MBtoGiB(float64(server.Memory.TotalSize))
-	memory := uint32(server.Memory.TotalSize)
-
 	coresMax := cores << 1
 	var coresMin uint32
 	if cores > 1 {
@@ -656,6 +848,7 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 		coresMin = 1
 	}
 
+	memory := uint32(server.Memory.TotalSize)
 	memoryMax := memory << 1
 	var memoryMin uint32
 	if memory > 1 {
@@ -732,7 +925,7 @@ func RecommendVmSpecs(csp string, region string, server inframodel.ServerPropert
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImage(csp string, region string, server inframodel.ServerProperty) (cloudmodel.TbImageInfo, error) {
+func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.TbImageInfo, error) {
 
 	var emptyRes = cloudmodel.TbImageInfo{}
 	// var vmOsImage = cloudmodel.TbImageInfo{}
@@ -806,7 +999,7 @@ func RecommendVmOsImage(csp string, region string, server inframodel.ServerPrope
 }
 
 // RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImages(csp string, region string, server inframodel.ServerProperty, limit int) ([]VmOsImageInfoWithScore, error) {
+func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerProperty, limit int) ([]VmOsImageInfoWithScore, error) {
 
 	var emptyRes = []VmOsImageInfoWithScore{}
 	var vmOsImageInfoAndScoreList = []VmOsImageInfoWithScore{}
@@ -905,7 +1098,7 @@ func RecommendVmOsImages(csp string, region string, server inframodel.ServerProp
 }
 
 // RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImageId(csp string, region string, server inframodel.ServerProperty) (string, error) {
+func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerProperty) (string, error) {
 
 	var emptyRes string = ""
 	var vmOsImageId string = ""
@@ -1119,7 +1312,7 @@ func FindBestVmOsImageId(keywords string, kwDelimiters []string, vmImages []tbmo
 	return bestVmOsImageID
 }
 
-func RecommendSecurityGroup(csp string, region string, server inframodel.ServerProperty) (cloudmodel.TbSecurityGroupReq, error) {
+func RecommendSecurityGroup(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.TbSecurityGroupReq, error) {
 
 	var emptyRes = cloudmodel.TbSecurityGroupReq{}
 	var recommendedSecurityGroup = cloudmodel.TbSecurityGroupReq{}
@@ -1131,10 +1324,8 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 		return emptyRes, err
 	}
 
-	// TODO:  To be updated, the security group in onpremise model.
-	// server.FirewallRules = dummyFirewallRules
-
-	firewallRules := dummyFirewallRules
+	firewallRules := server.FirewallTable
+	log.Debug().Msgf("firewallRules: %+v", firewallRules)
 
 	// Use the provided firewall rules or fall back to dummy data if empty
 	if len(firewallRules) == 0 {
@@ -1145,9 +1336,6 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	// [Process] Recommend the security group
 
 	// Create security group recommendations
-	// TODO: To be updated with the actual model and real data
-	// TODO: A list of firewall rules(i.e., firewall table) will be entered (currently, it's a dummy single firewall table)
-
 	sgRules := []cloudmodel.TbFirewallRuleInfo{}
 	// 1. Set default security group rules if no firewall rules are provided
 	if len(firewallRules) == 0 {
@@ -1182,7 +1370,7 @@ func RecommendSecurityGroup(csp string, region string, server inframodel.ServerP
 	return recommendedSecurityGroup, nil
 }
 
-func RecommendSecurityGroups(csp string, region string, servers []inframodel.ServerProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
+func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.ServerProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
 
 	var emptyRet = cloudmodel.RecommendedSecurityGroupList{}
 	var recommendedSecurityGroupList = cloudmodel.RecommendedSecurityGroupList{}
@@ -1329,7 +1517,7 @@ func formatCIDR(cidr string) string {
 }
 
 // generateSecurityGroupRules converts FirewallRuleProperty to tbmodel.TbFirewallRuleInfo
-func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []cloudmodel.TbFirewallRuleInfo {
+func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []cloudmodel.TbFirewallRuleInfo {
 	var tbRules []cloudmodel.TbFirewallRuleInfo
 
 	for _, rule := range rules {
@@ -1487,7 +1675,7 @@ func generateSecurityGroupRules(rules []inframodel.FirewallRuleProperty) []cloud
 	return tbRules
 }
 
-var dummyFirewallRules = []inframodel.FirewallRuleProperty{
+var dummyFirewallRules = []onpremmodel.FirewallRuleProperty{
 	{
 		SrcCIDR:   "0.0.0.0/0",
 		DstCIDR:   "192.168.1.10/32",

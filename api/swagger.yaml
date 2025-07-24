@@ -1171,7 +1171,7 @@ definitions:
         example: ap-northeast-2
         type: string
       onpremiseInfraModel:
-        $ref: '#/definitions/inframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
     required:
     - onpremiseInfraModel
     type: object
@@ -1213,7 +1213,7 @@ definitions:
       desiredCspAndRegionPair:
         $ref: '#/definitions/recommendation.CspRegionPair'
       onpremiseInfraModel:
-        $ref: '#/definitions/inframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
     type: object
   controller.RecommendVmInfraResponse:
     properties:
@@ -1245,7 +1245,7 @@ definitions:
       desiredCspAndRegionPair:
         $ref: '#/definitions/recommendation.CspRegionPair'
       onpremiseInfraModel:
-        $ref: '#/definitions/inframodel.OnpremInfra'
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
     type: object
   controller.RecommendVmInfraWithDefaultsResponse:
     properties:
@@ -1301,242 +1301,6 @@ definitions:
       text:
         example: Any text
         type: string
-    type: object
-  inframodel.CpuProperty:
-    properties:
-      architecture:
-        example: x86_64
-        type: string
-      cores:
-        description: Number of physical cores per CPU
-        example: 18
-        type: integer
-      cpus:
-        description: Number of physical CPUs (sockets)
-        example: 2
-        type: integer
-      maxSpeed:
-        description: Maximum speed in GHz
-        example: 3.6
-        type: number
-      model:
-        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
-        type: string
-      threads:
-        description: Number of logical CPUs (threads) per CPU with hyper-threading
-          enabled
-        example: 36
-        type: integer
-      vendor:
-        example: GenuineIntel
-        type: string
-    required:
-    - cores
-    - cpus
-    - threads
-    type: object
-  inframodel.DiskProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      label:
-        type: string
-      totalSize:
-        description: Unit GiB
-        example: 1024
-        type: integer
-      type:
-        description: SSD, HDD
-        example: SSD
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - label
-    - totalSize
-    - type
-    type: object
-  inframodel.FirewallRuleProperty:
-    properties:
-      action:
-        description: e.g., allow, deny
-        type: string
-      direction:
-        description: e.g., inbound, outbound
-        type: string
-      dstCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      dstPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-      protocol:
-        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
-        type: string
-      srcCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      srcPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-    type: object
-  inframodel.MemoryProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      totalSize:
-        description: Unit GiB
-        example: 128
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - totalSize
-    - type
-    type: object
-  inframodel.NetworkInterfaceProperty:
-    properties:
-      ipv4CidrBlocks:
-        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
-          of inet addr, Bcast, and Mask
-        items:
-          type: string
-        type: array
-      ipv6CidrBlocks:
-        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
-        items:
-          type: string
-        type: array
-      macAddress:
-        description: MAC address
-        type: string
-      mtu:
-        description: Maximum Transmission Unit (MTU) in bytes
-        type: integer
-      name:
-        description: Interface name (e.g., eth0, ens01, enp0s3)
-        type: string
-      state:
-        description: Interface state (e.g., UP, DOWN)
-        type: string
-    required:
-    - name
-    type: object
-  inframodel.NetworkProperty:
-    properties:
-      ipv4Networks:
-        example:
-        - 172.26.240.0/20
-        items:
-          type: string
-        type: array
-      ipv6Networks:
-        description: TBD
-        items:
-          type: string
-        type: array
-    type: object
-  inframodel.OnpremInfra:
-    properties:
-      network:
-        $ref: '#/definitions/inframodel.NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/inframodel.ServerProperty'
-        type: array
-    required:
-    - servers
-    type: object
-  inframodel.OsProperty:
-    properties:
-      id:
-        example: ubuntu
-        type: string
-      idLike:
-        example: debian
-        type: string
-      name:
-        example: Ubuntu
-        type: string
-      prettyName:
-        description: Pretty name
-        example: Ubuntu 22.04.3 LTS
-        type: string
-      version:
-        description: Full version string
-        example: 22.04.3 LTS (Jammy Jellyfish)
-        type: string
-      versionCodename:
-        example: jammy
-        type: string
-      versionId:
-        example: "22.04"
-        type: string
-    required:
-    - prettyName
-    type: object
-  inframodel.RouteProperty:
-    properties:
-      destination:
-        description: Destination network, expressed in CIDR format
-        type: string
-      gateway:
-        description: Gateway address to which packets are forwarded
-        type: string
-      interface:
-        description: Network interface associated with the route
-        type: string
-      linkState:
-        description: Link state of the route (e.g., UP, DOWN)
-        type: string
-      metric:
-        description: Metric value indicating the priority of the route
-        type: integer
-      protocol:
-        description: Protocol used to set the route (e.g., kernel, static)
-        type: string
-      scope:
-        description: Scope of the route (e.g., global, link, host)
-        type: string
-      source:
-        description: Optionally stores the source address (used for policy-based routing)
-        type: string
-    type: object
-  inframodel.ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/inframodel.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/inframodel.DiskProperty'
-        type: array
-      firewallTable:
-        items:
-          $ref: '#/definitions/inframodel.FirewallRuleProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/inframodel.NetworkInterfaceProperty'
-        type: array
-      memory:
-        $ref: '#/definitions/inframodel.MemoryProperty'
-      os:
-        $ref: '#/definitions/inframodel.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/inframodel.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/inframodel.RouteProperty'
-        type: array
     type: object
   model.BastionNode:
     properties:
@@ -2063,6 +1827,263 @@ definitions:
     required:
     - commonImage
     - commonSpec
+    type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.ServerProperty'
+        type: array
+    required:
+    - servers
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  onpremisemodel.ServerProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the server (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
     type: object
   recommendation.CspRegionPair:
     properties:
