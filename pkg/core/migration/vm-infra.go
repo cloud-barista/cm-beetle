@@ -270,15 +270,17 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	 * [Output] Return the created multi-cloud infrastructure info
 	 */
 
-	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.VmInfraInfo'
-	mciInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.VmInfraInfo](mciInfo)
+	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.TbMciInfo'
+	mciInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.TbMciInfo](mciInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
 		return emptyRet, err
 	}
+	var temp cloudmodel.VmInfraInfo
+	temp.TbMciInfo = mciInfoConverted
 
 	// return emptyRet, fmt.Errorf("CreateVMInfra is not implemented yet")
-	return mciInfoConverted, nil
+	return temp, nil
 }
 
 // List all migrated VM infrastructures
