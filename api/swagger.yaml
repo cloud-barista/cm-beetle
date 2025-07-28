@@ -30,6 +30,18 @@ definitions:
           type: string
         type: array
     type: object
+  cloudmodel.ImageStatus:
+    enum:
+    - Available
+    - Unavailable
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageAvailable
+    - ImageUnavailable
+    - ImageDeprecated
+    - ImageNA
   cloudmodel.KeyValue:
     properties:
       key:
@@ -75,6 +87,40 @@ definitions:
           $ref: '#/definitions/cloudmodel.SshCmdResult'
         type: array
     type: object
+  cloudmodel.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  cloudmodel.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
   cloudmodel.RecommendedSecurityGroup:
     properties:
       description:
@@ -262,9 +308,10 @@ definitions:
         example: aws-ap-southeast-1
         type: string
       imageStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
         description: Available, Deprecated, NA
         example: Available
-        type: string
       infraType:
         description: vm|k8s|kubernetes|container, etc.
         type: string
@@ -282,9 +329,10 @@ definitions:
         example: default
         type: string
       osArchitecture:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
         description: arm64, x86_64 etc.
         example: x86_64
-        type: string
       osDiskSizeGB:
         description: 10, 50, 100 etc.
         example: 50
@@ -298,9 +346,10 @@ definitions:
         example: Ubuntu 22.04~
         type: string
       osPlatform:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
         description: Linux/UNIX, Windows, NA
         example: Linux/UNIX
-        type: string
       osType:
         example: ubuntu 22.04
         type: string

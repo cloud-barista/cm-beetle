@@ -82,8 +82,18 @@ func validateReflectTypes(sourceType, targetType reflect.Type) error {
 		return validateSliceTypes(sourceType, targetType)
 	case reflect.Map:
 		return validateMapTypes(sourceType, targetType)
+	case reflect.String:
+		// For string-based custom types, check if they have the same underlying type
+		if sourceType.Kind() == reflect.String && targetType.Kind() == reflect.String {
+			return nil // Allow conversion between string-based custom types
+		}
+		fallthrough
 	default:
-		// For basic types, just check if they're the same
+		// For basic types, check underlying type compatibility
+		if sourceType.Kind() == targetType.Kind() {
+			// Same underlying kind, allow conversion
+			return nil
+		}
 		if sourceType != targetType {
 			return fmt.Errorf("incompatible basic types: source=%v, target=%v", sourceType, targetType)
 		}

@@ -1736,6 +1736,21 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "Unavailable",
+                "Deprecated",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "ImageAvailable",
+                "ImageUnavailable",
+                "ImageDeprecated",
+                "ImageNA"
+            ]
+        },
         "cloudmodel.KeyValue": {
             "type": "object",
             "properties": {
@@ -1803,6 +1818,46 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "cloudmodel.OSArchitecture": {
+            "type": "string",
+            "enum": [
+                "arm32",
+                "arm64",
+                "arm64_mac",
+                "x86_32",
+                "x86_64",
+                "x86_32_mac",
+                "x86_64_mac",
+                "s390x",
+                "NA",
+                ""
+            ],
+            "x-enum-varnames": [
+                "ARM32",
+                "ARM64",
+                "ARM64_MAC",
+                "X86_32",
+                "X86_64",
+                "X86_32_MAC",
+                "X86_64_MAC",
+                "S390X",
+                "ArchitectureNA",
+                "ArchitectureUnknown"
+            ]
+        },
+        "cloudmodel.OSPlatform": {
+            "type": "string",
+            "enum": [
+                "Linux/UNIX",
+                "Windows",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "Linux_UNIX",
+                "Windows",
+                "PlatformNA"
+            ]
         },
         "cloudmodel.RecommendedSecurityGroup": {
             "type": "object",
@@ -2080,7 +2135,11 @@ const docTemplate = `{
                 },
                 "imageStatus": {
                     "description": "Available, Deprecated, NA",
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.ImageStatus"
+                        }
+                    ],
                     "example": "Available"
                 },
                 "infraType": {
@@ -2106,7 +2165,11 @@ const docTemplate = `{
                 },
                 "osArchitecture": {
                     "description": "arm64, x86_64 etc.",
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSArchitecture"
+                        }
+                    ],
                     "example": "x86_64"
                 },
                 "osDiskSizeGB": {
@@ -2126,7 +2189,11 @@ const docTemplate = `{
                 },
                 "osPlatform": {
                     "description": "Linux/UNIX, Windows, NA",
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSPlatform"
+                        }
+                    ],
                     "example": "Linux/UNIX"
                 },
                 "osType": {
