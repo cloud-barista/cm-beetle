@@ -1327,33 +1327,37 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	firewallRules := server.FirewallTable
 	log.Debug().Msgf("firewallRules: %+v", firewallRules)
 
-	// Use the provided firewall rules or fall back to dummy data if empty
-	if len(firewallRules) == 0 {
-		log.Warn().Msg("no firewall rules provided, using sample data")
-		firewallRules = dummyFirewallRules
+	// Default rules
+	ruleToAllowAllOutboundTraffic := cloudmodel.TbFirewallRuleInfo{
+		Direction:  "outbound",
+		IPProtocol: "all",
+		CIDR:       "0.0.0.0/0",
+		FromPort:   "0",
+		ToPort:     "0",
+	}
+	ruleToAllowSSHInboundTraffic := cloudmodel.TbFirewallRuleInfo{
+		Direction:  "inbound",
+		IPProtocol: "tcp",
+		CIDR:       "0.0.0.0/0",
+		FromPort:   "22",
+		ToPort:     "22",
 	}
 
 	// [Process] Recommend the security group
-
 	// Create security group recommendations
-	sgRules := []cloudmodel.TbFirewallRuleInfo{}
+	var sgRules []cloudmodel.TbFirewallRuleInfo
 	// 1. Set default security group rules if no firewall rules are provided
 	if len(firewallRules) == 0 {
 		log.Warn().Msg("no firewall rules provided, using default rules")
 		// Allow all outbound traffic and deny all inbound traffic
 		// TODO: Check if the default rules are OK.
-		sgRules = []cloudmodel.TbFirewallRuleInfo{
-			{
-				Direction:  "outbound",
-				IPProtocol: "all",
-				CIDR:       "0.0.0.0/0", // Allow all outbound traffic
-				FromPort:   "0",
-				ToPort:     "0",
-			},
-		}
+		sgRules = append(sgRules, ruleToAllowAllOutboundTraffic)
+		sgRules = append(sgRules, ruleToAllowSSHInboundTraffic)
 	} else {
 		sgRules = generateSecurityGroupRules(firewallRules)
 	}
+
+	log.Debug().Msgf("sgRules: %+v", sgRules)
 
 	// [Output]
 	// Create a security group for all rules
@@ -1383,8 +1387,8 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 	}
 
 	// [Process] Recommend the security group for each server
-	var tempRecSgList = []cloudmodel.TbSecurityGroupReq{}
-	var targetSecurityGroupList = []cloudmodel.RecommendedSecurityGroup{}
+	var tempRecSgList []cloudmodel.TbSecurityGroupReq
+	var targetSecurityGroupList []cloudmodel.RecommendedSecurityGroup
 
 	for _, server := range servers {
 		// Recommend a security group for the server
@@ -1448,7 +1452,9 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 			recommendedSecurityGroupList.Count-countFailed, recommendedSecurityGroupList.Count)
 	}
 
-	log.Debug().Msgf("recommendedSecurityGroupList: %+v", tempRecSgList)
+	recommendedSecurityGroupList.TargetSecurityGroupList = targetSecurityGroupList
+
+	log.Debug().Msgf("recommendedSecurityGroupList: %+v", recommendedSecurityGroupList)
 
 	return recommendedSecurityGroupList, nil
 }
@@ -1675,84 +1681,84 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 	return tbRules
 }
 
-var dummyFirewallRules = []onpremmodel.FirewallRuleProperty{
-	{
-		SrcCIDR:   "0.0.0.0/0",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "22",
-		Protocol:  "TCP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "0.0.0.0/0",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "80,443",
-		Protocol:  "TCP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "10.0.0.0/16",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "3306",
-		Protocol:  "TCP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "172.16.0.0/12",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "5432",
-		Protocol:  "TCP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "0.0.0.0/0",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "25",
-		Protocol:  "TCP",
-		Direction: "inbound",
-		Action:    "deny",
-	},
-	{
-		SrcCIDR:   "0.0.0.0/0",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "53",
-		Protocol:  "UDP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "0.0.0.0/0",
-		DstCIDR:   "192.168.1.10/32",
-		DstPorts:  "1194",
-		Protocol:  "UDP",
-		Direction: "inbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "192.168.1.10/32",
-		DstCIDR:   "0.0.0.0/0",
-		SrcPorts:  "32768-60999",
-		Protocol:  "TCP",
-		Direction: "outbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "192.168.1.10/32",
-		DstCIDR:   "8.8.8.8/32",
-		DstPorts:  "53",
-		Protocol:  "UDP",
-		Direction: "outbound",
-		Action:    "allow",
-	},
-	{
-		SrcCIDR:   "192.168.1.10/32",
-		DstCIDR:   "0.0.0.0/0",
-		Protocol:  "ICMP",
-		Direction: "outbound",
-		Action:    "allow",
-	},
-}
+// var dummyFirewallRules = []onpremmodel.FirewallRuleProperty{
+// 	{
+// 		SrcCIDR:   "0.0.0.0/0",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "22",
+// 		Protocol:  "TCP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "0.0.0.0/0",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "80,443",
+// 		Protocol:  "TCP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "10.0.0.0/16",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "3306",
+// 		Protocol:  "TCP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "172.16.0.0/12",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "5432",
+// 		Protocol:  "TCP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "0.0.0.0/0",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "25",
+// 		Protocol:  "TCP",
+// 		Direction: "inbound",
+// 		Action:    "deny",
+// 	},
+// 	{
+// 		SrcCIDR:   "0.0.0.0/0",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "53",
+// 		Protocol:  "UDP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "0.0.0.0/0",
+// 		DstCIDR:   "192.168.1.10/32",
+// 		DstPorts:  "1194",
+// 		Protocol:  "UDP",
+// 		Direction: "inbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "192.168.1.10/32",
+// 		DstCIDR:   "0.0.0.0/0",
+// 		SrcPorts:  "32768-60999",
+// 		Protocol:  "TCP",
+// 		Direction: "outbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "192.168.1.10/32",
+// 		DstCIDR:   "8.8.8.8/32",
+// 		DstPorts:  "53",
+// 		Protocol:  "UDP",
+// 		Direction: "outbound",
+// 		Action:    "allow",
+// 	},
+// 	{
+// 		SrcCIDR:   "192.168.1.10/32",
+// 		DstCIDR:   "0.0.0.0/0",
+// 		Protocol:  "ICMP",
+// 		Direction: "outbound",
+// 		Action:    "allow",
+// 	},
+// }
