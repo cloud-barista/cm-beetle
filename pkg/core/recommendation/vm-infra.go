@@ -97,7 +97,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// 	CommonImage:    "", // Lookup and set an appropriate VM OS image
 	// 	CommonSpec:     "", // Lookup and set an appropriate VM spec
 	// 	Description:    "a recommended virtual machine",
-	// 	Name:           fmt.Sprintf("migrated-%s", server.Hostname),
+	// 	Name:           fmt.Sprintf("migrated-%s", server.MachineId),
 	// 	RootDiskSize:   "", // TBD
 	// 	RootDiskType:   "", // TBD
 	// 	SubGroupSize:   "",
@@ -120,7 +120,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 		// Lookup the appropriate VM specs for the server
 		vmSpecList, _, err := RecommendVmSpecs(desiredCsp, desiredRegion, server, max)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.Hostname, err)
+			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
 			continue
 		}
 
@@ -129,7 +129,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 		for range vmSpecList {
 			osImgId, err := RecommendVmOsImageId(desiredCsp, desiredRegion, server)
 			if err != nil {
-				log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.Hostname, err)
+				log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
 				vmOsImageIdList = append(vmOsImageIdList, "")
 			}
 			vmOsImageIdList = append(vmOsImageIdList, osImgId)
@@ -184,9 +184,9 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				CommonImage:    vmInfo.vmOsImageId,
 				CommonSpec:     vmInfo.vmSpecId,
 				Description:    "a recommended virtual machine",
-				Name:           fmt.Sprintf("migrated-%s", srcInfra.Servers[j].Hostname),
-				RootDiskSize:   "", // TBD
-				RootDiskType:   "", // TBD
+				Name:           fmt.Sprintf("migrated-%s", srcInfra.Servers[j].MachineId), // Set MachineId to identify the source server
+				RootDiskSize:   "",                                                        // TBD
+				RootDiskType:   "",                                                        // TBD
 				SubGroupSize:   "",
 				VmUserPassword: "",
 			}
@@ -287,19 +287,19 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// Lookup the appropriate VM specs for the server
 		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, server, max)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.Hostname, err)
+			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
 		}
 
 		// Lookup the appropriate VM OS images for the server
 		recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, server)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.Hostname, err)
+			log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
 		}
 
 		// Generete security group from the server's firewall rules (or firewall table)
 		recommendedSg, err := RecommendSecurityGroup(csp, region, server)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.Hostname, err)
+			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
 		}
 
 		/*
@@ -348,7 +348,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			// If the security group does not exist, set a name to indicate a dependency between resources.
 			recommendedSg.Name = fmt.Sprintf("mig-sg-%02d", len(recommendedSecurityGroupList)+1)
 			recommendedSg.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
-			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", server.Hostname)
+			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", server.MachineId) // Set MachineId to identify the source server
 
 			// * Set name to indicate a dependency between resources.
 			recommendedSg.VNetId = recommendedVmInfra.TargetVNet.Name // Set the vNet ID to the security group
@@ -366,19 +366,19 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// * Set names to indicate a dependency between resources.
 		tempVmReq := cloudmodel.TbVmReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.Hostname),
+			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
 			SpecId:           selectedVmSpec.Name,
 			ImageId:          selectedVmOsImage.Name,
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
-			Name:             fmt.Sprintf("migrated-%s", server.Hostname),
-			RootDiskSize:     "",                                   // TBD
-			RootDiskType:     "",                                   // TBD
-			SshKeyId:         recommendedVmInfra.TargetSshKey.Name, // Set the SSH key ID
-			VmUserName:       "",                                   // TBD: Set the VM user name if needed
-			VmUserPassword:   "",                                   // TBD
-			SubGroupSize:     "",                                   // TBD
+			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
+			RootDiskSize:     "",                                                   // TBD
+			RootDiskType:     "",                                                   // TBD
+			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
+			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
+			VmUserPassword:   "",                                                   // TBD
+			SubGroupSize:     "",                                                   // TBD
 		}
 
 		// Append the VM request to the list
@@ -643,7 +643,7 @@ func deriveSourceNetworksFromDefaultGateways(srcInfra onpremmodel.OnpremInfra) (
 
 						// 3. Get "prefix length" from the network interface
 						if nic.IPv4CidrBlocks == nil && len(nic.IPv4CidrBlocks) == 0 {
-							log.Warn().Msgf("no IPv4 CIDR blocks found in the network interface %s of the server %s", nic.Name, server.Hostname)
+							log.Warn().Msgf("no IPv4 CIDR blocks found in the network interface %s of the server %s", nic.Name, server.MachineId)
 							continue
 						}
 
@@ -1365,7 +1365,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 		Name:           "INSERT_YOUR_SECURITY_GROUP_NAME",
 		VNetId:         "INSERT_YOUR_VNET_ID",
 		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-		Description:    fmt.Sprintf("Recommended security group for %s", server.Hostname),
+		Description:    fmt.Sprintf("Recommended security group for %s", server.MachineId), // Set MachineId to identify the source server
 		FirewallRules:  &sgRules,
 	}
 
@@ -1395,22 +1395,22 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, server)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to recommend security group for server: %+v", server)
-			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", server.Hostname)
-			recommendedTargetSg.FirewallRules = nil // No rules if recommendation fails
+			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", server.MachineId) // Set MachineId to identify the source server
+			recommendedTargetSg.FirewallRules = nil                                                                      // No rules if recommendation fails
 		}
 
 		// Check duplicates and append the recommended security group
 		exists, idx, _ := containSg(tempRecSgList, recommendedTargetSg)
 
 		// If not exists, append the recommended security group
-		// If exists, just append the hostname to the existing security group
+		// If exists, just append the MachineId to the existing security group
 		if !exists {
 			// Note: This is a temporary list for checking duplicates
 			tempRecSgList = append(tempRecSgList, recommendedTargetSg)
 
 			// Create a temporary recommended security group
 			tempRecommendedSecurityGroup := cloudmodel.RecommendedSecurityGroup{
-				SourceServers:       []string{server.Hostname}, // Start with the current server's hostname
+				SourceServers:       []string{server.MachineId}, // Set MachineId to identify the source server
 				Description:         "Recommended security group",
 				TargetSecurityGroup: recommendedTargetSg,
 			}
@@ -1425,8 +1425,8 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 			// Append the recommended security group to the list
 			targetSecurityGroupList = append(targetSecurityGroupList, tempRecommendedSecurityGroup)
 		} else {
-			// Just append the hostname to the existing security group
-			targetSecurityGroupList[idx].SourceServers = append(targetSecurityGroupList[idx].SourceServers, server.Hostname)
+			// Just append the MachineId to the existing security group
+			targetSecurityGroupList[idx].SourceServers = append(targetSecurityGroupList[idx].SourceServers, server.MachineId)
 		}
 	}
 

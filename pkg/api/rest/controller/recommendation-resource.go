@@ -274,8 +274,8 @@ func RecommendVmSpecs(c echo.Context) error {
 			log.Error().Err(err).Msg("failed to recommend VM specs")
 
 			temp := cloudmodel.RecommendedVmSpec{
-				SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
-				Description:   fmt.Sprintf("failed to recommend VM specs for server %d: %s", i+1, server.Hostname),
+				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:   fmt.Sprintf("failed to recommend VM specs for server %d: %s", i+1, server.MachineId),
 				Status:        string(recommendation.NothingRecommended),
 				TargetVmSpec:  cloudmodel.TbSpecInfo{},
 			}
@@ -284,11 +284,11 @@ func RecommendVmSpecs(c echo.Context) error {
 		}
 		log.Trace().Msgf("specList: %v, count: %d", specList, count)
 		if count == 0 {
-			log.Warn().Msgf("no VM specs recommended for server: %s", server.Hostname)
+			log.Warn().Msgf("no VM specs recommended for server: %s", server.MachineId)
 
 			temp := cloudmodel.RecommendedVmSpec{
-				SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
-				Description:   fmt.Sprintf("no VM specs recommended for server %d: %s", i+1, server.Hostname),
+				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:   fmt.Sprintf("no VM specs recommended for server %d: %s", i+1, server.MachineId),
 				Status:        string(recommendation.NothingRecommended),
 				TargetVmSpec:  cloudmodel.TbSpecInfo{},
 			}
@@ -314,13 +314,13 @@ func RecommendVmSpecs(c echo.Context) error {
 			if exists {
 				recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers = append(
 					recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers,
-					server.Hostname, //TODO replace Hostname with MachineID
+					server.MachineId, // Set MachineId to identify the source server
 				)
 			} else {
 				temp := cloudmodel.RecommendedVmSpec{
 					Status:        string(recommendation.FullyRecommended),
-					SourceServers: []string{server.Hostname}, //TODO replace Hostname with MachineID
-					Description:   fmt.Sprintf("Recommended VM spec for server %d: %s", i+1, server.Hostname),
+					SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+					Description:   fmt.Sprintf("Recommended VM spec for server %d: %s", i+1, server.MachineId),
 					TargetVmSpec:  spec,
 				}
 				recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
@@ -417,8 +417,8 @@ func RecommendVmOsImages(c echo.Context) error {
 
 			temp := cloudmodel.RecommendedVmOsImage{
 				Status:          string(recommendation.NothingRecommended),
-				SourceServers:   []string{server.Hostname}, //TODO replace Hostname with MachineID
-				Description:     fmt.Sprintf("Recommended VM OS images for server %d: %s", i+1, server.Hostname),
+				SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:     fmt.Sprintf("Recommended VM OS images for server %d: %s", i+1, server.MachineId),
 				TargetVmOsImage: cloudmodel.TbImageInfo{},
 			}
 			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
@@ -426,12 +426,12 @@ func RecommendVmOsImages(c echo.Context) error {
 		}
 
 		if len(vmOsImageList) == 0 {
-			log.Warn().Msgf("no VM OS images recommended for server: %s", server.Hostname)
+			log.Warn().Msgf("no VM OS images recommended for server: %s", server.MachineId)
 
 			temp := cloudmodel.RecommendedVmOsImage{
 				Status:          string(recommendation.NothingRecommended),
-				SourceServers:   []string{server.Hostname}, //TODO replace Hostname with MachineID
-				Description:     fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.Hostname),
+				SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:     fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.MachineId),
 				TargetVmOsImage: cloudmodel.TbImageInfo{},
 			}
 			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
@@ -456,13 +456,13 @@ func RecommendVmOsImages(c echo.Context) error {
 			if exists {
 				recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers = append(
 					recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers,
-					server.Hostname, // TODO: replace Hostname with MachineID
+					server.MachineId, // Set MachineId to identify the source server
 				)
 			} else {
 				temp := cloudmodel.RecommendedVmOsImage{
 					Status:          string(recommendation.FullyRecommended),
-					SourceServers:   []string{server.Hostname}, // TODO: replace Hostname with MachineID
-					Description:     fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.Hostname),
+					SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
+					Description:     fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.MachineId),
 					TargetVmOsImage: vmOsImage,
 				}
 				recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
