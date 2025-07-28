@@ -1328,13 +1328,14 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	log.Debug().Msgf("firewallRules: %+v", firewallRules)
 
 	// Default rules
-	ruleToAllowAllOutboundTraffic := cloudmodel.TbFirewallRuleInfo{
-		Direction:  "outbound",
-		IPProtocol: "all",
-		CIDR:       "0.0.0.0/0",
-		FromPort:   "0",
-		ToPort:     "0",
-	}
+	// * Note: Spider supports this rule. Do not set this rule to avoid duplication error.
+	// ruleToAllowAllOutboundTraffic := cloudmodel.TbFirewallRuleInfo{
+	// 	Direction:  "outbound",
+	// 	IPProtocol: "all",
+	// 	CIDR:       "0.0.0.0/0",
+	// 	FromPort:   "0",
+	// 	ToPort:     "0",
+	// }
 	ruleToAllowSSHInboundTraffic := cloudmodel.TbFirewallRuleInfo{
 		Direction:  "inbound",
 		IPProtocol: "tcp",
@@ -1351,7 +1352,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 		log.Warn().Msg("no firewall rules provided, using default rules")
 		// Allow all outbound traffic and deny all inbound traffic
 		// TODO: Check if the default rules are OK.
-		sgRules = append(sgRules, ruleToAllowAllOutboundTraffic)
+		// sgRules = append(sgRules, ruleToAllowAllOutboundTraffic)
 		sgRules = append(sgRules, ruleToAllowSSHInboundTraffic)
 	} else {
 		sgRules = generateSecurityGroupRules(firewallRules)
