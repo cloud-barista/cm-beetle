@@ -154,13 +154,14 @@ func getFieldMap(structType reflect.Type) map[string]reflect.StructField {
 		jsonTag := field.Tag.Get("json")
 		if jsonTag != "" && jsonTag != "-" {
 			// Remove omitempty and other options
-			if commaIdx := len(jsonTag); commaIdx > 0 {
-				for j, char := range jsonTag {
-					if char == ',' {
-						commaIdx = j
-						break
-					}
+			commaIdx := -1
+			for j, char := range jsonTag {
+				if char == ',' {
+					commaIdx = j
+					break
 				}
+			}
+			if commaIdx != -1 {
 				jsonTag = jsonTag[:commaIdx]
 			}
 			fieldMap[jsonTag] = field

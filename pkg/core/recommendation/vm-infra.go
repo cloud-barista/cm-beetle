@@ -131,8 +131,9 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 			if err != nil {
 				log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
 				vmOsImageIdList = append(vmOsImageIdList, "")
+			} else {
+				vmOsImageIdList = append(vmOsImageIdList, osImgId)
 			}
-			vmOsImageIdList = append(vmOsImageIdList, osImgId)
 		}
 
 		// Set the recommended VM specs and OS images to the response body
@@ -1123,7 +1124,7 @@ func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerPr
 		IsGPUImage:             &falseValue,
 		IsKubernetesImage:      &falseValue,
 		IsRegisteredByAsset:    &falseValue,
-		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
+		OSType:                 server.OS.Name,
 		ProviderName:           csp,
 		RegionName:             region,
 	}
