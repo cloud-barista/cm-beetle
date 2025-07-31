@@ -1162,6 +1162,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1241,6 +1242,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1314,6 +1316,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1387,6 +1390,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1460,6 +1464,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1533,6 +1538,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1606,6 +1612,7 @@
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
