@@ -22,7 +22,8 @@ import (
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
-	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
@@ -31,27 +32,116 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// type Infrastructure struct {
-// 	Network        string
-// 	Disk           string
-// 	Compute        string
-// 	SecurityGroup  string
-// 	VirtualMachine string
-// }
+/*
+ * VM Infrastructure Recommendation
+ */
+
+type RecommendVmInfraWithDefaultsRequest struct {
+	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
+}
+
+type RecommendVmInfraWithDefaultsResponse struct {
+	cloudmodel.RecommendedVmInfraDynamicList
+}
+
+// RecommendVMInfraWithDefaults godoc
+// @ID RecommendVMInfraWithDefaults
+// @Summary (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
+// @Description Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
+// @Description
+// @Description [Note] `desiredCsp` and `desiredRegion` are required.
+// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+// @Description
+// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Tags [Recommendation] Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the your infrastructure to be migrated"
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} RecommendVmInfraWithDefaultsResponse "The result of recommended infrastructure"
+// @Failure 404 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/mciWithDefaults [post]
+func RecommendVMInfraWithDefaults(c echo.Context) error {
+
+	// [Input]
+	desiredCsp := c.QueryParam("desiredCsp")
+	desiredRegion := c.QueryParam("desiredRegion")
+
+	reqt := &RecommendVmInfraWithDefaultsRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind a request body")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	log.Trace().Msgf("reqt: %v\n", reqt)
+
+	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
+		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
+		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+
+	csp := reqt.DesiredCspAndRegionPair.Csp
+	if csp == "" {
+		csp = desiredCsp
+	}
+	region := reqt.DesiredCspAndRegionPair.Region
+	if region == "" {
+		region = desiredRegion
+	}
+	sourceInfra := reqt.OnpremiseInfraModel
+
+	// Replace "ncp" with "ncpvpc"
+	// TODO: improve it when "ncp" and "ncpvpc" are updated.
+	if csp == "ncp" {
+		csp = csp + "vpc"
+	}
+
+	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	if !ok {
+		log.Error().Err(err).Msg("failed to validate CSP and region")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// [Process]
+	recommendedInfraInfoList, err := recommendation.RecommendVmInfraWithDefaults(csp, region, sourceInfra)
+	// recommendedInfraInfoList.TargetInfra.Name = "mmci01"
+
+	// [Ouput]
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusNotFound, res)
+	}
+
+	return c.JSON(http.StatusOK, recommendedInfraInfoList)
+}
 
 type RecommendVmInfraRequest struct {
 	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
-	inframodel.OnpremiseInfraModel
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
 type RecommendVmInfraResponse struct {
-	recommendation.RecommendedInfraInfo
+	cloudmodel.RecommendedVmInfra
 }
 
 // RecommendVMInfra godoc
 // @ID RecommendVMInfra
-// @Summary Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
-// @Description Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+// @Summary Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Description Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
 // @Description
 // @Description [Note] `desiredCsp` and `desiredRegion` are required.
 // @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
@@ -70,13 +160,13 @@ type RecommendVmInfraResponse struct {
 // @Router /recommendation/mci [post]
 func RecommendVMInfra(c echo.Context) error {
 
+	// [Input]
 	desiredCsp := c.QueryParam("desiredCsp")
 	desiredRegion := c.QueryParam("desiredRegion")
 
-	// [Input]
 	reqt := &RecommendVmInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
-		log.Error().Err(err).Msg("failed to bind a request body")
+		log.Warn().Err(err).Msg("failed to bind a request body")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, res)
 	}
@@ -84,11 +174,13 @@ func RecommendVMInfra(c echo.Context) error {
 
 	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
 		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
 		resp := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, resp)
 	}
 	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
 		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
 		resp := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusBadRequest, resp)
 	}
@@ -101,7 +193,7 @@ func RecommendVMInfra(c echo.Context) error {
 	if region == "" {
 		region = desiredRegion
 	}
-	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
+	sourceInfra := reqt.OnpremiseInfraModel
 
 	// Replace "ncp" with "ncpvpc"
 	// TODO: improve it when "ncp" and "ncpvpc" are updated.
@@ -117,23 +209,26 @@ func RecommendVMInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraInfoList, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
-	// recommendedInfraInfoList.TargetInfra.Name = "mmci01"
-
-	// [Ouput]
+	recommendedInfra, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
 		res := common.SimpleMsg{Message: err.Error()}
 		return c.JSON(http.StatusNotFound, res)
 	}
 
-	return c.JSON(http.StatusOK, recommendedInfraInfoList)
+	// [Ouput]
+	//
+
+	return c.JSON(http.StatusOK, recommendedInfra)
 }
 
+/*
+ * Container Infrastructure Recommendation
+ */
 type RecommendInfraRequest struct {
 	DesiredProvider string `json:"desiredProvider" example:"aws"`
 	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
-	inframodel.OnpremiseInfraModel
+	onpremmodel.OnpremiseInfraModel
 }
 
 type RecommendInfraResponse struct {
@@ -142,7 +237,7 @@ type RecommendInfraResponse struct {
 
 // RecommendContainerInfra godoc
 // @ID RecommendContainerInfra
-// @Summary Recommend an appropriate container infrastructure for cloud migration
+// @Summary (Under-development) Recommend an appropriate container infrastructure for cloud migration
 // @Description Recommend an appropriate container infrastructure for container-based workloads
 // @Description
 // @Description [Note] `desiredProvider` and `desiredRegion` are required.

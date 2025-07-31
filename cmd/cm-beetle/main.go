@@ -20,6 +20,8 @@ import (
 	"sync"
 	"time"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/lkvstore"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
@@ -195,13 +197,22 @@ func main() {
 
 	// Create the default namespace
 	log.Debug().Msgf("creating the default namespace (%s)", common.DefaulNamespaceId)
-	nsInfo, err := common.GetNamespace(common.DefaulNamespaceId)
+
+	apiConfig := tbclient.ApiConfig{
+		RestUrl:  config.Tumblebug.RestUrl,
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+	}
+
+	tbCli := tbclient.NewClient(apiConfig)
+	nsInfo, err := tbCli.ReadNamespace(common.DefaulNamespaceId)
 	if err != nil {
 		log.Debug().Msgf("not found the default namespace (nsId: %s)", common.DefaulNamespaceId)
-		nsReq := common.NsReq{
-			Name: common.DefaulNamespaceId,
+		nsReq := tbmodel.NsReq{
+			Name:        common.DefaulNamespaceId,
+			Description: "Default namespace for computing infra migration",
 		}
-		nsInfo, err = common.CreateNamespace(nsReq)
+		nsInfo, err = tbCli.CreateNamespace(nsReq)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create a namespace")
 		}

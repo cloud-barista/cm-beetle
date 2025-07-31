@@ -85,11 +85,9 @@
                     },
                     {
                         "enum": [
-                            "status",
                             "id"
                         ],
                         "type": "string",
-                        "default": "status",
                         "description": "Option for getting the migrated multi-cloud infrastructure",
                         "name": "option",
                         "in": "query"
@@ -103,9 +101,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "The info list of the migrated multi-cloud infrastructure (MCI)",
+                        "description": "The ID list of The migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/migration.MciInfoList"
+                            "$ref": "#/definitions/cloudmodel.IdList"
                         }
                     },
                     "404": {
@@ -123,7 +121,7 @@
                 }
             },
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.",
                 "consumes": [
                     "application/json"
                 ],
@@ -133,7 +131,7 @@
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI)",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults",
                 "operationId": "MigrateInfra",
                 "parameters": [
                     {
@@ -278,8 +276,8 @@
                         ],
                         "type": "string",
                         "default": "terminate",
-                        "description": "Action for deletion",
-                        "name": "action",
+                        "description": "Option for deletion",
+                        "name": "option",
                         "in": "query"
                     },
                     {
@@ -306,6 +304,780 @@
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/mciWithDefaults": {
+            "post": {
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults",
+                "operationId": "MigrateInfraWithDefaults",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Specify the information for the targeted mulci-cloud infrastructure (MCI)",
+                        "name": "mciInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateInfraWithDefaultsRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully migrated to the multi-cloud infrastructure",
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateInfraWithDefaultsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/securityGroup": {
+            "get": {
+                "description": "Get the list of all migrated security groups in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "List all migrated security groups",
+                "operationId": "ListMigratedSecurityGroups",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "id"
+                        ],
+                        "type": "string",
+                        "description": "Option",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field key for filtering (ex: systemLabel)",
+                        "name": "filterKey",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field value for filtering (ex: Registered from CSP resource)",
+                        "name": "filterVal",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Different return structures by the given option param",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.JSONResult"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "[DEFAULT]": {
+                                            "$ref": "#/definitions/resource.RestGetAllSecurityGroupResponse"
+                                        },
+                                        "[ID]": {
+                                            "$ref": "#/definitions/model.IdList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new migrated security group in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Create a migrated security group",
+                "operationId": "CreateMigratedSecurityGroup",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "register"
+                        ],
+                        "type": "string",
+                        "description": "Option: [required params for register] connectionName, name, vNetId, cspResourceId",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Details for an securityGroup object",
+                        "name": "securityGroupReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSecurityGroupReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/securityGroup/{sgId}": {
+            "get": {
+                "description": "Get details of a specific migrated security group in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Get a specific migrated security group",
+                "operationId": "GetMigratedSecurityGroup",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Security Group ID",
+                        "name": "sgId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific migrated security group in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete a migrated security group",
+                "operationId": "DeleteMigratedSecurityGroup",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Security Group ID",
+                        "name": "securityGroupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/sshKey": {
+            "get": {
+                "description": "Get the list of all migrated SSH keys in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "List all migrated SSH keys",
+                "operationId": "ListMigratedSSHKeys",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "id"
+                        ],
+                        "type": "string",
+                        "description": "Option",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field key for filtering (ex: systemLabel)",
+                        "name": "filterKey",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field value for filtering (ex: Registered from CSP resource)",
+                        "name": "filterVal",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Different return structures by the given option param",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.JSONResult"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "[DEFAULT]": {
+                                            "$ref": "#/definitions/resource.RestGetAllSshKeyResponse"
+                                        },
+                                        "[ID]": {
+                                            "$ref": "#/definitions/model.IdList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new migrated SSH key in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Create a migrated SSH key",
+                "operationId": "CreateMigratedSSHKey",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "register"
+                        ],
+                        "type": "string",
+                        "description": "Option: [required params for register] connectionName, name, cspKeyId",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Details for an SSH key object",
+                        "name": "sshKeyReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSshKeyReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSshKeyInfo"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/sshKey/{sshKeyId}": {
+            "get": {
+                "description": "Get details of a specific migrated SSH key in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Get a specific migrated SSH key",
+                "operationId": "GetMigratedSSHKey",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "SSH Key ID",
+                        "name": "sshKeyId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbSshKeyInfo"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific migrated SSH key in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete a migrated SSH key",
+                "operationId": "DeleteMigratedSSHKey",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "SSH Key ID",
+                        "name": "sshKeyId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/vNet": {
+            "get": {
+                "description": "Get the list of all migrated virtual networks in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "List all migrated virtual networks",
+                "operationId": "ListMigratedVNets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Different return structures by the given option param",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/controller.JSONResult"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "[DEFAULT]": {
+                                            "$ref": "#/definitions/resource.RestGetAllVNetResponse"
+                                        },
+                                        "[ID]": {
+                                            "$ref": "#/definitions/model.IdList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new migrated virtual network in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Create a migrated virtual network",
+                "operationId": "CreateVNet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Virtual Network creation request",
+                        "name": "vNetReq",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.TbVNetReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbVNetInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/resources/vNet/{vNetId}": {
+            "get": {
+                "description": "Get details of a specific virtual network in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Get a specific migrated virtual network",
+                "operationId": "GetMigratedVNet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Virtual Network ID",
+                        "name": "vNetId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.TbVNetInfo"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific migrated virtual network in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete a migrated virtual network",
+                "operationId": "DeleteMigratedVNet",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Virtual Network ID",
+                        "name": "vNetId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "withsubnets",
+                            "refine",
+                            "force"
+                        ],
+                        "type": "string",
+                        "description": "Action",
+                        "name": "action",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
                         }
                     }
                 }
@@ -361,7 +1133,7 @@
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "Recommend an appropriate container infrastructure for cloud migration",
+                "summary": "(Under-development) Recommend an appropriate container infrastructure for cloud migration",
                 "operationId": "RecommendContainerInfra",
                 "parameters": [
                     {
@@ -430,7 +1202,7 @@
         },
         "/recommendation/mci": {
             "post": {
-                "description": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -440,7 +1212,7 @@
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration",
+                "summary": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration",
                 "operationId": "RecommendVMInfra",
                 "parameters": [
                     {
@@ -501,9 +1273,9 @@
                 }
             }
         },
-        "/sample/users": {
-            "get": {
-                "description": "Get information of all users.",
+        "/recommendation/mciWithDefaults": {
+            "post": {
+                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -511,11 +1283,40 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample API] Users"
+                    "[Recommendation] Infrastructure"
                 ],
-                "summary": "Get a list of users",
-                "operationId": "GetUsers",
+                "summary": "(To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration",
+                "operationId": "RecommendVMInfraWithDefaults",
                 "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
@@ -525,68 +1326,29 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "(sample) This is a sample description for success response in Swagger UI",
+                        "description": "The result of recommended infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.GetUsersResponse"
+                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsResponse"
                         }
                     },
                     "404": {
-                        "description": "User Not Found",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new user with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Sample API] Users"
-                ],
-                "summary": "Create a new user",
-                "operationId": "CreateUser",
-                "parameters": [
-                    {
-                        "description": "User information",
-                        "name": "User",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.CreateUserRequest"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
-                    {
-                        "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/controller.GetUserResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
             }
         },
-        "/sample/users/{id}": {
-            "get": {
-                "description": "Get information of a user with a specific ID.",
+        "/recommendation/resources/securityGroups": {
+            "post": {
+                "description": "Recommend an appropriate security group for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -594,112 +1356,39 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample API] Users"
+                    "[Recommendation] Resources for VM infrastructure"
                 ],
-                "summary": "Get specific user information",
-                "operationId": "GetUser",
+                "summary": "Recommend an appropriate security group for cloud migration",
+                "operationId": "RecommendSecurityGroups",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "(Sample) This is a sample description for success response in Swagger UI",
-                        "schema": {
-                            "$ref": "#/definitions/controller.GetUserResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "User Not Found",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update a user with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Sample API] Users"
-                ],
-                "summary": "Update a user",
-                "operationId": "UpdateUser",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User information to update",
-                        "name": "User",
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.UpdateUserRequest"
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
                         }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "(Sample) This is a sample description for success response in Swagger UI",
-                        "schema": {
-                            "$ref": "#/definitions/controller.UpdateUserResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete a user with the given information.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Sample API] Users"
-                ],
-                "summary": "Delete a user",
-                "operationId": "DeleteUser",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -710,27 +1399,29 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "User deletion successful",
+                        "description": "The result of recommended security groups",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/controller.RecommendSecurityGroupResponse"
                         }
                     },
                     "404": {
-                        "description": "User Not Found",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
-            },
-            "patch": {
-                "description": "Patch a user with the given information.",
+            }
+        },
+        "/recommendation/resources/vNet": {
+            "post": {
+                "description": "Recommend an appropriate virtual network for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -738,26 +1429,39 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Sample API] Users"
+                    "[Recommendation] Resources for VM infrastructure"
                 ],
-                "summary": "Patch a user",
-                "operationId": "PatchUser",
+                "summary": "Recommend an appropriate virtual network for cloud migration",
+                "operationId": "RecommendVNet",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User information to update",
-                        "name": "User",
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.PatchUserRequest"
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
                         }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -768,21 +1472,173 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "(Sample) This is a sample description for success response in Swagger UI",
+                        "description": "The result of recommended vNet",
                         "schema": {
-                            "$ref": "#/definitions/controller.PatchUserResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid Request",
-                        "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/controller.RecommendVNetResponse"
                         }
                     },
                     "404": {
-                        "description": "User Not Found",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/resources/vmOsImages": {
+            "post": {
+                "description": "Recommend an appropriate OS image for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for VM infrastructure"
+                ],
+                "summary": "Recommend an appropriate OS image for cloud migration",
+                "operationId": "RecommendVmOsImages",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended VM OS images",
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmOsImageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/resources/vmSpecs": {
+            "post": {
+                "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for VM infrastructure"
+                ],
+                "summary": "Recommend an appropriate VM specification for cloud migration",
+                "operationId": "RecommendVmSpecs",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Machine ID (e.g., TBD, xxxxxx)",
+                        "name": "machineID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended VM specifications",
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmSpecResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
@@ -828,598 +1684,42 @@
         }
     },
     "definitions": {
-        "common.SimpleMessage": {
+        "cloudmodel.ConnConfig": {
             "type": "object",
             "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
+                "configName": {
+                    "type": "string"
+                },
+                "credentialHolder": {
+                    "type": "string"
+                },
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionDetail": {
+                    "$ref": "#/definitions/cloudmodel.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/cloudmodel.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
                 }
             }
         },
-        "common.SimpleMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
-                }
-            }
-        },
-        "controller.CreateUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.GetUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.GetUsersResponse": {
-            "type": "object",
-            "properties": {
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser"
-                    }
-                }
-            }
-        },
-        "controller.MigrateInfraRequest": {
-            "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.TbVmDynamicReq"
-                    }
-                }
-            }
-        },
-        "controller.MigrateInfraResponse": {
-            "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.TbVmDynamicReq"
-                    }
-                }
-            }
-        },
-        "controller.PatchUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.PatchUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.RecommendInfraRequest": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "desiredProvider": {
-                    "type": "string",
-                    "example": "aws"
-                },
-                "desiredRegion": {
-                    "type": "string",
-                    "example": "ap-northeast-2"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/inframodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetInfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                }
-            }
-        },
-        "controller.RecommendVmInfraRequest": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/recommendation.CspRegionPair"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/inframodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendVmInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetInfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                }
-            }
-        },
-        "controller.UpdateUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.UpdateUserResponse": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string",
-                    "example": "Any details"
-                },
-                "list": {
-                    "type": "array",
-                    "items": {}
-                },
-                "object": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "text": {
-                    "type": "string",
-                    "example": "Any text"
-                }
-            }
-        },
-        "inframodel.CpuProperty": {
-            "type": "object",
-            "required": [
-                "cores",
-                "cpus",
-                "threads"
-            ],
-            "properties": {
-                "architecture": {
-                    "type": "string",
-                    "example": "x86_64"
-                },
-                "cores": {
-                    "description": "Number of physical cores per CPU",
-                    "type": "integer",
-                    "example": 18
-                },
-                "cpus": {
-                    "description": "Number of physical CPUs (sockets)",
-                    "type": "integer",
-                    "example": 2
-                },
-                "maxSpeed": {
-                    "description": "Maximum speed in GHz",
-                    "type": "number",
-                    "example": 3.6
-                },
-                "model": {
-                    "type": "string",
-                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
-                },
-                "threads": {
-                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
-                    "type": "integer",
-                    "example": 36
-                },
-                "vendor": {
-                    "type": "string",
-                    "example": "GenuineIntel"
-                }
-            }
-        },
-        "inframodel.DiskProperty": {
-            "type": "object",
-            "required": [
-                "label",
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 1024
-                },
-                "type": {
-                    "description": "SSD, HDD",
-                    "type": "string",
-                    "example": "SSD"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "inframodel.MemoryProperty": {
-            "type": "object",
-            "required": [
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 128
-                },
-                "type": {
-                    "type": "string",
-                    "example": "DDR4"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "inframodel.NetworkInterfaceProperty": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "ipv4CidrBlocks": {
-                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "ipv6CidrBlocks": {
-                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "macAddress": {
-                    "description": "MAC address",
-                    "type": "string"
-                },
-                "mtu": {
-                    "description": "Maximum Transmission Unit (MTU) in bytes",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
-                    "type": "string"
-                },
-                "state": {
-                    "description": "Interface state (e.g., UP, DOWN)",
-                    "type": "string"
-                }
-            }
-        },
-        "inframodel.NetworkProperty": {
-            "type": "object",
-            "properties": {
-                "ipv4Networks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "172.26.240.0/20"
-                    ]
-                },
-                "ipv6Networks": {
-                    "description": "TBD",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "inframodel.OnpremInfra": {
-            "type": "object",
-            "required": [
-                "servers"
-            ],
-            "properties": {
-                "network": {
-                    "$ref": "#/definitions/inframodel.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.ServerProperty"
-                    }
-                }
-            }
-        },
-        "inframodel.OsProperty": {
-            "type": "object",
-            "required": [
-                "prettyName"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "ubuntu"
-                },
-                "idLike": {
-                    "type": "string",
-                    "example": "debian"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ubuntu"
-                },
-                "prettyName": {
-                    "description": "Pretty name",
-                    "type": "string",
-                    "example": "Ubuntu 22.04.3 LTS"
-                },
-                "version": {
-                    "description": "Full version string",
-                    "type": "string",
-                    "example": "22.04.3 LTS (Jammy Jellyfish)"
-                },
-                "versionCodename": {
-                    "type": "string",
-                    "example": "jammy"
-                },
-                "versionId": {
-                    "type": "string",
-                    "example": "22.04"
-                }
-            }
-        },
-        "inframodel.RouteProperty": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination network, expressed in CIDR format",
-                    "type": "string"
-                },
-                "gateway": {
-                    "description": "Gateway address to which packets are forwarded",
-                    "type": "string"
-                },
-                "interface": {
-                    "description": "Network interface associated with the route",
-                    "type": "string"
-                },
-                "linkState": {
-                    "description": "Link state of the route (e.g., UP, DOWN)",
-                    "type": "string"
-                },
-                "metric": {
-                    "description": "Metric value indicating the priority of the route",
-                    "type": "integer"
-                },
-                "protocol": {
-                    "description": "Protocol used to set the route (e.g., kernel, static)",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Scope of the route (e.g., global, link, host)",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "Optionally stores the source address (used for policy-based routing)",
-                    "type": "string"
-                }
-            }
-        },
-        "inframodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/inframodel.CpuProperty"
-                },
-                "dataDisks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.DiskProperty"
-                    }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.NetworkInterfaceProperty"
-                    }
-                },
-                "memory": {
-                    "$ref": "#/definitions/inframodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/inframodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/inframodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/inframodel.RouteProperty"
-                    }
-                }
-            }
-        },
-        "migration.IdList": {
+        "cloudmodel.IdList": {
             "type": "object",
             "properties": {
                 "idList": {
@@ -1430,18 +1730,33 @@
                 }
             }
         },
-        "migration.MciInfoList": {
+        "cloudmodel.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "Unavailable",
+                "Deprecated",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "ImageAvailable",
+                "ImageUnavailable",
+                "ImageDeprecated",
+                "ImageNA"
+            ]
+        },
+        "cloudmodel.KeyValue": {
             "type": "object",
             "properties": {
-                "mci": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.MciStatusInfo"
-                    }
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },
-        "model.Location": {
+        "cloudmodel.Location": {
             "type": "object",
             "properties": {
                 "display": {
@@ -1455,64 +1770,256 @@
                 }
             }
         },
-        "model.MciStatusInfo": {
+        "cloudmodel.MciCmdReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "userName": {
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "cloudmodel.MciInfoList": {
             "type": "object",
             "properties": {
-                "id": {
+                "mci": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbMciInfo"
+                    }
+                }
+            }
+        },
+        "cloudmodel.MciSshCmdResult": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SshCmdResult"
+                    }
+                }
+            }
+        },
+        "cloudmodel.OSArchitecture": {
+            "type": "string",
+            "enum": [
+                "arm32",
+                "arm64",
+                "arm64_mac",
+                "x86_32",
+                "x86_64",
+                "x86_32_mac",
+                "x86_64_mac",
+                "s390x",
+                "NA",
+                ""
+            ],
+            "x-enum-varnames": [
+                "ARM32",
+                "ARM64",
+                "ARM64_MAC",
+                "X86_32",
+                "X86_64",
+                "X86_32_MAC",
+                "X86_64_MAC",
+                "S390X",
+                "ArchitectureNA",
+                "ArchitectureUnknown"
+            ]
+        },
+        "cloudmodel.OSPlatform": {
+            "type": "string",
+            "enum": [
+                "Linux/UNIX",
+                "Windows",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "Linux_UNIX",
+                "Windows",
+                "PlatformNA"
+            ]
+        },
+        "cloudmodel.RecommendedSecurityGroup": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
-                    "type": "string",
-                    "example": "[yes, no]"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
                         "type": "string"
                     }
                 },
-                "masterIp": {
-                    "type": "string",
-                    "example": "32.201.134.113"
-                },
-                "masterSSHPort": {
+                "status": {
                     "type": "string"
                 },
-                "masterVmId": {
-                    "type": "string",
-                    "example": "vm-asiaeast1-cb-01"
-                },
-                "name": {
+                "targetSecurityGroup": {
+                    "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVNet": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string"
                 },
                 "status": {
                     "type": "string"
                 },
-                "statusCount": {
-                    "$ref": "#/definitions/model.StatusCountInfo"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "targetAction": {
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVmInfraDynamic": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string"
                 },
-                "targetStatus": {
+                "status": {
                     "type": "string"
                 },
-                "vm": {
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.TbMciDynamicReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVmOsImage": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "sourceServers": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVmStatusInfo"
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetVmOsImage": {
+                    "$ref": "#/definitions/cloudmodel.TbImageInfo"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVmSpec": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetVmSpec": {
+                    "$ref": "#/definitions/cloudmodel.TbSpecInfo"
+                }
+            }
+        },
+        "cloudmodel.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/cloudmodel.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }
         },
-        "model.StatusCountInfo": {
+        "cloudmodel.RegionInfo": {
+            "type": "object",
+            "properties": {
+                "region": {
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.SshCmdResult": {
+            "type": "object",
+            "properties": {
+                "command": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "err": {},
+                "mciId": {
+                    "type": "string"
+                },
+                "stderr": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "stdout": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "vmId": {
+                    "type": "string"
+                },
+                "vmIp": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.StatusCountInfo": {
             "type": "object",
             "properties": {
                 "countCreating": {
@@ -1561,6 +2068,1678 @@
                 }
             }
         },
+        "cloudmodel.TbFirewallRuleInfo": {
+            "type": "object",
+            "required": [
+                "direction",
+                "fromPort",
+                "ipprotocol",
+                "toPort"
+            ],
+            "properties": {
+                "cidr": {
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "`json:\"direction\"`",
+                    "type": "string"
+                },
+                "fromPort": {
+                    "description": "`json:\"fromPort\"`",
+                    "type": "string"
+                },
+                "ipprotocol": {
+                    "description": "`json:\"ipProtocol\"`",
+                    "type": "string"
+                },
+                "toPort": {
+                    "description": "`json:\"toPort\"`",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbImageInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "creationDate": {
+                    "type": "string"
+                },
+                "cspImageName": {
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "fetchedTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageStatus": {
+                    "description": "Available, Deprecated, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.ImageStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "infraType": {
+                    "description": "vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isGPUImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isKubernetesImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "name": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "description": "Composite primary key",
+                    "type": "string",
+                    "example": "default"
+                },
+                "osArchitecture": {
+                    "description": "arm64, x86_64 etc.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSArchitecture"
+                        }
+                    ],
+                    "example": "x86_64"
+                },
+                "osDiskSizeGB": {
+                    "description": "10, 50, 100 etc.",
+                    "type": "number",
+                    "example": 50
+                },
+                "osDiskType": {
+                    "description": "ebs, HDD, etc.",
+                    "type": "string",
+                    "example": "HDD"
+                },
+                "osDistribution": {
+                    "description": "Ubuntu 22.04~, CentOS 8 etc.",
+                    "type": "string",
+                    "example": "Ubuntu 22.04~"
+                },
+                "osPlatform": {
+                    "description": "Linux/UNIX, Windows, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSPlatform"
+                        }
+                    ],
+                    "example": "Linux/UNIX"
+                },
+                "osType": {
+                    "type": "string",
+                    "example": "ubuntu 22.04"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionList": {
+                    "description": "Array field for supporting multiple regions",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "systemLabel": {
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "cloudmodel.TbMciDynamicReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "cloudmodel.TbMciInfo": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
+                    }
+                }
+            }
+        },
+        "cloudmodel.TbMciReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmReq"
+                    }
+                }
+            }
+        },
+        "cloudmodel.TbSecurityGroupReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is required to register object from CSP (option=register)",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "firewallRules": {
+                    "description": "validate:\"required\"`",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbFirewallRuleInfo"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbSpecInfo": {
+            "type": "object",
+            "properties": {
+                "acceleratorCount": {
+                    "type": "integer"
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number"
+                },
+                "acceleratorModel": {
+                    "type": "string"
+                },
+                "acceleratorType": {
+                    "type": "string"
+                },
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "costPerHour": {
+                    "type": "number"
+                },
+                "cspSpecName": {
+                    "description": "CspSpecName is name of the spec given by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "diskSizeGB": {
+                    "type": "number"
+                },
+                "evaluationScore01": {
+                    "type": "number"
+                },
+                "evaluationScore02": {
+                    "type": "number"
+                },
+                "evaluationScore03": {
+                    "type": "number"
+                },
+                "evaluationScore04": {
+                    "type": "number"
+                },
+                "evaluationScore05": {
+                    "type": "number"
+                },
+                "evaluationScore06": {
+                    "type": "number"
+                },
+                "evaluationScore07": {
+                    "type": "number"
+                },
+                "evaluationScore08": {
+                    "type": "number"
+                },
+                "evaluationScore09": {
+                    "type": "number"
+                },
+                "evaluationScore10": {
+                    "type": "number"
+                },
+                "evaluationStatus": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "infraType": {
+                    "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "maxTotalStorageTiB": {
+                    "type": "integer"
+                },
+                "memoryGiB": {
+                    "type": "number"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "netBwGbps": {
+                    "type": "integer"
+                },
+                "orderInFilteredResult": {
+                    "type": "integer"
+                },
+                "osType": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vCPU": {
+                    "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.TbSshKeyReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing SSH keys\" feature\nCspResourceId is required to register object from CSP (option=register)",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verifiedUsername": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbSubnetReq": {
+            "type": "object",
+            "required": [
+                "ipv4_CIDR",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "subnet00 managed by CB-Tumblebug"
+                },
+                "ipv4_CIDR": {
+                    "type": "string",
+                    "example": "10.0.1.0/24"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "subnet00"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbVNetReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
+            "properties": {
+                "cidrBlock": {
+                    "type": "string",
+                    "example": "10.0.0.0/16"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "vnet00 managed by CB-Tumblebug"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "vnet00"
+                },
+                "subnetInfoList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSubnetReq"
+                    }
+                }
+            }
+        },
+        "cloudmodel.TbVmDynamicReq": {
+            "type": "object",
+            "required": [
+                "commonImage",
+                "commonSpec"
+            ],
+            "properties": {
+                "commonImage": {
+                    "description": "CommonImage is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ubuntu18.04"
+                },
+                "commonSpec": {
+                    "description": "CommonSpec is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws+ap-northeast-2+t2.small"
+                },
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, TYPE1, ..."
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "default": "1",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbVmInfo": {
+            "type": "object",
+            "properties": {
+                "addtionalDetails": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/cloudmodel.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "Created time",
+                    "type": "string",
+                    "example": "2022-11-10 23:00:00"
+                },
+                "cspImageName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "cspSpecName": {
+                    "type": "string"
+                },
+                "cspSshKeyId": {
+                    "type": "string"
+                },
+                "cspSubnetId": {
+                    "type": "string"
+                },
+                "cspVNetId": {
+                    "type": "string"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "location": {
+                    "$ref": "#/definitions/cloudmodel.Location"
+                },
+                "monAgentStatus": {
+                    "description": "Montoring agent status",
+                    "type": "string",
+                    "example": "[installed, notInstalled, failed]"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "networkAgentStatus": {
+                    "description": "NetworkAgent status",
+                    "type": "string",
+                    "example": "[notInstalled, installing, installed, failed]"
+                },
+                "networkInterface": {
+                    "type": "string"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RegionInfo"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "rootDiskName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "sshPort": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Required by CB-Tumblebug",
+                    "type": "string"
+                },
+                "subGroupId": {
+                    "description": "defined if the VM is in a group",
+                    "type": "string"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserName": {
+                    "type": "string"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.TbVmReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "imageId",
+                "name",
+                "securityGroupIds",
+                "specId",
+                "sshKeyId",
+                "subnetId",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string",
+                    "example": "testcloud01-seoul"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
+                    "type": "string",
+                    "example": "i-014fa6ede6ada0b2c"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "imageId": {
+                    "description": "ImageType        string   `json:\"imageType\"`",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserName": {
+                    "type": "string"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.SimpleMessage": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "common.SimpleMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "controller.JSONResult": {
+            "type": "object"
+        },
+        "controller.MigrateInfraRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.TbMciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraResponse": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraWithDefaultsRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "vm"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
+                    }
+                }
+            }
+        },
+        "controller.RecommendInfraRequest": {
+            "type": "object",
+            "required": [
+                "onpremiseInfraModel"
+            ],
+            "properties": {
+                "desiredProvider": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "desiredRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/model.TbMciDynamicReq"
+                }
+            }
+        },
+        "controller.RecommendSecurityGroupResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroup"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVNetResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetVNetList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVNet"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmInfraRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/recommendation.CspRegionPair"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendVmInfraResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.TbMciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmInfraWithDefaultsRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/recommendation.CspRegionPair"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendVmInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetVmInfraList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfraDynamic"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmOsImageResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmOsImage"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendVmSpecResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmSpec"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "Any details"
+                },
+                "list": {
+                    "type": "array",
+                    "items": {}
+                },
+                "object": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Any text"
+                }
+            }
+        },
+        "model.BastionNode": {
+            "type": "object",
+            "properties": {
+                "mciId": {
+                    "type": "string"
+                },
+                "vmId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ConnConfig": {
+            "type": "object",
+            "properties": {
+                "configName": {
+                    "type": "string"
+                },
+                "credentialHolder": {
+                    "type": "string"
+                },
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionDetail": {
+                    "$ref": "#/definitions/model.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/model.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.IdList": {
+            "type": "object",
+            "properties": {
+                "output": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Location": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.MciCmdReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "userName": {
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "model.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/model.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SimpleMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "model.TbFirewallRuleInfo": {
+            "type": "object",
+            "required": [
+                "direction",
+                "fromPort",
+                "ipprotocol",
+                "toPort"
+            ],
+            "properties": {
+                "cidr": {
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "`json:\"direction\"`",
+                    "type": "string"
+                },
+                "fromPort": {
+                    "description": "`json:\"fromPort\"`",
+                    "type": "string"
+                },
+                "ipprotocol": {
+                    "description": "`json:\"ipProtocol\"`",
+                    "type": "string"
+                },
+                "toPort": {
+                    "description": "`json:\"toPort\"`",
+                    "type": "string"
+                }
+            }
+        },
         "model.TbMciDynamicReq": {
             "type": "object",
             "required": [
@@ -1593,6 +3772,14 @@
                     "type": "string",
                     "example": "mci01"
                 },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.MciCmdReq"
+                        }
+                    ]
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
@@ -1602,6 +3789,430 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.TbVmDynamicReq"
+                    }
+                }
+            }
+        },
+        "model.TbSecurityGroupInfo": {
+            "type": "object",
+            "properties": {
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "firewallRules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbFirewallRuleInfo"
+                    }
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vNetId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbSecurityGroupReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is required to register object from CSP (option=register)",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "firewallRules": {
+                    "description": "validate:\"required\"`",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbFirewallRuleInfo"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbSshKeyInfo": {
+            "type": "object",
+            "properties": {
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verifiedUsername": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbSshKeyReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing SSH keys\" feature\nCspResourceId is required to register object from CSP (option=register)",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verifiedUsername": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbSubnetInfo": {
+            "type": "object",
+            "properties": {
+                "bastionNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.BastionNode"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "cspVNetId": {
+                    "description": "CspVNetId is vNet resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-45eb41e14121c550a"
+                },
+                "cspVNetName": {
+                    "description": "CspVNetName is identifier to handle CSP vNet resource",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "ipv4_CIDR": {
+                    "type": "string"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbSubnetReq": {
+            "type": "object",
+            "required": [
+                "ipv4_CIDR",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "subnet00 managed by CB-Tumblebug"
+                },
+                "ipv4_CIDR": {
+                    "type": "string",
+                    "example": "10.0.1.0/24"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "subnet00"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.TbVNetInfo": {
+            "type": "object",
+            "properties": {
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cidrBlock": {
+                    "type": "string"
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "subnetInfoList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbSubnetInfo"
+                    }
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "model.TbVNetReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
+            "properties": {
+                "cidrBlock": {
+                    "type": "string",
+                    "example": "10.0.0.0/16"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "vnet00 managed by CB-Tumblebug"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "vnet00"
+                },
+                "subnetInfoList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbSubnetReq"
                     }
                 }
             }
@@ -1666,72 +4277,363 @@
                 }
             }
         },
-        "model.TbVmStatusInfo": {
+        "onpremisemodel.CpuProperty": {
+            "type": "object",
+            "required": [
+                "cores",
+                "cpus",
+                "threads"
+            ],
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
+                    "type": "string",
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+                },
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
+                },
+                "vendor": {
+                    "type": "string",
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "onpremisemodel.DiskProperty": {
+            "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.FirewallRuleProperty": {
             "type": "object",
             "properties": {
-                "createdTime": {
-                    "description": "Created time",
-                    "type": "string",
-                    "example": "2022-11-10 23:00:00"
+                "action": {
+                    "description": "e.g., allow, deny",
+                    "type": "string"
                 },
-                "cspResourceId": {
-                    "description": "CspResourceId is resource identifier managed by CSP",
-                    "type": "string",
-                    "example": "csp-06eb41e14121c550a"
+                "direction": {
+                    "description": "e.g., inbound, outbound",
+                    "type": "string"
                 },
-                "cspResourceName": {
-                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
-                    "type": "string",
-                    "example": "we12fawefadf1221edcf"
+                "dstCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
                 },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
+                "dstPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
                 },
-                "location": {
-                    "$ref": "#/definitions/model.Location"
+                "protocol": {
+                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
+                    "type": "string"
                 },
-                "monAgentStatus": {
-                    "description": "Montoring agent status",
+                "srcCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "srcPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.GatewayProperty": {
+            "type": "object",
+            "properties": {
+                "interfaceName": {
+                    "description": "Name of the network interface associated with the gateway",
+                    "type": "string"
+                },
+                "ip": {
+                    "description": "IP address of the gateway",
+                    "type": "string"
+                },
+                "machineId": {
+                    "description": "Unique identifier for the machine (e.g., UUID)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
+                },
+                "type": {
                     "type": "string",
-                    "example": "[installed, notInstalled, failed]"
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.NetworkDetail": {
+            "type": "object",
+            "properties": {
+                "cidrBlocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "defaultGateways": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.GatewayProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.NetworkInterfaceProperty": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "macAddress": {
+                    "description": "MAC address",
+                    "type": "string"
+                },
+                "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
+                    "type": "integer"
                 },
                 "name": {
-                    "description": "Name is human-readable string to represent the object",
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NetworkProperty": {
+            "type": "object",
+            "properties": {
+                "ipv4Networks": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                },
+                "ipv6Networks": {
+                    "description": "TBD",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/onpremisemodel.NetworkDetail"
+                        }
+                    ]
+                }
+            }
+        },
+        "onpremisemodel.OnpremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/onpremisemodel.NetworkProperty"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
+                "id": {
                     "type": "string",
-                    "example": "aws-ap-southeast-1"
+                    "example": "ubuntu"
                 },
-                "nativeStatus": {
-                    "type": "string"
-                },
-                "privateIp": {
-                    "type": "string"
-                },
-                "publicIp": {
-                    "type": "string"
-                },
-                "sshPort": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
+                "idLike": {
                     "type": "string",
-                    "example": "Failed because ..."
+                    "example": "debian"
                 },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                "name": {
                     "type": "string",
-                    "example": "wef12awefadf1221edcf"
+                    "example": "Ubuntu"
+                },
+                "prettyName": {
+                    "description": "Pretty name",
+                    "type": "string",
+                    "example": "Ubuntu 22.04.3 LTS"
+                },
+                "version": {
+                    "description": "Full version string",
+                    "type": "string",
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
+                },
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
+                }
+            }
+        },
+        "onpremisemodel.RouteProperty": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
+                    "type": "string"
+                },
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
+                    "type": "string"
+                },
+                "interface": {
+                    "description": "Network interface associated with the route",
+                    "type": "string"
+                },
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
+                    "type": "string"
+                },
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
+                    "type": "string"
+                },
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.ServerProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "machineId": {
+                    "description": "Unique identifier for the server (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onpremisemodel.OsProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
+                    }
                 }
             }
         },
@@ -1745,6 +4647,39 @@
                 "region": {
                     "type": "string",
                     "example": "ap-northeast-2"
+                }
+            }
+        },
+        "resource.RestGetAllSecurityGroupResponse": {
+            "type": "object",
+            "properties": {
+                "securityGroup": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                    }
+                }
+            }
+        },
+        "resource.RestGetAllSshKeyResponse": {
+            "type": "object",
+            "properties": {
+                "sshKey": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbSshKeyInfo"
+                    }
+                }
+            }
+        },
+        "resource.RestGetAllVNetResponse": {
+            "type": "object",
+            "properties": {
+                "vNet": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TbVNetInfo"
+                    }
                 }
             }
         }

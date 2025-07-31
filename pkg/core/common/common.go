@@ -16,11 +16,7 @@ package common
 
 import (
 	"database/sql"
-	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/config"
-	"github.com/go-resty/resty/v2"
-	"github.com/rs/zerolog/log"
 	"xorm.io/xorm"
 )
 
@@ -209,149 +205,149 @@ type RestGetAllNsResponse struct {
 	Ns []NsInfo `json:"ns"`
 }
 
-func CreateNamespace(nsInfo NsReq) (NsInfo, error) {
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
+// func CreateNamespace(nsReq NsReq) (NsInfo, error) {
+// 	// Initialize resty client with basic auth
+// 	client := resty.New()
+// 	apiUser := config.Tumblebug.API.Username
+// 	apiPass := config.Tumblebug.API.Password
+// 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set API endpoint
-	epTumblebug := config.Tumblebug.RestUrl
+// 	// set API endpoint
+// 	epTumblebug := config.Tumblebug.RestUrl
 
-	// create namespace
-	method := "POST"
-	url := fmt.Sprintf("%s/ns", epTumblebug)
-	reqNs := nsInfo
-	resNs := new(NsInfo)
+// 	// create namespace
+// 	method := "POST"
+// 	url := fmt.Sprintf("%s/ns", epTumblebug)
+// 	reqBody := nsReq
+// 	resBody := NsInfo{}
 
-	err = ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqNs),
-		&reqNs,
-		resNs,
-		VeryShortDuration,
-	)
+// 	err = ExecuteHttpRequest(
+// 		client,
+// 		method,
+// 		url,
+// 		nil,
+// 		SetUseBody(reqBody),
+// 		&reqBody,
+// 		&resBody,
+// 		VeryShortDuration,
+// 	)
 
-	if err != nil {
-		log.Err(err).Msg("")
-		return NsInfo{}, err
-	}
-	log.Debug().Msgf("resNs: %+v", resNs)
+// 	if err != nil {
+// 		log.Err(err).Msg("")
+// 		return NsInfo{}, err
+// 	}
+// 	log.Debug().Msgf("resNs: %+v", resBody)
 
-	return *resNs, nil
-}
+// 	return resBody, nil
+// }
 
-func GetAllNamespaces() (RestGetAllNsResponse, error) {
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
+// func GetAllNamespaces() (RestGetAllNsResponse, error) {
+// 	// Initialize resty client with basic auth
+// 	client := resty.New()
+// 	apiUser := config.Tumblebug.API.Username
+// 	apiPass := config.Tumblebug.API.Password
+// 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set API endpoint
-	epTumblebug := config.Tumblebug.RestUrl
+// 	// set API endpoint
+// 	epTumblebug := config.Tumblebug.RestUrl
 
-	// Get all namespaces
-	method := "GET"
-	url := fmt.Sprintf("%s/ns", epTumblebug)
-	reqNs := NoBody
-	resAllNs := new(RestGetAllNsResponse)
+// 	// Get all namespaces
+// 	method := "GET"
+// 	url := fmt.Sprintf("%s/ns", epTumblebug)
+// 	reqNs := NoBody
+// 	resAllNs := new(RestGetAllNsResponse)
 
-	err = ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqNs),
-		&reqNs,
-		resAllNs,
-		VeryShortDuration,
-	)
+// 	err = ExecuteHttpRequest(
+// 		client,
+// 		method,
+// 		url,
+// 		nil,
+// 		SetUseBody(reqNs),
+// 		&reqNs,
+// 		resAllNs,
+// 		VeryShortDuration,
+// 	)
 
-	if err != nil {
-		log.Err(err).Msg("")
-		return RestGetAllNsResponse{}, err
-	}
-	log.Debug().Msgf("resAllNs: %+v", resAllNs)
+// 	if err != nil {
+// 		log.Err(err).Msg("")
+// 		return RestGetAllNsResponse{}, err
+// 	}
+// 	log.Debug().Msgf("resAllNs: %+v", resAllNs)
 
-	return *resAllNs, nil
-}
+// 	return *resAllNs, nil
+// }
 
-func GetNamespace(nsId string) (NsInfo, error) {
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
+// func GetNamespace(nsId string) (NsInfo, error) {
+// 	// Initialize resty client with basic auth
+// 	client := resty.New()
+// 	apiUser := config.Tumblebug.API.Username
+// 	apiPass := config.Tumblebug.API.Password
+// 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set API endpoint
-	epTumblebug := config.Tumblebug.RestUrl
+// 	// set API endpoint
+// 	epTumblebug := config.Tumblebug.RestUrl
 
-	// try to get namespace
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
-	reqNs := NoBody
-	resNsInfo := new(NsInfo)
+// 	// try to get namespace
+// 	method := "GET"
+// 	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
+// 	reqNs := NoBody
+// 	resNsInfo := new(NsInfo)
 
-	err = ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqNs),
-		&reqNs,
-		resNsInfo,
-		VeryShortDuration,
-	)
+// 	err = ExecuteHttpRequest(
+// 		client,
+// 		method,
+// 		url,
+// 		nil,
+// 		SetUseBody(reqNs),
+// 		&reqNs,
+// 		resNsInfo,
+// 		VeryShortDuration,
+// 	)
 
-	if err != nil {
-		log.Err(err).Msg("")
-		return NsInfo{}, err
-	}
-	log.Debug().Msgf("resNsInfo: %+v", resNsInfo)
+// 	if err != nil {
+// 		log.Err(err).Msg("")
+// 		return NsInfo{}, err
+// 	}
+// 	log.Debug().Msgf("resNsInfo: %+v", resNsInfo)
 
-	return *resNsInfo, nil
-}
+// 	return *resNsInfo, nil
+// }
 
-func DeleteNamespace(nsId string) (SimpleMsg, error) {
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
+// func DeleteNamespace(nsId string) (SimpleMsg, error) {
+// 	// Initialize resty client with basic auth
+// 	client := resty.New()
+// 	apiUser := config.Tumblebug.API.Username
+// 	apiPass := config.Tumblebug.API.Password
+// 	client.SetBasicAuth(apiUser, apiPass)
 
-	// set API endpoint
-	epTumblebug := config.Tumblebug.RestUrl
+// 	// set API endpoint
+// 	epTumblebug := config.Tumblebug.RestUrl
 
-	// delete namespace
-	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
-	reqNs := NoBody
-	resMsg := new(SimpleMsg)
+// 	// delete namespace
+// 	method := "DELETE"
+// 	url := fmt.Sprintf("%s/ns/%s", epTumblebug, nsId)
+// 	reqNs := NoBody
+// 	resMsg := new(SimpleMsg)
 
-	err = ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		SetUseBody(reqNs),
-		&reqNs,
-		resMsg,
-		VeryShortDuration,
-	)
+// 	err = ExecuteHttpRequest(
+// 		client,
+// 		method,
+// 		url,
+// 		nil,
+// 		SetUseBody(reqNs),
+// 		&reqNs,
+// 		resMsg,
+// 		VeryShortDuration,
+// 	)
 
-	if err != nil {
-		log.Err(err).Msg("")
-		return SimpleMsg{}, err
-	}
-	log.Debug().Msgf("resMsg: %+v", resMsg)
+// 	if err != nil {
+// 		log.Err(err).Msg("")
+// 		return SimpleMsg{}, err
+// 	}
+// 	log.Debug().Msgf("resMsg: %+v", resMsg)
 
-	return *resMsg, nil
-}
+// 	return *resMsg, nil
+// }
 
 // func NsValidation() echo.MiddlewareFunc {
 // 	return func(next echo.HandlerFunc) echo.HandlerFunc {

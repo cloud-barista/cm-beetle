@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
-
-	tbResource "github.com/cloud-barista/cb-tumblebug/src/api/rest/server/resource"
 )
 
 var isTbInitalized bool = false
@@ -34,17 +33,17 @@ func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 			nsId := "system"
 			url := fmt.Sprintf("%s/ns/%s/resources/image", epTumblebug, nsId)
 
-			tbReqt := common.NoBody
-			tbResp := tbResource.RestGetAllImageResponse{}
+			tbReq := common.NoBody
+			tbRes := tbmodel.SearchImageResponse{}
 
 			err := common.ExecuteHttpRequest(
 				client,
 				method,
 				url,
 				nil,
-				common.SetUseBody(tbReqt),
-				&tbReqt,
-				&tbResp,
+				common.SetUseBody(tbReq),
+				&tbReq,
+				&tbRes,
 				common.VeryShortDuration,
 			)
 

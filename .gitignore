@@ -36,6 +36,9 @@ meta_db/
 # Temporal directory for container volumes
 container-volume/
 
+# Temporal directory for building container image with local cb-tumblebug changes
+cb-tumblebug/
+
 # Config file for test
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*

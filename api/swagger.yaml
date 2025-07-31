@@ -1,438 +1,55 @@
 basePath: /beetle
 definitions:
-  common.SimpleMessage:
+  cloudmodel.ConnConfig:
     properties:
-      message:
-        example: Any message
+      configName:
         type: string
-    type: object
-  common.SimpleMsg:
-    properties:
-      message:
-        example: Any message
+      credentialHolder:
         type: string
-    type: object
-  controller.CreateUserRequest:
-    properties:
-      email:
+      credentialName:
         type: string
-      id:
-        type: integer
-      name:
+      driverName:
         type: string
-    type: object
-  controller.GetUserResponse:
-    properties:
-      email:
+      providerName:
         type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.GetUsersResponse:
-    properties:
-      users:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser'
-        type: array
-    type: object
-  controller.MigrateInfraRequest:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        example: mci01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/model.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
-    type: object
-  controller.MigrateInfraResponse:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        example: mci01
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/model.TbVmDynamicReq'
-        type: array
-    required:
-    - name
-    - vm
-    type: object
-  controller.PatchUserRequest:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.PatchUserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.RecommendInfraRequest:
-    properties:
-      desiredProvider:
-        example: aws
-        type: string
-      desiredRegion:
-        example: ap-northeast-2
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/inframodel.OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  controller.RecommendInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetInfra:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-    type: object
-  controller.RecommendVmInfraRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/recommendation.CspRegionPair'
-      onpremiseInfraModel:
-        $ref: '#/definitions/inframodel.OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  controller.RecommendVmInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetInfra:
-        $ref: '#/definitions/model.TbMciDynamicReq'
-    type: object
-  controller.UpdateUserRequest:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  controller.UpdateUserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_api_rest_model.MyUser:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
+      regionDetail:
+        $ref: '#/definitions/cloudmodel.RegionDetail'
+      regionRepresentative:
         type: boolean
-      text:
-        example: Any text
+      regionZoneInfo:
+        $ref: '#/definitions/cloudmodel.RegionZoneInfo'
+      regionZoneInfoName:
         type: string
+      verified:
+        type: boolean
     type: object
-  inframodel.CpuProperty:
-    properties:
-      architecture:
-        example: x86_64
-        type: string
-      cores:
-        description: Number of physical cores per CPU
-        example: 18
-        type: integer
-      cpus:
-        description: Number of physical CPUs (sockets)
-        example: 2
-        type: integer
-      maxSpeed:
-        description: Maximum speed in GHz
-        example: 3.6
-        type: number
-      model:
-        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
-        type: string
-      threads:
-        description: Number of logical CPUs (threads) per CPU with hyper-threading
-          enabled
-        example: 36
-        type: integer
-      vendor:
-        example: GenuineIntel
-        type: string
-    required:
-    - cores
-    - cpus
-    - threads
-    type: object
-  inframodel.DiskProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      label:
-        type: string
-      totalSize:
-        description: Unit GiB
-        example: 1024
-        type: integer
-      type:
-        description: SSD, HDD
-        example: SSD
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - label
-    - totalSize
-    - type
-    type: object
-  inframodel.MemoryProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      totalSize:
-        description: Unit GiB
-        example: 128
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - totalSize
-    - type
-    type: object
-  inframodel.NetworkInterfaceProperty:
-    properties:
-      ipv4CidrBlocks:
-        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
-          of inet addr, Bcast, and Mask
-        items:
-          type: string
-        type: array
-      ipv6CidrBlocks:
-        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
-        items:
-          type: string
-        type: array
-      macAddress:
-        description: MAC address
-        type: string
-      mtu:
-        description: Maximum Transmission Unit (MTU) in bytes
-        type: integer
-      name:
-        description: Interface name (e.g., eth0, ens01, enp0s3)
-        type: string
-      state:
-        description: Interface state (e.g., UP, DOWN)
-        type: string
-    required:
-    - name
-    type: object
-  inframodel.NetworkProperty:
-    properties:
-      ipv4Networks:
-        example:
-        - 172.26.240.0/20
-        items:
-          type: string
-        type: array
-      ipv6Networks:
-        description: TBD
-        items:
-          type: string
-        type: array
-    type: object
-  inframodel.OnpremInfra:
-    properties:
-      network:
-        $ref: '#/definitions/inframodel.NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/inframodel.ServerProperty'
-        type: array
-    required:
-    - servers
-    type: object
-  inframodel.OsProperty:
-    properties:
-      id:
-        example: ubuntu
-        type: string
-      idLike:
-        example: debian
-        type: string
-      name:
-        example: Ubuntu
-        type: string
-      prettyName:
-        description: Pretty name
-        example: Ubuntu 22.04.3 LTS
-        type: string
-      version:
-        description: Full version string
-        example: 22.04.3 LTS (Jammy Jellyfish)
-        type: string
-      versionCodename:
-        example: jammy
-        type: string
-      versionId:
-        example: "22.04"
-        type: string
-    required:
-    - prettyName
-    type: object
-  inframodel.RouteProperty:
-    properties:
-      destination:
-        description: Destination network, expressed in CIDR format
-        type: string
-      gateway:
-        description: Gateway address to which packets are forwarded
-        type: string
-      interface:
-        description: Network interface associated with the route
-        type: string
-      linkState:
-        description: Link state of the route (e.g., UP, DOWN)
-        type: string
-      metric:
-        description: Metric value indicating the priority of the route
-        type: integer
-      protocol:
-        description: Protocol used to set the route (e.g., kernel, static)
-        type: string
-      scope:
-        description: Scope of the route (e.g., global, link, host)
-        type: string
-      source:
-        description: Optionally stores the source address (used for policy-based routing)
-        type: string
-    type: object
-  inframodel.ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/inframodel.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/inframodel.DiskProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/inframodel.NetworkInterfaceProperty'
-        type: array
-      memory:
-        $ref: '#/definitions/inframodel.MemoryProperty'
-      os:
-        $ref: '#/definitions/inframodel.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/inframodel.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/inframodel.RouteProperty'
-        type: array
-    type: object
-  migration.IdList:
+  cloudmodel.IdList:
     properties:
       idList:
         items:
           type: string
         type: array
     type: object
-  migration.MciInfoList:
+  cloudmodel.ImageStatus:
+    enum:
+    - Available
+    - Unavailable
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageAvailable
+    - ImageUnavailable
+    - ImageDeprecated
+    - ImageNA
+  cloudmodel.KeyValue:
     properties:
-      mci:
-        items:
-          $ref: '#/definitions/model.MciStatusInfo'
-        type: array
+      key:
+        type: string
+      value:
+        type: string
     type: object
-  model.Location:
+  cloudmodel.Location:
     properties:
       display:
         type: string
@@ -441,49 +58,178 @@ definitions:
       longitude:
         type: number
     type: object
-  model.MciStatusInfo:
+  cloudmodel.MciCmdReq:
     properties:
-      id:
-        type: string
-      installMonAgent:
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:yes)
-        example: '[yes, no]'
-        type: string
-      label:
-        additionalProperties:
+      command:
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
           type: string
-        description: Label is for describing the object by keywords
-        type: object
-      masterIp:
-        example: 32.201.134.113
+        type: array
+      userName:
+        example: cb-user
         type: string
-      masterSSHPort:
+    required:
+    - command
+    type: object
+  cloudmodel.MciInfoList:
+    properties:
+      mci:
+        items:
+          $ref: '#/definitions/cloudmodel.TbMciInfo'
+        type: array
+    type: object
+  cloudmodel.MciSshCmdResult:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/cloudmodel.SshCmdResult'
+        type: array
+    type: object
+  cloudmodel.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  cloudmodel.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
+  cloudmodel.RecommendedSecurityGroup:
+    properties:
+      description:
         type: string
-      masterVmId:
-        example: vm-asiaeast1-cb-01
+      sourceServers:
+        items:
+          type: string
+        type: array
+      status:
         type: string
-      name:
+      targetSecurityGroup:
+        $ref: '#/definitions/cloudmodel.TbSecurityGroupReq'
+    type: object
+  cloudmodel.RecommendedVNet:
+    properties:
+      description:
         type: string
       status:
         type: string
-      statusCount:
-        $ref: '#/definitions/model.StatusCountInfo'
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: Managed by CB-Tumblebug
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.TbVNetReq'
+    type: object
+  cloudmodel.RecommendedVmInfraDynamic:
+    properties:
+      description:
         type: string
-      targetAction:
+      status:
         type: string
-      targetStatus:
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.TbMciDynamicReq'
+    type: object
+  cloudmodel.RecommendedVmOsImage:
+    properties:
+      description:
         type: string
-      vm:
+      sourceServers:
         items:
-          $ref: '#/definitions/model.TbVmStatusInfo'
+          type: string
+        type: array
+      status:
+        type: string
+      targetVmOsImage:
+        $ref: '#/definitions/cloudmodel.TbImageInfo'
+    type: object
+  cloudmodel.RecommendedVmSpec:
+    properties:
+      description:
+        type: string
+      sourceServers:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      targetVmSpec:
+        $ref: '#/definitions/cloudmodel.TbSpecInfo'
+    type: object
+  cloudmodel.RegionDetail:
+    properties:
+      description:
+        type: string
+      location:
+        $ref: '#/definitions/cloudmodel.Location'
+      regionId:
+        type: string
+      regionName:
+        type: string
+      zones:
+        items:
+          type: string
         type: array
     type: object
-  model.StatusCountInfo:
+  cloudmodel.RegionInfo:
+    properties:
+      region:
+        type: string
+      zone:
+        type: string
+    type: object
+  cloudmodel.RegionZoneInfo:
+    properties:
+      assignedRegion:
+        type: string
+      assignedZone:
+        type: string
+    type: object
+  cloudmodel.SshCmdResult:
+    properties:
+      command:
+        additionalProperties:
+          type: string
+        type: object
+      err: {}
+      mciId:
+        type: string
+      stderr:
+        additionalProperties:
+          type: string
+        type: object
+      stdout:
+        additionalProperties:
+          type: string
+        type: object
+      vmId:
+        type: string
+      vmIp:
+        type: string
+    type: object
+  cloudmodel.StatusCountInfo:
     properties:
       countCreating:
         description: CountCreating is for counting Creating
@@ -519,6 +265,1210 @@ definitions:
         description: CountUndefined is for counting Undefined
         type: integer
     type: object
+  cloudmodel.TbFirewallRuleInfo:
+    properties:
+      cidr:
+        type: string
+      direction:
+        description: '`json:"direction"`'
+        type: string
+      fromPort:
+        description: '`json:"fromPort"`'
+        type: string
+      ipprotocol:
+        description: '`json:"ipProtocol"`'
+        type: string
+      toPort:
+        description: '`json:"toPort"`'
+        type: string
+    required:
+    - direction
+    - fromPort
+    - ipprotocol
+    - toPort
+    type: object
+  cloudmodel.TbImageInfo:
+    properties:
+      connectionName:
+        type: string
+      creationDate:
+        type: string
+      cspImageName:
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      fetchedTime:
+        type: string
+      id:
+        example: aws-ap-southeast-1
+        type: string
+      imageStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
+        description: Available, Deprecated, NA
+        example: Available
+      infraType:
+        description: vm|k8s|kubernetes|container, etc.
+        type: string
+      isGPUImage:
+        default: false
+        type: boolean
+      isKubernetesImage:
+        default: false
+        type: boolean
+      name:
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        description: Composite primary key
+        example: default
+        type: string
+      osArchitecture:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
+        description: arm64, x86_64 etc.
+        example: x86_64
+      osDiskSizeGB:
+        description: 10, 50, 100 etc.
+        example: 50
+        type: number
+      osDiskType:
+        description: ebs, HDD, etc.
+        example: HDD
+        type: string
+      osDistribution:
+        description: Ubuntu 22.04~, CentOS 8 etc.
+        example: Ubuntu 22.04~
+        type: string
+      osPlatform:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
+        description: Linux/UNIX, Windows, NA
+        example: Linux/UNIX
+      osType:
+        example: ubuntu 22.04
+        type: string
+      providerName:
+        type: string
+      regionList:
+        description: Array field for supporting multiple regions
+        items:
+          type: string
+        type: array
+      systemLabel:
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  cloudmodel.TbMciDynamicReq:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  cloudmodel.TbMciInfo:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmInfo'
+        type: array
+    type: object
+  cloudmodel.TbMciReq:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  cloudmodel.TbSecurityGroupReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      firewallRules:
+        description: validate:"required"`
+        items:
+          $ref: '#/definitions/cloudmodel.TbFirewallRuleInfo'
+        type: array
+      name:
+        type: string
+      vNetId:
+        type: string
+    required:
+    - connectionName
+    - name
+    - vNetId
+    type: object
+  cloudmodel.TbSpecInfo:
+    properties:
+      acceleratorCount:
+        type: integer
+      acceleratorMemoryGB:
+        type: number
+      acceleratorModel:
+        type: string
+      acceleratorType:
+        type: string
+      architecture:
+        example: x86_64
+        type: string
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionName:
+        type: string
+      costPerHour:
+        type: number
+      cspSpecName:
+        description: CspSpecName is name of the spec given by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      diskSizeGB:
+        type: number
+      evaluationScore01:
+        type: number
+      evaluationScore02:
+        type: number
+      evaluationScore03:
+        type: number
+      evaluationScore04:
+        type: number
+      evaluationScore05:
+        type: number
+      evaluationScore06:
+        type: number
+      evaluationScore07:
+        type: number
+      evaluationScore08:
+        type: number
+      evaluationScore09:
+        type: number
+      evaluationScore10:
+        type: number
+      evaluationStatus:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      infraType:
+        description: InfraType can be one of vm|k8s|kubernetes|container, etc.
+        type: string
+      isAutoGenerated:
+        type: boolean
+      maxTotalStorageTiB:
+        type: integer
+      memoryGiB:
+        type: number
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        example: default
+        type: string
+      netBwGbps:
+        type: integer
+      orderInFilteredResult:
+        type: integer
+      osType:
+        type: string
+      providerName:
+        type: string
+      regionName:
+        type: string
+      rootDiskSize:
+        type: string
+      rootDiskType:
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vCPU:
+        type: integer
+    type: object
+  cloudmodel.TbSshKeyReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing SSH keys" feature
+          CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    required:
+    - connectionName
+    - name
+    type: object
+  cloudmodel.TbSubnetReq:
+    properties:
+      description:
+        example: subnet00 managed by CB-Tumblebug
+        type: string
+      ipv4_CIDR:
+        example: 10.0.1.0/24
+        type: string
+      name:
+        example: subnet00
+        type: string
+      zone:
+        type: string
+    required:
+    - ipv4_CIDR
+    - name
+    type: object
+  cloudmodel.TbVNetReq:
+    properties:
+      cidrBlock:
+        example: 10.0.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      description:
+        example: vnet00 managed by CB-Tumblebug
+        type: string
+      name:
+        example: vnet00
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
+    type: object
+  cloudmodel.TbVmDynamicReq:
+    properties:
+      commonImage:
+        description: CommonImage is field for id of a image in common namespace
+        example: ubuntu18.04
+        type: string
+      commonSpec:
+        description: CommonSpec is field for id of a spec in common namespace
+        example: aws+ap-northeast-2+t2.small
+        type: string
+      connectionName:
+        description: |-
+          if ConnectionName is given, the VM tries to use associtated credential.
+          if not, it will use predefined ConnectionName in Spec objects
+        type: string
+      description:
+        example: Description
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: VM name or subGroup name if is (not empty) && (> 0). If it is
+          a group, actual VM name will be generated with -N postfix.
+        example: g1-1
+        type: string
+      rootDiskSize:
+        default: default
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: default, 30, 42, ...
+        type: string
+      rootDiskType:
+        default: default
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      subGroupSize:
+        default: "1"
+        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
+          VMs will be created accordingly.
+        example: "3"
+        type: string
+      vmUserPassword:
+        type: string
+    required:
+    - commonImage
+    - commonSpec
+    type: object
+  cloudmodel.TbVmInfo:
+    properties:
+      addtionalDetails:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/cloudmodel.ConnConfig'
+      connectionName:
+        type: string
+      createdTime:
+        description: Created time
+        example: "2022-11-10 23:00:00"
+        type: string
+      cspImageName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      cspSpecName:
+        type: string
+      cspSshKeyId:
+        type: string
+      cspSubnetId:
+        type: string
+      cspVNetId:
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      imageId:
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      location:
+        $ref: '#/definitions/cloudmodel.Location'
+      monAgentStatus:
+        description: Montoring agent status
+        example: '[installed, notInstalled, failed]'
+        type: string
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      networkAgentStatus:
+        description: NetworkAgent status
+        example: '[notInstalled, installing, installed, failed]'
+        type: string
+      networkInterface:
+        type: string
+      privateDNS:
+        type: string
+      privateIP:
+        type: string
+      publicDNS:
+        type: string
+      publicIP:
+        type: string
+      region:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.RegionInfo'
+        description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      rootDiskName:
+        type: string
+      rootDiskSize:
+        type: string
+      rootDiskType:
+        type: string
+      securityGroupIds:
+        items:
+          type: string
+        type: array
+      specId:
+        type: string
+      sshKeyId:
+        type: string
+      sshPort:
+        type: string
+      status:
+        description: Required by CB-Tumblebug
+        type: string
+      subGroupId:
+        description: defined if the VM is in a group
+        type: string
+      subnetId:
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vNetId:
+        type: string
+      vmUserName:
+        type: string
+      vmUserPassword:
+        type: string
+    type: object
+  cloudmodel.TbVmReq:
+    properties:
+      connectionName:
+        example: testcloud01-seoul
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP (required
+          for option=register)
+        example: i-014fa6ede6ada0b2c
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        example: Description
+        type: string
+      imageId:
+        description: ImageType        string   `json:"imageType"`
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: VM name or subGroup name if is (not empty) && (> 0). If it is
+          a group, actual VM name will be generated with -N postfix.
+        example: g1-1
+        type: string
+      rootDiskSize:
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: default, 30, 42, ...
+        type: string
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      securityGroupIds:
+        items:
+          type: string
+        type: array
+      specId:
+        type: string
+      sshKeyId:
+        type: string
+      subGroupSize:
+        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
+          VMs will be created accordingly.
+        example: "3"
+        type: string
+      subnetId:
+        type: string
+      vNetId:
+        type: string
+      vmUserName:
+        type: string
+      vmUserPassword:
+        type: string
+    required:
+    - connectionName
+    - imageId
+    - name
+    - securityGroupIds
+    - specId
+    - sshKeyId
+    - subnetId
+    - vNetId
+    type: object
+  common.SimpleMessage:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  common.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  controller.JSONResult:
+    type: object
+  controller.MigrateInfraRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.TbSshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.TbVNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.TbMciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSpecInfo'
+        type: array
+    type: object
+  controller.MigrateInfraResponse:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmInfo'
+        type: array
+    type: object
+  controller.MigrateInfraWithDefaultsRequest:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmDynamicReq'
+        type: array
+    required:
+    - name
+    - vm
+    type: object
+  controller.MigrateInfraWithDefaultsResponse:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.TbVmInfo'
+        type: array
+    type: object
+  controller.RecommendInfraRequest:
+    properties:
+      desiredProvider:
+        example: aws
+        type: string
+      desiredRegion:
+        example: ap-northeast-2
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    required:
+    - onpremiseInfraModel
+    type: object
+  controller.RecommendInfraResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetInfra:
+        $ref: '#/definitions/model.TbMciDynamicReq'
+    type: object
+  controller.RecommendSecurityGroupResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      status:
+        type: string
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedSecurityGroup'
+        type: array
+    type: object
+  controller.RecommendVNetResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVNetList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVNet'
+        type: array
+    type: object
+  controller.RecommendVmInfraRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/recommendation.CspRegionPair'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.TbSshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.TbVNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.TbMciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.TbSpecInfo'
+        type: array
+    type: object
+  controller.RecommendVmInfraWithDefaultsRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/recommendation.CspRegionPair'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraWithDefaultsResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVmInfraList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfraDynamic'
+        type: array
+    type: object
+  controller.RecommendVmOsImageResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      recommendedVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmOsImage'
+        type: array
+      status:
+        type: string
+    type: object
+  controller.RecommendVmSpecResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      recommendedVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmSpec'
+        type: array
+      status:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
+    properties:
+      details:
+        example: Any details
+        type: string
+      list:
+        items: {}
+        type: array
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
+        type: string
+    type: object
+  model.BastionNode:
+    properties:
+      mciId:
+        type: string
+      vmId:
+        type: string
+    type: object
+  model.ConnConfig:
+    properties:
+      configName:
+        type: string
+      credentialHolder:
+        type: string
+      credentialName:
+        type: string
+      driverName:
+        type: string
+      providerName:
+        type: string
+      regionDetail:
+        $ref: '#/definitions/model.RegionDetail'
+      regionRepresentative:
+        type: boolean
+      regionZoneInfo:
+        $ref: '#/definitions/model.RegionZoneInfo'
+      regionZoneInfoName:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  model.IdList:
+    properties:
+      output:
+        items:
+          type: string
+        type: array
+    type: object
+  model.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  model.Location:
+    properties:
+      display:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  model.MciCmdReq:
+    properties:
+      command:
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      userName:
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
+  model.RegionDetail:
+    properties:
+      description:
+        type: string
+      location:
+        $ref: '#/definitions/model.Location'
+      regionId:
+        type: string
+      regionName:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  model.RegionZoneInfo:
+    properties:
+      assignedRegion:
+        type: string
+      assignedZone:
+        type: string
+    type: object
+  model.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  model.TbFirewallRuleInfo:
+    properties:
+      cidr:
+        type: string
+      direction:
+        description: '`json:"direction"`'
+        type: string
+      fromPort:
+        description: '`json:"fromPort"`'
+        type: string
+      ipprotocol:
+        description: '`json:"ipProtocol"`'
+        type: string
+      toPort:
+        description: '`json:"toPort"`'
+        type: string
+    required:
+    - direction
+    - fromPort
+    - ipprotocol
+    - toPort
+    type: object
   model.TbMciDynamicReq:
     properties:
       description:
@@ -541,6 +1491,10 @@ definitions:
       name:
         example: mci01
         type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/model.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -553,6 +1507,322 @@ definitions:
     required:
     - name
     - vm
+    type: object
+  model.TbSecurityGroupInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      firewallRules:
+        items:
+          $ref: '#/definitions/model.TbFirewallRuleInfo'
+        type: array
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vNetId:
+        type: string
+    type: object
+  model.TbSecurityGroupReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      firewallRules:
+        description: validate:"required"`
+        items:
+          $ref: '#/definitions/model.TbFirewallRuleInfo'
+        type: array
+      name:
+        type: string
+      vNetId:
+        type: string
+    required:
+    - connectionName
+    - name
+    - vNetId
+    type: object
+  model.TbSshKeyInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    type: object
+  model.TbSshKeyReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing SSH keys" feature
+          CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    required:
+    - connectionName
+    - name
+    type: object
+  model.TbSubnetInfo:
+    properties:
+      bastionNodes:
+        items:
+          $ref: '#/definitions/model.BastionNode'
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      cspVNetId:
+        description: CspVNetId is vNet resource identifier managed by CSP
+        example: csp-45eb41e14121c550a
+        type: string
+      cspVNetName:
+        description: CspVNetName is identifier to handle CSP vNet resource
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      ipv4_CIDR:
+        type: string
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      zone:
+        type: string
+    type: object
+  model.TbSubnetReq:
+    properties:
+      description:
+        example: subnet00 managed by CB-Tumblebug
+        type: string
+      ipv4_CIDR:
+        example: 10.0.1.0/24
+        type: string
+      name:
+        example: subnet00
+        type: string
+      zone:
+        type: string
+    required:
+    - ipv4_CIDR
+    - name
+    type: object
+  model.TbVNetInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      cidrBlock:
+        type: string
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/model.TbSubnetInfo'
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  model.TbVNetReq:
+    properties:
+      cidrBlock:
+        example: 10.0.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      description:
+        example: vnet00 managed by CB-Tumblebug
+        type: string
+      name:
+        example: vnet00
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/model.TbSubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
     type: object
   model.TbVmDynamicReq:
     properties:
@@ -607,58 +1877,262 @@ definitions:
     - commonImage
     - commonSpec
     type: object
-  model.TbVmStatusInfo:
+  onpremisemodel.CpuProperty:
     properties:
-      createdTime:
-        description: Created time
-        example: "2022-11-10 23:00:00"
+      architecture:
+        example: x86_64
         type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
         type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
         type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.ServerProperty'
+        type: array
+    required:
+    - servers
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
       id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
+        example: ubuntu
         type: string
-      location:
-        $ref: '#/definitions/model.Location'
-      monAgentStatus:
-        description: Montoring agent status
-        example: '[installed, notInstalled, failed]'
+      idLike:
+        example: debian
         type: string
       name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
+        example: Ubuntu
         type: string
-      nativeStatus:
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
         type: string
-      privateIp:
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
         type: string
-      publicIp:
+      versionCodename:
+        example: jammy
         type: string
-      sshPort:
+      versionId:
+        example: "22.04"
         type: string
-      status:
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
         type: string
-      systemMessage:
-        description: Latest system message such as error message
-        example: Failed because ...
+      gateway:
+        description: Gateway address to which packets are forwarded
         type: string
-      targetAction:
+      interface:
+        description: Network interface associated with the route
         type: string
-      targetStatus:
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
         type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
         type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  onpremisemodel.ServerProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the server (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
     type: object
   recommendation.CspRegionPair:
     properties:
@@ -668,6 +2142,27 @@ definitions:
       region:
         example: ap-northeast-2
         type: string
+    type: object
+  resource.RestGetAllSecurityGroupResponse:
+    properties:
+      securityGroup:
+        items:
+          $ref: '#/definitions/model.TbSecurityGroupInfo'
+        type: array
+    type: object
+  resource.RestGetAllSshKeyResponse:
+    properties:
+      sshKey:
+        items:
+          $ref: '#/definitions/model.TbSshKeyInfo'
+        type: array
+    type: object
+  resource.RestGetAllVNetResponse:
+    properties:
+      vNet:
+        items:
+          $ref: '#/definitions/model.TbVNetInfo'
+        type: array
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
@@ -727,10 +2222,8 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: status
-        description: Option for getting the migrated multi-cloud infrastructure
+      - description: Option for getting the migrated multi-cloud infrastructure
         enum:
-        - status
         - id
         in: query
         name: option
@@ -743,9 +2236,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: The info list of the migrated multi-cloud infrastructure (MCI)
+          description: The ID list of The migrated multi-cloud infrastructure (MCI)
           schema:
-            $ref: '#/definitions/migration.MciInfoList'
+            $ref: '#/definitions/cloudmodel.IdList'
         "404":
           description: Not Found
           schema:
@@ -761,6 +2254,7 @@ paths:
       consumes:
       - application/json
       description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+        with defaults.
       operationId: MigrateInfra
       parameters:
       - default: mig01
@@ -795,7 +2289,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
-      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
+        defaults
       tags:
       - '[Migration] Infrastructure'
   /migration/ns/{nsId}/mci/{mciId}:
@@ -818,12 +2313,12 @@ paths:
         required: true
         type: string
       - default: terminate
-        description: Action for deletion
+        description: Option for deletion
         enum:
         - terminate
         - force
         in: query
-        name: action
+        name: option
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
@@ -888,6 +2383,525 @@ paths:
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
+  /migration/ns/{nsId}/mciWithDefaults:
+    post:
+      consumes:
+      - application/json
+      description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+        with defaults.
+      operationId: MigrateInfraWithDefaults
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Specify the information for the targeted mulci-cloud infrastructure
+          (MCI)
+        in: body
+        name: mciInfo
+        required: true
+        schema:
+          $ref: '#/definitions/controller.MigrateInfraWithDefaultsRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully migrated to the multi-cloud infrastructure
+          schema:
+            $ref: '#/definitions/controller.MigrateInfraWithDefaultsResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
+        defaults
+      tags:
+      - '[Migration] Infrastructure'
+  /migration/ns/{nsId}/resources/securityGroup:
+    get:
+      consumes:
+      - application/json
+      description: Get the list of all migrated security groups in the namespace
+      operationId: ListMigratedSecurityGroups
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Option
+        enum:
+        - id
+        in: query
+        name: option
+        type: string
+      - description: 'Field key for filtering (ex: systemLabel)'
+        in: query
+        name: filterKey
+        type: string
+      - description: 'Field value for filtering (ex: Registered from CSP resource)'
+        in: query
+        name: filterVal
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Different return structures by the given option param
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.JSONResult'
+            - properties:
+                '[DEFAULT]':
+                  $ref: '#/definitions/resource.RestGetAllSecurityGroupResponse'
+                '[ID]':
+                  $ref: '#/definitions/model.IdList'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: List all migrated security groups
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    post:
+      consumes:
+      - application/json
+      description: Create a new migrated security group in the namespace
+      operationId: CreateMigratedSecurityGroup
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: 'Option: [required params for register] connectionName, name,
+          vNetId, cspResourceId'
+        enum:
+        - register
+        in: query
+        name: option
+        type: string
+      - description: Details for an securityGroup object
+        in: body
+        name: securityGroupReq
+        required: true
+        schema:
+          $ref: '#/definitions/model.TbSecurityGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbSecurityGroupInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Create a migrated security group
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+  /migration/ns/{nsId}/resources/securityGroup/{sgId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific migrated security group in the namespace
+      operationId: DeleteMigratedSecurityGroup
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Security Group ID
+        in: path
+        name: securityGroupId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Delete a migrated security group
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific migrated security group in the namespace
+      operationId: GetMigratedSecurityGroup
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Security Group ID
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbSecurityGroupInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Get a specific migrated security group
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+  /migration/ns/{nsId}/resources/sshKey:
+    get:
+      consumes:
+      - application/json
+      description: Get the list of all migrated SSH keys in the namespace
+      operationId: ListMigratedSSHKeys
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Option
+        enum:
+        - id
+        in: query
+        name: option
+        type: string
+      - description: 'Field key for filtering (ex: systemLabel)'
+        in: query
+        name: filterKey
+        type: string
+      - description: 'Field value for filtering (ex: Registered from CSP resource)'
+        in: query
+        name: filterVal
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Different return structures by the given option param
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.JSONResult'
+            - properties:
+                '[DEFAULT]':
+                  $ref: '#/definitions/resource.RestGetAllSshKeyResponse'
+                '[ID]':
+                  $ref: '#/definitions/model.IdList'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: List all migrated SSH keys
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    post:
+      consumes:
+      - application/json
+      description: Create a new migrated SSH key in the namespace
+      operationId: CreateMigratedSSHKey
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: 'Option: [required params for register] connectionName, name,
+          cspKeyId'
+        enum:
+        - register
+        in: query
+        name: option
+        type: string
+      - description: Details for an SSH key object
+        in: body
+        name: sshKeyReq
+        required: true
+        schema:
+          $ref: '#/definitions/model.TbSshKeyReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbSshKeyInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Create a migrated SSH key
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+  /migration/ns/{nsId}/resources/sshKey/{sshKeyId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific migrated SSH key in the namespace
+      operationId: DeleteMigratedSSHKey
+      parameters:
+      - default: default
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: SSH Key ID
+        in: path
+        name: sshKeyId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Delete a migrated SSH key
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific migrated SSH key in the namespace
+      operationId: GetMigratedSSHKey
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: SSH Key ID
+        in: path
+        name: sshKeyId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbSshKeyInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Get a specific migrated SSH key
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+  /migration/ns/{nsId}/resources/vNet:
+    get:
+      consumes:
+      - application/json
+      description: Get the list of all migrated virtual networks in the namespace
+      operationId: ListMigratedVNets
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Different return structures by the given option param
+          schema:
+            allOf:
+            - $ref: '#/definitions/controller.JSONResult'
+            - properties:
+                '[DEFAULT]':
+                  $ref: '#/definitions/resource.RestGetAllVNetResponse'
+                '[ID]':
+                  $ref: '#/definitions/model.IdList'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: List all migrated virtual networks
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    post:
+      consumes:
+      - application/json
+      description: Create a new migrated virtual network in the namespace
+      operationId: CreateVNet
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Virtual Network creation request
+        in: body
+        name: vNetReq
+        required: true
+        schema:
+          $ref: '#/definitions/model.TbVNetReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbVNetInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Create a migrated virtual network
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+  /migration/ns/{nsId}/resources/vNet/{vNetId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific migrated virtual network in the namespace
+      operationId: DeleteMigratedVNet
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Virtual Network ID
+        in: path
+        name: vNetId
+        required: true
+        type: string
+      - description: Action
+        enum:
+        - withsubnets
+        - refine
+        - force
+        in: query
+        name: action
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Delete a migrated virtual network
+      tags:
+      - '[Migration] Resources for VM infrastructure'
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific virtual network in the namespace
+      operationId: GetMigratedVNet
+      parameters:
+      - description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Virtual Network ID
+        in: path
+        name: vNetId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.TbVNetInfo'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Get a specific migrated virtual network
+      tags:
+      - '[Migration] Resources for VM infrastructure'
   /readyz:
     get:
       consumes:
@@ -969,7 +2983,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.SimpleMsg'
-      summary: Recommend an appropriate container infrastructure for cloud migration
+      summary: (Under-development) Recommend an appropriate container infrastructure
+        for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/mci:
@@ -977,7 +2992,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration
+        Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
 
         [Note] `desiredCsp` and `desiredRegion` are required.
         - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
@@ -1025,79 +3040,44 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.SimpleMsg'
-      summary: Recommend an appropriate multi-cloud infrastructure (MCI) for cloud
-        migration
+      summary: Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud
+        infrastructure) for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
-  /sample/users:
-    get:
-      consumes:
-      - application/json
-      description: Get information of all users.
-      operationId: GetUsers
-      parameters:
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
-        in: header
-        name: X-Request-Id
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: (sample) This is a sample description for success response
-            in Swagger UI
-          schema:
-            $ref: '#/definitions/controller.GetUsersResponse'
-        "404":
-          description: User Not Found
-          schema:
-            type: object
-      summary: Get a list of users
-      tags:
-      - '[Sample API] Users'
+  /recommendation/mciWithDefaults:
     post:
       consumes:
       - application/json
-      description: Create a new user with the given information.
-      operationId: CreateUser
+      description: |-
+        Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
+
+        [Note] `desiredCsp` and `desiredRegion` are required.
+        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendVMInfraWithDefaults
       parameters:
-      - description: User information
+      - description: Specify the your infrastructure to be migrated
         in: body
-        name: User
+        name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.CreateUserRequest'
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
-        in: header
-        name: X-Request-Id
+          $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredCsp
         type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: (Sample) This is a sample description for success response
-            in Swagger UI
-          schema:
-            $ref: '#/definitions/controller.GetUserResponse'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
-      summary: Create a new user
-      tags:
-      - '[Sample API] Users'
-  /sample/users/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a user with the given information.
-      operationId: DeleteUser
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id
@@ -1106,31 +3086,55 @@ paths:
       - application/json
       responses:
         "200":
-          description: User deletion successful
+          description: The result of recommended infrastructure
           schema:
-            type: string
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
+            $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsResponse'
         "404":
-          description: User Not Found
+          description: Not Found
           schema:
-            type: object
-      summary: Delete a user
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
+        multi-cloud infrastructure) with defaults for cloud migration
       tags:
-      - '[Sample API] Users'
-    get:
+      - '[Recommendation] Infrastructure'
+  /recommendation/resources/securityGroups:
+    post:
       consumes:
       - application/json
-      description: Get information of a user with a specific ID.
-      operationId: GetUser
+      description: |-
+        Recommend an appropriate security group for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendSecurityGroups
       parameters:
-      - description: User ID
-        in: path
-        name: id
+      - description: Specify the your infrastructure to be migrated
+        in: body
+        name: UserInfra
         required: true
-        type: integer
+        schema:
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id
@@ -1139,34 +3143,54 @@ paths:
       - application/json
       responses:
         "200":
-          description: (Sample) This is a sample description for success response
-            in Swagger UI
+          description: The result of recommended security groups
           schema:
-            $ref: '#/definitions/controller.GetUserResponse'
+            $ref: '#/definitions/controller.RecommendSecurityGroupResponse'
         "404":
-          description: User Not Found
+          description: Not Found
           schema:
-            type: object
-      summary: Get specific user information
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an appropriate security group for cloud migration
       tags:
-      - '[Sample API] Users'
-    patch:
+      - '[Recommendation] Resources for VM infrastructure'
+  /recommendation/resources/vNet:
+    post:
       consumes:
       - application/json
-      description: Patch a user with the given information.
-      operationId: PatchUser
+      description: |-
+        Recommend an appropriate virtual network for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendVNet
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: User information to update
+      - description: Specify the your infrastructure to be migrated
         in: body
-        name: User
+        name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.PatchUserRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id
@@ -1175,38 +3199,54 @@ paths:
       - application/json
       responses:
         "200":
-          description: (Sample) This is a sample description for success response
-            in Swagger UI
+          description: The result of recommended vNet
           schema:
-            $ref: '#/definitions/controller.PatchUserResponse'
-        "400":
-          description: Invalid Request
-          schema:
-            type: object
+            $ref: '#/definitions/controller.RecommendVNetResponse'
         "404":
-          description: User Not Found
+          description: Not Found
           schema:
-            type: object
-      summary: Patch a user
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an appropriate virtual network for cloud migration
       tags:
-      - '[Sample API] Users'
-    put:
+      - '[Recommendation] Resources for VM infrastructure'
+  /recommendation/resources/vmOsImages:
+    post:
       consumes:
       - application/json
-      description: Update a user with the given information.
-      operationId: UpdateUser
+      description: |-
+        Recommend an appropriate OS image for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendVmOsImages
       parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: User information to update
+      - description: Specify the your infrastructure to be migrated
         in: body
-        name: User
+        name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.UpdateUserRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id
@@ -1214,18 +3254,81 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: (Sample) This is a sample description for success response
-            in Swagger UI
+        "200":
+          description: The result of recommended VM OS images
           schema:
-            $ref: '#/definitions/controller.UpdateUserResponse'
-        "400":
-          description: Invalid Request
+            $ref: '#/definitions/controller.RecommendVmOsImageResponse'
+        "404":
+          description: Not Found
           schema:
-            type: object
-      summary: Update a user
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an appropriate OS image for cloud migration
       tags:
-      - '[Sample API] Users'
+      - '[Recommendation] Resources for VM infrastructure'
+  /recommendation/resources/vmSpecs:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recommend an appropriate VM specification for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendVmSpecs
+      parameters:
+      - description: Specify the your infrastructure to be migrated
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - description: Machine ID (e.g., TBD, xxxxxx)
+        in: query
+        name: machineID
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The result of recommended VM specifications
+          schema:
+            $ref: '#/definitions/controller.RecommendVmSpecResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an appropriate VM specification for cloud migration
+      tags:
+      - '[Recommendation] Resources for VM infrastructure'
   /test/tracing:
     get:
       consumes:

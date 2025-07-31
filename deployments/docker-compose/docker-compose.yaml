@@ -55,21 +55,24 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.10.6
+    image: cloudbaristaorg/cb-tumblebug:0.11.1
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
-    #   dockerfile: Dockerfile    
-    platform: linux/amd64
+    #   dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network
+      # - terrarium_network # Uncomment this line when you use this compose and the terrarium compose
     ports:
       - 1323:1323
-    depends_on: 
-      - cb-tumblebug-etcd
-      # - cb-tumblebug-etcd-conf
-      - cb-spider      
+    depends_on:
+      cb-tumblebug-etcd:
+        condition: service_started
+      cb-spider:
+        condition: service_started
+      cb-tumblebug-postgres:
+        condition: service_healthy  
     volumes:
       - ./cb-tumblebug/conf/:/app/conf/
       - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
@@ -82,17 +85,21 @@ services:
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      # - TB_SQLITE_URL=localhost:3306 
-      # - TB_SQLITE_DATABASE=cb_tumblebug 
-      # - TB_SQLITE_USER=cb_tumblebug 
-      # - TB_SQLITE_PASSWORD=cb_tumblebug 
+      - TB_POSTGRES_ENDPOINT=cb-tumblebug-postgres:5432
+      - TB_POSTGRES_DATABASE=cb_tumblebug
+      - TB_POSTGRES_USER=cb_tumblebug
+      - TB_POSTGRES_PASSWORD=cb_tumblebug
+      # - TB_TERRARIUM_API_USERNAME=default
+      # - TB_TERRARIUM_API_PASSWORD=default
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
+      # - TB_AUTH_MODE=jwt
       # - TB_API_USERNAME=default
-      # - TB_API_PASSWORD=default
+      # - TB_API_PASSWORD=$$2a$$10$$4PKzCuJ6fPYsbCF.HR//ieLjaCzBAdwORchx62F2JRXQsuR3d9T0q
       # - TB_AUTOCONTROL_DURATION_MS=10000
       # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
       # - TB_DEFAULT_NAMESPACE=default
@@ -106,7 +113,7 @@ services:
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug
-      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -158,17 +165,39 @@ services:
       retries: 3
       start_period: 10s
 
+  # CB-Tumblebug PostgreSQL
+  # This is used for storing CB-Tumblebug Spec and Image.
+  cb-tumblebug-postgres:
+    image: postgres:16-alpine
+    container_name: cb-tumblebug-postgres
+    restart: always
+    networks:
+      - internal_network
+    ports:
+      - 5432:5432
+    volumes:
+      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=cb_tumblebug
+      - POSTGRES_PASSWORD=cb_tumblebug
+      - POSTGRES_DB=cb_tumblebug
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.10.2
+    image: cloudbaristaorg/cb-spider:0.11.1
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
-    #   dockerfile: Dockerfile    
-    platform: linux/amd64
+    #   dockerfile: Dockerfile
     networks:
       - internal_network
-      - external_network    # for outbound access (not ideal for security) 
+      - external_network # for outbound access (not ideal for security)
     # expose:
     #   - 1024
     ports:
@@ -178,7 +207,7 @@ services:
       - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - PLUGIN_SW=OFF
-      - SERVER_ADDRESS=localhost
+      - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
       # - API_USERNAME=
       # - API_PASSWORD=
@@ -186,7 +215,7 @@ services:
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
     healthcheck: # for CB-Spider
-      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -194,13 +223,14 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.10.0
+    image: cloudbaristaorg/cb-mapui:0.11.0
     container_name: cb-mapui
     # build:
     #   context: ../cb-mapui
     #   dockerfile: Dockerfile
     networks:
-      - external_network
+      - internal_network
+      - external_network # Keep this for the time being to support legacy access methods (http://localhost:1324)
     ports:
       - target: 1324
         published: 1324
@@ -214,11 +244,11 @@ services:
 
   # # mc-terrarium (PoC): resource extentions such as VPN for CB-Tumblebug by using OpenTofu
   # mc-terrarium:
-  #   image: cloudbaristaorg/mc-terrarium:0.0.10
+  #   image: cloudbaristaorg/mc-terrarium:0.0.22
   #   container_name: mc-terrarium
   #   # build:
   #   #   context: .
-  #   #   dockerfile: Dockerfile    
+  #   #   dockerfile: Dockerfile
   #   networks:
   #     - external_network
   #   ports:
@@ -226,18 +256,23 @@ services:
   #       published: 8055
   #       protocol: tcp
   #   env_file:
-  #     - ${HOME}/.cloud-barista/secrets/credentials           # AWS credentials
-  #     - ${HOME}/.cloud-barista/secrets/credential-azure.env  # Azure credentials
+  #     - ${HOME}/.cloud-barista/secrets/credentials             # AWS credential
+  #     - ${HOME}/.cloud-barista/secrets/credential-azure.env    # Azure credential
+  #     - ${HOME}/.cloud-barista/secrets/credential-alibaba.env  # Alibaba credential
+  #     - ${HOME}/.cloud-barista/secrets/credential-tencent.env  # Tencent credential
+  #     - ${HOME}/.cloud-barista/secrets/credential-ibm.env      # IBM credential
+  #     - ${HOME}/.cloud-barista/secrets/credential-ncp.env      # NCP credential
   #   volumes:
-  #     - ${HOME}/.cloud-barista/secrets:/app/secrets:ro       # GCP credentials
+  #     - ${HOME}/.cloud-barista/secrets/credential-gcp.json:/app/secrets/credential-gcp.json:ro # GCP credential
   #     - ${COMPOSE_PROJECT_ROOT}/container-volume/mc-terrarium-container/.terrarium:/app/.terrarium
+  #     - /etc/ssl/certs:/etc/ssl/certs:ro
   #   environment:
   #     - TERRARIUM_ROOT=/app
   #     # - TERRARIUM_SELF_ENDPOINT=localhost:8055
   #     # - TERRARIUM_API_ALLOW_ORIGINS=*
   #     # - TERRARIUM_API_AUTH_ENABLED=true
   #     # - TERRARIUM_API_USERNAME=default
-  #     # - TERRARIUM_API_PASSWORD=default
+  #     # - TERRARIUM_API_PASSWORD=$$2a$$10$$cKUlDfR8k4VUubhhRwCV9.sFvKV3KEc9RJ.H8R/thIeVOrhQ.nuuW
   #     # - TERRARIUM_LOGFILE_PATH=/app/log/terrarium.log
   #     # - TERRARIUM_LOGFILE_MAXSIZE=1000
   #     # - TERRARIUM_LOGFILE_MAXBACKUPS=3
@@ -247,8 +282,8 @@ services:
   #     # - TERRARIUM_LOGWRITER=both
   #     # - TERRARIUM_NODE_ENV=production
   #     # - TERRARIUM_AUTOCONTROL_DURATION_MS=10000
-  #   healthcheck:
-  #     test: [ "CMD", "curl", "-f", "http://localhost:8055/terrarium/readyz" ]
+  #   healthcheck: # for MC-Terrarirum
+  #     test: ["CMD", "curl", "-f", "http://localhost:8055/terrarium/readyz"]
   #     interval: 5m
   #     timeout: 5s
   #     retries: 3

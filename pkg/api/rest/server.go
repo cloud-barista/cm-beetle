@@ -198,7 +198,6 @@ func RunServer(port string) {
 	}
 	gBeetle.GET("/api", swaggerRedirect)
 	gBeetle.GET("/api/", swaggerRedirect)
-
 	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
 
 	// System management APIs
@@ -215,21 +214,69 @@ func RunServer(port string) {
 	// gNamespace.GET("/:nsId", controller.RestGetNs)
 	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
 
-	// Recommendation API group
+	/*
+	 * API group for computing infra recommendation
+	 */
 	gRecommendation := gBeetle.Group("/recommendation")
 	// Custom middleware to check if the Tumblebug is initialized
 	gRecommendation.Use(middlewares.TumblebugInitChecker)
 
-	// Recommendation APIs
+	// Recommendation APIs for VM infrastructure
 	gRecommendation.POST("/mci", controller.RecommendVMInfra)
+	gRecommendation.POST("/mciWithDefaults", controller.RecommendVMInfraWithDefaults)
 	gRecommendation.POST("/containerInfra", controller.RecommendContainerInfra)
 
-	// Migration API group
+	// Recommedation APIs for resources for VM infrastructure
+	gRecommendation.POST("/resources/vNet", controller.RecommendVNet)
+	gRecommendation.POST("/resources/securityGroups", controller.RecommendSecurityGroups)
+	gRecommendation.POST("/resources/vmOsImages", controller.RecommendVmOsImages)
+	gRecommendation.POST("/resources/vmSpecs", controller.RecommendVmSpecs)
+
+	/*
+	 * API group for computing infra migration
+	 */
 	gMigration := gBeetle.Group("/migration")
+	// Custom middleware to check if the Tumblebug is initialized
+	gMigration.Use(middlewares.TumblebugInitChecker)
+
+	// Migration APIs for VM infrastructure
+	gMigration.POST("/ns/:nsId/mciWithDefaults", controller.MigrateInfraWithDefaults)
 	gMigration.POST("/ns/:nsId/mci", controller.MigrateInfra)
 	gMigration.GET("/ns/:nsId/mci", controller.ListInfra)
 	gMigration.GET("/ns/:nsId/mci/:mciId", controller.GetInfra)
 	gMigration.DELETE("/ns/:nsId/mci/:mciId", controller.DeleteInfra)
+
+	// Migration APIs for resources for VM infrastructure
+	// APIs for the VM spec resources
+	// gMigration.GET("/ns/:nsId/resources/spec", controller.ListMigratedSpec)
+	// gMigration.POST("/ns/:nsId/resources/spec", controller.CreateMigratedSpec)
+	// gMigration.GET("/ns/:nsId/resources/spec/:specId", controller.GetMigratedSpec)
+	// gMigration.DELETE("/ns/:nsId/resources/spec/:specId", controller.DeleteMigratedSpec)
+
+	// APIs for the VM image resources
+	// gMigration.GET("/ns/:nsId/resources/image", controller.ListMigratedImage)
+	// gMigration.POST("/ns/:nsId/resources/image", controller.CreateMigratedImage)
+	// gMigration.GET("/ns/:nsId/resources/image/:imageId", controller.GetMigratedImage)
+	// gMigration.DELETE("/ns/:nsId/resources/image/:imageId", controller.DeleteMigratedVMImage)
+
+	// APIs for the vNet resource
+	gMigration.GET("/ns/:nsId/resources/vNet", controller.ListMigratedVNets)
+	gMigration.POST("/ns/:nsId/resources/vNet", controller.CreateVNet)
+	gMigration.GET("/ns/:nsId/resources/vNet/:vNetId", controller.GetMigratedVNet)
+	gMigration.DELETE("/ns/:nsId/resources/vNet/:vNetId", controller.DeleteMigratedVNet)
+
+	// APIs for the security group resources
+	gMigration.GET("/ns/:nsId/resources/securityGroup", controller.ListMigratedSecurityGroups)
+	gMigration.POST("/ns/:nsId/resources/securityGroup", controller.CreateMigratedSecurityGroup)
+	gMigration.GET("/ns/:nsId/resources/securityGroup/:sgId", controller.GetMigratedSecurityGroup)
+	gMigration.DELETE("/ns/:nsId/resources/securityGroup/:sgId", controller.DeleteMigratedSecurityGroup)
+
+	// APIs for the SSH key resources
+	gMigration.GET("/ns/:nsId/resources/sshKey", controller.ListMigratedSSHKeys)
+	gMigration.POST("/ns/:nsId/resources/sshKey", controller.CreateMigratedSSHKey)
+	gMigration.GET("/ns/:nsId/resources/sshKey/:sshKeyId", controller.GetMigratedSSHKey)
+	gMigration.DELETE("/ns/:nsId/resources/sshKey/:sshKeyId", controller.DeleteMigratedSSHKey)
+
 	// gMigration.POST("/ns/:nsId/mci/network", controller.MigrateInfra)
 	// gMigration.POST("/ns/:nsId/mci/storage", controller.MigrateInfra)
 	// gMigration.POST("/ns/:nsId/mci/instance", controller.MigrateInfra)
@@ -258,13 +305,13 @@ func RunServer(port string) {
 	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
 	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
 
-	// Sample API group (for developers to add new API)
-	gSample := gBeetle.Group("/sample")
-	gSample.GET("/users", controller.GetUsers)
-	gSample.GET("/users/:id", controller.GetUser)
-	gSample.POST("/users", controller.CreateUser)
-	gSample.PUT("/users/:id", controller.UpdateUser)
-	gSample.DELETE("/users/:id", controller.DeleteUser)
+	// // Sample API group (for developers to add new API)
+	// gSample := gBeetle.Group("/sample")
+	// gSample.GET("/users", controller.GetUsers)
+	// gSample.GET("/users/:id", controller.GetUser)
+	// gSample.POST("/users", controller.CreateUser)
+	// gSample.PUT("/users/:id", controller.UpdateUser)
+	// gSample.DELETE("/users/:id", controller.DeleteUser)
 
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint

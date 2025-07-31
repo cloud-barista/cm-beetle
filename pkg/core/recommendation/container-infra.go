@@ -11,7 +11,7 @@ import (
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
-	inframodel "github.com/cloud-barista/cm-model/infra/onprem"
+	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/go-resty/resty/v2"
@@ -19,7 +19,7 @@ import (
 )
 
 // RecommendContainer recommends appropriate K8s node specs for container workloads
-func RecommendContainer(provider, region string, srcInfra inframodel.OnpremInfra) (RecommendedInfraInfo, error) {
+func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfra) (RecommendedInfraInfo, error) {
 	var emptyResp RecommendedInfraInfo
 	var result RecommendedInfraInfo
 
