@@ -1168,6 +1168,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1247,6 +1248,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1320,6 +1322,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1393,6 +1396,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1466,6 +1470,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1539,6 +1544,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",
@@ -1612,6 +1618,7 @@ const docTemplate = `{
                             "aws",
                             "azure",
                             "gcp",
+                            "alibaba",
                             "ncp"
                         ],
                         "type": "string",

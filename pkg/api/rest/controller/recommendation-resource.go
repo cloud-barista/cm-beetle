@@ -48,7 +48,7 @@ type RecommendVNetResponse struct {
 // @Accept json
 // @Produce	json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVNetResponse "The result of recommended vNet"
@@ -142,7 +142,7 @@ type RecommendSecurityGroupResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendSecurityGroupResponse "The result of recommended security groups"
@@ -207,7 +207,7 @@ type RecommendVmSpecResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param machineID query string false "Machine ID (e.g., TBD, xxxxxx)"
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
@@ -374,7 +374,7 @@ type RecommendVmOsImageResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVmOsImageResponse "The result of recommended VM OS images"

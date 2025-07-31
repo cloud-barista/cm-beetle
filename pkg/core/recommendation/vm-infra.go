@@ -308,12 +308,13 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		 */
 		// Check duplicates and append the recommended VM specs
 		// * Note: Use the name of the VM spec managed by Tumblebug
-		log.Debug().Msgf("recommendedVmSpecInfoList[0]: %+v", recommendedVmSpecInfoList[0])
-		var selectedVmSpec = recommendedVmSpecInfoList[0]
+		var selectedVmSpec cloudmodel.TbSpecInfo
 		exists := false
-
-		// If the recommended VM spec already exists in the list, select the existing spec
 		if len(recommendedVmSpecInfoList) > 0 {
+			log.Debug().Msgf("recommendedVmSpecInfoList[0]: %+v", recommendedVmSpecInfoList[0])
+			selectedVmSpec = recommendedVmSpecInfoList[0]
+
+			// If the recommended VM spec already exists in the list, select the existing spec
 			for _, vmSpec := range recommendedVmSpecList {
 				if vmSpec.CspSpecName == recommendedVmSpecInfoList[0].CspSpecName {
 					exists = true
@@ -840,44 +841,37 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 }`
 
 	// Get server info from source computing infra info
-	cores := server.CPU.Cores
-	coresMax := cores << 1
-	var coresMin uint32
-	if cores > 1 {
-		coresMin = cores >> 1
-	} else {
-		coresMin = 1
-	}
-
+	vcpus := server.CPU.Cpus
 	memory := uint32(server.Memory.TotalSize)
-	memoryMax := memory << 1
-	var memoryMin uint32
-	if memory > 1 {
-		memoryMin = memory >> 1
-	} else {
-		memoryMin = 1
-	}
 
+	// Calculate optimal vCPU and memory ranges by the ratio of memory to vCPU (ref: AWS instance patterns)
+	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpus, memory)
+
+	// Set provider and region names
 	providerName := csp
 	regionName := region
 
+	// Set OS name and version
 	osNameAndVersion := server.OS.Name + " " + server.OS.Version
 	osNameWithVersion := strings.ToLower(osNameAndVersion)
 
 	log.Debug().
-		Uint32("coreLowerLimit", coresMin).
-		Uint32("coreUpperLimit", coresMax).
+		Uint32("originalVcpus", vcpus).
+		Uint32("originalMemory", memory).
+		Float64("ratio", float64(memory)/float64(vcpus)).
+		Uint32("vcpuLowerLimit", vcpusMin).
+		Uint32("vcpuUpperLimit", vcpusMax).
 		Uint32("memoryLowerLimit (GiB)", memoryMin).
 		Uint32("memoryUpperLimit (GiB)", memoryMax).
 		Str("providerName", providerName).
 		Str("regionName", regionName).
 		Str("osNameWithVersion", osNameWithVersion).
-		Msg("Source computing infrastructure info")
+		Msg("Calculated optimal ranges for AWS instance patterns")
 
 	// Set a deployment plan to search VMs having appropriate specs
 	planToSearchProperVm := fmt.Sprintf(planDocstring,
-		coresMin,
-		coresMax,
+		vcpusMin,
+		vcpusMax,
 		memoryMin,
 		memoryMax,
 		providerName,
@@ -899,11 +893,11 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	}
 
 	numOfVmSpecs := len(vmSpecInfoList)
-	log.Debug().Msgf("the number of recommended VM specs: %d (for the inserted PM/VM with spec (cores: %d, memory (GiB): %d))", numOfVmSpecs, cores, memory)
-	log.Trace().Msgf("recommendedVmList for the inserted PM/VM with spec (cores: %d, memory (GiB): %d): %+v", cores, memory, vmSpecInfoList)
+	log.Debug().Msgf("the number of recommended VM specs: %d (for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d))", numOfVmSpecs, vcpus, memory)
+	log.Trace().Msgf("recommendedVmList for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d): %+v", vcpus, memory, vmSpecInfoList)
 
 	if numOfVmSpecs == 0 {
-		err := fmt.Errorf("no VM spec recommended for the inserted PM/VM with spec (cores: %d, memory (GiB): %d)", cores, memory)
+		err := fmt.Errorf("no VM spec recommended for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d)", vcpus, memory)
 		log.Warn().Msgf(err.Error())
 		return emptyResp, -1, err
 	}
@@ -932,17 +926,17 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 	// var vmOsImage = cloudmodel.TbImageInfo{}
 
 	// Request body
-	falseValue := false
+	// falseValue := false
 	searchImageReq := tbmodel.SearchImageRequest{
-		DetailSearchKeys:       []string{},
-		IncludeDeprecatedImage: &falseValue,
-		IsGPUImage:             &falseValue,
-		IsKubernetesImage:      &falseValue,
-		IsRegisteredByAsset:    &falseValue,
-		OSArchitecture:         tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
-		ProviderName:           csp,
-		RegionName:             region,
+		// DetailSearchKeys:       []string{},
+		// IncludeDeprecatedImage: &falseValue,
+		// IsGPUImage:             &falseValue,
+		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
+		// IsRegisteredByAsset:    &falseValue,
+		OSArchitecture: tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:         server.OS.Name + " " + server.OS.VersionID,
+		ProviderName:   csp,
+		RegionName:     region,
 	}
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
@@ -1012,17 +1006,17 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	}
 
 	// Request body
-	falseValue := false
+	// falseValue := false
 	searchImageReq := tbmodel.SearchImageRequest{
-		DetailSearchKeys:       []string{},
-		IncludeDeprecatedImage: &falseValue,
-		IsGPUImage:             &falseValue,
-		IsKubernetesImage:      &falseValue,
-		IsRegisteredByAsset:    &falseValue,
-		OSArchitecture:         tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:                 server.OS.Name, // + " " + server.OS.VersionID,
-		ProviderName:           csp,
-		RegionName:             region,
+		// DetailSearchKeys:       []string{},
+		// IncludeDeprecatedImage: &falseValue,
+		// IsGPUImage:             &falseValue,
+		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
+		// IsRegisteredByAsset:    &falseValue,
+		OSArchitecture: tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:         server.OS.Name, // + " " + server.OS.VersionID,
+		ProviderName:   csp,
+		RegionName:     region,
 	}
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
@@ -1230,6 +1224,121 @@ func MBtoGiB(mb float64) uint32 {
 	const bytesInGiB = 1073741824.0
 	gib := (mb * bytesInMB) / bytesInGiB
 	return uint32(gib)
+}
+
+// isPrimeNumber checks if a number is prime
+func isPrimeNumber(n uint32) bool {
+	if n <= 1 {
+		return false
+	}
+	if n <= 3 {
+		return true
+	}
+	if n%2 == 0 || n%3 == 0 {
+		return false
+	}
+	for i := uint32(5); i*i <= n; i += 6 {
+		if n%i == 0 || n%(i+2) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// findPreviousPrimeNumberOrOne finds the largest prime number smaller than n
+func findPreviousPrimeNumberOrOne(n uint32) uint32 {
+	if n <= 2 {
+		return 1 // Return 1 as minimum vCPU count if no smaller prime exists
+	}
+
+	for i := n - 1; i >= 2; i-- {
+		if isPrimeNumber(i) {
+			return i
+		}
+	}
+	return 1 // Return 1 as fallback minimum vCPU count
+}
+
+// findNextPrimeNumber finds the smallest prime number larger than n
+func findNextPrimeNumber(n uint32) uint32 {
+	candidate := n + 1
+	for {
+		if isPrimeNumber(candidate) {
+			return candidate
+		}
+		candidate++
+	}
+}
+
+// calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
+func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	ratio := float64(memory) / float64(vcpus)
+
+	switch {
+	case ratio <= 3.0: // Compute Intensive (1:2)
+		return calculateComputeIntensiveRange(vcpus, memory)
+	case ratio >= 7.0: // Memory Intensive (1:8)
+		return calculateMemoryIntensiveRange(vcpus, memory)
+	default: // General Purpose (1:4)
+		return calculateGeneralPurposeRange(vcpus, memory)
+	}
+}
+
+func calculateComputeIntensiveRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
+	vcpusMin := findPreviousPrimeNumberOrOne(vcpus)
+	vcpusMax := findNextPrimeNumber(vcpus + 2)
+
+	// Set a wide search range for memory if Compute Intensive
+	memoryMin := uint32(2)
+	memoryMax := vcpusMax * 4
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
+}
+
+func calculateMemoryIntensiveRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
+	memoryMin := findPreviousPrimeNumberOrOne(memory)
+	memoryMax := findNextPrimeNumber(memory + 4)
+
+	// Set a wide search range for vCPU if Memory Intensive
+	vcpusMin := uint32(1)
+	vcpusMax := memoryMax / 8
+	if vcpusMax < 10 {
+		vcpusMax = 10
+	}
+
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
+}
+
+func calculateGeneralPurposeRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
+	// For General Purpose, provide balanced flexibility for both vCPU and memory
+	// Allow moderate range expansion while maintaining 1:4 ratio as the center point
+
+	vcpusMin := findPreviousPrimeNumberOrOne(vcpus)
+	vcpusMax := findNextPrimeNumber(vcpus + 2) // Slightly wider vCPU range
+
+	memoryMin := findPreviousPrimeNumberOrOne(memory)
+	memoryMax := findNextPrimeNumber(memory + 4) // Moderate memory range
+
+	// Ensure minimum bounds
+	if vcpusMin < 1 {
+		vcpusMin = 1
+	}
+	if memoryMin < 2 {
+		memoryMin = 2
+	}
+
+	// Ensure reasonable relationship between vCPU and memory
+	// Allow 1:2 to 1:8 ratio range for General Purpose workloads
+	if memoryMax < vcpusMin*2 {
+		memoryMax = vcpusMin * 2
+	}
+	if vcpusMax > memoryMax/2 {
+		vcpusMax = memoryMax / 2
+		if vcpusMax < vcpusMin {
+			vcpusMax = vcpusMin
+		}
+	}
+
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores

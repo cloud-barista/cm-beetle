@@ -2963,6 +2963,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredProvider
@@ -3024,6 +3025,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredCsp
@@ -3081,6 +3083,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredCsp
@@ -3138,6 +3141,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredProvider
@@ -3194,6 +3198,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredProvider
@@ -3250,6 +3255,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredProvider
@@ -3306,6 +3312,7 @@ paths:
         - aws
         - azure
         - gcp
+        - alibaba
         - ncp
         in: query
         name: desiredProvider

@@ -58,7 +58,7 @@ type RecommendVmInfraWithDefaultsResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVmInfraWithDefaultsResponse "The result of recommended infrastructure"
@@ -151,7 +151,7 @@ type RecommendVmInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
-// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVmInfraResponse "The result of recommended infrastructure"
@@ -247,7 +247,7 @@ type RecommendInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,ncp) default(aws)
+// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendInfraResponse "The result of recommended container infrastructure"
