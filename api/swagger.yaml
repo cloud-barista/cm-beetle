@@ -2434,7 +2434,7 @@ paths:
       description: Get the list of all migrated security groups in the namespace
       operationId: ListMigratedSecurityGroups
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
@@ -2485,7 +2485,7 @@ paths:
       description: Create a new migrated security group in the namespace
       operationId: CreateMigratedSecurityGroup
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
@@ -2529,15 +2529,16 @@ paths:
       description: Delete a specific migrated security group in the namespace
       operationId: DeleteMigratedSecurityGroup
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: Security Group ID
+      - default: mig-sg-01
+        description: Security Group ID
         in: path
-        name: securityGroupId
+        name: sgId
         required: true
         type: string
       produces:
@@ -2564,12 +2565,14 @@ paths:
       description: Get details of a specific migrated security group in the namespace
       operationId: GetMigratedSecurityGroup
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: Security Group ID
+      - default: mig-sg-01
+        description: Security Group ID
         in: path
         name: sgId
         required: true
@@ -2599,7 +2602,7 @@ paths:
       description: Get the list of all migrated SSH keys in the namespace
       operationId: ListMigratedSSHKeys
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
@@ -2650,7 +2653,7 @@ paths:
       description: Create a new migrated SSH key in the namespace
       operationId: CreateMigratedSSHKey
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
@@ -2694,13 +2697,14 @@ paths:
       description: Delete a specific migrated SSH key in the namespace
       operationId: DeleteMigratedSSHKey
       parameters:
-      - default: default
+      - default: mig01
         description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: SSH Key ID
+      - default: mig-sshkey-01
+        description: SSH Key ID
         in: path
         name: sshKeyId
         required: true
@@ -2729,12 +2733,14 @@ paths:
       description: Get details of a specific migrated SSH key in the namespace
       operationId: GetMigratedSSHKey
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: SSH Key ID
+      - default: mig-sshkey-01
+        description: SSH Key ID
         in: path
         name: sshKeyId
         required: true
@@ -2764,7 +2770,8 @@ paths:
       description: Get the list of all migrated virtual networks in the namespace
       operationId: ListMigratedVNets
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
@@ -2800,7 +2807,8 @@ paths:
       description: Create a new migrated virtual network in the namespace
       operationId: CreateVNet
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
@@ -2836,12 +2844,14 @@ paths:
       description: Delete a specific migrated virtual network in the namespace
       operationId: DeleteMigratedVNet
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: Virtual Network ID
+      - default: mig-vnet-01
+        description: Virtual Network ID
         in: path
         name: vNetId
         required: true
@@ -2874,12 +2884,14 @@ paths:
       description: Get details of a specific virtual network in the namespace
       operationId: GetMigratedVNet
       parameters:
-      - description: Namespace ID
+      - default: mig01
+        description: Namespace ID
         in: path
         name: nsId
         required: true
         type: string
-      - description: Virtual Network ID
+      - default: mig-vnet-01
+        description: Virtual Network ID
         in: path
         name: vNetId
         required: true

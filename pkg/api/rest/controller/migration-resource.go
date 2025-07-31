@@ -97,7 +97,7 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Success 200 {object} JSONResult{[DEFAULT]=tbresource.RestGetAllVNetResponse,[ID]=tbmodel.IdList} "Different return structures by the given option param"
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -119,8 +119,8 @@ func ListMigratedVNets(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
-// @Param vNetId path string true "Virtual Network ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
 // @Success 200 {object} tbmodel.TbVNetInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -142,7 +142,7 @@ func GetMigratedVNet(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetReq body tbmodel.TbVNetReq true "Virtual Network creation request"
 // @Success 200 {object} tbmodel.TbVNetInfo
 // @Failure 400 {object} tbmodel.SimpleMsg
@@ -165,8 +165,8 @@ func CreateVNet(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
-// @Param vNetId path string true "Virtual Network ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
 // @Param action query string false "Action" Enums(withsubnets,refine,force)
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
@@ -189,7 +189,7 @@ func DeleteMigratedVNet(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option" Enums(id)
 // @Param filterKey query string false "Field key for filtering (ex: systemLabel)"
 // @Param filterVal query string false "Field value for filtering (ex: Registered from CSP resource)"
@@ -214,8 +214,8 @@ func ListMigratedSSHKeys(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
-// @Param sshKeyId path string true "SSH Key ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param sshKeyId path string true "SSH Key ID" default(mig-sshkey-01)
 // @Success 200 {object} tbmodel.TbSshKeyInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -237,7 +237,7 @@ func GetMigratedSSHKey(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option: [required params for register] connectionName, name, cspKeyId" Enums(register)
 // @Param sshKeyReq body tbmodel.TbSshKeyReq true "Details for an SSH key object"
 // @Success 200 {object} tbmodel.TbSshKeyInfo
@@ -261,8 +261,8 @@ func CreateMigratedSSHKey(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
-// @Param sshKeyId path string true "SSH Key ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param sshKeyId path string true "SSH Key ID" default(mig-sshkey-01)
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -285,7 +285,7 @@ func DeleteMigratedSSHKey(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option" Enums(id)
 // @Param filterKey query string false "Field key for filtering (ex: systemLabel)"
 // @Param filterVal query string false "Field value for filtering (ex: Registered from CSP resource)"
@@ -310,8 +310,8 @@ func ListMigratedSecurityGroups(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID"
-// @Param sgId path string true "Security Group ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param sgId path string true "Security Group ID" default(mig-sg-01)
 // @Success 200 {object} tbmodel.TbSecurityGroupInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -333,7 +333,7 @@ func GetMigratedSecurityGroup(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
+// @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option: [required params for register] connectionName, name, vNetId, cspResourceId" Enums(register)
 // @Param securityGroupReq body tbmodel.TbSecurityGroupReq true "Details for an securityGroup object"
 // @Success 200 {object} tbmodel.TbSecurityGroupInfo
@@ -357,8 +357,8 @@ func CreateMigratedSecurityGroup(c echo.Context) error {
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
-// @Param nsId path string true "Namespace ID" default(default)
-// @Param securityGroupId path string true "Security Group ID"
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param sgId path string true "Security Group ID" default(mig-sg-01)
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg

@@ -1352,7 +1352,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	if len(firewallRules) == 0 {
 		log.Warn().Msg("no firewall rules provided, using default rules")
 		// Allow all outbound traffic and deny all inbound traffic
-		// TODO: Check if the default rules are OK.
+		// TODO: Check if the default rules are OK on testing.
 		// sgRules = append(sgRules, ruleToAllowAllOutboundTraffic)
 		sgRules = append(sgRules, ruleToAllowSSHInboundTraffic)
 	} else {
@@ -1540,6 +1540,18 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 			continue
 		}
 
+		// Skip IPv6 rules (currently not supported)
+		if isIPv6Rule(rule) {
+			log.Warn().Msgf("IPv6 rule detected but not currently supported: %+v - skipping rule", rule)
+			continue
+		}
+
+		// Handle protocol wildcard
+		protocol := rule.Protocol
+		if protocol == "*" {
+			protocol = "ALL"
+		}
+
 		switch rule.Direction {
 		case "inbound":
 			// Set CIDR block for source - For inbound, use source CIDR (where traffic comes from)
@@ -1552,26 +1564,60 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 			srcCIDR := formatCIDR(rule.SrcCIDR)
 			log.Debug().Msgf("Formatted SrcCIDR from '%s' to '%s'", rule.SrcCIDR, srcCIDR)
 
-			// * NOTE: 3 cases for destination ports
-			// 1. Comma-separated ports (e.g., 22,23,24)
-			// 2. Port range with colon notation (e.g., 30000:40000)
-			// 3. Single port (e.g., 22)
+			// ! Skip default outbound rule that allows all traffic because it is automatically created by cloud providers, CB-Spider, or CB-Tumblebug.
+			// TODO: To be updated if the default rule is needed in the future.
+			if strings.ToLower(protocol) == "all" && srcCIDR == "0.0.0.0/0" {
+				log.Debug().Msgf("Skipping default inbound ALL traffic rule (may conflict with existing rules): %+v", rule)
+				continue
+			}
+
+			// * NOTE: Handle destination ports (where traffic is going to)
+			// Special cases based on CB-Spider specification:
+			// - "*" for TCP/UDP means all ports (1-65535)
+			// - ICMP and ALL protocols use port -1
+			// - Comma-separated ports (e.g., 22,23,24)
+			// - Port range with colon notation (e.g., 30000:40000)
+			// - Single port (e.g., 22)
+
+			var dstPorts string
+			// Handle wildcard ports based on protocol
+			if rule.DstPorts == "*" {
+				protocolLower := strings.ToLower(protocol)
+				if protocolLower == "icmp" || protocolLower == "all" {
+					dstPorts = "-1" // Will be handled in the ICMP/ALL case below
+				} else {
+					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
+				}
+			} else {
+				dstPorts = rule.DstPorts
+			}
 
 			// Handle destination ports based on format
-			if rule.DstPorts == "" {
-				// Skip rules without port information
+			if dstPorts == "" {
+				// Skip rules without port information for non-ICMP/ALL protocols
 				log.Debug().Msgf("Skipping inbound rule without port information: %+v", rule)
 				continue
 
-			} else if strings.Contains(rule.DstPorts, ",") {
+			} else if dstPorts == "-1" {
+				// Special case: ICMP and ALL protocols use port -1 (CB-Spider specification)
+				tbRule := cloudmodel.TbFirewallRuleInfo{
+					Direction:  rule.Direction,
+					IPProtocol: protocol,
+					CIDR:       srcCIDR,
+					FromPort:   "-1",
+					ToPort:     "-1",
+				}
+				tbRules = append(tbRules, tbRule)
+				log.Debug().Msgf("Created inbound rule for ICMP/ALL protocol: %+v", tbRule)
+			} else if strings.Contains(dstPorts, ",") {
 				// Handle comma-separated ports (e.g., 22,23,24) - create multiple rules
-				ports := strings.Split(rule.DstPorts, ",")
+				ports := strings.Split(dstPorts, ",")
 
 				for _, port := range ports {
 					portTrimmed := strings.TrimSpace(port)
 					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
-						IPProtocol: rule.Protocol,
+						IPProtocol: protocol,
 						CIDR:       srcCIDR,
 						FromPort:   portTrimmed,
 						ToPort:     portTrimmed,
@@ -1580,34 +1626,34 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 					log.Debug().Msgf("Created inbound rule for comma-separated port %s: %+v", portTrimmed, tbRule)
 				}
 
-			} else if strings.Contains(rule.DstPorts, ":") {
+			} else if strings.Contains(dstPorts, ":") {
 				// Handle port range with colon notation (e.g., 30000:40000)
-				portRange := strings.Split(rule.DstPorts, ":")
+				portRange := strings.Split(dstPorts, ":")
 				if len(portRange) == 2 {
 					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
-						IPProtocol: rule.Protocol,
+						IPProtocol: protocol,
 						CIDR:       srcCIDR,
 						FromPort:   strings.TrimSpace(portRange[0]),
 						ToPort:     strings.TrimSpace(portRange[1]),
 					}
 					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created inbound rule for port range %s: %+v", rule.DstPorts, tbRule)
+					log.Debug().Msgf("Created inbound rule for port range %s: %+v", dstPorts, tbRule)
 				} else {
-					log.Warn().Msgf("Invalid port range format in rule.DstPorts: %s - skipping rule", rule.DstPorts)
+					log.Warn().Msgf("Invalid port range format in rule.DstPorts: %s - skipping rule", dstPorts)
 					continue
 				}
 			} else {
 				// Handle single port
 				tbRule := cloudmodel.TbFirewallRuleInfo{
 					Direction:  rule.Direction,
-					IPProtocol: rule.Protocol,
+					IPProtocol: protocol,
 					CIDR:       srcCIDR,
-					FromPort:   rule.DstPorts,
-					ToPort:     rule.DstPorts,
+					FromPort:   dstPorts,
+					ToPort:     dstPorts,
 				}
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created inbound rule for single port %s: %+v", rule.DstPorts, tbRule)
+				log.Debug().Msgf("Created inbound rule for single port %s: %+v", dstPorts, tbRule)
 			}
 
 		case "outbound":
@@ -1622,20 +1668,53 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 			dstCIDR := formatCIDR(rule.DstCIDR)
 			log.Debug().Msgf("Formatted outbound CIDR from '%s' to '%s'", rule.DstCIDR, dstCIDR)
 
+			// ! Skip default outbound rule that allows all traffic because it is automatically created by cloud providers, CB-Spider, or CB-Tumblebug.
+			// TODO: To be updated if the default rule is needed in the future.
+			if strings.ToLower(protocol) == "all" && dstCIDR == "0.0.0.0/0" {
+				log.Debug().Msgf("Skipping default outbound ALL traffic rule (may conflict with existing rules): %+v", rule)
+				continue
+			}
+
+			// Handle destination ports with wildcard support based on CB-Spider specification
+			var dstPorts string
+			// Handle wildcard ports based on protocol
+			if rule.DstPorts == "*" {
+				protocolLower := strings.ToLower(protocol)
+				if protocolLower == "icmp" || protocolLower == "all" {
+					dstPorts = "-1" // Will be handled in the ICMP/ALL case below
+				} else {
+					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
+				}
+			} else {
+				dstPorts = rule.DstPorts
+			}
+
 			// Now handle the ports similar to inbound case
-			if rule.DstPorts == "" {
-				// Skip rules without port information
+			if dstPorts == "" {
+				// Skip rules without port information for non-ICMP protocols
 				log.Debug().Msgf("Skipping outbound rule without port information: %+v", rule)
 				continue
-			} else if strings.Contains(rule.DstPorts, ",") {
+
+			} else if dstPorts == "-1" {
+				// Special case: ICMP and ALL protocols use port -1 (CB-Spider specification)
+				tbRule := cloudmodel.TbFirewallRuleInfo{
+					Direction:  rule.Direction,
+					IPProtocol: protocol,
+					CIDR:       dstCIDR,
+					FromPort:   "-1",
+					ToPort:     "-1",
+				}
+				tbRules = append(tbRules, tbRule)
+				log.Debug().Msgf("Created outbound rule for ICMP/ALL protocol: %+v", tbRule)
+			} else if strings.Contains(dstPorts, ",") {
 				// Handle comma-separated ports - create multiple rules
-				ports := strings.Split(rule.DstPorts, ",")
+				ports := strings.Split(dstPorts, ",")
 
 				for _, port := range ports {
 					portTrimmed := strings.TrimSpace(port)
 					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
-						IPProtocol: rule.Protocol,
+						IPProtocol: protocol,
 						CIDR:       dstCIDR,
 						FromPort:   portTrimmed,
 						ToPort:     portTrimmed,
@@ -1643,34 +1722,34 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 					tbRules = append(tbRules, tbRule)
 					log.Debug().Msgf("Created outbound rule for comma-separated port %s: %+v", portTrimmed, tbRule)
 				}
-			} else if strings.Contains(rule.DstPorts, ":") {
+			} else if strings.Contains(dstPorts, ":") {
 				// Handle port range with colon notation
-				portRange := strings.Split(rule.DstPorts, ":")
+				portRange := strings.Split(dstPorts, ":")
 				if len(portRange) == 2 {
 					tbRule := cloudmodel.TbFirewallRuleInfo{
 						Direction:  rule.Direction,
-						IPProtocol: rule.Protocol,
+						IPProtocol: protocol,
 						CIDR:       dstCIDR,
 						FromPort:   strings.TrimSpace(portRange[0]),
 						ToPort:     strings.TrimSpace(portRange[1]),
 					}
 					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created outbound rule for port range %s: %+v", rule.DstPorts, tbRule)
+					log.Debug().Msgf("Created outbound rule for port range %s: %+v", dstPorts, tbRule)
 				} else {
-					log.Warn().Msgf("Invalid port range format: %s - skipping rule", rule.DstPorts)
+					log.Warn().Msgf("Invalid port range format: %s - skipping rule", dstPorts)
 					continue
 				}
 			} else {
 				// Handle single port
 				tbRule := cloudmodel.TbFirewallRuleInfo{
 					Direction:  rule.Direction,
-					IPProtocol: rule.Protocol,
+					IPProtocol: protocol,
 					CIDR:       dstCIDR,
-					FromPort:   rule.DstPorts,
-					ToPort:     rule.DstPorts,
+					FromPort:   dstPorts,
+					ToPort:     dstPorts,
 				}
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created outbound rule for single port %s: %+v", rule.DstPorts, tbRule)
+				log.Debug().Msgf("Created outbound rule for single port %s: %+v", dstPorts, tbRule)
 			}
 
 		default:
@@ -1683,84 +1762,18 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 	return tbRules
 }
 
-// var dummyFirewallRules = []onpremmodel.FirewallRuleProperty{
-// 	{
-// 		SrcCIDR:   "0.0.0.0/0",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "22",
-// 		Protocol:  "TCP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "0.0.0.0/0",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "80,443",
-// 		Protocol:  "TCP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "10.0.0.0/16",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "3306",
-// 		Protocol:  "TCP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "172.16.0.0/12",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "5432",
-// 		Protocol:  "TCP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "0.0.0.0/0",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "25",
-// 		Protocol:  "TCP",
-// 		Direction: "inbound",
-// 		Action:    "deny",
-// 	},
-// 	{
-// 		SrcCIDR:   "0.0.0.0/0",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "53",
-// 		Protocol:  "UDP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "0.0.0.0/0",
-// 		DstCIDR:   "192.168.1.10/32",
-// 		DstPorts:  "1194",
-// 		Protocol:  "UDP",
-// 		Direction: "inbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "192.168.1.10/32",
-// 		DstCIDR:   "0.0.0.0/0",
-// 		SrcPorts:  "32768-60999",
-// 		Protocol:  "TCP",
-// 		Direction: "outbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "192.168.1.10/32",
-// 		DstCIDR:   "8.8.8.8/32",
-// 		DstPorts:  "53",
-// 		Protocol:  "UDP",
-// 		Direction: "outbound",
-// 		Action:    "allow",
-// 	},
-// 	{
-// 		SrcCIDR:   "192.168.1.10/32",
-// 		DstCIDR:   "0.0.0.0/0",
-// 		Protocol:  "ICMP",
-// 		Direction: "outbound",
-// 		Action:    "allow",
-// 	},
-// }
+// isIPv6Rule checks if the firewall rule contains IPv6 elements
+func isIPv6Rule(rule onpremmodel.FirewallRuleProperty) bool {
+	// Check for IPv6 CIDR blocks (contains ":")
+	if strings.Contains(rule.SrcCIDR, ":") || strings.Contains(rule.DstCIDR, ":") {
+		return true
+	}
+
+	// Check for IPv6-specific protocols
+	protocol := strings.ToLower(rule.Protocol)
+	if protocol == "icmpv6" || protocol == "ipv6" {
+		return true
+	}
+
+	return false
+}
