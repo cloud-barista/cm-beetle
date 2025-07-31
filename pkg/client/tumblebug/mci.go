@@ -166,6 +166,11 @@ func (c *TumblebugClient) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/mci", c.restUrl, nsId)
 
+	option := "id" // Use 'ids' option to retrieve only IDs
+	if option != "" {
+		url += fmt.Sprintf("?option=%s", option)
+	}
+
 	reqBody := common.NoBody
 	resBody := tbmodel.IdList{}
 

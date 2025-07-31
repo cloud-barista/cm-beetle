@@ -393,7 +393,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -473,7 +473,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -537,6 +537,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -544,6 +545,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-sg-01",
                         "description": "Security Group ID",
                         "name": "sgId",
                         "in": "path",
@@ -587,7 +589,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -595,8 +597,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-sg-01",
                         "description": "Security Group ID",
-                        "name": "securityGroupId",
+                        "name": "sgId",
                         "in": "path",
                         "required": true
                     }
@@ -640,7 +643,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -720,7 +723,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -784,6 +787,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -791,6 +795,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-sshkey-01",
                         "description": "SSH Key ID",
                         "name": "sshKeyId",
                         "in": "path",
@@ -834,7 +839,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -842,6 +847,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-sshkey-01",
                         "description": "SSH Key ID",
                         "name": "sshKeyId",
                         "in": "path",
@@ -887,6 +893,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -945,6 +952,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -999,6 +1007,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -1006,6 +1015,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-vnet-01",
                         "description": "Virtual Network ID",
                         "name": "vNetId",
                         "in": "path",
@@ -1049,6 +1059,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "default": "mig01",
                         "description": "Namespace ID",
                         "name": "nsId",
                         "in": "path",
@@ -1056,6 +1067,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "default": "mig-vnet-01",
                         "description": "Virtual Network ID",
                         "name": "vNetId",
                         "in": "path",
