@@ -833,8 +833,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	"priority": {
 		"policy": [
 			{
-				"metric": "performance",
-				"weight": "0.5"
+				"metric": "cost"
 			}
 		]
 	}
