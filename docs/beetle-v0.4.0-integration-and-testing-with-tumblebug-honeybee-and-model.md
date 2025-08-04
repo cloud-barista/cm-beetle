@@ -16223,8 +16223,9 @@
 
 ### NCP
 
-> [!WARNING]
+> [!CRITICAL]
 > Due to NCP resource constraints, we have **downgraded the server specifications** to the source computing environment.
+> **Upper limit of memory: 8GiB**
 
 #### Recommend a target model for computing infra
 
@@ -16275,9 +16276,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 64,
-          "available": 54,
-          "used": 10
+          "totalSize": 8,
+          "available": 4,
+          "used": 4
         },
         "rootDisk": {
           "label": "unknown",
@@ -17834,7 +17835,7 @@
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "ncpvpc+kr+m8-g2-s100",
+        "specId": "ncpvpc+kr+s2-g3a",
         "imageId": "ncpvpc+23214590",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -17874,19 +17875,19 @@
   },
   "targetVmSpecList": [
     {
-      "id": "ncpvpc+kr+m8-g2-s100",
-      "cspSpecName": "m8-g2-s100",
-      "name": "ncpvpc+kr+m8-g2-s100",
+      "id": "ncpvpc+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "name": "ncpvpc+kr+s2-g3a",
       "namespace": "system",
       "connectionName": "ncpvpc-kr",
       "providerName": "ncpvpc",
       "regionName": "kr",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 8,
-      "memoryGiB": 64,
-      "diskSizeGB": 100,
-      "costPerHour": -1,
+      "vCPU": 2,
+      "memoryGiB": 8,
+      "diskSizeGB": -1,
+      "costPerHour": 0.0848,
       "orderInFilteredResult": 1,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
@@ -17896,31 +17897,31 @@
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 0,
+      "evaluationScore09": 1.0000001,
       "evaluationScore10": -1,
-      "rootDiskType": "",
-      "rootDiskSize": "100",
-      "systemLabel": "auto-gen",
+      "rootDiskType": "default",
+      "rootDiskSize": "-1",
+      "systemLabel": "from-assets",
       "details": [
         {
           "key": "ServerSpecCode",
-          "value": "m8-g2-s100"
+          "value": "s2-g3a"
         },
         {
           "key": "GenerationCode",
-          "value": "G2"
+          "value": "G3"
         },
         {
           "key": "CpuCount",
-          "value": "8"
+          "value": "2"
         },
         {
           "key": "MemorySize",
-          "value": "68719476736"
+          "value": "8589934592"
         },
         {
           "key": "HypervisorType",
-          "value": "{code:XEN,codeName:XEN}"
+          "value": "{code:KVM,codeName:KVM}"
         },
         {
           "key": "CpuArchitectureType",
@@ -17928,7 +17929,19 @@
         },
         {
           "key": "BlockStorageMaxCount",
-          "value": "15"
+          "value": "20"
+        },
+        {
+          "key": "BlockStorageMaxIops",
+          "value": "4725"
+        },
+        {
+          "key": "BlockStorageMaxThroughput",
+          "value": "81"
+        },
+        {
+          "key": "NetworkPerformance",
+          "value": "1000000000"
         },
         {
           "key": "NetworkInterfaceMaxCount",
@@ -17936,15 +17949,15 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.HIMEM.C008.M064.NET.SSD.B100.G002"
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
         },
         {
           "key": "ServerSpecDescription",
-          "value": "vCPU 8EA, Memory 64GB, [SSD]Disk 100GB"
+          "value": "vCPU 2EA, Memory 8GB"
         },
         {
           "key": "CorrespondingImageIds",
-          "value": "20696218,16187025,16187022,16187021,16187007,16187006"
+          "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
         }
       ]
     }
@@ -18396,7 +18409,7 @@
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "ncpvpc+kr+m8-g2-s100",
+        "specId": "ncpvpc+kr+s2-g3a",
         "imageId": "ncpvpc+23214590",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -18436,19 +18449,19 @@
   },
   "targetVmSpecList": [
     {
-      "id": "ncpvpc+kr+m8-g2-s100",
-      "cspSpecName": "m8-g2-s100",
-      "name": "ncpvpc+kr+m8-g2-s100",
+      "id": "ncpvpc+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "name": "ncpvpc+kr+s2-g3a",
       "namespace": "system",
       "connectionName": "ncpvpc-kr",
       "providerName": "ncpvpc",
       "regionName": "kr",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 8,
-      "memoryGiB": 64,
-      "diskSizeGB": 100,
-      "costPerHour": -1,
+      "vCPU": 2,
+      "memoryGiB": 8,
+      "diskSizeGB": -1,
+      "costPerHour": 0.0848,
       "orderInFilteredResult": 1,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
@@ -18458,31 +18471,31 @@
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 0,
+      "evaluationScore09": 1.0000001,
       "evaluationScore10": -1,
-      "rootDiskType": "",
-      "rootDiskSize": "100",
-      "systemLabel": "auto-gen",
+      "rootDiskType": "default",
+      "rootDiskSize": "-1",
+      "systemLabel": "from-assets",
       "details": [
         {
           "key": "ServerSpecCode",
-          "value": "m8-g2-s100"
+          "value": "s2-g3a"
         },
         {
           "key": "GenerationCode",
-          "value": "G2"
+          "value": "G3"
         },
         {
           "key": "CpuCount",
-          "value": "8"
+          "value": "2"
         },
         {
           "key": "MemorySize",
-          "value": "68719476736"
+          "value": "8589934592"
         },
         {
           "key": "HypervisorType",
-          "value": "{code:XEN,codeName:XEN}"
+          "value": "{code:KVM,codeName:KVM}"
         },
         {
           "key": "CpuArchitectureType",
@@ -18490,7 +18503,19 @@
         },
         {
           "key": "BlockStorageMaxCount",
-          "value": "15"
+          "value": "20"
+        },
+        {
+          "key": "BlockStorageMaxIops",
+          "value": "4725"
+        },
+        {
+          "key": "BlockStorageMaxThroughput",
+          "value": "81"
+        },
+        {
+          "key": "NetworkPerformance",
+          "value": "1000000000"
         },
         {
           "key": "NetworkInterfaceMaxCount",
@@ -18498,15 +18523,15 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.HIMEM.C008.M064.NET.SSD.B100.G002"
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
         },
         {
           "key": "ServerSpecDescription",
-          "value": "vCPU 8EA, Memory 64GB, [SSD]Disk 100GB"
+          "value": "vCPU 2EA, Memory 8GB"
         },
         {
           "key": "CorrespondingImageIds",
-          "value": "20696218,16187025,16187022,16187021,16187007,16187006"
+          "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
         }
       ]
     }
@@ -18932,35 +18957,250 @@
 
 - Response body:
 
-> [!CAUTION]
-> cb-spider | [CB-SPIDER].[ERROR]: 2025-07-31 13:16:30 VMHandler.go:296, github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/ncpvpc/resources.(\*NcpVpcVMHandler).StartVM() - Failed to Create VM instance : [Status: 400 Bad Request, Body: {
->
-> > cb-spider | "responseError": {
-> > cb-spider | "returnCode": "1100034",
-> > cb-spider | "returnMessage": "Please try your call again later.\nTemporarily out of service.\nIf error continue, Please contact our customer service center."
-> > cb-spider | }
-> > cb-spider | }]
-> > cb-spider | [CB-SPIDER].[ERROR]: 2025-07-31 13:16:31 CommonNcpVpcFunc.go:71, github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/ncpvpc/resources.LoggingError() - Failed to Create VM instance : [Status: 400 Bad Request, Body: {
-> >
-> > > > cb-spider | "responseError": {
-> > > > cb-spider | "returnCode": "1100034",
-> > > > cb-spider | "returnMessage": "Please try your call again later.\nTemporarily out of service.\nIf error continue, Please contact our customer service center."
-> > > > cb-spider | }
-> > > > cb-spider | }]
-> > > > cb-spider | [CB-SPIDER].[ERROR]: 2025-07-31 13:16:31 VMManager.go:633, github.com/cloud-barista/cb-spider/api-runtime/common-runtime.StartVM() - Failed to Create VM instance : [Status: 400 Bad Request, Body: {
-> > > >
-> > > > > > > > cb-spider | "responseError": {
-> > > > > > > > cb-spider | "returnCode": "1100034",
-> > > > > > > > cb-spider | "returnMessage": "Please try your call again later.\nTemporarily out of service.\nIf error continue, Please contact our customer service center."
-> > > > > > > > cb-spider | }
-> > > > > > > > cb-spider | }]
-> > > > > > > > cb-tumblebug | 1:16PM ERR src/core/infra/provisioning.go:1551 > error="Error from Spider while creating VM: [Error from: http://cb-spider:1024/spider/vm] Status code: 500 Internal Server Error, Message: {\"message\":\"Failed to Create VM instance : [Status: 400 Bad Request, Body: {\\n \\\"responseError\\\": {\\n \\\"returnCode\\\": \\\"1100034\\\",\\n \\\"returnMessage\\\": \\\"Please try your call again later.\\\\nTemporarily out of service.\\\\nIf error continue, Please contact our customer service center.\\\"\\n }\\n}]\"}\n"
-
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
 
 ```json
-
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d286p2iie330bgfooe4g",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "Running",
+  "targetAction": "Create",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d286p2iie330bgfooe4g"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d286p2iie330bgfooe5g",
+      "cspResourceName": "d286p2iie330bgfooe5g",
+      "cspResourceId": "107789450",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-04 08:19:46",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-04 08:19:46",
+        "sys.cspResourceId": "107789450",
+        "sys.cspResourceName": "d286p2iie330bgfooe5g",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d286p2iie330bgfooe5g"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "223.130.138.35",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "10",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncpvpc+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "imageId": "ncpvpc+23214590",
+      "cspImageName": "23214590",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "116921",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "246877",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d286ot2ie330bgfooe3g",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "107789450"
+        },
+        {
+          "key": "ServerName",
+          "value": "d286p2iie330bgfooe5g"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d286ot2ie330bgfooe3g"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-04T17:17:26+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-04T17:19:38+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "116921"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "246877"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4867755"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "133214"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s2-g3a"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
 ```
 
 </details>
@@ -18974,14 +19214,15 @@
 - Response body:
 
 ```json
-
+{
+  "idList": ["mmci01"]
+}
 ```
 
 #### List the migrated computing infrastructures
 
 - API: `GET /migration/ns/{nsId}/mci`
 - nsId `mig01` (default)
-- option: `info`
 - Request body: none
 - Response body:
 
@@ -18989,7 +19230,120 @@
 	<summary> <ins>Click to see the response body </ins> </summary>
 
 ```json
-
+{
+  "mci": [
+    {
+      "resourceType": "mci",
+      "id": "mmci01",
+      "uid": "d286p2iie330bgfooe4g",
+      "name": "mmci01",
+      "status": "Running:1 (R:1/1)",
+      "statusCount": {
+        "countTotal": 1,
+        "countCreating": 0,
+        "countRunning": 1,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": null,
+      "systemLabel": "",
+      "systemMessage": "",
+      "description": "a recommended multi-cloud infrastructure",
+      "vm": [
+        {
+          "resourceType": "mci",
+          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "uid": "d286p2iie330bgfooe4g",
+          "name": "mmci01",
+          "subGroupId": "",
+          "location": {
+            "display": "",
+            "latitude": 0,
+            "longitude": 0
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": null,
+          "description": "a recommended multi-cloud infrastructure",
+          "region": {
+            "Region": "",
+            "Zone": ""
+          },
+          "publicIP": "",
+          "sshPort": "",
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": "",
+          "rootDiskName": "",
+          "connectionName": "",
+          "connectionConfig": {
+            "configName": "",
+            "providerName": "",
+            "driverName": "",
+            "credentialName": "",
+            "credentialHolder": "",
+            "regionZoneInfoName": "",
+            "regionZoneInfo": {
+              "assignedRegion": "",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "",
+              "regionName": "",
+              "description": "",
+              "location": {
+                "display": "",
+                "latitude": 0,
+                "longitude": 0
+              },
+              "zones": null
+            },
+            "regionRepresentative": false,
+            "verified": false
+          },
+          "specId": "",
+          "cspSpecName": "",
+          "imageId": "",
+          "cspImageName": "",
+          "vNetId": "",
+          "cspVNetId": "",
+          "subnetId": "",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": null,
+          "dataDiskIds": null,
+          "sshKeyId": "",
+          "cspSshKeyId": ""
+        }
+      ],
+      "newVmList": null,
+      "postCommand": {
+        "userName": "",
+        "command": null
+      },
+      "postCommandResult": {
+        "results": null
+      }
+    }
+  ]
+}
 ```
 
 </details>
@@ -19005,7 +19359,246 @@
   <summary> <ins>Click to see the response body </ins> </summary>
 
 ```json
-
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d286p2iie330bgfooe4g",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d286p2iie330bgfooe4g"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d286p2iie330bgfooe5g",
+      "cspResourceName": "d286p2iie330bgfooe5g",
+      "cspResourceId": "107789450",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-04 08:19:46",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-04 08:19:46",
+        "sys.cspResourceId": "107789450",
+        "sys.cspResourceName": "d286p2iie330bgfooe5g",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d286p2iie330bgfooe5g"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "223.130.138.35",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "10",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncpvpc+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "imageId": "ncpvpc+23214590",
+      "cspImageName": "23214590",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "116921",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "246877",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d286ot2ie330bgfooe3g",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "107789450"
+        },
+        {
+          "key": "ServerName",
+          "value": "d286p2iie330bgfooe5g"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d286ot2ie330bgfooe3g"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-04T17:17:26+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-04T17:19:38+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "116921"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "246877"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4867755"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "133214"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s2-g3a"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
 ```
 
 </details>
@@ -19020,5 +19613,8 @@
 - Response body:
 
 ```json
-
+{
+  "success": true,
+  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+}
 ```

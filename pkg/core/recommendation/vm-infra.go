@@ -843,6 +843,12 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	vcpus := server.CPU.Cpus
 	memory := uint32(server.Memory.TotalSize)
 
+	// Limit upper bound of memory if the CSP is NCP (Naver Cloud Platform)
+	// TODO: Remove the upper bound limit of memory for NCP as it is not necessary anymore.
+	if strings.Contains(strings.ToLower(csp), "ncp") {
+		memory = 8
+	}
+
 	// Calculate optimal vCPU and memory ranges by the ratio of memory to vCPU (ref: AWS instance patterns)
 	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpus, memory)
 
