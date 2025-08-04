@@ -400,6 +400,9 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 	log.Debug().Msgf("MCI deleted (nsId: %s, infraId: %s, IdList: %s)", nsId, infraId, idList.IdList)
 
+	// Sleep for a while to ensure previous deletions are completed
+	time.Sleep(3 * time.Second)
+
 	//3. Delete security groups
 	// Collect unique security group IDs from all VMs
 	sgIdMap := make(map[string]struct{})
@@ -417,6 +420,9 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		}
 		log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
 	}
+
+	// Sleep for a while to ensure previous deletions are completed
+	time.Sleep(3 * time.Second)
 
 	// 4. Delete SSH Key
 	// Collect unique SSH Key IDs from all VMs
@@ -436,6 +442,9 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		log.Debug().Msgf("SSH key deleted (nsId: %s, sshKeyId: %s, msg: %s)", nsId, sshKeyId, msg)
 	}
 
+	// Sleep for a while to ensure previous deletions are completed
+	time.Sleep(3 * time.Second)
+
 	// 5. Delete vNets
 	// Collect unique vNet IDs from all VMs
 	vNetIdMap := make(map[string]struct{})
@@ -454,7 +463,7 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 
 	// Sleep for a while to ensure all resources are deleted
-	time.Sleep(15 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	// 6. Delete shared resources
 	idList, err = tbCli.DeleteSharedResources(nsId)

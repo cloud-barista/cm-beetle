@@ -311,17 +311,26 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		var selectedVmSpec cloudmodel.TbSpecInfo
 		exists := false
 		if len(recommendedVmSpecInfoList) > 0 {
-			log.Debug().Msgf("recommendedVmSpecInfoList[0]: %+v", recommendedVmSpecInfoList[0])
-			selectedVmSpec = recommendedVmSpecInfoList[0]
+
+			for _, vmSpec := range recommendedVmSpecInfoList {
+				for _, kv := range vmSpec.Details {
+					if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
+						selectedVmSpec = vmSpec
+						break
+					}
+				}
+			}
+			log.Debug().Msgf("selectedVmSpec: %+v", selectedVmSpec)
 
 			// If the recommended VM spec already exists in the list, select the existing spec
 			for _, vmSpec := range recommendedVmSpecList {
-				if vmSpec.CspSpecName == recommendedVmSpecInfoList[0].CspSpecName {
+				if vmSpec.CspSpecName == selectedVmSpec.CspSpecName {
 					exists = true
 					selectedVmSpec = vmSpec
 					break
 				}
 			}
+
 		}
 		if !exists {
 			recommendedVmSpecList = append(recommendedVmSpecList, selectedVmSpec)
@@ -826,6 +835,14 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 					}
 				],
 				"metric": "regionName"
+			},
+			{
+				"condition": [
+					{
+						"operand": "%s"
+					}
+				],
+				"metric": "architecture"
 			}
 		]
 	},
@@ -845,9 +862,9 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Limit upper bound of memory if the CSP is NCP (Naver Cloud Platform)
 	// TODO: Remove the upper bound limit of memory for NCP as it is not necessary anymore.
-	if strings.Contains(strings.ToLower(csp), "ncp") {
-		memory = 8
-	}
+	// if strings.Contains(strings.ToLower(csp), "ncp") {
+	// 	memory = 8
+	// }
 
 	// Calculate optimal vCPU and memory ranges by the ratio of memory to vCPU (ref: AWS instance patterns)
 	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpus, memory)
@@ -855,6 +872,13 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	// Set provider and region names
 	providerName := csp
 	regionName := region
+
+	// Set architecture (default: "x86_64")
+	architecture := server.CPU.Architecture
+	if architecture == "" || architecture == "amd64" {
+		// If the architecture is not specified, set it to "x86_64" as a default value
+		architecture = "x86_64"
+	}
 
 	// Set OS name and version
 	osNameAndVersion := server.OS.Name + " " + server.OS.Version
@@ -881,6 +905,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		memoryMax,
 		providerName,
 		regionName,
+		architecture,
 	)
 	log.Debug().Msgf("deployment plan to search proper VMs: %s", planToSearchProperVm)
 
@@ -905,6 +930,20 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		err := fmt.Errorf("no VM spec recommended for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d)", vcpus, memory)
 		log.Warn().Msgf(err.Error())
 		return emptyResp, -1, err
+	}
+
+	// * (NCP) Filter VM specs to find KVM-based VMs
+	if strings.Contains(csp, "ncp") {
+		var kvmVmSpecs []tbmodel.TbSpecInfo
+		for _, vmSpec := range vmSpecInfoList {
+			for _, kv := range vmSpec.Details {
+				if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
+					// Found a KVM-based VM spec
+					kvmVmSpecs = append(kvmVmSpecs, vmSpec)
+				}
+			}
+		}
+		vmSpecInfoList = kvmVmSpecs
 	}
 
 	// [Output]
