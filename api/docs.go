@@ -2096,30 +2096,35 @@ const docTemplate = `{
         "cloudmodel.TbFirewallRuleInfo": {
             "type": "object",
             "required": [
-                "direction",
-                "fromPort",
-                "ipprotocol",
-                "toPort"
+                "Direction",
+                "Protocol"
             ],
             "properties": {
-                "cidr": {
-                    "type": "string"
+                "CIDR": {
+                    "type": "string",
+                    "example": "0.0.0.0/0"
                 },
-                "direction": {
-                    "description": "` + "`" + `json:\"direction\"` + "`" + `",
-                    "type": "string"
+                "Direction": {
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
                 },
-                "fromPort": {
-                    "description": "` + "`" + `json:\"fromPort\"` + "`" + `",
-                    "type": "string"
+                "Ports": {
+                    "type": "string",
+                    "example": "1-65535,22,5555"
                 },
-                "ipprotocol": {
-                    "description": "` + "`" + `json:\"ipProtocol\"` + "`" + `",
-                    "type": "string"
-                },
-                "toPort": {
-                    "description": "` + "`" + `json:\"toPort\"` + "`" + `",
-                    "type": "string"
+                "Protocol": {
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP",
+                        "ALL"
+                    ],
+                    "example": "TCP"
                 }
             }
         },
@@ -2469,7 +2474,8 @@ const docTemplate = `{
                 },
                 "cspResourceId": {
                     "description": "CspResourceId is required to register object from CSP (option=register)",
-                    "type": "string"
+                    "type": "string",
+                    "example": "required for option=register only. ex: csp-06eb41e14121c550a"
                 },
                 "description": {
                     "type": "string"
@@ -3738,30 +3744,77 @@ const docTemplate = `{
         "model.TbFirewallRuleInfo": {
             "type": "object",
             "required": [
-                "direction",
-                "fromPort",
-                "ipprotocol",
-                "toPort"
+                "Direction",
+                "Protocol"
             ],
             "properties": {
-                "cidr": {
-                    "type": "string"
+                "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
+                    "type": "string",
+                    "example": "0.0.0.0/0"
                 },
-                "direction": {
-                    "description": "` + "`" + `json:\"direction\"` + "`" + `",
-                    "type": "string"
+                "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
                 },
-                "fromPort": {
-                    "description": "` + "`" + `json:\"fromPort\"` + "`" + `",
-                    "type": "string"
+                "Port": {
+                    "description": "Port is the single port (e.g. \"22\") or port range (e.g. \"1-65535\") for the rule",
+                    "type": "string",
+                    "example": "1-65535"
                 },
-                "ipprotocol": {
-                    "description": "` + "`" + `json:\"ipProtocol\"` + "`" + `",
-                    "type": "string"
+                "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)",
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP",
+                        "ALL"
+                    ],
+                    "example": "TCP"
+                }
+            }
+        },
+        "model.TbFirewallRuleReq": {
+            "type": "object",
+            "required": [
+                "Direction",
+                "Protocol"
+            ],
+            "properties": {
+                "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
+                    "type": "string",
+                    "example": "0.0.0.0/0"
                 },
-                "toPort": {
-                    "description": "` + "`" + `json:\"toPort\"` + "`" + `",
-                    "type": "string"
+                "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
+                },
+                "Ports": {
+                    "description": "Ports is to get multiple ports or port ranges as a string (e.g. \"22,900-1000,2000-3000\")\nThis allows flexibility in specifying single ports or ranges in a comma-separated format.\nThis field is used to handle both single ports and port ranges in a unified way.\nIt can accept a single port (e.g. \"22\"), a range (e.g. \"900-1000\"), or multiple ports/ranges (e.g. \"22,900-1000,2000-3000\").",
+                    "type": "string",
+                    "example": "22,900-1000,2000-3000"
+                },
+                "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.",
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP"
+                    ],
+                    "example": "TCP"
                 }
             }
         },
@@ -3903,7 +3956,8 @@ const docTemplate = `{
                 },
                 "cspResourceId": {
                     "description": "CspResourceId is required to register object from CSP (option=register)",
-                    "type": "string"
+                    "type": "string",
+                    "example": "required for option=register only. ex: csp-06eb41e14121c550a"
                 },
                 "description": {
                     "type": "string"
@@ -3912,7 +3966,7 @@ const docTemplate = `{
                     "description": "validate:\"required\"` + "`" + `",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbFirewallRuleInfo"
+                        "$ref": "#/definitions/model.TbFirewallRuleReq"
                     }
                 },
                 "name": {

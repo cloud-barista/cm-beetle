@@ -312,13 +312,25 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		exists := false
 		if len(recommendedVmSpecInfoList) > 0 {
 
-			for _, vmSpec := range recommendedVmSpecInfoList {
-				for _, kv := range vmSpec.Details {
-					if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
-						selectedVmSpec = vmSpec
+			// If the CSP is NCP, select a VM spec with KVM hypervisor
+			// * Note: NCP uses KVM hypervisor, so we can filter the VM specs by checking the hypervisor type.
+			// * If the CSP is not NCP, select the first VM spec.
+			if strings.Contains(csp, "ncp") {
+				found := false
+				for _, vmSpec := range recommendedVmSpecInfoList {
+					for _, kv := range vmSpec.Details {
+						if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
+							selectedVmSpec = vmSpec
+							found = true
+							break
+						}
+					}
+					if found {
 						break
 					}
 				}
+			} else {
+				selectedVmSpec = recommendedVmSpecInfoList[0]
 			}
 			log.Debug().Msgf("selectedVmSpec: %+v", selectedVmSpec)
 
@@ -846,7 +858,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 			}
 		]
 	},
-	"limit": "5",
+	"limit": "%d",
 	"priority": {
 		"policy": [
 			{
@@ -906,6 +918,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		providerName,
 		regionName,
 		architecture,
+		limit,
 	)
 	log.Debug().Msgf("deployment plan to search proper VMs: %s", planToSearchProperVm)
 
@@ -971,16 +984,18 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 
 	// Request body
 	// falseValue := false
+	trueValue := true
 	searchImageReq := tbmodel.SearchImageRequest{
 		// DetailSearchKeys:       []string{},
 		// IncludeDeprecatedImage: &falseValue,
 		// IsGPUImage:             &falseValue,
 		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		// IsRegisteredByAsset:    &falseValue,
-		OSArchitecture: tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:         server.OS.Name + " " + server.OS.VersionID,
-		ProviderName:   csp,
-		RegionName:     region,
+		IncludeBasicImageOnly: &trueValue,
+		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:                server.OS.Name + " " + server.OS.VersionID,
+		ProviderName:          csp,
+		RegionName:            region,
 	}
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
@@ -1491,11 +1506,10 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	// 	ToPort:     "0",
 	// }
 	ruleToAllowSSHInboundTraffic := cloudmodel.TbFirewallRuleInfo{
-		Direction:  "inbound",
-		IPProtocol: "tcp",
-		CIDR:       "0.0.0.0/0",
-		FromPort:   "22",
-		ToPort:     "22",
+		Direction: "inbound",
+		Protocol:  "tcp",
+		CIDR:      "0.0.0.0/0",
+		Ports:     "22",
 	}
 
 	// [Process] Recommend the security group
@@ -1631,15 +1645,15 @@ func containSg(sgList []cloudmodel.TbSecurityGroupReq, sg cloudmodel.TbSecurityG
 				sgRulesMap := make(map[string]bool)
 				for _, rule := range *sg.FirewallRules {
 					// Create a unique key for each rule
-					key := fmt.Sprintf("%s-%s-%s-%s-%s",
-						rule.Direction, rule.IPProtocol, rule.CIDR, rule.FromPort, rule.ToPort)
+					key := fmt.Sprintf("%s-%s-%s-%s",
+						rule.Direction, rule.Protocol, rule.CIDR, rule.Ports)
 					sgRulesMap[key] = true
 				}
 
 				// Check if all rules in the recommended SG exist in the current SG
 				for _, rule := range *sgItem.FirewallRules {
-					key := fmt.Sprintf("%s-%s-%s-%s-%s",
-						rule.Direction, rule.IPProtocol, rule.CIDR, rule.FromPort, rule.ToPort)
+					key := fmt.Sprintf("%s-%s-%s-%s",
+						rule.Direction, rule.Protocol, rule.CIDR, rule.Ports)
 					if !sgRulesMap[key] {
 						areAllRulesSame = false
 						break
@@ -1724,89 +1738,66 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 				continue
 			}
 
+			// Handle destination ports based on format
+			if rule.DstPorts == "" {
+				// Skip rules without port information for non-ICMP/ALL protocols
+				log.Debug().Msgf("Skipping inbound rule without port information: %+v", rule)
+				continue
+			}
+
 			// * NOTE: Handle destination ports (where traffic is going to)
 			// Special cases based on CB-Spider specification:
-			// - "*" for TCP/UDP means all ports (1-65535)
-			// - ICMP and ALL protocols use port -1
+			// - (protocol: TCP/UDP/ALL) "*" port from the source is converted to "1-65535" for the target ports.
+			// - (protocol: ICMP) "*" ports from the source is omitted in the target ports.
 			// - Comma-separated ports (e.g., 22,23,24)
 			// - Port range with colon notation (e.g., 30000:40000)
 			// - Single port (e.g., 22)
 
-			var dstPorts string
-			// Handle wildcard ports based on protocol
-			if rule.DstPorts == "*" {
-				protocolLower := strings.ToLower(protocol)
-				if protocolLower == "icmp" || protocolLower == "all" {
-					dstPorts = "-1" // Will be handled in the ICMP/ALL case below
-				} else {
+			protocolLower := strings.ToLower(protocol)
+			switch protocolLower {
+			case "icmp":
+				tbRule := cloudmodel.TbFirewallRuleInfo{
+					Direction: rule.Direction,
+					Protocol:  protocol,
+					CIDR:      srcCIDR,
+				}
+				tbRules = append(tbRules, tbRule)
+				log.Debug().Msgf("Created inbound rule for 'ICMP' protocol: %+v", tbRule)
+
+			case "tcp", "udp", "all":
+				var dstPorts string
+				// Handle wildcard ports based on protocol
+				if rule.DstPorts == "*" {
 					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
-				}
-			} else {
-				dstPorts = rule.DstPorts
-			}
-
-			// Handle destination ports based on format
-			if dstPorts == "" {
-				// Skip rules without port information for non-ICMP/ALL protocols
-				log.Debug().Msgf("Skipping inbound rule without port information: %+v", rule)
-				continue
-
-			} else if dstPorts == "-1" {
-				// Special case: ICMP and ALL protocols use port -1 (CB-Spider specification)
-				tbRule := cloudmodel.TbFirewallRuleInfo{
-					Direction:  rule.Direction,
-					IPProtocol: protocol,
-					CIDR:       srcCIDR,
-					FromPort:   "-1",
-					ToPort:     "-1",
-				}
-				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created inbound rule for ICMP/ALL protocol: %+v", tbRule)
-			} else if strings.Contains(dstPorts, ",") {
-				// Handle comma-separated ports (e.g., 22,23,24) - create multiple rules
-				ports := strings.Split(dstPorts, ",")
-
-				for _, port := range ports {
-					portTrimmed := strings.TrimSpace(port)
-					tbRule := cloudmodel.TbFirewallRuleInfo{
-						Direction:  rule.Direction,
-						IPProtocol: protocol,
-						CIDR:       srcCIDR,
-						FromPort:   portTrimmed,
-						ToPort:     portTrimmed,
-					}
-					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created inbound rule for comma-separated port %s: %+v", portTrimmed, tbRule)
-				}
-
-			} else if strings.Contains(dstPorts, ":") {
-				// Handle port range with colon notation (e.g., 30000:40000)
-				portRange := strings.Split(dstPorts, ":")
-				if len(portRange) == 2 {
-					tbRule := cloudmodel.TbFirewallRuleInfo{
-						Direction:  rule.Direction,
-						IPProtocol: protocol,
-						CIDR:       srcCIDR,
-						FromPort:   strings.TrimSpace(portRange[0]),
-						ToPort:     strings.TrimSpace(portRange[1]),
-					}
-					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created inbound rule for port range %s: %+v", dstPorts, tbRule)
 				} else {
-					log.Warn().Msgf("Invalid port range format in rule.DstPorts: %s - skipping rule", dstPorts)
-					continue
+					dstPorts = rule.DstPorts
 				}
-			} else {
-				// Handle single port
+
+				// * Note: CB-Tumblebug will handle comma-separated ports and port ranges.
+				// In here, just convert : to - for port ranges.
+				if strings.Contains(dstPorts, ":") {
+					// Handle port range with colon notation (e.g., 30000:40000)
+					portRange := strings.Split(dstPorts, ":")
+					if len(portRange) == 2 {
+						dstPorts = strings.TrimSpace(portRange[0]) + "-" + strings.TrimSpace(portRange[1])
+					} else {
+						log.Warn().Msgf("Invalid port range format in rule.DstPorts: %s - skipping rule", dstPorts)
+						continue
+					}
+				}
+
 				tbRule := cloudmodel.TbFirewallRuleInfo{
-					Direction:  rule.Direction,
-					IPProtocol: protocol,
-					CIDR:       srcCIDR,
-					FromPort:   dstPorts,
-					ToPort:     dstPorts,
+					Direction: rule.Direction,
+					Protocol:  protocol,
+					CIDR:      srcCIDR,
+					Ports:     dstPorts,
 				}
+
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created inbound rule for single port %s: %+v", dstPorts, tbRule)
+				log.Debug().Msgf("Created inbound rule for '%s' protocol: %+v", protocol, tbRule)
+			default:
+				log.Warn().Msgf("Unsupported protocol '%s' in inbound rule: %+v - skipping rule", protocol, rule)
+				continue
 			}
 
 		case "outbound":
@@ -1828,81 +1819,67 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 				continue
 			}
 
-			// Handle destination ports with wildcard support based on CB-Spider specification
-			var dstPorts string
-			// Handle wildcard ports based on protocol
-			if rule.DstPorts == "*" {
-				protocolLower := strings.ToLower(protocol)
-				if protocolLower == "icmp" || protocolLower == "all" {
-					dstPorts = "-1" // Will be handled in the ICMP/ALL case below
-				} else {
-					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
-				}
-			} else {
-				dstPorts = rule.DstPorts
+			// Handle destination ports based on format
+			if rule.DstPorts == "" {
+				// Skip rules without port information for non-ICMP/ALL protocols
+				log.Debug().Msgf("Skipping inbound rule without port information: %+v", rule)
+				continue
 			}
 
-			// Now handle the ports similar to inbound case
-			if dstPorts == "" {
-				// Skip rules without port information for non-ICMP protocols
-				log.Debug().Msgf("Skipping outbound rule without port information: %+v", rule)
-				continue
+			// * NOTE: Handle destination ports (where traffic is going to)
+			// Special cases based on CB-Spider specification:
+			// - (protocol: TCP/UDP/ALL) "*" port from the source is converted to "1-65535" for the target ports.
+			// - (protocol: ICMP) "*" ports from the source is omitted in the target ports.
+			// - Comma-separated ports (e.g., 22,23,24)
+			// - Port range with colon notation (e.g., 30000:40000)
+			// - Single port (e.g., 22)
 
-			} else if dstPorts == "-1" {
-				// Special case: ICMP and ALL protocols use port -1 (CB-Spider specification)
+			protocolLower := strings.ToLower(protocol)
+			switch protocolLower {
+			case "icmp":
+				// Special case for ICMP protocol - no ports needed, just CIDR
 				tbRule := cloudmodel.TbFirewallRuleInfo{
-					Direction:  rule.Direction,
-					IPProtocol: protocol,
-					CIDR:       dstCIDR,
-					FromPort:   "-1",
-					ToPort:     "-1",
+					Direction: rule.Direction,
+					Protocol:  protocol,
+					CIDR:      dstCIDR,
 				}
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created outbound rule for ICMP/ALL protocol: %+v", tbRule)
-			} else if strings.Contains(dstPorts, ",") {
-				// Handle comma-separated ports - create multiple rules
-				ports := strings.Split(dstPorts, ",")
+				log.Debug().Msgf("Created outbound rule for 'ICMP' protocol: %+v", tbRule)
 
-				for _, port := range ports {
-					portTrimmed := strings.TrimSpace(port)
-					tbRule := cloudmodel.TbFirewallRuleInfo{
-						Direction:  rule.Direction,
-						IPProtocol: protocol,
-						CIDR:       dstCIDR,
-						FromPort:   portTrimmed,
-						ToPort:     portTrimmed,
-					}
-					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created outbound rule for comma-separated port %s: %+v", portTrimmed, tbRule)
-				}
-			} else if strings.Contains(dstPorts, ":") {
-				// Handle port range with colon notation
-				portRange := strings.Split(dstPorts, ":")
-				if len(portRange) == 2 {
-					tbRule := cloudmodel.TbFirewallRuleInfo{
-						Direction:  rule.Direction,
-						IPProtocol: protocol,
-						CIDR:       dstCIDR,
-						FromPort:   strings.TrimSpace(portRange[0]),
-						ToPort:     strings.TrimSpace(portRange[1]),
-					}
-					tbRules = append(tbRules, tbRule)
-					log.Debug().Msgf("Created outbound rule for port range %s: %+v", dstPorts, tbRule)
+			case "tcp", "udp", "all": // Handle destination ports with wildcard support based on CB-Spider specification
+
+				var dstPorts string
+				// Handle wildcard ports based on protocol
+				if rule.DstPorts == "*" {
+					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
 				} else {
-					log.Warn().Msgf("Invalid port range format: %s - skipping rule", dstPorts)
-					continue
+					dstPorts = rule.DstPorts
 				}
-			} else {
-				// Handle single port
+
+				// * Note: CB-Tumblebug will handle comma-separated ports and port ranges.
+				// In here, just convert : to - for port ranges.
+				if strings.Contains(dstPorts, ":") {
+					// Handle port range with colon notation
+					portRange := strings.Split(dstPorts, ":")
+					if len(portRange) == 2 {
+						dstPorts = strings.TrimSpace(portRange[0]) + "-" + strings.TrimSpace(portRange[1])
+					} else {
+						log.Warn().Msgf("Invalid port range format: %s - skipping rule", dstPorts)
+						continue
+					}
+				}
+
 				tbRule := cloudmodel.TbFirewallRuleInfo{
-					Direction:  rule.Direction,
-					IPProtocol: protocol,
-					CIDR:       dstCIDR,
-					FromPort:   dstPorts,
-					ToPort:     dstPorts,
+					Direction: rule.Direction,
+					Protocol:  protocol,
+					CIDR:      dstCIDR,
+					Ports:     dstPorts,
 				}
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created outbound rule for single port %s: %+v", dstPorts, tbRule)
+				log.Debug().Msgf("Created outbound rule for '%s' protocol: %+v", protocol, tbRule)
+			default:
+				log.Warn().Msgf("Unsupported protocol '%s' in outbound rule: %+v - skipping rule", protocol, rule)
+				continue
 			}
 
 		default:

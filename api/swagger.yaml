@@ -267,25 +267,29 @@ definitions:
     type: object
   cloudmodel.TbFirewallRuleInfo:
     properties:
-      cidr:
+      CIDR:
+        example: 0.0.0.0/0
         type: string
-      direction:
-        description: '`json:"direction"`'
+      Direction:
+        enum:
+        - inbound
+        - outbound
+        example: inbound
         type: string
-      fromPort:
-        description: '`json:"fromPort"`'
+      Ports:
+        example: 1-65535,22,5555
         type: string
-      ipprotocol:
-        description: '`json:"ipProtocol"`'
-        type: string
-      toPort:
-        description: '`json:"toPort"`'
+      Protocol:
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        - ALL
+        example: TCP
         type: string
     required:
-    - direction
-    - fromPort
-    - ipprotocol
-    - toPort
+    - Direction
+    - Protocol
     type: object
   cloudmodel.TbImageInfo:
     properties:
@@ -535,6 +539,7 @@ definitions:
         type: string
       cspResourceId:
         description: CspResourceId is required to register object from CSP (option=register)
+        example: 'required for option=register only. ex: csp-06eb41e14121c550a'
         type: string
       description:
         type: string
@@ -1449,25 +1454,68 @@ definitions:
     type: object
   model.TbFirewallRuleInfo:
     properties:
-      cidr:
+      CIDR:
+        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+        example: 0.0.0.0/0
         type: string
-      direction:
-        description: '`json:"direction"`'
+      Direction:
+        description: Direction is the direction of the rule (inbound or outbound)
+        enum:
+        - inbound
+        - outbound
+        example: inbound
         type: string
-      fromPort:
-        description: '`json:"fromPort"`'
+      Port:
+        description: Port is the single port (e.g. "22") or port range (e.g. "1-65535")
+          for the rule
+        example: 1-65535
         type: string
-      ipprotocol:
-        description: '`json:"ipProtocol"`'
-        type: string
-      toPort:
-        description: '`json:"toPort"`'
+      Protocol:
+        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        - ALL
+        example: TCP
         type: string
     required:
-    - direction
-    - fromPort
-    - ipprotocol
-    - toPort
+    - Direction
+    - Protocol
+    type: object
+  model.TbFirewallRuleReq:
+    properties:
+      CIDR:
+        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+        example: 0.0.0.0/0
+        type: string
+      Direction:
+        description: Direction is the direction of the rule (inbound or outbound)
+        enum:
+        - inbound
+        - outbound
+        example: inbound
+        type: string
+      Ports:
+        description: |-
+          Ports is to get multiple ports or port ranges as a string (e.g. "22,900-1000,2000-3000")
+          This allows flexibility in specifying single ports or ranges in a comma-separated format.
+          This field is used to handle both single ports and port ranges in a unified way.
+          It can accept a single port (e.g. "22"), a range (e.g. "900-1000"), or multiple ports/ranges (e.g. "22,900-1000,2000-3000").
+        example: 22,900-1000,2000-3000
+        type: string
+      Protocol:
+        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP).
+          Don't use ALL here.
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        example: TCP
+        type: string
+    required:
+    - Direction
+    - Protocol
     type: object
   model.TbMciDynamicReq:
     properties:
@@ -1569,13 +1617,14 @@ definitions:
         type: string
       cspResourceId:
         description: CspResourceId is required to register object from CSP (option=register)
+        example: 'required for option=register only. ex: csp-06eb41e14121c550a'
         type: string
       description:
         type: string
       firewallRules:
         description: validate:"required"`
         items:
-          $ref: '#/definitions/model.TbFirewallRuleInfo'
+          $ref: '#/definitions/model.TbFirewallRuleReq'
         type: array
       name:
         type: string

@@ -55,7 +55,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.1
+    image: cloudbaristaorg/cb-tumblebug:0.11.2
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
@@ -223,7 +223,7 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.11.0
+    image: cloudbaristaorg/cb-mapui:0.11.3
     container_name: cb-mapui
     # build:
     #   context: ../cb-mapui
@@ -241,6 +241,28 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # TB-MCP (Tumblebug Model Context Protocol Server)
+  # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
+  cb-tumblebug-mcp-server:
+    build:
+      context: ./cb-tumblebug/interface/mcp
+      dockerfile: Dockerfile
+    container_name: cb-tumblebug-mcp-server
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - "8000:8000"
+    environment:
+      # TB-MCP Configuration
+      - TUMBLEBUG_API_BASE_URL=http://cb-tumblebug:1323/tumblebug
+      - TUMBLEBUG_USERNAME=default
+      - TUMBLEBUG_PASSWORD=default
+      - PYTHONUNBUFFERED=1
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=8000
+
 
   # # mc-terrarium (PoC): resource extentions such as VPN for CB-Tumblebug by using OpenTofu
   # mc-terrarium:
