@@ -947,6 +947,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// * (NCP) Filter VM specs to find KVM-based VMs
 	if strings.Contains(csp, "ncp") {
+		log.Debug().Msg("Filtering VM specs to find KVM-based VMs for NCP")
 		var kvmVmSpecs []tbmodel.TbSpecInfo
 		for _, vmSpec := range vmSpecInfoList {
 			for _, kv := range vmSpec.Details {
@@ -1066,16 +1067,18 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 	// Request body
 	// falseValue := false
+	trueValue := true
 	searchImageReq := tbmodel.SearchImageRequest{
 		// DetailSearchKeys:       []string{},
 		// IncludeDeprecatedImage: &falseValue,
 		// IsGPUImage:             &falseValue,
 		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		// IsRegisteredByAsset:    &falseValue,
-		OSArchitecture: tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:         server.OS.Name, // + " " + server.OS.VersionID,
-		ProviderName:   csp,
-		RegionName:     region,
+		IncludeBasicImageOnly: &trueValue,
+		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:                server.OS.Name + " " + server.OS.VersionID,
+		ProviderName:          csp,
+		RegionName:            region,
 	}
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
@@ -1170,16 +1173,19 @@ func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerPr
 	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
 
 	// Request body
-	falseValue := false
+	// falseValue := false
+	trueValue := true
 	reqSearchImage := tbmodel.SearchImageRequest{
-		DetailSearchKeys:       []string{},
-		IncludeDeprecatedImage: &falseValue,
-		IsGPUImage:             &falseValue,
-		IsKubernetesImage:      &falseValue,
-		IsRegisteredByAsset:    &falseValue,
-		OSType:                 server.OS.Name,
-		ProviderName:           csp,
-		RegionName:             region,
+		// DetailSearchKeys:       []string{},
+		// IncludeDeprecatedImage: &falseValue,
+		// IsGPUImage:             &falseValue,
+		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
+		// IsRegisteredByAsset:    &falseValue,
+		IncludeBasicImageOnly: &trueValue,
+		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:                server.OS.Name + " " + server.OS.VersionID,
+		ProviderName:          csp,
+		RegionName:            region,
 	}
 
 	log.Debug().Msgf("reqSearchImage: %+v", reqSearchImage)

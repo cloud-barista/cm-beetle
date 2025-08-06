@@ -101,6 +101,7 @@ const DefaultSystemLabel string = "Managed by CM-Beetle"
 
 // CreateVMInfraWithDefaults Create a VM infrastructure with defaults for the computing infra migration
 func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicReq) (cloudmodel.VmInfraInfo, error) {
+	log.Info().Msg("Creating VM infrastructure with defaults")
 
 	// Initialize Tumblebug client
 	tbApiConfig := tbclient.ApiConfig{
@@ -129,11 +130,14 @@ func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicR
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
+	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, convertedVmInfraInfo.TbMciInfo.Name)
+
 	return convertedVmInfraInfo, nil
 }
 
 // CreateVMInfra creates a VM infrastructure for the computing infra migration
 func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra) (cloudmodel.VmInfraInfo, error) {
+	log.Info().Msg("Creating VM infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
 
@@ -280,11 +284,13 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	temp.TbMciInfo = mciInfoConverted
 
 	// return emptyRet, fmt.Errorf("CreateVMInfra is not implemented yet")
+	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, mciInfoConverted.Name)
 	return temp, nil
 }
 
 // List all migrated VM infrastructures
 func ListAllVMInfraInfo(nsId string) (cloudmodel.MciInfoList, error) {
+	log.Info().Msg("Listing all migrated VM infrastructures")
 
 	var emptyRet cloudmodel.MciInfoList
 	// var mciInfoList cloudmodel.MciInfoList
@@ -310,11 +316,13 @@ func ListAllVMInfraInfo(nsId string) (cloudmodel.MciInfoList, error) {
 		return emptyRet, err
 	}
 
+	log.Info().Msgf("Retrieved all migrated VM infrastructures (nsId: %s, count: %d) successfully", nsId, len(convertedVmInfraInfoList.Mci))
 	return convertedVmInfraInfoList, nil
 }
 
 // Get all migrated VM infrastructures
 func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
+	log.Info().Msg("Listing all migrated VM infrastructure IDs")
 
 	var emptyRet cloudmodel.IdList
 	var idList cloudmodel.IdList
@@ -345,11 +353,13 @@ func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 	// Return the result
 	idList.IdList = append(idList.IdList, mciIdList.IdList...)
 
+	log.Info().Msgf("Retrieved all migrated VM infrastructure IDs (nsId: %s, count: %d) successfully", nsId, len(idList.IdList))
 	return idList, nil
 }
 
 // Get the migrated VM infrastructure
 func GetVMInfra(nsId, infraId string) (cloudmodel.TbMciInfo, error) {
+	log.Info().Msgf("Retrieving the migrated VM infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Initialize Tumblebug client
 	tbApiConfig := tbclient.ApiConfig{
@@ -371,11 +381,13 @@ func GetVMInfra(nsId, infraId string) (cloudmodel.TbMciInfo, error) {
 		return cloudmodel.TbMciInfo{}, err
 	}
 
+	log.Info().Msgf("Retrieved the migrated VM infrastructure (nsId: %s, infraId: %s) successfully", nsId, infraId)
 	return convertedVmInfaInfo, nil
 }
 
 // Delete the migrated VM infrastructure
 func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
+	log.Info().Msg("Deleting the migrated VM infrastructure")
 
 	// Initialize Tumblebug client
 	apiConfig := tbclient.ApiConfig{
@@ -401,6 +413,7 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	log.Debug().Msgf("MCI deleted (nsId: %s, infraId: %s, IdList: %s)", nsId, infraId, idList.IdList)
 
 	// Sleep for a while to ensure previous deletions are completed
+	log.Debug().Msgf("Sleeping for 3 seconds to ensure MCI is deleted (nsId: %s)", nsId)
 	time.Sleep(3 * time.Second)
 
 	//3. Delete security groups
@@ -411,17 +424,21 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 			sgIdMap[sgId] = struct{}{}
 		}
 	}
+	log.Debug().Msgf("Deleting security groups (nsId: %s, SGs: %v)", nsId, sgIdMap)
+
 	// Delete all security groups
 	for sgId := range sgIdMap {
 		msg, err := tbCli.DeleteSecurityGroup(nsId, sgId)
 		if err != nil {
-			log.Warn().Err(err).Msgf("failed to delete security group (nsId: %s, sgId: %s)", nsId, sgId)
+			log.Error().Err(err).Msgf("failed to delete security group (nsId: %s, sgId: %s)", nsId, sgId)
 			// Continue deleting other resources even if this fails
+		} else {
+			log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
 		}
-		log.Debug().Msgf("Security group deleted (nsId: %s, sgId: %s, msg: %s)", nsId, sgId, msg)
 	}
 
 	// Sleep for a while to ensure previous deletions are completed
+	log.Debug().Msgf("Sleeping for 3 seconds to ensure security groups are deleted (nsId: %s)", nsId)
 	time.Sleep(3 * time.Second)
 
 	// 4. Delete SSH Key
@@ -430,19 +447,23 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	for _, vm := range mciInfo.Vm {
 		sshKeyIdMap[vm.SshKeyId] = struct{}{}
 	}
+	log.Debug().Msgf("Deleting SSH keys (nsId: %s, sshKeys: %v)", nsId, sshKeyIdMap)
+
 	// Delete all SSH Key
 	for sshKeyId := range sshKeyIdMap {
 		// Delete SSH Key
 		log.Debug().Msgf("Deleting SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
 		msg, err := tbCli.DeleteSshKey(nsId, sshKeyId)
 		if err != nil {
-			log.Warn().Err(err).Msgf("failed to delete SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
+			log.Error().Err(err).Msgf("failed to delete SSH key (nsId: %s, sshKeyId: %s)", nsId, sshKeyId)
 			// Continue deleting other resources even if this fails
+		} else {
+			log.Debug().Msgf("SSH key deleted (nsId: %s, sshKeyId: %s, msg: %s)", nsId, sshKeyId, msg)
 		}
-		log.Debug().Msgf("SSH key deleted (nsId: %s, sshKeyId: %s, msg: %s)", nsId, sshKeyId, msg)
 	}
 
 	// Sleep for a while to ensure previous deletions are completed
+	log.Debug().Msgf("Sleeping for 3 seconds to ensure SSH keys are deleted (nsId: %s)", nsId)
 	time.Sleep(3 * time.Second)
 
 	// 5. Delete vNets
@@ -451,19 +472,23 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	for _, vm := range mciInfo.Vm {
 		vNetIdMap[vm.VNetId] = struct{}{}
 	}
+	log.Debug().Msgf("Deleting VNets (nsId: %s, vNets: %v)", nsId, vNetIdMap)
+
 	// Delete all vNet
 	for vNetId := range vNetIdMap {
 		log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, action: %s)", nsId, vNetId, "withsubnets")
 		msg, err := tbCli.DeleteVNet(nsId, vNetId, "withsubnets")
 		if err != nil {
-			log.Warn().Err(err).Msgf("failed to delete VNet (nsId: %s, vNetId: %s)", nsId, vNetId)
+			log.Error().Err(err).Msgf("failed to delete VNet (nsId: %s, vNetId: %s)", nsId, vNetId)
 			// Continue deleting other resources even if this fails
+		} else {
+			log.Debug().Msgf("VNet deleted (nsId: %s, vNetId: %s, msg:%s)", nsId, vNetId, msg)
 		}
-		log.Debug().Msgf("VNet deleted (nsId: %s, vNetId: %s, msg:%s)", nsId, vNetId, msg)
 	}
 
 	// Sleep for a while to ensure all resources are deleted
-	time.Sleep(10 * time.Second)
+	log.Debug().Msgf("Sleeping for 3 seconds to ensure VNets are deleted (nsId: %s)", nsId)
+	time.Sleep(3 * time.Second)
 
 	// 6. Delete shared resources
 	idList, err = tbCli.DeleteSharedResources(nsId)
@@ -481,6 +506,7 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		Message: fmt.Sprintf("Successfully deleted the infrastructure and resources (nsId: %s, infraId: %s)", nsId, infraId),
 	}
 
+	log.Info().Msgf("Successfully deleted the infrastructure and resources (nsId: %s, infraId: %s)", nsId, infraId)
 	return ret, nil
 }
 
