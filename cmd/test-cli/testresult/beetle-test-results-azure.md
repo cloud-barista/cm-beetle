@@ -1,81 +1,74 @@
-# Beetle v0.4.0: Integration and Testing with Tumblebug, Honeybee and model
+# CM-Beetle test results for AZURE
 
 > [!NOTE]
-> This article is being written for the Beetle v0.4.0 release.
+> This document presents comprehensive test results for CM-Beetle integration with AZURE cloud infrastructure.
 
 ## Environment and scenario
 
-### Envrionment
+### Environment
 
-> [!NOTE]
-> To be updated
-
-- Beetle v0.3.2
-- cm-model v0.0.10 (It may be applied to Damselfly v0.3.0)
-- Honeybee v0.3.1
-- Tumblebug v0.11.2 (Spider v0.11.1, CB-MapUI v0.11.3)
+- CM-Beetle: v0.4.0 (b0d8551)
+- cm-model: v0.0.10
+- CB-Tumblebug: v0.11.2
+- CB-Spider: v0.11.1
+- CB-MapUI: v0.11.3
+- Target CSP: AZURE
+- Target Region: koreacentral
+- CM-Beetle URL: http://localhost:8056
+- Namespace: mig01
+- Test CLI: Custom automated testing tool
+- Test Date: August 11, 2025
+- Test Time: 21:09:39 KST
+- Test Execution: 2025-08-11 21:09:39 KST
 
 ### Scenario
 
-1. Get a source group list via Honeybee
-1. Get the refined source computing infra info via Honeybee
-
-- Refined source computing infra info = on-premise model (a.k.a computing infra source model)
-- **Used 2 servers info** as dicussed (i.e., web, nfs)
-
 1. Recommend a target model for computing infra via Beetle
 1. Migrate the computing infra as defined in the target model via Beetle
+1. List all MCIs via Beetle
+1. List MCI IDs via Beetle
+1. Get specific MCI details via Beetle
 1. Delete the migrated computing infra via Beetle
 
 > [!NOTE]
 > Some long request/response bodies are in the collapsible section for better readability.
 
-## Honeybee section
+## Test result for AZURE
 
-> [!Note]
-> The Honeybee has been providing the always-running servers. The server has been used.
+### Test Results Summary
 
-### Get a list of source group
+| Test | Endpoint                                          | Status      | Duration  | Details |
+| ---- | ------------------------------------------------- | ----------- | --------- | ------- |
+| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 207ms     | Success |
+| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 2m51.502s | Success |
+| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 61ms      | Success |
+| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 58ms      | Success |
+| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 1.647s    | Success |
+| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m48.303s | Success |
 
-> [!NOTE]
-> To be updated
+**Overall Result**: 6/6 tests passed ✅
 
-- API: `GET /source_group`
-- Request body: None
-- Response body:
+**Total Duration**: 4m57.857338148s
 
-```json
+_Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) using CM-Beetle automated test CLI_
 
-```
+### Recommend a target model for computing infra
 
-### Get the refined computing infra info
+> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
 
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group/{sgId}/infra/refined`
-- sgId: `db652288-047b-480b-ac86-3ef7ed57f68e`
-- Request body: None
-- Response body:
+- API: `POST /beetle/recommendation/mci`
+- Request body:
 
 <details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-
-```
-
-</details>
-
-> [!NOTE]
-> Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
-
-<details>
-  <summary><ins>Click to see the onpremise model</ins></summary>
+  <summary> <ins>Click to see the request body </ins> </summary>
 
 ```json
 {
-  "onpremiseInfraModel": {
+  "desiredCspAndRegionPair": {
+    "csp": "azure",
+    "region": "koreacentral"
+  },
+  "OnpremiseInfraModel": {
     "network": {
       "ipv4Networks": {
         "defaultGateways": [
@@ -103,9 +96,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 32,
+          "available": 15,
+          "used": 17
         },
         "rootDisk": {
           "label": "unknown",
@@ -1640,13 +1633,968 @@
 
 </details>
 
-## Beetle section
+- Response body:
 
-Testing was performed by `test-cli`.
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
 
-- ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
-- ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md) (Failed to delete vNet/subnet)
-- ❌ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md) (Deadline excceeded when deleting MCI)
-- TBD
+```json
+{
+  "status": "",
+  "description": "This is a list of recommended target infrastructures. Please review and use them.",
+  "targetVmInfra": {
+    "name": "mmci01",
+    "installMonAgent": "",
+    "label": null,
+    "systemLabel": "",
+    "description": "a recommended multi-cloud infrastructure",
+    "vm": [
+      {
+        "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "subGroupSize": "",
+        "label": null,
+        "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "connectionName": "azure-koreacentral",
+        "specId": "azure+koreacentral+standard_a4m_v2",
+        "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": ["mig-sg-01"],
+        "sshKeyId": "mig-sshkey-01",
+        "dataDiskIds": null
+      }
+    ],
+    "postCommand": {
+      "userName": "",
+      "command": null
+    }
+  },
+  "targetVNet": {
+    "name": "mig-vnet-01",
+    "connectionName": "azure-koreacentral",
+    "cidrBlock": "192.168.96.0/19",
+    "subnetInfoList": [
+      {
+        "name": "mig-subnet-01",
+        "ipv4_CIDR": "192.168.110.0/24",
+        "description": "a recommended subnet for migration"
+      }
+    ],
+    "description": "a recommended vNet for migration"
+  },
+  "targetSshKey": {
+    "name": "mig-sshkey-01",
+    "connectionName": "azure-koreacentral",
+    "description": "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded",
+    "cspResourceId": "",
+    "fingerprint": "",
+    "username": "",
+    "verifiedUsername": "",
+    "publicKey": "",
+    "privateKey": ""
+  },
+  "targetVmSpecList": [
+    {
+      "id": "azure+koreacentral+standard_a4m_v2",
+      "cspSpecName": "Standard_A4m_v2",
+      "name": "azure+koreacentral+standard_a4m_v2",
+      "namespace": "system",
+      "connectionName": "azure-koreacentral",
+      "providerName": "azure",
+      "regionName": "koreacentral",
+      "infraType": "vm",
+      "architecture": "x86_64",
+      "vCPU": 4,
+      "memoryGiB": 31.25,
+      "diskSizeGB": 42,
+      "costPerHour": 0.27,
+      "orderInFilteredResult": 1,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": 1.0000001,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": "42",
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "MaxDataDiskCount",
+          "value": "8"
+        },
+        {
+          "key": "MemoryInMB",
+          "value": "32768"
+        },
+        {
+          "key": "Name",
+          "value": "Standard_A4m_v2"
+        },
+        {
+          "key": "NumberOfCores",
+          "value": "4"
+        },
+        {
+          "key": "OSDiskSizeInMB",
+          "value": "1047552"
+        },
+        {
+          "key": "ResourceDiskSizeInMB",
+          "value": "40960"
+        }
+      ]
+    }
+  ],
+  "targetVmOsImageList": [
+    {
+      "namespace": "system",
+      "providerName": "azure",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "regionList": ["common"],
+      "id": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "name": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "connectionName": "azure-australiacentral",
+      "infraType": "vm",
+      "fetchedTime": "2025.08.11 09:52:30 Mon",
+      "isKubernetesImage": true,
+      "osType": "Ubuntu 22.04",
+      "osArchitecture": "x86_64",
+      "osPlatform": "Linux/UNIX",
+      "osDistribution": "0001-com-ubuntu-server-jammy:22_04-lts",
+      "osDiskType": "NA",
+      "osDiskSizeGB": -1,
+      "imageStatus": "Available",
+      "details": [
+        {
+          "key": "Location",
+          "value": "AustraliaCentral"
+        },
+        {
+          "key": "Name",
+          "value": "22.04.202505210"
+        },
+        {
+          "key": "ID",
+          "value": "/Subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/Providers/Microsoft.Compute/Locations/AustraliaCentral/Publishers/Canonical/ArtifactTypes/VMImage/Offers/0001-com-ubuntu-server-jammy/Skus/22_04-lts/Versions/22.04.202505210"
+        },
+        {
+          "key": "Properties",
+          "value": "{architecture:x64,automaticOSUpgradeProperties:{automaticOSUpgradeSupported:false},dataDiskImages:[],disallowed:{vmDiskType:Unmanaged},features:[{name:IsAcceleratedNetworkSupported,value:True},{name:DiskControllerTypes,value:SCSI, NVMe},{name:IsHibernateSupported,value:True}],hyperVGeneration:V1,imageDeprecationStatus:{imageState:Active},osDiskImage:{operatingSystem:Linux}}"
+        }
+      ],
+      "systemLabel": "from-assets"
+    }
+  ],
+  "targetSecurityGroupList": [
+    {
+      "name": "mig-sg-01",
+      "connectionName": "azure-koreacentral",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "firewallRules": [
+        {
+          "Ports": "10022",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8081,8082",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "53",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "80",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8086",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8888",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9201",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9202",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9203",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9204",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9206",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9001",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "18080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "13000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9101",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9106",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9105",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9102",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9103",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "5672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "4369",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15675",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "25672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "16567",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    }
+  ]
+}
+```
+
+</details>
+
+### Migrate the computing infra as defined in the target model
+
+- API: `POST /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: **same as the response from the previous step**
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2ctrjq9i92do98209s0",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "Running",
+  "targetAction": "Create",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2ctrjq9i92do98209s0"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2ctrjq9i92do98209t0",
+      "cspResourceName": "d2ctrjq9i92do98209t0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Korea Central",
+        "latitude": 37.5665,
+        "longitude": 126.978
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:12:05",
+      "label": {
+        "createdBy": "d2ctrjq9i92do98209t0",
+        "keypair": "d2ctrci9i92do98209r0",
+        "publicip": "d2ctrjq9i92do98209t0-50022-PublicIP",
+        "sys.connectionName": "azure-koreacentral",
+        "sys.createdTime": "2025-08-11 12:12:05",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+        "sys.cspResourceName": "d2ctrjq9i92do98209t0",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2ctrjq9i92do98209t0"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "koreacentral",
+        "Zone": "1"
+      },
+      "publicIP": "40.82.129.220",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.4",
+      "privateDNS": "",
+      "rootDiskType": "StandardHDD",
+      "rootDiskSize": "30",
+      "rootDiskName": "",
+      "connectionName": "azure-koreacentral",
+      "connectionConfig": {
+        "configName": "azure-koreacentral",
+        "providerName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "credentialName": "azure",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "azure-koreacentral",
+        "regionZoneInfo": {
+          "assignedRegion": "koreacentral",
+          "assignedZone": "1"
+        },
+        "regionDetail": {
+          "regionId": "koreacentral",
+          "regionName": "koreacentral",
+          "description": "Korea Central",
+          "location": {
+            "display": "Korea Central",
+            "latitude": 37.5665,
+            "longitude": 126.978
+          },
+          "zones": ["1", "2", "3"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "azure+koreacentral+standard_a4m_v2",
+      "cspSpecName": "Standard_A4m_v2",
+      "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0/subnets/d2ctr2q9i92do98209qg",
+      "networkInterface": "d2ctrjq9i92do98209t0-81764-VNic",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2ctrci9i92do98209r0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "Location",
+          "value": "koreacentral"
+        },
+        {
+          "key": "Properties",
+          "value": "{hardwareProfile:{vmSize:Standard_A4m_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2ctrjq9i92do98209t0-81764-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2ctrjq9i92do98209t0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNckwdiq0/xWGz1N842nL8wJcuyzfHrW0UgLJOnfFtq3CvTdKem+vA26vcTjFd9XANXNUaxkSFPbNIsiqCCuVnziJvcWW2L9rvyDy4EO4KvQSXAE5t9DcDtd5PXOqW0XZ9JLFvdUUOQUfb7zOXJR+JE9vUo6pOpSZlOJH0bRMAu2iB6tDf8HAnzlK9FQkNeIkietl/oScN1W99DzmyHL10IO5RKbR5v7RoQhSkrMt6rJA5KEcepVbiN8UTSbkbu+uyHa0VpfUv6hgP5hO7CGZbWRzwZ/kY5tza8zYLSh3YjPIgtSLPPLMI0sXkdlkz2SDAcRRZgeYKp/32QnA/IEAMKZANtpziH/SzI9ATST6WlA+v/rtmdtGdMB/bP1lyHTTcv15T7FygHwlUXCTuS0k0BJ2wvlBolVo+Plv4TGtZUgQWJYfAUGbCqCXUvG1ktTZGXYl9t8SbAe1Rqkrqh78p0BDBlPXTKvM35tnYglVxkFazBKNfcAlCYz3QaN/OCaKTTxrSEZy0FQZWQNoGujvxUJjRc86pXT8m0yoj4MBUCo8c6PDGmKEGV2evHvw23rYQEGIol5yo0ZL9VXjKLxQ5arbrU7JSOo4v1xHQ9cMlF2j2KAMPTH4Qwy9nitn+gX9QS3TQWEZLNGOXbhkfR1KaEJVB8mROD29sfp+niYoYHw==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,storageAccountType:Standard_LRS},name:d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,osType:Linux}},timeCreated:2025-08-11T12:11:13.3256727Z,vmId:ac7f9f2b-5748-48be-aa69-e688c4492e5a}"
+        },
+        {
+          "key": "Tags",
+          "value": "{createdBy:d2ctrjq9i92do98209t0,keypair:d2ctrci9i92do98209r0,publicip:d2ctrjq9i92do98209t0-50022-PublicIP}"
+        },
+        {
+          "key": "Zones",
+          "value": "1"
+        },
+        {
+          "key": "Etag",
+          "value": "\\1\\"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0"
+        },
+        {
+          "key": "Name",
+          "value": "d2ctrjq9i92do98209t0"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.Compute/virtualMachines"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>
+
+### Get a list of MCIs
+
+- API: `GET /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "mci": [
+    {
+      "resourceType": "mci",
+      "id": "mmci01",
+      "uid": "d2ctrjq9i92do98209s0",
+      "name": "mmci01",
+      "status": "Running:1 (R:1/1)",
+      "statusCount": {
+        "countTotal": 1,
+        "countCreating": 0,
+        "countRunning": 1,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": null,
+      "systemLabel": "",
+      "systemMessage": "",
+      "description": "a recommended multi-cloud infrastructure",
+      "vm": [
+        {
+          "resourceType": "mci",
+          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "uid": "d2ctrjq9i92do98209s0",
+          "name": "mmci01",
+          "subGroupId": "",
+          "location": {
+            "display": "",
+            "latitude": 0,
+            "longitude": 0
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": null,
+          "description": "a recommended multi-cloud infrastructure",
+          "region": {
+            "Region": "",
+            "Zone": ""
+          },
+          "publicIP": "",
+          "sshPort": "",
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": "",
+          "rootDiskName": "",
+          "connectionName": "",
+          "connectionConfig": {
+            "configName": "",
+            "providerName": "",
+            "driverName": "",
+            "credentialName": "",
+            "credentialHolder": "",
+            "regionZoneInfoName": "",
+            "regionZoneInfo": {
+              "assignedRegion": "",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "",
+              "regionName": "",
+              "description": "",
+              "location": {
+                "display": "",
+                "latitude": 0,
+                "longitude": 0
+              },
+              "zones": null
+            },
+            "regionRepresentative": false,
+            "verified": false
+          },
+          "specId": "",
+          "cspSpecName": "",
+          "imageId": "",
+          "cspImageName": "",
+          "vNetId": "",
+          "cspVNetId": "",
+          "subnetId": "",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": null,
+          "dataDiskIds": null,
+          "sshKeyId": "",
+          "cspSshKeyId": ""
+        }
+      ],
+      "newVmList": null,
+      "postCommand": {
+        "userName": "",
+        "command": null
+      },
+      "postCommandResult": {
+        "results": null
+      }
+    }
+  ]
+}
+```
+
+### Get a list of MCI IDs
+
+- API: `GET /beetle/migration/ns/mig01/mci?option=id`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "idList": ["mmci01"]
+}
+```
+
+### Get a specific MCI
+
+- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2ctrjq9i92do98209s0",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2ctrjq9i92do98209s0"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2ctrjq9i92do98209t0",
+      "cspResourceName": "d2ctrjq9i92do98209t0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Korea Central",
+        "latitude": 37.5665,
+        "longitude": 126.978
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:12:05",
+      "label": {
+        "createdBy": "d2ctrjq9i92do98209t0",
+        "keypair": "d2ctrci9i92do98209r0",
+        "publicip": "d2ctrjq9i92do98209t0-50022-PublicIP",
+        "sys.connectionName": "azure-koreacentral",
+        "sys.createdTime": "2025-08-11 12:12:05",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+        "sys.cspResourceName": "d2ctrjq9i92do98209t0",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2ctrjq9i92do98209t0"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "koreacentral",
+        "Zone": "1"
+      },
+      "publicIP": "40.82.129.220",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.4",
+      "privateDNS": "",
+      "rootDiskType": "StandardHDD",
+      "rootDiskSize": "30",
+      "rootDiskName": "",
+      "connectionName": "azure-koreacentral",
+      "connectionConfig": {
+        "configName": "azure-koreacentral",
+        "providerName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "credentialName": "azure",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "azure-koreacentral",
+        "regionZoneInfo": {
+          "assignedRegion": "koreacentral",
+          "assignedZone": "1"
+        },
+        "regionDetail": {
+          "regionId": "koreacentral",
+          "regionName": "koreacentral",
+          "description": "Korea Central",
+          "location": {
+            "display": "Korea Central",
+            "latitude": 37.5665,
+            "longitude": 126.978
+          },
+          "zones": ["1", "2", "3"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "azure+koreacentral+standard_a4m_v2",
+      "cspSpecName": "Standard_A4m_v2",
+      "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0/subnets/d2ctr2q9i92do98209qg",
+      "networkInterface": "d2ctrjq9i92do98209t0-81764-VNic",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2ctrci9i92do98209r0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "Location",
+          "value": "koreacentral"
+        },
+        {
+          "key": "Properties",
+          "value": "{hardwareProfile:{vmSize:Standard_A4m_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2ctrjq9i92do98209t0-81764-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2ctrjq9i92do98209t0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNckwdiq0/xWGz1N842nL8wJcuyzfHrW0UgLJOnfFtq3CvTdKem+vA26vcTjFd9XANXNUaxkSFPbNIsiqCCuVnziJvcWW2L9rvyDy4EO4KvQSXAE5t9DcDtd5PXOqW0XZ9JLFvdUUOQUfb7zOXJR+JE9vUo6pOpSZlOJH0bRMAu2iB6tDf8HAnzlK9FQkNeIkietl/oScN1W99DzmyHL10IO5RKbR5v7RoQhSkrMt6rJA5KEcepVbiN8UTSbkbu+uyHa0VpfUv6hgP5hO7CGZbWRzwZ/kY5tza8zYLSh3YjPIgtSLPPLMI0sXkdlkz2SDAcRRZgeYKp/32QnA/IEAMKZANtpziH/SzI9ATST6WlA+v/rtmdtGdMB/bP1lyHTTcv15T7FygHwlUXCTuS0k0BJ2wvlBolVo+Plv4TGtZUgQWJYfAUGbCqCXUvG1ktTZGXYl9t8SbAe1Rqkrqh78p0BDBlPXTKvM35tnYglVxkFazBKNfcAlCYz3QaN/OCaKTTxrSEZy0FQZWQNoGujvxUJjRc86pXT8m0yoj4MBUCo8c6PDGmKEGV2evHvw23rYQEGIol5yo0ZL9VXjKLxQ5arbrU7JSOo4v1xHQ9cMlF2j2KAMPTH4Qwy9nitn+gX9QS3TQWEZLNGOXbhkfR1KaEJVB8mROD29sfp+niYoYHw==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,storageAccountType:Standard_LRS},name:d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,osType:Linux}},timeCreated:2025-08-11T12:11:13.3256727Z,vmId:ac7f9f2b-5748-48be-aa69-e688c4492e5a}"
+        },
+        {
+          "key": "Tags",
+          "value": "{createdBy:d2ctrjq9i92do98209t0,keypair:d2ctrci9i92do98209r0,publicip:d2ctrjq9i92do98209t0-50022-PublicIP}"
+        },
+        {
+          "key": "Zones",
+          "value": "1"
+        },
+        {
+          "key": "Etag",
+          "value": "\\1\\"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0"
+        },
+        {
+          "key": "Name",
+          "value": "d2ctrjq9i92do98209t0"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.Compute/virtualMachines"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>
+
+### Delete the migrated computing infra
+
+- API: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "success": true,
+  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+}
+```

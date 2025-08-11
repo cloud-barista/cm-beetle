@@ -78,7 +78,21 @@ clean: ## Remove previous build
 	@rm -f coverage.out
 	@rm -f api/docs.go api/swagger.*
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
+	@cd cmd/test-cli && $(GO) clean
 	@echo "Cleaned!"
+
+test-cli-build: ## Build the test CLI binary
+	@echo "Building test CLI binary..."
+	@$(GO) build -o cmd/test-cli/test-cli ./cmd/test-cli/main.go
+	@echo "Test CLI build finished!"
+
+test-cli: test-cli-build ## Run the test CLI for all CSP-Region pairs
+	@echo "Running test CLI for all CSP-Region pairs..."
+	@cd cmd/test-cli && ./test-cli -config testdata/config-multi-csp-and-region-pair.json
+
+test-cli-help: ## Show test CLI help
+	@echo "Test CLI Help:"
+	@cd cmd/test-cli && ./test-cli -h || true
 
 compose: ## Build and up services by docker compose
 	@echo "Building and starting services by docker compose..."
