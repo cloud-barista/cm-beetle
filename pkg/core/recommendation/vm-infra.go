@@ -1,7 +1,6 @@
 package recommendation
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"net"
@@ -20,9 +19,7 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/config"
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
-	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -789,107 +786,78 @@ func toNetworkAddresses(cidrs []string) []string {
 // RecommendVmSpecs recommends appropriate VM specs for the given server
 func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProperty, limit int) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
 
+	// Constants
+	const (
+		defaultLimit        = 5
+		defaultArchitecture = "x86_64"
+	)
+
 	var emptyResp = []cloudmodel.TbSpecInfo{}
-	// var vmSpecList = []cloudmodel.TbSpecInfo{}
 
+	// Validate and set default limit
 	if limit <= 0 {
-		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
-		log.Warn().Msgf(err.Error())
-		limit = 5
+		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultLimit)
+		limit = defaultLimit
 	}
 
-	// Set a deployment plan to recommand virtual machines
-	// [Note]
-	// * ">=" means greater than or equal to the operand
-	// * "<=" means less than or equal to the operand
-	// Ref: https://github.com/cloud-barista/cb-tumblebug/discussions/1234
-	planDocstring := `{
-	"filter": {
-		"policy": [
-			{
-				"condition": [
-					{
-						"operand": "%d",
-						"operator": ">="
-					},
-					{
-						"operand": "%d",
-						"operator": "<="
-					}
-				],
-				"metric": "vCPU"
-			},
-			{
-				"condition": [
-					{
-						"operand": "%d",
-						"operator": ">="
-					},
-					{
-						"operand": "%d",
-						"operator": "<="
-					}
-				],
-				"metric": "memoryGiB"
-			},
-			{
-				"condition": [
-					{
-						"operand": "%s"
-					}
-				],
-				"metric": "providerName"
-			},
-			{
-				"condition": [
-					{
-						"operand": "%s"
-					}
-				],
-				"metric": "regionName"
-			},
-			{
-				"condition": [
-					{
-						"operand": "%s"
-					}
-				],
-				"metric": "architecture"
-			}
-		]
-	},
-	"limit": "%d",
-	"priority": {
-		"policy": [
-			{
-				"metric": "cost"
-			}
-		]
-	}
-}`
+	// Deployment plan template for VM spec recommendation
+	// * Note:
+	// * ">=": greater than or equal to
+	// * "<=": less than or equal to
+	// * The plan is designed to recommend VM specs based on vCPU and memory ranges.
+	// Reference: https://github.com/cloud-barista/cb-tumblebug/discussions/1234
+	const planTemplate = `{
+		"filter": {
+			"policy": [
+				{
+					"condition": [
+						{"operand": "%d", "operator": ">="},
+						{"operand": "%d", "operator": "<="}
+					],
+					"metric": "vCPU"
+				},
+				{
+					"condition": [
+						{"operand": "%d", "operator": ">="},
+						{"operand": "%d", "operator": "<="}
+					],
+					"metric": "memoryGiB"
+				},
+				{
+					"condition": [{"operand": "%s"}],
+					"metric": "providerName"
+				},
+				{
+					"condition": [{"operand": "%s"}],
+					"metric": "regionName"
+				},
+				{
+					"condition": [{"operand": "%s"}],
+					"metric": "architecture"
+				}
+			]
+		},
+		"limit": "%d",
+		"priority": {
+			"policy": [{"metric": "cost"}]
+		}
+	}`
 
-	// Get server info from source computing infra info
+	// Extract server specifications from source computing envrionment
 	vcpus := server.CPU.Cpus
 	memory := uint32(server.Memory.TotalSize)
 
-	// Limit upper bound of memory if the CSP is NCP (Naver Cloud Platform)
-	// TODO: Remove the upper bound limit of memory for NCP as it is not necessary anymore.
-	// if strings.Contains(strings.ToLower(csp), "ncp") {
-	// 	memory = 8
-	// }
-
-	// Calculate optimal vCPU and memory ranges by the ratio of memory to vCPU (ref: AWS instance patterns)
+	// Calculate optimal vCPU and memory ranges based on AWS, GCP, and NCP instance patterns
 	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpus, memory)
 
 	// Set provider and region names
-	providerName := csp
-	regionName := region
+	providerName := strings.ToLower(csp)
+	regionName := strings.ToLower(region)
 
 	// Set architecture (default: "x86_64")
 	architecture := server.CPU.Architecture
 	if architecture == "" || architecture == "amd64" {
-		// If the architecture is not specified, set it to "x86_64" as a default value
-		architecture = "x86_64"
+		architecture = defaultArchitecture
 	}
 
 	// Set OS name and version
@@ -897,82 +865,119 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	osNameWithVersion := strings.ToLower(osNameAndVersion)
 
 	log.Debug().
+		Str("machineId", server.MachineId).
 		Uint32("originalVcpus", vcpus).
 		Uint32("originalMemory", memory).
-		Float64("ratio", float64(memory)/float64(vcpus)).
-		Uint32("vcpuLowerLimit", vcpusMin).
-		Uint32("vcpuUpperLimit", vcpusMax).
-		Uint32("memoryLowerLimit (GiB)", memoryMin).
-		Uint32("memoryUpperLimit (GiB)", memoryMax).
-		Str("providerName", providerName).
-		Str("regionName", regionName).
+		Float64("memoryVcpuRatio", float64(memory)/float64(vcpus)).
+		Uint32("vcpuRange", vcpusMax-vcpusMin).
+		Uint32("memoryRange", memoryMax-memoryMin).
+		Str("provider", providerName).
+		Str("region", regionName).
+		Str("architecture", architecture).
 		Str("osNameWithVersion", osNameWithVersion).
-		Msg("Calculated optimal ranges for AWS instance patterns")
+		Msgf("Calculating VM spec recommendations for machine: %s", server.MachineId)
 
-	// Set a deployment plan to search VMs having appropriate specs
-	planToSearchProperVm := fmt.Sprintf(planDocstring,
-		vcpusMin,
-		vcpusMax,
-		memoryMin,
-		memoryMax,
-		providerName,
-		regionName,
-		architecture,
+	// Create deployment plan with calculated parameters
+	deploymentPlan := fmt.Sprintf(planTemplate,
+		vcpusMin, vcpusMax,
+		memoryMin, memoryMax,
+		providerName, regionName, architecture,
 		limit,
 	)
-	log.Debug().Msgf("deployment plan to search proper VMs: %s", planToSearchProperVm)
+	log.Debug().Msgf("Deployment plan for machine %s: %s", server.MachineId, deploymentPlan)
 
-	// Call Tumblebug API to get recommended VM specs
-	apiConfig := tbclient.ApiConfig{
+	// Initialize Tumblebug API client
+	tbCli := tbclient.NewClient(tbclient.ApiConfig{
 		RestUrl:  config.Tumblebug.RestUrl,
 		Username: config.Tumblebug.API.Username,
 		Password: config.Tumblebug.API.Password,
-	}
-	tbCli := tbclient.NewClient(apiConfig)
-	vmSpecInfoList, err := tbCli.MciRecommendVm(planToSearchProperVm)
+	})
+
+	// Call Tumblebug API to get recommended VM specs
+	vmSpecInfoList, err := tbCli.MciRecommendVm(deploymentPlan)
 	if err != nil {
-		log.Error().Err(err).Msg("")
-		return emptyResp, -1, err
+		log.Error().Err(err).
+			Str("machineId", server.MachineId).
+			Str("provider", providerName).
+			Str("region", region).
+			Msg("Failed to get VM spec recommendations from Tumblebug")
+		return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", server.MachineId, err)
 	}
 
 	numOfVmSpecs := len(vmSpecInfoList)
-	log.Debug().Msgf("the number of recommended VM specs: %d (for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d))", numOfVmSpecs, vcpus, memory)
-	log.Trace().Msgf("recommendedVmList for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d): %+v", vcpus, memory, vmSpecInfoList)
-
 	if numOfVmSpecs == 0 {
-		err := fmt.Errorf("no VM spec recommended for the inserted PM/VM with spec (vcpus: %d, memory (GiB): %d)", vcpus, memory)
-		log.Warn().Msgf(err.Error())
+		err := fmt.Errorf("no VM specs recommended for machine %s (vcpus: %d, memory: %d GiB)",
+			server.MachineId, vcpus, memory)
+		log.Warn().Err(err).
+			Str("machineId", server.MachineId).
+			Uint32("vcpus", vcpus).
+			Uint32("memory", memory).
+			Msg("No VM specifications found")
 		return emptyResp, -1, err
 	}
 
-	// * (NCP) Filter VM specs to find KVM-based VMs
-	if strings.Contains(csp, "ncp") {
-		log.Debug().Msg("Filtering VM specs to find KVM-based VMs for NCP")
-		var kvmVmSpecs []tbmodel.TbSpecInfo
+	log.Info().
+		Str("machineId", server.MachineId).
+		Int("specsFound", numOfVmSpecs).
+		Uint32("vcpus", vcpus).
+		Uint32("memory", memory).
+		Msgf("Found %d VM spec recommendations for machine: %s", numOfVmSpecs, server.MachineId)
+
+	// NCP-specific filtering for KVM hypervisor
+	if strings.Contains(strings.ToLower(csp), "ncp") {
+		log.Debug().
+			Str("machineId", server.MachineId).
+			Msg("Filtering VM specs for KVM hypervisor (NCP)")
+
+		kvmVmSpecs := make([]tbmodel.TbSpecInfo, 0, len(vmSpecInfoList))
 		for _, vmSpec := range vmSpecInfoList {
-			for _, kv := range vmSpec.Details {
-				if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
-					// Found a KVM-based VM spec
+			for _, detail := range vmSpec.Details {
+				if detail.Key == "HypervisorType" && strings.Contains(strings.ToLower(detail.Value), "kvm") {
 					kvmVmSpecs = append(kvmVmSpecs, vmSpec)
+					break
 				}
 			}
 		}
-		vmSpecInfoList = kvmVmSpecs
+
+		if len(kvmVmSpecs) > 0 {
+			vmSpecInfoList = kvmVmSpecs
+			log.Debug().
+				Str("machineId", server.MachineId).
+				Int("kvmSpecs", len(kvmVmSpecs)).
+				Msg("Filtered to KVM-compatible specs for NCP")
+		} else {
+			log.Warn().
+				Str("machineId", server.MachineId).
+				Msg("No KVM-compatible specs found for NCP, using all available specs")
+		}
 	}
 
 	// [Output]
-	// Limit the number of VM specs
-	if limit < numOfVmSpecs {
+	// Apply limit to results
+	finalSpecCount := len(vmSpecInfoList)
+	if limit < finalSpecCount {
 		vmSpecInfoList = vmSpecInfoList[:limit]
+		finalSpecCount = limit
 	}
-	log.Debug().Msgf("the number of recommended VM specs: %d", len(vmSpecInfoList))
 
-	// Convert []tbmodel.TbSpecInfo to []cloudmodel.TbSpecInfo with validation
+	log.Debug().
+		Str("machineId", server.MachineId).
+		Int("finalSpecCount", finalSpecCount).
+		Msg("Finalized VM spec recommendations")
+
+	// Convert model types with validation
 	convertedVmSpecList, err := modelconv.ConvertWithValidation[[]tbmodel.TbSpecInfo, []cloudmodel.TbSpecInfo](vmSpecInfoList)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to convert VM spec list")
-		return emptyResp, -1, err
+		log.Error().Err(err).
+			Str("machineId", server.MachineId).
+			Msg("Failed to convert VM spec list model")
+		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list for machine %s: %w", server.MachineId, err)
 	}
+
+	log.Info().
+		Str("machineId", server.MachineId).
+		Int("recommendedSpecs", len(convertedVmSpecList)).
+		Msgf("Successfully recommended %d VM specifications for machine: %s", len(convertedVmSpecList), server.MachineId)
 
 	return convertedVmSpecList, numOfVmSpecs, nil
 }
@@ -980,53 +985,11 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
 func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.TbImageInfo, error) {
 
-	var emptyRes = cloudmodel.TbImageInfo{}
-	// var vmOsImage = cloudmodel.TbImageInfo{}
+	var emptyRes cloudmodel.TbImageInfo
 
-	// Request body
-	// falseValue := false
-	trueValue := true
-	searchImageReq := tbmodel.SearchImageRequest{
-		// DetailSearchKeys:       []string{},
-		// IncludeDeprecatedImage: &falseValue,
-		// IsGPUImage:             &falseValue,
-		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
-		// IsRegisteredByAsset:    &falseValue,
-		IncludeBasicImageOnly: &trueValue,
-		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:                server.OS.Name + " " + server.OS.VersionID,
-		ProviderName:          csp,
-		RegionName:            region,
-	}
-	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
-
-	// Call Tumblebug API to search VM OS images
-	apiConfig := tbclient.ApiConfig{
-		RestUrl:  config.Tumblebug.RestUrl,
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-	}
-	tbCli := tbclient.NewClient(apiConfig)
-	nsId := "system" // default
-
-	resSearchImage, err := tbCli.SearchVmOsImage(nsId, searchImageReq)
+	imageList, err := RecommendVmOsImages(csp, region, server, 5)
 	if err != nil {
-		log.Error().Err(err).Msg("")
-		return emptyRes, err
-	}
-
-	// for pretty logging
-	prettyImages, err := json.MarshalIndent(resSearchImage.ImageList, "", "  ")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal response")
-		return emptyRes, err
-	}
-	log.Debug().Msgf("len(resSearchImage.ImageList): %d", len(resSearchImage.ImageList))
-	log.Debug().Msgf("resSearchImage.ImageList: %s", prettyImages)
-
-	if resSearchImage.ImageCount == 0 || len(resSearchImage.ImageList) == 0 {
-		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
-		log.Warn().Msgf(err.Error())
+		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return emptyRes, err
 	}
 
@@ -1041,23 +1004,46 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
 	delimiters2 := delimiters1
 
-	// Convert model from '[]tbmodel.TbImageInfo' to '[]cloudmodel.TbImageInfo'
-	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.TbImageInfo, []cloudmodel.TbImageInfo](resSearchImage.ImageList)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to convert VM OS image list")
-		return emptyRes, err
-	}
-
+	// Find the best VM OS image
 	bestVmOsImage := FindBestVmOsImage(keywords, delimiters1, imageList, delimiters2)
+
+	log.Debug().Msgf("Best VM OS image found: %+v", bestVmOsImage)
 
 	return bestVmOsImage, nil
 }
 
-// RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerProperty, limit int) ([]VmOsImageInfoWithScore, error) {
+// RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
+func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerProperty) (string, error) {
 
-	var emptyRes = []VmOsImageInfoWithScore{}
-	var vmOsImageInfoAndScoreList = []VmOsImageInfoWithScore{}
+	imageList, err := RecommendVmOsImages(csp, region, server, 5)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to recommend VM OS images")
+		return "", err
+	}
+
+	keywords := fmt.Sprintf("%s %s %s %s",
+		server.OS.Name,
+		server.OS.Version,
+		server.CPU.Architecture,
+		server.RootDisk.Type)
+	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
+
+	// Select VM OS image via LevenshteinDistance-based text similarity
+	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
+	delimiters2 := delimiters1
+
+	vmOsImageId := FindBestVmOsImageId(keywords, delimiters1, imageList, delimiters2)
+
+	log.Debug().Msgf("Best VM OS image ID found: %s", vmOsImageId)
+
+	return vmOsImageId, nil
+}
+
+// RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
+func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerProperty, limit int) ([]cloudmodel.TbImageInfo, error) {
+
+	var emptyRes = []cloudmodel.TbImageInfo{}
+	var vmOsImageInfoList = []cloudmodel.TbImageInfo{}
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
@@ -1097,18 +1083,32 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		return emptyRes, err
 	}
 
-	// for pretty logging
-	prettyImages, err := json.MarshalIndent(resSearchImage.ImageList, "", "  ")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal response")
-		return emptyRes, err
+	// Debug logging up to 3 images to avoid excessive output
+	if len(resSearchImage.ImageList) > 3 {
+		for i := range 3 {
+			log.Debug().Msgf("[Response from Tumblebug] resSearchImage.ImageList[%d]: %+v", i, resSearchImage.ImageList[i])
+		}
+	} else {
+		for i := range resSearchImage.ImageList {
+			log.Debug().Msgf("[Response from Tumblebug] resSearchImage.ImageList[%d]: %+v", i, resSearchImage.ImageList[i])
+		}
 	}
-	log.Debug().Msgf("len(resSearchImage.ImageList): %d", len(resSearchImage.ImageList))
-	log.Debug().Msgf("resSearchImage.ImageList: %s", prettyImages)
 
-	if resSearchImage.ImageCount == 0 || len(resSearchImage.ImageList) == 0 {
-		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
-		log.Warn().Msgf(err.Error())
+	// Filter VM OS images to support stability
+	var filteredImages []tbmodel.TbImageInfo
+	for _, img := range resSearchImage.ImageList {
+		if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+			continue
+		}
+		// Add more filters as needed
+
+		filteredImages = append(filteredImages, img)
+	}
+
+	// Convert model from '[]tbmodel.TbImageInfo' to '[]cloudmodel.TbImageInfo'
+	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.TbImageInfo, []cloudmodel.TbImageInfo](filteredImages)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert VM OS image list")
 		return emptyRes, err
 	}
 
@@ -1124,16 +1124,9 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	delimiters1 := []string{" ", "-", ",", "(", ")", "[", "]", "/"} // "_"
 	delimiters2 := delimiters1
 
-	// Convert model from '[]tbmodel.TbImageInfo' to '[]cloudmodel.TbImageInfo'
-	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.TbImageInfo, []cloudmodel.TbImageInfo](resSearchImage.ImageList)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to convert VM OS image list")
-		return emptyRes, err
-	}
+	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, imageList, delimiters2)
 
-	vmOsImageInfoAndScoreList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, imageList, delimiters2)
-
-	count := len(vmOsImageInfoAndScoreList)
+	count := len(vmOsImageInfoList)
 	if count == 0 {
 		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
 		log.Warn().Msgf(err.Error())
@@ -1143,99 +1136,15 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	// [Output]
 	// Limit the number of VM specs
 	if limit < count {
-		vmOsImageInfoAndScoreList = vmOsImageInfoAndScoreList[:limit]
-	}
-	log.Debug().Msgf("the number of VM OS images: %d", len(vmOsImageInfoAndScoreList))
-	for _, vmOsImageInfo := range vmOsImageInfoAndScoreList {
-		log.Debug().Msgf("(score: %f) OSDistribution: %s / OSArchitecture: %s / DiskType: %s",
-			vmOsImageInfo.SimilarityScore, vmOsImageInfo.VmOsImageInfo.OSDistribution, vmOsImageInfo.VmOsImageInfo.OSArchitecture, vmOsImageInfo.VmOsImageInfo.OSDiskType)
+		log.Debug().Msgf("Limiting the number of recommended VM OS images to %d", limit)
+		// * Note: If the number of recommended VM OS images is less than the limit, it will not be truncated.
+		// * This is to ensure that the user can see all available images.
+		vmOsImageInfoList = vmOsImageInfoList[:limit]
 	}
 
-	return vmOsImageInfoAndScoreList, nil
-}
+	log.Debug().Msgf("Found %d VM OS images for the given server: %s", len(vmOsImageInfoList), server.MachineId)
 
-// RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerProperty) (string, error) {
-
-	var emptyRes string = ""
-	var vmOsImageId string = ""
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// Set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-	method := "POST"
-	nsId := "system" // default
-	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
-
-	// Request body
-	// falseValue := false
-	trueValue := true
-	reqSearchImage := tbmodel.SearchImageRequest{
-		// DetailSearchKeys:       []string{},
-		// IncludeDeprecatedImage: &falseValue,
-		// IsGPUImage:             &falseValue,
-		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
-		// IsRegisteredByAsset:    &falseValue,
-		IncludeBasicImageOnly: &trueValue,
-		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:                server.OS.Name + " " + server.OS.VersionID,
-		ProviderName:          csp,
-		RegionName:            region,
-	}
-
-	log.Debug().Msgf("reqSearchImage: %+v", reqSearchImage)
-
-	// Response body
-	resSearchImage := new(tbmodel.SearchImageResponse)
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqSearchImage),
-		&reqSearchImage,
-		resSearchImage,
-		common.VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Error().Err(err).Msg("")
-		return emptyRes, err
-	}
-
-	// for pretty logging
-	prettyImages, err := json.MarshalIndent(resSearchImage.ImageList, "", "  ")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal response")
-		return emptyRes, err
-	}
-	log.Debug().Msgf("resSearchImage.ImageList: %s", prettyImages)
-
-	if resSearchImage.ImageCount == 0 || len(resSearchImage.ImageList) == 0 {
-		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
-		log.Warn().Msgf(err.Error())
-		return emptyRes, err
-	}
-
-	keywords := fmt.Sprintf("%s %s %s %s",
-		server.OS.Name,
-		server.OS.Version,
-		server.CPU.Architecture,
-		server.RootDisk.Type)
-	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
-
-	// Select VM OS image via LevenshteinDistance-based text similarity
-	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
-	delimiters2 := delimiters1
-	vmOsImageId = FindBestVmOsImageId(keywords, delimiters1, resSearchImage.ImageList, delimiters2)
-
-	return vmOsImageId, nil
+	return vmOsImageInfoList, nil
 }
 
 func transposeMatrix[T any](matrix [][]T) [][]T {
@@ -1337,67 +1246,93 @@ func findNextPrimeNumber(n uint32) uint32 {
 
 // calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
 func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	ratio := float64(memory) / float64(vcpus)
+	// Constants for instance type thresholds and ratios
+	const (
+		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
+		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
+		minMemoryBound                 = 2   // Minimum memory requirement
+		minVcpuBound                   = 1   // Minimum vCPU requirement
+		maxVcpuForMemoryIntensive      = 10  // Maximum vCPU for memory intensive
+	)
+
+	memoryToVcpuRatio := float64(memory) / float64(vcpus)
 
 	switch {
-	case ratio <= 3.0: // Compute Intensive (1:2)
-		return calculateComputeIntensiveRange(vcpus, memory)
-	case ratio >= 7.0: // Memory Intensive (1:8)
-		return calculateMemoryIntensiveRange(vcpus, memory)
+	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
+		return calculateComputeIntensiveRange(vcpus, memory, minMemoryBound)
+	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
+		return calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive)
 	default: // General Purpose (1:4)
-		return calculateGeneralPurposeRange(vcpus, memory)
+		return calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound)
 	}
 }
 
-func calculateComputeIntensiveRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
-	vcpusMin := findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax := findNextPrimeNumber(vcpus + 2)
+func calculateComputeIntensiveRange(vcpus, memory, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	const (
+		vcpuRangeBuffer  = 2 // Buffer for vCPU range expansion
+		memoryMultiplier = 4 // Memory multiplier for max calculation
+	)
 
-	// Set a wide search range for memory if Compute Intensive
-	memoryMin := uint32(2)
-	memoryMax := vcpusMax * 4
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
-}
+	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
+	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer)
 
-func calculateMemoryIntensiveRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
-	memoryMin := findPreviousPrimeNumberOrOne(memory)
-	memoryMax := findNextPrimeNumber(memory + 4)
-
-	// Set a wide search range for vCPU if Memory Intensive
-	vcpusMin := uint32(1)
-	vcpusMax := memoryMax / 8
-	if vcpusMax < 10 {
-		vcpusMax = 10
-	}
+	// Set a wide search range for memory for compute-intensive workloads
+	memoryMin = minMemoryBound
+	memoryMax = vcpusMax * memoryMultiplier
 
 	return vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
-func calculateGeneralPurposeRange(vcpus, memory uint32) (uint32, uint32, uint32, uint32) {
+func calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	const (
+		memoryRangeBuffer = 4 // Buffer for memory range expansion
+		memoryToCpuRatio  = 8 // Standard memory to CPU ratio for calculation
+	)
+
+	memoryMin = findPreviousPrimeNumberOrOne(memory)
+	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer)
+
+	// Set a wide search range for vCPU for memory-intensive workloads
+	vcpusMin = minVcpuBound
+	vcpusMax = memoryMax / memoryToCpuRatio
+	if vcpusMax < maxVcpuForMemoryIntensive {
+		vcpusMax = maxVcpuForMemoryIntensive
+	}
+
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
+}
+
+func calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	const (
+		vcpuRangeBuffer     = 2 // Buffer for vCPU range expansion
+		memoryRangeBuffer   = 4 // Buffer for memory range expansion
+		minMemoryToCpuRatio = 2 // Minimum memory to CPU ratio (1:2)
+		maxCpuToMemoryRatio = 2 // Maximum CPU to memory ratio (2:1)
+	)
+
 	// For General Purpose, provide balanced flexibility for both vCPU and memory
 	// Allow moderate range expansion while maintaining 1:4 ratio as the center point
+	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
+	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer) // Slightly wider vCPU range
 
-	vcpusMin := findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax := findNextPrimeNumber(vcpus + 2) // Slightly wider vCPU range
+	memoryMin = findPreviousPrimeNumberOrOne(memory)
+	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer) // Moderate memory range
 
-	memoryMin := findPreviousPrimeNumberOrOne(memory)
-	memoryMax := findNextPrimeNumber(memory + 4) // Moderate memory range
-
-	// Ensure minimum bounds
-	if vcpusMin < 1 {
-		vcpusMin = 1
+	// Apply minimum bounds
+	if vcpusMin < minVcpuBound {
+		vcpusMin = minVcpuBound
 	}
-	if memoryMin < 2 {
-		memoryMin = 2
+	if memoryMin < minMemoryBound {
+		memoryMin = minMemoryBound
 	}
 
 	// Ensure reasonable relationship between vCPU and memory
 	// Allow 1:2 to 1:8 ratio range for General Purpose workloads
-	if memoryMax < vcpusMin*2 {
-		memoryMax = vcpusMin * 2
+	if memoryMax < vcpusMin*minMemoryToCpuRatio {
+		memoryMax = vcpusMin * minMemoryToCpuRatio
 	}
-	if vcpusMax > memoryMax/2 {
-		vcpusMax = memoryMax / 2
+	if vcpusMax > memoryMax/maxCpuToMemoryRatio {
+		vcpusMax = memoryMax / maxCpuToMemoryRatio
 		if vcpusMax < vcpusMin {
 			vcpusMax = vcpusMin
 		}
@@ -1432,9 +1367,10 @@ type VmOsImageInfoWithScore struct {
 }
 
 // FindAndSortVmOsImageInfoListBySimilarity finds VM OS images that match the keywords and sorts them by similarity score
-func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) []VmOsImageInfoWithScore {
+func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) []cloudmodel.TbImageInfo {
 
-	var imageInfoList []VmOsImageInfoWithScore
+	var imageInfoListForSorting []VmOsImageInfoWithScore
+	var imageInfoList []cloudmodel.TbImageInfo
 
 	for _, image := range vmImages {
 
@@ -1450,25 +1386,26 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
 		}
-		imageInfoList = append(imageInfoList, imageInfo)
+		imageInfoListForSorting = append(imageInfoListForSorting, imageInfo)
 
 	}
 
 	// Sort the imageInfoList by highestScore in descending order
-	sort.Slice(imageInfoList, func(i, j int) bool {
-		return imageInfoList[i].SimilarityScore > imageInfoList[j].SimilarityScore
+	sort.Slice(imageInfoListForSorting, func(i, j int) bool {
+		return imageInfoListForSorting[i].SimilarityScore > imageInfoListForSorting[j].SimilarityScore
 	})
 
-	// // Log the sorted images
-	// for _, imageInfo := range imageInfoList {
-	// 	log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", imageInfo.VmOsImageInfo.OSDistribution, imageInfo.SimilarityScore, imageInfo.VmOsImageInfo.Description)
-	// }
+	// List the sorted images
+	for _, imageInfo := range imageInfoListForSorting {
+		log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", imageInfo.VmOsImageInfo.Name, imageInfo.SimilarityScore, imageInfo.VmOsImageInfo.Description)
+		imageInfoList = append(imageInfoList, imageInfo.VmOsImageInfo)
+	}
 
 	return imageInfoList
 }
 
 // FindBestVmOsImageId finds the best matching image based on the similarity scores
-func FindBestVmOsImageId(keywords string, kwDelimiters []string, vmImages []tbmodel.TbImageInfo, imgDelimiters []string) string {
+func FindBestVmOsImageId(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) string {
 
 	var bestVmOsImageID string
 	var highestScore float64 = 0.0

@@ -1591,7 +1591,7 @@ const docTemplate = `{
         },
         "/recommendation/resources/vmSpecs": {
             "post": {
-                "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.\n- If ` + "`" + `targetMachineId` + "`" + ` is provided, only that specific machine will be processed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1636,8 +1636,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Machine ID (e.g., TBD, xxxxxx)",
-                        "name": "machineID",
+                        "description": "Target Machine ID to focus recommendation on (optional)",
+                        "name": "targetMachineId",
                         "in": "query"
                     },
                     {

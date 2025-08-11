@@ -3347,6 +3347,7 @@ paths:
         - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 
         - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+        - If `targetMachineId` is provided, only that specific machine will be processed.
       operationId: RecommendVmSpecs
       parameters:
       - description: Specify the your infrastructure to be migrated
@@ -3371,9 +3372,9 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: Machine ID (e.g., TBD, xxxxxx)
+      - description: Target Machine ID to focus recommendation on (optional)
         in: query
-        name: machineID
+        name: targetMachineId
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
