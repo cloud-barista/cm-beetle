@@ -21,6 +21,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -203,13 +204,14 @@ type RecommendVmSpecResponse struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description - If `targetMachineId` is provided, only that specific machine will be processed.
 // @Tags [Recommendation] Resources for VM infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param machineID query string false "Machine ID (e.g., TBD, xxxxxx)"
+// @Param targetMachineId query string false "Target Machine ID to focus recommendation on (optional)"
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendVmSpecResponse "The result of recommended VM specifications"
 // @Failure 404 {object} common.SimpleMsg
@@ -227,7 +229,7 @@ func RecommendVmSpecs(c echo.Context) error {
 
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
-	// machineID := c.QueryParam("machineID")
+	targetMachineId := c.QueryParam("targetMachineId") // Add targetMachineId parameter
 
 	// Validate the input
 	if desiredProvider == "" {
@@ -246,25 +248,36 @@ func RecommendVmSpecs(c echo.Context) error {
 	// 	return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
 	// }
 
-	// // Validate by finding the machine ID in the request body
-	// found := false
-	// machine := inframodel.ServerProperty{}
-	// for _, server := range req.OnpremiseInfraModel.Servers {
-	// 	if server.MachineID == machineID {
-	// 		found = true
-	// 		machine = server
-	// 		break
-	// 	}
-	// }
-	// if !found {
-	// 	err := fmt.Errorf("invalid request: 'machineID' not found in the request body")
-	// 	log.Warn().Msg(err.Error())
-	// 	return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
-	// }
+	// Handle targetMachineId filtering if provided
+	var serversToProcess []onpremmodel.ServerProperty
+	if targetMachineId != "" {
+		// Validate by finding the machine ID in the request body
+		targetMachine := onpremmodel.ServerProperty{}
+		found := false
+		for _, server := range req.OnpremiseInfraModel.Servers {
+			if server.MachineId == targetMachineId {
+				found = true
+				targetMachine = server
+				break
+			}
+		}
+		if !found {
+			err := fmt.Errorf("invalid request: targetMachineId '%s' not found in the request body", targetMachineId)
+			log.Warn().Msg(err.Error())
+			return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		}
+		// Process only the target machine
+		serversToProcess = []onpremmodel.ServerProperty{targetMachine}
+		log.Info().Msgf("Processing VM specs for target machine: %s", targetMachineId)
+	} else {
+		// Process all servers in the infrastructure
+		serversToProcess = req.OnpremiseInfraModel.Servers
+		log.Info().Msgf("Processing VM specs for all servers (%d total)", len(serversToProcess))
+	}
 
 	// [Process]
 	recommendedVmSpecList := cloudmodel.RecommendedVmSpecList{}
-	for i, server := range req.OnpremiseInfraModel.Servers {
+	for i, server := range serversToProcess {
 
 		// Recommend VM specs for the server
 		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, server, 5)
@@ -340,16 +353,31 @@ func RecommendVmSpecs(c echo.Context) error {
 	switch countFailed {
 	case 0:
 		recommendedVmSpecList.Status = string(recommendation.FullyRecommended)
-		recommendedVmSpecList.Description = "Successfully recommended VM specs for all servers in the source infrastructure"
+		if targetMachineId != "" {
+			recommendedVmSpecList.Description = fmt.Sprintf("Successfully recommended VM specs for target machine '%s'", targetMachineId)
+		} else {
+			recommendedVmSpecList.Description = "Successfully recommended VM specs for all servers in the source infrastructure"
+		}
 	case recommendedVmSpecList.Count:
 		recommendedVmSpecList.Status = string(recommendation.NothingRecommended)
-		recommendedVmSpecList.Description = "Unable to recommend any VM specs for the servers in the source infrastructure"
+		if targetMachineId != "" {
+			recommendedVmSpecList.Description = fmt.Sprintf("Unable to recommend VM specs for target machine '%s'", targetMachineId)
+		} else {
+			recommendedVmSpecList.Description = "Unable to recommend any VM specs for the servers in the source infrastructure"
+		}
 	default:
 		recommendedVmSpecList.Status = string(recommendation.PartiallyRecommended)
-		recommendedVmSpecList.Description = fmt.Sprintf(
-			"Partially recommended VM specs: successful for %d servers, failed for %d servers",
-			recommendedVmSpecList.Count-countFailed, countFailed,
-		)
+		if targetMachineId != "" {
+			recommendedVmSpecList.Description = fmt.Sprintf(
+				"Partially recommended VM specs for target machine '%s': successful for %d specs, failed for %d specs",
+				targetMachineId, recommendedVmSpecList.Count-countFailed, countFailed,
+			)
+		} else {
+			recommendedVmSpecList.Description = fmt.Sprintf(
+				"Partially recommended VM specs: successful for %d servers, failed for %d servers",
+				recommendedVmSpecList.Count-countFailed, countFailed,
+			)
+		}
 	}
 
 	log.Debug().Msgf("recommendedVmSpecList: %+v", recommendedVmSpecList)
@@ -439,8 +467,7 @@ func RecommendVmOsImages(c echo.Context) error {
 		}
 
 		// Recursively check duplicates and append the recommended OS images
-		for _, vmOsImageAndScore := range vmOsImageList {
-			vmOsImage := vmOsImageAndScore.VmOsImageInfo
+		for _, vmOsImage := range vmOsImageList {
 			// Check if the OS image already exists in the list
 			exists := false
 			idx := -1
