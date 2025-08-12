@@ -137,7 +137,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 		recommendedVmInfo := []RecommendedVmInfo{}
 		for i, vmSpec := range vmSpecList {
 			recommendedVmInfo = append(recommendedVmInfo, RecommendedVmInfo{
-				vmSpecId:    vmSpec.Id,
+				vmSpecId:    vmSpec.CspSpecName,
 				vmOsImageId: vmOsImageIdList[i],
 			})
 		}
@@ -282,16 +282,17 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		/*
 		 * Recommend VM specs, OS images, and security groups
 		 */
-		// Lookup the appropriate VM specs for the server
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, server, max)
-		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
-		}
 
 		// Lookup the appropriate VM OS images for the server
 		recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, server)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
+		}
+
+		// Lookup the appropriate VM specs for the server
+		recommendedVmSpecInfoList, _, err := RecommendVmSpecsForImage(csp, region, server, max, recommendedVmOsImageInfo)
+		if err != nil {
+			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
 		}
 
 		// Generete security group from the server's firewall rules (or firewall table)
@@ -309,26 +310,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		exists := false
 		if len(recommendedVmSpecInfoList) > 0 {
 
-			// If the CSP is NCP, select a VM spec with KVM hypervisor
-			// * Note: NCP uses KVM hypervisor, so we can filter the VM specs by checking the hypervisor type.
-			// * If the CSP is not NCP, select the first VM spec.
-			if strings.Contains(csp, "ncp") {
-				found := false
-				for _, vmSpec := range recommendedVmSpecInfoList {
-					for _, kv := range vmSpec.Details {
-						if kv.Key == "HypervisorType" && strings.Contains(kv.Value, "KVM") {
-							selectedVmSpec = vmSpec
-							found = true
-							break
-						}
-					}
-					if found {
-						break
-					}
-				}
-			} else {
-				selectedVmSpec = recommendedVmSpecInfoList[0]
-			}
+			selectedVmSpec = recommendedVmSpecInfoList[0]
 			log.Debug().Msgf("selectedVmSpec: %+v", selectedVmSpec)
 
 			// If the recommended VM spec already exists in the list, select the existing spec
@@ -387,8 +369,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		tempVmReq := cloudmodel.TbVmReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
-			SpecId:           selectedVmSpec.Name,
-			ImageId:          selectedVmOsImage.Name,
+			SpecId:           selectedVmSpec.CspSpecName,
+			ImageId:          selectedVmOsImage.CspImageName,
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
@@ -783,6 +765,31 @@ func toNetworkAddresses(cidrs []string) []string {
 	return subnets
 }
 
+// RecommendVmSpecsForImage recommends appropriate VM specs for the server and image
+func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.ServerProperty, limit int, image cloudmodel.TbImageInfo) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
+
+	vmSpecList, length, err = RecommendVmSpecs(csp, region, server, limit)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to recommend VM specs")
+		return nil, 0, err
+	}
+
+	switch csp {
+	case "aws":
+		// AWS-specific filtering: match image hypervisor with VM spec hypervisor
+		vmSpecList = filterAwsVmSpecsByHypervisor(vmSpecList, image)
+	case "gcp":
+		// GCP-specific recommendations
+	case "ncp":
+		// NCP-specific filtering: include only KVM hypervisor specs
+		vmSpecList = filterNcpVmSpecsByHypervisor(vmSpecList)
+	default:
+		log.Warn().Msgf("Unknown CSP: %s", csp)
+	}
+
+	return vmSpecList, length, nil
+}
+
 // RecommendVmSpecs recommends appropriate VM specs for the given server
 func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProperty, limit int) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
 
@@ -974,6 +981,10 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list for machine %s: %w", server.MachineId, err)
 	}
 
+	for i, vmSpec := range convertedVmSpecList {
+		log.Debug().Msgf("Recommended VM specification %d: %+v", i+1, vmSpec)
+	}
+
 	log.Info().
 		Str("machineId", server.MachineId).
 		Int("recommendedSpecs", len(convertedVmSpecList)).
@@ -987,25 +998,18 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 
 	var emptyRes cloudmodel.TbImageInfo
 
-	imageList, err := RecommendVmOsImages(csp, region, server, 5)
+	imageList, err := RecommendVmOsImages(csp, region, server, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return emptyRes, err
 	}
 
-	keywords := fmt.Sprintf("%s %s %s %s",
-		server.OS.Name,
-		server.OS.Version,
-		server.CPU.Architecture,
-		server.RootDisk.Type)
+	// Set keywords and delimiters to calculate text similarity
+	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
-	// Select VM OS image via LevenshteinDistance-based text similarity
-	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
-	delimiters2 := delimiters1
-
 	// Find the best VM OS image
-	bestVmOsImage := FindBestVmOsImage(keywords, delimiters1, imageList, delimiters2)
+	bestVmOsImage := FindBestVmOsImage(keywords, kwDelimiters, imageList, imgDelimiters)
 
 	log.Debug().Msgf("Best VM OS image found: %+v", bestVmOsImage)
 
@@ -1015,24 +1019,17 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 // RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
 func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerProperty) (string, error) {
 
-	imageList, err := RecommendVmOsImages(csp, region, server, 5)
+	imageList, err := RecommendVmOsImages(csp, region, server, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return "", err
 	}
 
-	keywords := fmt.Sprintf("%s %s %s %s",
-		server.OS.Name,
-		server.OS.Version,
-		server.CPU.Architecture,
-		server.RootDisk.Type)
+	// Set keywords and delimiters to calculate text similarity
+	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
-	// Select VM OS image via LevenshteinDistance-based text similarity
-	delimiters1 := []string{" ", "-", "_", ",", "(", ")", "[", "]", "/"}
-	delimiters2 := delimiters1
-
-	vmOsImageId := FindBestVmOsImageId(keywords, delimiters1, imageList, delimiters2)
+	vmOsImageId := FindBestVmOsImageNameUsedInCsp(keywords, kwDelimiters, imageList, imgDelimiters)
 
 	log.Debug().Msgf("Best VM OS image ID found: %s", vmOsImageId)
 
@@ -1112,19 +1109,12 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		return emptyRes, err
 	}
 
-	keywords := fmt.Sprintf("%s %s %s %s %s",
-		server.OS.Name,
-		server.OS.VersionID,
-		server.OS.VersionCodename,
-		server.CPU.Architecture,
-		server.RootDisk.Type)
+	// Set keywords and delimiters to calculate text similarity
+	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
-	delimiters1 := []string{" ", "-", ",", "(", ")", "[", "]", "/"} // "_"
-	delimiters2 := delimiters1
-
-	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(keywords, delimiters1, imageList, delimiters2)
+	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(keywords, kwDelimiters, imageList, imgDelimiters)
 
 	count := len(vmOsImageInfoList)
 	if count == 0 {
@@ -1145,6 +1135,20 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	log.Debug().Msgf("Found %d VM OS images for the given server: %s", len(vmOsImageInfoList), server.MachineId)
 
 	return vmOsImageInfoList, nil
+}
+
+func setKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []string, []string) {
+	keywords := fmt.Sprintf("%s %s %s %s %s",
+		server.OS.Name,
+		server.OS.VersionID,
+		server.OS.VersionCodename,
+		server.CPU.Architecture,
+		server.RootDisk.Type)
+
+	kwDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
+	imgDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
+
+	return keywords, kwDelimiters, imgDelimiters
 }
 
 func transposeMatrix[T any](matrix [][]T) [][]T {
@@ -1348,7 +1352,15 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []cloudm
 	var highestScore float64 = 0.0
 
 	for _, image := range vmImages {
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.OSDistribution, imgDelimiters)
+
+		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
+			image.OSType,
+			image.OSArchitecture,
+			image.OSDiskType,
+			image.OSDistribution,
+		)
+
+		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImage = image
@@ -1356,7 +1368,7 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []cloudm
 		// log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", image.OSDistribution, score, image.Description)
 
 	}
-	log.Debug().Msgf("bestVmOsImage: %v, highestScore: %f", bestVmOsImage, highestScore)
+	log.Debug().Msgf("highestScore: %f, bestVmOsImage: %v", highestScore, bestVmOsImage)
 
 	return bestVmOsImage
 }
@@ -1404,24 +1416,31 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 	return imageInfoList
 }
 
-// FindBestVmOsImageId finds the best matching image based on the similarity scores
-func FindBestVmOsImageId(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) string {
+// FindBestVmOsImageNameUsedInCsp finds the best matching image based on the similarity scores
+func FindBestVmOsImageNameUsedInCsp(keywords string, kwDelimiters []string, vmImages []cloudmodel.TbImageInfo, imgDelimiters []string) string {
 
-	var bestVmOsImageID string
+	var bestVmOsImageNameUsedInCsp string
 	var highestScore float64 = 0.0
 
 	for _, image := range vmImages {
-		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, image.OSDistribution, imgDelimiters)
+		vmImgKeywords := fmt.Sprintf("%s %s %s %s",
+			image.OSType,
+			image.OSArchitecture,
+			image.OSDiskType,
+			image.OSDistribution,
+		)
+
+		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
 		if score > highestScore {
 			highestScore = score
-			bestVmOsImageID = image.Id
+			bestVmOsImageNameUsedInCsp = image.CspImageName
 		}
 		// log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", image.OSDistribution, score, image.Description)
 
 	}
-	log.Debug().Msgf("bestVmOsImageID: %s, highestScore: %f", bestVmOsImageID, highestScore)
+	log.Debug().Msgf("bestVmOsImageID: %s, highestScore: %f", bestVmOsImageNameUsedInCsp, highestScore)
 
-	return bestVmOsImageID
+	return bestVmOsImageNameUsedInCsp
 }
 
 func RecommendSecurityGroup(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.TbSecurityGroupReq, error) {
@@ -1849,4 +1868,209 @@ func isIPv6Rule(rule onpremmodel.FirewallRuleProperty) bool {
 	}
 
 	return false
+}
+
+// filterAwsVmSpecsByHypervisor filters AWS VM specs based on hypervisor and virtualization type compatibility with the given image
+func filterAwsVmSpecsByHypervisor(vmSpecs []cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) []cloudmodel.TbSpecInfo {
+	if len(vmSpecs) == 0 {
+		return vmSpecs
+	}
+
+	// Extract hypervisor and virtualization type from image
+	imageHypervisor := extractHypervisorFromImage(image)
+	imageVirtType := extractVirtualizationTypeFromImage(image)
+
+	log.Debug().Msgf("AWS image info - Hypervisor: %s, VirtualizationType: %s", imageHypervisor, imageVirtType)
+
+	if imageHypervisor == "" && imageVirtType == "" {
+		log.Warn().Msg("No hypervisor or virtualization type information found in image, returning all VM specs")
+		return vmSpecs
+	}
+
+	var filteredSpecs []cloudmodel.TbSpecInfo
+
+	for _, spec := range vmSpecs {
+		specHypervisor := extractHypervisorFromVmSpec(spec)
+		supportedVirtTypes := extractSupportedVirtualizationTypesFromVmSpec(spec)
+
+		if isAwsHypervisorCompatible(imageHypervisor, imageVirtType, specHypervisor, supportedVirtTypes) {
+			filteredSpecs = append(filteredSpecs, spec)
+		} else {
+			log.Debug().Msgf("Filtered out VM spec %s (hypervisor: %s, supported virt types: %v) - incompatible with image (hypervisor: %s, virt type: %s)",
+				spec.CspSpecName, specHypervisor, supportedVirtTypes, imageHypervisor, imageVirtType)
+		}
+	}
+
+	log.Debug().Msgf("AWS filtering: %d VM specs filtered to %d compatible specs", len(vmSpecs), len(filteredSpecs))
+
+	// If no compatible specs found, return original list with warning
+	if len(filteredSpecs) == 0 {
+		log.Warn().Msgf("No compatible AWS VM specs found for image (hypervisor: %s, virt type: %s), returning all specs", imageHypervisor, imageVirtType)
+		return vmSpecs
+	}
+
+	return filteredSpecs
+} // extractVirtualizationTypeFromImage extracts virtualization type from VM image details
+func extractVirtualizationTypeFromImage(image cloudmodel.TbImageInfo) string {
+	for _, detail := range image.Details {
+		if strings.EqualFold(detail.Key, "virtualizationtype") {
+			return strings.ToLower(strings.TrimSpace(detail.Value))
+		}
+	}
+	return ""
+}
+
+// extractSupportedVirtualizationTypesFromVmSpec extracts supported virtualization types from VM spec details
+func extractSupportedVirtualizationTypesFromVmSpec(spec cloudmodel.TbSpecInfo) []string {
+	for _, detail := range spec.Details {
+		if strings.EqualFold(detail.Key, "supportedvirtualizationtypes") {
+			// Parse supported types (format: "hvm", "hvm; pv", etc.)
+			virtTypes := strings.Split(detail.Value, ";")
+			var result []string
+			for _, vt := range virtTypes {
+				cleaned := strings.ToLower(strings.TrimSpace(vt))
+				if cleaned != "" {
+					result = append(result, cleaned)
+				}
+			}
+			return result
+		}
+	}
+	return []string{}
+}
+
+// isAwsHypervisorCompatible checks AWS-specific hypervisor and virtualization type compatibility
+func isAwsHypervisorCompatible(imageHypervisor, imageVirtType, specHypervisor string, supportedVirtTypes []string) bool {
+	log.Debug().Msgf("AWS compatibility check - Image (hypervisor: %s, virt: %s) vs Spec (hypervisor: %s, supported: %v)",
+		imageHypervisor, imageVirtType, specHypervisor, supportedVirtTypes)
+
+	// If we have virtualization type info, use it as primary criteria
+	if imageVirtType != "" && len(supportedVirtTypes) > 0 {
+		virtualizationSupported := false
+		for _, supportedType := range supportedVirtTypes {
+			if imageVirtType == supportedType {
+				virtualizationSupported = true
+				break
+			}
+		}
+
+		if !virtualizationSupported {
+			log.Debug().Msgf("Virtualization type %s not supported by spec (supports: %v)", imageVirtType, supportedVirtTypes)
+			return false
+		}
+
+		// Additional check: ensure hypervisors are compatible if both are present
+		if imageHypervisor != "" && specHypervisor != "" {
+			hypervisorCompatible := isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, imageVirtType)
+			log.Debug().Msgf("Hypervisor compatibility check result: %t", hypervisorCompatible)
+			return hypervisorCompatible
+		}
+
+		log.Debug().Msgf("Virtualization type compatible, no hypervisor info to check")
+		return true
+	}
+
+	// Fall back to hypervisor-only compatibility if virtualization type info is missing
+	if imageHypervisor != "" && specHypervisor != "" {
+		log.Debug().Msgf("No virtualization type info, checking hypervisor compatibility only")
+		return isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, imageVirtType)
+	}
+
+	// If both image and spec lack detailed info, assume compatible
+	log.Debug().Msgf("Missing hypervisor info, assuming compatible")
+	return true
+}
+
+// isAwsHypervisorTypeCompatible checks AWS hypervisor type compatibility
+func isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, virtType string) bool {
+	// Normalize hypervisor names
+	imageHyp := normalizeAwsHypervisorName(imageHypervisor)
+	specHyp := normalizeAwsHypervisorName(specHypervisor)
+
+	log.Debug().Msgf("AWS hypervisor compatibility check - Image: %s (%s), Spec: %s (%s), VirtType: %s",
+		imageHypervisor, imageHyp, specHypervisor, specHyp, virtType)
+
+	// AWS strict hypervisor compatibility rule:
+	// Xen hypervisor images can ONLY run on Xen hypervisor instances
+	// Nitro hypervisor images can ONLY run on Nitro hypervisor instances
+	// This is the actual AWS behavior regardless of virtualization type
+	compatible := imageHyp == specHyp
+
+	log.Debug().Msgf("AWS hypervisor compatibility result: %t (strict matching required)", compatible)
+	return compatible
+} // normalizeAwsHypervisorName normalizes AWS hypervisor names for comparison
+func normalizeAwsHypervisorName(hypervisor string) string {
+	normalized := strings.ToLower(strings.TrimSpace(hypervisor))
+
+	// Handle AWS-specific hypervisor aliases
+	switch {
+	case strings.Contains(normalized, "nitro"):
+		return "nitro"
+	case strings.Contains(normalized, "xen"):
+		return "xen"
+	default:
+		return normalized
+	}
+}
+
+// extractHypervisorFromImage extracts hypervisor information from VM image details
+func extractHypervisorFromImage(image cloudmodel.TbImageInfo) string {
+	for _, detail := range image.Details {
+		if strings.EqualFold(detail.Key, "hypervisor") ||
+			strings.EqualFold(detail.Key, "hypervisortype") {
+			return strings.ToLower(strings.TrimSpace(detail.Value))
+		}
+	}
+	return ""
+} // extractHypervisorFromVmSpec extracts hypervisor information from VM spec details
+func extractHypervisorFromVmSpec(spec cloudmodel.TbSpecInfo) string {
+	for _, detail := range spec.Details {
+		if strings.EqualFold(detail.Key, "hypervisor") ||
+			strings.EqualFold(detail.Key, "hypervisortype") ||
+			strings.EqualFold(detail.Key, "virtualizationtype") {
+			return strings.ToLower(strings.TrimSpace(detail.Value))
+		}
+	}
+	return ""
+}
+
+// filterNcpVmSpecsByHypervisor filters NCP VM specs to include only KVM hypervisor specs
+func filterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.TbSpecInfo) []cloudmodel.TbSpecInfo {
+	if len(vmSpecs) == 0 {
+		return vmSpecs
+	}
+
+	log.Debug().Msgf("NCP filtering: checking %d VM specs for KVM hypervisor", len(vmSpecs))
+
+	var filteredSpecs []cloudmodel.TbSpecInfo
+
+	for _, spec := range vmSpecs {
+		hasKvmHypervisor := false
+
+		// Check if this spec has KVM hypervisor
+		for _, detail := range spec.Details {
+			if strings.EqualFold(detail.Key, "hypervisortype") &&
+				strings.Contains(strings.ToUpper(detail.Value), "KVM") {
+				hasKvmHypervisor = true
+				break
+			}
+		}
+
+		if hasKvmHypervisor {
+			filteredSpecs = append(filteredSpecs, spec)
+			log.Debug().Msgf("NCP: included VM spec %s (KVM hypervisor found)", spec.CspSpecName)
+		} else {
+			log.Debug().Msgf("NCP: filtered out VM spec %s (no KVM hypervisor)", spec.CspSpecName)
+		}
+	}
+
+	log.Debug().Msgf("NCP filtering: %d VM specs filtered to %d KVM specs", len(vmSpecs), len(filteredSpecs))
+
+	// If no KVM specs found, return original list with warning
+	if len(filteredSpecs) == 0 {
+		log.Warn().Msg("No KVM hypervisor specs found for NCP, returning all specs")
+		return vmSpecs
+	}
+
+	return filteredSpecs
 }

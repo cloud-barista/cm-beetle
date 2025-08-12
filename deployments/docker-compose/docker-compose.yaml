@@ -9,9 +9,9 @@ services:
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.3.2
     container_name: cm-beetle
-    # build:
-    #   context: ${COMPOSE_PROJECT_ROOT}
-    #   dockerfile: Dockerfile
+    build:
+      context: ${COMPOSE_PROJECT_ROOT}
+      dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network
@@ -54,7 +54,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.2
+    image: cloudbaristaorg/cb-tumblebug:0.11.3
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
@@ -108,7 +108,7 @@ services:
       # - TB_LOGFILE_MAXBACKUPS=3
       # - TB_LOGFILE_MAXAGE=30
       # - TB_LOGFILE_COMPRESS=false
-      # - TB_LOGLEVEL=debug
+      - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug
@@ -222,7 +222,7 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.11.3
+    image: cloudbaristaorg/cb-mapui:0.11.4
     container_name: cb-mapui
     # build:
     #   context: ../cb-mapui

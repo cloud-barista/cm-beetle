@@ -1816,6 +1816,41 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.MciCreationErrors": {
+            "type": "object",
+            "properties": {
+                "failedVmCount": {
+                    "description": "FailedVmCount is the number of VMs that failed to be created",
+                    "type": "integer"
+                },
+                "failureHandlingStrategy": {
+                    "description": "FailureHandlingStrategy indicates how failures were handled",
+                    "type": "string"
+                },
+                "successfulVmCount": {
+                    "description": "SuccessfulVmCount is the number of VMs that were successfully created",
+                    "type": "integer"
+                },
+                "totalVmCount": {
+                    "description": "TotalVmCount is the total number of VMs that were supposed to be created",
+                    "type": "integer"
+                },
+                "vmCreationErrors": {
+                    "description": "VmCreationErrors contains errors from actual VM creation phase",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                    }
+                },
+                "vmObjectCreationErrors": {
+                    "description": "VmObjectCreationErrors contains errors from VM object creation phase",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                    }
+                }
+            }
+        },
         "cloudmodel.MciInfoList": {
             "type": "object",
             "properties": {
@@ -2276,6 +2311,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "mci01"
                 },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
                 "postCommand": {
                     "description": "PostCommand is for the command to bootstrap the VMs",
                     "allOf": [
@@ -2290,6 +2336,7 @@ const docTemplate = `{
                     "example": ""
                 },
                 "vm": {
+                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
@@ -2309,6 +2356,14 @@ const docTemplate = `{
                         "no"
                     ],
                     "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                        }
+                    ]
                 },
                 "description": {
                     "type": "string"
@@ -2439,6 +2494,17 @@ const docTemplate = `{
                 },
                 "placementAlgo": {
                     "type": "string"
+                },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
                 },
                 "postCommand": {
                     "description": "PostCommand is for the command to bootstrap the VMs",
@@ -2741,44 +2807,49 @@ const docTemplate = `{
                 "commonImage": {
                     "description": "CommonImage is field for id of a image in common namespace",
                     "type": "string",
-                    "example": "ubuntu18.04"
+                    "example": "ami-01f71f215b23ba262"
                 },
                 "commonSpec": {
                     "description": "CommonSpec is field for id of a spec in common namespace",
                     "type": "string",
-                    "example": "aws+ap-northeast-2+t2.small"
+                    "example": "aws+ap-northeast-2+t3.nano"
                 },
                 "connectionName": {
                     "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string"
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
                 },
                 "description": {
                     "type": "string",
-                    "example": "Description"
+                    "example": "Created via CB-Tumblebug"
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
+                    },
+                    "example": {
+                        "\"env\"": "\"test\"}",
+                        "{\"role\"": "\"worker\""
                     }
                 },
                 "name": {
                     "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
                     "type": "string",
-                    "example": "g1-1"
+                    "example": "g1"
                 },
                 "rootDiskSize": {
                     "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
                     "type": "string",
                     "default": "default",
-                    "example": "default, 30, 42, ..."
+                    "example": "50"
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
                     "type": "string",
                     "default": "default",
-                    "example": "default, TYPE1, ..."
+                    "example": "gp3"
                 },
                 "subGroupSize": {
                     "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
@@ -2787,7 +2858,8 @@ const docTemplate = `{
                     "example": "3"
                 },
                 "vmUserPassword": {
-                    "type": "string"
+                    "type": "string",
+                    "example": ""
                 }
             }
         },
@@ -3055,6 +3127,27 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.VmCreationError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error is the error message",
+                    "type": "string"
+                },
+                "phase": {
+                    "description": "Phase indicates when the error occurred",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Timestamp when the error occurred",
+                    "type": "string"
+                },
+                "vmName": {
+                    "description": "VmName is the name of the VM that failed",
+                    "type": "string"
+                }
+            }
+        },
         "common.SimpleMessage": {
             "type": "object",
             "properties": {
@@ -3126,6 +3219,14 @@ const docTemplate = `{
                         "no"
                     ],
                     "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                        }
+                    ]
                 },
                 "description": {
                     "type": "string"
@@ -3254,6 +3355,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "mci01"
                 },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
                 "postCommand": {
                     "description": "PostCommand is for the command to bootstrap the VMs",
                     "allOf": [
@@ -3268,6 +3380,7 @@ const docTemplate = `{
                     "example": ""
                 },
                 "vm": {
+                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
@@ -3287,6 +3400,14 @@ const docTemplate = `{
                         "no"
                     ],
                     "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                        }
+                    ]
                 },
                 "description": {
                     "type": "string"
@@ -3850,6 +3971,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "mci01"
                 },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
                 "postCommand": {
                     "description": "PostCommand is for the command to bootstrap the VMs",
                     "allOf": [
@@ -3864,6 +3996,7 @@ const docTemplate = `{
                     "example": ""
                 },
                 "vm": {
+                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.TbVmDynamicReq"
@@ -4306,44 +4439,49 @@ const docTemplate = `{
                 "commonImage": {
                     "description": "CommonImage is field for id of a image in common namespace",
                     "type": "string",
-                    "example": "ubuntu18.04"
+                    "example": "ami-01f71f215b23ba262"
                 },
                 "commonSpec": {
                     "description": "CommonSpec is field for id of a spec in common namespace",
                     "type": "string",
-                    "example": "aws+ap-northeast-2+t2.small"
+                    "example": "aws+ap-northeast-2+t3.nano"
                 },
                 "connectionName": {
                     "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string"
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
                 },
                 "description": {
                     "type": "string",
-                    "example": "Description"
+                    "example": "Created via CB-Tumblebug"
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
+                    },
+                    "example": {
+                        "\"env\"": "\"test\"}",
+                        "{\"role\"": "\"worker\""
                     }
                 },
                 "name": {
                     "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
                     "type": "string",
-                    "example": "g1-1"
+                    "example": "g1"
                 },
                 "rootDiskSize": {
                     "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
                     "type": "string",
                     "default": "default",
-                    "example": "default, 30, 42, ..."
+                    "example": "50"
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
                     "type": "string",
                     "default": "default",
-                    "example": "default, TYPE1, ..."
+                    "example": "gp3"
                 },
                 "subGroupSize": {
                     "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
@@ -4352,7 +4490,8 @@ const docTemplate = `{
                     "example": "3"
                 },
                 "vmUserPassword": {
-                    "type": "string"
+                    "type": "string",
+                    "example": ""
                 }
             }
         },
