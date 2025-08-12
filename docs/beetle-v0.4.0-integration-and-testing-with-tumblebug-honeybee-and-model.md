@@ -8,10 +8,10 @@
 ### Envrionment
 
 > [!NOTE]
-> To be updated
+> It will continue to be updated until the v0.4.0 release.
 
 - Beetle v0.3.2
-- cm-model v0.0.10 (It may be applied to Damselfly v0.3.0)
+- cm-model v0.0.10 (It may be applied to Damselfly v0.3.1)
 - Honeybee v0.3.1
 - Tumblebug v0.11.2 (Spider v0.11.1, CB-MapUI v0.11.3)
 
@@ -70,8 +70,17 @@
 > [!NOTE]
 > Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
 
+> [!INFO]  
+> We are testing with a lower memory specification (8GiB instead of 255GiB) than the actual infrastructure.
+>
+> - Reason: **This prevents test failures caused by cloud provider quota limits**, which are unrelated to our system's core functionality.
+> - Note 1: Default VM quotas vary by Cloud Service Provider (CSP)—some are even zero—and may require users to request an increase.
+> - Note 2: If infrastructure creation fails due to quota issues, all deployed resources must be rolled back **one by one**.
+
 <details>
   <summary><ins>Click to see the onpremise model</ins></summary>
+
+(Onpremise Infra Model)
 
 ```json
 {
@@ -103,9 +112,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 8,
+          "available": 3,
+          "used": 5
         },
         "rootDisk": {
           "label": "unknown",
@@ -1636,6 +1645,17 @@
     ]
   }
 }
+```
+
+(Original Memory spec)
+
+```json
+    "memory": {
+     "type": "DDR4",
+     "totalSize": 255,
+     "available": 146,
+     "used": 109
+    }
 ```
 
 </details>
