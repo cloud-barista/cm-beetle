@@ -73,6 +73,34 @@ definitions:
     required:
     - command
     type: object
+  cloudmodel.MciCreationErrors:
+    properties:
+      failedVmCount:
+        description: FailedVmCount is the number of VMs that failed to be created
+        type: integer
+      failureHandlingStrategy:
+        description: FailureHandlingStrategy indicates how failures were handled
+        type: string
+      successfulVmCount:
+        description: SuccessfulVmCount is the number of VMs that were successfully
+          created
+        type: integer
+      totalVmCount:
+        description: TotalVmCount is the total number of VMs that were supposed to
+          be created
+        type: integer
+      vmCreationErrors:
+        description: VmCreationErrors contains errors from actual VM creation phase
+        items:
+          $ref: '#/definitions/cloudmodel.VmCreationError'
+        type: array
+      vmObjectCreationErrors:
+        description: VmObjectCreationErrors contains errors from VM object creation
+          phase
+        items:
+          $ref: '#/definitions/cloudmodel.VmCreationError'
+        type: array
+    type: object
   cloudmodel.MciInfoList:
     properties:
       mci:
@@ -393,6 +421,19 @@ definitions:
       name:
         example: mci01
         type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
       postCommand:
         allOf:
         - $ref: '#/definitions/cloudmodel.MciCmdReq'
@@ -403,6 +444,35 @@ definitions:
         example: ""
         type: string
       vm:
+        description: |-
+          Vm is array of VM requests for multi-cloud infrastructure
+          Example: Multiple VM groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "subGroupSize": "3",
+              "commonSpec": "aws+ap-northeast-2+t3.nano",
+              "commonImage": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "subGroupSize": "2",
+              "commonSpec": "azure+koreasouth+standard_b1s",
+              "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "subGroupSize": "1",
+              "commonSpec": "gcp+asia-northeast3+g1-small",
+              "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
         items:
           $ref: '#/definitions/cloudmodel.TbVmDynamicReq'
         type: array
@@ -421,6 +491,11 @@ definitions:
         - "no"
         example: "yes"
         type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
       description:
         type: string
       id:
@@ -515,6 +590,19 @@ definitions:
         example: mci01
         type: string
       placementAlgo:
+        type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
         type: string
       postCommand:
         allOf:
@@ -729,34 +817,38 @@ definitions:
     properties:
       commonImage:
         description: CommonImage is field for id of a image in common namespace
-        example: ubuntu18.04
+        example: ami-01f71f215b23ba262
         type: string
       commonSpec:
         description: CommonSpec is field for id of a spec in common namespace
-        example: aws+ap-northeast-2+t2.small
+        example: aws+ap-northeast-2+t3.nano
         type: string
       connectionName:
         description: |-
           if ConnectionName is given, the VM tries to use associtated credential.
           if not, it will use predefined ConnectionName in Spec objects
+        example: aws-ap-northeast-2
         type: string
       description:
-        example: Description
+        example: Created via CB-Tumblebug
         type: string
       label:
         additionalProperties:
           type: string
         description: Label is for describing the object by keywords
+        example:
+          '"env"': '"test"}'
+          '{"role"': '"worker"'
         type: object
       name:
         description: VM name or subGroup name if is (not empty) && (> 0). If it is
           a group, actual VM name will be generated with -N postfix.
-        example: g1-1
+        example: g1
         type: string
       rootDiskSize:
         default: default
         description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
+        example: "50"
         type: string
       rootDiskType:
         default: default
@@ -764,7 +856,7 @@ definitions:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
           "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
           TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: default, TYPE1, ...
+        example: gp3
         type: string
       subGroupSize:
         default: "1"
@@ -773,6 +865,7 @@ definitions:
         example: "3"
         type: string
       vmUserPassword:
+        example: ""
         type: string
     required:
     - commonImage
@@ -974,6 +1067,21 @@ definitions:
     - subnetId
     - vNetId
     type: object
+  cloudmodel.VmCreationError:
+    properties:
+      error:
+        description: Error is the error message
+        type: string
+      phase:
+        description: Phase indicates when the error occurred
+        type: string
+      timestamp:
+        description: Timestamp when the error occurred
+        type: string
+      vmName:
+        description: VmName is the name of the VM that failed
+        type: string
+    type: object
   common.SimpleMessage:
     properties:
       message:
@@ -1024,6 +1132,11 @@ definitions:
         - "no"
         example: "yes"
         type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
       description:
         type: string
       id:
@@ -1117,6 +1230,19 @@ definitions:
       name:
         example: mci01
         type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
       postCommand:
         allOf:
         - $ref: '#/definitions/cloudmodel.MciCmdReq'
@@ -1127,6 +1253,35 @@ definitions:
         example: ""
         type: string
       vm:
+        description: |-
+          Vm is array of VM requests for multi-cloud infrastructure
+          Example: Multiple VM groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "subGroupSize": "3",
+              "commonSpec": "aws+ap-northeast-2+t3.nano",
+              "commonImage": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "subGroupSize": "2",
+              "commonSpec": "azure+koreasouth+standard_b1s",
+              "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "subGroupSize": "1",
+              "commonSpec": "gcp+asia-northeast3+g1-small",
+              "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
         items:
           $ref: '#/definitions/cloudmodel.TbVmDynamicReq'
         type: array
@@ -1145,6 +1300,11 @@ definitions:
         - "no"
         example: "yes"
         type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
       description:
         type: string
       id:
@@ -1539,6 +1699,19 @@ definitions:
       name:
         example: mci01
         type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
       postCommand:
         allOf:
         - $ref: '#/definitions/model.MciCmdReq'
@@ -1549,6 +1722,35 @@ definitions:
         example: ""
         type: string
       vm:
+        description: |-
+          Vm is array of VM requests for multi-cloud infrastructure
+          Example: Multiple VM groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "subGroupSize": "3",
+              "commonSpec": "aws+ap-northeast-2+t3.nano",
+              "commonImage": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "subGroupSize": "2",
+              "commonSpec": "azure+koreasouth+standard_b1s",
+              "commonImage": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "subGroupSize": "1",
+              "commonSpec": "gcp+asia-northeast3+g1-small",
+              "commonImage": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
         items:
           $ref: '#/definitions/model.TbVmDynamicReq'
         type: array
@@ -1877,34 +2079,38 @@ definitions:
     properties:
       commonImage:
         description: CommonImage is field for id of a image in common namespace
-        example: ubuntu18.04
+        example: ami-01f71f215b23ba262
         type: string
       commonSpec:
         description: CommonSpec is field for id of a spec in common namespace
-        example: aws+ap-northeast-2+t2.small
+        example: aws+ap-northeast-2+t3.nano
         type: string
       connectionName:
         description: |-
           if ConnectionName is given, the VM tries to use associtated credential.
           if not, it will use predefined ConnectionName in Spec objects
+        example: aws-ap-northeast-2
         type: string
       description:
-        example: Description
+        example: Created via CB-Tumblebug
         type: string
       label:
         additionalProperties:
           type: string
         description: Label is for describing the object by keywords
+        example:
+          '"env"': '"test"}'
+          '{"role"': '"worker"'
         type: object
       name:
         description: VM name or subGroup name if is (not empty) && (> 0). If it is
           a group, actual VM name will be generated with -N postfix.
-        example: g1-1
+        example: g1
         type: string
       rootDiskSize:
         default: default
         description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
+        example: "50"
         type: string
       rootDiskType:
         default: default
@@ -1912,7 +2118,7 @@ definitions:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
           "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
           TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: default, TYPE1, ...
+        example: gp3
         type: string
       subGroupSize:
         default: "1"
@@ -1921,6 +2127,7 @@ definitions:
         example: "3"
         type: string
       vmUserPassword:
+        example: ""
         type: string
     required:
     - commonImage

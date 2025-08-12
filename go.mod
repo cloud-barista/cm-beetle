@@ -23,8 +23,8 @@ go 1.23.0
 // replace github.com/cloud-barista/cm-model => ../cm-model
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.11.2
-	github.com/cloud-barista/cm-model v0.0.10
+	github.com/cloud-barista/cb-tumblebug v0.11.3
+	github.com/cloud-barista/cm-model v0.0.11
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1
@@ -41,7 +41,6 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/cloud-barista/mc-terrarium v0.0.22 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect

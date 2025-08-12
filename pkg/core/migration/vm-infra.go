@@ -514,19 +514,24 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 
 	// * 1. Validate that name fieleds are not empty
 	if targetVmInfraModel == nil {
+		log.Error().Msgf("target infrastructure model is nil (nsId: %s)", nsId)
 		return fmt.Errorf("target infrastructure model is nil")
 	}
 	if targetVmInfraModel.TargetVmInfra.Name == "" { // MCI name
+		log.Error().Msgf("target VM infrastructure name is empty (nsId: %s)", nsId)
 		return fmt.Errorf("target VM infrastructure name is empty")
 	}
 	if targetVmInfraModel.TargetVNet.Name == "" {
+		log.Error().Msgf("target VNet name is empty (nsId: %s)", nsId)
 		return fmt.Errorf("target VNet name is empty")
 	}
 	if targetVmInfraModel.TargetSshKey.Name == "" {
+		log.Error().Msgf("target SSH key name is empty (nsId: %s)", nsId)
 		return fmt.Errorf("target SSH key name is empty")
 	}
 	for _, sg := range targetVmInfraModel.TargetSecurityGroupList {
 		if sg.Name == "" {
+			log.Error().Msgf("target security group name is empty (nsId: %s)", nsId)
 			return fmt.Errorf("target security group name is empty")
 		}
 	}
@@ -535,6 +540,8 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	// Check if the each VM's vNetId matches the target VNet name
 	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
 		if vm.VNetId != targetVmInfraModel.TargetVNet.Name {
+			log.Error().Msgf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
+				vm.VNetId, targetVmInfraModel.TargetVNet.Name)
 			return fmt.Errorf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
 				vm.VNetId, targetVmInfraModel.TargetVNet.Name)
 		}
@@ -543,6 +550,8 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	// Check if each VM's SshKeyId matches the target SSH key name
 	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
 		if vm.SshKeyId != targetVmInfraModel.TargetSshKey.Name {
+			log.Error().Msgf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
+				vm.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
 			return fmt.Errorf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
 				vm.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
 		}
@@ -552,14 +561,14 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
 		found := false
 		for _, vmSpec := range targetVmInfraModel.TargetVmSpecList {
-			if vm.SpecId == vmSpec.Id {
+			if vm.SpecId == vmSpec.CspSpecName {
 				found = true
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("target VM infrastructure vmSpecId (%s) does not match any target VM spec ID in the list",
-				vm.SpecId)
+			log.Error().Msgf("VM spec '%s' not found in target spec list", vm.SpecId)
+			return fmt.Errorf("VM spec '%s' not found in target spec list", vm.SpecId)
 		}
 	}
 
@@ -567,14 +576,14 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
 		found := false
 		for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-			if vm.ImageId == vmOsImage.Id {
+			if vm.ImageId == vmOsImage.CspImageName {
 				found = true
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("target VM infrastructure vmOsImageId (%s) does not match any target VM OS image ID in the list",
-				vm.ImageId)
+			log.Error().Msgf("VM OS image '%s' not found in target image list", vm.ImageId)
+			return fmt.Errorf("VM OS image '%s' not found in target image list", vm.ImageId)
 		}
 	}
 
@@ -590,6 +599,8 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 				}
 			}
 			if !found {
+				log.Error().Msgf("target VM infrastructure security group name (%s) does not match any target security group name in the list",
+					sgId)
 				return fmt.Errorf("target VM infrastructure security group name (%s) does not match any target security group name in the list",
 					sgId)
 			}
