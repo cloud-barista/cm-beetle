@@ -7,12 +7,11 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.3.1
+    image: cloudbaristaorg/cm-beetle:0.3.2
     container_name: cm-beetle
-    pull_policy: missing
-    build:
-      context: ${COMPOSE_PROJECT_ROOT}
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${COMPOSE_PROJECT_ROOT}
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network
@@ -109,7 +108,7 @@ services:
       # - TB_LOGFILE_MAXBACKUPS=3
       # - TB_LOGFILE_MAXAGE=30
       # - TB_LOGFILE_COMPRESS=false
-      - TB_LOGLEVEL=debug
+      # - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug

@@ -645,7 +645,7 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair reco
 	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/mci ---")
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("POST /beetle/recommendation/mci (%s)", displayName),
@@ -757,7 +757,7 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 	fmt.Printf("\n--- Test 3: GET /beetle/migration/ns/%s/mci ---\n", config.NamespaceID)
 
 	// Wait before API call for stability with animation
-	animatedSleep(3*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci (%s)", displayName),
@@ -812,7 +812,7 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 	fmt.Printf("\n--- Test 4: GET /beetle/migration/ns/%s/mci?option=id ---\n", config.NamespaceID)
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci?option=id (%s)", displayName),
@@ -876,7 +876,7 @@ func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName s
 	fmt.Printf("\n--- Test 5: GET /beetle/migration/ns/%s/mci/%s ---\n", config.NamespaceID, mciId)
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
@@ -940,7 +940,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	fmt.Printf("\n--- Test 6: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.NamespaceID, mciId)
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
