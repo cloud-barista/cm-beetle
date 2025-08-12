@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (b0d8551)
-- cm-model: v0.0.10
-- CB-Tumblebug: v0.11.2
+- CM-Beetle: v0.4.0 (fe6f682)
+- cm-model: v0.0.11
+- CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
-- CB-MapUI: v0.11.3
+- CB-MapUI: v0.11.4
 - Target CSP: AZURE
 - Target Region: koreacentral
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 11, 2025
-- Test Time: 21:09:39 KST
-- Test Execution: 2025-08-11 21:09:39 KST
+- Test Date: August 12, 2025
+- Test Time: 21:40:43 KST
+- Test Execution: 2025-08-12 21:40:43 KST
 
 ### Scenario
 
@@ -37,24 +37,25 @@
 
 ### Test Results Summary
 
-| Test | Endpoint                                          | Status      | Duration  | Details |
-| ---- | ------------------------------------------------- | ----------- | --------- | ------- |
-| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 207ms     | Success |
-| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 2m51.502s | Success |
-| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 61ms      | Success |
-| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 58ms      | Success |
-| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 1.647s    | Success |
-| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m48.303s | Success |
+| Test | Endpoint | Status | Duration | Details |
+|------|----------|--------|----------|----------|
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 208ms | Success |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m10.804s | Success |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2.661s | Success |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 63ms | Success |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2.661s | Success |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m18.584s | Success |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 4m57.857338148s
+**Total Duration**: 6m5.144459909s
 
-_Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) using CM-Beetle automated test CLI_
+*Test executed on August 12, 2025 at 21:40:43 KST (2025-08-12 21:40:43 KST) using CM-Beetle automated test CLI*
 
 ### Recommend a target model for computing infra
 
-> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
+> [!Note]
+> `desiredCsp` and `desiredRegion` are required in the request body.
 
 - API: `POST /beetle/recommendation/mci`
 - Request body:
@@ -96,9 +97,9 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 32,
-          "available": 15,
-          "used": 17
+          "totalSize": 8,
+          "available": 3,
+          "used": 5
         },
         "rootDisk": {
           "label": "unknown",
@@ -117,8 +118,12 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
@@ -135,8 +140,13 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
+            "ipv4CidrBlocks": [
+              "172.29.0.102/24",
+              "172.29.0.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b003/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -153,8 +163,12 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -181,22 +195,30 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": ["172.20.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.20.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": ["172.19.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.19.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": ["172.17.0.1/16"],
-            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
+            "ipv4CidrBlocks": [
+              "172.17.0.1/16"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::42:ccff:fe24:2530/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -208,15 +230,21 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": ["10.1.0.106/24"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
+            "ipv4CidrBlocks": [
+              "10.1.0.106/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fe9d:89c5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::2852:51ff:fe36:258b/64"
+            ],
             "mtu": 65000,
             "state": "up"
           },
@@ -228,135 +256,178 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.102/24"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.102/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
+            "ipv6CidrBlocks": [
+              "fe80::682a:78ff:fe65:4232/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4c:392b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fed5:6f85/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4d:319e/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe52:914b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe46:9b72/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe3e:1510/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe65:ad39/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe1e:c7fc/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe19:8c71/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
+            "ipv6CidrBlocks": [
+              "fe80::780f:53ff:fead:5084/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
+            "ipv4CidrBlocks": [
+              "10.254.0.27/28",
+              "10.254.0.3/28"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fec9:ea1c/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
+            "ipv6CidrBlocks": [
+              "fe80::bc22:36ff:fe27:1d2/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
+            "ipv6CidrBlocks": [
+              "fe80::38f0:78ff:fef7:358/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
+            "ipv6CidrBlocks": [
+              "fe80::5c87:18ff:fe73:d0dd/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
+            "ipv6CidrBlocks": [
+              "fe80::303c:e7ff:fe79:eeef/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe8a:c222/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe09:e9f5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           }
@@ -1655,11 +1726,13 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "azure-koreacentral",
-        "specId": "azure+koreacentral+standard_a4m_v2",
-        "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+        "specId": "Standard_B2as_v2",
+        "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
-        "securityGroupIds": ["mig-sg-01"],
+        "securityGroupIds": [
+          "mig-sg-01"
+        ],
         "sshKeyId": "mig-sshkey-01",
         "dataDiskIds": null
       }
@@ -1667,7 +1740,8 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     "postCommand": {
       "userName": "",
       "command": null
-    }
+    },
+    "policyOnPartialFailure": ""
   },
   "targetVNet": {
     "name": "mig-vnet-01",
@@ -1695,19 +1769,18 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
   },
   "targetVmSpecList": [
     {
-      "id": "azure+koreacentral+standard_a4m_v2",
-      "cspSpecName": "Standard_A4m_v2",
-      "name": "azure+koreacentral+standard_a4m_v2",
+      "id": "azure+koreacentral+standard_b2as_v2",
+      "cspSpecName": "Standard_B2as_v2",
+      "name": "azure+koreacentral+standard_b2as_v2",
       "namespace": "system",
       "connectionName": "azure-koreacentral",
       "providerName": "azure",
       "regionName": "koreacentral",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 4,
-      "memoryGiB": 31.25,
-      "diskSizeGB": 42,
-      "costPerHour": 0.27,
+      "vCPU": 2,
+      "memoryGiB": 7.8125,
+      "costPerHour": 0.0936,
       "orderInFilteredResult": 1,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
@@ -1717,27 +1790,27 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 1.0000001,
+      "evaluationScore09": 0.99999946,
       "evaluationScore10": -1,
       "rootDiskType": "",
-      "rootDiskSize": "42",
+      "rootDiskSize": "0",
       "systemLabel": "auto-gen",
       "details": [
         {
           "key": "MaxDataDiskCount",
-          "value": "8"
+          "value": "4"
         },
         {
           "key": "MemoryInMB",
-          "value": "32768"
+          "value": "8192"
         },
         {
           "key": "Name",
-          "value": "Standard_A4m_v2"
+          "value": "Standard_B2as_v2"
         },
         {
           "key": "NumberOfCores",
-          "value": "4"
+          "value": "2"
         },
         {
           "key": "OSDiskSizeInMB",
@@ -1745,7 +1818,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         {
           "key": "ResourceDiskSizeInMB",
-          "value": "40960"
+          "value": "0"
         }
       ]
     }
@@ -1755,12 +1828,14 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
       "namespace": "system",
       "providerName": "azure",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-      "regionList": ["common"],
+      "regionList": [
+        "common"
+      ],
       "id": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "name": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "connectionName": "azure-australiacentral",
       "infraType": "vm",
-      "fetchedTime": "2025.08.11 09:52:30 Mon",
+      "fetchedTime": "2025.08.12 08:03:21 Tue",
       "isKubernetesImage": true,
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
@@ -2090,7 +2165,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2ctrjq9i92do98209s0",
+  "uid": "d2djda5aou68jg3om440",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2117,7 +2192,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2ctrjq9i92do98209s0"
+    "sys.uid": "d2djda5aou68jg3om440"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2126,9 +2201,9 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2ctrjq9i92do98209t0",
-      "cspResourceName": "d2ctrjq9i92do98209t0",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+      "uid": "d2djda5aou68jg3om450",
+      "cspResourceName": "d2djda5aou68jg3om450",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2142,15 +2217,12 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:12:05",
+      "createdTime": "2025-08-12 12:43:17",
       "label": {
-        "createdBy": "d2ctrjq9i92do98209t0",
-        "keypair": "d2ctrci9i92do98209r0",
-        "publicip": "d2ctrjq9i92do98209t0-50022-PublicIP",
         "sys.connectionName": "azure-koreacentral",
-        "sys.createdTime": "2025-08-11 12:12:05",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
-        "sys.cspResourceName": "d2ctrjq9i92do98209t0",
+        "sys.createdTime": "2025-08-12 12:43:17",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
+        "sys.cspResourceName": "d2djda5aou68jg3om450",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2158,19 +2230,19 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2ctrjq9i92do98209t0"
+        "sys.uid": "d2djda5aou68jg3om450"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "koreacentral",
         "Zone": "1"
       },
-      "publicIP": "40.82.129.220",
+      "publicIP": "20.196.139.194",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.4",
       "privateDNS": "",
-      "rootDiskType": "StandardHDD",
+      "rootDiskType": "PremiumSSD",
       "rootDiskSize": "30",
       "rootDiskName": "",
       "connectionName": "azure-koreacentral",
@@ -2194,24 +2266,30 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
             "latitude": 37.5665,
             "longitude": 126.978
           },
-          "zones": ["1", "2", "3"]
+          "zones": [
+            "1",
+            "2",
+            "3"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "azure+koreacentral+standard_a4m_v2",
-      "cspSpecName": "Standard_A4m_v2",
-      "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "specId": "Standard_B2as_v2",
+      "cspSpecName": "Standard_B2as_v2",
+      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0/subnets/d2ctr2q9i92do98209qg",
-      "networkInterface": "d2ctrjq9i92do98209t0-81764-VNic",
-      "securityGroupIds": ["mig-sg-01"],
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420/subnets/d2djcldaou68jg3om42g",
+      "networkInterface": "d2djda5aou68jg3om450-2072-VNic",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2ctrci9i92do98209r0",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2djco5aou68jg3om430",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2220,11 +2298,11 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_A4m_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2ctrjq9i92do98209t0-81764-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2ctrjq9i92do98209t0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNckwdiq0/xWGz1N842nL8wJcuyzfHrW0UgLJOnfFtq3CvTdKem+vA26vcTjFd9XANXNUaxkSFPbNIsiqCCuVnziJvcWW2L9rvyDy4EO4KvQSXAE5t9DcDtd5PXOqW0XZ9JLFvdUUOQUfb7zOXJR+JE9vUo6pOpSZlOJH0bRMAu2iB6tDf8HAnzlK9FQkNeIkietl/oScN1W99DzmyHL10IO5RKbR5v7RoQhSkrMt6rJA5KEcepVbiN8UTSbkbu+uyHa0VpfUv6hgP5hO7CGZbWRzwZ/kY5tza8zYLSh3YjPIgtSLPPLMI0sXkdlkz2SDAcRRZgeYKp/32QnA/IEAMKZANtpziH/SzI9ATST6WlA+v/rtmdtGdMB/bP1lyHTTcv15T7FygHwlUXCTuS0k0BJ2wvlBolVo+Plv4TGtZUgQWJYfAUGbCqCXUvG1ktTZGXYl9t8SbAe1Rqkrqh78p0BDBlPXTKvM35tnYglVxkFazBKNfcAlCYz3QaN/OCaKTTxrSEZy0FQZWQNoGujvxUJjRc86pXT8m0yoj4MBUCo8c6PDGmKEGV2evHvw23rYQEGIol5yo0ZL9VXjKLxQ5arbrU7JSOo4v1xHQ9cMlF2j2KAMPTH4Qwy9nitn+gX9QS3TQWEZLNGOXbhkfR1KaEJVB8mROD29sfp+niYoYHw==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,storageAccountType:Standard_LRS},name:d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,osType:Linux}},timeCreated:2025-08-11T12:11:13.3256727Z,vmId:ac7f9f2b-5748-48be-aa69-e688c4492e5a}"
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2djda5aou68jg3om450-2072-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2djda5aou68jg3om450,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHi09BxIUJT21qH/Kis4LVsgp5XIV/N380SWxP3aFIyORrrssWruP915ygvpBFPYN+AtWglnXDwyWB80mMBZq1OkymlAWH5ySnt0bfew+6+1fwoEKDKKByEG2uTXju+PSoe0HTh37uceeuOEtTjZtMgbP4I3+erKwk0Rklil1v9lCeh2oqUlntg4Y1uqoGBFu0cviP1ns/NJsx2hJRD7T9JQpY5aPNzBi0doYpdpu4MKnFE3wgdPKtW2TyE1aILD/MrUe6bi24Q4Z9+mfK3AI5X/YSu7+/ZX3PWy+4VZpSKstrpPDLVjL4mM/sSDuhxCX2IFaukOe2G5fnVqsEchG5vdG+hY6Yn1gbo9gwYk1c/O8HWIOEEn5MFAeQ2XiFJL2FouBLUqueOfZhpSNsLT/YMBtK8KZ8VTKsreQyYn8FobVMEq08GanaOedupz58AsslSK1HUqqHQC1Wnl5l8EvG2dGh3QusLK/YEpp4ubz0y3AQ7vhKR84YUaKCsPDhkMLbW/mi7IxzHt3aoQI3+sB0lUHgsSFRzJRhjGTqaWzJP45vAC62ed5UdI/0kIrU+ejHRrU23roiwP0WO/ecCscte+HZrxiSj2VRCN+NrmCZZXJ8BUzF/2if5WXttNdeE2/nY71Nmz5Gw0e7hmxwxcdNZrMlvzkiwwaJjjiu5dqKBQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,storageAccountType:Premium_LRS},name:d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,osType:Linux}},timeCreated:2025-08-12T12:42:30.1202647Z,vmId:977d85b1-e9f2-4b8f-acaf-4b9ce42835b7}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d2ctrjq9i92do98209t0,keypair:d2ctrci9i92do98209r0,publicip:d2ctrjq9i92do98209t0-50022-PublicIP}"
+          "value": "{createdBy:d2djda5aou68jg3om450,keypair:d2djco5aou68jg3om430,publicip:d2djda5aou68jg3om450-27211-PublicIP}"
         },
         {
           "key": "Zones",
@@ -2236,11 +2314,11 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450"
         },
         {
           "key": "Name",
-          "value": "d2ctrjq9i92do98209t0"
+          "value": "d2djda5aou68jg3om450"
         },
         {
           "key": "Type",
@@ -2275,7 +2353,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2ctrjq9i92do98209s0",
+      "uid": "d2djda5aou68jg3om440",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2303,7 +2381,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2ctrjq9i92do98209s0",
+          "uid": "d2djda5aou68jg3om440",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2395,7 +2473,9 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
 
 ```json
 {
-  "idList": ["mmci01"]
+  "idList": [
+    "mmci01"
+  ]
 }
 ```
 
@@ -2413,7 +2493,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2ctrjq9i92do98209s0",
+  "uid": "d2djda5aou68jg3om440",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2440,7 +2520,7 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2ctrjq9i92do98209s0"
+    "sys.uid": "d2djda5aou68jg3om440"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2449,9 +2529,9 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2ctrjq9i92do98209t0",
-      "cspResourceName": "d2ctrjq9i92do98209t0",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
+      "uid": "d2djda5aou68jg3om450",
+      "cspResourceName": "d2djda5aou68jg3om450",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2465,15 +2545,12 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:12:05",
+      "createdTime": "2025-08-12 12:43:17",
       "label": {
-        "createdBy": "d2ctrjq9i92do98209t0",
-        "keypair": "d2ctrci9i92do98209r0",
-        "publicip": "d2ctrjq9i92do98209t0-50022-PublicIP",
         "sys.connectionName": "azure-koreacentral",
-        "sys.createdTime": "2025-08-11 12:12:05",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0",
-        "sys.cspResourceName": "d2ctrjq9i92do98209t0",
+        "sys.createdTime": "2025-08-12 12:43:17",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
+        "sys.cspResourceName": "d2djda5aou68jg3om450",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2481,19 +2558,19 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2ctrjq9i92do98209t0"
+        "sys.uid": "d2djda5aou68jg3om450"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "koreacentral",
         "Zone": "1"
       },
-      "publicIP": "40.82.129.220",
+      "publicIP": "20.196.139.194",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.4",
       "privateDNS": "",
-      "rootDiskType": "StandardHDD",
+      "rootDiskType": "PremiumSSD",
       "rootDiskSize": "30",
       "rootDiskName": "",
       "connectionName": "azure-koreacentral",
@@ -2517,24 +2594,30 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
             "latitude": 37.5665,
             "longitude": 126.978
           },
-          "zones": ["1", "2", "3"]
+          "zones": [
+            "1",
+            "2",
+            "3"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "azure+koreacentral+standard_a4m_v2",
-      "cspSpecName": "Standard_A4m_v2",
-      "imageId": "azure+canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+      "specId": "Standard_B2as_v2",
+      "cspSpecName": "Standard_B2as_v2",
+      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2ctr2q9i92do98209q0/subnets/d2ctr2q9i92do98209qg",
-      "networkInterface": "d2ctrjq9i92do98209t0-81764-VNic",
-      "securityGroupIds": ["mig-sg-01"],
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420/subnets/d2djcldaou68jg3om42g",
+      "networkInterface": "d2djda5aou68jg3om450-2072-VNic",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2ctrci9i92do98209r0",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2djco5aou68jg3om430",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2543,11 +2626,11 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_A4m_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2ctrjq9i92do98209t0-81764-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2ctrjq9i92do98209t0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNckwdiq0/xWGz1N842nL8wJcuyzfHrW0UgLJOnfFtq3CvTdKem+vA26vcTjFd9XANXNUaxkSFPbNIsiqCCuVnziJvcWW2L9rvyDy4EO4KvQSXAE5t9DcDtd5PXOqW0XZ9JLFvdUUOQUfb7zOXJR+JE9vUo6pOpSZlOJH0bRMAu2iB6tDf8HAnzlK9FQkNeIkietl/oScN1W99DzmyHL10IO5RKbR5v7RoQhSkrMt6rJA5KEcepVbiN8UTSbkbu+uyHa0VpfUv6hgP5hO7CGZbWRzwZ/kY5tza8zYLSh3YjPIgtSLPPLMI0sXkdlkz2SDAcRRZgeYKp/32QnA/IEAMKZANtpziH/SzI9ATST6WlA+v/rtmdtGdMB/bP1lyHTTcv15T7FygHwlUXCTuS0k0BJ2wvlBolVo+Plv4TGtZUgQWJYfAUGbCqCXUvG1ktTZGXYl9t8SbAe1Rqkrqh78p0BDBlPXTKvM35tnYglVxkFazBKNfcAlCYz3QaN/OCaKTTxrSEZy0FQZWQNoGujvxUJjRc86pXT8m0yoj4MBUCo8c6PDGmKEGV2evHvw23rYQEGIol5yo0ZL9VXjKLxQ5arbrU7JSOo4v1xHQ9cMlF2j2KAMPTH4Qwy9nitn+gX9QS3TQWEZLNGOXbhkfR1KaEJVB8mROD29sfp+niYoYHw==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,storageAccountType:Standard_LRS},name:d2ctrjq9i92do98209t0_OsDisk_1_418e999974e04af186fad69fffcc5224,osType:Linux}},timeCreated:2025-08-11T12:11:13.3256727Z,vmId:ac7f9f2b-5748-48be-aa69-e688c4492e5a}"
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2djda5aou68jg3om450-2072-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2djda5aou68jg3om450,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHi09BxIUJT21qH/Kis4LVsgp5XIV/N380SWxP3aFIyORrrssWruP915ygvpBFPYN+AtWglnXDwyWB80mMBZq1OkymlAWH5ySnt0bfew+6+1fwoEKDKKByEG2uTXju+PSoe0HTh37uceeuOEtTjZtMgbP4I3+erKwk0Rklil1v9lCeh2oqUlntg4Y1uqoGBFu0cviP1ns/NJsx2hJRD7T9JQpY5aPNzBi0doYpdpu4MKnFE3wgdPKtW2TyE1aILD/MrUe6bi24Q4Z9+mfK3AI5X/YSu7+/ZX3PWy+4VZpSKstrpPDLVjL4mM/sSDuhxCX2IFaukOe2G5fnVqsEchG5vdG+hY6Yn1gbo9gwYk1c/O8HWIOEEn5MFAeQ2XiFJL2FouBLUqueOfZhpSNsLT/YMBtK8KZ8VTKsreQyYn8FobVMEq08GanaOedupz58AsslSK1HUqqHQC1Wnl5l8EvG2dGh3QusLK/YEpp4ubz0y3AQ7vhKR84YUaKCsPDhkMLbW/mi7IxzHt3aoQI3+sB0lUHgsSFRzJRhjGTqaWzJP45vAC62ed5UdI/0kIrU+ejHRrU23roiwP0WO/ecCscte+HZrxiSj2VRCN+NrmCZZXJ8BUzF/2if5WXttNdeE2/nY71Nmz5Gw0e7hmxwxcdNZrMlvzkiwwaJjjiu5dqKBQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,storageAccountType:Premium_LRS},name:d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,osType:Linux}},timeCreated:2025-08-12T12:42:30.1202647Z,vmId:977d85b1-e9f2-4b8f-acaf-4b9ce42835b7}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d2ctrjq9i92do98209t0,keypair:d2ctrci9i92do98209r0,publicip:d2ctrjq9i92do98209t0-50022-PublicIP}"
+          "value": "{createdBy:d2djda5aou68jg3om450,keypair:d2djco5aou68jg3om430,publicip:d2djda5aou68jg3om450-27211-PublicIP}"
         },
         {
           "key": "Zones",
@@ -2559,11 +2642,11 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2ctrjq9i92do98209t0"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450"
         },
         {
           "key": "Name",
-          "value": "d2ctrjq9i92do98209t0"
+          "value": "d2djda5aou68jg3om450"
         },
         {
           "key": "Type",
@@ -2598,3 +2681,4 @@ _Test executed on August 11, 2025 at 21:09:39 KST (2025-08-11 21:09:39 KST) usin
   "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
 }
 ```
+

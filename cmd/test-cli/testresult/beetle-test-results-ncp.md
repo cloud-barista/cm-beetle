@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (b0d8551)
-- cm-model: v0.0.10
-- CB-Tumblebug: v0.11.2
+- CM-Beetle: v0.4.0 (ec76095)
+- cm-model: v0.0.11
+- CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
-- CB-MapUI: v0.11.3
+- CB-MapUI: v0.11.4
 - Target CSP: NCP
 - Target Region: kr
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 11, 2025
-- Test Time: 21:46:37 KST
-- Test Execution: 2025-08-11 21:46:37 KST
+- Test Date: August 12, 2025
+- Test Time: 22:02:08 KST
+- Test Execution: 2025-08-12 22:02:08 KST
 
 ### Scenario
 
@@ -37,24 +37,25 @@
 
 ### Test Results Summary
 
-| Test | Endpoint                                          | Status      | Duration  | Details |
-| ---- | ------------------------------------------------- | ----------- | --------- | ------- |
-| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 277ms     | Success |
-| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 3m21.699s | Success |
-| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 74ms      | Success |
-| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 56ms      | Success |
-| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 123ms     | Success |
-| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ❌ **FAIL** | 10m1.168s | HTTP 0  |
+| Test | Endpoint | Status | Duration | Details |
+|------|----------|--------|----------|----------|
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 214ms | Success |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m35.298s | Success |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 207ms | Success |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 64ms | Success |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 137ms | Success |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ❌ **FAIL** | 10m1.298s | HTTP 0 |
 
 **Overall Result**: 5/6 tests passed ❌
 
-**Total Duration**: 13m39.476100377s
+**Total Duration**: 14m7.403728228s
 
-_Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) using CM-Beetle automated test CLI_
+*Test executed on August 12, 2025 at 22:02:08 KST (2025-08-12 22:02:08 KST) using CM-Beetle automated test CLI*
 
 ### Recommend a target model for computing infra
 
-> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
+> [!Note]
+> `desiredCsp` and `desiredRegion` are required in the request body.
 
 - API: `POST /beetle/recommendation/mci`
 - Request body:
@@ -117,8 +118,12 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
@@ -135,8 +140,13 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
+            "ipv4CidrBlocks": [
+              "172.29.0.102/24",
+              "172.29.0.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b003/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -153,8 +163,12 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -181,22 +195,30 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": ["172.20.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.20.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": ["172.19.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.19.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": ["172.17.0.1/16"],
-            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
+            "ipv4CidrBlocks": [
+              "172.17.0.1/16"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::42:ccff:fe24:2530/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -208,15 +230,21 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": ["10.1.0.106/24"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
+            "ipv4CidrBlocks": [
+              "10.1.0.106/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fe9d:89c5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::2852:51ff:fe36:258b/64"
+            ],
             "mtu": 65000,
             "state": "up"
           },
@@ -228,135 +256,178 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.102/24"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.102/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
+            "ipv6CidrBlocks": [
+              "fe80::682a:78ff:fe65:4232/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4c:392b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fed5:6f85/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4d:319e/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe52:914b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe46:9b72/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe3e:1510/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe65:ad39/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe1e:c7fc/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe19:8c71/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
+            "ipv6CidrBlocks": [
+              "fe80::780f:53ff:fead:5084/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
+            "ipv4CidrBlocks": [
+              "10.254.0.27/28",
+              "10.254.0.3/28"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fec9:ea1c/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
+            "ipv6CidrBlocks": [
+              "fe80::bc22:36ff:fe27:1d2/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
+            "ipv6CidrBlocks": [
+              "fe80::38f0:78ff:fef7:358/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
+            "ipv6CidrBlocks": [
+              "fe80::5c87:18ff:fe73:d0dd/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
+            "ipv6CidrBlocks": [
+              "fe80::303c:e7ff:fe79:eeef/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe8a:c222/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe09:e9f5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           }
@@ -1655,11 +1726,13 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "ncpvpc+kr+s2-g3",
-        "imageId": "ncpvpc+23789321",
+        "specId": "s2-g3",
+        "imageId": "23789321",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
-        "securityGroupIds": ["mig-sg-01"],
+        "securityGroupIds": [
+          "mig-sg-01"
+        ],
         "sshKeyId": "mig-sshkey-01",
         "dataDiskIds": null
       }
@@ -1667,7 +1740,8 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     "postCommand": {
       "userName": "",
       "command": null
-    }
+    },
+    "policyOnPartialFailure": ""
   },
   "targetVNet": {
     "name": "mig-vnet-01",
@@ -1787,11 +1861,13 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
       "namespace": "system",
       "providerName": "ncpvpc",
       "cspImageName": "23789321",
-      "regionList": ["kr"],
+      "regionList": [
+        "kr"
+      ],
       "id": "ncpvpc+23789321",
       "name": "ncpvpc+23789321",
       "connectionName": "ncpvpc-kr",
-      "fetchedTime": "2025.08.11 09:48:11 Mon",
+      "fetchedTime": "2025.08.12 07:58:40 Tue",
       "isGPUImage": true,
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
@@ -2164,7 +2240,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2cucoa9i92do9fttimg",
+  "uid": "d2djn2taou68jg3om4c0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2191,7 +2267,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2cucoa9i92do9fttimg"
+    "sys.uid": "d2djn2taou68jg3om4c0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2200,9 +2276,9 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2cucoa9i92do9ftting",
-      "cspResourceName": "d2cucoa9i92do9ftting",
-      "cspResourceId": "108018240",
+      "uid": "d2djn2taou68jg3om4d0",
+      "cspResourceName": "d2djn2taou68jg3om4d0",
+      "cspResourceId": "108052862",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2216,12 +2292,12 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:50:06",
+      "createdTime": "2025-08-12 13:05:46",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-11 12:50:06",
-        "sys.cspResourceId": "108018240",
-        "sys.cspResourceName": "d2cucoa9i92do9ftting",
+        "sys.createdTime": "2025-08-12 13:05:46",
+        "sys.cspResourceId": "108052862",
+        "sys.cspResourceName": "d2djn2taou68jg3om4d0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2229,14 +2305,14 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2cucoa9i92do9ftting"
+        "sys.uid": "d2djn2taou68jg3om4d0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "223.130.153.163",
+      "publicIP": "49.50.132.79",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2265,33 +2341,38 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncpvpc+kr+s2-g3",
+      "specId": "s2-g3",
       "cspSpecName": "s2-g3",
-      "imageId": "ncpvpc+23789321",
+      "imageId": "23789321",
       "cspImageName": "23789321",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "118207",
+      "cspVNetId": "118425",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "249488",
+      "cspSubnetId": "249903",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-sg-01"],
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2cucj29i92do9fttilg",
+      "cspSshKeyId": "d2djmtdaou68jg3om4b0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108018240"
+          "value": "108052862"
         },
         {
           "key": "ServerName",
-          "value": "d2cucoa9i92do9ftting"
+          "value": "d2djn2taou68jg3om4d0"
         },
         {
           "key": "CpuCount",
@@ -2307,7 +2388,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "LoginKeyName",
-          "value": "d2cucj29i92do9fttilg"
+          "value": "d2djmtdaou68jg3om4b0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2323,11 +2404,11 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-11T21:47:45+0900"
+          "value": "2025-08-12T22:03:25+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-11T21:49:59+0900"
+          "value": "2025-08-12T22:05:37+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2351,19 +2432,19 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "VpcNo",
-          "value": "118207"
+          "value": "118425"
         },
         {
           "key": "SubnetNo",
-          "value": "249488"
+          "value": "249903"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4886506"
+          "value": "4889976"
         },
         {
           "key": "InitScriptNo",
-          "value": "134300"
+          "value": "134453"
         },
         {
           "key": "ServerInstanceType",
@@ -2418,7 +2499,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2cucoa9i92do9fttimg",
+      "uid": "d2djn2taou68jg3om4c0",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2446,7 +2527,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2cucoa9i92do9fttimg",
+          "uid": "d2djn2taou68jg3om4c0",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2538,7 +2619,9 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
 
 ```json
 {
-  "idList": ["mmci01"]
+  "idList": [
+    "mmci01"
+  ]
 }
 ```
 
@@ -2556,7 +2639,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2cucoa9i92do9fttimg",
+  "uid": "d2djn2taou68jg3om4c0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2583,7 +2666,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2cucoa9i92do9fttimg"
+    "sys.uid": "d2djn2taou68jg3om4c0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2592,9 +2675,9 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2cucoa9i92do9ftting",
-      "cspResourceName": "d2cucoa9i92do9ftting",
-      "cspResourceId": "108018240",
+      "uid": "d2djn2taou68jg3om4d0",
+      "cspResourceName": "d2djn2taou68jg3om4d0",
+      "cspResourceId": "108052862",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2608,12 +2691,12 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:50:06",
+      "createdTime": "2025-08-12 13:05:46",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-11 12:50:06",
-        "sys.cspResourceId": "108018240",
-        "sys.cspResourceName": "d2cucoa9i92do9ftting",
+        "sys.createdTime": "2025-08-12 13:05:46",
+        "sys.cspResourceId": "108052862",
+        "sys.cspResourceName": "d2djn2taou68jg3om4d0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2621,14 +2704,14 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2cucoa9i92do9ftting"
+        "sys.uid": "d2djn2taou68jg3om4d0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "223.130.153.163",
+      "publicIP": "49.50.132.79",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2657,33 +2740,38 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncpvpc+kr+s2-g3",
+      "specId": "s2-g3",
       "cspSpecName": "s2-g3",
-      "imageId": "ncpvpc+23789321",
+      "imageId": "23789321",
       "cspImageName": "23789321",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "118207",
+      "cspVNetId": "118425",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "249488",
+      "cspSubnetId": "249903",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-sg-01"],
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2cucj29i92do9fttilg",
+      "cspSshKeyId": "d2djmtdaou68jg3om4b0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108018240"
+          "value": "108052862"
         },
         {
           "key": "ServerName",
-          "value": "d2cucoa9i92do9ftting"
+          "value": "d2djn2taou68jg3om4d0"
         },
         {
           "key": "CpuCount",
@@ -2699,7 +2787,7 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "LoginKeyName",
-          "value": "d2cucj29i92do9fttilg"
+          "value": "d2djmtdaou68jg3om4b0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2715,11 +2803,11 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-11T21:47:45+0900"
+          "value": "2025-08-12T22:03:25+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-11T21:49:59+0900"
+          "value": "2025-08-12T22:05:37+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2743,19 +2831,19 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
         },
         {
           "key": "VpcNo",
-          "value": "118207"
+          "value": "118425"
         },
         {
           "key": "SubnetNo",
-          "value": "249488"
+          "value": "249903"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4886506"
+          "value": "4889976"
         },
         {
           "key": "InitScriptNo",
-          "value": "134300"
+          "value": "134453"
         },
         {
           "key": "ServerInstanceType",
@@ -2796,3 +2884,4 @@ _Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) usin
 ```
 
 </details>
+

@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (b0d8551)
-- cm-model: v0.0.10
-- CB-Tumblebug: v0.11.2
+- CM-Beetle: v0.4.0 (ec76095)
+- cm-model: v0.0.11
+- CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
-- CB-MapUI: v0.11.3
+- CB-MapUI: v0.11.4
 - Target CSP: ALIBABA
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 11, 2025
-- Test Time: 21:01:30 KST
-- Test Execution: 2025-08-11 21:01:30 KST
+- Test Date: August 12, 2025
+- Test Time: 22:21:36 KST
+- Test Execution: 2025-08-12 22:21:36 KST
 
 ### Scenario
 
@@ -37,24 +37,25 @@
 
 ### Test Results Summary
 
-| Test | Endpoint                                          | Status                | Duration | Details |
-| ---- | ------------------------------------------------- | --------------------- | -------- | ------- |
-| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS**           | 225ms    | Success |
-| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS**           | 49.915s  | Success |
-| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS**           | 62ms     | Success |
-| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS**           | 81ms     | Success |
-| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS**           | 134ms    | Success |
-| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | :warning: **WARNING** | 43.698s  | WARNING |
+| Test | Endpoint | Status | Duration | Details |
+|------|----------|--------|----------|----------|
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 298ms | Success |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 58.023s | Success |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 104ms | Success |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 64ms | Success |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 123ms | Success |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 42.681s | Success |
 
-**Overall Result**: 5/6 tests passed :warning:
+**Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 1m50.196857737s
+**Total Duration**: 2m11.472920703s
 
-_Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) using CM-Beetle automated test CLI_
+*Test executed on August 12, 2025 at 22:21:36 KST (2025-08-12 22:21:36 KST) using CM-Beetle automated test CLI*
 
 ### Recommend a target model for computing infra
 
-> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
+> [!Note]
+> `desiredCsp` and `desiredRegion` are required in the request body.
 
 - API: `POST /beetle/recommendation/mci`
 - Request body:
@@ -96,9 +97,9 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 8,
+          "available": 3,
+          "used": 5
         },
         "rootDisk": {
           "label": "unknown",
@@ -117,8 +118,12 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
@@ -135,8 +140,13 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
+            "ipv4CidrBlocks": [
+              "172.29.0.102/24",
+              "172.29.0.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b003/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -153,8 +163,12 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -181,22 +195,30 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": ["172.20.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.20.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": ["172.19.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.19.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": ["172.17.0.1/16"],
-            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
+            "ipv4CidrBlocks": [
+              "172.17.0.1/16"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::42:ccff:fe24:2530/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -208,15 +230,21 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": ["10.1.0.106/24"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
+            "ipv4CidrBlocks": [
+              "10.1.0.106/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fe9d:89c5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::2852:51ff:fe36:258b/64"
+            ],
             "mtu": 65000,
             "state": "up"
           },
@@ -228,135 +256,178 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.102/24"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.102/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
+            "ipv6CidrBlocks": [
+              "fe80::682a:78ff:fe65:4232/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4c:392b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fed5:6f85/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4d:319e/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe52:914b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe46:9b72/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe3e:1510/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe65:ad39/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe1e:c7fc/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe19:8c71/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
+            "ipv6CidrBlocks": [
+              "fe80::780f:53ff:fead:5084/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
+            "ipv4CidrBlocks": [
+              "10.254.0.27/28",
+              "10.254.0.3/28"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fec9:ea1c/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
+            "ipv6CidrBlocks": [
+              "fe80::bc22:36ff:fe27:1d2/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
+            "ipv6CidrBlocks": [
+              "fe80::38f0:78ff:fef7:358/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
+            "ipv6CidrBlocks": [
+              "fe80::5c87:18ff:fe73:d0dd/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
+            "ipv6CidrBlocks": [
+              "fe80::303c:e7ff:fe79:eeef/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe8a:c222/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe09:e9f5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           }
@@ -1655,11 +1726,13 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "alibaba-ap-northeast-2",
-        "specId": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
-        "imageId": "alibaba+ubuntu_22_04_x64_20g_alibase_20250722.vhd",
+        "specId": "ecs.e-c1m4.large",
+        "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
-        "securityGroupIds": ["mig-sg-01"],
+        "securityGroupIds": [
+          "mig-sg-01"
+        ],
         "sshKeyId": "mig-sshkey-01",
         "dataDiskIds": null
       }
@@ -1667,7 +1740,8 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     "postCommand": {
       "userName": "",
       "command": null
-    }
+    },
+    "policyOnPartialFailure": ""
   },
   "targetVNet": {
     "name": "mig-vnet-01",
@@ -1695,19 +1769,19 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
   },
   "targetVmSpecList": [
     {
-      "id": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
-      "name": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
+      "id": "alibaba+ap-northeast-2+ecs.e-c1m4.large",
+      "cspSpecName": "ecs.e-c1m4.large",
+      "name": "alibaba+ap-northeast-2+ecs.e-c1m4.large",
       "namespace": "system",
       "connectionName": "alibaba-ap-northeast-2",
       "providerName": "alibaba",
       "regionName": "ap-northeast-2",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 32,
-      "memoryGiB": 256,
+      "vCPU": 2,
+      "memoryGiB": 8,
       "diskSizeGB": -1,
-      "costPerHour": 1.71649,
+      "costPerHour": 0.0791,
       "orderInFilteredResult": 1,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
@@ -1717,7 +1791,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 1,
+      "evaluationScore09": 1.0000001,
       "evaluationScore10": -1,
       "rootDiskType": "",
       "rootDiskSize": "-1",
@@ -1725,11 +1799,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
       "details": [
         {
           "key": "MemorySize",
-          "value": "256.00"
+          "value": "8.00"
         },
         {
           "key": "InstancePpsRx",
-          "value": "2000000"
+          "value": "200000"
         },
         {
           "key": "EriQuantity",
@@ -1737,15 +1811,15 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "EniPrivateIpAddressQuantity",
-          "value": "20"
+          "value": "2"
         },
         {
           "key": "CpuCoreCount",
-          "value": "32"
+          "value": "2"
         },
         {
           "key": "EniTotalQuantity",
-          "value": "40"
+          "value": "2"
         },
         {
           "key": "NetworkEncryptionSupport",
@@ -1765,11 +1839,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceTypeId",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.e-c1m4.large"
         },
         {
           "key": "InstanceBandwidthRx",
-          "value": "10240000"
+          "value": "409600"
         },
         {
           "key": "QueuePairNumber",
@@ -1777,11 +1851,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "EniQuantity",
-          "value": "8"
+          "value": "2"
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.e"
         },
         {
           "key": "InitialCredit",
@@ -1789,11 +1863,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstancePpsTx",
-          "value": "2000000"
+          "value": "200000"
         },
         {
           "key": "InstanceFamilyLevel",
-          "value": "EnterpriseLevel"
+          "value": "EntryLevel"
         },
         {
           "key": "LocalStorageAmount",
@@ -1801,7 +1875,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "TotalEniQueueQuantity",
-          "value": "128"
+          "value": "2"
         },
         {
           "key": "CpuArchitecture",
@@ -1809,15 +1883,15 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "SecondaryEniQueueNumber",
-          "value": "16"
+          "value": "1"
         },
         {
           "key": "InstanceBandwidthTx",
-          "value": "10240000"
+          "value": "409600"
         },
         {
           "key": "MaximumQueueNumberPerEni",
-          "value": "32"
+          "value": "0"
         },
         {
           "key": "DiskQuantity",
@@ -1825,7 +1899,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "PrimaryEniQueueNumber",
-          "value": "16"
+          "value": "1"
         },
         {
           "key": "Memory",
@@ -1833,7 +1907,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "CpuTurboFrequency",
-          "value": "3.20"
+          "value": "0.00"
         },
         {
           "key": "BaselineCredit",
@@ -1841,7 +1915,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "EniTrunkSupported",
-          "value": "true"
+          "value": "false"
         },
         {
           "key": "GPUAmount",
@@ -1857,7 +1931,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceCategory",
-          "value": "Memory-optimized"
+          "value": "Shared"
         },
         {
           "key": "EniIpv6AddressQuantity",
@@ -1873,7 +1947,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "PhysicalProcessorModel",
-          "value": "Intel Xeon (Cascade Lake) Platinum 8269CY"
+          "value": "Intel(R) Xeon(R) Platinum"
         },
         {
           "key": "SupportedBootModes",
@@ -1885,7 +1959,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:16,HyperThreadingAdjustable:false,CoreCount:0,CoreFactor:2,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:[ContinuousCoreToHTMapping,DiscreteCoreToHTMapping]}}"
+          "value": "{Core:1,HyperThreadingAdjustable:true,CoreCount:0,CoreFactor:1,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "NetworkCards",
@@ -1932,7 +2006,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
       "id": "alibaba+ubuntu_22_04_x64_20g_alibase_20250722.vhd",
       "name": "alibaba+ubuntu_22_04_x64_20g_alibase_20250722.vhd",
       "connectionName": "alibaba-ap-northeast-1",
-      "fetchedTime": "2025.08.11 09:48:12 Mon",
+      "fetchedTime": "2025.08.12 07:58:40 Tue",
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
       "osPlatform": "Linux/UNIX",
@@ -2357,7 +2431,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2ctnaq9i92do9dlmf90",
+  "uid": "d2djvtlaou68jg3om4g0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2384,7 +2458,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2ctnaq9i92do9dlmf90"
+    "sys.uid": "d2djvtlaou68jg3om4g0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2393,9 +2467,9 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2ctnb29i92do9dlmfa0",
-      "cspResourceName": "d2ctnb29i92do9dlmfa0",
-      "cspResourceId": "i-mj73r11lpv9bb7a7bvpa",
+      "uid": "d2djvtlaou68jg3om4h0",
+      "cspResourceName": "d2djvtlaou68jg3om4h0",
+      "cspResourceId": "i-mj759v25qdfzffo7lywx",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2409,12 +2483,12 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:02:25",
+      "createdTime": "2025-08-12 13:22:40",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-11 12:02:25",
-        "sys.cspResourceId": "i-mj73r11lpv9bb7a7bvpa",
-        "sys.cspResourceName": "d2ctnb29i92do9dlmfa0",
+        "sys.createdTime": "2025-08-12 13:22:40",
+        "sys.cspResourceId": "i-mj759v25qdfzffo7lywx",
+        "sys.cspResourceName": "d2djvtlaou68jg3om4h0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2422,17 +2496,17 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2ctnb29i92do9dlmfa0"
+        "sys.uid": "d2djvtlaou68jg3om4h0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.220.209.221",
+      "publicIP": "8.220.210.234",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.85",
+      "privateIP": "192.168.110.202",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -2458,26 +2532,31 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
             "latitude": 37.36,
             "longitude": 126.78
           },
-          "zones": ["ap-northeast-2a", "ap-northeast-2b"]
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
-      "imageId": "alibaba+ubuntu_22_04_x64_20g_alibase_20250722.vhd",
+      "specId": "ecs.e-c1m4.large",
+      "cspSpecName": "ecs.e-c1m4.large",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7l2nedm2mwby86wi24b",
+      "cspVNetId": "vpc-mj7oap9wc93jgg686lkdi",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj744ln2puy641ry8ivc2",
-      "networkInterface": "eni-mj73r11lpv9bb7a32ql9",
-      "securityGroupIds": ["mig-sg-01"],
+      "cspSubnetId": "vsw-mj78smabxjpmwl2e87npl",
+      "networkInterface": "eni-mj759v25qdfzffo013p1",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2ctn9a9i92do9dlmf80",
+      "cspSshKeyId": "d2djvrtaou68jg3om4f0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "nd9$1Abc29tia!",
+      "vmUserPassword": "l2dv$Auoatdj!1",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -2485,7 +2564,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.e-c1m4.large"
         },
         {
           "key": "DeviceAvailable",
@@ -2509,7 +2588,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceName",
-          "value": "d2ctnb29i92do9dlmfa0"
+          "value": "d2djvtlaou68jg3om4h0"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -2529,7 +2608,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "StartTime",
-          "value": "2025-08-11T12:02Z"
+          "value": "2025-08-12T13:22Z"
         },
         {
           "key": "ZoneId",
@@ -2537,7 +2616,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "400"
         },
         {
           "key": "InternetChargeType",
@@ -2545,7 +2624,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "HostName",
-          "value": "iZmj73r11lpv9bb7a7bvpaZ"
+          "value": "iZmj759v25qdfzffo7lywxZ"
         },
         {
           "key": "Status",
@@ -2557,7 +2636,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "2"
         },
         {
           "key": "SpotPriceLimit",
@@ -2577,7 +2656,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "SerialNumber",
-          "value": "2fc1c945-b95a-4bd4-a430-4e9c842f3239"
+          "value": "80b2304e-f590-4267-a26d-9aab93f23f9a"
         },
         {
           "key": "RegionId",
@@ -2593,11 +2672,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.e"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj73r11lpv9bb7a7bvpa"
+          "value": "i-mj759v25qdfzffo7lywx"
         },
         {
           "key": "Recyclable",
@@ -2613,15 +2692,15 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "8192"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-11T12:01Z"
+          "value": "2025-08-12T13:22Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2ctn9a9i92do9dlmf80"
+          "value": "d2djvrtaou68jg3om4f0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -2645,7 +2724,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj79lra3nmoikzke76jd]}"
+          "value": "{SecurityGroupId:[sg-mj7a889k38yz8v0ww7su]}"
         },
         {
           "key": "InnerIpAddress",
@@ -2653,7 +2732,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.209.221]}"
+          "value": "{IpAddress:[8.220.210.234]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -2669,7 +2748,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:1,CoreFactor:0,Numa:ON,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -2701,7 +2780,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj744ln2puy641ry8ivc2,VpcId:vpc-mj7l2nedm2mwby86wi24b,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.85]}}"
+          "value": "{VSwitchId:vsw-mj78smabxjpmwl2e87npl,VpcId:vpc-mj7oap9wc93jgg686lkdi,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.202]}}"
         },
         {
           "key": "Tags",
@@ -2709,7 +2788,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:0a:39:d3,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj73r11lpv9bb7a32ql9,PrimaryIpAddress:192.168.110.85,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.85,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:0a:a4:17,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj759v25qdfzffo013p1,PrimaryIpAddress:192.168.110.202,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.202,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",
@@ -2744,7 +2823,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2ctnaq9i92do9dlmf90",
+      "uid": "d2djvtlaou68jg3om4g0",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2772,7 +2851,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2ctnaq9i92do9dlmf90",
+          "uid": "d2djvtlaou68jg3om4g0",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2864,7 +2943,9 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
 
 ```json
 {
-  "idList": ["mmci01"]
+  "idList": [
+    "mmci01"
+  ]
 }
 ```
 
@@ -2882,7 +2963,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2ctnaq9i92do9dlmf90",
+  "uid": "d2djvtlaou68jg3om4g0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2909,7 +2990,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2ctnaq9i92do9dlmf90"
+    "sys.uid": "d2djvtlaou68jg3om4g0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2918,9 +2999,9 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2ctnb29i92do9dlmfa0",
-      "cspResourceName": "d2ctnb29i92do9dlmfa0",
-      "cspResourceId": "i-mj73r11lpv9bb7a7bvpa",
+      "uid": "d2djvtlaou68jg3om4h0",
+      "cspResourceName": "d2djvtlaou68jg3om4h0",
+      "cspResourceId": "i-mj759v25qdfzffo7lywx",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2934,12 +3015,12 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-11 12:02:25",
+      "createdTime": "2025-08-12 13:22:40",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-11 12:02:25",
-        "sys.cspResourceId": "i-mj73r11lpv9bb7a7bvpa",
-        "sys.cspResourceName": "d2ctnb29i92do9dlmfa0",
+        "sys.createdTime": "2025-08-12 13:22:40",
+        "sys.cspResourceId": "i-mj759v25qdfzffo7lywx",
+        "sys.cspResourceName": "d2djvtlaou68jg3om4h0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2947,17 +3028,17 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2ctnb29i92do9dlmfa0"
+        "sys.uid": "d2djvtlaou68jg3om4h0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.220.209.221",
+      "publicIP": "8.220.210.234",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.85",
+      "privateIP": "192.168.110.202",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -2983,26 +3064,31 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
             "latitude": 37.36,
             "longitude": 126.78
           },
-          "zones": ["ap-northeast-2a", "ap-northeast-2b"]
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
-      "imageId": "alibaba+ubuntu_22_04_x64_20g_alibase_20250722.vhd",
+      "specId": "ecs.e-c1m4.large",
+      "cspSpecName": "ecs.e-c1m4.large",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7l2nedm2mwby86wi24b",
+      "cspVNetId": "vpc-mj7oap9wc93jgg686lkdi",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj744ln2puy641ry8ivc2",
-      "networkInterface": "eni-mj73r11lpv9bb7a32ql9",
-      "securityGroupIds": ["mig-sg-01"],
+      "cspSubnetId": "vsw-mj78smabxjpmwl2e87npl",
+      "networkInterface": "eni-mj759v25qdfzffo013p1",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2ctn9a9i92do9dlmf80",
+      "cspSshKeyId": "d2djvrtaou68jg3om4f0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "nd9$1Abc29tia!",
+      "vmUserPassword": "l2dv$Auoatdj!1",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -3010,7 +3096,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.e-c1m4.large"
         },
         {
           "key": "DeviceAvailable",
@@ -3034,7 +3120,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceName",
-          "value": "d2ctnb29i92do9dlmfa0"
+          "value": "d2djvtlaou68jg3om4h0"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -3054,7 +3140,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "StartTime",
-          "value": "2025-08-11T12:02Z"
+          "value": "2025-08-12T13:22Z"
         },
         {
           "key": "ZoneId",
@@ -3062,7 +3148,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "400"
         },
         {
           "key": "InternetChargeType",
@@ -3070,7 +3156,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "HostName",
-          "value": "iZmj73r11lpv9bb7a7bvpaZ"
+          "value": "iZmj759v25qdfzffo7lywxZ"
         },
         {
           "key": "Status",
@@ -3082,7 +3168,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "2"
         },
         {
           "key": "SpotPriceLimit",
@@ -3102,7 +3188,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "SerialNumber",
-          "value": "2fc1c945-b95a-4bd4-a430-4e9c842f3239"
+          "value": "80b2304e-f590-4267-a26d-9aab93f23f9a"
         },
         {
           "key": "RegionId",
@@ -3118,11 +3204,11 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.e"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj73r11lpv9bb7a7bvpa"
+          "value": "i-mj759v25qdfzffo7lywx"
         },
         {
           "key": "Recyclable",
@@ -3138,15 +3224,15 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "8192"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-11T12:01Z"
+          "value": "2025-08-12T13:22Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2ctn9a9i92do9dlmf80"
+          "value": "d2djvrtaou68jg3om4f0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -3170,7 +3256,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj79lra3nmoikzke76jd]}"
+          "value": "{SecurityGroupId:[sg-mj7a889k38yz8v0ww7su]}"
         },
         {
           "key": "InnerIpAddress",
@@ -3178,7 +3264,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.209.221]}"
+          "value": "{IpAddress:[8.220.210.234]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -3194,7 +3280,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:1,CoreFactor:0,Numa:ON,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -3226,7 +3312,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj744ln2puy641ry8ivc2,VpcId:vpc-mj7l2nedm2mwby86wi24b,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.85]}}"
+          "value": "{VSwitchId:vsw-mj78smabxjpmwl2e87npl,VpcId:vpc-mj7oap9wc93jgg686lkdi,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.202]}}"
         },
         {
           "key": "Tags",
@@ -3234,7 +3320,7 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:0a:39:d3,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj73r11lpv9bb7a32ql9,PrimaryIpAddress:192.168.110.85,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.85,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:0a:a4:17,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj759v25qdfzffo013p1,PrimaryIpAddress:192.168.110.202,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.202,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",
@@ -3269,3 +3355,4 @@ _Test executed on August 11, 2025 at 21:01:30 KST (2025-08-11 21:01:30 KST) usin
   "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
 }
 ```
+
