@@ -1,81 +1,74 @@
-# Beetle v0.4.0: Integration and Testing with Tumblebug, Honeybee and model
+# CM-Beetle test results for NCP
 
 > [!NOTE]
-> This article is being written for the Beetle v0.4.0 release.
+> This document presents comprehensive test results for CM-Beetle integration with NCP cloud infrastructure.
 
 ## Environment and scenario
 
-### Envrionment
+### Environment
 
-> [!NOTE]
-> To be updated
-
-- Beetle v0.3.2
-- cm-model v0.0.10 (It may be applied to Damselfly v0.3.0)
-- Honeybee v0.3.1
-- Tumblebug v0.11.2 (Spider v0.11.1, CB-MapUI v0.11.3)
+- CM-Beetle: v0.4.0 (b0d8551)
+- cm-model: v0.0.10
+- CB-Tumblebug: v0.11.2
+- CB-Spider: v0.11.1
+- CB-MapUI: v0.11.3
+- Target CSP: NCP
+- Target Region: kr
+- CM-Beetle URL: http://localhost:8056
+- Namespace: mig01
+- Test CLI: Custom automated testing tool
+- Test Date: August 11, 2025
+- Test Time: 21:46:37 KST
+- Test Execution: 2025-08-11 21:46:37 KST
 
 ### Scenario
 
-1. Get a source group list via Honeybee
-1. Get the refined source computing infra info via Honeybee
-
-- Refined source computing infra info = on-premise model (a.k.a computing infra source model)
-- **Used 2 servers info** as dicussed (i.e., web, nfs)
-
 1. Recommend a target model for computing infra via Beetle
 1. Migrate the computing infra as defined in the target model via Beetle
+1. List all MCIs via Beetle
+1. List MCI IDs via Beetle
+1. Get specific MCI details via Beetle
 1. Delete the migrated computing infra via Beetle
 
 > [!NOTE]
 > Some long request/response bodies are in the collapsible section for better readability.
 
-## Honeybee section
+## Test result for NCP
 
-> [!Note]
-> The Honeybee has been providing the always-running servers. The server has been used.
+### Test Results Summary
 
-### Get a list of source group
+| Test | Endpoint                                          | Status      | Duration  | Details |
+| ---- | ------------------------------------------------- | ----------- | --------- | ------- |
+| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 277ms     | Success |
+| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 3m21.699s | Success |
+| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 74ms      | Success |
+| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 56ms      | Success |
+| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 123ms     | Success |
+| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ❌ **FAIL** | 10m1.168s | HTTP 0  |
 
-> [!NOTE]
-> To be updated
+**Overall Result**: 5/6 tests passed ❌
 
-- API: `GET /source_group`
-- Request body: None
-- Response body:
+**Total Duration**: 13m39.476100377s
 
-```json
+_Test executed on August 11, 2025 at 21:46:37 KST (2025-08-11 21:46:37 KST) using CM-Beetle automated test CLI_
 
-```
+### Recommend a target model for computing infra
 
-### Get the refined computing infra info
+> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
 
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group/{sgId}/infra/refined`
-- sgId: `db652288-047b-480b-ac86-3ef7ed57f68e`
-- Request body: None
-- Response body:
+- API: `POST /beetle/recommendation/mci`
+- Request body:
 
 <details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-
-```
-
-</details>
-
-> [!NOTE]
-> Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
-
-<details>
-  <summary><ins>Click to see the onpremise model</ins></summary>
+  <summary> <ins>Click to see the request body </ins> </summary>
 
 ```json
 {
-  "onpremiseInfraModel": {
+  "desiredCspAndRegionPair": {
+    "csp": "ncp",
+    "region": "kr"
+  },
+  "OnpremiseInfraModel": {
     "network": {
       "ipv4Networks": {
         "defaultGateways": [
@@ -103,9 +96,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 8,
+          "available": 3,
+          "used": 5
         },
         "rootDisk": {
           "label": "unknown",
@@ -1640,13 +1633,1166 @@
 
 </details>
 
-## Beetle section
+- Response body:
 
-Testing was performed by `test-cli`.
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
 
-- ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
-- ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md) (Failed to delete vNet/subnet)
-- ❌ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md) (Deadline excceeded when deleting MCI)
-- TBD
+```json
+{
+  "status": "",
+  "description": "This is a list of recommended target infrastructures. Please review and use them.",
+  "targetVmInfra": {
+    "name": "mmci01",
+    "installMonAgent": "",
+    "label": null,
+    "systemLabel": "",
+    "description": "a recommended multi-cloud infrastructure",
+    "vm": [
+      {
+        "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "subGroupSize": "",
+        "label": null,
+        "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "connectionName": "ncpvpc-kr",
+        "specId": "ncpvpc+kr+s2-g3",
+        "imageId": "ncpvpc+23789321",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": ["mig-sg-01"],
+        "sshKeyId": "mig-sshkey-01",
+        "dataDiskIds": null
+      }
+    ],
+    "postCommand": {
+      "userName": "",
+      "command": null
+    }
+  },
+  "targetVNet": {
+    "name": "mig-vnet-01",
+    "connectionName": "ncpvpc-kr",
+    "cidrBlock": "192.168.96.0/19",
+    "subnetInfoList": [
+      {
+        "name": "mig-subnet-01",
+        "ipv4_CIDR": "192.168.110.0/24",
+        "description": "a recommended subnet for migration"
+      }
+    ],
+    "description": "a recommended vNet for migration"
+  },
+  "targetSshKey": {
+    "name": "mig-sshkey-01",
+    "connectionName": "ncpvpc-kr",
+    "description": "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded",
+    "cspResourceId": "",
+    "fingerprint": "",
+    "username": "",
+    "verifiedUsername": "",
+    "publicKey": "",
+    "privateKey": ""
+  },
+  "targetVmSpecList": [
+    {
+      "id": "ncpvpc+kr+s2-g3",
+      "cspSpecName": "s2-g3",
+      "name": "ncpvpc+kr+s2-g3",
+      "namespace": "system",
+      "connectionName": "ncpvpc-kr",
+      "providerName": "ncpvpc",
+      "regionName": "kr",
+      "infraType": "vm",
+      "architecture": "x86_64",
+      "vCPU": 2,
+      "memoryGiB": 8,
+      "diskSizeGB": -1,
+      "costPerHour": 0.0848,
+      "orderInFilteredResult": 1,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": 1.0000001,
+      "evaluationScore10": -1,
+      "rootDiskType": "default",
+      "rootDiskSize": "-1",
+      "systemLabel": "from-assets",
+      "details": [
+        {
+          "key": "ServerSpecCode",
+          "value": "s2-g3"
+        },
+        {
+          "key": "GenerationCode",
+          "value": "G3"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "CpuArchitectureType",
+          "value": "{code:X86_64,codeName:x86 64bit}"
+        },
+        {
+          "key": "BlockStorageMaxCount",
+          "value": "20"
+        },
+        {
+          "key": "BlockStorageMaxIops",
+          "value": "4725"
+        },
+        {
+          "key": "BlockStorageMaxThroughput",
+          "value": "81"
+        },
+        {
+          "key": "NetworkPerformance",
+          "value": "1000000000"
+        },
+        {
+          "key": "NetworkInterfaceMaxCount",
+          "value": "3"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.STAND.C002.M008.G003"
+        },
+        {
+          "key": "ServerSpecDescription",
+          "value": "vCPU 2EA, Memory 8GB"
+        },
+        {
+          "key": "CorrespondingImageIds",
+          "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+        }
+      ]
+    }
+  ],
+  "targetVmOsImageList": [
+    {
+      "namespace": "system",
+      "providerName": "ncpvpc",
+      "cspImageName": "23789321",
+      "regionList": ["kr"],
+      "id": "ncpvpc+23789321",
+      "name": "ncpvpc+23789321",
+      "connectionName": "ncpvpc-kr",
+      "fetchedTime": "2025.08.11 09:48:11 Mon",
+      "isGPUImage": true,
+      "osType": "Ubuntu 22.04",
+      "osArchitecture": "x86_64",
+      "osPlatform": "Linux/UNIX",
+      "osDistribution": "ubuntu-22.04-gpu (Hypervisor:KVM)",
+      "osDiskType": "Common BlockStorage 1",
+      "osDiskSizeGB": 107,
+      "imageStatus": "Available",
+      "details": [
+        {
+          "key": "ServerImageNo",
+          "value": "23789321"
+        },
+        {
+          "key": "ServerImageName",
+          "value": "ubuntu-22.04-gpu"
+        },
+        {
+          "key": "ServerImageDescription",
+          "value": "kernel version : 5.15.0-140-generic"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerImageType",
+          "value": "{code:NCP,codeName:NCP 서버이미지}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "CpuArchitectureType",
+          "value": "{code:X86_64,codeName:x86 64bit}"
+        },
+        {
+          "key": "OsCategoryType",
+          "value": "{code:LINUX,codeName:LINUX}"
+        },
+        {
+          "key": "OsType",
+          "value": "{code:UBUNTU,codeName:UBUNTU}"
+        },
+        {
+          "key": "ServerImageStatus",
+          "value": "{code:CREAT,codeName:NSI CREATED state}"
+        },
+        {
+          "key": "ServerImageOperation",
+          "value": "{code:NULL,codeName:NSI NULL OP}"
+        },
+        {
+          "key": "ServerImageStatusName",
+          "value": "created"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2024-04-25T18:39:01+0900"
+        },
+        {
+          "key": "ShareStatus",
+          "value": "{code:NULL,codeName:NSI Share NULL State}"
+        },
+        {
+          "key": "BlockStorageMappingList",
+          "value": "{order:0,blockStorageSnapshotInstanceNo:23752581,blockStorageSnapshotName:snapshot of ubuntu-22.04-gpu,blockStorageSize:107374182400,blockStorageVolumeType:{code:CB1,codeName:Common BlockStorage 1},iops:300,throughput:104857600,isEncryptedVolume:false}"
+        }
+      ]
+    }
+  ],
+  "targetSecurityGroupList": [
+    {
+      "name": "mig-sg-01",
+      "connectionName": "ncpvpc-kr",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "firewallRules": [
+        {
+          "Ports": "10022",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8081,8082",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "53",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "80",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8086",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8888",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9201",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9202",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9203",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9204",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9206",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9001",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "18080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "13000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9101",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9106",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9105",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9102",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9103",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "5672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "4369",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15675",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "25672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "16567",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    }
+  ]
+}
+```
+
+</details>
+
+### Migrate the computing infra as defined in the target model
+
+- API: `POST /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: **same as the response from the previous step**
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2cucoa9i92do9fttimg",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "Running",
+  "targetAction": "Create",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2cucoa9i92do9fttimg"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2cucoa9i92do9ftting",
+      "cspResourceName": "d2cucoa9i92do9ftting",
+      "cspResourceId": "108018240",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:50:06",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-11 12:50:06",
+        "sys.cspResourceId": "108018240",
+        "sys.cspResourceName": "d2cucoa9i92do9ftting",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2cucoa9i92do9ftting"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "223.130.153.163",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "100",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncpvpc+kr+s2-g3",
+      "cspSpecName": "s2-g3",
+      "imageId": "ncpvpc+23789321",
+      "cspImageName": "23789321",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "118207",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "249488",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2cucj29i92do9fttilg",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "108018240"
+        },
+        {
+          "key": "ServerName",
+          "value": "d2cucoa9i92do9ftting"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d2cucj29i92do9fttilg"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-11T21:47:45+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-11T21:49:59+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "118207"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "249488"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4886506"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "134300"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23789321"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s2-g3"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>
+
+### Get a list of MCIs
+
+- API: `GET /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "mci": [
+    {
+      "resourceType": "mci",
+      "id": "mmci01",
+      "uid": "d2cucoa9i92do9fttimg",
+      "name": "mmci01",
+      "status": "Running:1 (R:1/1)",
+      "statusCount": {
+        "countTotal": 1,
+        "countCreating": 0,
+        "countRunning": 1,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": null,
+      "systemLabel": "",
+      "systemMessage": "",
+      "description": "a recommended multi-cloud infrastructure",
+      "vm": [
+        {
+          "resourceType": "mci",
+          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "uid": "d2cucoa9i92do9fttimg",
+          "name": "mmci01",
+          "subGroupId": "",
+          "location": {
+            "display": "",
+            "latitude": 0,
+            "longitude": 0
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": null,
+          "description": "a recommended multi-cloud infrastructure",
+          "region": {
+            "Region": "",
+            "Zone": ""
+          },
+          "publicIP": "",
+          "sshPort": "",
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": "",
+          "rootDiskName": "",
+          "connectionName": "",
+          "connectionConfig": {
+            "configName": "",
+            "providerName": "",
+            "driverName": "",
+            "credentialName": "",
+            "credentialHolder": "",
+            "regionZoneInfoName": "",
+            "regionZoneInfo": {
+              "assignedRegion": "",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "",
+              "regionName": "",
+              "description": "",
+              "location": {
+                "display": "",
+                "latitude": 0,
+                "longitude": 0
+              },
+              "zones": null
+            },
+            "regionRepresentative": false,
+            "verified": false
+          },
+          "specId": "",
+          "cspSpecName": "",
+          "imageId": "",
+          "cspImageName": "",
+          "vNetId": "",
+          "cspVNetId": "",
+          "subnetId": "",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": null,
+          "dataDiskIds": null,
+          "sshKeyId": "",
+          "cspSshKeyId": ""
+        }
+      ],
+      "newVmList": null,
+      "postCommand": {
+        "userName": "",
+        "command": null
+      },
+      "postCommandResult": {
+        "results": null
+      }
+    }
+  ]
+}
+```
+
+### Get a list of MCI IDs
+
+- API: `GET /beetle/migration/ns/mig01/mci?option=id`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "idList": ["mmci01"]
+}
+```
+
+### Get a specific MCI
+
+- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2cucoa9i92do9fttimg",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2cucoa9i92do9fttimg"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2cucoa9i92do9ftting",
+      "cspResourceName": "d2cucoa9i92do9ftting",
+      "cspResourceId": "108018240",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:50:06",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-11 12:50:06",
+        "sys.cspResourceId": "108018240",
+        "sys.cspResourceName": "d2cucoa9i92do9ftting",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2cucoa9i92do9ftting"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "223.130.153.163",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "100",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncpvpc+kr+s2-g3",
+      "cspSpecName": "s2-g3",
+      "imageId": "ncpvpc+23789321",
+      "cspImageName": "23789321",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "118207",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "249488",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2cucj29i92do9fttilg",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "108018240"
+        },
+        {
+          "key": "ServerName",
+          "value": "d2cucoa9i92do9ftting"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d2cucj29i92do9fttilg"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-11T21:47:45+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-11T21:49:59+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "118207"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "249488"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4886506"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "134300"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23789321"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s2-g3"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>

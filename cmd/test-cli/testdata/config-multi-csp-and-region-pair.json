@@ -1,0 +1,33 @@
+{
+  "beetleUrl": "http://localhost:8056",
+  "namespaceId": "mig01",
+  "authConfigFile": "testdata/auth-config.json",
+  "desiredCspRegionPairs": [
+    {
+      "csp": "aws",
+      "region": "ap-northeast-2",
+      "name": "AWS-Seoul"
+    },
+    {
+      "csp": "azure",
+      "region": "koreacentral",
+      "name": "Azure-Seoul"
+    },
+    {
+      "csp": "gcp",
+      "region": "asia-northeast3",
+      "name": "GCP-Seoul"
+    },
+    {
+      "csp": "ncp",
+      "region": "kr",
+      "name": "NCP-Seoul"
+    },
+    {
+      "csp": "alibaba",
+      "region": "ap-northeast-2",
+      "name": "Alibaba-Seoul"
+    }
+  ],
+  "requestBodyFile": "testdata/recommendation-request.json"
+}

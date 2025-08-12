@@ -1,80 +1,8 @@
-# Beetle v0.4.0: Integration and Testing with Tumblebug, Honeybee and model
-
-> [!NOTE]
-> This article is being written for the Beetle v0.4.0 release.
-
-## Environment and scenario
-
-### Envrionment
-
-> [!NOTE]
-> To be updated
-
-- Beetle v0.3.2
-- cm-model v0.0.10 (It may be applied to Damselfly v0.3.0)
-- Honeybee v0.3.1
-- Tumblebug v0.11.2 (Spider v0.11.1, CB-MapUI v0.11.3)
-
-### Scenario
-
-1. Get a source group list via Honeybee
-1. Get the refined source computing infra info via Honeybee
-
-- Refined source computing infra info = on-premise model (a.k.a computing infra source model)
-- **Used 2 servers info** as dicussed (i.e., web, nfs)
-
-1. Recommend a target model for computing infra via Beetle
-1. Migrate the computing infra as defined in the target model via Beetle
-1. Delete the migrated computing infra via Beetle
-
-> [!NOTE]
-> Some long request/response bodies are in the collapsible section for better readability.
-
-## Honeybee section
-
-> [!Note]
-> The Honeybee has been providing the always-running servers. The server has been used.
-
-### Get a list of source group
-
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group`
-- Request body: None
-- Response body:
-
-```json
-
-```
-
-### Get the refined computing infra info
-
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group/{sgId}/infra/refined`
-- sgId: `db652288-047b-480b-ac86-3ef7ed57f68e`
-- Request body: None
-- Response body:
-
-<details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-
-```
-
-</details>
-
-> [!NOTE]
-> Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
-
-<details>
-  <summary><ins>Click to see the onpremise model</ins></summary>
-
-```json
 {
+  "desiredCspAndRegionPair": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
   "onpremiseInfraModel": {
     "network": {
       "ipv4Networks": {
@@ -103,9 +31,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 8,
+          "available": 3,
+          "used": 5
         },
         "rootDisk": {
           "label": "unknown",
@@ -124,8 +52,12 @@
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
@@ -142,8 +74,13 @@
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
+            "ipv4CidrBlocks": [
+              "172.29.0.102/24",
+              "172.29.0.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b003/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -160,8 +97,12 @@
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -188,22 +129,30 @@
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": ["172.20.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.20.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": ["172.19.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.19.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": ["172.17.0.1/16"],
-            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
+            "ipv4CidrBlocks": [
+              "172.17.0.1/16"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::42:ccff:fe24:2530/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -215,15 +164,21 @@
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": ["10.1.0.106/24"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
+            "ipv4CidrBlocks": [
+              "10.1.0.106/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fe9d:89c5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::2852:51ff:fe36:258b/64"
+            ],
             "mtu": 65000,
             "state": "up"
           },
@@ -235,135 +190,178 @@
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.102/24"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.102/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
+            "ipv6CidrBlocks": [
+              "fe80::682a:78ff:fe65:4232/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4c:392b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fed5:6f85/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4d:319e/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe52:914b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe46:9b72/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe3e:1510/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe65:ad39/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe1e:c7fc/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe19:8c71/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
+            "ipv6CidrBlocks": [
+              "fe80::780f:53ff:fead:5084/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
+            "ipv4CidrBlocks": [
+              "10.254.0.27/28",
+              "10.254.0.3/28"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fec9:ea1c/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
+            "ipv6CidrBlocks": [
+              "fe80::bc22:36ff:fe27:1d2/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
+            "ipv6CidrBlocks": [
+              "fe80::38f0:78ff:fef7:358/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
+            "ipv6CidrBlocks": [
+              "fe80::5c87:18ff:fe73:d0dd/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
+            "ipv6CidrBlocks": [
+              "fe80::303c:e7ff:fe79:eeef/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe8a:c222/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe09:e9f5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           }
@@ -1636,17 +1634,3 @@
     ]
   }
 }
-```
-
-</details>
-
-## Beetle section
-
-Testing was performed by `test-cli`.
-
-- ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
-- ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md) (Failed to delete vNet/subnet)
-- ❌ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md) (Deadline excceeded when deleting MCI)
-- TBD

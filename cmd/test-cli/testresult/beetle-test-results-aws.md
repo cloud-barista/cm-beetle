@@ -1,81 +1,75 @@
-# Beetle v0.4.0: Integration and Testing with Tumblebug, Honeybee and model
+# CM-Beetle test results for AWS
 
 > [!NOTE]
-> This article is being written for the Beetle v0.4.0 release.
+> This document presents comprehensive test results for CM-Beetle integration with AWS cloud infrastructure.
 
 ## Environment and scenario
 
-### Envrionment
+### Environment
 
-> [!NOTE]
-> To be updated
-
-- Beetle v0.3.2
-- cm-model v0.0.10 (It may be applied to Damselfly v0.3.0)
-- Honeybee v0.3.1
-- Tumblebug v0.11.2 (Spider v0.11.1, CB-MapUI v0.11.3)
+- CM-Beetle: v0.4.0 (b0d8551)
+- cm-model: v0.0.10
+- CB-Tumblebug: v0.11.2
+- CB-Spider: v0.11.1
+- CB-MapUI: v0.11.3
+- Target CSP: AWS
+- Target Region: ap-northeast-2
+- CM-Beetle URL: http://localhost:8056
+- Namespace: mig01
+- Test CLI: Custom automated testing tool
+- Test Date: August 11, 2025
+- Test Time: 21:07:12 KST
+- Test Execution: 2025-08-11 21:07:12 KST
 
 ### Scenario
 
-1. Get a source group list via Honeybee
-1. Get the refined source computing infra info via Honeybee
-
-- Refined source computing infra info = on-premise model (a.k.a computing infra source model)
-- **Used 2 servers info** as dicussed (i.e., web, nfs)
-
 1. Recommend a target model for computing infra via Beetle
 1. Migrate the computing infra as defined in the target model via Beetle
+1. List all MCIs via Beetle
+1. List MCI IDs via Beetle
+1. Get specific MCI details via Beetle
 1. Delete the migrated computing infra via Beetle
 
 > [!NOTE]
 > Some long request/response bodies are in the collapsible section for better readability.
 
-## Honeybee section
+## Test result for AWS
+
+### Test Results Summary
+
+| Test | Endpoint | Status | Duration | Details |
+|------|----------|--------|----------|----------|
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 541ms | Success |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 37.999s | Success |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 62ms | Success |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 166ms | Success |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 160ms | Success |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m22.054s | Success |
+
+**Overall Result**: 6/6 tests passed ✅
+
+**Total Duration**: 2m17.05276286s
+
+*Test executed on August 11, 2025 at 21:07:12 KST (2025-08-11 21:07:12 KST) using CM-Beetle automated test CLI*
+
+### Recommend a target model for computing infra
 
 > [!Note]
-> The Honeybee has been providing the always-running servers. The server has been used.
+> `desiredCsp` and `desiredRegion` are required in the request body.
 
-### Get a list of source group
-
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group`
-- Request body: None
-- Response body:
-
-```json
-
-```
-
-### Get the refined computing infra info
-
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group/{sgId}/infra/refined`
-- sgId: `db652288-047b-480b-ac86-3ef7ed57f68e`
-- Request body: None
-- Response body:
+- API: `POST /beetle/recommendation/mci`
+- Request body:
 
 <details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-
-```
-
-</details>
-
-> [!NOTE]
-> Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
-
-<details>
-  <summary><ins>Click to see the onpremise model</ins></summary>
+  <summary> <ins>Click to see the request body </ins> </summary>
 
 ```json
 {
-  "onpremiseInfraModel": {
+  "desiredCspAndRegionPair": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
+  "OnpremiseInfraModel": {
     "network": {
       "ipv4Networks": {
         "defaultGateways": [
@@ -103,9 +97,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 32,
+          "available": 15,
+          "used": 17
         },
         "rootDisk": {
           "label": "unknown",
@@ -124,8 +118,12 @@
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
@@ -142,8 +140,13 @@
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
+            "ipv4CidrBlocks": [
+              "172.29.0.102/24",
+              "172.29.0.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b003/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -160,8 +163,12 @@
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.200/32"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.200/32"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -188,22 +195,30 @@
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": ["172.20.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.20.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": ["172.19.0.1/16"],
+            "ipv4CidrBlocks": [
+              "172.19.0.1/16"
+            ],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": ["172.17.0.1/16"],
-            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
+            "ipv4CidrBlocks": [
+              "172.17.0.1/16"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::42:ccff:fe24:2530/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
@@ -215,15 +230,21 @@
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": ["10.1.0.106/24"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
+            "ipv4CidrBlocks": [
+              "10.1.0.106/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fe9d:89c5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::2852:51ff:fe36:258b/64"
+            ],
             "mtu": 65000,
             "state": "up"
           },
@@ -235,135 +256,178 @@
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": ["192.168.110.102/24"],
-            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
+            "ipv4CidrBlocks": [
+              "192.168.110.102/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::a6bf:1ff:fe5a:b004/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
+            "ipv6CidrBlocks": [
+              "fe80::682a:78ff:fe65:4232/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4c:392b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fed5:6f85/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe4d:319e/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe52:914b/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe46:9b72/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe3e:1510/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe65:ad39/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe1e:c7fc/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe19:8c71/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
+            "ipv6CidrBlocks": [
+              "fe80::780f:53ff:fead:5084/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
-            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
+            "ipv4CidrBlocks": [
+              "10.254.0.27/28",
+              "10.254.0.3/28"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::f816:3eff:fec9:ea1c/64"
+            ],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
+            "ipv6CidrBlocks": [
+              "fe80::bc22:36ff:fe27:1d2/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
+            "ipv6CidrBlocks": [
+              "fe80::38f0:78ff:fef7:358/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
+            "ipv6CidrBlocks": [
+              "fe80::5c87:18ff:fe73:d0dd/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
+            "ipv6CidrBlocks": [
+              "fe80::303c:e7ff:fe79:eeef/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe8a:c222/64"
+            ],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
+            "ipv6CidrBlocks": [
+              "fe80::fc16:3eff:fe09:e9f5/64"
+            ],
             "mtu": 1442,
             "state": "up"
           }
@@ -1640,13 +1704,1312 @@
 
 </details>
 
-## Beetle section
+- Response body:
 
-Testing was performed by `test-cli`.
+<details>
+  <summary> <ins>Click to see the response body</ins> </summary>
 
-- ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
-- ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md) (Failed to delete vNet/subnet)
-- ❌ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md) (Deadline excceeded when deleting MCI)
-- TBD
+```json
+{
+  "status": "",
+  "description": "This is a list of recommended target infrastructures. Please review and use them.",
+  "targetVmInfra": {
+    "name": "mmci01",
+    "installMonAgent": "",
+    "label": null,
+    "systemLabel": "",
+    "description": "a recommended multi-cloud infrastructure",
+    "vm": [
+      {
+        "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "subGroupSize": "",
+        "label": null,
+        "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "connectionName": "aws-ap-northeast-2",
+        "specId": "aws+ap-northeast-2+r5a.xlarge",
+        "imageId": "aws+ami-01f71f215b23ba262",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": [
+          "mig-sg-01"
+        ],
+        "sshKeyId": "mig-sshkey-01",
+        "dataDiskIds": null
+      }
+    ],
+    "postCommand": {
+      "userName": "",
+      "command": null
+    }
+  },
+  "targetVNet": {
+    "name": "mig-vnet-01",
+    "connectionName": "aws-ap-northeast-2",
+    "cidrBlock": "192.168.96.0/19",
+    "subnetInfoList": [
+      {
+        "name": "mig-subnet-01",
+        "ipv4_CIDR": "192.168.110.0/24",
+        "description": "a recommended subnet for migration"
+      }
+    ],
+    "description": "a recommended vNet for migration"
+  },
+  "targetSshKey": {
+    "name": "mig-sshkey-01",
+    "connectionName": "aws-ap-northeast-2",
+    "description": "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded",
+    "cspResourceId": "",
+    "fingerprint": "",
+    "username": "",
+    "verifiedUsername": "",
+    "publicKey": "",
+    "privateKey": ""
+  },
+  "targetVmSpecList": [
+    {
+      "id": "aws+ap-northeast-2+r5a.xlarge",
+      "cspSpecName": "r5a.xlarge",
+      "name": "aws+ap-northeast-2+r5a.xlarge",
+      "namespace": "system",
+      "connectionName": "aws-ap-northeast-2",
+      "providerName": "aws",
+      "regionName": "ap-northeast-2",
+      "infraType": "vm",
+      "architecture": "x86_64",
+      "vCPU": 4,
+      "memoryGiB": 32,
+      "diskSizeGB": -1,
+      "costPerHour": 0.272,
+      "orderInFilteredResult": 1,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": 1,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": "-1",
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "AutoRecoverySupported",
+          "value": "true"
+        },
+        {
+          "key": "BareMetal",
+          "value": "false"
+        },
+        {
+          "key": "BurstablePerformanceSupported",
+          "value": "false"
+        },
+        {
+          "key": "CurrentGeneration",
+          "value": "true"
+        },
+        {
+          "key": "DedicatedHostsSupported",
+          "value": "false"
+        },
+        {
+          "key": "EbsInfo",
+          "value": "{EbsOptimizedInfo:{BaselineBandwidthInMbps:1085,BaselineIops:6000,BaselineThroughputInMBps:135.625,MaximumBandwidthInMbps:2880,MaximumIops:16000,MaximumThroughputInMBps:360},EbsOptimizedSupport:default,EncryptionSupport:supported,NvmeSupport:required}"
+        },
+        {
+          "key": "FreeTierEligible",
+          "value": "false"
+        },
+        {
+          "key": "HibernationSupported",
+          "value": "true"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "nitro"
+        },
+        {
+          "key": "InstanceStorageSupported",
+          "value": "false"
+        },
+        {
+          "key": "InstanceType",
+          "value": "r5a.xlarge"
+        },
+        {
+          "key": "MemoryInfo",
+          "value": "{SizeInMiB:32768}"
+        },
+        {
+          "key": "NetworkInfo",
+          "value": "{DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:required,Ipv4AddressesPerInterface:15,Ipv6AddressesPerInterface:15,Ipv6Supported:true,MaximumNetworkCards:1,MaximumNetworkInterfaces:4,NetworkCards:[{MaximumNetworkInterfaces:4,NetworkCardIndex:0,NetworkPerformance:Up to 10 Gigabit}],NetworkPerformance:Up to 10 Gigabit}"
+        },
+        {
+          "key": "PlacementGroupInfo",
+          "value": "{SupportedStrategies:[cluster,partition,spread]}"
+        },
+        {
+          "key": "ProcessorInfo",
+          "value": "{SupportedArchitectures:[x86_64],SustainedClockSpeedInGhz:2.5}"
+        },
+        {
+          "key": "SupportedBootModes",
+          "value": "legacy-bios; uefi"
+        },
+        {
+          "key": "SupportedRootDeviceTypes",
+          "value": "ebs"
+        },
+        {
+          "key": "SupportedUsageClasses",
+          "value": "on-demand; spot"
+        },
+        {
+          "key": "SupportedVirtualizationTypes",
+          "value": "hvm"
+        },
+        {
+          "key": "VCpuInfo",
+          "value": "{DefaultCores:2,DefaultThreadsPerCore:2,DefaultVCpus:4,ValidCores:[2],ValidThreadsPerCore:[1,2]}"
+        }
+      ]
+    }
+  ],
+  "targetVmOsImageList": [
+    {
+      "namespace": "system",
+      "providerName": "aws",
+      "cspImageName": "ami-01f71f215b23ba262",
+      "regionList": [
+        "ap-northeast-2"
+      ],
+      "id": "aws+ami-01f71f215b23ba262",
+      "name": "aws+ami-01f71f215b23ba262",
+      "connectionName": "aws-ap-northeast-2",
+      "fetchedTime": "2025.08.11 09:48:47 Mon",
+      "creationDate": "2025-07-12T06:57:06.000Z",
+      "osType": "Ubuntu 22.04",
+      "osArchitecture": "x86_64",
+      "osPlatform": "Linux/UNIX",
+      "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20250712",
+      "osDiskType": "ebs",
+      "osDiskSizeGB": -1,
+      "imageStatus": "Available",
+      "details": [
+        {
+          "key": "Architecture",
+          "value": "x86_64"
+        },
+        {
+          "key": "BlockDeviceMappings",
+          "value": "{DeviceName:/dev/sda1,Ebs:{DeleteOnTermination:true,Encrypted:false,Iops:null,KmsKeyId:null,OutpostArn:null,SnapshotId:snap-02bc8625f6075151c,Throughput:null,VolumeSize:8,VolumeType:gp2},NoDevice:null,VirtualName:null}; {DeviceName:/dev/sdb,Ebs:null,NoDevice:null,VirtualName:ephemeral0}; {DeviceName:/dev/sdc,Ebs:null,NoDevice:null,VirtualName:ephemeral1}"
+        },
+        {
+          "key": "BootMode",
+          "value": "uefi-preferred"
+        },
+        {
+          "key": "CreationDate",
+          "value": "2025-07-12T06:57:06.000Z"
+        },
+        {
+          "key": "DeprecationTime",
+          "value": "2027-07-12T06:57:06.000Z"
+        },
+        {
+          "key": "Description",
+          "value": "Canonical, Ubuntu, 22.04, amd64 jammy image"
+        },
+        {
+          "key": "EnaSupport",
+          "value": "true"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "xen"
+        },
+        {
+          "key": "ImageId",
+          "value": "ami-01f71f215b23ba262"
+        },
+        {
+          "key": "ImageLocation",
+          "value": "amazon/ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20250712"
+        },
+        {
+          "key": "ImageOwnerAlias",
+          "value": "amazon"
+        },
+        {
+          "key": "ImageType",
+          "value": "machine"
+        },
+        {
+          "key": "Name",
+          "value": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20250712"
+        },
+        {
+          "key": "OwnerId",
+          "value": "099720109477"
+        },
+        {
+          "key": "PlatformDetails",
+          "value": "Linux/UNIX"
+        },
+        {
+          "key": "Public",
+          "value": "true"
+        },
+        {
+          "key": "RootDeviceName",
+          "value": "/dev/sda1"
+        },
+        {
+          "key": "RootDeviceType",
+          "value": "ebs"
+        },
+        {
+          "key": "SriovNetSupport",
+          "value": "simple"
+        },
+        {
+          "key": "State",
+          "value": "available"
+        },
+        {
+          "key": "UsageOperation",
+          "value": "RunInstances"
+        },
+        {
+          "key": "VirtualizationType",
+          "value": "hvm"
+        }
+      ],
+      "description": "Canonical, Ubuntu, 22.04, amd64 jammy image"
+    }
+  ],
+  "targetSecurityGroupList": [
+    {
+      "name": "mig-sg-01",
+      "connectionName": "aws-ap-northeast-2",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "firewallRules": [
+        {
+          "Ports": "10022",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8081,8082",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "53",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "80",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8086",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8888",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9201",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9202",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9203",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9204",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9206",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "3000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9001",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "18080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "13000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9101",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9106",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9105",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9102",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9103",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "5672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "4369",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "15675",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "25672",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8883",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "16567",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "8000",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "192.168.110.0/24"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    }
+  ]
+}
+```
+
+</details>
+
+### Migrate the computing infra as defined in the target model
+
+- API: `POST /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: **same as the response from the previous step**
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2ctq029i92do98209o0",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "Running",
+  "targetAction": "Create",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2ctq029i92do98209o0"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2ctq029i92do98209p0",
+      "cspResourceName": "d2ctq029i92do98209p0",
+      "cspResourceId": "i-0fec6a28177c85d62",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:07:55",
+      "label": {
+        "Name": "d2ctq029i92do98209p0",
+        "sys.connectionName": "aws-ap-northeast-2",
+        "sys.createdTime": "2025-08-11 12:07:55",
+        "sys.cspResourceId": "i-0fec6a28177c85d62",
+        "sys.cspResourceName": "d2ctq029i92do98209p0",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2ctq029i92do98209p0"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "43.202.0.178",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.227",
+      "privateDNS": "ip-192-168-110-227.ap-northeast-2.compute.internal",
+      "rootDiskType": "gp2",
+      "rootDiskSize": "8",
+      "rootDiskName": "",
+      "connectionName": "aws-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "driverName": "aws-driver-v1.0.so",
+        "credentialName": "aws",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "aws-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "Asia Pacific (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b",
+            "ap-northeast-2c",
+            "ap-northeast-2d"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "aws+ap-northeast-2+r5a.xlarge",
+      "cspSpecName": "r5a.xlarge",
+      "imageId": "aws+ami-01f71f215b23ba262",
+      "cspImageName": "ami-01f71f215b23ba262",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-05b57a613c3728ebb",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "subnet-0ac27113a7a48667d",
+      "networkInterface": "eni-attach-05827553d657d73c9",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2ctpva9i92do98209n0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "AmiLaunchIndex",
+          "value": "0"
+        },
+        {
+          "key": "Architecture",
+          "value": "x86_64"
+        },
+        {
+          "key": "BlockDeviceMappings",
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-11T12:07:35Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-071deabc2213fcbc4}}"
+        },
+        {
+          "key": "BootMode",
+          "value": "uefi-preferred"
+        },
+        {
+          "key": "CapacityReservationSpecification",
+          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
+        },
+        {
+          "key": "ClientToken",
+          "value": "9EE4F15D-4EF2-41A7-B05C-B54495C45356"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{CoreCount:2,ThreadsPerCore:2}"
+        },
+        {
+          "key": "EbsOptimized",
+          "value": "false"
+        },
+        {
+          "key": "EnaSupport",
+          "value": "true"
+        },
+        {
+          "key": "EnclaveOptions",
+          "value": "{Enabled:false}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "xen"
+        },
+        {
+          "key": "ImageId",
+          "value": "ami-01f71f215b23ba262"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-0fec6a28177c85d62"
+        },
+        {
+          "key": "InstanceType",
+          "value": "r5a.xlarge"
+        },
+        {
+          "key": "KeyName",
+          "value": "d2ctpva9i92do98209n0"
+        },
+        {
+          "key": "LaunchTime",
+          "value": "2025-08-11T12:07:34Z"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
+        },
+        {
+          "key": "Monitoring",
+          "value": "{State:disabled}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.202.0.178},Attachment:{AttachTime:2025-08-11T12:07:34Z,AttachmentId:eni-attach-05827553d657d73c9,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0807f692c3922d663,GroupName:d2ctpva9i92do98209ng}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:04:72:7e:28:41,NetworkInterfaceId:eni-098683a92c67c1549,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.227,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.202.0.178},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.227}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0ac27113a7a48667d,VpcId:vpc-05b57a613c3728ebb}"
+        },
+        {
+          "key": "Placement",
+          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
+        },
+        {
+          "key": "PrivateDnsName",
+          "value": "ip-192-168-110-227.ap-northeast-2.compute.internal"
+        },
+        {
+          "key": "PrivateIpAddress",
+          "value": "192.168.110.227"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "43.202.0.178"
+        },
+        {
+          "key": "RootDeviceName",
+          "value": "/dev/sda1"
+        },
+        {
+          "key": "RootDeviceType",
+          "value": "ebs"
+        },
+        {
+          "key": "SecurityGroups",
+          "value": "{GroupId:sg-0807f692c3922d663,GroupName:d2ctpva9i92do98209ng}"
+        },
+        {
+          "key": "SourceDestCheck",
+          "value": "true"
+        },
+        {
+          "key": "State",
+          "value": "{Code:16,Name:running}"
+        },
+        {
+          "key": "SubnetId",
+          "value": "subnet-0ac27113a7a48667d"
+        },
+        {
+          "key": "Tags",
+          "value": "{Key:Name,Value:d2ctq029i92do98209p0}"
+        },
+        {
+          "key": "VirtualizationType",
+          "value": "hvm"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-05b57a613c3728ebb"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>
+
+### Get a list of MCIs
+
+- API: `GET /beetle/migration/ns/mig01/mci`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "mci": [
+    {
+      "resourceType": "mci",
+      "id": "mmci01",
+      "uid": "d2ctq029i92do98209o0",
+      "name": "mmci01",
+      "status": "Running:1 (R:1/1)",
+      "statusCount": {
+        "countTotal": 1,
+        "countCreating": 0,
+        "countRunning": 1,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": null,
+      "systemLabel": "",
+      "systemMessage": "",
+      "description": "a recommended multi-cloud infrastructure",
+      "vm": [
+        {
+          "resourceType": "mci",
+          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "uid": "d2ctq029i92do98209o0",
+          "name": "mmci01",
+          "subGroupId": "",
+          "location": {
+            "display": "",
+            "latitude": 0,
+            "longitude": 0
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "",
+          "networkAgentStatus": "",
+          "systemMessage": "",
+          "createdTime": "",
+          "label": null,
+          "description": "a recommended multi-cloud infrastructure",
+          "region": {
+            "Region": "",
+            "Zone": ""
+          },
+          "publicIP": "",
+          "sshPort": "",
+          "publicDNS": "",
+          "privateIP": "",
+          "privateDNS": "",
+          "rootDiskType": "",
+          "rootDiskSize": "",
+          "rootDiskName": "",
+          "connectionName": "",
+          "connectionConfig": {
+            "configName": "",
+            "providerName": "",
+            "driverName": "",
+            "credentialName": "",
+            "credentialHolder": "",
+            "regionZoneInfoName": "",
+            "regionZoneInfo": {
+              "assignedRegion": "",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "",
+              "regionName": "",
+              "description": "",
+              "location": {
+                "display": "",
+                "latitude": 0,
+                "longitude": 0
+              },
+              "zones": null
+            },
+            "regionRepresentative": false,
+            "verified": false
+          },
+          "specId": "",
+          "cspSpecName": "",
+          "imageId": "",
+          "cspImageName": "",
+          "vNetId": "",
+          "cspVNetId": "",
+          "subnetId": "",
+          "cspSubnetId": "",
+          "networkInterface": "",
+          "securityGroupIds": null,
+          "dataDiskIds": null,
+          "sshKeyId": "",
+          "cspSshKeyId": ""
+        }
+      ],
+      "newVmList": null,
+      "postCommand": {
+        "userName": "",
+        "command": null
+      },
+      "postCommandResult": {
+        "results": null
+      }
+    }
+  ]
+}
+```
+
+### Get a list of MCI IDs
+
+- API: `GET /beetle/migration/ns/mig01/mci?option=id`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "idList": [
+    "mmci01"
+  ]
+}
+```
+
+### Get a specific MCI
+
+- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d2ctq029i92do98209o0",
+  "name": "mmci01",
+  "status": "Running:1 (R:1/1)",
+  "statusCount": {
+    "countTotal": 1,
+    "countCreating": 0,
+    "countRunning": 1,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d2ctq029i92do98209o0"
+  },
+  "systemLabel": "",
+  "systemMessage": "",
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2ctq029i92do98209p0",
+      "cspResourceName": "d2ctq029i92do98209p0",
+      "cspResourceId": "i-0fec6a28177c85d62",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-11 12:07:55",
+      "label": {
+        "Name": "d2ctq029i92do98209p0",
+        "sys.connectionName": "aws-ap-northeast-2",
+        "sys.createdTime": "2025-08-11 12:07:55",
+        "sys.cspResourceId": "i-0fec6a28177c85d62",
+        "sys.cspResourceName": "d2ctq029i92do98209p0",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2ctq029i92do98209p0"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "43.202.0.178",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.227",
+      "privateDNS": "ip-192-168-110-227.ap-northeast-2.compute.internal",
+      "rootDiskType": "gp2",
+      "rootDiskSize": "8",
+      "rootDiskName": "",
+      "connectionName": "aws-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "driverName": "aws-driver-v1.0.so",
+        "credentialName": "aws",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "aws-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "Asia Pacific (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b",
+            "ap-northeast-2c",
+            "ap-northeast-2d"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "aws+ap-northeast-2+r5a.xlarge",
+      "cspSpecName": "r5a.xlarge",
+      "imageId": "aws+ami-01f71f215b23ba262",
+      "cspImageName": "ami-01f71f215b23ba262",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-05b57a613c3728ebb",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "subnet-0ac27113a7a48667d",
+      "networkInterface": "eni-attach-05827553d657d73c9",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2ctpva9i92do98209n0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "AmiLaunchIndex",
+          "value": "0"
+        },
+        {
+          "key": "Architecture",
+          "value": "x86_64"
+        },
+        {
+          "key": "BlockDeviceMappings",
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-11T12:07:35Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-071deabc2213fcbc4}}"
+        },
+        {
+          "key": "BootMode",
+          "value": "uefi-preferred"
+        },
+        {
+          "key": "CapacityReservationSpecification",
+          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
+        },
+        {
+          "key": "ClientToken",
+          "value": "9EE4F15D-4EF2-41A7-B05C-B54495C45356"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{CoreCount:2,ThreadsPerCore:2}"
+        },
+        {
+          "key": "EbsOptimized",
+          "value": "false"
+        },
+        {
+          "key": "EnaSupport",
+          "value": "true"
+        },
+        {
+          "key": "EnclaveOptions",
+          "value": "{Enabled:false}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "xen"
+        },
+        {
+          "key": "ImageId",
+          "value": "ami-01f71f215b23ba262"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-0fec6a28177c85d62"
+        },
+        {
+          "key": "InstanceType",
+          "value": "r5a.xlarge"
+        },
+        {
+          "key": "KeyName",
+          "value": "d2ctpva9i92do98209n0"
+        },
+        {
+          "key": "LaunchTime",
+          "value": "2025-08-11T12:07:34Z"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
+        },
+        {
+          "key": "Monitoring",
+          "value": "{State:disabled}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.202.0.178},Attachment:{AttachTime:2025-08-11T12:07:34Z,AttachmentId:eni-attach-05827553d657d73c9,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0807f692c3922d663,GroupName:d2ctpva9i92do98209ng}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:04:72:7e:28:41,NetworkInterfaceId:eni-098683a92c67c1549,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.227,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.202.0.178},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.227}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0ac27113a7a48667d,VpcId:vpc-05b57a613c3728ebb}"
+        },
+        {
+          "key": "Placement",
+          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
+        },
+        {
+          "key": "PrivateDnsName",
+          "value": "ip-192-168-110-227.ap-northeast-2.compute.internal"
+        },
+        {
+          "key": "PrivateIpAddress",
+          "value": "192.168.110.227"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "43.202.0.178"
+        },
+        {
+          "key": "RootDeviceName",
+          "value": "/dev/sda1"
+        },
+        {
+          "key": "RootDeviceType",
+          "value": "ebs"
+        },
+        {
+          "key": "SecurityGroups",
+          "value": "{GroupId:sg-0807f692c3922d663,GroupName:d2ctpva9i92do98209ng}"
+        },
+        {
+          "key": "SourceDestCheck",
+          "value": "true"
+        },
+        {
+          "key": "State",
+          "value": "{Code:16,Name:running}"
+        },
+        {
+          "key": "SubnetId",
+          "value": "subnet-0ac27113a7a48667d"
+        },
+        {
+          "key": "Tags",
+          "value": "{Key:Name,Value:d2ctq029i92do98209p0}"
+        },
+        {
+          "key": "VirtualizationType",
+          "value": "hvm"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-05b57a613c3728ebb"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "",
+    "command": null
+  },
+  "postCommandResult": {
+    "results": null
+  }
+}
+```
+
+</details>
+
+### Delete the migrated computing infra
+
+- API: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- nsId: `mig01`
+- Request body: None
+- Response body:
+
+```json
+{
+  "success": true,
+  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+}
+```
+

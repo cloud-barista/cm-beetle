@@ -109,7 +109,7 @@ services:
       # - TB_LOGFILE_MAXBACKUPS=3
       # - TB_LOGFILE_MAXAGE=30
       # - TB_LOGFILE_COMPRESS=false
-      # - TB_LOGLEVEL=debug
+      - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug
@@ -242,6 +242,7 @@ services:
       retries: 3
       start_period: 10s
 
+  # NOTE: Synchronize the stable version of TB MCP Server before running it
   # TB-MCP (Tumblebug Model Context Protocol Server)
   # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
   cb-tumblebug-mcp-server:
