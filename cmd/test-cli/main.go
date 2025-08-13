@@ -173,7 +173,7 @@ func main() {
 
 	// Initialize HTTP client
 	client := resty.New()
-	client.SetTimeout(20 * time.Minute) // Increased timeout to 20 minutes for all operations
+	client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
 
 	// Check CM-Beetle readiness first
 	if err := checkBeetleReadiness(client, config.BeetleURL); err != nil {

@@ -66,9 +66,7 @@ func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.TbMciDyn
 
 	emptyRet := tbmodel.TbMciInfo{}
 
-	// Set timeout duration
-	timeoutDuration := 40 * time.Minute
-	c.client.SetTimeout(timeoutDuration)
+	c.client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/mciDynamic", c.restUrl, nsId)
@@ -198,6 +196,8 @@ func (c *TumblebugClient) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
 // DeleteMci deletes a specific MCI (Multi-Cloud Image) in the specified namespace
 func (c *TumblebugClient) DeleteMci(nsId, mciId, option string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Deleting MCI")
+
+	c.client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
 
 	emptyRet := tbmodel.IdList{}
 
