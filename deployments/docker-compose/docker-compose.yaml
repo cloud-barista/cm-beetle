@@ -38,9 +38,9 @@ services:
       # - BEETLE_LOGFILE_MAXBACKUPS=3
       # - BEETLE_LOGFILE_MAXAGE=30
       # - BEETLE_LOGFILE_COMPRESS=false
-      # - BEETLE_LOGLEVEL=debug
+      - BEETLE_LOGLEVEL=debug
       # - BEETLE_LOGWRITER=both
-      # - BEETLE_NODE_ENV=development
+      - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000
       - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       # - BEETLE_TUMBLEBUG_API_USERNAME=default
@@ -108,7 +108,7 @@ services:
       # - TB_LOGFILE_MAXBACKUPS=3
       # - TB_LOGFILE_MAXAGE=30
       # - TB_LOGFILE_COMPRESS=false
-      # - TB_LOGLEVEL=debug
+      - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug

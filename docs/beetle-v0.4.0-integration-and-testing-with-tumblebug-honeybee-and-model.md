@@ -1667,6 +1667,9 @@ Testing was performed by `test-cli`.
 - ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
 - ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
 - ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md) (Failed to delete vNet/subnet)
-- ❌ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md) (Deadline excceeded when deleting MCI)
+  - Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
+- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
+  - Note: Failed to delete vNet/subnet
+- ⚠️ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
+  - Note: Deadline excceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
 - TBD

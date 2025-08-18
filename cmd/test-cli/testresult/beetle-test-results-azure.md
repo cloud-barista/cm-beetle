@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (fe6f682)
+- CM-Beetle: v0.4.0 (8261244)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 12, 2025
-- Test Time: 21:40:43 KST
-- Test Execution: 2025-08-12 21:40:43 KST
+- Test Date: August 18, 2025
+- Test Time: 19:10:41 KST
+- Test Execution: 2025-08-18 19:10:41 KST
 
 ### Scenario
 
@@ -39,26 +39,35 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 208ms | Success |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m10.804s | Success |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2.661s | Success |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 63ms | Success |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2.661s | Success |
-| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m18.584s | Success |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 259ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m14.016s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2.831s | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 88ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2.75s | Pass |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m11.394s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 6m5.144459909s
+**Total Duration**: 6m1.568457293s
 
-*Test executed on August 12, 2025 at 21:40:43 KST (2025-08-12 21:40:43 KST) using CM-Beetle automated test CLI*
+*Test executed on August 18, 2025 at 19:10:41 KST (2025-08-18 19:10:41 KST) using CM-Beetle automated test CLI*
 
-### Recommend a target model for computing infra
+---
 
-> [!Note]
-> `desiredCsp` and `desiredRegion` are required in the request body.
+## Detailed Test Case Results
 
-- API: `POST /beetle/recommendation/mci`
-- Request body:
+> [!INFO]
+> This section provides detailed information for each test case, including API request information and response details.
+
+### Test Case 1: Recommend a target model for computing infra
+
+#### 1.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/recommendation/mci`
+- **Purpose**: Get infrastructure recommendations for migration
+- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body
+
+**Request Body**:
 
 <details>
   <summary> <ins>Click to see the request body </ins> </summary>
@@ -1704,7 +1713,12 @@
 
 </details>
 
-- Response body:
+#### 1.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure recommendation generated successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body</ins> </summary>
@@ -2151,12 +2165,21 @@
 
 </details>
 
-### Migrate the computing infra as defined in the target model
+### Test Case 2: Migrate the computing infra as defined in the target model
 
-- API: `POST /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: **same as the response from the previous step**
-- Response body:
+#### 2.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/migration/ns/mig01/mci`
+- **Purpose**: Create and migrate infrastructure based on recommendation
+- **Namespace ID**: `mig01`
+- **Request Body**: Uses the response from the previous recommendation step
+
+#### 2.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure migration completed successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2165,7 +2188,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2djda5aou68jg3om440",
+  "uid": "d2hfovcdjuna1t2ovma0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2192,7 +2215,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2djda5aou68jg3om440"
+    "sys.uid": "d2hfovcdjuna1t2ovma0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2201,9 +2224,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2djda5aou68jg3om450",
-      "cspResourceName": "d2djda5aou68jg3om450",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
+      "uid": "d2hfovcdjuna1t2ovmb0",
+      "cspResourceName": "d2hfovcdjuna1t2ovmb0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2217,12 +2240,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-12 12:43:17",
+      "createdTime": "2025-08-18 10:13:12",
       "label": {
         "sys.connectionName": "azure-koreacentral",
-        "sys.createdTime": "2025-08-12 12:43:17",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
-        "sys.cspResourceName": "d2djda5aou68jg3om450",
+        "sys.createdTime": "2025-08-18 10:13:12",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0",
+        "sys.cspResourceName": "d2hfovcdjuna1t2ovmb0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2230,14 +2253,14 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2djda5aou68jg3om450"
+        "sys.uid": "d2hfovcdjuna1t2ovmb0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "koreacentral",
         "Zone": "1"
       },
-      "publicIP": "20.196.139.194",
+      "publicIP": "20.196.129.53",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.4",
@@ -2280,16 +2303,16 @@
       "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2hfoacdjuna1t2ovm80",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420/subnets/d2djcldaou68jg3om42g",
-      "networkInterface": "d2djda5aou68jg3om450-2072-VNic",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2hfoacdjuna1t2ovm80/subnets/d2hfoacdjuna1t2ovm8g",
+      "networkInterface": "d2hfovcdjuna1t2ovmb0-1390-VNic",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2djco5aou68jg3om430",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2hfodkdjuna1t2ovm90",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2298,11 +2321,11 @@
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2djda5aou68jg3om450-2072-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2djda5aou68jg3om450,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHi09BxIUJT21qH/Kis4LVsgp5XIV/N380SWxP3aFIyORrrssWruP915ygvpBFPYN+AtWglnXDwyWB80mMBZq1OkymlAWH5ySnt0bfew+6+1fwoEKDKKByEG2uTXju+PSoe0HTh37uceeuOEtTjZtMgbP4I3+erKwk0Rklil1v9lCeh2oqUlntg4Y1uqoGBFu0cviP1ns/NJsx2hJRD7T9JQpY5aPNzBi0doYpdpu4MKnFE3wgdPKtW2TyE1aILD/MrUe6bi24Q4Z9+mfK3AI5X/YSu7+/ZX3PWy+4VZpSKstrpPDLVjL4mM/sSDuhxCX2IFaukOe2G5fnVqsEchG5vdG+hY6Yn1gbo9gwYk1c/O8HWIOEEn5MFAeQ2XiFJL2FouBLUqueOfZhpSNsLT/YMBtK8KZ8VTKsreQyYn8FobVMEq08GanaOedupz58AsslSK1HUqqHQC1Wnl5l8EvG2dGh3QusLK/YEpp4ubz0y3AQ7vhKR84YUaKCsPDhkMLbW/mi7IxzHt3aoQI3+sB0lUHgsSFRzJRhjGTqaWzJP45vAC62ed5UdI/0kIrU+ejHRrU23roiwP0WO/ecCscte+HZrxiSj2VRCN+NrmCZZXJ8BUzF/2if5WXttNdeE2/nY71Nmz5Gw0e7hmxwxcdNZrMlvzkiwwaJjjiu5dqKBQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,storageAccountType:Premium_LRS},name:d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,osType:Linux}},timeCreated:2025-08-12T12:42:30.1202647Z,vmId:977d85b1-e9f2-4b8f-acaf-4b9ce42835b7}"
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2hfovcdjuna1t2ovmb0-1390-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2hfovcdjuna1t2ovmb0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC76mXjVWpamJOCLiVQDBESMzEd4LiE522pCpHaya7bqVOIY9Cz2lxhlqFZjQ1grFBGFLYog4HUXxXxUZhlgyQ8ZWrd9JnSd5pizgWmVZFEM6FE/R9hWpA7BLOjgcZ/3OtA36sRUfBUf3BoQGpVLRd/BkkzLJ/ADGNuIfV/tF97i4eTDkqaIV4oA4GG/y7UurGNcO6nmTxmBqhYSTaHe1kDjQhiPPOnr6IdzhLjZ34/gUbO+3YmVlXCbXcN4B4vBc5YcSx2yYqPVETRBhNuOXCuz24QHnCqT8UxmivwX4jZ0wsyY6KwwwBO5R/8/qIO2uQe7Q6iMuL9OkovbGo2oBdigFwIAGB8wdlEFPZqGzu0UKOBOiVBcJsfrz8wZ8j3qAg+1wyzptdXTPIIIwr8e4HyS4dKEkP52FNWSdaobTSgkx6UDzcwMatVOW36VCM8gJpTfglyYKZCti+X7/ZaVkTzw3jq/phtmVDmhJAX19Ps8sGu+AYCtCFN57zCBXg3Aa0pc5s8FakghKqw4DDG0TYyCEZLH/pxQENPymD5viyrZQozaDrifMej+5eSGboJ5FU+628LuChDhaNlHM1BWD02mIe1mkQ1fz5kVN38OTz8QX1O7eMdwzRgweN6pSX/ZeeJvx+yav0oUU3vwPON+IYsFlA31Jkbm0YkL2KV7GlPeQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2hfovcdjuna1t2ovmb0_OsDisk_1_ab0821cfceae4937a7cfec2c9bcadd68,storageAccountType:Premium_LRS},name:d2hfovcdjuna1t2ovmb0_OsDisk_1_ab0821cfceae4937a7cfec2c9bcadd68,osType:Linux}},timeCreated:2025-08-18T10:12:26.2387783Z,vmId:ba345a87-baa5-4cd2-ad82-5a4bc7bd89f3}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d2djda5aou68jg3om450,keypair:d2djco5aou68jg3om430,publicip:d2djda5aou68jg3om450-27211-PublicIP}"
+          "value": "{createdBy:d2hfovcdjuna1t2ovmb0,keypair:d2hfodkdjuna1t2ovm90,publicip:d2hfovcdjuna1t2ovmb0-7100-PublicIP}"
         },
         {
           "key": "Zones",
@@ -2314,11 +2337,11 @@
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0"
         },
         {
           "key": "Name",
-          "value": "d2djda5aou68jg3om450"
+          "value": "d2hfovcdjuna1t2ovmb0"
         },
         {
           "key": "Type",
@@ -2340,12 +2363,21 @@
 
 </details>
 
-### Get a list of MCIs
+### Test Case 3: Get a list of MCIs
 
-- API: `GET /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 3.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci`
+- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances
+- **Namespace ID**: `mig01`
+- **Request Body**: None (GET request)
+
+#### 3.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI list retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2353,7 +2385,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2djda5aou68jg3om440",
+      "uid": "d2hfovcdjuna1t2ovma0",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2381,7 +2413,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2djda5aou68jg3om440",
+          "uid": "d2hfovcdjuna1t2ovma0",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2464,12 +2496,22 @@
 }
 ```
 
-### Get a list of MCI IDs
+### Test Case 4: Get a list of MCI IDs
 
-- API: `GET /beetle/migration/ns/mig01/mci?option=id`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 4.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci?option=id`
+- **Purpose**: Retrieve MCI IDs only (lightweight response)
+- **Namespace ID**: `mig01`
+- **Query Parameter**: `option=id`
+- **Request Body**: None (GET request)
+
+#### 4.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI IDs retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2479,12 +2521,22 @@
 }
 ```
 
-### Get a specific MCI
+### Test Case 5: Get a specific MCI
 
-- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 5.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Retrieve detailed information for a specific MCI
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
+- **Request Body**: None (GET request)
+
+#### 5.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI details retrieved successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2493,7 +2545,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2djda5aou68jg3om440",
+  "uid": "d2hfovcdjuna1t2ovma0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2520,7 +2572,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2djda5aou68jg3om440"
+    "sys.uid": "d2hfovcdjuna1t2ovma0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2529,9 +2581,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2djda5aou68jg3om450",
-      "cspResourceName": "d2djda5aou68jg3om450",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
+      "uid": "d2hfovcdjuna1t2ovmb0",
+      "cspResourceName": "d2hfovcdjuna1t2ovmb0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2545,12 +2597,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-12 12:43:17",
+      "createdTime": "2025-08-18 10:13:12",
       "label": {
         "sys.connectionName": "azure-koreacentral",
-        "sys.createdTime": "2025-08-12 12:43:17",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450",
-        "sys.cspResourceName": "d2djda5aou68jg3om450",
+        "sys.createdTime": "2025-08-18 10:13:12",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0",
+        "sys.cspResourceName": "d2hfovcdjuna1t2ovmb0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2558,14 +2610,14 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2djda5aou68jg3om450"
+        "sys.uid": "d2hfovcdjuna1t2ovmb0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "koreacentral",
         "Zone": "1"
       },
-      "publicIP": "20.196.139.194",
+      "publicIP": "20.196.129.53",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.4",
@@ -2608,16 +2660,16 @@
       "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2hfoacdjuna1t2ovm80",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2djcldaou68jg3om420/subnets/d2djcldaou68jg3om42g",
-      "networkInterface": "d2djda5aou68jg3om450-2072-VNic",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/virtualNetworks/d2hfoacdjuna1t2ovm80/subnets/d2hfoacdjuna1t2ovm8g",
+      "networkInterface": "d2hfovcdjuna1t2ovmb0-1390-VNic",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2djco5aou68jg3om430",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/sshPublicKeys/d2hfodkdjuna1t2ovm90",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2626,11 +2678,11 @@
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2djda5aou68jg3om450-2072-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2djda5aou68jg3om450,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHi09BxIUJT21qH/Kis4LVsgp5XIV/N380SWxP3aFIyORrrssWruP915ygvpBFPYN+AtWglnXDwyWB80mMBZq1OkymlAWH5ySnt0bfew+6+1fwoEKDKKByEG2uTXju+PSoe0HTh37uceeuOEtTjZtMgbP4I3+erKwk0Rklil1v9lCeh2oqUlntg4Y1uqoGBFu0cviP1ns/NJsx2hJRD7T9JQpY5aPNzBi0doYpdpu4MKnFE3wgdPKtW2TyE1aILD/MrUe6bi24Q4Z9+mfK3AI5X/YSu7+/ZX3PWy+4VZpSKstrpPDLVjL4mM/sSDuhxCX2IFaukOe2G5fnVqsEchG5vdG+hY6Yn1gbo9gwYk1c/O8HWIOEEn5MFAeQ2XiFJL2FouBLUqueOfZhpSNsLT/YMBtK8KZ8VTKsreQyYn8FobVMEq08GanaOedupz58AsslSK1HUqqHQC1Wnl5l8EvG2dGh3QusLK/YEpp4ubz0y3AQ7vhKR84YUaKCsPDhkMLbW/mi7IxzHt3aoQI3+sB0lUHgsSFRzJRhjGTqaWzJP45vAC62ed5UdI/0kIrU+ejHRrU23roiwP0WO/ecCscte+HZrxiSj2VRCN+NrmCZZXJ8BUzF/2if5WXttNdeE2/nY71Nmz5Gw0e7hmxwxcdNZrMlvzkiwwaJjjiu5dqKBQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,storageAccountType:Premium_LRS},name:d2djda5aou68jg3om450_OsDisk_1_ddfc8e38d0b24b0abd2f02e29ad1de94,osType:Linux}},timeCreated:2025-08-12T12:42:30.1202647Z,vmId:977d85b1-e9f2-4b8f-acaf-4b9ce42835b7}"
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Network/networkInterfaces/d2hfovcdjuna1t2ovmb0-1390-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d2hfovcdjuna1t2ovmb0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC76mXjVWpamJOCLiVQDBESMzEd4LiE522pCpHaya7bqVOIY9Cz2lxhlqFZjQ1grFBGFLYog4HUXxXxUZhlgyQ8ZWrd9JnSd5pizgWmVZFEM6FE/R9hWpA7BLOjgcZ/3OtA36sRUfBUf3BoQGpVLRd/BkkzLJ/ADGNuIfV/tF97i4eTDkqaIV4oA4GG/y7UurGNcO6nmTxmBqhYSTaHe1kDjQhiPPOnr6IdzhLjZ34/gUbO+3YmVlXCbXcN4B4vBc5YcSx2yYqPVETRBhNuOXCuz24QHnCqT8UxmivwX4jZ0wsyY6KwwwBO5R/8/qIO2uQe7Q6iMuL9OkovbGo2oBdigFwIAGB8wdlEFPZqGzu0UKOBOiVBcJsfrz8wZ8j3qAg+1wyzptdXTPIIIwr8e4HyS4dKEkP52FNWSdaobTSgkx6UDzcwMatVOW36VCM8gJpTfglyYKZCti+X7/ZaVkTzw3jq/phtmVDmhJAX19Ps8sGu+AYCtCFN57zCBXg3Aa0pc5s8FakghKqw4DDG0TYyCEZLH/pxQENPymD5viyrZQozaDrifMej+5eSGboJ5FU+628LuChDhaNlHM1BWD02mIe1mkQ1fz5kVN38OTz8QX1O7eMdwzRgweN6pSX/ZeeJvx+yav0oUU3vwPON+IYsFlA31Jkbm0YkL2KV7GlPeQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202505210,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts,version:22.04.202505210},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/disks/d2hfovcdjuna1t2ovmb0_OsDisk_1_ab0821cfceae4937a7cfec2c9bcadd68,storageAccountType:Premium_LRS},name:d2hfovcdjuna1t2ovmb0_OsDisk_1_ab0821cfceae4937a7cfec2c9bcadd68,osType:Linux}},timeCreated:2025-08-18T10:12:26.2387783Z,vmId:ba345a87-baa5-4cd2-ad82-5a4bc7bd89f3}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d2djda5aou68jg3om450,keypair:d2djco5aou68jg3om430,publicip:d2djda5aou68jg3om450-27211-PublicIP}"
+          "value": "{createdBy:d2hfovcdjuna1t2ovmb0,keypair:d2hfodkdjuna1t2ovm90,publicip:d2hfovcdjuna1t2ovmb0-7100-PublicIP}"
         },
         {
           "key": "Zones",
@@ -2642,11 +2694,11 @@
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2djda5aou68jg3om450"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreacentral/providers/Microsoft.Compute/virtualMachines/d2hfovcdjuna1t2ovmb0"
         },
         {
           "key": "Name",
-          "value": "d2djda5aou68jg3om450"
+          "value": "d2hfovcdjuna1t2ovmb0"
         },
         {
           "key": "Type",
@@ -2668,12 +2720,23 @@
 
 </details>
 
-### Delete the migrated computing infra
+### Test Case 6: Delete the migrated computing infra
 
-- API: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 6.1 API Request Information
+
+- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Delete the migrated infrastructure and clean up resources
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete
+- **Query Parameter**: `option=terminate` (terminates all resources)
+- **Request Body**: None (DELETE request)
+
+#### 6.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure deletion completed successfully
+
+**Response Body**:
 
 ```json
 {

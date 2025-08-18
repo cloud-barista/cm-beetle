@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (fe6f682)
+- CM-Beetle: v0.4.0 (8261244)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 12, 2025
-- Test Time: 21:38:18 KST
-- Test Execution: 2025-08-12 21:38:18 KST
+- Test Date: August 18, 2025
+- Test Time: 19:08:11 KST
+- Test Execution: 2025-08-18 19:08:11 KST
 
 ### Scenario
 
@@ -39,26 +39,35 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 698ms | Success |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 49.178s | Success |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 159ms | Success |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 63ms | Success |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 160ms | Success |
-| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 58.293s | Success |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 718ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 1m2.047s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 204ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 69ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 155ms | Pass |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 58.358s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 2m18.741384337s
+**Total Duration**: 2m31.807866373s
 
-*Test executed on August 12, 2025 at 21:38:18 KST (2025-08-12 21:38:18 KST) using CM-Beetle automated test CLI*
+*Test executed on August 18, 2025 at 19:08:11 KST (2025-08-18 19:08:11 KST) using CM-Beetle automated test CLI*
 
-### Recommend a target model for computing infra
+---
 
-> [!Note]
-> `desiredCsp` and `desiredRegion` are required in the request body.
+## Detailed Test Case Results
 
-- API: `POST /beetle/recommendation/mci`
-- Request body:
+> [!INFO]
+> This section provides detailed information for each test case, including API request information and response details.
+
+### Test Case 1: Recommend a target model for computing infra
+
+#### 1.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/recommendation/mci`
+- **Purpose**: Get infrastructure recommendations for migration
+- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body
+
+**Request Body**:
 
 <details>
   <summary> <ins>Click to see the request body </ins> </summary>
@@ -1704,7 +1713,12 @@
 
 </details>
 
-- Response body:
+#### 1.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure recommendation generated successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body</ins> </summary>
@@ -2276,12 +2290,21 @@
 
 </details>
 
-### Migrate the computing infra as defined in the target model
+### Test Case 2: Migrate the computing infra as defined in the target model
 
-- API: `POST /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: **same as the response from the previous step**
-- Response body:
+#### 2.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/migration/ns/mig01/mci`
+- **Purpose**: Create and migrate infrastructure based on recommendation
+- **Namespace ID**: `mig01`
+- **Request Body**: Uses the response from the previous recommendation step
+
+#### 2.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure migration completed successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2290,7 +2313,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2djbk5aou68jg3om400",
+  "uid": "d2hfn84djuna1t2ovm60",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2317,7 +2340,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2djbk5aou68jg3om400"
+    "sys.uid": "d2hfn84djuna1t2ovm60"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2326,9 +2349,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2djbk5aou68jg3om410",
-      "cspResourceName": "d2djbk5aou68jg3om410",
-      "cspResourceId": "i-0e303f6af93733fc7",
+      "uid": "d2hfn84djuna1t2ovm70",
+      "cspResourceName": "d2hfn84djuna1t2ovm70",
+      "cspResourceId": "i-0f80800fe9e2a9cd8",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2342,12 +2365,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-12 12:39:14",
+      "createdTime": "2025-08-18 10:09:16",
       "label": {
         "sys.connectionName": "aws-ap-northeast-2",
-        "sys.createdTime": "2025-08-12 12:39:14",
-        "sys.cspResourceId": "i-0e303f6af93733fc7",
-        "sys.cspResourceName": "d2djbk5aou68jg3om410",
+        "sys.createdTime": "2025-08-18 10:09:16",
+        "sys.cspResourceId": "i-0f80800fe9e2a9cd8",
+        "sys.cspResourceName": "d2hfn84djuna1t2ovm70",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2355,18 +2378,18 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2djbk5aou68jg3om410"
+        "sys.uid": "d2hfn84djuna1t2ovm70"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "43.203.209.159",
+      "publicIP": "3.36.99.6",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.122",
-      "privateDNS": "ip-192-168-110-122.ap-northeast-2.compute.internal",
+      "privateIP": "192.168.110.141",
+      "privateDNS": "ip-192-168-110-141.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": "8",
       "rootDiskName": "",
@@ -2406,16 +2429,16 @@
       "imageId": "ami-058165de3b7202099",
       "cspImageName": "ami-058165de3b7202099",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-058673339ae20f9ce",
+      "cspVNetId": "vpc-076c636a8440d1453",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-0d2a9f91e78a1090a",
-      "networkInterface": "eni-attach-0f0923dabe180a0a6",
+      "cspSubnetId": "subnet-0cf9a2ddb7da04ed6",
+      "networkInterface": "eni-attach-03e374e19ba9f5972",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2djbilaou68jg3om3v0",
+      "cspSshKeyId": "d2hfn6kdjuna1t2ovm50",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2428,7 +2451,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-12T12:38:43Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0d3b1f2053bbb9dd7}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-18T10:08:36Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0bbcbffac027eb970}}"
         },
         {
           "key": "CapacityReservationSpecification",
@@ -2436,7 +2459,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "CA3F4A98-EC7D-4050-A77F-CA512023DD40"
+          "value": "991043B9-0FA9-4AFF-BF57-9A7C080B4B06"
         },
         {
           "key": "CpuOptions",
@@ -2468,7 +2491,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-0e303f6af93733fc7"
+          "value": "i-0f80800fe9e2a9cd8"
         },
         {
           "key": "InstanceType",
@@ -2476,11 +2499,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d2djbilaou68jg3om3v0"
+          "value": "d2hfn6kdjuna1t2ovm50"
         },
         {
           "key": "LaunchTime",
-          "value": "2025-08-12T12:38:42Z"
+          "value": "2025-08-18T10:08:35Z"
         },
         {
           "key": "MetadataOptions",
@@ -2492,7 +2515,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.209.159},Attachment:{AttachTime:2025-08-12T12:38:42Z,AttachmentId:eni-attach-0f0923dabe180a0a6,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-034d591686c911952,GroupName:d2djbjdaou68jg3om3vg}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:25:95:a1:e9:7f,NetworkInterfaceId:eni-0bb7a52f32c615d62,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.122,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.209.159},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.122}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0d2a9f91e78a1090a,VpcId:vpc-058673339ae20f9ce}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.36.99.6},Attachment:{AttachTime:2025-08-18T10:08:35Z,AttachmentId:eni-attach-03e374e19ba9f5972,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-072c336af44e1fc97,GroupName:d2hfn7cdjuna1t2ovm5g}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:38:4c:dc:6f:b5,NetworkInterfaceId:eni-080ac29dbe4e607c8,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.141,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.36.99.6},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.141}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0cf9a2ddb7da04ed6,VpcId:vpc-076c636a8440d1453}"
         },
         {
           "key": "Placement",
@@ -2500,15 +2523,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-192-168-110-122.ap-northeast-2.compute.internal"
+          "value": "ip-192-168-110-141.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "192.168.110.122"
+          "value": "192.168.110.141"
         },
         {
           "key": "PublicIpAddress",
-          "value": "43.203.209.159"
+          "value": "3.36.99.6"
         },
         {
           "key": "RootDeviceName",
@@ -2520,7 +2543,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-034d591686c911952,GroupName:d2djbjdaou68jg3om3vg}"
+          "value": "{GroupId:sg-072c336af44e1fc97,GroupName:d2hfn7cdjuna1t2ovm5g}"
         },
         {
           "key": "SourceDestCheck",
@@ -2532,11 +2555,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-0d2a9f91e78a1090a"
+          "value": "subnet-0cf9a2ddb7da04ed6"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d2djbk5aou68jg3om410}"
+          "value": "{Key:Name,Value:d2hfn84djuna1t2ovm70}"
         },
         {
           "key": "VirtualizationType",
@@ -2544,7 +2567,7 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-058673339ae20f9ce"
+          "value": "vpc-076c636a8440d1453"
         }
       ]
     }
@@ -2562,12 +2585,21 @@
 
 </details>
 
-### Get a list of MCIs
+### Test Case 3: Get a list of MCIs
 
-- API: `GET /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 3.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci`
+- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances
+- **Namespace ID**: `mig01`
+- **Request Body**: None (GET request)
+
+#### 3.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI list retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2575,7 +2607,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2djbk5aou68jg3om400",
+      "uid": "d2hfn84djuna1t2ovm60",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2603,7 +2635,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2djbk5aou68jg3om400",
+          "uid": "d2hfn84djuna1t2ovm60",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2686,12 +2718,22 @@
 }
 ```
 
-### Get a list of MCI IDs
+### Test Case 4: Get a list of MCI IDs
 
-- API: `GET /beetle/migration/ns/mig01/mci?option=id`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 4.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci?option=id`
+- **Purpose**: Retrieve MCI IDs only (lightweight response)
+- **Namespace ID**: `mig01`
+- **Query Parameter**: `option=id`
+- **Request Body**: None (GET request)
+
+#### 4.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI IDs retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2701,12 +2743,22 @@
 }
 ```
 
-### Get a specific MCI
+### Test Case 5: Get a specific MCI
 
-- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 5.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Retrieve detailed information for a specific MCI
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
+- **Request Body**: None (GET request)
+
+#### 5.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI details retrieved successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2715,7 +2767,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2djbk5aou68jg3om400",
+  "uid": "d2hfn84djuna1t2ovm60",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2742,7 +2794,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2djbk5aou68jg3om400"
+    "sys.uid": "d2hfn84djuna1t2ovm60"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2751,9 +2803,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2djbk5aou68jg3om410",
-      "cspResourceName": "d2djbk5aou68jg3om410",
-      "cspResourceId": "i-0e303f6af93733fc7",
+      "uid": "d2hfn84djuna1t2ovm70",
+      "cspResourceName": "d2hfn84djuna1t2ovm70",
+      "cspResourceId": "i-0f80800fe9e2a9cd8",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2767,12 +2819,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-12 12:39:14",
+      "createdTime": "2025-08-18 10:09:16",
       "label": {
         "sys.connectionName": "aws-ap-northeast-2",
-        "sys.createdTime": "2025-08-12 12:39:14",
-        "sys.cspResourceId": "i-0e303f6af93733fc7",
-        "sys.cspResourceName": "d2djbk5aou68jg3om410",
+        "sys.createdTime": "2025-08-18 10:09:16",
+        "sys.cspResourceId": "i-0f80800fe9e2a9cd8",
+        "sys.cspResourceName": "d2hfn84djuna1t2ovm70",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2780,18 +2832,18 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2djbk5aou68jg3om410"
+        "sys.uid": "d2hfn84djuna1t2ovm70"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "43.203.209.159",
+      "publicIP": "3.36.99.6",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.122",
-      "privateDNS": "ip-192-168-110-122.ap-northeast-2.compute.internal",
+      "privateIP": "192.168.110.141",
+      "privateDNS": "ip-192-168-110-141.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": "8",
       "rootDiskName": "",
@@ -2831,16 +2883,16 @@
       "imageId": "ami-058165de3b7202099",
       "cspImageName": "ami-058165de3b7202099",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-058673339ae20f9ce",
+      "cspVNetId": "vpc-076c636a8440d1453",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-0d2a9f91e78a1090a",
-      "networkInterface": "eni-attach-0f0923dabe180a0a6",
+      "cspSubnetId": "subnet-0cf9a2ddb7da04ed6",
+      "networkInterface": "eni-attach-03e374e19ba9f5972",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2djbilaou68jg3om3v0",
+      "cspSshKeyId": "d2hfn6kdjuna1t2ovm50",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
@@ -2853,7 +2905,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-12T12:38:43Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0d3b1f2053bbb9dd7}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2025-08-18T10:08:36Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0bbcbffac027eb970}}"
         },
         {
           "key": "CapacityReservationSpecification",
@@ -2861,7 +2913,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "CA3F4A98-EC7D-4050-A77F-CA512023DD40"
+          "value": "991043B9-0FA9-4AFF-BF57-9A7C080B4B06"
         },
         {
           "key": "CpuOptions",
@@ -2893,7 +2945,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-0e303f6af93733fc7"
+          "value": "i-0f80800fe9e2a9cd8"
         },
         {
           "key": "InstanceType",
@@ -2901,11 +2953,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d2djbilaou68jg3om3v0"
+          "value": "d2hfn6kdjuna1t2ovm50"
         },
         {
           "key": "LaunchTime",
-          "value": "2025-08-12T12:38:42Z"
+          "value": "2025-08-18T10:08:35Z"
         },
         {
           "key": "MetadataOptions",
@@ -2917,7 +2969,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.209.159},Attachment:{AttachTime:2025-08-12T12:38:42Z,AttachmentId:eni-attach-0f0923dabe180a0a6,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-034d591686c911952,GroupName:d2djbjdaou68jg3om3vg}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:25:95:a1:e9:7f,NetworkInterfaceId:eni-0bb7a52f32c615d62,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.122,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.209.159},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.122}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0d2a9f91e78a1090a,VpcId:vpc-058673339ae20f9ce}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.36.99.6},Attachment:{AttachTime:2025-08-18T10:08:35Z,AttachmentId:eni-attach-03e374e19ba9f5972,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-072c336af44e1fc97,GroupName:d2hfn7cdjuna1t2ovm5g}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:38:4c:dc:6f:b5,NetworkInterfaceId:eni-080ac29dbe4e607c8,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:192.168.110.141,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.36.99.6},Primary:true,PrivateDnsName:null,PrivateIpAddress:192.168.110.141}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-0cf9a2ddb7da04ed6,VpcId:vpc-076c636a8440d1453}"
         },
         {
           "key": "Placement",
@@ -2925,15 +2977,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-192-168-110-122.ap-northeast-2.compute.internal"
+          "value": "ip-192-168-110-141.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "192.168.110.122"
+          "value": "192.168.110.141"
         },
         {
           "key": "PublicIpAddress",
-          "value": "43.203.209.159"
+          "value": "3.36.99.6"
         },
         {
           "key": "RootDeviceName",
@@ -2945,7 +2997,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-034d591686c911952,GroupName:d2djbjdaou68jg3om3vg}"
+          "value": "{GroupId:sg-072c336af44e1fc97,GroupName:d2hfn7cdjuna1t2ovm5g}"
         },
         {
           "key": "SourceDestCheck",
@@ -2957,11 +3009,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-0d2a9f91e78a1090a"
+          "value": "subnet-0cf9a2ddb7da04ed6"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d2djbk5aou68jg3om410}"
+          "value": "{Key:Name,Value:d2hfn84djuna1t2ovm70}"
         },
         {
           "key": "VirtualizationType",
@@ -2969,7 +3021,7 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-058673339ae20f9ce"
+          "value": "vpc-076c636a8440d1453"
         }
       ]
     }
@@ -2987,12 +3039,23 @@
 
 </details>
 
-### Delete the migrated computing infra
+### Test Case 6: Delete the migrated computing infra
 
-- API: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 6.1 API Request Information
+
+- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Delete the migrated infrastructure and clean up resources
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete
+- **Query Parameter**: `option=terminate` (terminates all resources)
+- **Request Body**: None (DELETE request)
+
+#### 6.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure deletion completed successfully
+
+**Response Body**:
 
 ```json
 {
