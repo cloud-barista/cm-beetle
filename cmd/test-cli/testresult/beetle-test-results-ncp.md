@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (220af0b)
+- CM-Beetle: v0.4.0 (56d0244)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 13, 2025
-- Test Time: 21:52:28 KST
-- Test Execution: 2025-08-13 21:52:28 KST
+- Test Date: August 18, 2025
+- Test Time: 15:04:30 KST
+- Test Execution: 2025-08-18 15:04:30 KST
 
 ### Scenario
 
@@ -39,25 +39,35 @@
 
 | Test | Endpoint                                          | Status      | Duration  | Details |
 | ---- | ------------------------------------------------- | ----------- | --------- | ------- |
-| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 1.529s    | Success |
-| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 3m19.045s | Success |
-| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 133ms     | Success |
-| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 58ms      | Success |
-| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 139ms     | Success |
-| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 13m4.461s | Success |
+| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 690ms     | Pass    |
+| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 3m40.768s | Pass    |
+| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 148ms     | Pass    |
+| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 65ms      | Pass    |
+| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 169ms     | Pass    |
+| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ❌ **FAIL** | 10m1.247s | Fail    |
 
-**Overall Result**: 6/6 tests passed ✅
+**Overall Result**: 5/6 tests passed ❌
 
-**Total Duration**: 16m55.509589159s
+**Total Duration**: 14m13.341996987s
 
-_Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) using CM-Beetle automated test CLI_
+_Test executed on August 18, 2025 at 15:04:30 KST (2025-08-18 15:04:30 KST) using CM-Beetle automated test CLI_
 
-### Recommend a target model for computing infra
+---
 
-> [!Note] > `desiredCsp` and `desiredRegion` are required in the request body.
+## Detailed Test Case Results
 
-- API: `POST /beetle/recommendation/mci`
-- Request body:
+> [!INFO]
+> This section provides detailed information for each test case, including API request information and response details.
+
+### Test Case 1: Recommend a target model for computing infra
+
+#### 1.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/recommendation/mci`
+- **Purpose**: Get infrastructure recommendations for migration
+- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body
+
+**Request Body**:
 
 <details>
   <summary> <ins>Click to see the request body </ins> </summary>
@@ -1633,7 +1643,12 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 
 </details>
 
-- Response body:
+#### 1.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure recommendation generated successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body</ins> </summary>
@@ -2151,12 +2166,21 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 
 </details>
 
-### Migrate the computing infra as defined in the target model
+### Test Case 2: Migrate the computing infra as defined in the target model
 
-- API: `POST /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: **same as the response from the previous step**
-- Response body:
+#### 2.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/migration/ns/mig01/mci`
+- **Purpose**: Create and migrate infrastructure based on recommendation
+- **Namespace ID**: `mig01`
+- **Request Body**: Uses the response from the previous recommendation step
+
+#### 2.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure migration completed successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2165,7 +2189,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2e8lhkv38occbiu5oig",
+  "uid": "d2hc59cdjuna1t6iluqg",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2192,7 +2216,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2e8lhkv38occbiu5oig"
+    "sys.uid": "d2hc59cdjuna1t6iluqg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2201,9 +2225,9 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2e8lhkv38occbiu5ojg",
-      "cspResourceName": "d2e8lhkv38occbiu5ojg",
-      "cspResourceId": "108085622",
+      "uid": "d2hc59cdjuna1t6ilurg",
+      "cspResourceName": "d2hc59cdjuna1t6ilurg",
+      "cspResourceId": "108216966",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2217,12 +2241,12 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-13 12:55:59",
+      "createdTime": "2025-08-18 06:08:02",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-13 12:55:59",
-        "sys.cspResourceId": "108085622",
-        "sys.cspResourceName": "d2e8lhkv38occbiu5ojg",
+        "sys.createdTime": "2025-08-18 06:08:02",
+        "sys.cspResourceId": "108216966",
+        "sys.cspResourceName": "d2hc59cdjuna1t6ilurg",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2230,14 +2254,14 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2e8lhkv38occbiu5ojg"
+        "sys.uid": "d2hc59cdjuna1t6ilurg"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "211.188.60.25",
+      "publicIP": "223.130.156.156",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2276,23 +2300,23 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
       "imageId": "23789321",
       "cspImageName": "23789321",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "118605",
+      "cspVNetId": "119316",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "250374",
+      "cspSubnetId": "251483",
       "networkInterface": "eth0",
       "securityGroupIds": ["mig-sg-01"],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2e8lbsv38occbiu5ohg",
+      "cspSshKeyId": "d2hc53sdjuna1t6ilupg",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108085622"
+          "value": "108216966"
         },
         {
           "key": "ServerName",
-          "value": "d2e8lhkv38occbiu5ojg"
+          "value": "d2hc59cdjuna1t6ilurg"
         },
         {
           "key": "CpuCount",
@@ -2308,7 +2332,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "LoginKeyName",
-          "value": "d2e8lbsv38occbiu5ohg"
+          "value": "d2hc53sdjuna1t6ilupg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2324,11 +2348,11 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-13T21:53:45+0900"
+          "value": "2025-08-18T15:05:42+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-13T21:55:51+0900"
+          "value": "2025-08-18T15:07:57+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2352,19 +2376,19 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "VpcNo",
-          "value": "118605"
+          "value": "119316"
         },
         {
           "key": "SubnetNo",
-          "value": "250374"
+          "value": "251483"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4892970"
+          "value": "4899196"
         },
         {
           "key": "InitScriptNo",
-          "value": "134609"
+          "value": "135041"
         },
         {
           "key": "ServerInstanceType",
@@ -2406,12 +2430,21 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 
 </details>
 
-### Get a list of MCIs
+### Test Case 3: Get a list of MCIs
 
-- API: `GET /beetle/migration/ns/mig01/mci`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 3.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci`
+- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances
+- **Namespace ID**: `mig01`
+- **Request Body**: None (GET request)
+
+#### 3.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI list retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2419,7 +2452,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2e8lhkv38occbiu5oig",
+      "uid": "d2hc59cdjuna1t6iluqg",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2447,7 +2480,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2e8lhkv38occbiu5oig",
+          "uid": "d2hc59cdjuna1t6iluqg",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2530,12 +2563,22 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 }
 ```
 
-### Get a list of MCI IDs
+### Test Case 4: Get a list of MCI IDs
 
-- API: `GET /beetle/migration/ns/mig01/mci?option=id`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 4.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci?option=id`
+- **Purpose**: Retrieve MCI IDs only (lightweight response)
+- **Namespace ID**: `mig01`
+- **Query Parameter**: `option=id`
+- **Request Body**: None (GET request)
+
+#### 4.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI IDs retrieved successfully
+
+**Response Body**:
 
 ```json
 {
@@ -2543,12 +2586,22 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 }
 ```
 
-### Get a specific MCI
+### Test Case 5: Get a specific MCI
 
-- API: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 5.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Retrieve detailed information for a specific MCI
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
+- **Request Body**: None (GET request)
+
+#### 5.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI details retrieved successfully
+
+**Response Body**:
 
 <details>
   <summary> <ins>Click to see the response body </ins> </summary>
@@ -2557,7 +2610,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2e8lhkv38occbiu5oig",
+  "uid": "d2hc59cdjuna1t6iluqg",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2584,7 +2637,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2e8lhkv38occbiu5oig"
+    "sys.uid": "d2hc59cdjuna1t6iluqg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2593,9 +2646,9 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2e8lhkv38occbiu5ojg",
-      "cspResourceName": "d2e8lhkv38occbiu5ojg",
-      "cspResourceId": "108085622",
+      "uid": "d2hc59cdjuna1t6ilurg",
+      "cspResourceName": "d2hc59cdjuna1t6ilurg",
+      "cspResourceId": "108216966",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2609,12 +2662,12 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-13 12:55:59",
+      "createdTime": "2025-08-18 06:08:02",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-13 12:55:59",
-        "sys.cspResourceId": "108085622",
-        "sys.cspResourceName": "d2e8lhkv38occbiu5ojg",
+        "sys.createdTime": "2025-08-18 06:08:02",
+        "sys.cspResourceId": "108216966",
+        "sys.cspResourceName": "d2hc59cdjuna1t6ilurg",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2622,14 +2675,14 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2e8lhkv38occbiu5ojg"
+        "sys.uid": "d2hc59cdjuna1t6ilurg"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "211.188.60.25",
+      "publicIP": "223.130.156.156",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2668,23 +2721,23 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
       "imageId": "23789321",
       "cspImageName": "23789321",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "118605",
+      "cspVNetId": "119316",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "250374",
+      "cspSubnetId": "251483",
       "networkInterface": "eth0",
       "securityGroupIds": ["mig-sg-01"],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2e8lbsv38occbiu5ohg",
+      "cspSshKeyId": "d2hc53sdjuna1t6ilupg",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108085622"
+          "value": "108216966"
         },
         {
           "key": "ServerName",
-          "value": "d2e8lhkv38occbiu5ojg"
+          "value": "d2hc59cdjuna1t6ilurg"
         },
         {
           "key": "CpuCount",
@@ -2700,7 +2753,7 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "LoginKeyName",
-          "value": "d2e8lbsv38occbiu5ohg"
+          "value": "d2hc53sdjuna1t6ilupg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2716,11 +2769,11 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-13T21:53:45+0900"
+          "value": "2025-08-18T15:05:42+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-13T21:55:51+0900"
+          "value": "2025-08-18T15:07:57+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2744,19 +2797,19 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
         },
         {
           "key": "VpcNo",
-          "value": "118605"
+          "value": "119316"
         },
         {
           "key": "SubnetNo",
-          "value": "250374"
+          "value": "251483"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4892970"
+          "value": "4899196"
         },
         {
           "key": "InitScriptNo",
-          "value": "134609"
+          "value": "135041"
         },
         {
           "key": "ServerInstanceType",
@@ -2798,16 +2851,37 @@ _Test executed on August 13, 2025 at 21:52:28 KST (2025-08-13 21:52:28 KST) usin
 
 </details>
 
-### Delete the migrated computing infra
+### Test Case 6: Delete the migrated computing infra
 
-- API: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
-- nsId: `mig01`
-- Request body: None
-- Response body:
+#### 6.1 API Request Information
+
+- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Delete the migrated infrastructure and clean up resources
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete
+- **Query Parameter**: `option=terminate` (terminates all resources)
+- **Request Body**: None (DELETE request)
+
+#### 6.2 API Response Information
+
+- **Status**: ❌ **FAILED**
+- **Error**: Infrastructure deletion failed
+
+**Error Message**:
+
+```
+HTTP 500: {"success":false,"text":"[Error from: http://cb-tumblebug:1323/tumblebug/ns/mig01/mci/mmci01?option=terminate] Status code: 500 Internal Server Error, Message: {\"message\":\"[Delete http://cb-spider:1024/spider/vm/d2hc59cdjuna1t6ilurg: context deadline exceeded (Client.Timeout exceeded while awaiting headers) (from cb-spider:1024/spider/vm/d2hc59cdjuna1t6ilurg)]\"}\n"}
+```
+
+**Error Details**: HTTP 500
+
+**Request URL**: `http://localhost:8056/beetle/migration/ns/mig01/mci/mmci01?option=terminate`
+
+**Response Body**:
 
 ```json
 {
-  "success": true,
-  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+  "success": false,
+  "text": "[Error from: http://cb-tumblebug:1323/tumblebug/ns/mig01/mci/mmci01?option=terminate] Status code: 500 Internal Server Error, Message: {\"message\":\"[Delete http://cb-spider:1024/spider/vm/d2hc59cdjuna1t6ilurg: context deadline exceeded (Client.Timeout exceeded while awaiting headers) (from cb-spider:1024/spider/vm/d2hc59cdjuna1t6ilurg)]\"}\n"
 }
 ```

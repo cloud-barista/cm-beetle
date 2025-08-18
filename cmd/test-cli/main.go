@@ -67,14 +67,18 @@ type AuthConfig struct {
 
 // TestResults holds test execution results
 type TestResults struct {
-	TestName   string                 `json:"testName"`
-	StartTime  time.Time              `json:"startTime"`
-	EndTime    time.Time              `json:"endTime"`
-	Duration   time.Duration          `json:"duration"`
-	Success    bool                   `json:"success"`
-	StatusCode int                    `json:"statusCode"`
-	Response   map[string]interface{} `json:"response"`
-	Error      string                 `json:"error,omitempty"`
+	TestName     string                 `json:"testName"`
+	StartTime    time.Time              `json:"startTime"`
+	EndTime      time.Time              `json:"endTime"`
+	Duration     time.Duration          `json:"duration"`
+	Success      bool                   `json:"success"`
+	StatusCode   int                    `json:"statusCode"`
+	Response     map[string]interface{} `json:"response"`
+	Error        string                 `json:"error,omitempty"`
+	ErrorMessage string                 `json:"errorMessage,omitempty"` // Human-readable error message
+	ErrorDetails string                 `json:"errorDetails,omitempty"` // Additional error details
+	RequestURL   string                 `json:"requestUrl,omitempty"`   // Request URL for debugging
+	RequestBody  interface{}            `json:"requestBody,omitempty"`  // Request body for debugging
 }
 
 // TestSuite holds all test results
@@ -113,6 +117,85 @@ func init() {
 
 	// Set the global logger
 	log.Logger = *logger
+}
+
+// extractErrorDetails extracts meaningful error information from error responses
+func extractErrorDetails(err error, statusCode int) (string, string) {
+	if err == nil {
+		// Handle HTTP errors without Go error
+		if statusCode >= 400 {
+			return fmt.Sprintf("HTTP %d error", statusCode), fmt.Sprintf("HTTP %d", statusCode)
+		}
+		return "", ""
+	}
+
+	errorStr := err.Error()
+	errorMessage := errorStr
+	errorDetails := ""
+
+	// Try to parse JSON error response if it looks like JSON
+	if strings.Contains(errorStr, "{") && strings.Contains(errorStr, "}") {
+		jsonStart := strings.Index(errorStr, "{")
+		jsonEnd := strings.LastIndex(errorStr, "}") + 1
+		if jsonStart >= 0 && jsonEnd > jsonStart {
+			jsonStr := errorStr[jsonStart:jsonEnd]
+			var errorResponse map[string]interface{}
+			if err := json.Unmarshal([]byte(jsonStr), &errorResponse); err == nil {
+				if message, ok := errorResponse["message"].(string); ok {
+					errorMessage = message
+				} else if details, ok := errorResponse["error"].(string); ok {
+					errorMessage = details
+				}
+				if details, ok := errorResponse["details"].(string); ok {
+					errorDetails = details
+				}
+			}
+		}
+	}
+
+	// Add HTTP status context if available
+	if statusCode > 0 && errorDetails == "" {
+		errorDetails = fmt.Sprintf("HTTP %d", statusCode)
+	} else if statusCode > 0 {
+		errorDetails = fmt.Sprintf("HTTP %d: %s", statusCode, errorDetails)
+	}
+
+	return errorMessage, errorDetails
+}
+
+// populateErrorInfo populates error information in TestResults
+func populateErrorInfo(result *TestResults, err error, statusCode int, requestURL string, requestBody interface{}) {
+	result.Success = false
+	result.StatusCode = statusCode
+	result.RequestURL = requestURL
+	result.RequestBody = requestBody
+
+	// Handle case where err might be nil but we have HTTP error status
+	if err != nil {
+		result.Error = err.Error()
+	} else {
+		// Create a generic error message for HTTP errors without Go error
+		result.Error = fmt.Sprintf("HTTP %d error", statusCode)
+	}
+
+	errorMessage, errorDetails := extractErrorDetails(err, statusCode)
+	result.ErrorMessage = errorMessage
+	result.ErrorDetails = errorDetails
+
+	// Ensure Response is initialized for backward compatibility
+	if result.Response == nil {
+		result.Response = make(map[string]interface{})
+	}
+
+	// Add error info to response for backward compatibility
+	if err != nil {
+		result.Response["error"] = err.Error()
+	} else {
+		result.Response["error"] = fmt.Sprintf("HTTP %d error", statusCode)
+	}
+	if errorMessage != "" {
+		result.Response["message"] = errorMessage
+	}
 }
 
 func main() {
@@ -678,21 +761,23 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair reco
 	result.Duration = result.EndTime.Sub(result.StartTime)
 
 	if err != nil {
-		result.Success = false
-		result.Error = err.Error()
-		result.StatusCode = 0
-		fmt.Printf("❌ Test 1 failed: %s\n", result.Error)
-	} else {
-		result.Success = true
-		result.StatusCode = 200
-		// Convert struct response to map for TestResults compatibility
-		responseMap := make(map[string]interface{})
-		jsonBytes, _ := json.Marshal(response)
-		json.Unmarshal(jsonBytes, &responseMap)
-		result.Response = responseMap
-		fmt.Println("✅ Test 1 passed")
+		populateErrorInfo(&result, err, 0, url, recommendRequest)
+		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
+		log.Error().Err(err).Str("url", url).Msg("Recommendation test failed")
+		return controller.RecommendVmInfraResponse{}, result
 	}
 
+	result.Success = true
+	result.StatusCode = 200
+	result.RequestURL = url
+	result.RequestBody = recommendRequest
+
+	// Convert struct response to map for TestResults compatibility
+	responseMap := make(map[string]interface{})
+	jsonBytes, _ := json.Marshal(response)
+	json.Unmarshal(jsonBytes, &responseMap)
+	result.Response = responseMap
+	fmt.Println("✅ Test 1 passed")
 	return response, result
 }
 
@@ -953,38 +1038,59 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	log.Debug().Msg("API Request Body: none")
 
 	var response map[string]interface{}
-	var emptyBody interface{} = common.NoBody
-	err := common.ExecuteHttpRequest(
-		client,
-		"DELETE",
-		url,
-		nil,
-		common.SetUseBody(emptyBody),
-		&emptyBody,
-		&response,
-		0,
-	)
 
-	// Log response body
-	if response != nil {
-		log.Debug().Msgf("API Response Body: %+v", response)
-	}
+	// Make HTTP request directly with resty to capture full error response
+	resp, err := client.R().
+		SetResult(&response).
+		SetError(&response). // This captures error response body
+		Delete(url)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
 
-	if err != nil {
-		result.Success = false
-		result.Error = err.Error()
-		result.StatusCode = 0
-		fmt.Printf("❌ Test 6 failed: %s\n", result.Error)
-	} else {
-		result.Success = true
-		result.StatusCode = 200
-		result.Response = response
-		fmt.Println("✅ Test 6 passed")
+	// Log response details
+	log.Debug().Msgf("HTTP Status: %s", resp.Status())
+	log.Debug().Msgf("Response Body: %+v", response)
+
+	if err != nil || resp.StatusCode() >= 400 {
+		statusCode := 0
+		if resp != nil {
+			statusCode = resp.StatusCode()
+		}
+
+		// Create a more specific error if we only have HTTP error without Go error
+		var finalErr error = err
+		if err == nil && resp.StatusCode() >= 400 {
+			// Create error from HTTP response body if available
+			if len(response) > 0 {
+				if respBytes, jsonErr := json.Marshal(response); jsonErr == nil {
+					finalErr = fmt.Errorf("HTTP %d: %s", statusCode, string(respBytes))
+				} else {
+					finalErr = fmt.Errorf("HTTP %d error", statusCode)
+				}
+			} else {
+				finalErr = fmt.Errorf("HTTP %d error", statusCode)
+			}
+		}
+
+		populateErrorInfo(&result, finalErr, statusCode, url, nil)
+
+		// If we have error response, include it in the result
+		if len(response) > 0 {
+			result.Response = response
+		}
+
+		fmt.Printf("❌ Test 6 failed: %s\n", result.ErrorMessage)
+		log.Error().Err(err).Str("url", url).Int("statusCode", statusCode).Msg("Delete MCI test failed")
+		return result, false
 	}
 
+	result.Success = true
+	result.StatusCode = 200
+	result.RequestURL = url
+	result.RequestBody = nil
+	result.Response = response
+	fmt.Println("✅ Test 6 passed")
 	return result, true
 }
 
@@ -1189,6 +1295,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("> [!NOTE]\n")
 	sb.WriteString("> Some long request/response bodies are in the collapsible section for better readability.\n\n")
 
+	// ========================================================================
+	// First Section: Summary Information
+	// ========================================================================
+
 	// Test result section
 	sb.WriteString(fmt.Sprintf("## Test result for %s\n\n", strings.ToUpper(report.CSP)))
 
@@ -1220,15 +1330,9 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 
 		duration := result.Duration.Truncate(time.Millisecond)
-		details := "Success"
+		details := "Pass"
 		if !result.Success {
-			if errorMsg, ok := result.Response["error"].(string); ok {
-				details = errorMsg
-			} else if msg, ok := result.Response["message"].(string); ok {
-				details = msg
-			} else {
-				details = fmt.Sprintf("HTTP %d", result.StatusCode)
-			}
+			details = "Fail"
 		}
 
 		sb.WriteString(fmt.Sprintf("| %d | %s | %s | %v | %s |\n",
@@ -1260,13 +1364,25 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		report.TestTime,
 		report.TestDateTime.Format("2006-01-02 15:04:05 MST")))
 
-	// Test 1: Recommendation
-	sb.WriteString("### Recommend a target model for computing infra\n\n")
-	sb.WriteString("> [!Note]\n")
-	sb.WriteString("> `desiredCsp` and `desiredRegion` are required in the request body.\n\n")
+	// ========================================================================
+	// Second Section: Detailed Test Case Information
+	// ========================================================================
 
-	sb.WriteString("- API: `POST /beetle/recommendation/mci`\n")
-	sb.WriteString("- Request body:\n\n")
+	sb.WriteString("---\n\n")
+	sb.WriteString("## Detailed Test Case Results\n\n")
+	sb.WriteString("> [!INFO]\n")
+	sb.WriteString("> This section provides detailed information for each test case, including API request information and response details.\n\n")
+
+	// Test Case 1: Recommendation
+	sb.WriteString("### Test Case 1: Recommend a target model for computing infra\n\n")
+
+	// API request information
+	sb.WriteString("#### 1.1 API Request Information\n\n")
+	sb.WriteString("- **API Endpoint**: `POST /beetle/recommendation/mci`\n")
+	sb.WriteString("- **Purpose**: Get infrastructure recommendations for migration\n")
+	sb.WriteString("- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body\n\n")
+
+	sb.WriteString("**Request Body**:\n\n")
 	sb.WriteString("<details>\n")
 	sb.WriteString("  <summary> <ins>Click to see the request body </ins> </summary>\n\n")
 	sb.WriteString("```json\n")
@@ -1275,8 +1391,12 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("\n```\n\n")
 	sb.WriteString("</details>\n\n")
 
-	sb.WriteString("- Response body:\n\n")
+	// API response information
+	sb.WriteString("#### 1.2 API Response Information\n\n")
 	if report.RecommendationResponse != nil {
+		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+		sb.WriteString("- **Response**: Infrastructure recommendation generated successfully\n\n")
+		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("<details>\n")
 		sb.WriteString("  <summary> <ins>Click to see the response body</ins> </summary>\n\n")
 		sb.WriteString("```json\n")
@@ -1285,17 +1405,41 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("\n```\n\n")
 		sb.WriteString("</details>\n\n")
 	} else {
-		sb.WriteString("❌ **Test Failed**: No response received\n\n")
+		sb.WriteString("- **Status**: ❌ **FAILED**\n")
+		sb.WriteString("- **Error**: No response received\n\n")
+		// Add detailed error information if available
+		if len(report.TestResults) > 0 {
+			result := report.TestResults[0] // First test is recommendation
+			if result.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(result.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			}
+			if result.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", result.ErrorDetails))
+			}
+			if result.RequestURL != "" {
+				sb.WriteString(fmt.Sprintf("**Request URL**: `%s`\n\n", result.RequestURL))
+			}
+		}
 	}
 
-	// Test 2: Migration
-	sb.WriteString("### Migrate the computing infra as defined in the target model\n\n")
-	sb.WriteString(fmt.Sprintf("- API: `POST /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
-	sb.WriteString(fmt.Sprintf("- nsId: `%s`\n", report.NamespaceID))
-	sb.WriteString("- Request body: **same as the response from the previous step**\n")
-	sb.WriteString("- Response body:\n\n")
+	// Test Case 2: Migration
+	sb.WriteString("### Test Case 2: Migrate the computing infra as defined in the target model\n\n")
 
+	// API request information
+	sb.WriteString("#### 2.1 API Request Information\n\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Create and migrate infrastructure based on recommendation\n")
+	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
+	sb.WriteString("- **Request Body**: Uses the response from the previous recommendation step\n\n")
+
+	// API response information
+	sb.WriteString("#### 2.2 API Response Information\n\n")
 	if report.MigrationResponse != nil {
+		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+		sb.WriteString("- **Response**: Infrastructure migration completed successfully\n\n")
+		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("<details>\n")
 		sb.WriteString("  <summary> <ins>Click to see the response body </ins> </summary>\n\n")
 		sb.WriteString("```json\n")
@@ -1304,48 +1448,117 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("\n```\n\n")
 		sb.WriteString("</details>\n\n")
 	} else {
-		sb.WriteString("❌ **Test Failed**: Migration failed\n\n")
+		sb.WriteString("- **Status**: ❌ **FAILED**\n")
+		sb.WriteString("- **Error**: Migration failed\n\n")
+		// Add detailed error information if available
+		if len(report.TestResults) > 1 {
+			result := report.TestResults[1] // Second test is migration
+			if result.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(result.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			}
+			if result.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", result.ErrorDetails))
+			}
+			if result.RequestURL != "" {
+				sb.WriteString(fmt.Sprintf("**Request URL**: `%s`\n\n", result.RequestURL))
+			}
+		}
 	}
 
-	// Test 3: List MCIs
-	sb.WriteString("### Get a list of MCIs\n\n")
-	sb.WriteString(fmt.Sprintf("- API: `GET /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
-	sb.WriteString(fmt.Sprintf("- nsId: `%s`\n", report.NamespaceID))
-	sb.WriteString("- Request body: None\n")
-	sb.WriteString("- Response body:\n\n")
+	// Test Case 3: List MCIs
+	sb.WriteString("### Test Case 3: Get a list of MCIs\n\n")
 
+	// API request information
+	sb.WriteString("#### 3.1 API Request Information\n\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances\n")
+	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
+	sb.WriteString("- **Request Body**: None (GET request)\n\n")
+
+	// API response information
+	sb.WriteString("#### 3.2 API Response Information\n\n")
 	if report.ListMCIResponse != nil {
+		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+		sb.WriteString("- **Response**: MCI list retrieved successfully\n\n")
+		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("```json\n")
 		listJSON, _ := json.MarshalIndent(report.ListMCIResponse, "", "  ")
 		sb.WriteString(string(listJSON))
 		sb.WriteString("\n```\n\n")
 	} else {
-		sb.WriteString("❌ **Test Failed**: No response received\n\n")
+		sb.WriteString("- **Status**: ❌ **FAILED**\n")
+		sb.WriteString("- **Error**: No response received\n\n")
+		// Add detailed error information if available
+		if len(report.TestResults) > 2 {
+			result := report.TestResults[2] // Third test is list MCIs
+			if result.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(result.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			}
+			if result.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", result.ErrorDetails))
+			}
+		}
 	}
 
-	// Test 4: List MCI IDs
-	sb.WriteString("### Get a list of MCI IDs\n\n")
-	sb.WriteString(fmt.Sprintf("- API: `GET /beetle/migration/ns/%s/mci?option=id`\n", report.NamespaceID))
-	sb.WriteString(fmt.Sprintf("- nsId: `%s`\n", report.NamespaceID))
-	sb.WriteString("- Request body: None\n")
-	sb.WriteString("- Response body:\n\n")
+	// Test Case 4: List MCI IDs
+	sb.WriteString("### Test Case 4: Get a list of MCI IDs\n\n")
 
+	// API request information
+	sb.WriteString("#### 4.1 API Request Information\n\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci?option=id`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Retrieve MCI IDs only (lightweight response)\n")
+	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
+	sb.WriteString("- **Query Parameter**: `option=id`\n")
+	sb.WriteString("- **Request Body**: None (GET request)\n\n")
+
+	// API response information
+	sb.WriteString("#### 4.2 API Response Information\n\n")
 	if report.ListMCIIDsResponse != nil {
+		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+		sb.WriteString("- **Response**: MCI IDs retrieved successfully\n\n")
+		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("```json\n")
 		idsJSON, _ := json.MarshalIndent(report.ListMCIIDsResponse, "", "  ")
 		sb.WriteString(string(idsJSON))
 		sb.WriteString("\n```\n\n")
 	} else {
-		sb.WriteString("❌ **Test Failed**: No response received\n\n")
+		sb.WriteString("- **Status**: ❌ **FAILED**\n")
+		sb.WriteString("- **Error**: No response received\n\n")
+		// Add detailed error information if available
+		if len(report.TestResults) > 3 {
+			result := report.TestResults[3] // Fourth test is list MCI IDs
+			if result.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(result.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			}
+			if result.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", result.ErrorDetails))
+			}
+		}
 	}
 
-	// Test 5: Get specific MCI (if available)
+	// Test Case 5: Get specific MCI (if available)
 	if report.GetMCIResponse != nil {
-		sb.WriteString("### Get a specific MCI\n\n")
-		sb.WriteString(fmt.Sprintf("- API: `GET /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
-		sb.WriteString(fmt.Sprintf("- nsId: `%s`\n", report.NamespaceID))
-		sb.WriteString("- Request body: None\n")
-		sb.WriteString("- Response body:\n\n")
+		sb.WriteString("### Test Case 5: Get a specific MCI\n\n")
+
+		// API request information
+		sb.WriteString("#### 5.1 API Request Information\n\n")
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
+		sb.WriteString("- **Purpose**: Retrieve detailed information for a specific MCI\n")
+		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
+		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The specific MCI identifier\n")
+		sb.WriteString("- **Request Body**: None (GET request)\n\n")
+
+		// API response information
+		sb.WriteString("#### 5.2 API Response Information\n\n")
+		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+		sb.WriteString("- **Response**: MCI details retrieved successfully\n\n")
+		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("<details>\n")
 		sb.WriteString("  <summary> <ins>Click to see the response body </ins> </summary>\n\n")
 		sb.WriteString("```json\n")
@@ -1355,17 +1568,63 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("</details>\n\n")
 	}
 
-	// Test 6: Delete MCI (if available)
-	if len(report.DeleteMCIResponse) > 0 {
-		sb.WriteString("### Delete the migrated computing infra\n\n")
-		sb.WriteString(fmt.Sprintf("- API: `DELETE /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
-		sb.WriteString(fmt.Sprintf("- nsId: `%s`\n", report.NamespaceID))
-		sb.WriteString("- Request body: None\n")
-		sb.WriteString("- Response body:\n\n")
-		sb.WriteString("```json\n")
-		delJSON, _ := json.MarshalIndent(report.DeleteMCIResponse, "", "  ")
-		sb.WriteString(string(delJSON))
-		sb.WriteString("\n```\n\n")
+	// Test Case 6: Delete MCI (always show if test was attempted)
+	if len(report.TestResults) > 5 && report.TestResults[5].TestName != "" {
+		sb.WriteString("### Test Case 6: Delete the migrated computing infra\n\n")
+
+		// API request information
+		sb.WriteString("#### 6.1 API Request Information\n\n")
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
+		sb.WriteString("- **Purpose**: Delete the migrated infrastructure and clean up resources\n")
+		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
+		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete\n")
+		sb.WriteString("- **Query Parameter**: `option=terminate` (terminates all resources)\n")
+		sb.WriteString("- **Request Body**: None (DELETE request)\n\n")
+
+		// API response information
+		sb.WriteString("#### 6.2 API Response Information\n\n")
+		deleteResult := report.TestResults[5] // 6th test is delete
+		if deleteResult.Success && len(report.DeleteMCIResponse) > 0 {
+			// Success case - show response
+			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+			sb.WriteString("- **Response**: Infrastructure deletion completed successfully\n\n")
+			sb.WriteString("**Response Body**:\n\n")
+			sb.WriteString("```json\n")
+			delJSON, _ := json.MarshalIndent(report.DeleteMCIResponse, "", "  ")
+			sb.WriteString(string(delJSON))
+			sb.WriteString("\n```\n\n")
+		} else if !deleteResult.Success {
+			// Failure case - show error message
+			sb.WriteString("- **Status**: ❌ **FAILED**\n")
+			sb.WriteString("- **Error**: Infrastructure deletion failed\n\n")
+
+			if deleteResult.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(deleteResult.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			} else if deleteResult.Error != "" {
+				sb.WriteString("**Error**:\n\n```\n")
+				sb.WriteString(deleteResult.Error)
+				sb.WriteString("\n```\n\n")
+			}
+
+			if deleteResult.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", deleteResult.ErrorDetails))
+			}
+
+			if deleteResult.RequestURL != "" {
+				sb.WriteString(fmt.Sprintf("**Request URL**: `%s`\n\n", deleteResult.RequestURL))
+			}
+
+			// Show error response if available
+			if len(deleteResult.Response) > 0 {
+				sb.WriteString("**Response Body**:\n\n")
+				sb.WriteString("```json\n")
+				errJSON, _ := json.MarshalIndent(deleteResult.Response, "", "  ")
+				sb.WriteString(string(errJSON))
+				sb.WriteString("\n```\n\n")
+			}
+		}
 	}
 
 	return sb.String()
