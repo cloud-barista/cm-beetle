@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (8261244)
+- CM-Beetle: v0.4.0 (76a9a3e)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 18, 2025
-- Test Time: 19:17:09 KST
-- Test Execution: 2025-08-18 19:17:09 KST
+- Test Date: August 19, 2025
+- Test Time: 15:12:56 KST
+- Test Execution: 2025-08-19 15:12:56 KST
 
 ### Scenario
 
@@ -39,18 +39,18 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 220ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m44.235s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 150ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 64ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 162ms | Pass |
-| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 3m31.034s | Pass |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 246ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m7.284s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 140ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 69ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 137ms | Pass |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 3m26.448s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 7m46.111146226s
+**Total Duration**: 7m4.540328445s
 
-*Test executed on August 18, 2025 at 19:17:09 KST (2025-08-18 19:17:09 KST) using CM-Beetle automated test CLI*
+*Test executed on August 19, 2025 at 15:12:56 KST (2025-08-19 15:12:56 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -1740,7 +1740,7 @@
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "s2-g3",
+        "specId": "s2-g3a",
         "imageId": "23214590",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -1783,9 +1783,9 @@
   },
   "targetVmSpecList": [
     {
-      "id": "ncpvpc+kr+s2-g3",
-      "cspSpecName": "s2-g3",
-      "name": "ncpvpc+kr+s2-g3",
+      "id": "ncpvpc+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "name": "ncpvpc+kr+s2-g3a",
       "namespace": "system",
       "connectionName": "ncpvpc-kr",
       "providerName": "ncpvpc",
@@ -1813,7 +1813,7 @@
       "details": [
         {
           "key": "ServerSpecCode",
-          "value": "s2-g3"
+          "value": "s2-g3a"
         },
         {
           "key": "GenerationCode",
@@ -1857,7 +1857,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C002.M008.G003"
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
         },
         {
           "key": "ServerSpecDescription",
@@ -1865,7 +1865,7 @@
         },
         {
           "key": "CorrespondingImageIds",
-          "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+          "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
         }
       ]
     }
@@ -1881,7 +1881,7 @@
       "id": "ncpvpc+23214590",
       "name": "ncpvpc+23214590",
       "connectionName": "ncpvpc-kr",
-      "fetchedTime": "2025.08.12 07:58:40 Tue",
+      "fetchedTime": "2025.08.18 10:52:57 Mon",
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
       "osPlatform": "Linux/UNIX",
@@ -2262,7 +2262,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2hfrncdjuna1t2ovmf0",
+  "uid": "d2i1c8cdjuna1t4r4rt0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2289,7 +2289,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2hfrncdjuna1t2ovmf0"
+    "sys.uid": "d2i1c8cdjuna1t4r4rt0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2298,9 +2298,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2hfrncdjuna1t2ovmg0",
-      "cspResourceName": "d2hfrncdjuna1t2ovmg0",
-      "cspResourceId": "108223514",
+      "uid": "d2i1c8cdjuna1t4r4ru0",
+      "cspResourceName": "d2i1c8cdjuna1t4r4ru0",
+      "cspResourceId": "108250326",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2314,12 +2314,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-18 10:20:44",
+      "createdTime": "2025-08-19 06:15:58",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-18 10:20:44",
-        "sys.cspResourceId": "108223514",
-        "sys.cspResourceName": "d2hfrncdjuna1t2ovmg0",
+        "sys.createdTime": "2025-08-19 06:15:58",
+        "sys.cspResourceId": "108250326",
+        "sys.cspResourceName": "d2i1c8cdjuna1t4r4ru0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2327,14 +2327,14 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2hfrncdjuna1t2ovmg0"
+        "sys.uid": "d2i1c8cdjuna1t4r4ru0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.135.191",
+      "publicIP": "101.79.8.56",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2371,30 +2371,30 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "s2-g3",
-      "cspSpecName": "s2-g3",
+      "specId": "s2-g3a",
+      "cspSpecName": "s2-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "119344",
+      "cspVNetId": "119520",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "251588",
+      "cspSubnetId": "251917",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2hfri4djuna1t2ovme0",
+      "cspSshKeyId": "d2i1c2kdjuna1t4r4rs0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108223514"
+          "value": "108250326"
         },
         {
           "key": "ServerName",
-          "value": "d2hfrncdjuna1t2ovmg0"
+          "value": "d2i1c8cdjuna1t4r4ru0"
         },
         {
           "key": "CpuCount",
@@ -2410,7 +2410,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d2hfri4djuna1t2ovme0"
+          "value": "d2i1c2kdjuna1t4r4rs0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2426,11 +2426,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-18T19:18:20+0900"
+          "value": "2025-08-19T15:13:54+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-18T19:20:38+0900"
+          "value": "2025-08-19T15:15:54+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2438,7 +2438,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C002.M008.G003"
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -2454,19 +2454,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "119344"
+          "value": "119520"
         },
         {
           "key": "SubnetNo",
-          "value": "251588"
+          "value": "251917"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4899871"
+          "value": "4902335"
         },
         {
           "key": "InitScriptNo",
-          "value": "135069"
+          "value": "135227"
         },
         {
           "key": "ServerInstanceType",
@@ -2490,7 +2490,7 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "s2-g3"
+          "value": "s2-g3a"
         }
       ]
     }
@@ -2530,7 +2530,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2hfrncdjuna1t2ovmf0",
+      "uid": "d2i1c8cdjuna1t4r4rt0",
       "name": "mmci01",
       "status": "Running:1 (R:1/1)",
       "statusCount": {
@@ -2558,7 +2558,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2hfrncdjuna1t2ovmf0",
+          "uid": "d2i1c8cdjuna1t4r4rt0",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2690,7 +2690,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2hfrncdjuna1t2ovmf0",
+  "uid": "d2i1c8cdjuna1t4r4rt0",
   "name": "mmci01",
   "status": "Running:1 (R:1/1)",
   "statusCount": {
@@ -2717,7 +2717,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2hfrncdjuna1t2ovmf0"
+    "sys.uid": "d2i1c8cdjuna1t4r4rt0"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2726,9 +2726,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2hfrncdjuna1t2ovmg0",
-      "cspResourceName": "d2hfrncdjuna1t2ovmg0",
-      "cspResourceId": "108223514",
+      "uid": "d2i1c8cdjuna1t4r4ru0",
+      "cspResourceName": "d2i1c8cdjuna1t4r4ru0",
+      "cspResourceId": "108250326",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2742,12 +2742,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-18 10:20:44",
+      "createdTime": "2025-08-19 06:15:58",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-18 10:20:44",
-        "sys.cspResourceId": "108223514",
-        "sys.cspResourceName": "d2hfrncdjuna1t2ovmg0",
+        "sys.createdTime": "2025-08-19 06:15:58",
+        "sys.cspResourceId": "108250326",
+        "sys.cspResourceName": "d2i1c8cdjuna1t4r4ru0",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2755,14 +2755,14 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2hfrncdjuna1t2ovmg0"
+        "sys.uid": "d2i1c8cdjuna1t4r4ru0"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.135.191",
+      "publicIP": "101.79.8.56",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.6",
@@ -2799,30 +2799,30 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "s2-g3",
-      "cspSpecName": "s2-g3",
+      "specId": "s2-g3a",
+      "cspSpecName": "s2-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "119344",
+      "cspVNetId": "119520",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "251588",
+      "cspSubnetId": "251917",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2hfri4djuna1t2ovme0",
+      "cspSshKeyId": "d2i1c2kdjuna1t4r4rs0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108223514"
+          "value": "108250326"
         },
         {
           "key": "ServerName",
-          "value": "d2hfrncdjuna1t2ovmg0"
+          "value": "d2i1c8cdjuna1t4r4ru0"
         },
         {
           "key": "CpuCount",
@@ -2838,7 +2838,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d2hfri4djuna1t2ovme0"
+          "value": "d2i1c2kdjuna1t4r4rs0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2854,11 +2854,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-18T19:18:20+0900"
+          "value": "2025-08-19T15:13:54+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-18T19:20:38+0900"
+          "value": "2025-08-19T15:15:54+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2866,7 +2866,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C002.M008.G003"
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -2882,19 +2882,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "119344"
+          "value": "119520"
         },
         {
           "key": "SubnetNo",
-          "value": "251588"
+          "value": "251917"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4899871"
+          "value": "4902335"
         },
         {
           "key": "InitScriptNo",
-          "value": "135069"
+          "value": "135227"
         },
         {
           "key": "ServerInstanceType",
@@ -2918,7 +2918,7 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "s2-g3"
+          "value": "s2-g3a"
         }
       ]
     }
