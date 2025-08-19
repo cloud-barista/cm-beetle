@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/cloud-barista/cb-tumblebug/src/core/common/netutil"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -220,7 +222,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	var recommendedVmInfra cloudmodel.RecommendedVmInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
-	var max int = 5
+	var limitSpecs int = 10
+	var limitImages int = 20
 
 	// Initialize the response body
 	recommendedVmInfra = cloudmodel.RecommendedVmInfra{
@@ -283,16 +286,17 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		 * Recommend VM specs, OS images, and security groups
 		 */
 
-		// Lookup the appropriate VM OS images for the server
-		recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, server)
-		if err != nil {
-			log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
-		}
-
 		// Lookup the appropriate VM specs for the server
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecsForImage(csp, region, server, max, recommendedVmOsImageInfo)
+		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, server, limitSpecs)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
+		}
+
+		// Lookup the appropriate VM OS images for the server
+		// recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, server)
+		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, server, limitImages)
+		if err != nil {
+			log.Warn().Msgf("failed to recommend VM OS images for server %s: %v", server.MachineId, err)
 		}
 
 		// Generete security group from the server's firewall rules (or firewall table)
@@ -301,27 +305,37 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
 		}
 
+		log.Debug().Msgf("recommendedVmSpecInfoList: %+v", recommendedVmSpecInfoList)
+		log.Debug().Msgf("recommendedVmOsImageInfoList: %+v", recommendedVmOsImageInfoList)
+		var selectedVmSpec cloudmodel.TbSpecInfo
+		var selectedVmOsImage cloudmodel.TbImageInfo
+		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
+			log.Warn().Msgf("no recommended VM specs or OS images found for server %s", server.MachineId)
+		} else {
+			// Find compatible spec and image pair
+			tempSelectedVmSpec, tempSelectedVmOsImage, err := FindCompatibleSpecAndImage(recommendedVmSpecInfoList, recommendedVmOsImageInfoList, csp)
+			if err != nil {
+				log.Warn().Msgf("failed to find compatible spec-image pair for server %s: %v", server.MachineId, err)
+				// Use fallback selection (first spec, first image)
+			} else {
+				selectedVmSpec = tempSelectedVmSpec
+				selectedVmOsImage = tempSelectedVmOsImage
+			}
+		}
+
 		/*
 		 * Check duplicate and append the recommended VM specs, OS images, and security groups
 		 */
 		// Check duplicates and append the recommended VM specs
 		// * Note: Use the name of the VM spec managed by Tumblebug
-		var selectedVmSpec cloudmodel.TbSpecInfo
 		exists := false
-		if len(recommendedVmSpecInfoList) > 0 {
-
-			selectedVmSpec = recommendedVmSpecInfoList[0]
-			log.Debug().Msgf("selectedVmSpec: %+v", selectedVmSpec)
-
-			// If the recommended VM spec already exists in the list, select the existing spec
-			for _, vmSpec := range recommendedVmSpecList {
-				if vmSpec.CspSpecName == selectedVmSpec.CspSpecName {
-					exists = true
-					selectedVmSpec = vmSpec
-					break
-				}
+		// If the recommended VM spec already exists in the list, select the existing spec
+		for _, vmSpec := range recommendedVmSpecList {
+			if vmSpec.CspSpecName == selectedVmSpec.CspSpecName {
+				exists = true
+				selectedVmSpec = vmSpec
+				break
 			}
-
 		}
 		if !exists {
 			recommendedVmSpecList = append(recommendedVmSpecList, selectedVmSpec)
@@ -329,12 +343,11 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 
 		// Check duplicates and append the recommended VM OS images
 		// * Note: Use the name of the VM OS image managed by Tumblebug
-		log.Debug().Msgf("recommendedVmOsImageInfo: %+v", recommendedVmOsImageInfo)
-		var selectedVmOsImage = recommendedVmOsImageInfo
+		log.Debug().Msgf("selectedVmOsImage: %+v", selectedVmOsImage)
 		exists = false
 		// If the recommended VM OS image already exists in the list, select the existing OS image
 		for _, vmOsImage := range recommendedVmOsImageList {
-			if vmOsImage.CspImageName == recommendedVmOsImageInfo.CspImageName {
+			if vmOsImage.CspImageName == selectedVmOsImage.CspImageName {
 				exists = true
 				selectedVmOsImage = vmOsImage
 				break
@@ -752,19 +765,6 @@ func toNetworkAddress(cidr string) (string, error) {
 	return subnet.String(), nil
 }
 
-func toNetworkAddresses(cidrs []string) []string {
-	var subnets []string
-	for _, cidr := range cidrs {
-		subnet, err := toNetworkAddress(cidr)
-		if err != nil {
-			log.Warn().Err(err).Msgf("failed to parse CIDR block %s", cidr)
-			continue
-		}
-		subnets = append(subnets, subnet)
-	}
-	return subnets
-}
-
 // RecommendVmSpecsForImage recommends appropriate VM specs for the server and image
 func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.ServerProperty, limit int, image cloudmodel.TbImageInfo) (vmSpecList []cloudmodel.TbSpecInfo, length int, err error) {
 
@@ -774,20 +774,28 @@ func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.Serv
 		return nil, 0, err
 	}
 
-	switch csp {
-	case "aws":
-		// AWS-specific filtering: match image hypervisor with VM spec hypervisor
-		vmSpecList = filterAwsVmSpecsByHypervisor(vmSpecList, image)
-	case "gcp":
-		// GCP-specific recommendations
-	case "ncp":
-		// NCP-specific filtering: include only KVM hypervisor specs
-		vmSpecList = filterNcpVmSpecsByHypervisor(vmSpecList)
-	default:
-		log.Warn().Msgf("Unknown CSP: %s", csp)
+	// Use unified compatibility filtering instead of CSP-specific switches
+	compatibleSpecs := make([]cloudmodel.TbSpecInfo, 0, len(vmSpecList))
+
+	for _, spec := range vmSpecList {
+		if isCompatible := checkCompatibility(strings.ToLower(csp), spec, image); isCompatible {
+			compatibleSpecs = append(compatibleSpecs, spec)
+		} else {
+			log.Debug().Msgf("Filtered incompatible spec: %s for image: %s on CSP: %s",
+				spec.CspSpecName, image.CspImageName, csp)
+		}
 	}
 
-	return vmSpecList, length, nil
+	if len(compatibleSpecs) == 0 {
+		log.Warn().Msgf("No compatible specs found for image %s on CSP %s, returning original list",
+			image.CspImageName, csp)
+		return vmSpecList, length, nil
+	}
+
+	log.Info().Msgf("Filtered %d specs to %d compatible specs for image %s on CSP %s",
+		len(vmSpecList), len(compatibleSpecs), image.CspImageName, csp)
+
+	return compatibleSpecs, len(compatibleSpecs), nil
 }
 
 // RecommendVmSpecs recommends appropriate VM specs for the given server
@@ -1049,12 +1057,11 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	}
 
 	// Request body
-	// falseValue := false
+	falseValue := false
 	trueValue := true
 	searchImageReq := tbmodel.SearchImageRequest{
 		// DetailSearchKeys:       []string{},
 		// IncludeDeprecatedImage: &falseValue,
-		// IsGPUImage:             &falseValue,
 		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		// IsRegisteredByAsset:    &falseValue,
 		IncludeBasicImageOnly: &trueValue,
@@ -1063,6 +1070,10 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		ProviderName:          csp,
 		RegionName:            region,
 	}
+
+	// TODO: Add condition to check if searchImageReq.IsGPUImage is set, when GPU information is confirmed in the source model
+	searchImageReq.IsGPUImage = &falseValue
+
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
 	// Call Tumblebug API to search VM OS images
@@ -1870,62 +1881,295 @@ func isIPv6Rule(rule onpremmodel.FirewallRuleProperty) bool {
 	return false
 }
 
-// filterAwsVmSpecsByHypervisor filters AWS VM specs based on hypervisor and virtualization type compatibility with the given image
-func filterAwsVmSpecsByHypervisor(vmSpecs []cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) []cloudmodel.TbSpecInfo {
-	if len(vmSpecs) == 0 {
-		return vmSpecs
+// FindCompatibleSpecAndImage finds a compatible VM spec and image pair by performing CSP-specific compatibility checks
+func FindCompatibleSpecAndImage(specs []cloudmodel.TbSpecInfo, images []cloudmodel.TbImageInfo, csp string) (cloudmodel.TbSpecInfo, cloudmodel.TbImageInfo, error) {
+	var emptySpec cloudmodel.TbSpecInfo
+	var emptyImage cloudmodel.TbImageInfo
+
+	if len(specs) == 0 {
+		return emptySpec, emptyImage, fmt.Errorf("no VM specs provided")
+	}
+	if len(images) == 0 {
+		return emptySpec, emptyImage, fmt.Errorf("no VM images provided")
 	}
 
-	// Extract hypervisor and virtualization type from image
-	imageHypervisor := extractHypervisorFromImage(image)
-	imageVirtType := extractVirtualizationTypeFromImage(image)
+	log.Debug().Msgf("Finding compatible spec and image for CSP: %s, specs: %d, images: %d", csp, len(specs), len(images))
 
-	log.Debug().Msgf("AWS image info - Hypervisor: %s, VirtualizationType: %s", imageHypervisor, imageVirtType)
+	// Pre-filter specs and images based on CSP-specific rules
+	filteredSpecs, filteredImages := preFilterByCsp(csp, specs, images)
 
-	if imageHypervisor == "" && imageVirtType == "" {
-		log.Warn().Msg("No hypervisor or virtualization type information found in image, returning all VM specs")
-		return vmSpecs
+	if len(filteredSpecs) == 0 {
+		return emptySpec, emptyImage, fmt.Errorf("no compatible VM specs found after CSP-specific filtering")
+	}
+	if len(filteredImages) == 0 {
+		return emptySpec, emptyImage, fmt.Errorf("no compatible VM images found after CSP-specific filtering")
 	}
 
-	var filteredSpecs []cloudmodel.TbSpecInfo
+	log.Debug().Msgf("After pre-filtering - specs: %d, images: %d", len(filteredSpecs), len(filteredImages))
 
-	for _, spec := range vmSpecs {
-		specHypervisor := extractHypervisorFromVmSpec(spec)
-		supportedVirtTypes := extractSupportedVirtualizationTypesFromVmSpec(spec)
+	// Find best compatible pair without scoring
+	bestSpec, bestImage, err := findCompatiblePair(csp, filteredSpecs, filteredImages)
+	if err != nil {
+		return emptySpec, emptyImage, fmt.Errorf("failed to find compatible spec-image pair: %w", err)
+	}
 
-		if isAwsHypervisorCompatible(imageHypervisor, imageVirtType, specHypervisor, supportedVirtTypes) {
-			filteredSpecs = append(filteredSpecs, spec)
-		} else {
-			log.Debug().Msgf("Filtered out VM spec %s (hypervisor: %s, supported virt types: %v) - incompatible with image (hypervisor: %s, virt type: %s)",
-				spec.CspSpecName, specHypervisor, supportedVirtTypes, imageHypervisor, imageVirtType)
+	log.Info().Msgf("Found compatible pair - Spec: %s, Image: %s", bestSpec.CspSpecName, bestImage.CspImageName)
+	return bestSpec, bestImage, nil
+}
+
+// preFilterByCsp performs CSP-specific pre-filtering with integrated logic
+func preFilterByCsp(csp string, specs []cloudmodel.TbSpecInfo, images []cloudmodel.TbImageInfo) ([]cloudmodel.TbSpecInfo, []cloudmodel.TbImageInfo) {
+	cspLower := strings.ToLower(csp)
+
+	switch cspLower {
+	case "aws":
+		// Filter out UEFI images for AWS
+		filteredImages := make([]cloudmodel.TbImageInfo, 0, len(images))
+		for _, img := range images {
+			if !strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+				filteredImages = append(filteredImages, img)
+			}
+		}
+		log.Debug().Msgf("AWS pre-filtering: %d images filtered to %d", len(images), len(filteredImages))
+		return specs, filteredImages
+
+	case "ncp":
+		// Filter specs for KVM hypervisor only
+		filteredSpecs := filterNcpVmSpecsByHypervisor(specs)
+		log.Debug().Msgf("NCP pre-filtering: %d specs filtered to %d KVM specs", len(specs), len(filteredSpecs))
+		return filteredSpecs, images
+
+	default:
+		// No specific filtering for GCP, Azure, and others
+		log.Debug().Msgf("No specific pre-filtering rules for CSP: %s", csp)
+		return specs, images
+	}
+}
+
+// findCompatiblePair finds the first compatible spec-image pair using comprehensive compatibility checks
+func findCompatiblePair(csp string, specs []cloudmodel.TbSpecInfo, images []cloudmodel.TbImageInfo) (cloudmodel.TbSpecInfo, cloudmodel.TbImageInfo, error) {
+	var emptySpec cloudmodel.TbSpecInfo
+	var emptyImage cloudmodel.TbImageInfo
+
+	cspLower := strings.ToLower(csp)
+
+	// Use standard compatibility check for all CSPs
+	for _, spec := range specs {
+		for _, image := range images {
+			if isCompatible := checkCompatibility(cspLower, spec, image); isCompatible {
+				log.Info().Msgf("Found compatible pair - Spec: %s, Image: %s",
+					spec.CspSpecName, image.CspImageName)
+				log.Debug().Msgf("Compatible pair (spec): %v", spec)
+				log.Debug().Msgf("Compatible pair (image): %v", image)
+				return spec, image, nil
+			}
 		}
 	}
 
-	log.Debug().Msgf("AWS filtering: %d VM specs filtered to %d compatible specs", len(vmSpecs), len(filteredSpecs))
+	return emptySpec, emptyImage, fmt.Errorf("no compatible spec-image pairs found")
+}
 
-	// If no compatible specs found, return original list with warning
-	if len(filteredSpecs) == 0 {
-		log.Warn().Msgf("No compatible AWS VM specs found for image (hypervisor: %s, virt type: %s), returning all specs", imageHypervisor, imageVirtType)
-		return vmSpecs
+// checkCompatibility performs compatibility check between spec and image
+func checkCompatibility(csp string, spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// 1. Architecture check for all CSPs
+	if spec.Architecture != "" && string(image.OSArchitecture) != "" {
+		if spec.Architecture != string(image.OSArchitecture) {
+			log.Debug().Msgf("%s architecture mismatch - Spec: %s (%s), Image: %s (%s)",
+				strings.ToUpper(csp), spec.CspSpecName, spec.Architecture, image.CspImageName, string(image.OSArchitecture))
+			return false
+		}
+		log.Debug().Msgf("%s architecture match - %s", strings.ToUpper(csp), spec.Architecture)
 	}
 
-	return filteredSpecs
-} // extractVirtualizationTypeFromImage extracts virtualization type from VM image details
-func extractVirtualizationTypeFromImage(image cloudmodel.TbImageInfo) string {
+	// 2. CSP-specific compatibility checks using Detail information
+	switch csp {
+	case "aws":
+		return checkAwsCompatibility(spec, image)
+	case "gcp":
+		return checkGcpCompatibility(spec, image)
+	case "azure":
+		return checkAzureCompatibility(spec, image)
+	case "ncp":
+		return checkNcpCompatibility(spec, image)
+	default:
+		log.Debug().Msgf("No specific compatibility checks for CSP: %s", csp)
+		return true
+	}
+}
+
+// checkAwsCompatibility checks AWS-specific compatibility
+func checkAwsCompatibility(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// AWS hypervisor compatibility check
+	if !isAwsHypervisorCompatible(spec, image) {
+		log.Debug().Msgf("AWS hypervisor compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		return false
+	}
+
+	// AWS ENA Support compatibility check
+	if !isAwsEnaSupportCompatible(spec, image) {
+		log.Debug().Msgf("AWS ENA support compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		return false
+	}
+
+	// Add other AWS-specific checks here if needed (GPU support, etc.)
+
+	return true
+}
+
+// checkGcpCompatibility checks GCP-specific compatibility
+func checkGcpCompatibility(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// Add GCP-specific compatibility checks using Detail information
+	// For example: GPU support, machine type families, etc.
+	log.Debug().Msgf("GCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	return true
+}
+
+// checkAzureCompatibility checks Azure-specific compatibility
+func checkAzureCompatibility(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// Add Azure-specific compatibility checks using Detail information
+	// For example: VM size families, disk types, etc.
+	log.Debug().Msgf("Azure compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	return true
+}
+
+// checkNcpCompatibility checks NCP-specific compatibility
+func checkNcpCompatibility(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// NCP Image ID compatibility check using CorrespondingImageIds
+	if !isNcpImageCompatible(spec, image) {
+		log.Debug().Msgf("NCP image compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		return false
+	}
+
+	// Add other NCP-specific compatibility checks here if needed
+	log.Debug().Msgf("NCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	return true
+}
+
+// isNcpImageCompatible checks if NCP image is compatible with spec using CorrespondingImageIds
+func isNcpImageCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// Extract CorrespondingImageIds from spec details
+	correspondingImageIds := extractNcpCorrespondingImageIds(spec)
+	if len(correspondingImageIds) == 0 {
+		log.Debug().Msgf("No CorrespondingImageIds found for NCP spec: %s, allowing all images", spec.CspSpecName)
+		return true // If no corresponding image IDs specified, allow all images
+	}
+
+	// Extract image ID from image (could be in CspImageName or other fields)
+	imageId := extractNcpImageId(image)
+	if imageId == "" {
+		log.Debug().Msgf("Could not extract image ID from NCP image: %s", image.CspImageName)
+		return true // If we can't extract image ID, be permissive
+	}
+
+	// Check if image ID is in the corresponding image IDs list
+	for _, correspondingId := range correspondingImageIds {
+		if imageId == correspondingId {
+			log.Debug().Msgf("NCP image ID %s matches corresponding image ID for spec %s", imageId, spec.CspSpecName)
+			return true
+		}
+	}
+
+	log.Debug().Msgf("NCP image ID %s not found in corresponding image IDs %v for spec %s",
+		imageId, correspondingImageIds, spec.CspSpecName)
+	return false
+}
+
+// extractNcpCorrespondingImageIds extracts CorrespondingImageIds from NCP spec details
+func extractNcpCorrespondingImageIds(spec cloudmodel.TbSpecInfo) []string {
+	for _, detail := range spec.Details {
+		if strings.EqualFold(detail.Key, "CorrespondingImageIds") {
+			// Parse comma-separated image IDs
+			imageIds := strings.Split(detail.Value, ",")
+			var cleanedIds []string
+			for _, id := range imageIds {
+				cleanedId := strings.TrimSpace(id)
+				if cleanedId != "" {
+					cleanedIds = append(cleanedIds, cleanedId)
+				}
+			}
+			log.Debug().Msgf("Extracted NCP CorrespondingImageIds: %v", cleanedIds)
+			return cleanedIds
+		}
+	}
+	return []string{}
+}
+
+// extractNcpImageId extracts image ID from NCP image info
+func extractNcpImageId(image cloudmodel.TbImageInfo) string {
+	// Try to extract from CspImageName first (might contain the ID directly)
+	if image.CspImageName != "" {
+		log.Debug().Msgf("NCP image CspImageName: %s", image.CspImageName)
+		// If CspImageName is numeric, use it directly
+		if isNumeric(image.CspImageName) {
+			return image.CspImageName
+		}
+	}
+
+	// Try to extract from Details
 	for _, detail := range image.Details {
-		if strings.EqualFold(detail.Key, "virtualizationtype") {
-			return strings.ToLower(strings.TrimSpace(detail.Value))
+		if strings.EqualFold(detail.Key, "ImageId") ||
+			strings.EqualFold(detail.Key, "Id") ||
+			strings.EqualFold(detail.Key, "NcpImageId") {
+			if detail.Value != "" && isNumeric(detail.Value) {
+				log.Debug().Msgf("Extracted NCP image ID from Details[%s]: %s", detail.Key, detail.Value)
+				return detail.Value
+			}
+		}
+	}
+
+	// Fallback: try to extract numeric part from CspImageName
+	if image.CspImageName != "" {
+		// Look for numeric patterns in the image name
+		re := regexp.MustCompile(`\d+`)
+		matches := re.FindAllString(image.CspImageName, -1)
+		if len(matches) > 0 {
+			// Use the first (or longest) numeric match
+			longestMatch := ""
+			for _, match := range matches {
+				if len(match) > len(longestMatch) {
+					longestMatch = match
+				}
+			}
+			if longestMatch != "" {
+				log.Debug().Msgf("Extracted NCP image ID from CspImageName pattern: %s", longestMatch)
+				return longestMatch
+			}
+		}
+	}
+
+	log.Debug().Msgf("Could not extract numeric image ID from NCP image: %s", image.CspImageName)
+	return ""
+}
+
+// isNumeric checks if a string contains only digits
+func isNumeric(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// extractAwsVirtualizationTypeFromImageDetails extracts virtualization type from VM image details
+func extractAwsVirtualizationTypeFromImageDetails(image cloudmodel.TbImageInfo) string {
+	for _, kv := range image.Details {
+		if strings.EqualFold(kv.Key, "virtualizationtype") {
+			return strings.ToLower(strings.TrimSpace(kv.Value))
 		}
 	}
 	return ""
 }
 
-// extractSupportedVirtualizationTypesFromVmSpec extracts supported virtualization types from VM spec details
-func extractSupportedVirtualizationTypesFromVmSpec(spec cloudmodel.TbSpecInfo) []string {
-	for _, detail := range spec.Details {
-		if strings.EqualFold(detail.Key, "supportedvirtualizationtypes") {
+// extractAwsSupportedVirtualizationTypesFromSpecDetails extracts supported virtualization types from VM spec details
+func extractAwsSupportedVirtualizationTypesFromSpecDetails(spec cloudmodel.TbSpecInfo) []string {
+	for _, kv := range spec.Details {
+		if strings.EqualFold(kv.Key, "supportedvirtualizationtypes") {
 			// Parse supported types (format: "hvm", "hvm; pv", etc.)
-			virtTypes := strings.Split(detail.Value, ";")
+			virtTypes := strings.Split(kv.Value, ";")
 			var result []string
 			for _, vt := range virtTypes {
 				cleaned := strings.ToLower(strings.TrimSpace(vt))
@@ -1940,7 +2184,13 @@ func extractSupportedVirtualizationTypesFromVmSpec(spec cloudmodel.TbSpecInfo) [
 }
 
 // isAwsHypervisorCompatible checks AWS-specific hypervisor and virtualization type compatibility
-func isAwsHypervisorCompatible(imageHypervisor, imageVirtType, specHypervisor string, supportedVirtTypes []string) bool {
+func isAwsHypervisorCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// Extract hypervisor and virtualization info from spec and image
+	imageHypervisor := extractAwsHypervisorFromImageDetails(image)
+	imageVirtType := extractAwsVirtualizationTypeFromImageDetails(image)
+	specHypervisor := extractAwsHypervisorFromSpecDetails(spec)
+	supportedVirtTypes := extractAwsSupportedVirtualizationTypesFromSpecDetails(spec)
+
 	log.Debug().Msgf("AWS compatibility check - Image (hypervisor: %s, virt: %s) vs Spec (hypervisor: %s, supported: %v)",
 		imageHypervisor, imageVirtType, specHypervisor, supportedVirtTypes)
 
@@ -1958,77 +2208,160 @@ func isAwsHypervisorCompatible(imageHypervisor, imageVirtType, specHypervisor st
 			log.Debug().Msgf("Virtualization type %s not supported by spec (supports: %v)", imageVirtType, supportedVirtTypes)
 			return false
 		}
+	}
 
-		// Additional check: ensure hypervisors are compatible if both are present
-		if imageHypervisor != "" && specHypervisor != "" {
-			hypervisorCompatible := isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, imageVirtType)
-			log.Debug().Msgf("Hypervisor compatibility check result: %t", hypervisorCompatible)
-			return hypervisorCompatible
+	// Additional check: ensure hypervisors are compatible if both are present
+	if imageHypervisor != "" && specHypervisor != "" {
+		// Normalize hypervisor names inline
+		imageNormalized := strings.ToLower(strings.TrimSpace(imageHypervisor))
+		specNormalized := strings.ToLower(strings.TrimSpace(specHypervisor))
+
+		// Handle AWS-specific hypervisor aliases
+		var imageHyp, specHyp string
+		switch {
+		case strings.Contains(imageNormalized, "nitro"):
+			imageHyp = "nitro"
+		case strings.Contains(imageNormalized, "xen"):
+			imageHyp = "xen"
+		default:
+			imageHyp = imageNormalized
 		}
 
-		log.Debug().Msgf("Virtualization type compatible, no hypervisor info to check")
-		return true
+		switch {
+		case strings.Contains(specNormalized, "nitro"):
+			specHyp = "nitro"
+		case strings.Contains(specNormalized, "xen"):
+			specHyp = "xen"
+		default:
+			specHyp = specNormalized
+		}
+
+		log.Debug().Msgf("AWS hypervisor compatibility check - Image: %s (%s), Spec: %s (%s), VirtType: %s",
+			imageHypervisor, imageHyp, specHypervisor, specHyp, imageVirtType)
+
+		// AWS strict hypervisor compatibility rule:
+		// Xen hypervisor images can ONLY run on Xen hypervisor instances
+		// Nitro hypervisor images can ONLY run on Nitro hypervisor instances
+		compatible := imageHyp == specHyp
+
+		log.Debug().Msgf("AWS hypervisor compatibility result: %t (strict matching required)", compatible)
+		return compatible
 	}
 
-	// Fall back to hypervisor-only compatibility if virtualization type info is missing
-	if imageHypervisor != "" && specHypervisor != "" {
-		log.Debug().Msgf("No virtualization type info, checking hypervisor compatibility only")
-		return isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, imageVirtType)
-	}
-
-	// If both image and spec lack detailed info, assume compatible
-	log.Debug().Msgf("Missing hypervisor info, assuming compatible")
+	// If both image and spec lack detailed info or virt types match, assume compatible
+	log.Debug().Msgf("Hypervisor compatibility check passed")
 	return true
 }
 
-// isAwsHypervisorTypeCompatible checks AWS hypervisor type compatibility
-func isAwsHypervisorTypeCompatible(imageHypervisor, specHypervisor, virtType string) bool {
-	// Normalize hypervisor names
-	imageHyp := normalizeAwsHypervisorName(imageHypervisor)
-	specHyp := normalizeAwsHypervisorName(specHypervisor)
+// isAwsEnaSupportCompatible checks AWS ENA support compatibility between spec and image
+func isAwsEnaSupportCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+	// Extract ENA support from spec and image using specialized functions
+	specEnaSupport := extractAwsEnaSupportFromSpecDetails(spec)
+	imageEnaSupport := extractAwsEnaSupportFromImageDetails(image)
 
-	log.Debug().Msgf("AWS hypervisor compatibility check - Image: %s (%s), Spec: %s (%s), VirtType: %s",
-		imageHypervisor, imageHyp, specHypervisor, specHyp, virtType)
+	log.Debug().Msgf("AWS ENA support check - Spec: %s (%s), Image: %s (%s)",
+		spec.CspSpecName, specEnaSupport, image.CspImageName, imageEnaSupport)
 
-	// AWS strict hypervisor compatibility rule:
-	// Xen hypervisor images can ONLY run on Xen hypervisor instances
-	// Nitro hypervisor images can ONLY run on Nitro hypervisor instances
-	// This is the actual AWS behavior regardless of virtualization type
-	compatible := imageHyp == specHyp
+	// If either spec or image doesn't have ENA info, assume compatible
+	if specEnaSupport == "unknown" || imageEnaSupport == "unknown" {
+		log.Debug().Msgf("AWS ENA support unknown, assuming compatible")
+		return true
+	}
 
-	log.Debug().Msgf("AWS hypervisor compatibility result: %t (strict matching required)", compatible)
-	return compatible
-} // normalizeAwsHypervisorName normalizes AWS hypervisor names for comparison
-func normalizeAwsHypervisorName(hypervisor string) string {
-	normalized := strings.ToLower(strings.TrimSpace(hypervisor))
+	// If spec supports ENA but image doesn't support ENA, they are incompatible
+	if specEnaSupport == "supported" && imageEnaSupport == "unsupported" {
+		compatible := false
+		log.Debug().Msgf("Spec supports ENA but image doesn't support ENA, incompatible: %t", compatible)
+		return compatible
+	}
 
-	// Handle AWS-specific hypervisor aliases
-	switch {
-	case strings.Contains(normalized, "nitro"):
-		return "nitro"
-	case strings.Contains(normalized, "xen"):
-		return "xen"
+	// All other combinations are compatible:
+	// - Spec unsupported + Image supported: OK
+	// - Spec unsupported + Image unsupported: OK
+	// - Spec supported + Image supported: OK
+	log.Debug().Msgf("AWS ENA support compatibility: compatible")
+	return true
+}
+
+// extractAwsEnaSupportFromImageDetails extracts ENA support from image details
+// Image has direct "EnaSupport" key with value like "true"
+func extractAwsEnaSupportFromImageDetails(image cloudmodel.TbImageInfo) string {
+	for _, kv := range image.Details {
+		key := strings.ToLower(strings.TrimSpace(kv.Key))
+		value := strings.TrimSpace(kv.Value)
+
+		// Direct ENA support check (EnaSupport key)
+		if key == "enasupport" {
+			log.Debug().Msgf("Found ENA support in image %s: %s = %s", image.CspImageName, kv.Key, kv.Value)
+			return isEnaSupport(value)
+		}
+	}
+
+	log.Debug().Msgf("No ENA support information found in image %s", image.CspImageName)
+	return "unknown"
+}
+
+// extractAwsEnaSupportFromSpecDetails extracts ENA support from spec details
+// Spec has "NetworkInfo" key with value containing "EnaSupport:required"
+func extractAwsEnaSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+	for _, kv := range spec.Details {
+		key := strings.ToLower(strings.TrimSpace(kv.Key))
+		value := strings.TrimSpace(kv.Value)
+
+		// Check nested NetworkInfo structure
+		if key == "networkinfo" {
+			// Look for EnaSupport in the NetworkInfo JSON-like string
+			// Example: {DefaultNetworkCardIndex:0,EfaInfo:null,EfaSupported:false,EnaSupport:unsupported,...}
+
+			// Find EnaSupport field
+			enaPattern := `EnaSupport:([^,}]+)`
+			re := regexp.MustCompile(enaPattern)
+			matches := re.FindStringSubmatch(value)
+
+			if len(matches) >= 2 {
+				enaValue := strings.TrimSpace(matches[1])
+				log.Debug().Msgf("Found ENA support in NetworkInfo of %s: EnaSupport = %s", spec.CspSpecName, enaValue)
+				return isEnaSupport(enaValue)
+			}
+		}
+	}
+
+	log.Debug().Msgf("No ENA support information found in spec %s", spec.CspSpecName)
+	return "unknown"
+}
+
+// isEnaSupport parses ENA support value and returns normalized string
+func isEnaSupport(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+
+	switch value {
+	case "true", "supported", "required", "enabled":
+		return "supported"
+	case "false", "unsupported", "disabled":
+		return "unsupported"
 	default:
-		return normalized
+		log.Debug().Msgf("Unknown ENA support value: %s", value)
+		return "unknown"
 	}
 }
 
-// extractHypervisorFromImage extracts hypervisor information from VM image details
-func extractHypervisorFromImage(image cloudmodel.TbImageInfo) string {
-	for _, detail := range image.Details {
-		if strings.EqualFold(detail.Key, "hypervisor") ||
-			strings.EqualFold(detail.Key, "hypervisortype") {
-			return strings.ToLower(strings.TrimSpace(detail.Value))
+// extractAwsHypervisorFromImageDetails extracts hypervisor information from VM image details
+func extractAwsHypervisorFromImageDetails(image cloudmodel.TbImageInfo) string {
+	for _, kv := range image.Details {
+		key := strings.ToLower(kv.Key)
+		if key == "hypervisor" || key == "hypervisortype" || key == "virtualizationtype" {
+			return strings.ToLower(strings.TrimSpace(kv.Value))
 		}
 	}
 	return ""
-} // extractHypervisorFromVmSpec extracts hypervisor information from VM spec details
-func extractHypervisorFromVmSpec(spec cloudmodel.TbSpecInfo) string {
-	for _, detail := range spec.Details {
-		if strings.EqualFold(detail.Key, "hypervisor") ||
-			strings.EqualFold(detail.Key, "hypervisortype") ||
-			strings.EqualFold(detail.Key, "virtualizationtype") {
-			return strings.ToLower(strings.TrimSpace(detail.Value))
+}
+
+// extractAwsHypervisorFromSpecDetails extracts hypervisor information from VM spec details
+func extractAwsHypervisorFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+	for _, kv := range spec.Details {
+		key := strings.ToLower(kv.Key)
+		if key == "hypervisor" || key == "hypervisortype" || key == "virtualizationtype" {
+			return strings.ToLower(strings.TrimSpace(kv.Value))
 		}
 	}
 	return ""
