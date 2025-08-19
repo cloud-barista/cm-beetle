@@ -1,6 +1,6 @@
 module github.com/cloud-barista/cm-beetle
 
-go 1.23.0
+go 1.24
 
 // When you need to build cm-beetle with pkgs being developed locally,
 // you can use the following guide.

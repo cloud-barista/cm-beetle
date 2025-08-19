@@ -20,11 +20,11 @@ sudo apt install make gcc git
 Note - **Install the latest stable version of Go** for CM-Beetle contribution/development since backward compatibility seems to be supported.
 For example, we can install Go 1.23.0 and use `go 1.19` in `go.mod`. (In the opposite case, you will encounter a build error.)
 
-Example - Install Go 1.23.0, see [Go all releases](https://golang.org/dl/) and [Download and install](https://go.dev/doc/install)
+Example - Install Go 1.24, see [Go all releases](https://golang.org/dl/) and [Download and install](https://go.dev/doc/install)
 
 ```bash
 # Set Go version
-GO_VERSION=1.23.0
+GO_VERSION=1.24.6
 
 # Get Go archive
 wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
