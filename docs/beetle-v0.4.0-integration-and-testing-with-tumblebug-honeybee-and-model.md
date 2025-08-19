@@ -10,7 +10,7 @@
 > [!NOTE]
 > It will continue to be updated until the v0.4.0 release.
 
-- Beetle v0.3.3
+- Beetle v0.3.4
 - cm-model v0.0.11 (It may be applied to Damselfly)
 - Honeybee v0.3.1
 - Tumblebug v0.11.3 (Spider v0.11.1, CB-MapUI v0.11.4)
