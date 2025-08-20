@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.3.4
+    image: cloudbaristaorg/cm-beetle:0.3.5
     container_name: cm-beetle
     build:
       context: ${COMPOSE_PROJECT_ROOT}
@@ -84,7 +84,7 @@ services:
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
-      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
+      # - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
