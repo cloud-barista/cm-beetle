@@ -118,23 +118,23 @@ func isAwsHypervisorAndDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudm
 
 	// Critical compatibility analysis for Nitro instances + Xen AMI
 	if specHyp == "nitro" && imageHyp == "xen" {
-		log.Debug().Msgf("AWS CRITICAL: Nitro instance with Xen AMI - analyzing Xen-on-Nitro compatibility")
+		log.Debug().Msgf("AWS CRITICAL: Nitro instance with Xen AMI - checking Xen-on-Nitro compatibility")
 
-		// Check if this instance family supports Xen-on-Nitro
-		if !isXenOnNitroSupported(spec) {
-			log.Debug().Msgf("AWS Xen-on-Nitro not supported for instance family: %s", spec.CspSpecName)
-			return false
-		}
-
-		// For Xen-on-Nitro supported instances, check driver compatibility
+		// For Nitro instances with Xen AMIs (Xen-on-Nitro)
+		// ENA is required, but NVMe is optional - many Xen AMIs work without NVMe drivers
 		enaCompatible := isAwsEnaDriverCompatible(spec, image)
 		nvmeCompatible := isAwsNvmeDriverCompatible(spec, image)
 
-		if !enaCompatible || !nvmeCompatible {
-			log.Debug().Msgf("AWS Xen-on-Nitro driver incompatible - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
+		if !enaCompatible {
+			log.Debug().Msgf("AWS Xen-on-Nitro incompatible - ENA required but not supported")
 			return false
 		}
-		log.Debug().Msgf("AWS Xen-on-Nitro compatible - Instance family and drivers OK")
+
+		if !nvmeCompatible {
+			log.Debug().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t (NVMe optional for Xen AMIs)", enaCompatible, nvmeCompatible)
+		} else {
+			log.Debug().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
+		}
 		return true
 	}
 
@@ -162,6 +162,13 @@ func isAwsEnaDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbIma
 		return false
 	}
 
+	// Be more permissive: if we don't have clear incompatibility, assume compatible
+	// Most modern AMIs support ENA even if not explicitly documented
+	if specEnaSupport == "unknown" || imageEnaSupport == "unknown" {
+		log.Debug().Msgf("AWS ENA compatibility unknown, assuming compatible")
+		return true
+	}
+
 	return true
 }
 
@@ -174,6 +181,13 @@ func isAwsNvmeDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbIm
 	if specNvmeSupport == "required" && (imageNvmeSupport == "unsupported" || imageNvmeSupport == "false") {
 		log.Debug().Msgf("AWS NVMe incompatible - Spec requires NVMe, Image doesn't support it")
 		return false
+	}
+
+	// Be more permissive: if we don't have clear incompatibility, assume compatible
+	// Most modern AMIs support NVMe even if not explicitly documented
+	if specNvmeSupport == "unknown" || imageNvmeSupport == "unknown" {
+		log.Debug().Msgf("AWS NVMe compatibility unknown, assuming compatible")
+		return true
 	}
 
 	return true
@@ -390,73 +404,5 @@ func extractAwsBootModeFromImageDetails(image cloudmodel.TbImageInfo) string {
 }
 
 // === 6. AWS Xen-on-Nitro Compatibility ===
-
-// isXenOnNitroSupported checks if an instance family supports Xen-on-Nitro compatibility layer
-// Based on AWS documentation: certain legacy instance families can run Xen AMIs on Nitro hardware
-func isXenOnNitroSupported(spec cloudmodel.TbSpecInfo) bool {
-	instanceFamily := extractInstanceFamily(spec.CspSpecName)
-
-	// Supported instance families for Xen-on-Nitro (as of AWS documentation)
-	// Current: M1, M2, M3, C1, C3, R3, I2, T1
-	// Planned: C4, M4, R4, T2
-	supportedFamilies := map[string]bool{
-		// Current support
-		"m1": true, "m2": true, "m3": true,
-		"c1": true, "c3": true,
-		"r3": true,
-		"i2": true,
-		"t1": true,
-
-		// Planned support (conservative approach: treat as supported)
-		"c4": true, "m4": true, "r4": true, "t2": true,
-	}
-
-	// GPU/FPGA instances are explicitly excluded
-	gpuFpgaFamilies := map[string]bool{
-		"g2": true, "g3": true, "g4": true, "g5": true,
-		"p2": true, "p3": true, "p4": true,
-		"f1": true,
-	}
-
-	if gpuFpgaFamilies[instanceFamily] {
-		log.Debug().Msgf("AWS Xen-on-Nitro: GPU/FPGA instance family %s explicitly excluded", instanceFamily)
-		return false
-	}
-
-	if supportedFamilies[instanceFamily] {
-		log.Debug().Msgf("AWS Xen-on-Nitro: instance family %s is supported", instanceFamily)
-		return true
-	}
-
-	// For unknown families, use conservative approach: assume not supported
-	// This prevents potential failures for newer instance types
-	log.Debug().Msgf("AWS Xen-on-Nitro: instance family %s not in known supported list, assuming not supported", instanceFamily)
-	return false
-}
-
-// extractInstanceFamily extracts the instance family from instance type (e.g., "m5.large" -> "m5")
-func extractInstanceFamily(instanceType string) string {
-	if instanceType == "" {
-		return ""
-	}
-
-	// Split by dot and take the first part, then extract the family part
-	parts := strings.Split(instanceType, ".")
-	if len(parts) == 0 {
-		return ""
-	}
-
-	instanceTypePart := strings.ToLower(parts[0])
-
-	// Extract family (letters) and generation (numbers) - e.g., "m5" -> "m5", "t3a" -> "t3"
-	// Use regex to extract the family pattern
-	re := regexp.MustCompile(`^([a-z]+\d+)`)
-	matches := re.FindStringSubmatch(instanceTypePart)
-
-	if len(matches) >= 2 {
-		return matches[1]
-	}
-
-	// Fallback: return the whole part before the dot
-	return instanceTypePart
-}
+// Note: Simplified approach - modern Nitro instances generally support Xen AMIs
+// with proper driver compatibility checks

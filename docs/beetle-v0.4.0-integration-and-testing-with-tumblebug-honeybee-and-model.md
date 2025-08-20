@@ -10,9 +10,9 @@
 > [!NOTE]
 > It will continue to be updated until the v0.4.0 release.
 
-- Beetle v0.3.4
+- Beetle v0.3.5
 - cm-model v0.0.11 (It may be applied to Damselfly)
-- Honeybee v0.3.1
+- Honeybee v0.3.3 (?) (Used always-running server)
 - Tumblebug v0.11.3 (Spider v0.11.1, CB-MapUI v0.11.4)
 
 ### Scenario
@@ -21,7 +21,7 @@
 1. Get the refined source computing infra info via Honeybee
 
 - Refined source computing infra info = on-premise model (a.k.a computing infra source model)
-- **Used 2 servers info** as dicussed (i.e., web, nfs)
+- **Used 2 servers info** as dicussed (i.e., cm-web, cm-nfs)
 
 1. Recommend a target model for computing infra via Beetle
 1. Migrate the computing infra as defined in the target model via Beetle
@@ -34,53 +34,89 @@
 
 > [!Note]
 > The Honeybee has been providing the always-running servers. The server has been used.
+> Honeybee Server Swagger UI: http://210.207.104.224:8081/honeybee/api/index.html
 
 ### Get a list of source group
-
-> [!NOTE]
-> To be updated
 
 - API: `GET /source_group`
 - Request body: None
 - Response body:
 
-```json
-
-```
-
-### Get the refined computing infra info
-
-> [!NOTE]
-> To be updated
-
-- API: `GET /source_group/{sgId}/infra/refined`
-- sgId: `db652288-047b-480b-ac86-3ef7ed57f68e`
-- Request body: None
-- Response body:
-
 <details>
-  <summary> <ins>Click to see the response body </ins> </summary>
+  <summary>Click to see the response body</summary>
 
 ```json
-
+{
+  "source_group": [
+    {
+      "id": "db652288-047b-480b-ac86-3ef7ed57f68e",
+      "name": "cm-test",
+      "description": "Cloud-Migrator Test Source Group",
+      "connection_info_status_count": {
+        "count_connection_success": 5,
+        "count_connection_failed": 0,
+        "count_agent_success": 5,
+        "count_agent_failed": 0,
+        "connection_info_total": 5
+      }
+    },
+    {
+      "id": "ddcfa917-17e0-4718-a878-f1e99f97ed6d",
+      "name": "migration-test",
+      "description": "Migration Test Group",
+      "connection_info_status_count": {
+        "count_connection_success": 2,
+        "count_connection_failed": 0,
+        "count_agent_success": 2,
+        "count_agent_failed": 0,
+        "connection_info_total": 2
+      }
+    }
+  ],
+  "connection_info_status_count": {
+    "count_connection_success": 7,
+    "count_connection_failed": 0,
+    "count_agent_success": 7,
+    "count_agent_failed": 0,
+    "connection_info_total": 7
+  }
+}
 ```
 
 </details>
 
-> [!NOTE]
+### Get the refined computing infra info
+
+> [!INFO]
 > Tests were performed using the onpremiseInfraModel provided in advance by the Honeybee maintainer. Thank you!
 
-> [!INFO]  
-> We are testing with a lower memory specification (8GiB instead of 255GiB) than the actual infrastructure.
+> [!NOTE]  
+> We are testing with a lower memory specification (e.g, 8GiB, 16GiB, 32GiB, 64GiB) than the actual infrastructure one (i.e., 255GiB).
 >
 > - Reason: **This prevents test failures caused by cloud provider quota limits**, which are unrelated to our system's core functionality.
 > - Note 1: Default VM quotas vary by Cloud Service Provider (CSP)—some are even zero—and may require users to request an increase.
 > - Note 2: If infrastructure creation fails due to quota issues, all deployed resources must be rolled back **one by one**.
 
-<details>
-  <summary><ins>Click to see the onpremise model</ins></summary>
+(Original Memory spec)
 
-(Onpremise Infra Model)
+```json
+    "memory": {
+     "type": "DDR4",
+     "totalSize": 255,
+     "available": 146,
+     "used": 109
+    }
+```
+
+- API: `GET /source_group/{sgId}/infra/refined`
+- sgId: `ddcfa917-17e0-4718-a878-f1e99f97ed6d`
+- Request body: None
+- Response body:
+
+<details>
+  <summary> <ins>Click to see the response body (onpremise model) </ins> </summary>
+
+Note: Downgraded memory spec
 
 ```json
 {
@@ -92,6 +128,11 @@
             "ip": "192.168.110.254",
             "interfaceName": "br-ex",
             "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+          },
+          {
+            "ip": "192.168.110.254",
+            "interfaceName": "br-ex",
+            "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
           }
         ]
       },
@@ -112,9 +153,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 8,
-          "available": 3,
-          "used": 5
+          "totalSize": 64,
+          "available": 30,
+          "used": 34
         },
         "rootDisk": {
           "label": "unknown",
@@ -1063,573 +1104,752 @@
             "protocol": "udp",
             "direction": "inbound",
             "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.5 LTS",
+          "version": "22.04.5 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "cm-web",
+        "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 2,
+          "cores": 18,
+          "threads": 36,
+          "maxSpeed": 3.7,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 32,
+          "available": 14,
+          "used": 18
+        },
+        "rootDisk": {
+          "label": "unknown",
+          "type": "HDD",
+          "totalSize": 1312,
+          "available": 1222,
+          "used": 23
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": ["127.0.0.1/8"],
+            "ipv6CidrBlocks": ["::1/128"],
+            "mtu": 65536,
+            "state": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp24s0f0",
+            "macAddress": "b4:96:91:53:01:58",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "inbound",
-            "action": "deny"
+            "name": "enp24s0f1",
+            "macAddress": "b4:96:91:53:01:59",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "icmp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp175s0f0",
+            "macAddress": "b4:96:91:55:23:8c",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "67",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "68",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "eno1np0",
+            "macAddress": "a4:bf:01:5a:b1:1b",
+            "ipv4CidrBlocks": ["172.29.0.103/24"],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b11b/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "224.0.0.251/32",
-            "dstPorts": "5353",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp26s0f0",
+            "macAddress": "b4:96:91:53:01:6c",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "239.255.255.250/32",
-            "dstPorts": "1900",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp26s0f1",
+            "macAddress": "b4:96:91:53:01:6d",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "22",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "eno2np1",
+            "macAddress": "a4:bf:01:5a:b1:1c",
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b11c/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "80",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp175s0f1",
+            "macAddress": "b4:96:91:55:23:8e",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "443",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp177s0f0",
+            "macAddress": "b4:96:91:55:1e:04",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8086",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "enp177s0f1",
+            "macAddress": "b4:96:91:55:1e:06",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8888",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "ovs-system",
+            "macAddress": "6e:a8:ca:69:96:82",
+            "mtu": 1500
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9201",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "br-ex",
+            "macAddress": "a4:bf:01:5a:b1:1c",
+            "ipv4CidrBlocks": ["192.168.110.103/24"],
+            "ipv6CidrBlocks": ["2001::1000/64", "fe80::7824:d2ff:fe2c:7330/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9202",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "genev_sys_6081",
+            "macAddress": "fa:e3:ea:20:21:0c",
+            "ipv6CidrBlocks": ["fe80::2caf:1eff:fe7f:f78f/64"],
+            "mtu": 65000,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9203",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "br-int",
+            "macAddress": "ea:d0:e7:43:23:41",
+            "mtu": 1442
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9204",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap334a688a-76",
+            "macAddress": "fe:16:3e:52:10:6e",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:106e/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9206",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tapd4e69ee0-72",
+            "macAddress": "fe:16:3e:2c:59:7a",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe2c:597a/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "3100",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap50ee370b-a7",
+            "macAddress": "fe:16:3e:71:22:43",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe71:2243/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "3000",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tape46b2f03-d0",
+            "macAddress": "fe:16:3e:e2:ea:0f",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fee2:ea0f/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8443",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap78b1ab69-36",
+            "macAddress": "fe:16:3e:14:65:fb",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe14:65fb/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9000",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tape545ab95-ab",
+            "macAddress": "fe:16:3e:73:24:90",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe73:2490/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9001",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tapadd1bc06-e8",
+            "macAddress": "fe:16:3e:26:ea:51",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe26:ea51/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "18080",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tapd7ff0608-f0",
+            "macAddress": "fe:16:3e:2b:75:d6",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe2b:75d6/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "13000",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap26b9063f-c8",
+            "macAddress": "fe:16:3e:6c:c9:90",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe6c:c990/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9101",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap0d667e3a-e2",
+            "macAddress": "fe:16:3e:9f:7a:65",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe9f:7a65/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9100",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap1df68fb5-f9",
+            "macAddress": "fe:16:3e:13:66:6f",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe13:666f/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9106",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap3b66c516-59",
+            "macAddress": "fe:16:3e:77:e4:da",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe77:e4da/64"],
+            "mtu": 1442,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9105",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap6f653485-7f",
+            "macAddress": "fe:16:3e:7d:85:5b",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe7d:855b/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8080",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap1479d90f-c0",
+            "macAddress": "02:b9:31:31:0d:fe",
+            "ipv6CidrBlocks": ["fe80::b9:31ff:fe31:dfe/64"],
+            "mtu": 1500,
+            "state": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9102",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "name": "tap87daf3f9-0f",
+            "macAddress": "fe:16:3e:cb:97:79",
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fecb:9779/64"],
+            "mtu": 1500,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9103",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "172.29.0.0/24",
+            "interface": "eno1np0",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "9104",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "192.168.110.0/24",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "5672",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "1883",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "2001::/64",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "4369",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "eno2np1",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "15672",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "eno1np0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "15675",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "25672",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "genev_sys_6081",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8883",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap334a688a-76",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "16567",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tapd4e69ee0-72",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8000",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap50ee370b-a7",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tape46b2f03-d0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap78b1ab69-36",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tape545ab95-ab",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "tcp",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tapadd1bc06-e8",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "0.0.0.0/0",
-            "srcPorts": "*",
-            "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "*",
-            "protocol": "udp",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tapd7ff0608-f0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap26b9063f-c8",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "inbound",
-            "action": "deny"
+            "destination": "fe80::/64",
+            "interface": "tap0d667e3a-e2",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "icmpv6",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap1df68fb5-f9",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "fe80::/10",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "icmpv6",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap3b66c516-59",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "fe80::/10",
-            "srcPorts": "547",
-            "dstCIDR": "fe80::/10",
-            "dstPorts": "546",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap6f653485-7f",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "ff02::fb/128",
-            "dstPorts": "5353",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap1479d90f-c0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "ff02::f/128",
-            "dstPorts": "1900",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::/64",
+            "interface": "tap87daf3f9-0f",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "22",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "80",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "443",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "2001::1000/128",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "tcp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::b9:31ff:fe31:dfe/128",
+            "interface": "tap1479d90f-c0",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "udp",
-            "direction": "inbound",
-            "action": "allow"
+            "destination": "fe80::2caf:1eff:fe7f:f78f/128",
+            "interface": "genev_sys_6081",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::7824:d2ff:fe2c:7330/128",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "*",
-            "direction": "outbound",
-            "action": "deny"
+            "destination": "fe80::a6bf:1ff:fe5a:b11b/128",
+            "interface": "eno1np0",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "icmpv6",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::a6bf:1ff:fe5a:b11c/128",
+            "interface": "eno2np1",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "fe80::/10",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "icmpv6",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::fc16:3eff:fe13:666f/128",
+            "interface": "tap1df68fb5-f9",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "tcp",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::fc16:3eff:fe14:65fb/128",
+            "interface": "tap78b1ab69-36",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           },
           {
-            "srcCIDR": "::/0",
-            "srcPorts": "*",
-            "dstCIDR": "::/0",
-            "dstPorts": "*",
-            "protocol": "udp",
-            "direction": "outbound",
-            "action": "allow"
+            "destination": "fe80::fc16:3eff:fe26:ea51/128",
+            "interface": "tapadd1bc06-e8",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe2b:75d6/128",
+            "interface": "tapd7ff0608-f0",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe2c:597a/128",
+            "interface": "tapd4e69ee0-72",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe52:106e/128",
+            "interface": "tap334a688a-76",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe6c:c990/128",
+            "interface": "tap26b9063f-c8",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe71:2243/128",
+            "interface": "tap50ee370b-a7",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe73:2490/128",
+            "interface": "tape545ab95-ab",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe77:e4da/128",
+            "interface": "tap3b66c516-59",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe7d:855b/128",
+            "interface": "tap6f653485-7f",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fe9f:7a65/128",
+            "interface": "tap0d667e3a-e2",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fecb:9779/128",
+            "interface": "tap87daf3f9-0f",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::fc16:3eff:fee2:ea0f/128",
+            "interface": "tape46b2f03-d0",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "eno2np1",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "eno1np0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "192.168.110.254",
+            "interface": "br-ex",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "genev_sys_6081",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap334a688a-76",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tapd4e69ee0-72",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap50ee370b-a7",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tape46b2f03-d0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap78b1ab69-36",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tape545ab95-ab",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tapadd1bc06-e8",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tapd7ff0608-f0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap26b9063f-c8",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap0d667e3a-e2",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap1df68fb5-f9",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap3b66c516-59",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap6f653485-7f",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap1479d90f-c0",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "interface": "tap87daf3f9-0f",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
           }
         ],
         "os": {
@@ -1647,17 +1867,6 @@
 }
 ```
 
-(Original Memory spec)
-
-```json
-    "memory": {
-     "type": "DDR4",
-     "totalSize": 255,
-     "available": 146,
-     "used": 109
-    }
-```
-
 </details>
 
 ## Beetle section
@@ -1666,10 +1875,14 @@ Testing was performed by `test-cli`.
 
 - ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
 - ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
+  - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB) / (ok: 32GiB, 64GiB)
 - ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
+  - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB) / (ok: 32GiB, 64GiB)
   - Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
 - ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
-  - Note: Failed to delete vNet/subnet
-- ⚠️ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
-  - Note: Deadline excceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
+  - Note: vNet/subnet is sometimes not completely deleted.
+- ✅ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
+  - Note: Deadline exceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
+  - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB)
+    - Default Quota of High Memory M-g3 is 0.
 - TBD
