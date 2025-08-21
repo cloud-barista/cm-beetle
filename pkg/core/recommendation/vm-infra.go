@@ -10,7 +10,7 @@ import (
 	"github.com/cloud-barista/cb-tumblebug/src/core/common/netutil"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
-	"github.com/cloud-barista/cm-beetle/pkg/core/compat"
+	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
@@ -50,7 +50,7 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 
 	if !supportedCsp {
 		err := fmt.Errorf("not supported yet (provider: %s)", cspName)
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		return isValid, err
 	}
 
@@ -1051,7 +1051,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		limit = 5
 	}
 
@@ -1129,7 +1129,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	count := len(vmOsImageInfoList)
 	if count == 0 {
 		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		return emptyRes, err
 	}
 
@@ -1214,6 +1214,97 @@ func MBtoGiB(mb float64) uint32 {
 	return uint32(gib)
 }
 
+// calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
+func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	// Constants for instance type thresholds and ratios
+	const (
+		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
+		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
+		// minMemoryBound                 = 2   // Minimum memory requirement
+		// minVcpuBound                   = 1   // Minimum vCPU requirement
+		// maxVcpuForMemoryIntensive      = 10  // Maximum vCPU for memory intensive
+	)
+
+	memoryToVcpuRatio := float64(memory) / float64(vcpus)
+
+	switch {
+	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
+		return calculateComputeIntensiveRange(vcpus, memory)
+	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
+		return calculateMemoryIntensiveRange(vcpus, memory)
+	default: // General Purpose (1:4)
+		return calculateGeneralPurposeRange(vcpus, memory)
+	}
+}
+
+func calculateComputeIntensiveRange(vcpus, memory uint32) (vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax uint32) {
+	const (
+		memoryMultiplier = 4 // Memory multiplier for max calculation
+	)
+
+	vcpusRangeMin = calculateRangeMin(vcpus)
+	vcpusRangeMax = calculateRangeMax(vcpus)
+
+	// Set a wide search range for memory for compute-intensive workloads
+	memoryRangeMin = 0
+	memoryRangeMax = vcpusRangeMax * memoryMultiplier
+
+	return vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax
+}
+
+func calculateMemoryIntensiveRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax uint32) {
+	const (
+		memoryToCpuRatio = 7 // memory to CPU ratio for calculation (Standard: 8)
+	)
+
+	memoryRangeMin = calculateRangeMin(memory)
+	memoryRangeMax = calculateRangeMax(memory)
+
+	// Set a wide search range for vCPU for memory-intensive workloads
+	vcpusMin = 0
+	vcpusMax = memoryRangeMax / memoryToCpuRatio * 2
+
+	return vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax
+}
+
+func calculateGeneralPurposeRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	// For General Purpose workloads, provide balanced flexibility for both vCPU and memory
+	// The input has already been classified as General Purpose in calculateOptimalRange
+
+	vcpusMin = calculateRangeMin(vcpus)
+	vcpusMax = calculateRangeMax(vcpus)
+
+	memoryMin = calculateRangeMin(memory)
+	memoryMax = calculateRangeMax(memory)
+
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
+}
+
+// calculateRangeMin calculates the minimum value for a range based on a given number
+func calculateRangeMin(n uint32) uint32 {
+
+	// Calculate previous previous prime number
+	min := findPreviousPrimeOrDecrementOne(n)
+	min = findPreviousPrimeOrDecrementOne(min)
+
+	return min
+}
+
+// calculateRangeMax calculates the maximum value for a range based on a given number
+func calculateRangeMax(n uint32) uint32 {
+
+	// Calculate next next prime number
+	max := findNextPrimeNumber(n)
+	max = findNextPrimeNumber(max)
+
+	// Expand the range if it's too narrow
+	if max-n < 4 {
+		max = findNextPrimeNumber(max)
+	}
+
+	return max
+}
+
 // isPrimeNumber checks if a number is prime
 func isPrimeNumber(n uint32) bool {
 	if n <= 1 {
@@ -1233,18 +1324,27 @@ func isPrimeNumber(n uint32) bool {
 	return true
 }
 
-// findPreviousPrimeNumberOrOne finds the largest prime number smaller than n
-func findPreviousPrimeNumberOrOne(n uint32) uint32 {
-	if n <= 2 {
-		return 1 // Return 1 as minimum vCPU count if no smaller prime exists
+// findPreviousPrimeOrDecrementOne finds the largest prime number smaller than n,
+// returns 1 if n=2, returns 0 if n=1
+func findPreviousPrimeOrDecrementOne(n uint32) uint32 {
+
+	// Return 1 when n is 2
+	if n == 2 {
+		return 1
 	}
 
+	// Return 0 when n is 1 or less
+	if n <= 1 {
+		return 0
+	}
+
+	// Find the prime number smaller than n
 	for i := n - 1; i >= 2; i-- {
 		if isPrimeNumber(i) {
 			return i
 		}
 	}
-	return 1 // Return 1 as fallback minimum vCPU count
+	return 0 // Return 0 as fallback minimum value
 }
 
 // findNextPrimeNumber finds the smallest prime number larger than n
@@ -1256,103 +1356,6 @@ func findNextPrimeNumber(n uint32) uint32 {
 		}
 		candidate++
 	}
-}
-
-// calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
-func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	// Constants for instance type thresholds and ratios
-	const (
-		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
-		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
-		minMemoryBound                 = 2   // Minimum memory requirement
-		minVcpuBound                   = 1   // Minimum vCPU requirement
-		maxVcpuForMemoryIntensive      = 10  // Maximum vCPU for memory intensive
-	)
-
-	memoryToVcpuRatio := float64(memory) / float64(vcpus)
-
-	switch {
-	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
-		return calculateComputeIntensiveRange(vcpus, memory, minMemoryBound)
-	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
-		return calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive)
-	default: // General Purpose (1:4)
-		return calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound)
-	}
-}
-
-func calculateComputeIntensiveRange(vcpus, memory, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		vcpuRangeBuffer  = 2 // Buffer for vCPU range expansion
-		memoryMultiplier = 4 // Memory multiplier for max calculation
-	)
-
-	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer)
-
-	// Set a wide search range for memory for compute-intensive workloads
-	memoryMin = minMemoryBound
-	memoryMax = vcpusMax * memoryMultiplier
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
-}
-
-func calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		memoryRangeBuffer = 4 // Buffer for memory range expansion
-		memoryToCpuRatio  = 8 // Standard memory to CPU ratio for calculation
-	)
-
-	memoryMin = findPreviousPrimeNumberOrOne(memory)
-	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer)
-
-	// Set a wide search range for vCPU for memory-intensive workloads
-	vcpusMin = minVcpuBound
-	vcpusMax = memoryMax / memoryToCpuRatio
-	if vcpusMax < maxVcpuForMemoryIntensive {
-		vcpusMax = maxVcpuForMemoryIntensive
-	}
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
-}
-
-func calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		vcpuRangeBuffer     = 2 // Buffer for vCPU range expansion
-		memoryRangeBuffer   = 4 // Buffer for memory range expansion
-		minMemoryToCpuRatio = 2 // Minimum memory to CPU ratio (1:2)
-		maxCpuToMemoryRatio = 2 // Maximum CPU to memory ratio (2:1)
-	)
-
-	// For General Purpose, provide balanced flexibility for both vCPU and memory
-	// Allow moderate range expansion while maintaining 1:4 ratio as the center point
-	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer) // Slightly wider vCPU range
-
-	memoryMin = findPreviousPrimeNumberOrOne(memory)
-	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer) // Moderate memory range
-
-	// Apply minimum bounds
-	if vcpusMin < minVcpuBound {
-		vcpusMin = minVcpuBound
-	}
-	if memoryMin < minMemoryBound {
-		memoryMin = minMemoryBound
-	}
-
-	// Ensure reasonable relationship between vCPU and memory
-	// Allow 1:2 to 1:8 ratio range for General Purpose workloads
-	if memoryMax < vcpusMin*minMemoryToCpuRatio {
-		memoryMax = vcpusMin * minMemoryToCpuRatio
-	}
-	if vcpusMax > memoryMax/maxCpuToMemoryRatio {
-		vcpusMax = memoryMax / maxCpuToMemoryRatio
-		if vcpusMax < vcpusMin {
-			vcpusMax = vcpusMin
-		}
-	}
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
