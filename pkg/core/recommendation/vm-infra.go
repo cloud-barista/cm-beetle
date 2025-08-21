@@ -985,8 +985,11 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		log.Error().Err(err).
 			Str("machineId", server.MachineId).
 			Msg("Failed to convert VM spec list model")
-		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list for machine %s: %w", server.MachineId, err)
+		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list model for machine %s: %w", server.MachineId, err)
 	}
+
+	// Sort specs by proximity
+	sortByProximity(vcpus, memory, convertedVmSpecList)
 
 	for i, vmSpec := range convertedVmSpecList {
 		log.Debug().Msgf("Recommended VM specification %d: %+v", i+1, vmSpec)
@@ -998,6 +1001,78 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		Msgf("Successfully recommended %d VM specifications for machine: %s", len(convertedVmSpecList), server.MachineId)
 
 	return convertedVmSpecList, numOfVmSpecs, nil
+}
+
+// Sort VM specs by proximity to the desired resource allocation
+func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.TbSpecInfo) {
+
+	// Derive server's spec type (i.e. compute intensive type, memory intensive type, general purpose type)
+	machineType := deriveMachineType(vcpus, memory)
+
+	switch machineType {
+	case "compute-intensive":
+		// Sort by proximity to desired values
+		// 1. First sort by vCPU proximity (closest to target first)
+		// 2. Within same vCPU values, sort by memory proximity (closest to target first)
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+
+			// If vCPU differences are different, sort by vCPU proximity
+			if vcpuDiffI != vcpuDiffJ {
+				return vcpuDiffI < vcpuDiffJ
+			}
+
+			// If vCPU differences are same, sort by memory proximity
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+			return memDiffI < memDiffJ
+		})
+	case "memory-intensive":
+		// Sort by proximity to desired values
+		// 1. First sort by memory proximity (closest to target first)
+		// 2. Within same memory values, sort by vCPU proximity (closest to target first)
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+
+			// If memory differences are different, sort by memory proximity
+			if memDiffI != memDiffJ {
+				return memDiffI < memDiffJ
+			}
+
+			// If memory differences are same, sort by vCPU proximity
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+			return vcpuDiffI < vcpuDiffJ
+		})
+	default: // "general-purpose"
+		// Sort by combined proximity to both vCPU and memory (balanced approach)
+		// Calculate total distance (Manhattan distance) for both vCPU and memory
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			totalDiffI := vcpuDiffI + memDiffI
+
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+			totalDiffJ := vcpuDiffJ + memDiffJ
+
+			// If total differences are same, sort by spec name for consistency
+			if totalDiffI == totalDiffJ {
+				return vmSpecs[i].CspSpecName < vmSpecs[j].CspSpecName
+			}
+			return totalDiffI < totalDiffJ
+		})
+	}
+}
+
+// abs returns the absolute value of x
+func abs(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
@@ -1214,6 +1289,25 @@ func MBtoGiB(mb float64) uint32 {
 	return uint32(gib)
 }
 
+// deriveMachineType derives the machine type based on vCPU and memory
+func deriveMachineType(vcpus uint32, memory uint32) (machineType string) {
+	const (
+		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
+		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
+	)
+
+	memoryToVcpuRatio := float64(memory) / float64(vcpus)
+
+	switch {
+	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
+		return "compute-intensive"
+	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
+		return "memory-intensive"
+	default: // General Purpose (1:4)
+		return "general-purpose"
+	}
+}
+
 // calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
 func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
 	// Constants for instance type thresholds and ratios
@@ -1262,7 +1356,7 @@ func calculateMemoryIntensiveRange(vcpus, memory uint32) (vcpusMin, vcpusMax, me
 
 	// Set a wide search range for vCPU for memory-intensive workloads
 	vcpusMin = 0
-	vcpusMax = memoryRangeMax / memoryToCpuRatio * 2
+	vcpusMax = memoryRangeMax / memoryToCpuRatio
 
 	return vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax
 }
@@ -1942,7 +2036,8 @@ func preFilterByCsp(csp string, specs []cloudmodel.TbSpecInfo, images []cloudmod
 		return filteredSpecs, images
 
 	default:
-		// No specific filtering for GCP, Azure, and others
+		// No specific filtering for GCP and others
+		// Rely on comprehensive compatibility checks in findCompatiblePair
 		log.Debug().Msgf("No specific pre-filtering rules for CSP: %s", csp)
 		return specs, images
 	}
