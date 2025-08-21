@@ -37,8 +37,8 @@
         "memory": {
           "type": "DDR4",
           "totalSize": 64,
-          "available": 30,
-          "used": 34
+          "available": 44,
+          "used": 20
         },
         "rootDisk": {
           "label": "unknown",
@@ -1083,9 +1083,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 32,
-          "available": 14,
-          "used": 18
+          "totalSize": 64,
+          "available": 44,
+          "used": 20
         },
         "rootDisk": {
           "label": "unknown",

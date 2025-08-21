@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (b20b7be)
+- CM-Beetle: v0.4.0 (33d5906)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 20, 2025
-- Test Time: 22:01:51 KST
-- Test Execution: 2025-08-20 22:01:51 KST
+- Test Date: August 22, 2025
+- Test Time: 10:49:13 KST
+- Test Execution: 2025-08-22 10:49:13 KST
 
 ### Scenario
 
@@ -37,20 +37,20 @@
 
 ### Test Results Summary
 
-| Test | Endpoint | Status | Duration | Details |
-|------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 344ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 5m25.65s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 205ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 60ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 137ms | Pass |
-| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m38.581s | Pass |
+| Test | Endpoint                                          | Status      | Duration  | Details |
+| ---- | ------------------------------------------------- | ----------- | --------- | ------- |
+| 1    | `POST /beetle/recommendation/mci`                 | ✅ **PASS** | 320ms     | Pass    |
+| 2    | `POST /beetle/migration/ns/mig01/mci`             | ✅ **PASS** | 5m9.036s  | Pass    |
+| 3    | `GET /beetle/migration/ns/mig01/mci`              | ✅ **PASS** | 142ms     | Pass    |
+| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`    | ✅ **PASS** | 55ms      | Pass    |
+| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 131ms     | Pass    |
+| 6    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m30.421s | Pass    |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 7m35.176379266s
+**Total Duration**: 7m10.26193251s
 
-*Test executed on August 20, 2025 at 22:01:51 KST (2025-08-20 22:01:51 KST) using CM-Beetle automated test CLI*
+_Test executed on August 22, 2025 at 10:49:13 KST (2025-08-22 10:49:13 KST) using CM-Beetle automated test CLI_
 
 ---
 
@@ -111,9 +111,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 64,
+          "available": 44,
+          "used": 20
         },
         "rootDisk": {
           "label": "unknown",
@@ -132,12 +132,8 @@
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": [
-              "127.0.0.1/8"
-            ],
-            "ipv6CidrBlocks": [
-              "::1/128"
-            ],
+            "ipv4CidrBlocks": ["127.0.0.1/8"],
+            "ipv6CidrBlocks": ["::1/128"],
             "mtu": 65536,
             "state": "up"
           },
@@ -154,13 +150,8 @@
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b0:03",
-            "ipv4CidrBlocks": [
-              "172.29.0.102/24",
-              "172.29.0.200/32"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b003/64"
-            ],
+            "ipv4CidrBlocks": ["172.29.0.102/24", "172.29.0.200/32"],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b003/64"],
             "mtu": 1500,
             "state": "up"
           },
@@ -177,12 +168,8 @@
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.200/32"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
+            "ipv4CidrBlocks": ["192.168.110.200/32"],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
             "mtu": 1500,
             "state": "up"
           },
@@ -209,30 +196,22 @@
           {
             "name": "br-189b10762332",
             "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": [
-              "172.20.0.1/16"
-            ],
+            "ipv4CidrBlocks": ["172.20.0.1/16"],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-f67138586d47",
             "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": [
-              "172.19.0.1/16"
-            ],
+            "ipv4CidrBlocks": ["172.19.0.1/16"],
             "mtu": 1500,
             "state": "down"
           },
           {
             "name": "br-068801a3f047",
             "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": [
-              "172.17.0.1/16"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::42:ccff:fe24:2530/64"
-            ],
+            "ipv4CidrBlocks": ["172.17.0.1/16"],
+            "ipv6CidrBlocks": ["fe80::42:ccff:fe24:2530/64"],
             "mtu": 1500,
             "state": "up"
           },
@@ -244,21 +223,15 @@
           {
             "name": "octavia-hm0",
             "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": [
-              "10.1.0.106/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fe9d:89c5/64"
-            ],
+            "ipv4CidrBlocks": ["10.1.0.106/24"],
+            "ipv6CidrBlocks": ["fe80::f816:3eff:fe9d:89c5/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": [
-              "fe80::2852:51ff:fe36:258b/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::2852:51ff:fe36:258b/64"],
             "mtu": 65000,
             "state": "up"
           },
@@ -270,178 +243,135 @@
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.102/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
+            "ipv4CidrBlocks": ["192.168.110.102/24"],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b004/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0481d752-40",
             "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": [
-              "fe80::682a:78ff:fe65:4232/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::682a:78ff:fe65:4232/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap935cb764-41",
             "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4c:392b/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4c:392b/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap19d6d4d9-a4",
             "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fed5:6f85/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fed5:6f85/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap7422e216-ff",
             "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4d:319e/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe4d:319e/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapa53b173c-e4",
             "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:914b/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:914b/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapabb5f299-74",
             "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe46:9b72/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe46:9b72/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapf6929430-67",
             "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe3e:1510/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe3e:1510/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap3968711d-8a",
             "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe65:ad39/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe65:ad39/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap49d44128-d0",
             "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe1e:c7fc/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe1e:c7fc/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap708d34b6-e0",
             "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe19:8c71/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe19:8c71/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": [
-              "fe80::780f:53ff:fead:5084/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::780f:53ff:fead:5084/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1a03c4f4-e8",
             "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": [
-              "10.254.0.27/28",
-              "10.254.0.3/28"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fec9:ea1c/64"
-            ],
+            "ipv4CidrBlocks": ["10.254.0.27/28", "10.254.0.3/28"],
+            "ipv6CidrBlocks": ["fe80::f816:3eff:fec9:ea1c/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "veth0b8a5f4",
             "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": [
-              "fe80::bc22:36ff:fe27:1d2/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::bc22:36ff:fe27:1d2/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth87e839e",
             "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": [
-              "fe80::38f0:78ff:fef7:358/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::38f0:78ff:fef7:358/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "veth089f03a",
             "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": [
-              "fe80::5c87:18ff:fe73:d0dd/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::5c87:18ff:fe73:d0dd/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapaf1a281f-c0",
             "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": [
-              "fe80::303c:e7ff:fe79:eeef/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::303c:e7ff:fe79:eeef/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0e0c519d-d0",
             "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe8a:c222/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe8a:c222/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd801f01d-d6",
             "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe09:e9f5/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe09:e9f5/64"],
             "mtu": 1442,
             "state": "up"
           }
@@ -1158,9 +1088,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 89,
-          "used": 166
+          "totalSize": 64,
+          "available": 44,
+          "used": 20
         },
         "rootDisk": {
           "label": "unknown",
@@ -1172,12 +1102,8 @@
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": [
-              "127.0.0.1/8"
-            ],
-            "ipv6CidrBlocks": [
-              "::1/128"
-            ],
+            "ipv4CidrBlocks": ["127.0.0.1/8"],
+            "ipv6CidrBlocks": ["::1/128"],
             "mtu": 65536,
             "state": "up"
           },
@@ -1199,12 +1125,8 @@
           {
             "name": "eno1np0",
             "macAddress": "a4:bf:01:5a:b1:1b",
-            "ipv4CidrBlocks": [
-              "172.29.0.103/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11b/64"
-            ],
+            "ipv4CidrBlocks": ["172.29.0.103/24"],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b11b/64"],
             "mtu": 1500,
             "state": "up"
           },
@@ -1221,9 +1143,7 @@
           {
             "name": "eno2np1",
             "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11c/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::a6bf:1ff:fe5a:b11c/64"],
             "mtu": 1500,
             "state": "up"
           },
@@ -1250,22 +1170,15 @@
           {
             "name": "br-ex",
             "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv4CidrBlocks": [
-              "192.168.110.103/24"
-            ],
-            "ipv6CidrBlocks": [
-              "2001::1000/64",
-              "fe80::7824:d2ff:fe2c:7330/64"
-            ],
+            "ipv4CidrBlocks": ["192.168.110.103/24"],
+            "ipv6CidrBlocks": ["2001::1000/64", "fe80::7824:d2ff:fe2c:7330/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "genev_sys_6081",
             "macAddress": "fa:e3:ea:20:21:0c",
-            "ipv6CidrBlocks": [
-              "fe80::2caf:1eff:fe7f:f78f/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::2caf:1eff:fe7f:f78f/64"],
             "mtu": 65000,
             "state": "up"
           },
@@ -1277,135 +1190,105 @@
           {
             "name": "tap334a688a-76",
             "macAddress": "fe:16:3e:52:10:6e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:106e/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe52:106e/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd4e69ee0-72",
             "macAddress": "fe:16:3e:2c:59:7a",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2c:597a/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe2c:597a/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap50ee370b-a7",
             "macAddress": "fe:16:3e:71:22:43",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe71:2243/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe71:2243/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tape46b2f03-d0",
             "macAddress": "fe:16:3e:e2:ea:0f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fee2:ea0f/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fee2:ea0f/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap78b1ab69-36",
             "macAddress": "fe:16:3e:14:65:fb",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe14:65fb/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe14:65fb/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tape545ab95-ab",
             "macAddress": "fe:16:3e:73:24:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe73:2490/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe73:2490/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tapadd1bc06-e8",
             "macAddress": "fe:16:3e:26:ea:51",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe26:ea51/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe26:ea51/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tapd7ff0608-f0",
             "macAddress": "fe:16:3e:2b:75:d6",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2b:75d6/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe2b:75d6/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap26b9063f-c8",
             "macAddress": "fe:16:3e:6c:c9:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe6c:c990/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe6c:c990/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap0d667e3a-e2",
             "macAddress": "fe:16:3e:9f:7a:65",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe9f:7a65/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe9f:7a65/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap1df68fb5-f9",
             "macAddress": "fe:16:3e:13:66:6f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe13:666f/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe13:666f/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap3b66c516-59",
             "macAddress": "fe:16:3e:77:e4:da",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe77:e4da/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe77:e4da/64"],
             "mtu": 1442,
             "state": "up"
           },
           {
             "name": "tap6f653485-7f",
             "macAddress": "fe:16:3e:7d:85:5b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe7d:855b/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fe7d:855b/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap1479d90f-c0",
             "macAddress": "02:b9:31:31:0d:fe",
-            "ipv6CidrBlocks": [
-              "fe80::b9:31ff:fe31:dfe/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::b9:31ff:fe31:dfe/64"],
             "mtu": 1500,
             "state": "up"
           },
           {
             "name": "tap87daf3f9-0f",
             "macAddress": "fe:16:3e:cb:97:79",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fecb:9779/64"
-            ],
+            "ipv6CidrBlocks": ["fe80::fc16:3eff:fecb:9779/64"],
             "mtu": 1500,
             "state": "up"
           }
@@ -1971,13 +1854,11 @@
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "m32-g3a",
+        "specId": "m8-g3a",
         "imageId": "23214590",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
-        "securityGroupIds": [
-          "mig-sg-01"
-        ],
+        "securityGroupIds": ["mig-sg-01"],
         "sshKeyId": "mig-sshkey-01",
         "dataDiskIds": null
       },
@@ -1987,13 +1868,11 @@
         "label": null,
         "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
         "connectionName": "ncpvpc-kr",
-        "specId": "m32-g3a",
+        "specId": "m8-g3a",
         "imageId": "23214590",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
-        "securityGroupIds": [
-          "mig-sg-02"
-        ],
+        "securityGroupIds": ["mig-sg-02"],
         "sshKeyId": "mig-sshkey-01",
         "dataDiskIds": null
       }
@@ -2030,19 +1909,19 @@
   },
   "targetVmSpecList": [
     {
-      "id": "ncpvpc+kr+m32-g3a",
-      "cspSpecName": "m32-g3a",
-      "name": "ncpvpc+kr+m32-g3a",
+      "id": "ncpvpc+kr+m8-g3a",
+      "cspSpecName": "m8-g3a",
+      "name": "ncpvpc+kr+m8-g3a",
       "namespace": "system",
       "connectionName": "ncpvpc-kr",
       "providerName": "ncpvpc",
       "regionName": "kr",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 32,
-      "memoryGiB": 256,
+      "vCPU": 8,
+      "memoryGiB": 64,
       "diskSizeGB": -1,
-      "costPerHour": 1.9602,
+      "costPerHour": 0.4858,
       "orderInFilteredResult": 1,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
@@ -2052,7 +1931,7 @@
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 1,
+      "evaluationScore09": 1.0000001,
       "evaluationScore10": -1,
       "rootDiskType": "default",
       "rootDiskSize": "-1",
@@ -2060,7 +1939,7 @@
       "details": [
         {
           "key": "ServerSpecCode",
-          "value": "m32-g3a"
+          "value": "m8-g3a"
         },
         {
           "key": "GenerationCode",
@@ -2068,11 +1947,11 @@
         },
         {
           "key": "CpuCount",
-          "value": "32"
+          "value": "8"
         },
         {
           "key": "MemorySize",
-          "value": "274877906944"
+          "value": "68719476736"
         },
         {
           "key": "HypervisorType",
@@ -2088,15 +1967,15 @@
         },
         {
           "key": "BlockStorageMaxIops",
-          "value": "40000"
+          "value": "15000"
         },
         {
           "key": "BlockStorageMaxThroughput",
-          "value": "850"
+          "value": "288"
         },
         {
           "key": "NetworkPerformance",
-          "value": "10000000000"
+          "value": "2000000000"
         },
         {
           "key": "NetworkInterfaceMaxCount",
@@ -2104,11 +1983,11 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.AMD.HIMEM.C032.M256.G003"
+          "value": "SVR.VSVR.AMD.HIMEM.C008.M064.G003"
         },
         {
           "key": "ServerSpecDescription",
-          "value": "vCPU 32EA, Memory 256GB"
+          "value": "vCPU 8EA, Memory 64GB"
         },
         {
           "key": "CorrespondingImageIds",
@@ -2122,9 +2001,7 @@
       "namespace": "system",
       "providerName": "ncpvpc",
       "cspImageName": "23214590",
-      "regionList": [
-        "kr"
-      ],
+      "regionList": ["kr"],
       "id": "ncpvpc+23214590",
       "name": "ncpvpc+23214590",
       "connectionName": "ncpvpc-kr",
@@ -2272,7 +2149,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2isf18eak5cr9n8jae0",
+  "uid": "d2jspn8eak5cr9kob6pg",
   "name": "mmci01",
   "status": "Running:2 (R:2/2)",
   "statusCount": {
@@ -2299,7 +2176,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2isf18eak5cr9n8jae0"
+    "sys.uid": "d2jspn8eak5cr9kob6pg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2308,9 +2185,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d2isf18eak5cr9n8jag0",
-      "cspResourceName": "d2isf18eak5cr9n8jag0",
-      "cspResourceId": "108292651",
+      "uid": "d2jspn8eak5cr9kob6rg",
+      "cspResourceName": "d2jspn8eak5cr9kob6rg",
+      "cspResourceId": "108342784",
       "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "location": {
@@ -2324,12 +2201,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:05:35",
+      "createdTime": "2025-08-22 01:52:21",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-20 13:05:35",
-        "sys.cspResourceId": "108292651",
-        "sys.cspResourceName": "d2isf18eak5cr9n8jag0",
+        "sys.createdTime": "2025-08-22 01:52:21",
+        "sys.cspResourceId": "108342784",
+        "sys.cspResourceName": "d2jspn8eak5cr9kob6rg",
         "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2337,213 +2214,14 @@
         "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isf18eak5cr9n8jag0"
+        "sys.uid": "d2jspn8eak5cr9kob6rg"
       },
       "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "223.130.131.232",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.6",
-      "privateDNS": "",
-      "rootDiskType": "SSD",
-      "rootDiskSize": "10",
-      "rootDiskName": "",
-      "connectionName": "ncpvpc-kr",
-      "connectionConfig": {
-        "configName": "ncpvpc-kr",
-        "providerName": "ncpvpc",
-        "driverName": "ncpvpc-driver-v1.0.so",
-        "credentialName": "ncpvpc",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncpvpc-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "m32-g3a",
-      "cspSpecName": "m32-g3a",
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "119764",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "252646",
-      "networkInterface": "eth0",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isep0eak5cr9n8jacg",
-      "vmUserName": "cb-user",
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "108292651"
-        },
-        {
-          "key": "ServerName",
-          "value": "d2isf18eak5cr9n8jag0"
-        },
-        {
-          "key": "CpuCount",
-          "value": "32"
-        },
-        {
-          "key": "MemorySize",
-          "value": "274877906944"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "d2isep0eak5cr9n8jacg"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2025-08-20T22:03:15+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2025-08-20T22:05:28+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.AMD.HIMEM.C032.M256.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "119764"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "252646"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "4906118"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "135432"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:HIMEM,codeName:High Memory}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "m32-g3a"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2isf18eak5cr9n8jaf0",
-      "cspResourceName": "d2isf18eak5cr9n8jaf0",
-      "cspResourceId": "108292656",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-08-20 13:07:13",
-      "label": {
-        "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-20 13:07:13",
-        "sys.cspResourceId": "108292656",
-        "sys.cspResourceName": "d2isf18eak5cr9n8jaf0",
-        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.labelType": "vm",
-        "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mmci01",
-        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isf18eak5cr9n8jaf0"
-      },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "KR",
-        "Zone": "KR-1"
-      },
-      "publicIP": "49.50.133.3",
+      "publicIP": "211.188.48.66",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.7",
@@ -2572,46 +2250,41 @@
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
+          "zones": ["KR-1", "KR-2"]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "m32-g3a",
-      "cspSpecName": "m32-g3a",
+      "specId": "m8-g3a",
+      "cspSpecName": "m8-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "119764",
+      "cspVNetId": "120092",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "252646",
+      "cspSubnetId": "253345",
       "networkInterface": "eth0",
-      "securityGroupIds": [
-        "mig-sg-01"
-      ],
+      "securityGroupIds": ["mig-sg-02"],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isep0eak5cr9n8jacg",
+      "cspSshKeyId": "d2jspeoeak5cr9kob6o0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108292656"
+          "value": "108342784"
         },
         {
           "key": "ServerName",
-          "value": "d2isf18eak5cr9n8jaf0"
+          "value": "d2jspn8eak5cr9kob6rg"
         },
         {
           "key": "CpuCount",
-          "value": "32"
+          "value": "8"
         },
         {
           "key": "MemorySize",
-          "value": "274877906944"
+          "value": "68719476736"
         },
         {
           "key": "PlatformType",
@@ -2619,7 +2292,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d2isep0eak5cr9n8jacg"
+          "value": "d2jspeoeak5cr9kob6o0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2635,11 +2308,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-20T22:03:21+0900"
+          "value": "2025-08-22T10:50:37+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-20T22:05:12+0900"
+          "value": "2025-08-22T10:52:17+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2647,7 +2320,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.AMD.HIMEM.C032.M256.G003"
+          "value": "SVR.VSVR.AMD.HIMEM.C008.M064.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -2663,19 +2336,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "119764"
+          "value": "120092"
         },
         {
           "key": "SubnetNo",
-          "value": "252646"
+          "value": "253345"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4906119"
+          "value": "4911748"
         },
         {
           "key": "InitScriptNo",
-          "value": "135433"
+          "value": "135718"
         },
         {
           "key": "ServerInstanceType",
@@ -2699,7 +2372,201 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "m32-g3a"
+          "value": "m8-g3a"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2jspn8eak5cr9kob6qg",
+      "cspResourceName": "d2jspn8eak5cr9kob6qg",
+      "cspResourceId": "108342780",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-22 01:54:31",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-22 01:54:31",
+        "sys.cspResourceId": "108342780",
+        "sys.cspResourceName": "d2jspn8eak5cr9kob6qg",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2jspn8eak5cr9kob6qg"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "49.50.131.250",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "10",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "m8-g3a",
+      "cspSpecName": "m8-g3a",
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "120092",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "253345",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2jspeoeak5cr9kob6o0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "108342780"
+        },
+        {
+          "key": "ServerName",
+          "value": "d2jspn8eak5cr9kob6qg"
+        },
+        {
+          "key": "CpuCount",
+          "value": "8"
+        },
+        {
+          "key": "MemorySize",
+          "value": "68719476736"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d2jspeoeak5cr9kob6o0"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-22T10:50:33+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-22T10:52:19+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.HIMEM.C008.M064.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "120092"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "253345"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4911744"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "135717"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:HIMEM,codeName:High Memory}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "m8-g3a"
         }
       ]
     }
@@ -2739,7 +2606,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2isf18eak5cr9n8jae0",
+      "uid": "d2jspn8eak5cr9kob6pg",
       "name": "mmci01",
       "status": "Running:2 (R:2/2)",
       "statusCount": {
@@ -2767,7 +2634,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "uid": "d2isf18eak5cr9n8jae0",
+          "uid": "d2jspn8eak5cr9kob6pg",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2839,7 +2706,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2isf18eak5cr9n8jae0",
+          "uid": "d2jspn8eak5cr9kob6pg",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -2941,9 +2808,7 @@
 
 ```json
 {
-  "idList": [
-    "mmci01"
-  ]
+  "idList": ["mmci01"]
 }
 ```
 
@@ -2971,7 +2836,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2isf18eak5cr9n8jae0",
+  "uid": "d2jspn8eak5cr9kob6pg",
   "name": "mmci01",
   "status": "Running:2 (R:2/2)",
   "statusCount": {
@@ -2998,7 +2863,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2isf18eak5cr9n8jae0"
+    "sys.uid": "d2jspn8eak5cr9kob6pg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -3007,9 +2872,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d2isf18eak5cr9n8jag0",
-      "cspResourceName": "d2isf18eak5cr9n8jag0",
-      "cspResourceId": "108292651",
+      "uid": "d2jspn8eak5cr9kob6rg",
+      "cspResourceName": "d2jspn8eak5cr9kob6rg",
+      "cspResourceId": "108342784",
       "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "location": {
@@ -3023,12 +2888,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:05:35",
+      "createdTime": "2025-08-22 01:52:21",
       "label": {
         "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-20 13:05:35",
-        "sys.cspResourceId": "108292651",
-        "sys.cspResourceName": "d2isf18eak5cr9n8jag0",
+        "sys.createdTime": "2025-08-22 01:52:21",
+        "sys.cspResourceId": "108342784",
+        "sys.cspResourceName": "d2jspn8eak5cr9kob6rg",
         "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -3036,213 +2901,14 @@
         "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isf18eak5cr9n8jag0"
+        "sys.uid": "d2jspn8eak5cr9kob6rg"
       },
       "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "223.130.131.232",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.6",
-      "privateDNS": "",
-      "rootDiskType": "SSD",
-      "rootDiskSize": "10",
-      "rootDiskName": "",
-      "connectionName": "ncpvpc-kr",
-      "connectionConfig": {
-        "configName": "ncpvpc-kr",
-        "providerName": "ncpvpc",
-        "driverName": "ncpvpc-driver-v1.0.so",
-        "credentialName": "ncpvpc",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncpvpc-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "m32-g3a",
-      "cspSpecName": "m32-g3a",
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "119764",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "252646",
-      "networkInterface": "eth0",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isep0eak5cr9n8jacg",
-      "vmUserName": "cb-user",
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "108292651"
-        },
-        {
-          "key": "ServerName",
-          "value": "d2isf18eak5cr9n8jag0"
-        },
-        {
-          "key": "CpuCount",
-          "value": "32"
-        },
-        {
-          "key": "MemorySize",
-          "value": "274877906944"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "d2isep0eak5cr9n8jacg"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2025-08-20T22:03:15+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2025-08-20T22:05:28+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.AMD.HIMEM.C032.M256.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "119764"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "252646"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "4906118"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "135432"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:HIMEM,codeName:High Memory}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "m32-g3a"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2isf18eak5cr9n8jaf0",
-      "cspResourceName": "d2isf18eak5cr9n8jaf0",
-      "cspResourceId": "108292656",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-08-20 13:07:13",
-      "label": {
-        "sys.connectionName": "ncpvpc-kr",
-        "sys.createdTime": "2025-08-20 13:07:13",
-        "sys.cspResourceId": "108292656",
-        "sys.cspResourceName": "d2isf18eak5cr9n8jaf0",
-        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.labelType": "vm",
-        "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mmci01",
-        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isf18eak5cr9n8jaf0"
-      },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "KR",
-        "Zone": "KR-1"
-      },
-      "publicIP": "49.50.133.3",
+      "publicIP": "211.188.48.66",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "192.168.110.7",
@@ -3271,46 +2937,41 @@
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
+          "zones": ["KR-1", "KR-2"]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "m32-g3a",
-      "cspSpecName": "m32-g3a",
+      "specId": "m8-g3a",
+      "cspSpecName": "m8-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "119764",
+      "cspVNetId": "120092",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "252646",
+      "cspSubnetId": "253345",
       "networkInterface": "eth0",
-      "securityGroupIds": [
-        "mig-sg-01"
-      ],
+      "securityGroupIds": ["mig-sg-02"],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isep0eak5cr9n8jacg",
+      "cspSshKeyId": "d2jspeoeak5cr9kob6o0",
       "vmUserName": "cb-user",
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "108292656"
+          "value": "108342784"
         },
         {
           "key": "ServerName",
-          "value": "d2isf18eak5cr9n8jaf0"
+          "value": "d2jspn8eak5cr9kob6rg"
         },
         {
           "key": "CpuCount",
-          "value": "32"
+          "value": "8"
         },
         {
           "key": "MemorySize",
-          "value": "274877906944"
+          "value": "68719476736"
         },
         {
           "key": "PlatformType",
@@ -3318,7 +2979,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d2isep0eak5cr9n8jacg"
+          "value": "d2jspeoeak5cr9kob6o0"
         },
         {
           "key": "ServerInstanceStatus",
@@ -3334,11 +2995,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-08-20T22:03:21+0900"
+          "value": "2025-08-22T10:50:37+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-08-20T22:05:12+0900"
+          "value": "2025-08-22T10:52:17+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -3346,7 +3007,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.AMD.HIMEM.C032.M256.G003"
+          "value": "SVR.VSVR.AMD.HIMEM.C008.M064.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -3362,19 +3023,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "119764"
+          "value": "120092"
         },
         {
           "key": "SubnetNo",
-          "value": "252646"
+          "value": "253345"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "4906119"
+          "value": "4911748"
         },
         {
           "key": "InitScriptNo",
-          "value": "135433"
+          "value": "135718"
         },
         {
           "key": "ServerInstanceType",
@@ -3398,7 +3059,201 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "m32-g3a"
+          "value": "m8-g3a"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d2jspn8eak5cr9kob6qg",
+      "cspResourceName": "d2jspn8eak5cr9kob6qg",
+      "cspResourceId": "108342780",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-08-22 01:54:31",
+      "label": {
+        "sys.connectionName": "ncpvpc-kr",
+        "sys.createdTime": "2025-08-22 01:54:31",
+        "sys.cspResourceId": "108342780",
+        "sys.cspResourceName": "d2jspn8eak5cr9kob6qg",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d2jspn8eak5cr9kob6qg"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "KR",
+        "Zone": "KR-1"
+      },
+      "publicIP": "49.50.131.250",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.6",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": "10",
+      "rootDiskName": "",
+      "connectionName": "ncpvpc-kr",
+      "connectionConfig": {
+        "configName": "ncpvpc-kr",
+        "providerName": "ncpvpc",
+        "driverName": "ncpvpc-driver-v1.0.so",
+        "credentialName": "ncpvpc",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncpvpc-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": ["KR-1", "KR-2"]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "m8-g3a",
+      "cspSpecName": "m8-g3a",
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "120092",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "253345",
+      "networkInterface": "eth0",
+      "securityGroupIds": ["mig-sg-01"],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d2jspeoeak5cr9kob6o0",
+      "vmUserName": "cb-user",
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "108342780"
+        },
+        {
+          "key": "ServerName",
+          "value": "d2jspn8eak5cr9kob6qg"
+        },
+        {
+          "key": "CpuCount",
+          "value": "8"
+        },
+        {
+          "key": "MemorySize",
+          "value": "68719476736"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "d2jspeoeak5cr9kob6o0"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2025-08-22T10:50:33+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2025-08-22T10:52:19+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.HIMEM.C008.M064.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "120092"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "253345"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "4911744"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "135717"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:HIMEM,codeName:High Memory}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "m8-g3a"
         }
       ]
     }
@@ -3440,4 +3295,3 @@
   "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
 }
 ```
-
