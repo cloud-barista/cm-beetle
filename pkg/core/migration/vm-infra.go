@@ -283,7 +283,6 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	var temp cloudmodel.VmInfraInfo
 	temp.TbMciInfo = mciInfoConverted
 
-	// return emptyRet, fmt.Errorf("CreateVMInfra is not implemented yet")
 	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, mciInfoConverted.Name)
 	return temp, nil
 }

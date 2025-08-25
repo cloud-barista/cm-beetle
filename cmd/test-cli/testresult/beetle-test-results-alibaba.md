@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (81e984e)
+- CM-Beetle: v0.4.0 (dfc4a41)
 - cm-model: v0.0.11
 - CB-Tumblebug: v0.11.3
 - CB-Spider: v0.11.1
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: August 20, 2025
-- Test Time: 22:09:18 KST
-- Test Execution: 2025-08-20 22:09:18 KST
+- Test Date: August 25, 2025
+- Test Time: 12:55:14 KST
+- Test Execution: 2025-08-25 12:55:14 KST
 
 ### Scenario
 
@@ -39,18 +39,18 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 390ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2m29.15s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 111ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 73ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 110ms | Pass |
-| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 40.277s | Pass |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 879ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2m42.985s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 384ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 66ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 212ms | Pass |
+| 6 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 31.596s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 3m40.306533038s
+**Total Duration**: 3m46.385401098s
 
-*Test executed on August 20, 2025 at 22:09:18 KST (2025-08-20 22:09:18 KST) using CM-Beetle automated test CLI*
+*Test executed on August 25, 2025 at 12:55:14 KST (2025-08-25 12:55:14 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -102,7 +102,7 @@
         "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "cpu": {
           "architecture": "x86_64",
-          "cpus": 2,
+          "cpus": 4,
           "cores": 18,
           "threads": 36,
           "maxSpeed": 3.7,
@@ -111,9 +111,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 146,
-          "used": 109
+          "totalSize": 16,
+          "available": 12,
+          "used": 4
         },
         "rootDisk": {
           "label": "unknown",
@@ -1149,7 +1149,7 @@
         "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
         "cpu": {
           "architecture": "x86_64",
-          "cpus": 2,
+          "cpus": 4,
           "cores": 18,
           "threads": 36,
           "maxSpeed": 3.7,
@@ -1158,9 +1158,9 @@
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 255,
-          "available": 89,
-          "used": 166
+          "totalSize": 16,
+          "available": 12,
+          "used": 4
         },
         "rootDisk": {
           "label": "unknown",
@@ -1971,7 +1971,7 @@
         "label": null,
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "alibaba-ap-northeast-2",
-        "specId": "ecs.r6.8xlarge",
+        "specId": "ecs.g8a.xlarge",
         "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -1987,7 +1987,7 @@
         "label": null,
         "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
         "connectionName": "alibaba-ap-northeast-2",
-        "specId": "ecs.r6.8xlarge",
+        "specId": "ecs.g8a.xlarge",
         "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -2030,20 +2030,20 @@
   },
   "targetVmSpecList": [
     {
-      "id": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
-      "name": "alibaba+ap-northeast-2+ecs.r6.8xlarge",
+      "id": "alibaba+ap-northeast-2+ecs.g8a.xlarge",
+      "cspSpecName": "ecs.g8a.xlarge",
+      "name": "alibaba+ap-northeast-2+ecs.g8a.xlarge",
       "namespace": "system",
       "connectionName": "alibaba-ap-northeast-2",
       "providerName": "alibaba",
       "regionName": "ap-northeast-2",
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 32,
-      "memoryGiB": 256,
+      "vCPU": 4,
+      "memoryGiB": 16,
       "diskSizeGB": -1,
-      "costPerHour": 1.71649,
-      "orderInFilteredResult": 1,
+      "costPerHour": 0.1835,
+      "orderInFilteredResult": 5,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
       "evaluationScore03": -1,
@@ -2052,7 +2052,7 @@
       "evaluationScore06": -1,
       "evaluationScore07": -1,
       "evaluationScore08": -1,
-      "evaluationScore09": 1,
+      "evaluationScore09": 1.0218444,
       "evaluationScore10": -1,
       "rootDiskType": "",
       "rootDiskSize": "-1",
@@ -2060,27 +2060,27 @@
       "details": [
         {
           "key": "MemorySize",
-          "value": "256.00"
+          "value": "16.00"
         },
         {
           "key": "InstancePpsRx",
-          "value": "2000000"
+          "value": "1000000"
         },
         {
           "key": "EriQuantity",
-          "value": "0"
+          "value": "1"
         },
         {
           "key": "EniPrivateIpAddressQuantity",
-          "value": "20"
+          "value": "15"
         },
         {
           "key": "CpuCoreCount",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "EniTotalQuantity",
-          "value": "40"
+          "value": "5"
         },
         {
           "key": "NetworkEncryptionSupport",
@@ -2096,27 +2096,27 @@
         },
         {
           "key": "JumboFrameSupport",
-          "value": "false"
+          "value": "true"
         },
         {
           "key": "InstanceTypeId",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.g8a.xlarge"
         },
         {
           "key": "InstanceBandwidthRx",
-          "value": "10240000"
+          "value": "2560000"
         },
         {
           "key": "QueuePairNumber",
-          "value": "0"
+          "value": "2"
         },
         {
           "key": "EniQuantity",
-          "value": "8"
+          "value": "4"
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.g8a"
         },
         {
           "key": "InitialCredit",
@@ -2124,7 +2124,7 @@
         },
         {
           "key": "InstancePpsTx",
-          "value": "2000000"
+          "value": "1000000"
         },
         {
           "key": "InstanceFamilyLevel",
@@ -2136,7 +2136,7 @@
         },
         {
           "key": "TotalEniQueueQuantity",
-          "value": "128"
+          "value": "16"
         },
         {
           "key": "CpuArchitecture",
@@ -2144,15 +2144,15 @@
         },
         {
           "key": "SecondaryEniQueueNumber",
-          "value": "16"
+          "value": "4"
         },
         {
           "key": "InstanceBandwidthTx",
-          "value": "10240000"
+          "value": "2560000"
         },
         {
           "key": "MaximumQueueNumberPerEni",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "DiskQuantity",
@@ -2160,7 +2160,7 @@
         },
         {
           "key": "PrimaryEniQueueNumber",
-          "value": "16"
+          "value": "4"
         },
         {
           "key": "Memory",
@@ -2168,7 +2168,7 @@
         },
         {
           "key": "CpuTurboFrequency",
-          "value": "3.20"
+          "value": "3.70"
         },
         {
           "key": "BaselineCredit",
@@ -2188,15 +2188,15 @@
         },
         {
           "key": "NvmeSupport",
-          "value": "unsupported"
+          "value": "required"
         },
         {
           "key": "InstanceCategory",
-          "value": "Memory-optimized"
+          "value": "General-purpose"
         },
         {
           "key": "EniIpv6AddressQuantity",
-          "value": "1"
+          "value": "15"
         },
         {
           "key": "LocalStorageCapacity",
@@ -2204,11 +2204,11 @@
         },
         {
           "key": "CpuSpeedFrequency",
-          "value": "2.50"
+          "value": "2.70"
         },
         {
           "key": "PhysicalProcessorModel",
-          "value": "Intel Xeon (Cascade Lake) Platinum 8269CY"
+          "value": "AMD EPYC™ Genoa 9T24"
         },
         {
           "key": "SupportedBootModes",
@@ -2220,7 +2220,7 @@
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:16,HyperThreadingAdjustable:false,CoreCount:0,CoreFactor:2,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:[ContinuousCoreToHTMapping,DiscreteCoreToHTMapping]}}"
+          "value": "{Core:2,HyperThreadingAdjustable:true,CoreCount:0,CoreFactor:2,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "NetworkCards",
@@ -2464,7 +2464,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2isi48eak5cr9n8jak0",
+  "uid": "d2ltte0eak5cr9m5qpdg",
   "name": "mmci01",
   "status": "Running:2 (R:2/2)",
   "statusCount": {
@@ -2491,7 +2491,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2isi48eak5cr9n8jak0"
+    "sys.uid": "d2ltte0eak5cr9m5qpdg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -2500,9 +2500,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d2isi48eak5cr9n8jam0",
-      "cspResourceName": "d2isi48eak5cr9n8jam0",
-      "cspResourceId": "i-mj70tz47n16tbhhc32wp",
+      "uid": "d2ltte0eak5cr9m5qpfg",
+      "cspResourceName": "d2ltte0eak5cr9m5qpfg",
+      "cspResourceId": "i-mj7f2ol1bdvt902h7e3o",
       "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "location": {
@@ -2516,12 +2516,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:10:19",
+      "createdTime": "2025-08-25 03:56:04",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-20 13:10:19",
-        "sys.cspResourceId": "i-mj70tz47n16tbhhc32wp",
-        "sys.cspResourceName": "d2isi48eak5cr9n8jam0",
+        "sys.createdTime": "2025-08-25 03:56:04",
+        "sys.cspResourceId": "i-mj7f2ol1bdvt902h7e3o",
+        "sys.cspResourceName": "d2ltte0eak5cr9m5qpfg",
         "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2529,17 +2529,17 @@
         "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isi48eak5cr9n8jam0"
+        "sys.uid": "d2ltte0eak5cr9m5qpfg"
       },
       "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.213.135.208",
+      "publicIP": "8.213.132.163",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.80",
+      "privateIP": "192.168.110.22",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -2573,23 +2573,23 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
+      "specId": "ecs.g8a.xlarge",
+      "cspSpecName": "ecs.g8a.xlarge",
       "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7vkfd9s3bnm8ogljdj4",
+      "cspVNetId": "vpc-mj7lxc0r53ahd8xxediq2",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7o5otesxobk45dfsv1d",
-      "networkInterface": "eni-mj70tz47n16tbhh6yqvu",
+      "cspSubnetId": "vsw-mj7wfexdgm4dmpk1cusgl",
+      "networkInterface": "eni-mj7f2ol1bdvt902onv5c",
       "securityGroupIds": [
         "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isi2oeak5cr9n8jaig",
+      "cspSshKeyId": "d2lttcgeak5cr9m5qpc0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "keA1i!i24$8sad",
+      "vmUserPassword": "1tAd0ea$e!ktl2",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -2597,7 +2597,7 @@
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.g8a.xlarge"
         },
         {
           "key": "DeviceAvailable",
@@ -2621,7 +2621,7 @@
         },
         {
           "key": "InstanceName",
-          "value": "d2isi48eak5cr9n8jam0"
+          "value": "d2ltte0eak5cr9m5qpfg"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -2641,7 +2641,7 @@
         },
         {
           "key": "StartTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "ZoneId",
@@ -2649,7 +2649,7 @@
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "2500"
         },
         {
           "key": "InternetChargeType",
@@ -2657,7 +2657,7 @@
         },
         {
           "key": "HostName",
-          "value": "iZmj70tz47n16tbhhc32wpZ"
+          "value": "iZmj7f2ol1bdvt902h7e3oZ"
         },
         {
           "key": "Status",
@@ -2669,7 +2669,7 @@
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "SpotPriceLimit",
@@ -2689,7 +2689,7 @@
         },
         {
           "key": "SerialNumber",
-          "value": "a8b15d59-dbe4-48ba-8cbd-b57974f1cf12"
+          "value": "fd03acbb-b86e-4661-be5c-6625ad359b1b"
         },
         {
           "key": "RegionId",
@@ -2705,11 +2705,11 @@
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.g8a"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj70tz47n16tbhhc32wp"
+          "value": "i-mj7f2ol1bdvt902h7e3o"
         },
         {
           "key": "Recyclable",
@@ -2725,15 +2725,15 @@
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "16384"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2isi2oeak5cr9n8jaig"
+          "value": "d2lttcgeak5cr9m5qpc0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -2757,7 +2757,7 @@
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj703mxyyq8qhxlrxy1i]}"
+          "value": "{SecurityGroupId:[sg-mj7aswnkfflg9vuoviy9]}"
         },
         {
           "key": "InnerIpAddress",
@@ -2765,7 +2765,7 @@
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.213.135.208]}"
+          "value": "{IpAddress:[8.213.132.163]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -2781,7 +2781,7 @@
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:N/A,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -2813,7 +2813,7 @@
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7o5otesxobk45dfsv1d,VpcId:vpc-mj7vkfd9s3bnm8ogljdj4,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.80]}}"
+          "value": "{VSwitchId:vsw-mj7wfexdgm4dmpk1cusgl,VpcId:vpc-mj7lxc0r53ahd8xxediq2,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.22]}}"
         },
         {
           "key": "Tags",
@@ -2821,7 +2821,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:02:1f:40,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj70tz47n16tbhh6yqvu,PrimaryIpAddress:192.168.110.80,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.80,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:e5:0a,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7f2ol1bdvt902onv5c,PrimaryIpAddress:192.168.110.22,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.22,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",
@@ -2832,9 +2832,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2isi48eak5cr9n8jal0",
-      "cspResourceName": "d2isi48eak5cr9n8jal0",
-      "cspResourceId": "i-mj7627lkja1bm4rojr1u",
+      "uid": "d2ltte0eak5cr9m5qpeg",
+      "cspResourceName": "d2ltte0eak5cr9m5qpeg",
+      "cspResourceId": "i-mj7bkki7kf2h8ze6s5us",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -2848,12 +2848,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:11:48",
+      "createdTime": "2025-08-25 03:57:51",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-20 13:11:48",
-        "sys.cspResourceId": "i-mj7627lkja1bm4rojr1u",
-        "sys.cspResourceName": "d2isi48eak5cr9n8jal0",
+        "sys.createdTime": "2025-08-25 03:57:51",
+        "sys.cspResourceId": "i-mj7bkki7kf2h8ze6s5us",
+        "sys.cspResourceName": "d2ltte0eak5cr9m5qpeg",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -2861,17 +2861,17 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isi48eak5cr9n8jal0"
+        "sys.uid": "d2ltte0eak5cr9m5qpeg"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.220.214.219",
+      "publicIP": "8.213.132.86",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.79",
+      "privateIP": "192.168.110.23",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -2905,23 +2905,23 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
+      "specId": "ecs.g8a.xlarge",
+      "cspSpecName": "ecs.g8a.xlarge",
       "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7vkfd9s3bnm8ogljdj4",
+      "cspVNetId": "vpc-mj7lxc0r53ahd8xxediq2",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7o5otesxobk45dfsv1d",
-      "networkInterface": "eni-mj7627lkja1bm4rwh3d1",
+      "cspSubnetId": "vsw-mj7wfexdgm4dmpk1cusgl",
+      "networkInterface": "eni-mj7bkki7kf2h8ze9cwey",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isi2oeak5cr9n8jaig",
+      "cspSshKeyId": "d2lttcgeak5cr9m5qpc0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "keA1i!i24$8sad",
+      "vmUserPassword": "1tAd0ea$e!ktl2",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -2929,7 +2929,7 @@
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.g8a.xlarge"
         },
         {
           "key": "DeviceAvailable",
@@ -2953,7 +2953,7 @@
         },
         {
           "key": "InstanceName",
-          "value": "d2isi48eak5cr9n8jal0"
+          "value": "d2ltte0eak5cr9m5qpeg"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -2973,7 +2973,7 @@
         },
         {
           "key": "StartTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "ZoneId",
@@ -2981,7 +2981,7 @@
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "2500"
         },
         {
           "key": "InternetChargeType",
@@ -2989,7 +2989,7 @@
         },
         {
           "key": "HostName",
-          "value": "iZmj7627lkja1bm4rojr1uZ"
+          "value": "iZmj7bkki7kf2h8ze6s5usZ"
         },
         {
           "key": "Status",
@@ -3001,7 +3001,7 @@
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "SpotPriceLimit",
@@ -3021,7 +3021,7 @@
         },
         {
           "key": "SerialNumber",
-          "value": "c4de2650-e657-4b39-8eae-c1ddb5bdc07e"
+          "value": "84d547d3-9c50-4783-b444-7878a0401535"
         },
         {
           "key": "RegionId",
@@ -3037,11 +3037,11 @@
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.g8a"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj7627lkja1bm4rojr1u"
+          "value": "i-mj7bkki7kf2h8ze6s5us"
         },
         {
           "key": "Recyclable",
@@ -3057,15 +3057,15 @@
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "16384"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2isi2oeak5cr9n8jaig"
+          "value": "d2lttcgeak5cr9m5qpc0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -3089,7 +3089,7 @@
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj7627lkja1bm4rw0m6i]}"
+          "value": "{SecurityGroupId:[sg-mj73oldn06t9gipf48q1]}"
         },
         {
           "key": "InnerIpAddress",
@@ -3097,7 +3097,7 @@
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.214.219]}"
+          "value": "{IpAddress:[8.213.132.86]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -3113,7 +3113,7 @@
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:N/A,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -3145,7 +3145,7 @@
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7o5otesxobk45dfsv1d,VpcId:vpc-mj7vkfd9s3bnm8ogljdj4,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.79]}}"
+          "value": "{VSwitchId:vsw-mj7wfexdgm4dmpk1cusgl,VpcId:vpc-mj7lxc0r53ahd8xxediq2,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.23]}}"
         },
         {
           "key": "Tags",
@@ -3153,7 +3153,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:02:1f:3f,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7627lkja1bm4rwh3d1,PrimaryIpAddress:192.168.110.79,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.79,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:e5:0c,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7bkki7kf2h8ze9cwey,PrimaryIpAddress:192.168.110.23,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.23,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",
@@ -3197,7 +3197,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d2isi48eak5cr9n8jak0",
+      "uid": "d2ltte0eak5cr9m5qpdg",
       "name": "mmci01",
       "status": "Running:2 (R:2/2)",
       "statusCount": {
@@ -3225,7 +3225,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "uid": "d2isi48eak5cr9n8jak0",
+          "uid": "d2ltte0eak5cr9m5qpdg",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -3297,7 +3297,7 @@
         {
           "resourceType": "mci",
           "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d2isi48eak5cr9n8jak0",
+          "uid": "d2ltte0eak5cr9m5qpdg",
           "name": "mmci01",
           "subGroupId": "",
           "location": {
@@ -3429,7 +3429,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d2isi48eak5cr9n8jak0",
+  "uid": "d2ltte0eak5cr9m5qpdg",
   "name": "mmci01",
   "status": "Running:2 (R:2/2)",
   "statusCount": {
@@ -3456,7 +3456,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d2isi48eak5cr9n8jak0"
+    "sys.uid": "d2ltte0eak5cr9m5qpdg"
   },
   "systemLabel": "",
   "systemMessage": "",
@@ -3465,9 +3465,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d2isi48eak5cr9n8jam0",
-      "cspResourceName": "d2isi48eak5cr9n8jam0",
-      "cspResourceId": "i-mj70tz47n16tbhhc32wp",
+      "uid": "d2ltte0eak5cr9m5qpfg",
+      "cspResourceName": "d2ltte0eak5cr9m5qpfg",
+      "cspResourceId": "i-mj7f2ol1bdvt902h7e3o",
       "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "location": {
@@ -3481,12 +3481,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:10:19",
+      "createdTime": "2025-08-25 03:56:04",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-20 13:10:19",
-        "sys.cspResourceId": "i-mj70tz47n16tbhhc32wp",
-        "sys.cspResourceName": "d2isi48eak5cr9n8jam0",
+        "sys.createdTime": "2025-08-25 03:56:04",
+        "sys.cspResourceId": "i-mj7f2ol1bdvt902h7e3o",
+        "sys.cspResourceName": "d2ltte0eak5cr9m5qpfg",
         "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -3494,17 +3494,17 @@
         "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isi48eak5cr9n8jam0"
+        "sys.uid": "d2ltte0eak5cr9m5qpfg"
       },
       "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.213.135.208",
+      "publicIP": "8.213.132.163",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.80",
+      "privateIP": "192.168.110.22",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -3538,23 +3538,23 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
+      "specId": "ecs.g8a.xlarge",
+      "cspSpecName": "ecs.g8a.xlarge",
       "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7vkfd9s3bnm8ogljdj4",
+      "cspVNetId": "vpc-mj7lxc0r53ahd8xxediq2",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7o5otesxobk45dfsv1d",
-      "networkInterface": "eni-mj70tz47n16tbhh6yqvu",
+      "cspSubnetId": "vsw-mj7wfexdgm4dmpk1cusgl",
+      "networkInterface": "eni-mj7f2ol1bdvt902onv5c",
       "securityGroupIds": [
         "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isi2oeak5cr9n8jaig",
+      "cspSshKeyId": "d2lttcgeak5cr9m5qpc0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "keA1i!i24$8sad",
+      "vmUserPassword": "1tAd0ea$e!ktl2",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -3562,7 +3562,7 @@
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.g8a.xlarge"
         },
         {
           "key": "DeviceAvailable",
@@ -3586,7 +3586,7 @@
         },
         {
           "key": "InstanceName",
-          "value": "d2isi48eak5cr9n8jam0"
+          "value": "d2ltte0eak5cr9m5qpfg"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -3606,7 +3606,7 @@
         },
         {
           "key": "StartTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "ZoneId",
@@ -3614,7 +3614,7 @@
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "2500"
         },
         {
           "key": "InternetChargeType",
@@ -3622,7 +3622,7 @@
         },
         {
           "key": "HostName",
-          "value": "iZmj70tz47n16tbhhc32wpZ"
+          "value": "iZmj7f2ol1bdvt902h7e3oZ"
         },
         {
           "key": "Status",
@@ -3634,7 +3634,7 @@
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "SpotPriceLimit",
@@ -3654,7 +3654,7 @@
         },
         {
           "key": "SerialNumber",
-          "value": "a8b15d59-dbe4-48ba-8cbd-b57974f1cf12"
+          "value": "fd03acbb-b86e-4661-be5c-6625ad359b1b"
         },
         {
           "key": "RegionId",
@@ -3670,11 +3670,11 @@
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.g8a"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj70tz47n16tbhhc32wp"
+          "value": "i-mj7f2ol1bdvt902h7e3o"
         },
         {
           "key": "Recyclable",
@@ -3690,15 +3690,15 @@
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "16384"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2isi2oeak5cr9n8jaig"
+          "value": "d2lttcgeak5cr9m5qpc0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -3722,7 +3722,7 @@
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj703mxyyq8qhxlrxy1i]}"
+          "value": "{SecurityGroupId:[sg-mj7aswnkfflg9vuoviy9]}"
         },
         {
           "key": "InnerIpAddress",
@@ -3730,7 +3730,7 @@
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.213.135.208]}"
+          "value": "{IpAddress:[8.213.132.163]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -3746,7 +3746,7 @@
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:N/A,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -3778,7 +3778,7 @@
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7o5otesxobk45dfsv1d,VpcId:vpc-mj7vkfd9s3bnm8ogljdj4,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.80]}}"
+          "value": "{VSwitchId:vsw-mj7wfexdgm4dmpk1cusgl,VpcId:vpc-mj7lxc0r53ahd8xxediq2,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.22]}}"
         },
         {
           "key": "Tags",
@@ -3786,7 +3786,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:02:1f:40,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj70tz47n16tbhh6yqvu,PrimaryIpAddress:192.168.110.80,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.80,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:e5:0a,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7f2ol1bdvt902onv5c,PrimaryIpAddress:192.168.110.22,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.22,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",
@@ -3797,9 +3797,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d2isi48eak5cr9n8jal0",
-      "cspResourceName": "d2isi48eak5cr9n8jal0",
-      "cspResourceId": "i-mj7627lkja1bm4rojr1u",
+      "uid": "d2ltte0eak5cr9m5qpeg",
+      "cspResourceName": "d2ltte0eak5cr9m5qpeg",
+      "cspResourceId": "i-mj7bkki7kf2h8ze6s5us",
       "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
       "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "location": {
@@ -3813,12 +3813,12 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-08-20 13:11:48",
+      "createdTime": "2025-08-25 03:57:51",
       "label": {
         "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-08-20 13:11:48",
-        "sys.cspResourceId": "i-mj7627lkja1bm4rojr1u",
-        "sys.cspResourceName": "d2isi48eak5cr9n8jal0",
+        "sys.createdTime": "2025-08-25 03:57:51",
+        "sys.cspResourceId": "i-mj7bkki7kf2h8ze6s5us",
+        "sys.cspResourceName": "d2ltte0eak5cr9m5qpeg",
         "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -3826,17 +3826,17 @@
         "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d2isi48eak5cr9n8jal0"
+        "sys.uid": "d2ltte0eak5cr9m5qpeg"
       },
       "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
       "region": {
         "Region": "ap-northeast-2",
         "Zone": "ap-northeast-2a"
       },
-      "publicIP": "8.220.214.219",
+      "publicIP": "8.213.132.86",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.79",
+      "privateIP": "192.168.110.23",
       "privateDNS": "",
       "rootDiskType": "cloud_essd",
       "rootDiskSize": "40",
@@ -3870,23 +3870,23 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ecs.r6.8xlarge",
-      "cspSpecName": "ecs.r6.8xlarge",
+      "specId": "ecs.g8a.xlarge",
+      "cspSpecName": "ecs.g8a.xlarge",
       "imageId": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250722.vhd",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj7vkfd9s3bnm8ogljdj4",
+      "cspVNetId": "vpc-mj7lxc0r53ahd8xxediq2",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7o5otesxobk45dfsv1d",
-      "networkInterface": "eni-mj7627lkja1bm4rwh3d1",
+      "cspSubnetId": "vsw-mj7wfexdgm4dmpk1cusgl",
+      "networkInterface": "eni-mj7bkki7kf2h8ze9cwey",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d2isi2oeak5cr9n8jaig",
+      "cspSshKeyId": "d2lttcgeak5cr9m5qpc0",
       "vmUserName": "cb-user",
-      "vmUserPassword": "keA1i!i24$8sad",
+      "vmUserPassword": "1tAd0ea$e!ktl2",
       "addtionalDetails": [
         {
           "key": "ImageId",
@@ -3894,7 +3894,7 @@
         },
         {
           "key": "InstanceType",
-          "value": "ecs.r6.8xlarge"
+          "value": "ecs.g8a.xlarge"
         },
         {
           "key": "DeviceAvailable",
@@ -3918,7 +3918,7 @@
         },
         {
           "key": "InstanceName",
-          "value": "d2isi48eak5cr9n8jal0"
+          "value": "d2ltte0eak5cr9m5qpeg"
         },
         {
           "key": "DeploymentSetGroupNo",
@@ -3938,7 +3938,7 @@
         },
         {
           "key": "StartTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "ZoneId",
@@ -3946,7 +3946,7 @@
         },
         {
           "key": "InternetMaxBandwidthIn",
-          "value": "10000"
+          "value": "2500"
         },
         {
           "key": "InternetChargeType",
@@ -3954,7 +3954,7 @@
         },
         {
           "key": "HostName",
-          "value": "iZmj7627lkja1bm4rojr1uZ"
+          "value": "iZmj7bkki7kf2h8ze6s5usZ"
         },
         {
           "key": "Status",
@@ -3966,7 +3966,7 @@
         },
         {
           "key": "Cpu",
-          "value": "32"
+          "value": "4"
         },
         {
           "key": "SpotPriceLimit",
@@ -3986,7 +3986,7 @@
         },
         {
           "key": "SerialNumber",
-          "value": "c4de2650-e657-4b39-8eae-c1ddb5bdc07e"
+          "value": "84d547d3-9c50-4783-b444-7878a0401535"
         },
         {
           "key": "RegionId",
@@ -4002,11 +4002,11 @@
         },
         {
           "key": "InstanceTypeFamily",
-          "value": "ecs.r6"
+          "value": "ecs.g8a"
         },
         {
           "key": "InstanceId",
-          "value": "i-mj7627lkja1bm4rojr1u"
+          "value": "i-mj7bkki7kf2h8ze6s5us"
         },
         {
           "key": "Recyclable",
@@ -4022,15 +4022,15 @@
         },
         {
           "key": "Memory",
-          "value": "262144"
+          "value": "16384"
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-20T13:09Z"
+          "value": "2025-08-25T03:55Z"
         },
         {
           "key": "KeyPairName",
-          "value": "d2isi2oeak5cr9n8jaig"
+          "value": "d2lttcgeak5cr9m5qpc0"
         },
         {
           "key": "LocalStorageCapacity",
@@ -4054,7 +4054,7 @@
         },
         {
           "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj7627lkja1bm4rw0m6i]}"
+          "value": "{SecurityGroupId:[sg-mj73oldn06t9gipf48q1]}"
         },
         {
           "key": "InnerIpAddress",
@@ -4062,7 +4062,7 @@
         },
         {
           "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.214.219]}"
+          "value": "{IpAddress:[8.213.132.86]}"
         },
         {
           "key": "RdmaIpAddress",
@@ -4078,7 +4078,7 @@
         },
         {
           "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:16,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:N/A,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
         },
         {
           "key": "HibernationOptions",
@@ -4110,7 +4110,7 @@
         },
         {
           "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7o5otesxobk45dfsv1d,VpcId:vpc-mj7vkfd9s3bnm8ogljdj4,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.79]}}"
+          "value": "{VSwitchId:vsw-mj7wfexdgm4dmpk1cusgl,VpcId:vpc-mj7lxc0r53ahd8xxediq2,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.23]}}"
         },
         {
           "key": "Tags",
@@ -4118,7 +4118,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:02:1f:3f,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7627lkja1bm4rwh3d1,PrimaryIpAddress:192.168.110.79,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.79,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:e5:0c,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj7bkki7kf2h8ze9cwey,PrimaryIpAddress:192.168.110.23,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.23,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
         },
         {
           "key": "OperationLocks",

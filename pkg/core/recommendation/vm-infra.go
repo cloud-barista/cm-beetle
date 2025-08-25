@@ -10,7 +10,7 @@ import (
 	"github.com/cloud-barista/cb-tumblebug/src/core/common/netutil"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
-	"github.com/cloud-barista/cm-beetle/pkg/core/compat"
+	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
@@ -23,6 +23,28 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 	"github.com/rs/zerolog/log"
 )
+
+// Recommendation limits constants
+const (
+	defaultSpecsLimit  = 30
+	defaultImagesLimit = 20
+	defaultInfraLimit  = 15
+)
+
+// GetDefaultSpecsLimit returns the default VM specs recommendation limit
+func GetDefaultSpecsLimit() int {
+	return defaultSpecsLimit
+}
+
+// GetDefaultImagesLimit returns the default VM images recommendation limit
+func GetDefaultImagesLimit() int {
+	return defaultImagesLimit
+}
+
+// GetDefaultInfraLimit returns the default infrastructure recommendation limit
+func GetDefaultInfraLimit() int {
+	return defaultInfraLimit
+}
 
 func isSupportedCSP(csp string) bool {
 	supportedCSPs := map[string]bool{
@@ -50,7 +72,7 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 
 	if !supportedCsp {
 		err := fmt.Errorf("not supported yet (provider: %s)", cspName)
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		return isValid, err
 	}
 
@@ -81,7 +103,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	var recommendedVmInfraInfoList cloudmodel.RecommendedVmInfraDynamicList
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
-	var max int = 5
+	var max int = defaultInfraLimit
 	// Initialize the response body
 	recommendedVmInfraInfoList = cloudmodel.RecommendedVmInfraDynamicList{
 		Description:       "This is a list of recommended target infrastructures. Please review and use them.",
@@ -221,8 +243,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	var recommendedVmInfra cloudmodel.RecommendedVmInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
-	var limitSpecs int = 10
-	var limitImages int = 20
+	var limitSpecs int = defaultSpecsLimit
+	var limitImages int = defaultImagesLimit
 
 	// Initialize the response body
 	recommendedVmInfra = cloudmodel.RecommendedVmInfra{
@@ -304,8 +326,20 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
 		}
 
-		log.Debug().Msgf("recommendedVmSpecInfoList: %+v", recommendedVmSpecInfoList)
-		log.Debug().Msgf("recommendedVmOsImageInfoList: %+v", recommendedVmOsImageInfoList)
+		lenSpecList := len(recommendedVmSpecInfoList)
+		lenImageList := len(recommendedVmOsImageInfoList)
+		log.Debug().Msgf("length of recommendedVmSpecInfoList: %d", lenSpecList)
+		log.Debug().Msgf("length of recommendedVmOsImageInfoList: %d", lenImageList)
+
+		// Logging the first 3 items to avoid excessive output
+		loggingLimit := 3
+		for i := 0; i < lenSpecList && i < loggingLimit; i++ {
+			log.Debug().Msgf("(logging up to 3 specs) recommendedVmSpecInfoList[%d]: %+v", i, recommendedVmSpecInfoList[i])
+		}
+		for i := 0; i < lenImageList && i < loggingLimit; i++ {
+			log.Debug().Msgf("(logging up to 3 images) recommendedVmOsImageInfoList[%d]: %+v", i, recommendedVmOsImageInfoList[i])
+		}
+
 		var selectedVmSpec cloudmodel.TbSpecInfo
 		var selectedVmOsImage cloudmodel.TbImageInfo
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
@@ -319,6 +353,30 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			} else {
 				selectedVmSpec = tempSelectedVmSpec
 				selectedVmOsImage = tempSelectedVmOsImage
+
+				// Log CPU comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("specId", selectedVmSpec.CspSpecName).
+					Uint32("originalCPUs", server.CPU.Cpus).
+					Uint32("recommendedVCPU", uint32(selectedVmSpec.VCPU)).
+					Msg("CPU comparison")
+
+				// Log Memory comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("specId", selectedVmSpec.CspSpecName).
+					Uint32("originalMemoryGB", uint32(server.Memory.TotalSize)).
+					Float32("recommendedMemoryGiB", selectedVmSpec.MemoryGiB).
+					Msg("Memory comparison")
+
+				// Log OS comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("imageId", selectedVmOsImage.CspImageName).
+					Str("originalOS", server.OS.Name+" "+server.OS.Version).
+					Str("recommendedOSImage", selectedVmOsImage.CspImageName).
+					Msg("OS comparison")
 			}
 		}
 
@@ -802,7 +860,6 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Constants
 	const (
-		defaultLimit        = 5
 		defaultArchitecture = "x86_64"
 	)
 
@@ -810,8 +867,8 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Validate and set default limit
 	if limit <= 0 {
-		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultLimit)
-		limit = defaultLimit
+		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultSpecsLimit)
+		limit = defaultSpecsLimit
 	}
 
 	// Deployment plan template for VM spec recommendation
@@ -985,8 +1042,11 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		log.Error().Err(err).
 			Str("machineId", server.MachineId).
 			Msg("Failed to convert VM spec list model")
-		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list for machine %s: %w", server.MachineId, err)
+		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list model for machine %s: %w", server.MachineId, err)
 	}
+
+	// Sort specs by proximity
+	sortByProximity(vcpus, memory, convertedVmSpecList)
 
 	for i, vmSpec := range convertedVmSpecList {
 		log.Debug().Msgf("Recommended VM specification %d: %+v", i+1, vmSpec)
@@ -998,6 +1058,80 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		Msgf("Successfully recommended %d VM specifications for machine: %s", len(convertedVmSpecList), server.MachineId)
 
 	return convertedVmSpecList, numOfVmSpecs, nil
+}
+
+// Sort VM specs by proximity to the desired resource allocation
+func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.TbSpecInfo) {
+
+	// Derive server's spec type (i.e. compute intensive type, memory intensive type, general purpose type)
+	machineType := deriveMachineType(vcpus, memory)
+
+	switch machineType {
+	case "compute-intensive":
+		// Sort by proximity to desired values
+		// 1. First sort by vCPU proximity (closest to target first)
+		// 2. Within same vCPU values, sort by memory proximity (closest to target first)
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+
+			// If vCPU differences are different, sort by vCPU proximity
+			if vcpuDiffI != vcpuDiffJ {
+				return vcpuDiffI < vcpuDiffJ
+			}
+
+			// If vCPU differences are same, sort by memory proximity
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+			return memDiffI < memDiffJ
+		})
+	case "memory-intensive":
+		// Sort by proximity to desired values
+		// 1. First sort by memory proximity (closest to target first)
+		// 2. Within same memory values, sort by vCPU proximity (closest to target first)
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+
+			// If memory differences are different, sort by memory proximity
+			if memDiffI != memDiffJ {
+				return memDiffI < memDiffJ
+			}
+
+			// If memory differences are same, sort by vCPU proximity
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+			return vcpuDiffI < vcpuDiffJ
+		})
+	default: // "general-purpose"
+		// * Note: Manhattan Distance is preferred over Euclidean distance for VM specs
+		// because CPU and memory are independent resources with different scales
+
+		// Sort by Manhattan distance (L1 norm) for balanced workloads
+		sort.Slice(vmSpecs, func(i, j int) bool {
+			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
+			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
+			totalDiffI := vcpuDiffI + memDiffI
+
+			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
+			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
+			totalDiffJ := vcpuDiffJ + memDiffJ
+
+			// If total differences are same, sort by spec name for consistency
+			if totalDiffI == totalDiffJ {
+				return vmSpecs[i].CspSpecName < vmSpecs[j].CspSpecName
+			}
+			return totalDiffI < totalDiffJ
+		})
+	}
+}
+
+// abs returns the absolute value of x
+func abs(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
@@ -1051,7 +1185,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: 5", limit)
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		limit = 5
 	}
 
@@ -1129,7 +1263,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	count := len(vmOsImageInfoList)
 	if count == 0 {
 		err := fmt.Errorf("no VM OS image recommended for the inserted PM/VM")
-		log.Warn().Msgf(err.Error())
+		log.Warn().Msgf("%s", err.Error())
 		return emptyRes, err
 	}
 
@@ -1214,6 +1348,116 @@ func MBtoGiB(mb float64) uint32 {
 	return uint32(gib)
 }
 
+// deriveMachineType derives the machine type based on vCPU and memory
+func deriveMachineType(vcpus uint32, memory uint32) (machineType string) {
+	const (
+		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
+		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
+	)
+
+	memoryToVcpuRatio := float64(memory) / float64(vcpus)
+
+	switch {
+	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
+		return "compute-intensive"
+	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
+		return "memory-intensive"
+	default: // General Purpose (1:4)
+		return "general-purpose"
+	}
+}
+
+// calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
+func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	// Constants for instance type thresholds and ratios
+	const (
+		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
+		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
+		// minMemoryBound                 = 2   // Minimum memory requirement
+		// minVcpuBound                   = 1   // Minimum vCPU requirement
+		// maxVcpuForMemoryIntensive      = 10  // Maximum vCPU for memory intensive
+	)
+
+	memoryToVcpuRatio := float64(memory) / float64(vcpus)
+
+	switch {
+	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
+		return calculateComputeIntensiveRange(vcpus, memory)
+	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
+		return calculateMemoryIntensiveRange(vcpus, memory)
+	default: // General Purpose (1:4)
+		return calculateGeneralPurposeRange(vcpus, memory)
+	}
+}
+
+func calculateComputeIntensiveRange(vcpus, memory uint32) (vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax uint32) {
+	const (
+		memoryMultiplier = 4 // Memory multiplier for max calculation
+	)
+
+	vcpusRangeMin = findPreviousPrimeOrDecrementOne(vcpus)
+	vcpusRangeMax = calculateRangeMax(vcpus) // find the next next prime number
+
+	// Set a wide search range for memory for compute-intensive workloads
+	memoryRangeMin = 0
+	memoryRangeMax = vcpusRangeMax * memoryMultiplier
+
+	return vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax
+}
+
+func calculateMemoryIntensiveRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax uint32) {
+	const (
+		memoryToCpuRatio = 7 // memory to CPU ratio for calculation (Standard: 8)
+	)
+
+	memoryRangeMin = calculateRangeMin(memory)
+	memoryRangeMax = calculateRangeMax(memory)
+
+	// Set a wide search range for vCPU for memory-intensive workloads
+	vcpusMin = 0
+	vcpusMax = memoryRangeMax / memoryToCpuRatio
+
+	return vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax
+}
+
+func calculateGeneralPurposeRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+	// For General Purpose workloads, provide balanced flexibility for both vCPU and memory
+	// The input has already been classified as General Purpose in calculateOptimalRange
+
+	vcpusMin = findPreviousPrimeOrDecrementOne(vcpus)
+	vcpusMax = calculateRangeMax(vcpus) // find the next next prime number
+
+	memoryMin = calculateRangeMin(memory)
+	memoryMax = calculateRangeMax(memory)
+
+	return vcpusMin, vcpusMax, memoryMin, memoryMax
+}
+
+// calculateRangeMin calculates the minimum value for a range based on a given number
+func calculateRangeMin(n uint32) uint32 {
+
+	// Calculate previous previous prime number
+	min := findPreviousPrimeOrDecrementOne(n)
+	min = findPreviousPrimeOrDecrementOne(min)
+
+	return min
+}
+
+// calculateRangeMax calculates the maximum value for a range based on a given number
+func calculateRangeMax(n uint32) uint32 {
+
+	// Calculate next next prime number
+	max := findNextPrimeNumber(n)
+	max = findNextPrimeNumber(max)
+
+	// Expand the range if it's too narrow
+	if max-n < 4 {
+		max = findNextPrimeNumber(max)
+	}
+
+	return max
+}
+
 // isPrimeNumber checks if a number is prime
 func isPrimeNumber(n uint32) bool {
 	if n <= 1 {
@@ -1233,18 +1477,27 @@ func isPrimeNumber(n uint32) bool {
 	return true
 }
 
-// findPreviousPrimeNumberOrOne finds the largest prime number smaller than n
-func findPreviousPrimeNumberOrOne(n uint32) uint32 {
-	if n <= 2 {
-		return 1 // Return 1 as minimum vCPU count if no smaller prime exists
+// findPreviousPrimeOrDecrementOne finds the largest prime number smaller than n,
+// returns 1 if n=2, returns 0 if n=1
+func findPreviousPrimeOrDecrementOne(n uint32) uint32 {
+
+	// Return 1 when n is 2
+	if n == 2 {
+		return 1
 	}
 
+	// Return 0 when n is 1 or less
+	if n <= 1 {
+		return 0
+	}
+
+	// Find the prime number smaller than n
 	for i := n - 1; i >= 2; i-- {
 		if isPrimeNumber(i) {
 			return i
 		}
 	}
-	return 1 // Return 1 as fallback minimum vCPU count
+	return 0 // Return 0 as fallback minimum value
 }
 
 // findNextPrimeNumber finds the smallest prime number larger than n
@@ -1256,103 +1509,6 @@ func findNextPrimeNumber(n uint32) uint32 {
 		}
 		candidate++
 	}
-}
-
-// calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
-func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	// Constants for instance type thresholds and ratios
-	const (
-		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
-		memoryIntensiveRatioThreshold  = 7.0 // 1:8 ratio instances
-		minMemoryBound                 = 2   // Minimum memory requirement
-		minVcpuBound                   = 1   // Minimum vCPU requirement
-		maxVcpuForMemoryIntensive      = 10  // Maximum vCPU for memory intensive
-	)
-
-	memoryToVcpuRatio := float64(memory) / float64(vcpus)
-
-	switch {
-	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
-		return calculateComputeIntensiveRange(vcpus, memory, minMemoryBound)
-	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
-		return calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive)
-	default: // General Purpose (1:4)
-		return calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound)
-	}
-}
-
-func calculateComputeIntensiveRange(vcpus, memory, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		vcpuRangeBuffer  = 2 // Buffer for vCPU range expansion
-		memoryMultiplier = 4 // Memory multiplier for max calculation
-	)
-
-	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer)
-
-	// Set a wide search range for memory for compute-intensive workloads
-	memoryMin = minMemoryBound
-	memoryMax = vcpusMax * memoryMultiplier
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
-}
-
-func calculateMemoryIntensiveRange(vcpus, memory, minVcpuBound, maxVcpuForMemoryIntensive uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		memoryRangeBuffer = 4 // Buffer for memory range expansion
-		memoryToCpuRatio  = 8 // Standard memory to CPU ratio for calculation
-	)
-
-	memoryMin = findPreviousPrimeNumberOrOne(memory)
-	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer)
-
-	// Set a wide search range for vCPU for memory-intensive workloads
-	vcpusMin = minVcpuBound
-	vcpusMax = memoryMax / memoryToCpuRatio
-	if vcpusMax < maxVcpuForMemoryIntensive {
-		vcpusMax = maxVcpuForMemoryIntensive
-	}
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
-}
-
-func calculateGeneralPurposeRange(vcpus, memory, minVcpuBound, minMemoryBound uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
-	const (
-		vcpuRangeBuffer     = 2 // Buffer for vCPU range expansion
-		memoryRangeBuffer   = 4 // Buffer for memory range expansion
-		minMemoryToCpuRatio = 2 // Minimum memory to CPU ratio (1:2)
-		maxCpuToMemoryRatio = 2 // Maximum CPU to memory ratio (2:1)
-	)
-
-	// For General Purpose, provide balanced flexibility for both vCPU and memory
-	// Allow moderate range expansion while maintaining 1:4 ratio as the center point
-	vcpusMin = findPreviousPrimeNumberOrOne(vcpus)
-	vcpusMax = findNextPrimeNumber(vcpus + vcpuRangeBuffer) // Slightly wider vCPU range
-
-	memoryMin = findPreviousPrimeNumberOrOne(memory)
-	memoryMax = findNextPrimeNumber(memory + memoryRangeBuffer) // Moderate memory range
-
-	// Apply minimum bounds
-	if vcpusMin < minVcpuBound {
-		vcpusMin = minVcpuBound
-	}
-	if memoryMin < minMemoryBound {
-		memoryMin = minMemoryBound
-	}
-
-	// Ensure reasonable relationship between vCPU and memory
-	// Allow 1:2 to 1:8 ratio range for General Purpose workloads
-	if memoryMax < vcpusMin*minMemoryToCpuRatio {
-		memoryMax = vcpusMin * minMemoryToCpuRatio
-	}
-	if vcpusMax > memoryMax/maxCpuToMemoryRatio {
-		vcpusMax = memoryMax / maxCpuToMemoryRatio
-		if vcpusMax < vcpusMin {
-			vcpusMax = vcpusMin
-		}
-	}
-
-	return vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
@@ -1939,7 +2095,8 @@ func preFilterByCsp(csp string, specs []cloudmodel.TbSpecInfo, images []cloudmod
 		return filteredSpecs, images
 
 	default:
-		// No specific filtering for GCP, Azure, and others
+		// No specific filtering for GCP and others
+		// Rely on comprehensive compatibility checks in findCompatiblePair
 		log.Debug().Msgf("No specific pre-filtering rules for CSP: %s", csp)
 		return specs, images
 	}
