@@ -10,7 +10,7 @@
 > [!NOTE]
 > It will continue to be updated until the v0.4.0 release.
 
-- Beetle v0.3.5
+- Beetle v0.3.6
 - cm-model v0.0.11 (It may be applied to Damselfly)
 - Honeybee v0.3.3 (?) (Used always-running server)
 - Tumblebug v0.11.3 (Spider v0.11.1, CB-MapUI v0.11.4)
@@ -1874,10 +1874,11 @@ Note: Downgraded memory spec
 Testing was performed by `test-cli`.
 
 - ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- ✅ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
-  - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB) / (ok: 32GiB, 64GiB)
+- ⚠️ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
+  - Note: Not recommended to use a large number of vCPUs to avoid exceeding approved Total Regional Cores quota
+  - Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
 - ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-  - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB) / (ok: 32GiB, 64GiB)
+  - Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
 - ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
   - Note: vNet/subnet is sometimes not completely deleted.
