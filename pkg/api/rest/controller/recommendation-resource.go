@@ -279,8 +279,9 @@ func RecommendVmSpecs(c echo.Context) error {
 	recommendedVmSpecList := cloudmodel.RecommendedVmSpecList{}
 	for i, server := range serversToProcess {
 
+		specsLimit := recommendation.GetDefaultSpecsLimit()
 		// Recommend VM specs for the server
-		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, server, 5)
+		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, server, specsLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {

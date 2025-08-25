@@ -24,6 +24,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Recommendation limits constants
+const (
+	defaultSpecsLimit  = 30
+	defaultImagesLimit = 20
+	defaultInfraLimit  = 15
+)
+
+// GetDefaultSpecsLimit returns the default VM specs recommendation limit
+func GetDefaultSpecsLimit() int {
+	return defaultSpecsLimit
+}
+
+// GetDefaultImagesLimit returns the default VM images recommendation limit
+func GetDefaultImagesLimit() int {
+	return defaultImagesLimit
+}
+
+// GetDefaultInfraLimit returns the default infrastructure recommendation limit
+func GetDefaultInfraLimit() int {
+	return defaultInfraLimit
+}
+
 func isSupportedCSP(csp string) bool {
 	supportedCSPs := map[string]bool{
 		"aws":     true,
@@ -81,7 +103,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	var recommendedVmInfraInfoList cloudmodel.RecommendedVmInfraDynamicList
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
-	var max int = 5
+	var max int = defaultInfraLimit
 	// Initialize the response body
 	recommendedVmInfraInfoList = cloudmodel.RecommendedVmInfraDynamicList{
 		Description:       "This is a list of recommended target infrastructures. Please review and use them.",
@@ -221,8 +243,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	var recommendedVmInfra cloudmodel.RecommendedVmInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
-	var limitSpecs int = 10
-	var limitImages int = 20
+	var limitSpecs int = defaultSpecsLimit
+	var limitImages int = defaultImagesLimit
 
 	// Initialize the response body
 	recommendedVmInfra = cloudmodel.RecommendedVmInfra{
@@ -304,8 +326,20 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
 		}
 
-		log.Debug().Msgf("recommendedVmSpecInfoList: %+v", recommendedVmSpecInfoList)
-		log.Debug().Msgf("recommendedVmOsImageInfoList: %+v", recommendedVmOsImageInfoList)
+		lenSpecList := len(recommendedVmSpecInfoList)
+		lenImageList := len(recommendedVmOsImageInfoList)
+		log.Debug().Msgf("length of recommendedVmSpecInfoList: %d", lenSpecList)
+		log.Debug().Msgf("length of recommendedVmOsImageInfoList: %d", lenImageList)
+
+		// Logging the first 3 items to avoid excessive output
+		loggingLimit := 3
+		for i := 0; i < lenSpecList && i < loggingLimit; i++ {
+			log.Debug().Msgf("(logging up to 3 specs) recommendedVmSpecInfoList[%d]: %+v", i, recommendedVmSpecInfoList[i])
+		}
+		for i := 0; i < lenImageList && i < loggingLimit; i++ {
+			log.Debug().Msgf("(logging up to 3 images) recommendedVmOsImageInfoList[%d]: %+v", i, recommendedVmOsImageInfoList[i])
+		}
+
 		var selectedVmSpec cloudmodel.TbSpecInfo
 		var selectedVmOsImage cloudmodel.TbImageInfo
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
@@ -319,6 +353,30 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			} else {
 				selectedVmSpec = tempSelectedVmSpec
 				selectedVmOsImage = tempSelectedVmOsImage
+
+				// Log CPU comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("specId", selectedVmSpec.CspSpecName).
+					Uint32("originalCPUs", server.CPU.Cpus).
+					Uint32("recommendedVCPU", uint32(selectedVmSpec.VCPU)).
+					Msg("CPU comparison")
+
+				// Log Memory comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("specId", selectedVmSpec.CspSpecName).
+					Uint32("originalMemoryGB", uint32(server.Memory.TotalSize)).
+					Float32("recommendedMemoryGiB", selectedVmSpec.MemoryGiB).
+					Msg("Memory comparison")
+
+				// Log OS comparison
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Str("imageId", selectedVmOsImage.CspImageName).
+					Str("originalOS", server.OS.Name+" "+server.OS.Version).
+					Str("recommendedOSImage", selectedVmOsImage.CspImageName).
+					Msg("OS comparison")
 			}
 		}
 
@@ -802,7 +860,6 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Constants
 	const (
-		defaultLimit        = 5
 		defaultArchitecture = "x86_64"
 	)
 
@@ -810,8 +867,8 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Validate and set default limit
 	if limit <= 0 {
-		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultLimit)
-		limit = defaultLimit
+		log.Warn().Msgf("Invalid limit value: %d, setting to default: %d", limit, defaultSpecsLimit)
+		limit = defaultSpecsLimit
 	}
 
 	// Deployment plan template for VM spec recommendation
@@ -1047,8 +1104,10 @@ func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.TbSpecInfo) {
 			return vcpuDiffI < vcpuDiffJ
 		})
 	default: // "general-purpose"
-		// Sort by combined proximity to both vCPU and memory (balanced approach)
-		// Calculate total distance (Manhattan distance) for both vCPU and memory
+		// * Note: Manhattan Distance is preferred over Euclidean distance for VM specs
+		// because CPU and memory are independent resources with different scales
+
+		// Sort by Manhattan distance (L1 norm) for balanced workloads
 		sort.Slice(vmSpecs, func(i, j int) bool {
 			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
 			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
@@ -1336,8 +1395,8 @@ func calculateComputeIntensiveRange(vcpus, memory uint32) (vcpusRangeMin, vcpusR
 		memoryMultiplier = 4 // Memory multiplier for max calculation
 	)
 
-	vcpusRangeMin = calculateRangeMin(vcpus)
-	vcpusRangeMax = calculateRangeMax(vcpus)
+	vcpusRangeMin = findPreviousPrimeOrDecrementOne(vcpus)
+	vcpusRangeMax = calculateRangeMax(vcpus) // find the next next prime number
 
 	// Set a wide search range for memory for compute-intensive workloads
 	memoryRangeMin = 0
@@ -1365,8 +1424,8 @@ func calculateGeneralPurposeRange(vcpus, memory uint32) (vcpusMin, vcpusMax, mem
 	// For General Purpose workloads, provide balanced flexibility for both vCPU and memory
 	// The input has already been classified as General Purpose in calculateOptimalRange
 
-	vcpusMin = calculateRangeMin(vcpus)
-	vcpusMax = calculateRangeMax(vcpus)
+	vcpusMin = findPreviousPrimeOrDecrementOne(vcpus)
+	vcpusMax = calculateRangeMax(vcpus) // find the next next prime number
 
 	memoryMin = calculateRangeMin(memory)
 	memoryMax = calculateRangeMax(memory)
