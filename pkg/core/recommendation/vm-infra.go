@@ -432,8 +432,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		/*
 		 * Recommend VM by specifying the recommended VM specs, OS images, and security groups
 		 */
-		// TODO: Select a subnet by the server's network information
-		// xxx
+		// TODO: Select a subnet by the server's network information (for now, select the first one)
 
 		// * Set names to indicate a dependency between resources.
 		tempVmReq := cloudmodel.TbVmReq{
@@ -442,7 +441,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			SpecId:           selectedVmSpec.CspSpecName,
 			ImageId:          selectedVmOsImage.CspImageName,
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
-			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity
+			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
 			RootDiskSize:     "",                                                   // TBD
@@ -451,6 +450,9 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
 			VmUserPassword:   "",                                                   // TBD
 			SubGroupSize:     "",                                                   // TBD
+			Label: map[string]string{
+				"sourceMachineId": server.MachineId,
+			},
 		}
 
 		// Append the VM request to the list
