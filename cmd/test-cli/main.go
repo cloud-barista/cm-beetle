@@ -19,7 +19,6 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
@@ -49,11 +48,11 @@ type CSPTestReport struct {
 
 // TestConfig holds test configuration
 type TestConfig struct {
-	BeetleURL             string                         `json:"beetleUrl"`
-	NamespaceID           string                         `json:"namespaceId"`
-	DesiredCspRegionPairs []recommendation.CspRegionPair `json:"desiredCspRegionPairs"`
-	RequestBodyFile       string                         `json:"requestBodyFile"`
-	AuthConfigFile        string                         `json:"authConfigFile,omitempty"`
+	BeetleURL             string                     `json:"beetleUrl"`
+	NamespaceID           string                     `json:"namespaceId"`
+	DesiredCspRegionPairs []cloudmodel.CloudProperty `json:"desiredCspRegionPairs"`
+	RequestBodyFile       string                     `json:"requestBodyFile"`
+	AuthConfigFile        string                     `json:"authConfigFile,omitempty"`
 	// Legacy fields for backward compatibility
 	DesiredCSP    string `json:"desiredCsp,omitempty"`
 	DesiredRegion string `json:"desiredRegion,omitempty"`
@@ -221,7 +220,7 @@ func main() {
 	cspRegionPairs := config.DesiredCspRegionPairs
 	if len(cspRegionPairs) == 0 && config.DesiredCSP != "" && config.DesiredRegion != "" {
 		// Use legacy fields if new format is not provided
-		cspRegionPairs = []recommendation.CspRegionPair{
+		cspRegionPairs = []cloudmodel.CloudProperty{
 			{
 				Csp:    config.DesiredCSP,
 				Region: config.DesiredRegion,
@@ -298,7 +297,7 @@ func main() {
 
 		// Create RecommendVmInfraRequest for this CSP-Region pair
 		recommendRequest := controller.RecommendVmInfraRequest{
-			DesiredCspAndRegionPair: recommendation.CspRegionPair{
+			DesiredCspAndRegionPair: cloudmodel.CloudProperty{
 				Csp:    cspPair.Csp,
 				Region: cspPair.Region,
 			},
@@ -857,7 +856,7 @@ func convertMapToVmInfraInfo(responseMap map[string]interface{}) (*cloudmodel.Vm
 }
 
 // runRecommendationTest performs Test 1: POST /beetle/recommendation/mci
-func runRecommendationTest(client *resty.Client, config TestConfig, cspPair recommendation.CspRegionPair, recommendRequest controller.RecommendVmInfraRequest, displayName string) (controller.RecommendVmInfraResponse, TestResults) {
+func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (controller.RecommendVmInfraResponse, TestResults) {
 	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/mci ---")
 
 	// Wait before API call for stability with animation

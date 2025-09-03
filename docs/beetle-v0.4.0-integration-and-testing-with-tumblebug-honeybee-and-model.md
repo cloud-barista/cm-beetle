@@ -10,10 +10,17 @@
 > [!NOTE]
 > It will continue to be updated until the v0.4.0 release.
 
-- Beetle v0.3.6
-- cm-model v0.0.11 (It may be applied to Damselfly)
-- Honeybee v0.3.3 (?) (Used always-running server)
-- Tumblebug v0.11.3 (Spider v0.11.1, CB-MapUI v0.11.4)
+**Directly integrated**
+
+- Beetle v0.3.8
+- cm-model v0.0.13
+- Tumblebug v0.11.9 (integrates Spider v0.11.4 and CB-MapUI v0.11.11)
+
+**Indirectly related**
+
+- Honeybee v0.3.5 (integrates cm-model v0.0.13)
+  - Note - Used the always-running servers
+- Damselfly v0.3.5 (integrates cm-model v0.0.13)
 
 ### Scenario
 

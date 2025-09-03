@@ -6,7 +6,7 @@ import (
 )
 
 // CheckIbm checks compatibility between IBM Cloud VM spec and OS image
-func CheckIbm(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckIbm(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting IBM Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add IBM Cloud-specific compatibility checks using Detail information

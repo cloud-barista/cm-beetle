@@ -106,5 +106,36 @@ compose-down: ## Down services by docker compose
 	@echo "Removing services by docker compose..."
 	@cd deployments/docker-compose && docker compose down	
 
+apidiff: ## Compare Swagger JSON between two branches (Usage: make apidiff <old_branch> <new_branch>)
+	@OLD_BRANCH=$(word 2,$(MAKECMDGOALS)); \
+	NEW_BRANCH=$(word 3,$(MAKECMDGOALS)); \
+	if [ -z "$$OLD_BRANCH" ] || [ -z "$$NEW_BRANCH" ]; then \
+		echo "Error: Please specify both old and new branch names"; \
+		echo "Usage: make apidiff <old_branch> <new_branch>"; \
+		echo "Example: make apidiff v0.3.7 dev-tumblebug-sync"; \
+		exit 1; \
+	fi; \
+	echo "Comparing Swagger API differences between $$OLD_BRANCH and $$NEW_BRANCH..."; \
+	echo "Extracting swagger.json from $$OLD_BRANCH..."; \
+	git show $$OLD_BRANCH:api/swagger.json > api/old_swagger.json; \
+	echo "Extracting swagger.json from $$NEW_BRANCH..."; \
+	git show $$NEW_BRANCH:api/swagger.json > api/new_swagger.json; \
+	echo "Generating API diff using oasdiff..."; \
+	if command -v oasdiff >/dev/null 2>&1; then \
+		oasdiff diff api/old_swagger.json api/new_swagger.json --format markdown > api/diff.md; \
+		echo "API diff generated: api/diff.md"; \
+	else \
+		echo "Error: oasdiff is not installed. Please install it first:"; \
+		echo "  go install github.com/oasdiff/oasdiff@latest"; \
+		exit 1; \
+	fi; \
+	echo "Cleaning up temporary files..."; \
+	rm -f api/old_swagger.json api/new_swagger.json; \
+	echo "API diff comparison completed!"
+
+# Dummy targets to prevent make from interpreting branch names as targets
+%:
+	@:
+
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

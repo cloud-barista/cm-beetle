@@ -6,7 +6,7 @@ import (
 )
 
 // CheckTencent checks compatibility between Tencent Cloud VM spec and OS image
-func CheckTencent(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckTencent(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting Tencent Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add Tencent Cloud-specific compatibility checks using Detail information

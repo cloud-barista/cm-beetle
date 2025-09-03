@@ -6,7 +6,7 @@ import (
 )
 
 // CheckOpenstack checks compatibility between OpenStack VM spec and OS image
-func CheckOpenstack(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckOpenstack(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting OpenStack compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add OpenStack-specific compatibility checks using Detail information

@@ -29,16 +29,16 @@ import (
 // * Other APIs can be added as needed.
 
 // ReadVmSpec retrieves information about a specific VM Spec in the specified namespace
-func (c *TumblebugClient) ReadVmSpec(nsId, vmSpecId string) (tbmodel.TbSpecInfo, error) {
+func (c *TumblebugClient) ReadVmSpec(nsId, vmSpecId string) (tbmodel.SpecInfo, error) {
 	log.Debug().Msg("Retrieving VM Spec")
 
-	var emptyRet = tbmodel.TbSpecInfo{}
+	var emptyRet = tbmodel.SpecInfo{}
 
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/resources/spec/%s", c.restUrl, nsId, vmSpecId)
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbSpecInfo{}
+	resBody := tbmodel.SpecInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,

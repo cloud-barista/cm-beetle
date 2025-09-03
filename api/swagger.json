@@ -103,7 +103,7 @@
                     "200": {
                         "description": "The ID list of The migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/cloudmodel.IdList"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.IdList"
                         }
                     },
                     "404": {
@@ -488,7 +488,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TbSecurityGroupReq"
+                            "$ref": "#/definitions/model.SecurityGroupReq"
                         }
                     }
                 ],
@@ -496,7 +496,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                            "$ref": "#/definitions/model.SecurityGroupInfo"
                         }
                     },
                     "404": {
@@ -507,6 +507,51 @@
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete multiple migrated security groups in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete multiple migrated security groups",
+                "operationId": "DeleteMigratedSecurityGroups",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "Delete resources containing matched ID-substring only",
+                        "name": "match",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.IdList"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.SimpleMsg"
                         }
@@ -550,7 +595,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                            "$ref": "#/definitions/model.SecurityGroupInfo"
                         }
                     },
                     "404": {
@@ -738,7 +783,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TbSshKeyReq"
+                            "$ref": "#/definitions/model.SshKeyReq"
                         }
                     }
                 ],
@@ -746,7 +791,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbSshKeyInfo"
+                            "$ref": "#/definitions/model.SshKeyInfo"
                         }
                     },
                     "404": {
@@ -800,7 +845,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbSshKeyInfo"
+                            "$ref": "#/definitions/model.SshKeyInfo"
                         }
                     },
                     "404": {
@@ -958,7 +1003,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.TbVNetReq"
+                            "$ref": "#/definitions/model.VNetReq"
                         }
                     }
                 ],
@@ -966,7 +1011,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbVNetInfo"
+                            "$ref": "#/definitions/model.VNetInfo"
                         }
                     },
                     "400": {
@@ -1020,7 +1065,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.TbVNetInfo"
+                            "$ref": "#/definitions/model.VNetInfo"
                         }
                     },
                     "404": {
@@ -1703,7 +1748,598 @@
         }
     },
     "definitions": {
-        "cloudmodel.ConnConfig": {
+        "common.SimpleMessage": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "common.SimpleMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "controller.JSONResult": {
+            "type": "object"
+        },
+        "controller.MigrateInfraRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraResponse": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors"
+                        }
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo"
+                    }
+                }
+            }
+        },
+        "controller.MigrateInfraWithDefaultsRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "subGroups"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "subGroups": {
+                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq"
+                    }
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "controller.MigrateInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors"
+                        }
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo"
+                    }
+                }
+            }
+        },
+        "controller.RecommendInfraRequest": {
+            "type": "object",
+            "required": [
+                "onpremiseInfraModel"
+            ],
+            "properties": {
+                "desiredProvider": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "desiredRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendInfraResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/model.MciDynamicReq"
+                }
+            }
+        },
+        "controller.RecommendSecurityGroupResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedSecurityGroup"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVNetResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetVNetList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVNet"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmInfraRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendVmInfraResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmInfraWithDefaultsRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendVmInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetVmInfraList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmInfraDynamic"
+                    }
+                }
+            }
+        },
+        "controller.RecommendVmOsImageResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmOsImage"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.RecommendVmSpecResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmSpec"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "Any details"
+                },
+                "list": {
+                    "type": "array",
+                    "items": {}
+                },
+                "object": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Any text"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.ConnConfig": {
             "type": "object",
             "properties": {
                 "configName": {
@@ -1722,13 +2358,13 @@
                     "type": "string"
                 },
                 "regionDetail": {
-                    "$ref": "#/definitions/cloudmodel.RegionDetail"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionDetail"
                 },
                 "regionRepresentative": {
                     "type": "boolean"
                 },
                 "regionZoneInfo": {
-                    "$ref": "#/definitions/cloudmodel.RegionZoneInfo"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionZoneInfo"
                 },
                 "regionZoneInfoName": {
                     "type": "string"
@@ -1738,7 +2374,200 @@
                 }
             }
         },
-        "cloudmodel.IdList": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq": {
+            "type": "object",
+            "required": [
+                "imageId",
+                "specId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Created via CB-Tumblebug"
+                },
+                "imageId": {
+                    "description": "ImageId is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ami-01f71f215b23ba262"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "\"env\"": "\"test\"}",
+                        "{\"role\"": "\"worker\""
+                    }
+                },
+                "name": {
+                    "description": "SubGroup name, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "50"
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "gp3"
+                },
+                "specId": {
+                    "description": "SpecId is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws+ap-northeast-2+t3.nano"
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "default": "1",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "imageId",
+                "name",
+                "securityGroupIds",
+                "specId",
+                "sshKeyId",
+                "subnetId",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string",
+                    "example": "testcloud01-seoul"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
+                    "type": "string",
+                    "example": "i-014fa6ede6ada0b2c"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "imageId": {
+                    "description": "ImageType        string   `json:\"imageType\"`",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "SubGroup name of VMs. Actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "default, TYPE1, ..."
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "example": "3"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                },
+                "vmUserName": {
+                    "type": "string"
+                },
+                "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.FirewallRuleReq": {
+            "type": "object",
+            "required": [
+                "Direction",
+                "Protocol"
+            ],
+            "properties": {
+                "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
+                    "type": "string",
+                    "example": "0.0.0.0/0"
+                },
+                "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
+                },
+                "Ports": {
+                    "description": "Ports is to get multiple ports or port ranges as a string (e.g. \"22,900-1000,2000-3000\")\nThis allows flexibility in specifying single ports or ranges in a comma-separated format.\nThis field is used to handle both single ports and port ranges in a unified way.\nIt can accept a single port (e.g. \"22\"), a range (e.g. \"900-1000\"), or multiple ports/ranges (e.g. \"22,900-1000,2000-3000\").",
+                    "type": "string",
+                    "example": "22,900-1000,2000-3000"
+                },
+                "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.",
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP"
+                    ],
+                    "example": "TCP"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.IdList": {
             "type": "object",
             "properties": {
                 "idList": {
@@ -1749,7 +2578,127 @@
                 }
             }
         },
-        "cloudmodel.ImageStatus": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "creationDate": {
+                    "type": "string"
+                },
+                "cspImageName": {
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue"
+                    }
+                },
+                "fetchedTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageStatus": {
+                    "description": "Available, Deprecated, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "infraType": {
+                    "description": "vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isBasicImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isGPUImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isKubernetesImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "name": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "description": "Composite primary key",
+                    "type": "string",
+                    "example": "default"
+                },
+                "osArchitecture": {
+                    "description": "arm64, x86_64 etc.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.OSArchitecture"
+                        }
+                    ],
+                    "example": "x86_64"
+                },
+                "osDiskSizeGB": {
+                    "description": "10, 50, 100 etc.",
+                    "type": "number",
+                    "example": 50
+                },
+                "osDiskType": {
+                    "description": "ebs, HDD, etc.",
+                    "type": "string",
+                    "example": "HDD"
+                },
+                "osDistribution": {
+                    "description": "Ubuntu 22.04~, CentOS 8 etc.",
+                    "type": "string",
+                    "example": "Ubuntu 22.04~"
+                },
+                "osPlatform": {
+                    "description": "Linux/UNIX, Windows, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.OSPlatform"
+                        }
+                    ],
+                    "example": "Linux/UNIX"
+                },
+                "osType": {
+                    "type": "string",
+                    "example": "ubuntu 22.04"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionList": {
+                    "description": "Array field for supporting multiple regions",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "systemLabel": {
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.ImageStatus": {
             "type": "string",
             "enum": [
                 "Available",
@@ -1764,7 +2713,7 @@
                 "ImageNA"
             ]
         },
-        "cloudmodel.KeyValue": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue": {
             "type": "object",
             "properties": {
                 "key": {
@@ -1775,7 +2724,7 @@
                 }
             }
         },
-        "cloudmodel.Location": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.Location": {
             "type": "object",
             "properties": {
                 "display": {
@@ -1789,7 +2738,7 @@
                 }
             }
         },
-        "cloudmodel.MciCmdReq": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq": {
             "type": "object",
             "required": [
                 "command"
@@ -1810,7 +2759,7 @@
                 }
             }
         },
-        "cloudmodel.MciCreationErrors": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors": {
             "type": "object",
             "properties": {
                 "failedVmCount": {
@@ -1833,41 +2782,291 @@
                     "description": "VmCreationErrors contains errors from actual VM creation phase",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError"
                     }
                 },
                 "vmObjectCreationErrors": {
                     "description": "VmObjectCreationErrors contains errors from VM object creation phase",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError"
                     }
                 }
             }
         },
-        "cloudmodel.MciInfoList": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciDynamicReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "subGroups"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "subGroups": {
+                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq"
+                    }
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciInfo": {
+            "type": "object",
+            "properties": {
+                "configureCloudAdaptiveNetwork": {
+                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "yes"
+                },
+                "creationErrors": {
+                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors"
+                        }
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "newVmList": {
+                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "postCommandResult": {
+                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusCount": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo"
+                    }
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciInfoList": {
             "type": "object",
             "properties": {
                 "mci": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbMciInfo"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciInfo"
                     }
                 }
             }
         },
-        "cloudmodel.MciSshCmdResult": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "subGroups"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Made in CB-TB"
+                },
+                "installMonAgent": {
+                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
+                    "type": "string",
+                    "default": "no",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "example": "no"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mci01"
+                },
+                "placementAlgo": {
+                    "type": "string"
+                },
+                "policyOnPartialFailure": {
+                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "type": "string",
+                    "default": "continue",
+                    "enum": [
+                        "continue",
+                        "rollback",
+                        "refine"
+                    ],
+                    "example": "continue"
+                },
+                "postCommand": {
+                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq"
+                        }
+                    ]
+                },
+                "subGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupReq"
+                    }
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult": {
             "type": "object",
             "properties": {
                 "results": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.SshCmdResult"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshCmdResult"
                     }
                 }
             }
         },
-        "cloudmodel.OSArchitecture": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.OSArchitecture": {
             "type": "string",
             "enum": [
                 "arm32",
@@ -1894,7 +3093,7 @@
                 "ArchitectureUnknown"
             ]
         },
-        "cloudmodel.OSPlatform": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.OSPlatform": {
             "type": "string",
             "enum": [
                 "Linux/UNIX",
@@ -1907,7 +3106,7 @@
                 "PlatformNA"
             ]
         },
-        "cloudmodel.RecommendedSecurityGroup": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedSecurityGroup": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1923,11 +3122,11 @@
                     "type": "string"
                 },
                 "targetSecurityGroup": {
-                    "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq"
                 }
             }
         },
-        "cloudmodel.RecommendedVNet": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVNet": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1937,11 +3136,11 @@
                     "type": "string"
                 },
                 "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq"
                 }
             }
         },
-        "cloudmodel.RecommendedVmInfraDynamic": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmInfraDynamic": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1951,11 +3150,11 @@
                     "type": "string"
                 },
                 "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.TbMciDynamicReq"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciDynamicReq"
                 }
             }
         },
-        "cloudmodel.RecommendedVmOsImage": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmOsImage": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1971,11 +3170,11 @@
                     "type": "string"
                 },
                 "targetVmOsImage": {
-                    "$ref": "#/definitions/cloudmodel.TbImageInfo"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo"
                 }
             }
         },
-        "cloudmodel.RecommendedVmSpec": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmSpec": {
             "type": "object",
             "properties": {
                 "description": {
@@ -1991,18 +3190,18 @@
                     "type": "string"
                 },
                 "targetVmSpec": {
-                    "$ref": "#/definitions/cloudmodel.TbSpecInfo"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo"
                 }
             }
         },
-        "cloudmodel.RegionDetail": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RegionDetail": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "string"
                 },
                 "location": {
-                    "$ref": "#/definitions/cloudmodel.Location"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.Location"
                 },
                 "regionId": {
                     "type": "string"
@@ -2018,7 +3217,7 @@
                 }
             }
         },
-        "cloudmodel.RegionInfo": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RegionInfo": {
             "type": "object",
             "properties": {
                 "region": {
@@ -2029,7 +3228,7 @@
                 }
             }
         },
-        "cloudmodel.RegionZoneInfo": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.RegionZoneInfo": {
             "type": "object",
             "properties": {
                 "assignedRegion": {
@@ -2040,7 +3239,191 @@
                 }
             }
         },
-        "cloudmodel.SshCmdResult": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is required to register object from CSP (option=register)",
+                    "type": "string",
+                    "example": "required for option=register only. ex: csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "firewallRules": {
+                    "description": "validate:\"required\"`",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.FirewallRuleReq"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vNetId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo": {
+            "type": "object",
+            "properties": {
+                "acceleratorCount": {
+                    "type": "integer"
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number"
+                },
+                "acceleratorModel": {
+                    "type": "string"
+                },
+                "acceleratorType": {
+                    "type": "string"
+                },
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "costPerHour": {
+                    "type": "number"
+                },
+                "cspSpecName": {
+                    "description": "CspSpecName is name of the spec given by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue"
+                    }
+                },
+                "diskSizeGB": {
+                    "type": "number"
+                },
+                "evaluationScore01": {
+                    "type": "number"
+                },
+                "evaluationScore02": {
+                    "type": "number"
+                },
+                "evaluationScore03": {
+                    "type": "number"
+                },
+                "evaluationScore04": {
+                    "type": "number"
+                },
+                "evaluationScore05": {
+                    "type": "number"
+                },
+                "evaluationScore06": {
+                    "type": "number"
+                },
+                "evaluationScore07": {
+                    "type": "number"
+                },
+                "evaluationScore08": {
+                    "type": "number"
+                },
+                "evaluationScore09": {
+                    "type": "number"
+                },
+                "evaluationScore10": {
+                    "type": "number"
+                },
+                "evaluationStatus": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws+ap-southeast+csp-06eb41e14121c550a"
+                },
+                "infraType": {
+                    "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "maxTotalStorageTiB": {
+                    "type": "integer"
+                },
+                "memoryGiB": {
+                    "type": "number"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "netBwGbps": {
+                    "type": "integer"
+                },
+                "orderInFilteredResult": {
+                    "type": "integer"
+                },
+                "osType": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionLatitude": {
+                    "type": "number"
+                },
+                "regionLongitude": {
+                    "type": "number"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vCPU": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.SshCmdResult": {
             "type": "object",
             "properties": {
                 "command": {
@@ -2073,7 +3456,44 @@
                 }
             }
         },
-        "cloudmodel.StatusCountInfo": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name"
+            ],
+            "properties": {
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing SSH keys\" feature\nCspResourceId is required to register object from CSP (option=register)",
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verifiedUsername": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo": {
             "type": "object",
             "properties": {
                 "countCreating": {
@@ -2122,621 +3542,7 @@
                 }
             }
         },
-        "cloudmodel.TbFirewallRuleInfo": {
-            "type": "object",
-            "required": [
-                "Direction",
-                "Protocol"
-            ],
-            "properties": {
-                "CIDR": {
-                    "type": "string",
-                    "example": "0.0.0.0/0"
-                },
-                "Direction": {
-                    "type": "string",
-                    "enum": [
-                        "inbound",
-                        "outbound"
-                    ],
-                    "example": "inbound"
-                },
-                "Ports": {
-                    "type": "string",
-                    "example": "1-65535,22,5555"
-                },
-                "Protocol": {
-                    "type": "string",
-                    "enum": [
-                        "TCP",
-                        "UDP",
-                        "ICMP",
-                        "ALL"
-                    ],
-                    "example": "TCP"
-                }
-            }
-        },
-        "cloudmodel.TbImageInfo": {
-            "type": "object",
-            "properties": {
-                "connectionName": {
-                    "type": "string"
-                },
-                "creationDate": {
-                    "type": "string"
-                },
-                "cspImageName": {
-                    "type": "string",
-                    "example": "csp-06eb41e14121c550a"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "details": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.KeyValue"
-                    }
-                },
-                "fetchedTime": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "imageStatus": {
-                    "description": "Available, Deprecated, NA",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.ImageStatus"
-                        }
-                    ],
-                    "example": "Available"
-                },
-                "infraType": {
-                    "description": "vm|k8s|kubernetes|container, etc.",
-                    "type": "string"
-                },
-                "isGPUImage": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "isKubernetesImage": {
-                    "type": "boolean",
-                    "default": false
-                },
-                "name": {
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "namespace": {
-                    "description": "Composite primary key",
-                    "type": "string",
-                    "example": "default"
-                },
-                "osArchitecture": {
-                    "description": "arm64, x86_64 etc.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.OSArchitecture"
-                        }
-                    ],
-                    "example": "x86_64"
-                },
-                "osDiskSizeGB": {
-                    "description": "10, 50, 100 etc.",
-                    "type": "number",
-                    "example": 50
-                },
-                "osDiskType": {
-                    "description": "ebs, HDD, etc.",
-                    "type": "string",
-                    "example": "HDD"
-                },
-                "osDistribution": {
-                    "description": "Ubuntu 22.04~, CentOS 8 etc.",
-                    "type": "string",
-                    "example": "Ubuntu 22.04~"
-                },
-                "osPlatform": {
-                    "description": "Linux/UNIX, Windows, NA",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.OSPlatform"
-                        }
-                    ],
-                    "example": "Linux/UNIX"
-                },
-                "osType": {
-                    "type": "string",
-                    "example": "ubuntu 22.04"
-                },
-                "providerName": {
-                    "type": "string"
-                },
-                "regionList": {
-                    "description": "Array field for supporting multiple regions",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "systemLabel": {
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "uid": {
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                }
-            }
-        },
-        "cloudmodel.TbMciDynamicReq": {
-            "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
-                    "type": "string",
-                    "default": "continue",
-                    "enum": [
-                        "continue",
-                        "rollback",
-                        "refine"
-                    ],
-                    "example": "continue"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
-                },
-                "vm": {
-                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
-                    }
-                }
-            }
-        },
-        "cloudmodel.TbMciInfo": {
-            "type": "object",
-            "properties": {
-                "configureCloudAdaptiveNetwork": {
-                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "yes"
-                },
-                "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
-                        }
-                    ]
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "placementAlgo": {
-                    "type": "string"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
-                        }
-                    ]
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "statusCount": {
-                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
-                    }
-                }
-            }
-        },
-        "cloudmodel.TbMciReq": {
-            "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "placementAlgo": {
-                    "type": "string"
-                },
-                "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
-                    "type": "string",
-                    "default": "continue",
-                    "enum": [
-                        "continue",
-                        "rollback",
-                        "refine"
-                    ],
-                    "example": "continue"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmReq"
-                    }
-                }
-            }
-        },
-        "cloudmodel.TbSecurityGroupReq": {
-            "type": "object",
-            "required": [
-                "connectionName",
-                "name",
-                "vNetId"
-            ],
-            "properties": {
-                "connectionName": {
-                    "type": "string"
-                },
-                "cspResourceId": {
-                    "description": "CspResourceId is required to register object from CSP (option=register)",
-                    "type": "string",
-                    "example": "required for option=register only. ex: csp-06eb41e14121c550a"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "firewallRules": {
-                    "description": "validate:\"required\"`",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbFirewallRuleInfo"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "vNetId": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.TbSpecInfo": {
-            "type": "object",
-            "properties": {
-                "acceleratorCount": {
-                    "type": "integer"
-                },
-                "acceleratorMemoryGB": {
-                    "type": "number"
-                },
-                "acceleratorModel": {
-                    "type": "string"
-                },
-                "acceleratorType": {
-                    "type": "string"
-                },
-                "architecture": {
-                    "type": "string",
-                    "example": "x86_64"
-                },
-                "associatedObjectList": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "connectionName": {
-                    "type": "string"
-                },
-                "costPerHour": {
-                    "type": "number"
-                },
-                "cspSpecName": {
-                    "description": "CspSpecName is name of the spec given by CSP",
-                    "type": "string",
-                    "example": "csp-06eb41e14121c550a"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "details": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.KeyValue"
-                    }
-                },
-                "diskSizeGB": {
-                    "type": "number"
-                },
-                "evaluationScore01": {
-                    "type": "number"
-                },
-                "evaluationScore02": {
-                    "type": "number"
-                },
-                "evaluationScore03": {
-                    "type": "number"
-                },
-                "evaluationScore04": {
-                    "type": "number"
-                },
-                "evaluationScore05": {
-                    "type": "number"
-                },
-                "evaluationScore06": {
-                    "type": "number"
-                },
-                "evaluationScore07": {
-                    "type": "number"
-                },
-                "evaluationScore08": {
-                    "type": "number"
-                },
-                "evaluationScore09": {
-                    "type": "number"
-                },
-                "evaluationScore10": {
-                    "type": "number"
-                },
-                "evaluationStatus": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "infraType": {
-                    "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
-                    "type": "string"
-                },
-                "isAutoGenerated": {
-                    "type": "boolean"
-                },
-                "maxTotalStorageTiB": {
-                    "type": "integer"
-                },
-                "memoryGiB": {
-                    "type": "number"
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "namespace": {
-                    "type": "string",
-                    "example": "default"
-                },
-                "netBwGbps": {
-                    "type": "integer"
-                },
-                "orderInFilteredResult": {
-                    "type": "integer"
-                },
-                "osType": {
-                    "type": "string"
-                },
-                "providerName": {
-                    "type": "string"
-                },
-                "regionName": {
-                    "type": "string"
-                },
-                "rootDiskSize": {
-                    "type": "string"
-                },
-                "rootDiskType": {
-                    "type": "string"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vCPU": {
-                    "type": "integer"
-                }
-            }
-        },
-        "cloudmodel.TbSshKeyReq": {
-            "type": "object",
-            "required": [
-                "connectionName",
-                "name"
-            ],
-            "properties": {
-                "connectionName": {
-                    "type": "string"
-                },
-                "cspResourceId": {
-                    "description": "Fields for \"Register existing SSH keys\" feature\nCspResourceId is required to register object from CSP (option=register)",
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "fingerprint": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "privateKey": {
-                    "type": "string"
-                },
-                "publicKey": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                },
-                "verifiedUsername": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.TbSubnetReq": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.SubnetReq": {
             "type": "object",
             "required": [
                 "ipv4_CIDR",
@@ -2760,7 +3566,7 @@
                 }
             }
         },
-        "cloudmodel.TbVNetReq": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -2786,88 +3592,43 @@
                 "subnetInfoList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSubnetReq"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SubnetReq"
                     }
                 }
             }
         },
-        "cloudmodel.TbVmDynamicReq": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError": {
             "type": "object",
-            "required": [
-                "commonImage",
-                "commonSpec"
-            ],
             "properties": {
-                "commonImage": {
-                    "description": "CommonImage is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "ami-01f71f215b23ba262"
+                "error": {
+                    "description": "Error is the error message",
+                    "type": "string"
                 },
-                "commonSpec": {
-                    "description": "CommonSpec is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "aws+ap-northeast-2+t3.nano"
+                "phase": {
+                    "description": "Phase indicates when the error occurred",
+                    "type": "string"
                 },
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string",
-                    "example": "aws-ap-northeast-2"
+                "timestamp": {
+                    "description": "Timestamp when the error occurred",
+                    "type": "string"
                 },
-                "description": {
-                    "type": "string",
-                    "example": "Created via CB-Tumblebug"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "\"env\"": "\"test\"}",
-                        "{\"role\"": "\"worker\""
-                    }
-                },
-                "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "50"
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "gp3"
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "default": "1",
-                    "example": "3"
-                },
-                "vmUserPassword": {
-                    "type": "string",
-                    "example": ""
+                "vmName": {
+                    "description": "VmName is the name of the VM that failed",
+                    "type": "string"
                 }
             }
         },
-        "cloudmodel.TbVmInfo": {
+        "github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo": {
             "type": "object",
             "properties": {
                 "addtionalDetails": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue"
                     }
                 },
                 "connectionConfig": {
-                    "$ref": "#/definitions/cloudmodel.ConnConfig"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ConnConfig"
                 },
                 "connectionName": {
                     "type": "string"
@@ -2926,7 +3687,7 @@
                     }
                 },
                 "location": {
-                    "$ref": "#/definitions/cloudmodel.Location"
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.Location"
                 },
                 "monAgentStatus": {
                     "description": "Montoring agent status",
@@ -2962,7 +3723,7 @@
                     "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.RegionInfo"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionInfo"
                         }
                     ]
                 },
@@ -3032,681 +3793,363 @@
                 }
             }
         },
-        "cloudmodel.TbVmReq": {
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.CpuProperty": {
             "type": "object",
             "required": [
-                "connectionName",
-                "imageId",
-                "name",
-                "securityGroupIds",
-                "specId",
-                "sshKeyId",
-                "subnetId",
-                "vNetId"
+                "cores",
+                "cpus",
+                "threads"
             ],
             "properties": {
-                "connectionName": {
+                "architecture": {
                     "type": "string",
-                    "example": "testcloud01-seoul"
+                    "example": "x86_64"
                 },
-                "cspResourceId": {
-                    "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
+                "cores": {
+                    "description": "Number of physical cores per CPU",
+                    "type": "integer",
+                    "example": 18
+                },
+                "cpus": {
+                    "description": "Number of physical CPUs (sockets)",
+                    "type": "integer",
+                    "example": 2
+                },
+                "maxSpeed": {
+                    "description": "Maximum speed in GHz",
+                    "type": "number",
+                    "example": 3.6
+                },
+                "model": {
                     "type": "string",
-                    "example": "i-014fa6ede6ada0b2c"
+                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
                 },
-                "dataDiskIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "threads": {
+                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
+                    "type": "integer",
+                    "example": 36
                 },
-                "description": {
+                "vendor": {
                     "type": "string",
-                    "example": "Description"
-                },
-                "imageId": {
-                    "description": "ImageType        string   `json:\"imageType\"`",
-                    "type": "string"
+                    "example": "GenuineIntel"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty": {
+            "type": "object",
+            "required": [
+                "label",
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
                 },
                 "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
+                    "type": "string"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 1024
+                },
+                "type": {
+                    "description": "SSD, HDD",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.FirewallRuleProperty": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "e.g., allow, deny",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "e.g., inbound, outbound",
+                    "type": "string"
+                },
+                "dstCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "dstPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
+                    "type": "string"
+                },
+                "srcCIDR": {
+                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
+                    "type": "string"
+                },
+                "srcPorts": {
+                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.GatewayProperty": {
+            "type": "object",
+            "properties": {
+                "interfaceName": {
+                    "description": "Name of the network interface associated with the gateway",
+                    "type": "string"
+                },
+                "ip": {
+                    "description": "IP address of the gateway",
+                    "type": "string"
+                },
+                "machineId": {
+                    "description": "Unique identifier for the machine (e.g., UUID)",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.MemoryProperty": {
+            "type": "object",
+            "required": [
+                "totalSize",
+                "type"
+            ],
+            "properties": {
+                "available": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                },
+                "totalSize": {
+                    "description": "Unit GiB",
+                    "type": "integer",
+                    "example": 128
+                },
+                "type": {
+                    "type": "string",
+                    "example": "DDR4"
+                },
+                "used": {
+                    "description": "Unit GiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail": {
+            "type": "object",
+            "properties": {
+                "cidrBlocks": {
+                    "type": "array",
+                    "items": {
                         "type": "string"
                     }
+                },
+                "defaultGateways": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.GatewayProperty"
+                    }
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkInterfaceProperty": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "ipv4CidrBlocks": {
+                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ipv6CidrBlocks": {
+                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "macAddress": {
+                    "description": "MAC address",
+                    "type": "string"
+                },
+                "mtu": {
+                    "description": "Maximum Transmission Unit (MTU) in bytes",
+                    "type": "integer"
                 },
                 "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1-1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "example": "default, TYPE1, ..."
-                },
-                "securityGroupIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "specId": {
+                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
                     "type": "string"
                 },
-                "sshKeyId": {
-                    "type": "string"
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
-                },
-                "subnetId": {
-                    "type": "string"
-                },
-                "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
+                "state": {
+                    "description": "Interface state (e.g., UP, DOWN)",
                     "type": "string"
                 }
             }
         },
-        "cloudmodel.VmCreationError": {
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkProperty": {
             "type": "object",
             "properties": {
-                "error": {
-                    "description": "Error is the error message",
-                    "type": "string"
+                "ipv4Networks": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail"
                 },
-                "phase": {
-                    "description": "Phase indicates when the error occurred",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "Timestamp when the error occurred",
-                    "type": "string"
-                },
-                "vmName": {
-                    "description": "VmName is the name of the VM that failed",
-                    "type": "string"
-                }
-            }
-        },
-        "common.SimpleMessage": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
-                }
-            }
-        },
-        "common.SimpleMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
-                }
-            }
-        },
-        "controller.JSONResult": {
-            "type": "object"
-        },
-        "controller.MigrateInfraRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
-                    }
-                },
-                "targetSshKey": {
-                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
-                },
-                "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.TbMciReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
-                    }
-                }
-            }
-        },
-        "controller.MigrateInfraResponse": {
-            "type": "object",
-            "properties": {
-                "configureCloudAdaptiveNetwork": {
-                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "yes"
-                },
-                "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                "ipv6Networks": {
+                    "description": "TBD",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail"
                         }
                     ]
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "network": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkProperty"
                 },
-                "description": {
-                    "type": "string"
-                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.ServerProperty"
+                    }
+                }
+            }
+        },
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.OsProperty": {
+            "type": "object",
+            "required": [
+                "prettyName"
+            ],
+            "properties": {
                 "id": {
-                    "description": "Id is unique identifier for the object",
                     "type": "string",
-                    "example": "aws-ap-southeast-1"
+                    "example": "ubuntu"
                 },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
+                "idLike": {
                     "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "placementAlgo": {
-                    "type": "string"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
-                        }
-                    ]
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "statusCount": {
-                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
-                    }
-                }
-            }
-        },
-        "controller.MigrateInfraWithDefaultsRequest": {
-            "type": "object",
-            "required": [
-                "name",
-                "vm"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
+                    "example": "debian"
                 },
                 "name": {
                     "type": "string",
-                    "example": "mci01"
+                    "example": "Ubuntu"
                 },
-                "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                "prettyName": {
+                    "description": "Pretty name",
                     "type": "string",
-                    "default": "continue",
-                    "enum": [
-                        "continue",
-                        "rollback",
-                        "refine"
-                    ],
-                    "example": "continue"
+                    "example": "Ubuntu 22.04.3 LTS"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                "version": {
+                    "description": "Full version string",
                     "type": "string",
-                    "example": ""
+                    "example": "22.04.3 LTS (Jammy Jellyfish)"
                 },
-                "vm": {
-                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmDynamicReq"
-                    }
+                "versionCodename": {
+                    "type": "string",
+                    "example": "jammy"
+                },
+                "versionId": {
+                    "type": "string",
+                    "example": "22.04"
                 }
             }
         },
-        "controller.MigrateInfraWithDefaultsResponse": {
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.RouteProperty": {
             "type": "object",
             "properties": {
-                "configureCloudAdaptiveNetwork": {
-                    "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "yes"
-                },
-                "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
-                        }
-                    ]
-                },
-                "description": {
+                "destination": {
+                    "description": "Destination network, expressed in CIDR format",
                     "type": "string"
                 },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "placementAlgo": {
+                "gateway": {
+                    "description": "Gateway address to which packets are forwarded",
                     "type": "string"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
-                        }
-                    ]
-                },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
-                        }
-                    ]
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
+                "interface": {
+                    "description": "Network interface associated with the route",
                     "type": "string"
                 },
-                "status": {
+                "linkState": {
+                    "description": "Link state of the route (e.g., UP, DOWN)",
                     "type": "string"
                 },
-                "statusCount": {
-                    "$ref": "#/definitions/cloudmodel.StatusCountInfo"
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": "Managed by CB-Tumblebug"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbVmInfo"
-                    }
-                }
-            }
-        },
-        "controller.RecommendInfraRequest": {
-            "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
-            "properties": {
-                "desiredProvider": {
-                    "type": "string",
-                    "example": "aws"
-                },
-                "desiredRegion": {
-                    "type": "string",
-                    "example": "ap-northeast-2"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetInfra": {
-                    "$ref": "#/definitions/model.TbMciDynamicReq"
-                }
-            }
-        },
-        "controller.RecommendSecurityGroupResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
+                "metric": {
+                    "description": "Metric value indicating the priority of the route",
                     "type": "integer"
                 },
-                "description": {
+                "protocol": {
+                    "description": "Protocol used to set the route (e.g., kernel, static)",
                     "type": "string"
                 },
-                "status": {
+                "scope": {
+                    "description": "Scope of the route (e.g., global, link, host)",
                     "type": "string"
                 },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroup"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVNetResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "targetVNetList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVNet"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVmInfraRequest": {
-            "type": "object",
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/recommendation.CspRegionPair"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendVmInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSecurityGroupReq"
-                    }
-                },
-                "targetSshKey": {
-                    "$ref": "#/definitions/cloudmodel.TbSshKeyReq"
-                },
-                "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.TbVNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.TbMciReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.TbSpecInfo"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVmInfraWithDefaultsRequest": {
-            "type": "object",
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/recommendation.CspRegionPair"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendVmInfraWithDefaultsResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "targetVmInfraList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfraDynamic"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVmOsImageResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmOsImage"
-                    }
-                },
-                "status": {
+                "source": {
+                    "description": "Optionally stores the source address (used for policy-based routing)",
                     "type": "string"
                 }
             }
         },
-        "controller.RecommendVmSpecResponse": {
+        "github_com_cloud-barista_cm-model_infra_on-premise-model.ServerProperty": {
             "type": "object",
             "properties": {
-                "count": {
-                    "type": "integer"
+                "cpu": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.CpuProperty"
                 },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmSpecList": {
+                "dataDisks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmSpec"
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty"
                     }
                 },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string",
-                    "example": "Any details"
-                },
-                "list": {
+                "firewallTable": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.FirewallRuleProperty"
+                    }
                 },
-                "object": {
-                    "type": "object",
-                    "additionalProperties": true
+                "hostname": {
+                    "type": "string"
                 },
-                "success": {
-                    "type": "boolean",
-                    "example": true
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkInterfaceProperty"
+                    }
                 },
-                "text": {
-                    "type": "string",
-                    "example": "Any text"
+                "machineId": {
+                    "description": "Unique identifier for the server (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OsProperty"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.RouteProperty"
+                    }
                 }
             }
         },
@@ -3753,6 +4196,149 @@
                 },
                 "verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "model.CreateSubGroupDynamicReq": {
+            "type": "object",
+            "required": [
+                "imageId",
+                "specId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Created via CB-Tumblebug"
+                },
+                "imageId": {
+                    "description": "ImageId is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "ami-01f71f215b23ba262"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "\"env\"": "\"test\"}",
+                        "{\"role\"": "\"worker\""
+                    }
+                },
+                "name": {
+                    "description": "SubGroup name, actual VM name will be generated with -N postfix.",
+                    "type": "string",
+                    "example": "g1"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "50"
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "gp3"
+                },
+                "specId": {
+                    "description": "SpecId is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "aws+ap-northeast-2+t3.nano"
+                },
+                "subGroupSize": {
+                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
+                    "type": "string",
+                    "default": "1",
+                    "example": "3"
+                },
+                "vmUserPassword": {
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "model.FirewallRuleInfo": {
+            "type": "object",
+            "required": [
+                "Direction",
+                "Protocol"
+            ],
+            "properties": {
+                "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
+                    "type": "string",
+                    "example": "0.0.0.0/0"
+                },
+                "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
+                },
+                "Port": {
+                    "description": "Port is the single port (e.g. \"22\") or port range (e.g. \"1-65535\") for the rule",
+                    "type": "string",
+                    "example": "1-65535"
+                },
+                "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)",
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP",
+                        "ALL"
+                    ],
+                    "example": "TCP"
+                }
+            }
+        },
+        "model.FirewallRuleReq": {
+            "type": "object",
+            "required": [
+                "Direction",
+                "Protocol"
+            ],
+            "properties": {
+                "CIDR": {
+                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
+                    "type": "string",
+                    "example": "0.0.0.0/0"
+                },
+                "Direction": {
+                    "description": "Direction is the direction of the rule (inbound or outbound)",
+                    "type": "string",
+                    "enum": [
+                        "inbound",
+                        "outbound"
+                    ],
+                    "example": "inbound"
+                },
+                "Ports": {
+                    "description": "Ports is to get multiple ports or port ranges as a string (e.g. \"22,900-1000,2000-3000\")\nThis allows flexibility in specifying single ports or ranges in a comma-separated format.\nThis field is used to handle both single ports and port ranges in a unified way.\nIt can accept a single port (e.g. \"22\"), a range (e.g. \"900-1000\"), or multiple ports/ranges (e.g. \"22,900-1000,2000-3000\").",
+                    "type": "string",
+                    "example": "22,900-1000,2000-3000"
+                },
+                "Protocol": {
+                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.",
+                    "type": "string",
+                    "enum": [
+                        "TCP",
+                        "UDP",
+                        "ICMP"
+                    ],
+                    "example": "TCP"
                 }
             }
         },
@@ -3813,131 +4399,11 @@
                 }
             }
         },
-        "model.RegionDetail": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "location": {
-                    "$ref": "#/definitions/model.Location"
-                },
-                "regionId": {
-                    "type": "string"
-                },
-                "regionName": {
-                    "type": "string"
-                },
-                "zones": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "model.RegionZoneInfo": {
-            "type": "object",
-            "properties": {
-                "assignedRegion": {
-                    "type": "string"
-                },
-                "assignedZone": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.SimpleMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
-                }
-            }
-        },
-        "model.TbFirewallRuleInfo": {
-            "type": "object",
-            "required": [
-                "Direction",
-                "Protocol"
-            ],
-            "properties": {
-                "CIDR": {
-                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
-                    "type": "string",
-                    "example": "0.0.0.0/0"
-                },
-                "Direction": {
-                    "description": "Direction is the direction of the rule (inbound or outbound)",
-                    "type": "string",
-                    "enum": [
-                        "inbound",
-                        "outbound"
-                    ],
-                    "example": "inbound"
-                },
-                "Port": {
-                    "description": "Port is the single port (e.g. \"22\") or port range (e.g. \"1-65535\") for the rule",
-                    "type": "string",
-                    "example": "1-65535"
-                },
-                "Protocol": {
-                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)",
-                    "type": "string",
-                    "enum": [
-                        "TCP",
-                        "UDP",
-                        "ICMP",
-                        "ALL"
-                    ],
-                    "example": "TCP"
-                }
-            }
-        },
-        "model.TbFirewallRuleReq": {
-            "type": "object",
-            "required": [
-                "Direction",
-                "Protocol"
-            ],
-            "properties": {
-                "CIDR": {
-                    "description": "CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)",
-                    "type": "string",
-                    "example": "0.0.0.0/0"
-                },
-                "Direction": {
-                    "description": "Direction is the direction of the rule (inbound or outbound)",
-                    "type": "string",
-                    "enum": [
-                        "inbound",
-                        "outbound"
-                    ],
-                    "example": "inbound"
-                },
-                "Ports": {
-                    "description": "Ports is to get multiple ports or port ranges as a string (e.g. \"22,900-1000,2000-3000\")\nThis allows flexibility in specifying single ports or ranges in a comma-separated format.\nThis field is used to handle both single ports and port ranges in a unified way.\nIt can accept a single port (e.g. \"22\"), a range (e.g. \"900-1000\"), or multiple ports/ranges (e.g. \"22,900-1000,2000-3000\").",
-                    "type": "string",
-                    "example": "22,900-1000,2000-3000"
-                },
-                "Protocol": {
-                    "description": "Protocol is the protocol type for the rule (TCP, UDP, ICMP). Don't use ALL here.",
-                    "type": "string",
-                    "enum": [
-                        "TCP",
-                        "UDP",
-                        "ICMP"
-                    ],
-                    "example": "TCP"
-                }
-            }
-        },
-        "model.TbMciDynamicReq": {
+        "model.MciDynamicReq": {
             "type": "object",
             "required": [
                 "name",
-                "vm"
+                "subGroups"
             ],
             "properties": {
                 "description": {
@@ -3984,21 +4450,55 @@
                         }
                     ]
                 },
+                "subGroups": {
+                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CreateSubGroupDynamicReq"
+                    }
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                }
+            }
+        },
+        "model.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
                 },
-                "vm": {
-                    "description": "Vm is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"commonSpec\": \"aws+ap-northeast-2+t3.nano\",\n    \"commonImage\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"commonSpec\": \"azure+koreasouth+standard_b1s\",\n    \"commonImage\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"commonSpec\": \"gcp+asia-northeast3+g1-small\",\n    \"commonImage\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                "location": {
+                    "$ref": "#/definitions/model.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "zones": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVmDynamicReq"
+                        "type": "string"
                     }
                 }
             }
         },
-        "model.TbSecurityGroupInfo": {
+        "model.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SecurityGroupInfo": {
             "type": "object",
             "properties": {
                 "associatedObjectList": {
@@ -4029,7 +4529,7 @@
                 "firewallRules": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbFirewallRuleInfo"
+                        "$ref": "#/definitions/model.FirewallRuleInfo"
                     }
                 },
                 "id": {
@@ -4070,7 +4570,7 @@
                 }
             }
         },
-        "model.TbSecurityGroupReq": {
+        "model.SecurityGroupReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -4093,7 +4593,7 @@
                     "description": "validate:\"required\"`",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbFirewallRuleReq"
+                        "$ref": "#/definitions/model.FirewallRuleReq"
                     }
                 },
                 "name": {
@@ -4104,7 +4604,16 @@
                 }
             }
         },
-        "model.TbSshKeyInfo": {
+        "model.SimpleMsg": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Any message"
+                }
+            }
+        },
+        "model.SshKeyInfo": {
             "type": "object",
             "properties": {
                 "associatedObjectList": {
@@ -4182,7 +4691,7 @@
                 }
             }
         },
-        "model.TbSshKeyReq": {
+        "model.SshKeyReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -4219,7 +4728,7 @@
                 }
             }
         },
-        "model.TbSubnetInfo": {
+        "model.SubnetInfo": {
             "type": "object",
             "properties": {
                 "bastionNodes": {
@@ -4293,7 +4802,7 @@
                 }
             }
         },
-        "model.TbSubnetReq": {
+        "model.SubnetReq": {
             "type": "object",
             "required": [
                 "ipv4_CIDR",
@@ -4317,7 +4826,7 @@
                 }
             }
         },
-        "model.TbVNetInfo": {
+        "model.VNetInfo": {
             "type": "object",
             "properties": {
                 "associatedObjectList": {
@@ -4377,7 +4886,7 @@
                 "subnetInfoList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbSubnetInfo"
+                        "$ref": "#/definitions/model.SubnetInfo"
                     }
                 },
                 "systemLabel": {
@@ -4392,7 +4901,7 @@
                 }
             }
         },
-        "model.TbVNetReq": {
+        "model.VNetReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -4418,447 +4927,8 @@
                 "subnetInfoList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbSubnetReq"
+                        "$ref": "#/definitions/model.SubnetReq"
                     }
-                }
-            }
-        },
-        "model.TbVmDynamicReq": {
-            "type": "object",
-            "required": [
-                "commonImage",
-                "commonSpec"
-            ],
-            "properties": {
-                "commonImage": {
-                    "description": "CommonImage is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "ami-01f71f215b23ba262"
-                },
-                "commonSpec": {
-                    "description": "CommonSpec is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "aws+ap-northeast-2+t3.nano"
-                },
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string",
-                    "example": "aws-ap-northeast-2"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Created via CB-Tumblebug"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "\"env\"": "\"test\"}",
-                        "{\"role\"": "\"worker\""
-                    }
-                },
-                "name": {
-                    "description": "VM name or subGroup name if is (not empty) \u0026\u0026 (\u003e 0). If it is a group, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "50"
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "gp3"
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "default": "1",
-                    "example": "3"
-                },
-                "vmUserPassword": {
-                    "type": "string",
-                    "example": ""
-                }
-            }
-        },
-        "onpremisemodel.CpuProperty": {
-            "type": "object",
-            "required": [
-                "cores",
-                "cpus",
-                "threads"
-            ],
-            "properties": {
-                "architecture": {
-                    "type": "string",
-                    "example": "x86_64"
-                },
-                "cores": {
-                    "description": "Number of physical cores per CPU",
-                    "type": "integer",
-                    "example": 18
-                },
-                "cpus": {
-                    "description": "Number of physical CPUs (sockets)",
-                    "type": "integer",
-                    "example": 2
-                },
-                "maxSpeed": {
-                    "description": "Maximum speed in GHz",
-                    "type": "number",
-                    "example": 3.6
-                },
-                "model": {
-                    "type": "string",
-                    "example": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
-                },
-                "threads": {
-                    "description": "Number of logical CPUs (threads) per CPU with hyper-threading enabled",
-                    "type": "integer",
-                    "example": 36
-                },
-                "vendor": {
-                    "type": "string",
-                    "example": "GenuineIntel"
-                }
-            }
-        },
-        "onpremisemodel.DiskProperty": {
-            "type": "object",
-            "required": [
-                "label",
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 1024
-                },
-                "type": {
-                    "description": "SSD, HDD",
-                    "type": "string",
-                    "example": "SSD"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "onpremisemodel.FirewallRuleProperty": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "description": "e.g., allow, deny",
-                    "type": "string"
-                },
-                "direction": {
-                    "description": "e.g., inbound, outbound",
-                    "type": "string"
-                },
-                "dstCIDR": {
-                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
-                    "type": "string"
-                },
-                "dstPorts": {
-                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
-                    "type": "string"
-                },
-                "protocol": {
-                    "description": "e.g., \"TCP\", \"UDP\", \"ICMP\", \"*\" (for all protocol)",
-                    "type": "string"
-                },
-                "srcCIDR": {
-                    "description": "e.g., \"123.123.123.123/32\", \"123.123.123.123/24\", \"0.0.0.0/0\"",
-                    "type": "string"
-                },
-                "srcPorts": {
-                    "description": "e.g., \"80\", \"80,443\", \"1024-65535\", \"*\" (for all ports)",
-                    "type": "string"
-                }
-            }
-        },
-        "onpremisemodel.GatewayProperty": {
-            "type": "object",
-            "properties": {
-                "interfaceName": {
-                    "description": "Name of the network interface associated with the gateway",
-                    "type": "string"
-                },
-                "ip": {
-                    "description": "IP address of the gateway",
-                    "type": "string"
-                },
-                "machineId": {
-                    "description": "Unique identifier for the machine (e.g., UUID)",
-                    "type": "string"
-                }
-            }
-        },
-        "onpremisemodel.MemoryProperty": {
-            "type": "object",
-            "required": [
-                "totalSize",
-                "type"
-            ],
-            "properties": {
-                "available": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                },
-                "totalSize": {
-                    "description": "Unit GiB",
-                    "type": "integer",
-                    "example": 128
-                },
-                "type": {
-                    "type": "string",
-                    "example": "DDR4"
-                },
-                "used": {
-                    "description": "Unit GiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "onpremisemodel.NetworkDetail": {
-            "type": "object",
-            "properties": {
-                "cidrBlocks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "defaultGateways": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.GatewayProperty"
-                    }
-                }
-            }
-        },
-        "onpremisemodel.NetworkInterfaceProperty": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "ipv4CidrBlocks": {
-                    "description": "IPv4 address with prefix length (e.g., 192.168.0.21/24), instead of inet addr, Bcast, and Mask",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "ipv6CidrBlocks": {
-                    "description": "IPv6 address with prefix length (e.g., \"2001:db8::1/64\")",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "macAddress": {
-                    "description": "MAC address",
-                    "type": "string"
-                },
-                "mtu": {
-                    "description": "Maximum Transmission Unit (MTU) in bytes",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Interface name (e.g., eth0, ens01, enp0s3)",
-                    "type": "string"
-                },
-                "state": {
-                    "description": "Interface state (e.g., UP, DOWN)",
-                    "type": "string"
-                }
-            }
-        },
-        "onpremisemodel.NetworkProperty": {
-            "type": "object",
-            "properties": {
-                "ipv4Networks": {
-                    "$ref": "#/definitions/onpremisemodel.NetworkDetail"
-                },
-                "ipv6Networks": {
-                    "description": "TBD",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/onpremisemodel.NetworkDetail"
-                        }
-                    ]
-                }
-            }
-        },
-        "onpremisemodel.OnpremInfra": {
-            "type": "object",
-            "required": [
-                "servers"
-            ],
-            "properties": {
-                "network": {
-                    "$ref": "#/definitions/onpremisemodel.NetworkProperty"
-                },
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
-                    }
-                }
-            }
-        },
-        "onpremisemodel.OsProperty": {
-            "type": "object",
-            "required": [
-                "prettyName"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "ubuntu"
-                },
-                "idLike": {
-                    "type": "string",
-                    "example": "debian"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "Ubuntu"
-                },
-                "prettyName": {
-                    "description": "Pretty name",
-                    "type": "string",
-                    "example": "Ubuntu 22.04.3 LTS"
-                },
-                "version": {
-                    "description": "Full version string",
-                    "type": "string",
-                    "example": "22.04.3 LTS (Jammy Jellyfish)"
-                },
-                "versionCodename": {
-                    "type": "string",
-                    "example": "jammy"
-                },
-                "versionId": {
-                    "type": "string",
-                    "example": "22.04"
-                }
-            }
-        },
-        "onpremisemodel.RouteProperty": {
-            "type": "object",
-            "properties": {
-                "destination": {
-                    "description": "Destination network, expressed in CIDR format",
-                    "type": "string"
-                },
-                "gateway": {
-                    "description": "Gateway address to which packets are forwarded",
-                    "type": "string"
-                },
-                "interface": {
-                    "description": "Network interface associated with the route",
-                    "type": "string"
-                },
-                "linkState": {
-                    "description": "Link state of the route (e.g., UP, DOWN)",
-                    "type": "string"
-                },
-                "metric": {
-                    "description": "Metric value indicating the priority of the route",
-                    "type": "integer"
-                },
-                "protocol": {
-                    "description": "Protocol used to set the route (e.g., kernel, static)",
-                    "type": "string"
-                },
-                "scope": {
-                    "description": "Scope of the route (e.g., global, link, host)",
-                    "type": "string"
-                },
-                "source": {
-                    "description": "Optionally stores the source address (used for policy-based routing)",
-                    "type": "string"
-                }
-            }
-        },
-        "onpremisemodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
-                },
-                "dataDisks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                    }
-                },
-                "firewallTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
-                    }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
-                    }
-                },
-                "machineId": {
-                    "description": "Unique identifier for the server (e.g., UUID)",
-                    "type": "string"
-                },
-                "memory": {
-                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/onpremisemodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
-                    }
-                }
-            }
-        },
-        "recommendation.CspRegionPair": {
-            "type": "object",
-            "properties": {
-                "csp": {
-                    "type": "string",
-                    "example": "aws"
-                },
-                "region": {
-                    "type": "string",
-                    "example": "ap-northeast-2"
                 }
             }
         },
@@ -4868,7 +4938,7 @@
                 "securityGroup": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbSecurityGroupInfo"
+                        "$ref": "#/definitions/model.SecurityGroupInfo"
                     }
                 }
             }
@@ -4879,7 +4949,7 @@
                 "sshKey": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbSshKeyInfo"
+                        "$ref": "#/definitions/model.SshKeyInfo"
                     }
                 }
             }
@@ -4890,7 +4960,7 @@
                 "vNet": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.TbVNetInfo"
+                        "$ref": "#/definitions/model.VNetInfo"
                     }
                 }
             }

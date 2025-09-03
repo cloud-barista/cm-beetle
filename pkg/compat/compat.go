@@ -11,11 +11,11 @@ import (
 
 // Checker interface defines the contract for CSP-specific compatibility checkers
 type Checker interface {
-	CheckCompatibility(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool
+	CheckCompatibility(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool
 }
 
 // CheckCompatibility performs compatibility check between spec and image for the specified CSP
-func CheckCompatibility(csp string, spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 
 	// 1. Architecture check for all CSPs (common check)
 	if !isArchitectureCompatible(csp, spec, image) {
@@ -51,7 +51,7 @@ func CheckCompatibility(csp string, spec cloudmodel.TbSpecInfo, image cloudmodel
 }
 
 // isArchitectureCompatible checks CPU architecture compatibility for all CSPs
-func isArchitectureCompatible(csp string, spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isArchitectureCompatible(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	if spec.Architecture != "" && string(image.OSArchitecture) != "" {
 		if spec.Architecture != string(image.OSArchitecture) {
 			log.Debug().Msgf("%s architecture mismatch - Spec: %s (%s), Image: %s (%s)",

@@ -11,11 +11,11 @@ const (
 	FullyRecommended     RecommendationStatus = "ok"
 )
 
-// CspRegionPair represents a pair of cloud service provider (CSP) and region.
-type CspRegionPair struct {
-	Csp    string `json:"csp" example:"aws"`
-	Region string `json:"region" example:"ap-northeast-2"`
-}
+// // CspRegionPair represents a pair of cloud service provider (CSP) and region.
+// type CspRegionPair struct {
+// 	Csp    string `json:"csp" example:"aws"`
+// 	Region string `json:"region" example:"ap-northeast-2"`
+// }
 
 // * Note: The models for VM infrastructure is moved to cm-model repo for sharing and use with other subsystems.
 
@@ -27,19 +27,19 @@ type CspRegionPair struct {
 // type RecommendedVmInfra struct {
 // 	Status                  string                       `json:"status"`
 // 	Description             string                       `json:"description"`
-// 	TargetVmInfra           tbmodel.TbMciReq             `json:"targetVmInfra"`
-// 	TargetVNet              tbmodel.TbVNetReq            `json:"targetVNet"`
-// 	TargetSshKey            tbmodel.TbSshKeyReq          `json:"targetSshKey"`
-// 	TargetVmSpecList        []tbmodel.TbSpecInfo         `json:"targetVmSpecList"`
-// 	TargetVmOsImageList     []tbmodel.TbImageInfo        `json:"targetVmOsImageList"`
-// 	TargetSecurityGroupList []tbmodel.TbSecurityGroupReq `json:"targetSecurityGroupList"`
+// 	TargetVmInfra           tbmodel.MciReq             `json:"targetVmInfra"`
+// 	TargetVNet              tbmodel.VNetReq            `json:"targetVNet"`
+// 	TargetSshKey            tbmodel.SshKeyReq          `json:"targetSshKey"`
+// 	TargetVmSpecList        []tbmodel.SpecInfo         `json:"targetVmSpecList"`
+// 	TargetVmOsImageList     []tbmodel.ImageInfo        `json:"targetVmOsImageList"`
+// 	TargetSecurityGroupList []tbmodel.SecurityGroupReq `json:"targetSecurityGroupList"`
 // }
 
 // // RecommendedVmInfraDynamic represents the recommended virtual machine infrastructure information.
 // type RecommendedVmInfraDynamic struct {
 // 	Status        string                  `json:"status"`
 // 	Description   string                  `json:"description"`
-// 	TargetVmInfra tbmodel.TbMciDynamicReq `json:"targetVmInfra"`
+// 	TargetVmInfra tbmodel.MciDynamicReq `json:"targetVmInfra"`
 // }
 
 // // RecommendedVmInfraDynamicList represents a list of recommended virtual machine infrastructure information.
@@ -54,7 +54,7 @@ type CspRegionPair struct {
 // type RecommendedVNet struct {
 // 	Status      string            `json:"status"`
 // 	Description string            `json:"description"`
-// 	TargetVNet  tbmodel.TbVNetReq `json:"targetVNet"`
+// 	TargetVNet  tbmodel.VNetReq `json:"targetVNet"`
 // }
 
 // // RecommendedVNetList represents a list of recommended virtual network information.
@@ -69,7 +69,7 @@ type CspRegionPair struct {
 // 	Status              string                     `json:"status"`
 // 	SourceServers       []string                   `json:"sourceServers"`
 // 	Description         string                     `json:"description"`
-// 	TargetSecurityGroup tbmodel.TbSecurityGroupReq `json:"targetSecurityGroup"`
+// 	TargetSecurityGroup tbmodel.SecurityGroupReq `json:"targetSecurityGroup"`
 // }
 
 // // RecommendedSecurityGroupList represents a list of recommended security group information.
@@ -85,7 +85,7 @@ type CspRegionPair struct {
 // 	Status        string             `json:"status"`
 // 	SourceServers []string           `json:"sourceServers"`
 // 	Description   string             `json:"description"`
-// 	TargetVmSpec  tbmodel.TbSpecInfo `json:"targetVmSpec"`
+// 	TargetVmSpec  tbmodel.SpecInfo `json:"targetVmSpec"`
 // }
 
 // // RecommendedVmSpecList represents a collection of recommended VM specifications across multiple source servers.
@@ -101,9 +101,9 @@ type CspRegionPair struct {
 // 	Status          string              `json:"status"`
 // 	SourceServers   []string            `json:"sourceServers"`
 // 	Description     string              `json:"description"`
-// 	TargetVmOsImage tbmodel.TbImageInfo `json:"targetVmOsImage"`
+// 	TargetVmOsImage tbmodel.ImageInfo `json:"targetVmOsImage"`
 // 	// Count            int                   `json:"count"`
-// 	// TargetVmOsImages []tbmodel.TbImageInfo `json:"targetVmOsImages"`
+// 	// TargetVmOsImages []tbmodel.ImageInfo `json:"targetVmOsImages"`
 // }
 
 // // RecommendedVmOsImageList represents a collection of recommended VM OS images across multiple source servers.
@@ -118,7 +118,7 @@ type CspRegionPair struct {
  * Models for Container Infrastructure (i.e., an infrastructure for Kubernetes)
  */
 type RecommendedInfraInfo struct {
-	Status      string                  `json:"status"`
-	Description string                  `json:"description"`
-	TargetInfra tbmodel.TbMciDynamicReq `json:"targetInfra"`
+	Status      string                `json:"status"`
+	Description string                `json:"description"`
+	TargetInfra tbmodel.MciDynamicReq `json:"targetInfra"`
 }

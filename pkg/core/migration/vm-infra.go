@@ -100,7 +100,7 @@ const (
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
 // CreateVMInfraWithDefaults Create a VM infrastructure with defaults for the computing infra migration
-func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicReq) (cloudmodel.VmInfraInfo, error) {
+func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.MciDynamicReq) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating VM infrastructure with defaults")
 
 	// Initialize Tumblebug client
@@ -110,8 +110,8 @@ func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicR
 		RestUrl:  config.Tumblebug.RestUrl,
 	}
 	tbCli := tbclient.NewClient(tbApiConfig)
-	// Convert the request model from 'cloudmodel.TbMciDynamicReq' to 'tbmodel.TbMciDynamicReq'
-	infraModelConverted, err := modelconv.ConvertWithValidation[cloudmodel.TbMciDynamicReq, tbmodel.TbMciDynamicReq](*infraModel)
+	// Convert the request model from 'cloudmodel.MciDynamicReq' to 'tbmodel.MciDynamicReq'
+	infraModelConverted, err := modelconv.ConvertWithValidation[cloudmodel.MciDynamicReq, tbmodel.MciDynamicReq](*infraModel)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure model (nsId: %s)", nsId)
 		return cloudmodel.VmInfraInfo{}, err
@@ -123,14 +123,14 @@ func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.TbMciDynamicR
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.VmInfraInfo'
-	convertedVmInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.VmInfraInfo](vmInfraInfo)
+	// Convert the response model from 'tbmodel.MciInfo' to 'cloudmodel.VmInfraInfo'
+	convertedVmInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.MciInfo, cloudmodel.VmInfraInfo](vmInfraInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, convertedVmInfraInfo.TbMciInfo.Name)
+	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, convertedVmInfraInfo.MciInfo.Name)
 
 	return convertedVmInfraInfo, nil
 }
@@ -171,6 +171,13 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 		return emptyRet, err
 	}
 
+	log.Debug().Msgf("Checking if the MCI (%s) exists in the namespace (%s)", targetInfraModel.TargetVmInfra.Name, nsId)
+	tempMciInfo, err := tbCli.ReadMci(nsId, targetInfraModel.TargetVmInfra.Name)
+	if tempMciInfo.Id != "" {
+		log.Error().Err(err).Msgf("the MCI already exist (nsId: %s, mciName: %s)", nsId, targetInfraModel.TargetVmInfra.Name)
+		return emptyRet, err
+	}
+
 	// 2. Create a VM specification (vmSpec)
 	// * Skip: No need to regenerate vmSpec in namespace
 
@@ -183,8 +190,8 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	log.Debug().Msgf("Creating a vNet (nsId: %s, vNetName: %s)", nsId, vNetReq.Name)
 	log.Debug().Msgf("vNetReq: %+v", vNetReq)
 
-	// Convert model from 'cloudmodel.TbVNetReq' to 'tbmodel.TbVNetReq'
-	tbVNetReq, err := modelconv.ConvertWithValidation[cloudmodel.TbVNetReq, tbmodel.TbVNetReq](vNetReq)
+	// Convert model from 'cloudmodel.VNetReq' to 'tbmodel.VNetReq'
+	tbVNetReq, err := modelconv.ConvertWithValidation[cloudmodel.VNetReq, tbmodel.VNetReq](vNetReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert vNet request (nsId: %s)", nsId)
 		return emptyRet, err
@@ -204,8 +211,8 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	log.Debug().Msgf("Creating a SSH key (nsId: %s, sshKeyName: %s)", nsId, sshKeyReq.Name)
 	log.Debug().Msgf("sshKeyReq: %+v", sshKeyReq)
 
-	// Convert model from 'cloudmodel.TbSshKeyReq' to 'tbmodel.TbSshKeyReq'
-	tbSshKeyReq, err := modelconv.ConvertWithValidation[cloudmodel.TbSshKeyReq, tbmodel.TbSshKeyReq](sshKeyReq)
+	// Convert model from 'cloudmodel.SshKeyReq' to 'tbmodel.SshKeyReq'
+	tbSshKeyReq, err := modelconv.ConvertWithValidation[cloudmodel.SshKeyReq, tbmodel.SshKeyReq](sshKeyReq)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
 		return emptyRet, err
@@ -224,14 +231,14 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	log.Debug().Msgf("Creating security groups (nsId: %s, sgCount: %d)", nsId, len(sgReqList))
 	log.Debug().Msgf("sgReqList: %+v", sgReqList)
 
-	sgInfoList := []tbmodel.TbSecurityGroupInfo{}
+	sgInfoList := []tbmodel.SecurityGroupInfo{}
 	for _, sgReq := range sgReqList {
 		// Create security group
 		log.Debug().Msgf("Creating a security group (nsId: %s, sgReq.sgName: %s, sgReq.VNetId: %s, vNetInfo.vNetId: %s)",
 			nsId, sgReq.Name, sgReq.VNetId, vNetInfo.Id)
 
-		// Convert model from 'cloudmodel.TbSecurityGroupReq' to 'tbmodel.TbSecurityGroupReq'
-		tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.TbSecurityGroupReq, tbmodel.TbSecurityGroupReq](sgReq)
+		// Convert model from 'cloudmodel.SecurityGroupReq' to 'tbmodel.SecurityGroupReq'
+		tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.SecurityGroupReq, tbmodel.SecurityGroupReq](sgReq)
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
 			return emptyRet, err
@@ -255,12 +262,13 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	log.Debug().Msgf("Creating a multi-cloud infrastructure (nsId: %s, mciName: %s)", nsId, mciReq.Name)
 	log.Debug().Msgf("mciReq: %+v", mciReq)
 
-	// Convert model from 'cloudmodel.TbSecurityGroupReq' to 'tbmodel.TbSecurityGroupReq'
-	tbMciReq, err := modelconv.ConvertWithValidation[cloudmodel.TbMciReq, tbmodel.TbMciReq](mciReq)
+	// Convert model from 'cloudmodel.SecurityGroupReq' to 'tbmodel.SecurityGroupReq'
+	tbMciReq, err := modelconv.ConvertWithValidation[cloudmodel.MciReq, tbmodel.MciReq](mciReq)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
+		log.Error().Err(err).Msgf("failed to convert the MCI request (nsId: %s)", nsId)
 		return emptyRet, err
 	}
+	log.Debug().Msgf("tbMciReq: %+v", tbMciReq)
 
 	// Create multi-cloud infrastructure
 	mciInfo, err := tbCli.CreateMci(nsId, tbMciReq)
@@ -274,14 +282,14 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	 * [Output] Return the created multi-cloud infrastructure info
 	 */
 
-	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.TbMciInfo'
-	mciInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.TbMciInfo](mciInfo)
+	// Convert the response model from 'tbmodel.MciInfo' to 'cloudmodel.MciInfo'
+	mciInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.MciInfo, cloudmodel.MciInfo](mciInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
 		return emptyRet, err
 	}
 	var temp cloudmodel.VmInfraInfo
-	temp.TbMciInfo = mciInfoConverted
+	temp.MciInfo = mciInfoConverted
 
 	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, mciName: %s)", nsId, mciInfoConverted.Name)
 	return temp, nil
@@ -357,7 +365,7 @@ func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 }
 
 // Get the migrated VM infrastructure
-func GetVMInfra(nsId, infraId string) (cloudmodel.TbMciInfo, error) {
+func GetVMInfra(nsId, infraId string) (cloudmodel.MciInfo, error) {
 	log.Info().Msgf("Retrieving the migrated VM infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Initialize Tumblebug client
@@ -370,14 +378,14 @@ func GetVMInfra(nsId, infraId string) (cloudmodel.TbMciInfo, error) {
 	vmInfaInfo, err := tbCli.ReadMci(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return cloudmodel.TbMciInfo{}, err
+		return cloudmodel.MciInfo{}, err
 	}
 
-	// Convert the response model from 'tbmodel.TbMciInfo' to 'cloudmodel.TbMciInfo'
-	convertedVmInfaInfo, err := modelconv.ConvertWithValidation[tbmodel.TbMciInfo, cloudmodel.TbMciInfo](vmInfaInfo)
+	// Convert the response model from 'tbmodel.MciInfo' to 'cloudmodel.MciInfo'
+	convertedVmInfaInfo, err := modelconv.ConvertWithValidation[tbmodel.MciInfo, cloudmodel.MciInfo](vmInfaInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
-		return cloudmodel.TbMciInfo{}, err
+		return cloudmodel.MciInfo{}, err
 	}
 
 	log.Info().Msgf("Retrieved the migrated VM infrastructure (nsId: %s, infraId: %s) successfully", nsId, infraId)
@@ -537,59 +545,59 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 
 	// * 2. Validate that the names or IDs are matched in the model
 	// Check if the each VM's vNetId matches the target VNet name
-	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
-		if vm.VNetId != targetVmInfraModel.TargetVNet.Name {
+	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
+		if subgroup.VNetId != targetVmInfraModel.TargetVNet.Name {
 			log.Error().Msgf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
-				vm.VNetId, targetVmInfraModel.TargetVNet.Name)
+				subgroup.VNetId, targetVmInfraModel.TargetVNet.Name)
 			return fmt.Errorf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
-				vm.VNetId, targetVmInfraModel.TargetVNet.Name)
+				subgroup.VNetId, targetVmInfraModel.TargetVNet.Name)
 		}
 	}
 
 	// Check if each VM's SshKeyId matches the target SSH key name
-	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
-		if vm.SshKeyId != targetVmInfraModel.TargetSshKey.Name {
+	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
+		if subgroup.SshKeyId != targetVmInfraModel.TargetSshKey.Name {
 			log.Error().Msgf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
-				vm.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
+				subgroup.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
 			return fmt.Errorf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
-				vm.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
+				subgroup.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
 		}
 	}
 
 	// Check if each VM's spec is contained in the target VM spec list
-	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
+	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
 		found := false
 		for _, vmSpec := range targetVmInfraModel.TargetVmSpecList {
-			if vm.SpecId == vmSpec.CspSpecName {
+			if subgroup.SpecId == vmSpec.Id {
 				found = true
 				break
 			}
 		}
 		if !found {
-			log.Error().Msgf("VM spec '%s' not found in target spec list", vm.SpecId)
-			return fmt.Errorf("VM spec '%s' not found in target spec list", vm.SpecId)
+			log.Error().Msgf("VM spec '%s' not found in target spec list", subgroup.SpecId)
+			return fmt.Errorf("VM spec '%s' not found in target spec list", subgroup.SpecId)
 		}
 	}
 
 	// Check if each VM's OS image is contained in the target VM OS image list
-	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
+	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
 		found := false
 		for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-			if vm.ImageId == vmOsImage.CspImageName {
+			if subgroup.ImageId == vmOsImage.Id {
 				found = true
 				break
 			}
 		}
 		if !found {
-			log.Error().Msgf("VM OS image '%s' not found in target image list", vm.ImageId)
-			return fmt.Errorf("VM OS image '%s' not found in target image list", vm.ImageId)
+			log.Error().Msgf("VM OS image '%s' not found in target image list", subgroup.ImageId)
+			return fmt.Errorf("VM OS image '%s' not found in target image list", subgroup.ImageId)
 		}
 	}
 
 	// Check if each security group name is contained in the target security group list
-	for _, vm := range targetVmInfraModel.TargetVmInfra.Vm {
+	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
 		found := false
-		for _, sgId := range vm.SecurityGroupIds {
+		for _, sgId := range subgroup.SecurityGroupIds {
 			// Check if the security group name matches any target security group name
 			for _, targetSg := range targetVmInfraModel.TargetSecurityGroupList {
 				if sgId == targetSg.Name {
@@ -647,11 +655,16 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	}
 
 	// Validate that the VM OS images exist by the VM OS image ID
+	// * Note - current imageId format: csp+cspImageName (e.g., alibaba+ubuntu_22_04_x64_20G_alibase_20250722.vhd)
+	// ref: https://github.com/cloud-barista/cb-tumblebug/pull/2130#issuecomment-3243624048
+	// TODO: ImageId should be updated later as Tumblebug's/ns/{nsId}/resources/image/{imageId}` API changes.
 	for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-		_, err := tbCli.ReadVmOsImage("system", vmOsImage.Id)
+		imageKey := fmt.Sprintf("%s+%s", vmOsImage.ProviderName, vmOsImage.Id)
+
+		_, err := tbCli.ReadVmOsImage("system", imageKey)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageId: %s)", nsId, vmOsImage.Id)
-			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageId: %s): %w", nsId, vmOsImage.Id, err)
+			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s)", nsId, imageKey)
+			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s): %w", nsId, imageKey, err)
 		}
 	}
 

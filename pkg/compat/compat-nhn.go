@@ -6,7 +6,7 @@ import (
 )
 
 // CheckNhn checks compatibility between NHN Cloud VM spec and OS image
-func CheckNhn(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckNhn(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting NHN Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add NHN Cloud-specific compatibility checks using Detail information
