@@ -14,7 +14,7 @@
 
 - Beetle v0.3.8
 - cm-model v0.0.13
-- Tumblebug v0.11.9 (integrates Spider v0.11.4 and CB-MapUI v0.11.11)
+- Tumblebug v0.11.9 (integrates Spider v0.11.5 and CB-MapUI v0.11.12)
 
 **Indirectly related**
 
@@ -1880,6 +1880,11 @@ Note: Downgraded memory spec
 
 Testing was performed by `test-cli`.
 
+**Test passed**
+
+> [!NOTE]
+> Please note that computing infra migration may fail depending on the VM specifications and image combination.
+
 - ✅ [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
 - ⚠️ [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
   - Note: Not recommended to use a large number of vCPUs to avoid exceeding approved Total Regional Cores quota
@@ -1887,10 +1892,21 @@ Testing was performed by `test-cli`.
 - ✅ [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
   - Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
-- ⚠️ [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
-  - Note: vNet/subnet is sometimes not completely deleted.
 - ✅ [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
   - Note: Deadline exceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
   - Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB)
     - Default Quota of High Memory M-g3 is 0.
-- TBD
+
+**Excluded from testing**
+
+: Determined on Sep. 3rd, 2025.
+
+> [!WARNING]
+> There are some known issues that are scheduled to be addressed in a future release, beyond v0.4.0.
+>
+> - vNet/subnet is sometimes not completely deleted. (see https://github.com/cloud-barista/cm-beetle/issues/168)
+> - Need to investigate Alibaba VM provisioning error. (see https://github.com/cloud-barista/cb-tumblebug/issues/2131)
+
+- Test result for Alibaba
+
+  - Note - Ignore the existing test result for Alibaba
