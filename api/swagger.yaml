@@ -1,446 +1,6 @@
 basePath: /beetle
 definitions:
-  common.SimpleMessage:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
-  common.SimpleMsg:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
-  controller.JSONResult:
-    type: object
-  controller.MigrateInfraRequest:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty'
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq'
-        type: array
-      targetSshKey:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq'
-      targetVNet:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq'
-      targetVmInfra:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciReq'
-      targetVmOsImageList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo'
-        type: array
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo'
-        type: array
-    type: object
-  controller.MigrateInfraResponse:
-    properties:
-      configureCloudAdaptiveNetwork:
-        default: "no"
-        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
-          Adaptive Network (CLADNet) ([yes/no] default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "yes"
-        type: string
-      creationErrors:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
-          (if any)
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
-        items:
-          type: string
-        type: array
-      placementAlgo:
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      postCommandResult:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult'
-        description: PostCommandResult is the result of the command for bootstraping
-          the VMs
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      status:
-        type: string
-      statusCount:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo'
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        items:
-          type: string
-        type: array
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo'
-        type: array
-    type: object
-  controller.MigrateInfraWithDefaultsRequest:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        example: mci01
-        type: string
-      policyOnPartialFailure:
-        default: continue
-        description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
-        enum:
-        - continue
-        - rollback
-        - refine
-        example: continue
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      subGroups:
-        description: |-
-          SubGroups is array of VM requests for multi-cloud infrastructure
-          Example: Multiple VM groups across different CSPs
-          [
-            {
-              "name": "aws-group",
-              "subGroupSize": "3",
-              "specId": "aws+ap-northeast-2+t3.nano",
-              "imageId": "ami-01f71f215b23ba262",
-              "rootDiskSize": "50",
-              "label": {"role": "worker", "csp": "aws"}
-            },
-            {
-              "name": "azure-group",
-              "subGroupSize": "2",
-              "specId": "azure+koreasouth+standard_b1s",
-              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-              "rootDiskSize": "50",
-              "label": {"role": "head", "csp": "azure"}
-            },
-            {
-              "name": "gcp-group",
-              "subGroupSize": "1",
-              "specId": "gcp+asia-northeast3+g1-small",
-              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-              "rootDiskSize": "50",
-              "label": {"role": "test", "csp": "gcp"}
-            }
-          ]
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq'
-        type: array
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-    required:
-    - name
-    - subGroups
-    type: object
-  controller.MigrateInfraWithDefaultsResponse:
-    properties:
-      configureCloudAdaptiveNetwork:
-        default: "no"
-        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
-          Adaptive Network (CLADNet) ([yes/no] default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "yes"
-        type: string
-      creationErrors:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
-          (if any)
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
-        items:
-          type: string
-        type: array
-      placementAlgo:
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      postCommandResult:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult'
-        description: PostCommandResult is the result of the command for bootstraping
-          the VMs
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      status:
-        type: string
-      statusCount:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo'
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        items:
-          type: string
-        type: array
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo'
-        type: array
-    type: object
-  controller.RecommendInfraRequest:
-    properties:
-      desiredProvider:
-        example: aws
-        type: string
-      desiredRegion:
-        example: ap-northeast-2
-        type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  controller.RecommendInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetInfra:
-        $ref: '#/definitions/model.MciDynamicReq'
-    type: object
-  controller.RecommendSecurityGroupResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      status:
-        type: string
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedSecurityGroup'
-        type: array
-    type: object
-  controller.RecommendVNetResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      targetVNetList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVNet'
-        type: array
-    type: object
-  controller.RecommendVmInfraRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty'
-      onpremiseInfraModel:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra'
-    type: object
-  controller.RecommendVmInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty'
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq'
-        type: array
-      targetSshKey:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq'
-      targetVNet:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq'
-      targetVmInfra:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciReq'
-      targetVmOsImageList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo'
-        type: array
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo'
-        type: array
-    type: object
-  controller.RecommendVmInfraWithDefaultsRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty'
-      onpremiseInfraModel:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra'
-    type: object
-  controller.RecommendVmInfraWithDefaultsResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      targetVmInfraList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmInfraDynamic'
-        type: array
-    type: object
-  controller.RecommendVmOsImageResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      recommendedVmOsImageList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmOsImage'
-        type: array
-      status:
-        type: string
-    type: object
-  controller.RecommendVmSpecResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      recommendedVmSpecList:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmSpec'
-        type: array
-      status:
-        type: string
-    type: object
-  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
-        type: boolean
-      text:
-        example: Any text
-        type: string
-    type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.CloudProperty:
+  cloudmodel.CloudProperty:
     properties:
       csp:
         example: aws
@@ -449,7 +9,7 @@ definitions:
         example: ap-northeast-2
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.ConnConfig:
+  cloudmodel.ConnConfig:
     properties:
       configName:
         type: string
@@ -462,17 +22,17 @@ definitions:
       providerName:
         type: string
       regionDetail:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionDetail'
+        $ref: '#/definitions/cloudmodel.RegionDetail'
       regionRepresentative:
         type: boolean
       regionZoneInfo:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionZoneInfo'
+        $ref: '#/definitions/cloudmodel.RegionZoneInfo'
       regionZoneInfoName:
         type: string
       verified:
         type: boolean
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq:
+  cloudmodel.CreateSubGroupDynamicReq:
     properties:
       connectionName:
         description: |-
@@ -529,7 +89,7 @@ definitions:
     - imageId
     - specId
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupReq:
+  cloudmodel.CreateSubGroupReq:
     properties:
       connectionName:
         example: testcloud01-seoul
@@ -601,7 +161,7 @@ definitions:
     - subnetId
     - vNetId
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.FirewallRuleReq:
+  cloudmodel.FirewallRuleReq:
     properties:
       CIDR:
         description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
@@ -635,14 +195,14 @@ definitions:
     - Direction
     - Protocol
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.IdList:
+  cloudmodel.IdList:
     properties:
       idList:
         items:
           type: string
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo:
+  cloudmodel.ImageInfo:
     properties:
       connectionName:
         type: string
@@ -655,7 +215,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue'
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
       fetchedTime:
         type: string
@@ -664,7 +224,7 @@ definitions:
         type: string
       imageStatus:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageStatus'
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
         description: Available, Deprecated, NA
         example: Available
       infraType:
@@ -688,7 +248,7 @@ definitions:
         type: string
       osArchitecture:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.OSArchitecture'
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
         description: arm64, x86_64 etc.
         example: x86_64
       osDiskSizeGB:
@@ -705,7 +265,7 @@ definitions:
         type: string
       osPlatform:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.OSPlatform'
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
         description: Linux/UNIX, Windows, NA
         example: Linux/UNIX
       osType:
@@ -725,7 +285,7 @@ definitions:
         example: wef12awefadf1221edcf
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.ImageStatus:
+  cloudmodel.ImageStatus:
     enum:
     - Available
     - Unavailable
@@ -737,14 +297,14 @@ definitions:
     - ImageUnavailable
     - ImageDeprecated
     - ImageNA
-  github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue:
+  cloudmodel.KeyValue:
     properties:
       key:
         type: string
       value:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.Location:
+  cloudmodel.Location:
     properties:
       display:
         type: string
@@ -753,7 +313,7 @@ definitions:
       longitude:
         type: number
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq:
+  cloudmodel.MciCmdReq:
     properties:
       command:
         example:
@@ -768,7 +328,7 @@ definitions:
     required:
     - command
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors:
+  cloudmodel.MciCreationErrors:
     properties:
       failedVmCount:
         description: FailedVmCount is the number of VMs that failed to be created
@@ -787,16 +347,16 @@ definitions:
       vmCreationErrors:
         description: VmCreationErrors contains errors from actual VM creation phase
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError'
+          $ref: '#/definitions/cloudmodel.VmCreationError'
         type: array
       vmObjectCreationErrors:
         description: VmObjectCreationErrors contains errors from VM object creation
           phase
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError'
+          $ref: '#/definitions/cloudmodel.VmCreationError'
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciDynamicReq:
+  cloudmodel.MciDynamicReq:
     properties:
       description:
         example: Made in CB-TB
@@ -833,7 +393,7 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       subGroups:
         description: |-
@@ -866,7 +426,7 @@ definitions:
             }
           ]
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupDynamicReq'
+          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
         type: array
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
@@ -877,7 +437,7 @@ definitions:
     - name
     - subGroups
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciInfo:
+  cloudmodel.MciInfo:
     properties:
       configureCloudAdaptiveNetwork:
         default: "no"
@@ -890,7 +450,7 @@ definitions:
         type: string
       creationErrors:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCreationErrors'
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
         description: CreationErrors contains information about VM creation failures
           (if any)
       description:
@@ -927,11 +487,11 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       postCommandResult:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult'
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
         description: PostCommandResult is the result of the command for bootstraping
           the VMs
       resourceType:
@@ -940,7 +500,7 @@ definitions:
       status:
         type: string
       statusCount:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo'
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -962,17 +522,17 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo'
+          $ref: '#/definitions/cloudmodel.VmInfo'
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciInfoList:
+  cloudmodel.MciInfoList:
     properties:
       mci:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciInfo'
+          $ref: '#/definitions/cloudmodel.MciInfo'
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciReq:
+  cloudmodel.MciReq:
     properties:
       description:
         example: Made in CB-TB
@@ -1011,11 +571,11 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       subGroups:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.CreateSubGroupReq'
+          $ref: '#/definitions/cloudmodel.CreateSubGroupReq'
         type: array
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
@@ -1026,14 +586,14 @@ definitions:
     - name
     - subGroups
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.MciSshCmdResult:
+  cloudmodel.MciSshCmdResult:
     properties:
       results:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SshCmdResult'
+          $ref: '#/definitions/cloudmodel.SshCmdResult'
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.OSArchitecture:
+  cloudmodel.OSArchitecture:
     enum:
     - arm32
     - arm64
@@ -1057,7 +617,7 @@ definitions:
     - S390X
     - ArchitectureNA
     - ArchitectureUnknown
-  github_com_cloud-barista_cm-model_infra_cloud-model.OSPlatform:
+  cloudmodel.OSPlatform:
     enum:
     - Linux/UNIX
     - Windows
@@ -1067,7 +627,7 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedSecurityGroup:
+  cloudmodel.RecommendedSecurityGroup:
     properties:
       description:
         type: string
@@ -1078,27 +638,27 @@ definitions:
       status:
         type: string
       targetSecurityGroup:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq'
+        $ref: '#/definitions/cloudmodel.SecurityGroupReq'
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVNet:
+  cloudmodel.RecommendedVNet:
     properties:
       description:
         type: string
       status:
         type: string
       targetVNet:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq'
+        $ref: '#/definitions/cloudmodel.VNetReq'
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmInfraDynamic:
+  cloudmodel.RecommendedVmInfraDynamic:
     properties:
       description:
         type: string
       status:
         type: string
       targetVmInfra:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.MciDynamicReq'
+        $ref: '#/definitions/cloudmodel.MciDynamicReq'
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmOsImage:
+  cloudmodel.RecommendedVmOsImage:
     properties:
       description:
         type: string
@@ -1109,9 +669,9 @@ definitions:
       status:
         type: string
       targetVmOsImage:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ImageInfo'
+        $ref: '#/definitions/cloudmodel.ImageInfo'
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RecommendedVmSpec:
+  cloudmodel.RecommendedVmSpec:
     properties:
       description:
         type: string
@@ -1122,14 +682,14 @@ definitions:
       status:
         type: string
       targetVmSpec:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo'
+        $ref: '#/definitions/cloudmodel.SpecInfo'
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RegionDetail:
+  cloudmodel.RegionDetail:
     properties:
       description:
         type: string
       location:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.Location'
+        $ref: '#/definitions/cloudmodel.Location'
       regionId:
         type: string
       regionName:
@@ -1139,21 +699,21 @@ definitions:
           type: string
         type: array
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RegionInfo:
+  cloudmodel.RegionInfo:
     properties:
       region:
         type: string
       zone:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.RegionZoneInfo:
+  cloudmodel.RegionZoneInfo:
     properties:
       assignedRegion:
         type: string
       assignedZone:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.SecurityGroupReq:
+  cloudmodel.SecurityGroupReq:
     properties:
       connectionName:
         type: string
@@ -1166,7 +726,7 @@ definitions:
       firewallRules:
         description: validate:"required"`
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.FirewallRuleReq'
+          $ref: '#/definitions/cloudmodel.FirewallRuleReq'
         type: array
       name:
         type: string
@@ -1177,7 +737,7 @@ definitions:
     - name
     - vNetId
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.SpecInfo:
+  cloudmodel.SpecInfo:
     properties:
       acceleratorCount:
         type: integer
@@ -1206,7 +766,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue'
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
       diskSizeGB:
         type: number
@@ -1283,7 +843,7 @@ definitions:
       vCPU:
         type: integer
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.SshCmdResult:
+  cloudmodel.SshCmdResult:
     properties:
       command:
         additionalProperties:
@@ -1305,7 +865,7 @@ definitions:
       vmIp:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.SshKeyReq:
+  cloudmodel.SshKeyReq:
     properties:
       connectionName:
         type: string
@@ -1332,7 +892,7 @@ definitions:
     - connectionName
     - name
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.StatusCountInfo:
+  cloudmodel.StatusCountInfo:
     properties:
       countCreating:
         description: CountCreating is for counting Creating
@@ -1368,7 +928,7 @@ definitions:
         description: CountUndefined is for counting Undefined
         type: integer
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.SubnetReq:
+  cloudmodel.SubnetReq:
     properties:
       description:
         example: subnet00 managed by CB-Tumblebug
@@ -1385,7 +945,7 @@ definitions:
     - ipv4_CIDR
     - name
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.VNetReq:
+  cloudmodel.VNetReq:
     properties:
       cidrBlock:
         example: 10.0.0.0/16
@@ -1401,13 +961,13 @@ definitions:
         type: string
       subnetInfoList:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.SubnetReq'
+          $ref: '#/definitions/cloudmodel.SubnetReq'
         type: array
     required:
     - connectionName
     - name
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.VmCreationError:
+  cloudmodel.VmCreationError:
     properties:
       error:
         description: Error is the error message
@@ -1422,14 +982,14 @@ definitions:
         description: VmName is the name of the VM that failed
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_cloud-model.VmInfo:
+  cloudmodel.VmInfo:
     properties:
       addtionalDetails:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.KeyValue'
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
       connectionConfig:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.ConnConfig'
+        $ref: '#/definitions/cloudmodel.ConnConfig'
       connectionName:
         type: string
       createdTime:
@@ -1472,7 +1032,7 @@ definitions:
           type: string
         type: object
       location:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.Location'
+        $ref: '#/definitions/cloudmodel.Location'
       monAgentStatus:
         description: Montoring agent status
         example: '[installed, notInstalled, failed]'
@@ -1497,7 +1057,7 @@ definitions:
         type: string
       region:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.RegionInfo'
+        - $ref: '#/definitions/cloudmodel.RegionInfo'
         description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
       resourceType:
         description: ResourceType is the type of the resource
@@ -1546,262 +1106,445 @@ definitions:
       vmUserPassword:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.CpuProperty:
+  common.SimpleMessage:
     properties:
-      architecture:
-        example: x86_64
+      message:
+        example: Any message
         type: string
-      cores:
-        description: Number of physical cores per CPU
-        example: 18
-        type: integer
-      cpus:
-        description: Number of physical CPUs (sockets)
-        example: 2
-        type: integer
-      maxSpeed:
-        description: Maximum speed in GHz
-        example: 3.6
-        type: number
-      model:
-        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
-        type: string
-      threads:
-        description: Number of logical CPUs (threads) per CPU with hyper-threading
-          enabled
-        example: 36
-        type: integer
-      vendor:
-        example: GenuineIntel
-        type: string
-    required:
-    - cores
-    - cpus
-    - threads
     type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty:
+  common.SimpleMsg:
     properties:
-      available:
-        description: Unit GiB
-        type: integer
+      message:
+        example: Any message
+        type: string
+    type: object
+  controller.JSONResult:
+    type: object
+  controller.MigrateInfraRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.MciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+    type: object
+  controller.MigrateInfraResponse:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
       label:
-        type: string
-      totalSize:
-        description: Unit GiB
-        example: 1024
-        type: integer
-      type:
-        description: SSD, HDD
-        example: SSD
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - label
-    - totalSize
-    - type
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.FirewallRuleProperty:
-    properties:
-      action:
-        description: e.g., allow, deny
-        type: string
-      direction:
-        description: e.g., inbound, outbound
-        type: string
-      dstCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      dstPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-      protocol:
-        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
-        type: string
-      srcCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      srcPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.GatewayProperty:
-    properties:
-      interfaceName:
-        description: Name of the network interface associated with the gateway
-        type: string
-      ip:
-        description: IP address of the gateway
-        type: string
-      machineId:
-        description: Unique identifier for the machine (e.g., UUID)
-        type: string
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.MemoryProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      totalSize:
-        description: Unit GiB
-        example: 128
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - totalSize
-    - type
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail:
-    properties:
-      cidrBlocks:
-        items:
+        additionalProperties:
           type: string
-        type: array
-      defaultGateways:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.GatewayProperty'
-        type: array
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkInterfaceProperty:
-    properties:
-      ipv4CidrBlocks:
-        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
-          of inet addr, Bcast, and Mask
-        items:
-          type: string
-        type: array
-      ipv6CidrBlocks:
-        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
-        items:
-          type: string
-        type: array
-      macAddress:
-        description: MAC address
-        type: string
-      mtu:
-        description: Maximum Transmission Unit (MTU) in bytes
-        type: integer
+        description: Label is for describing the object by keywords
+        type: object
       name:
-        description: Interface name (e.g., eth0, ens01, enp0s3)
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
         type: string
-      state:
-        description: Interface state (e.g., UP, DOWN)
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        items:
+          type: string
+        type: array
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.VmInfo'
+        type: array
+    type: object
+  controller.MigrateInfraWithDefaultsRequest:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      subGroups:
+        description: |-
+          SubGroups is array of VM requests for multi-cloud infrastructure
+          Example: Multiple VM groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "subGroupSize": "3",
+              "specId": "aws+ap-northeast-2+t3.nano",
+              "imageId": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "subGroupSize": "2",
+              "specId": "azure+koreasouth+standard_b1s",
+              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "subGroupSize": "1",
+              "specId": "gcp+asia-northeast3+g1-small",
+              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
+        items:
+          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
         type: string
     required:
     - name
+    - subGroups
     type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkProperty:
+  controller.MigrateInfraWithDefaultsResponse:
     properties:
-      ipv4Networks:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail'
-      ipv6Networks:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      creationErrors:
         allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkDetail'
-        description: TBD
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.OnpremInfra:
-    properties:
-      network:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.ServerProperty'
-        type: array
-    required:
-    - servers
-    type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.OsProperty:
-    properties:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
+      description:
+        type: string
       id:
-        example: ubuntu
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
         type: string
-      idLike:
-        example: debian
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
         type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
       name:
-        example: Ubuntu
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
         type: string
-      prettyName:
-        description: Pretty name
-        example: Ubuntu 22.04.3 LTS
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
         type: string
-      version:
-        description: Full version string
-        example: 22.04.3 LTS (Jammy Jellyfish)
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
         type: string
-      versionCodename:
-        example: jammy
+      status:
         type: string
-      versionId:
-        example: "22.04"
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
         type: string
+      systemMessage:
+        description: Latest system message such as error message
+        items:
+          type: string
+        type: array
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.VmInfo'
+        type: array
+    type: object
+  controller.RecommendInfraRequest:
+    properties:
+      desiredProvider:
+        example: aws
+        type: string
+      desiredRegion:
+        example: ap-northeast-2
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
     required:
-    - prettyName
+    - onpremiseInfraModel
     type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.RouteProperty:
+  controller.RecommendInfraResponse:
     properties:
-      destination:
-        description: Destination network, expressed in CIDR format
+      description:
         type: string
-      gateway:
-        description: Gateway address to which packets are forwarded
+      status:
         type: string
-      interface:
-        description: Network interface associated with the route
-        type: string
-      linkState:
-        description: Link state of the route (e.g., UP, DOWN)
-        type: string
-      metric:
-        description: Metric value indicating the priority of the route
+      targetInfra:
+        $ref: '#/definitions/model.MciDynamicReq'
+    type: object
+  controller.RecommendSecurityGroupResponse:
+    properties:
+      count:
         type: integer
-      protocol:
-        description: Protocol used to set the route (e.g., kernel, static)
+      description:
         type: string
-      scope:
-        description: Scope of the route (e.g., global, link, host)
+      status:
         type: string
-      source:
-        description: Optionally stores the source address (used for policy-based routing)
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedSecurityGroup'
+        type: array
+    type: object
+  controller.RecommendVNetResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVNetList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVNet'
+        type: array
+    type: object
+  controller.RecommendVmInfraRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.MciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+    type: object
+  controller.RecommendVmInfraWithDefaultsRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraWithDefaultsResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVmInfraList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfraDynamic'
+        type: array
+    type: object
+  controller.RecommendVmOsImageResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      recommendedVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmOsImage'
+        type: array
+      status:
         type: string
     type: object
-  github_com_cloud-barista_cm-model_infra_on-premise-model.ServerProperty:
+  controller.RecommendVmSpecResponse:
     properties:
-      cpu:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty'
-        type: array
-      firewallTable:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.FirewallRuleProperty'
-        type: array
-      hostname:
+      count:
+        type: integer
+      description:
         type: string
-      interfaces:
+      recommendedVmSpecList:
         items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.NetworkInterfaceProperty'
+          $ref: '#/definitions/cloudmodel.RecommendedVmSpec'
         type: array
-      machineId:
-        description: Unique identifier for the server (e.g., UUID)
+      status:
         type: string
-      memory:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.MemoryProperty'
-      os:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_on-premise-model.RouteProperty'
+    type: object
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
+    properties:
+      details:
+        example: Any details
+        type: string
+      list:
+        items: {}
         type: array
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
+        type: string
     type: object
   model.BastionNode:
     properties:
@@ -2419,6 +2162,263 @@ definitions:
     - connectionName
     - name
     type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.ServerProperty'
+        type: array
+    required:
+    - servers
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  onpremisemodel.ServerProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the server (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
   resource.RestGetAllSecurityGroupResponse:
     properties:
       securityGroup:
@@ -2514,7 +2514,7 @@ paths:
         "200":
           description: The ID list of The migrated multi-cloud infrastructure (MCI)
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-model_infra_cloud-model.IdList'
+            $ref: '#/definitions/cloudmodel.IdList'
         "404":
           description: Not Found
           schema:
