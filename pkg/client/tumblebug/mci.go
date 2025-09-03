@@ -31,15 +31,15 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateMci creates a new MCI (Multi-Cloud Image) in the specified namespace
-func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.TbMciReq) (tbmodel.TbMciInfo, error) {
+func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.MciReq) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Creating MCI")
 
-	emptyRet := tbmodel.TbMciInfo{}
+	emptyRet := tbmodel.MciInfo{}
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/mci", c.restUrl, nsId)
 
-	resBody := tbmodel.TbMciInfo{}
+	resBody := tbmodel.MciInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,
@@ -52,7 +52,7 @@ func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.TbMciReq) (tbmo
 		common.ShortDuration,
 	)
 	if err != nil {
-		log.Error().Msg("Failed to create MCI")
+		log.Error().Err(err).Msg("Failed to create MCI")
 		return emptyRet, err
 	}
 
@@ -61,17 +61,17 @@ func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.TbMciReq) (tbmo
 }
 
 // CreateMciDynamic creates a new MCI (Multi-Cloud Image) with defaults in the specified namespace
-func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.TbMciDynamicReq) (tbmodel.TbMciInfo, error) {
+func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.MciDynamicReq) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Creating MCI with defaults")
 
-	emptyRet := tbmodel.TbMciInfo{}
+	emptyRet := tbmodel.MciInfo{}
 
 	c.client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/mciDynamic", c.restUrl, nsId)
 
-	resBody := tbmodel.TbMciInfo{}
+	resBody := tbmodel.MciInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,
@@ -84,7 +84,7 @@ func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.TbMciDyn
 		common.ShortDuration,
 	)
 	if err != nil {
-		log.Error().Msg("Failed to create MCI with defaults")
+		log.Error().Err(err).Msg("Failed to create MCI with defaults")
 		return emptyRet, err
 	}
 
@@ -94,7 +94,7 @@ func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.TbMciDyn
 }
 
 type TbMciInfoList struct {
-	Mci []tbmodel.TbMciInfo `json:"mci"`
+	Mci []tbmodel.MciInfo `json:"mci"`
 }
 
 // ReadAllMci retrieves all MCIs (Multi-Cloud Images) in the specified namespace
@@ -125,16 +125,16 @@ func (c *TumblebugClient) ReadAllMci(nsId string) (TbMciInfoList, error) {
 }
 
 // ReadMci retrieves information about a specific MCI (Multi-Cloud Image) in the specified namespace
-func (c *TumblebugClient) ReadMci(nsId, mciId string) (tbmodel.TbMciInfo, error) {
+func (c *TumblebugClient) ReadMci(nsId, mciId string) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Retrieving MCI")
 
-	var emptyRet = tbmodel.TbMciInfo{}
+	var emptyRet = tbmodel.MciInfo{}
 
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/mci/%s", c.restUrl, nsId, mciId)
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbMciInfo{}
+	resBody := tbmodel.MciInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,
@@ -231,19 +231,19 @@ func (c *TumblebugClient) DeleteMci(nsId, mciId, option string) (tbmodel.IdList,
 	return resBody, nil
 }
 
-// MciRecommendVm finds appropriate VM specs by filtering and prioritzing.
-func (c *TumblebugClient) MciRecommendVm(planToSearchProperVm string) ([]tbmodel.TbSpecInfo, error) {
-	log.Debug().Msg("MCI Recommend VM")
+// MciRecommendSpec finds appropriate VM specs by filtering and prioritzing.
+func (c *TumblebugClient) MciRecommendSpec(planToSearchProperVm string) ([]tbmodel.SpecInfo, error) {
+	log.Debug().Msg("MCI Recommend Spec")
 
-	var vmSpecInfoList = []tbmodel.TbSpecInfo{}
-	var emptyRet = []tbmodel.TbSpecInfo{}
+	var vmSpecInfoList = []tbmodel.SpecInfo{}
+	var emptyRet = []tbmodel.SpecInfo{}
 
 	// Lookup VM specs
 	method := "POST"
-	url := fmt.Sprintf("%s/mciRecommendVm", c.restUrl)
+	url := fmt.Sprintf("%s/recommendSpec", c.restUrl)
 
 	// Request body
-	reqRecommVm := new(tbmodel.DeploymentPlan)
+	reqRecommVm := new(tbmodel.RecommendSpecReq)
 	err := json.Unmarshal([]byte(planToSearchProperVm), reqRecommVm)
 	if err != nil {
 		log.Error().Err(err).Msg("")

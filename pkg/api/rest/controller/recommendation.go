@@ -37,7 +37,7 @@ import (
  */
 
 type RecommendVmInfraWithDefaultsRequest struct {
-	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
+	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
@@ -102,12 +102,6 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	}
 	sourceInfra := reqt.OnpremiseInfraModel
 
-	// Replace "ncp" with "ncpvpc"
-	// TODO: improve it when "ncp" and "ncpvpc" are updated.
-	if csp == "ncp" {
-		csp = csp + "vpc"
-	}
-
 	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
@@ -130,7 +124,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 }
 
 type RecommendVmInfraRequest struct {
-	DesiredCspAndRegionPair recommendation.CspRegionPair `json:"desiredCspAndRegionPair"`
+	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
@@ -194,12 +188,6 @@ func RecommendVMInfra(c echo.Context) error {
 		region = desiredRegion
 	}
 	sourceInfra := reqt.OnpremiseInfraModel
-
-	// Replace "ncp" with "ncpvpc"
-	// TODO: improve it when "ncp" and "ncpvpc" are updated.
-	if csp == "ncp" {
-		csp = csp + "vpc"
-	}
 
 	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {

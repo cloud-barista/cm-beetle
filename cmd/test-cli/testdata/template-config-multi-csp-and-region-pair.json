@@ -22,6 +22,11 @@
       "csp": "ncp",
       "region": "kr",
       "name": "NCP-Seoul"
+    },
+    {
+      "csp": "alibaba",
+      "region": "ap-northeast-2",
+      "name": "Alibaba-Seoul"
     }
   ],
   "requestBodyFile": "testdata/recommendation-request.json"

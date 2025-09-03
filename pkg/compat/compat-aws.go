@@ -15,7 +15,7 @@ import (
 // 2. Hypervisor and Driver compatibility (ENA + NVMe) - Most Critical
 // 3. Boot Mode compatibility
 // 4. Xen-on-Nitro compatibility (when applicable)
-func CheckAws(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckAws(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting AWS compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. Virtualization Type compatibility check
@@ -43,7 +43,7 @@ func CheckAws(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
 // === 1. Virtualization Type Compatibility ===
 
 // isAwsVirtualizationTypeCompatible checks virtualization type compatibility between spec and image
-func isAwsVirtualizationTypeCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsVirtualizationTypeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	supportedVirtTypes := extractAwsSupportedVirtualizationTypesFromSpecDetails(spec)
 	imageVirtType := extractAwsVirtualizationTypeFromImageDetails(image)
 
@@ -67,7 +67,7 @@ func isAwsVirtualizationTypeCompatible(spec cloudmodel.TbSpecInfo, image cloudmo
 }
 
 // extractAwsVirtualizationTypeFromImageDetails extracts virtualization type from VM image details
-func extractAwsVirtualizationTypeFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAwsVirtualizationTypeFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		if strings.EqualFold(kv.Key, "virtualizationtype") {
 			return strings.ToLower(strings.TrimSpace(kv.Value))
@@ -77,7 +77,7 @@ func extractAwsVirtualizationTypeFromImageDetails(image cloudmodel.TbImageInfo) 
 }
 
 // extractAwsSupportedVirtualizationTypesFromSpecDetails extracts supported virtualization types from VM spec details
-func extractAwsSupportedVirtualizationTypesFromSpecDetails(spec cloudmodel.TbSpecInfo) []string {
+func extractAwsSupportedVirtualizationTypesFromSpecDetails(spec cloudmodel.SpecInfo) []string {
 	for _, kv := range spec.Details {
 		if strings.EqualFold(kv.Key, "supportedvirtualizationtypes") {
 			// Parse supported types (format: "hvm", "hvm; pv", etc.)
@@ -98,7 +98,7 @@ func extractAwsSupportedVirtualizationTypesFromSpecDetails(spec cloudmodel.TbSpe
 // === 2. Hypervisor and Driver Compatibility (Most Critical) ===
 
 // isAwsHypervisorAndDriverCompatible checks hypervisor and driver compatibility (most critical for AWS)
-func isAwsHypervisorAndDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsHypervisorAndDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	// Extract hypervisor information
 	specHypervisor := extractAwsHypervisorFromSpecDetails(spec)
 	imageHypervisor := extractAwsHypervisorFromImageDetails(image)
@@ -143,7 +143,7 @@ func isAwsHypervisorAndDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudm
 }
 
 // isAwsDriverCompatible checks overall driver compatibility (ENA + NVMe)
-func isAwsDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	enaCompatible := isAwsEnaDriverCompatible(spec, image)
 	nvmeCompatible := isAwsNvmeDriverCompatible(spec, image)
 
@@ -152,7 +152,7 @@ func isAwsDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageI
 }
 
 // isAwsEnaDriverCompatible checks ENA driver compatibility between spec and image
-func isAwsEnaDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsEnaDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specEnaSupport := extractAwsEnaSupportFromSpecDetails(spec)
 	imageEnaSupport := extractAwsEnaSupportFromImageDetails(image)
 
@@ -173,7 +173,7 @@ func isAwsEnaDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbIma
 }
 
 // isAwsNvmeDriverCompatible checks NVMe driver compatibility between spec and image
-func isAwsNvmeDriverCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsNvmeDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specNvmeSupport := extractAwsNvmeSupportFromSpecDetails(spec)
 	imageNvmeSupport := extractAwsNvmeSupportFromImageDetails(image)
 
@@ -206,7 +206,7 @@ func normalizeAwsHypervisor(hypervisor string) string {
 }
 
 // extractAwsHypervisorFromImageDetails extracts hypervisor information from VM image details
-func extractAwsHypervisorFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAwsHypervisorFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		key := strings.ToLower(kv.Key)
 		if key == "hypervisor" || key == "hypervisortype" || key == "virtualizationtype" {
@@ -217,7 +217,7 @@ func extractAwsHypervisorFromImageDetails(image cloudmodel.TbImageInfo) string {
 }
 
 // extractAwsHypervisorFromSpecDetails extracts hypervisor information from VM spec details
-func extractAwsHypervisorFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAwsHypervisorFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		key := strings.ToLower(kv.Key)
 		if key == "hypervisor" || key == "hypervisortype" || key == "virtualizationtype" {
@@ -231,7 +231,7 @@ func extractAwsHypervisorFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
 
 // extractAwsEnaSupportFromImageDetails extracts ENA support from image details
 // Image has direct "EnaSupport" key with value like "true"
-func extractAwsEnaSupportFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAwsEnaSupportFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		key := strings.ToLower(strings.TrimSpace(kv.Key))
 		value := strings.TrimSpace(kv.Value)
@@ -249,7 +249,7 @@ func extractAwsEnaSupportFromImageDetails(image cloudmodel.TbImageInfo) string {
 
 // extractAwsEnaSupportFromSpecDetails extracts ENA support from spec details
 // Spec has "NetworkInfo" key with value containing "EnaSupport:required"
-func extractAwsEnaSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAwsEnaSupportFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		key := strings.ToLower(strings.TrimSpace(kv.Key))
 		value := strings.TrimSpace(kv.Value)
@@ -296,7 +296,7 @@ func isEnaSupport(value string) string {
 // === 4. NVMe Driver Support ===
 
 // extractAwsNvmeSupportFromSpecDetails extracts NVMe support from spec details
-func extractAwsNvmeSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAwsNvmeSupportFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		key := strings.ToLower(kv.Key)
 		if strings.Contains(key, "nvmesupport") || strings.Contains(key, "ebsinfo") {
@@ -316,7 +316,7 @@ func extractAwsNvmeSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
 }
 
 // extractAwsNvmeSupportFromImageDetails extracts NVMe support from image details
-func extractAwsNvmeSupportFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAwsNvmeSupportFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		key := strings.ToLower(kv.Key)
 		if strings.Contains(key, "nvmesupport") {
@@ -340,7 +340,7 @@ func extractAwsNvmeSupportFromImageDetails(image cloudmodel.TbImageInfo) string 
 // === 5. Boot Mode Compatibility ===
 
 // isAwsBootModeCompatible checks boot mode compatibility between spec and image
-func isAwsBootModeCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAwsBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	supportedBootModes := extractAwsSupportedBootModesFromSpecDetails(spec)
 	imageBootMode := extractAwsBootModeFromImageDetails(image)
 
@@ -375,7 +375,7 @@ func isAwsBootModeCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImag
 }
 
 // extractAwsSupportedBootModesFromSpecDetails extracts supported boot modes from spec details
-func extractAwsSupportedBootModesFromSpecDetails(spec cloudmodel.TbSpecInfo) []string {
+func extractAwsSupportedBootModesFromSpecDetails(spec cloudmodel.SpecInfo) []string {
 	for _, kv := range spec.Details {
 		if strings.Contains(strings.ToLower(kv.Key), "supportedbootmodes") {
 			// Parse boot modes (e.g., "legacy-bios; uefi")
@@ -394,7 +394,7 @@ func extractAwsSupportedBootModesFromSpecDetails(spec cloudmodel.TbSpecInfo) []s
 }
 
 // extractAwsBootModeFromImageDetails extracts boot mode from image details
-func extractAwsBootModeFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAwsBootModeFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		if strings.EqualFold(kv.Key, "bootmode") {
 			return strings.ToLower(strings.TrimSpace(kv.Value))

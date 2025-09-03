@@ -10,7 +10,7 @@ import (
 
 // CheckAzure checks compatibility between Azure VM spec and OS image
 // Primary focus: Hypervisor Generation compatibility (V1 vs V2)
-func CheckAzure(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckAzure(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting Azure compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. Hypervisor Generation compatibility check (most critical for Azure)
@@ -24,7 +24,7 @@ func CheckAzure(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
 }
 
 // isAzureHypervisorGenerationCompatible checks hypervisor generation compatibility
-func isAzureHypervisorGenerationCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAzureHypervisorGenerationCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specGeneration := getAzureVmGeneration(spec.CspSpecName)
 	imageGeneration := getAzureImageGeneration(image)
 
@@ -92,7 +92,7 @@ func getAzureVmGeneration(vmSize string) string {
 }
 
 // getAzureImageGeneration extracts hypervisor generation from image
-func getAzureImageGeneration(image cloudmodel.TbImageInfo) string {
+func getAzureImageGeneration(image cloudmodel.ImageInfo) string {
 	// Check image SKU for generation indicators
 	imageName := strings.ToLower(image.CspImageName)
 

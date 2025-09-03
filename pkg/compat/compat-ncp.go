@@ -10,7 +10,7 @@ import (
 )
 
 // CheckNcp checks compatibility between NCP VM spec and OS image
-func CheckNcp(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckNcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting NCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// NCP Image ID compatibility check using CorrespondingImageIds
@@ -27,7 +27,7 @@ func CheckNcp(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
 // === NCP Image Compatibility Functions ===
 
 // isNcpImageCompatible checks if NCP image is compatible with spec using CorrespondingImageIds
-func isNcpImageCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isNcpImageCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	// Extract CorrespondingImageIds from spec details
 	correspondingImageIds := extractNcpCorrespondingImageIds(spec)
 	if len(correspondingImageIds) == 0 {
@@ -56,7 +56,7 @@ func isNcpImageCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageIn
 }
 
 // extractNcpCorrespondingImageIds extracts CorrespondingImageIds from NCP spec details
-func extractNcpCorrespondingImageIds(spec cloudmodel.TbSpecInfo) []string {
+func extractNcpCorrespondingImageIds(spec cloudmodel.SpecInfo) []string {
 	for _, detail := range spec.Details {
 		if strings.EqualFold(detail.Key, "CorrespondingImageIds") {
 			// Parse comma-separated image IDs
@@ -76,7 +76,7 @@ func extractNcpCorrespondingImageIds(spec cloudmodel.TbSpecInfo) []string {
 }
 
 // extractNcpImageId extracts image ID from NCP image info
-func extractNcpImageId(image cloudmodel.TbImageInfo) string {
+func extractNcpImageId(image cloudmodel.ImageInfo) string {
 	// Try to extract from CspImageName first (might contain the ID directly)
 	if image.CspImageName != "" {
 		log.Debug().Msgf("NCP image CspImageName: %s", image.CspImageName)
@@ -138,14 +138,14 @@ func isNumeric(s string) bool {
 // === NCP VM Spec Filtering Functions ===
 
 // FilterNcpVmSpecsByHypervisor filters NCP VM specs to include only KVM hypervisor specs
-func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.TbSpecInfo) []cloudmodel.TbSpecInfo {
+func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.SpecInfo {
 	if len(vmSpecs) == 0 {
 		return vmSpecs
 	}
 
 	log.Debug().Msgf("NCP filtering: checking %d VM specs for KVM hypervisor", len(vmSpecs))
 
-	var filteredSpecs []cloudmodel.TbSpecInfo
+	var filteredSpecs []cloudmodel.SpecInfo
 
 	for _, spec := range vmSpecs {
 		hasKvmHypervisor := false

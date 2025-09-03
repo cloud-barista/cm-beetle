@@ -16,6 +16,7 @@ package tbclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
@@ -29,16 +30,18 @@ import (
 // * Other APIs can be added as needed.
 
 // ReadVmOsImage retrieves information about a specific VM OS Image in the specified namespace
-func (c *TumblebugClient) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.TbImageInfo, error) {
+func (c *TumblebugClient) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.ImageInfo, error) {
 	log.Debug().Msg("Retrieving VM OS Image")
 
-	var emptyRet = tbmodel.TbImageInfo{}
+	var emptyRet = tbmodel.ImageInfo{}
 
 	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/resources/image/%s", c.restUrl, nsId, vmOsImageId)
+	// URL encode the vmOsImageId to handle special characters like '+'
+	encodedVmOsImageId := url.QueryEscape(vmOsImageId)
+	url := fmt.Sprintf("%s/ns/%s/resources/image/%s", c.restUrl, nsId, encodedVmOsImageId)
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbImageInfo{}
+	resBody := tbmodel.ImageInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,

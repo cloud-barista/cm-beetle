@@ -40,8 +40,9 @@ meta_db/
 # Temporal directory for container volumes
 container-volume/
 
-# Temporal directory for building container image with local cb-tumblebug changes
+# Temporal directory for building container image with local changes (e.g., cb-tumblebug, cm-model)
 cb-tumblebug/
+cm-model/
 
 # Config file for test
 pkg/testclient/scripts/sequentialFullTest/executionStatus*

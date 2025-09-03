@@ -270,6 +270,7 @@ func RunServer(port string) {
 	gMigration.POST("/ns/:nsId/resources/securityGroup", controller.CreateMigratedSecurityGroup)
 	gMigration.GET("/ns/:nsId/resources/securityGroup/:sgId", controller.GetMigratedSecurityGroup)
 	gMigration.DELETE("/ns/:nsId/resources/securityGroup/:sgId", controller.DeleteMigratedSecurityGroup)
+	gMigration.DELETE("/ns/:nsId/resources/securityGroup", controller.DeleteMigratedSecurityGroups)
 
 	// APIs for the SSH key resources
 	gMigration.GET("/ns/:nsId/resources/sshKey", controller.ListMigratedSSHKeys)

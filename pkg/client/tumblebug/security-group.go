@@ -29,10 +29,10 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateSecurityGroup creates a new Security Group in the specified namespace
-func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.TbSecurityGroupReq, option string) (tbmodel.TbSecurityGroupInfo, error) {
+func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.SecurityGroupReq, option string) (tbmodel.SecurityGroupInfo, error) {
 	log.Debug().Msg("Creating Security Group")
 
-	var emptyRet = tbmodel.TbSecurityGroupInfo{}
+	var emptyRet = tbmodel.SecurityGroupInfo{}
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/resources/securityGroup", c.restUrl, nsId)
@@ -41,7 +41,7 @@ func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.TbSec
 		url += fmt.Sprintf("?option=%s", option)
 	}
 
-	var resBody tbmodel.TbSecurityGroupInfo
+	var resBody tbmodel.SecurityGroupInfo
 	err := common.ExecuteHttpRequest(
 		c.client,
 		method,
@@ -53,7 +53,7 @@ func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.TbSec
 		common.ShortDuration,
 	)
 	if err != nil {
-		log.Error().Msg("Failed to create Security Group")
+		log.Error().Err(err).Msg("Failed to create Security Group")
 		return emptyRet, err
 	}
 
@@ -62,17 +62,17 @@ func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.TbSec
 }
 
 // ReadSecurityGroup retrieves information about a specific Security Group in the specified namespace
-func (c *TumblebugClient) ReadSecurityGroup(nsId, securityGroupId string) (tbmodel.TbSecurityGroupInfo, error) {
+func (c *TumblebugClient) ReadSecurityGroup(nsId, securityGroupId string) (tbmodel.SecurityGroupInfo, error) {
 	log.Debug().Msg("Retrieving Security Group")
 
-	var emptyRet = tbmodel.TbSecurityGroupInfo{}
+	var emptyRet = tbmodel.SecurityGroupInfo{}
 
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/resources/securityGroup/%s", c.restUrl, nsId, securityGroupId)
 	// /ns/{nsId}/resources/securityGroup/{securityGroupId}
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbSecurityGroupInfo{}
+	resBody := tbmodel.SecurityGroupInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,

@@ -31,9 +31,9 @@ import (
 
 type MigrateInfraWithDefaultsRequest struct {
 	// [NOTE] Failed to embed the struct in CB-Tumblebug as follows:
-	// mci.TbMciDynamicReq
+	// mci.MciDynamicReq
 
-	cloudmodel.TbMciDynamicReq
+	cloudmodel.MciDynamicReq
 }
 
 type MigrateInfraWithDefaultsResponse struct {
@@ -75,11 +75,11 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	}
 
 	log.Debug().Msgf("req: %v", req)
-	log.Debug().Msgf("req.TbMciDynamicReq: %v", req.TbMciDynamicReq)
+	log.Debug().Msgf("req.MciDynamicReq: %v", req.MciDynamicReq)
 
 	// [Process]
 	// Create the VM infrastructure for migration
-	mciInfo, err := migration.CreateVMInfraWithDefaults(nsId, &req.TbMciDynamicReq)
+	mciInfo, err := migration.CreateVMInfraWithDefaults(nsId, &req.MciDynamicReq)
 
 	log.Debug().Msgf("mciInfo: %v", mciInfo)
 

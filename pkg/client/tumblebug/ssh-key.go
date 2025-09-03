@@ -29,15 +29,15 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateSshKey creates a new SSH Key in the specified namespace
-func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.TbSshKeyReq) (tbmodel.TbSshKeyInfo, error) {
+func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.SshKeyReq) (tbmodel.SshKeyInfo, error) {
 	log.Debug().Msg("Creating SSH Key")
 
-	emptyRet := tbmodel.TbSshKeyInfo{}
+	emptyRet := tbmodel.SshKeyInfo{}
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/resources/sshKey", c.restUrl, nsId)
 
-	resBody := tbmodel.TbSshKeyInfo{}
+	resBody := tbmodel.SshKeyInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,
@@ -50,7 +50,7 @@ func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.TbSshKeyReq)
 		common.ShortDuration,
 	)
 	if err != nil {
-		log.Error().Msg("Failed to create SSH Key")
+		log.Error().Err(err).Msg("Failed to create SSH Key")
 		return emptyRet, err
 	}
 
@@ -59,16 +59,16 @@ func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.TbSshKeyReq)
 }
 
 // ReadSshKey retrieves information about a specific SSH Key in the specified namespace
-func (c *TumblebugClient) ReadSshKey(nsId, sshKeyId string) (tbmodel.TbSshKeyInfo, error) {
+func (c *TumblebugClient) ReadSshKey(nsId, sshKeyId string) (tbmodel.SshKeyInfo, error) {
 	log.Debug().Msg("Retrieving SSH Key")
 
-	var emptyRet = tbmodel.TbSshKeyInfo{}
+	var emptyRet = tbmodel.SshKeyInfo{}
 
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/resources/sshKey/%s", c.restUrl, nsId, sshKeyId)
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbSshKeyInfo{}
+	resBody := tbmodel.SshKeyInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,

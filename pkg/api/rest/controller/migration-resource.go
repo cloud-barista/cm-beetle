@@ -121,7 +121,7 @@ func ListMigratedVNets(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
-// @Success 200 {object} tbmodel.TbVNetInfo
+// @Success 200 {object} tbmodel.VNetInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/vNet/{vNetId} [get]
@@ -143,8 +143,8 @@ func GetMigratedVNet(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param vNetReq body tbmodel.TbVNetReq true "Virtual Network creation request"
-// @Success 200 {object} tbmodel.TbVNetInfo
+// @Param vNetReq body tbmodel.VNetReq true "Virtual Network creation request"
+// @Success 200 {object} tbmodel.VNetInfo
 // @Failure 400 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/vNet [post]
@@ -216,7 +216,7 @@ func ListMigratedSSHKeys(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sshKeyId path string true "SSH Key ID" default(mig-sshkey-01)
-// @Success 200 {object} tbmodel.TbSshKeyInfo
+// @Success 200 {object} tbmodel.SshKeyInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/sshKey/{sshKeyId} [get]
@@ -239,8 +239,8 @@ func GetMigratedSSHKey(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option: [required params for register] connectionName, name, cspKeyId" Enums(register)
-// @Param sshKeyReq body tbmodel.TbSshKeyReq true "Details for an SSH key object"
-// @Success 200 {object} tbmodel.TbSshKeyInfo
+// @Param sshKeyReq body tbmodel.SshKeyReq true "Details for an SSH key object"
+// @Success 200 {object} tbmodel.SshKeyInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/sshKey [post]
@@ -312,7 +312,7 @@ func ListMigratedSecurityGroups(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sgId path string true "Security Group ID" default(mig-sg-01)
-// @Success 200 {object} tbmodel.TbSecurityGroupInfo
+// @Success 200 {object} tbmodel.SecurityGroupInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/securityGroup/{sgId} [get]
@@ -335,8 +335,8 @@ func GetMigratedSecurityGroup(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option: [required params for register] connectionName, name, vNetId, cspResourceId" Enums(register)
-// @Param securityGroupReq body tbmodel.TbSecurityGroupReq true "Details for an securityGroup object"
-// @Success 200 {object} tbmodel.TbSecurityGroupInfo
+// @Param securityGroupReq body tbmodel.SecurityGroupReq true "Details for an securityGroup object"
+// @Success 200 {object} tbmodel.SecurityGroupInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/securityGroup [post]
@@ -368,6 +368,28 @@ func DeleteMigratedSecurityGroup(c echo.Context) error {
 	sourcePattern := "/migration/ns/*/resources/securityGroup/*"
 	// First * is used as $1(nsId), second * as $2(securityGroupId)
 	targetPattern := "/ns/$1/resources/securityGroup/$2"
+
+	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
+	return proxyHandler(c)
+}
+
+// DeleteMigratedSecurityGroups godoc
+// @ID DeleteMigratedSecurityGroups
+// @Summary Delete multiple migrated security groups
+// @Description Delete multiple migrated security groups in the namespace
+// @Tags [Migration] Resources for VM infrastructure
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param match query string false "Delete resources containing matched ID-substring only" default()
+// @Success 200 {object} tbmodel.IdList
+// @Failure 404 {object} tbmodel.SimpleMsg
+// @Router /migration/ns/{nsId}/resources/securityGroup [delete]
+func DeleteMigratedSecurityGroups(c echo.Context) error {
+	// Path pattern that captures two path parameters
+	sourcePattern := "/migration/ns/*/resources/securityGroup"
+	// First * is used as $1(nsId), second * is used as $2(securityGroupIds)
+	targetPattern := "/ns/$1/resources/securityGroup"
 
 	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
 	return proxyHandler(c)

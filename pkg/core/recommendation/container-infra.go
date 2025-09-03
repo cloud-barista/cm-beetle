@@ -23,10 +23,10 @@ func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfr
 	var emptyResp RecommendedInfraInfo
 	var result RecommendedInfraInfo
 
-	result.TargetInfra = tbmodel.TbMciDynamicReq{
+	result.TargetInfra = tbmodel.MciDynamicReq{
 		Description: "Recommended Kubernetes node configuration by CM-Beetle",
 		Name:        "recommended-k8s-cluster",
-		Vm:          []tbmodel.TbVmDynamicReq{}, // a field to contain Kubernetes node information
+		SubGroups:   []tbmodel.CreateSubGroupDynamicReq{}, // a field to contain Kubernetes node information
 	}
 
 	client := resty.New()
@@ -85,7 +85,7 @@ func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfr
 		Msg("Container workload resource requirements")
 
 	// Step 1: Recommend spec for Kubernetes node - using dynamic values based on user input
-	plan := tbmodel.DeploymentPlan{
+	plan := tbmodel.RecommendSpecReq{
 		Filter: tbmodel.FilterInfo{Policy: []tbmodel.FilterCondition{
 			{Metric: "vCPU", Condition: []tbmodel.Operation{
 				{Operator: ">=", Operand: fmt.Sprintf("%d", coresMin)},
@@ -109,7 +109,7 @@ func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfr
 	}
 
 	// TbSpecInfo is a response body that contains a list of Kubernetes node specs.
-	var specResp []tbmodel.TbSpecInfo
+	var specResp []tbmodel.SpecInfo
 	resp, err := client.R().
 		SetBody(plan).
 		SetResult(&specResp).
@@ -135,7 +135,7 @@ func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfr
 	for _, specInfo := range specResp {
 		// Step 2: Request the available OS image for the spec
 		reqCheck := tbmodel.K8sClusterConnectionConfigCandidatesReq{
-			CommonSpecs: []string{specInfo.Id},
+			SpecIds: []string{specInfo.Id},
 		}
 
 		var checkResp tbmodel.CheckK8sClusterDynamicReqInfo
@@ -173,17 +173,17 @@ func RecommendContainer(provider, region string, srcInfra onpremmodel.OnpremInfr
 			}
 
 			// Set the recommended Kubernetes node spec and OS image to the response body
-			vm := tbmodel.TbVmDynamicReq{
+			subgroup := tbmodel.CreateSubGroupDynamicReq{
 				Name:        fmt.Sprintf("k8snode-%s", strings.Split(commonSpec, "-")[len(strings.Split(commonSpec, "-"))-1]),
-				CommonSpec:  commonSpec,
-				CommonImage: imageID,
+				SpecId:      commonSpec,
+				ImageId:     imageID,
 				Description: "Recommended K8s node",
 			}
-			result.TargetInfra.Vm = append(result.TargetInfra.Vm, vm)
+			result.TargetInfra.SubGroups = append(result.TargetInfra.SubGroups, subgroup)
 		}
 	}
 
-	if len(result.TargetInfra.Vm) > 0 {
+	if len(result.TargetInfra.SubGroups) > 0 {
 		result.Status = string(FullyRecommended)
 		result.Description = "K8s node configuration recommended."
 	} else {

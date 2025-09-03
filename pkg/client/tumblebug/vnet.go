@@ -29,15 +29,15 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateVNet creates a new Virtual Network (VNet) in the specified namespace
-func (c *TumblebugClient) CreateVNet(nsId string, reqBody tbmodel.TbVNetReq) (tbmodel.TbVNetInfo, error) {
+func (c *TumblebugClient) CreateVNet(nsId string, reqBody tbmodel.VNetReq) (tbmodel.VNetInfo, error) {
 	log.Debug().Msg("Creating Virtual Network")
 
-	emptyRet := tbmodel.TbVNetInfo{}
+	emptyRet := tbmodel.VNetInfo{}
 
 	method := "POST"
 	url := fmt.Sprintf("%s/ns/%s/resources/vNet", c.restUrl, nsId)
 
-	resBody := tbmodel.TbVNetInfo{}
+	resBody := tbmodel.VNetInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,
@@ -50,7 +50,7 @@ func (c *TumblebugClient) CreateVNet(nsId string, reqBody tbmodel.TbVNetReq) (tb
 		common.ShortDuration,
 	)
 	if err != nil {
-		log.Error().Msg("Failed to create VNet")
+		log.Error().Err(err).Msg("Failed to create VNet")
 		return emptyRet, err
 	}
 
@@ -59,16 +59,16 @@ func (c *TumblebugClient) CreateVNet(nsId string, reqBody tbmodel.TbVNetReq) (tb
 }
 
 // ReadVNet retrieves information about a specific Virtual Network (VNet) in the specified namespace
-func (c *TumblebugClient) ReadVNet(nsId, vNetId string) (tbmodel.TbVNetInfo, error) {
+func (c *TumblebugClient) ReadVNet(nsId, vNetId string) (tbmodel.VNetInfo, error) {
 	log.Debug().Msg("Retrieving Virtual Network")
 
-	var emptyRet = tbmodel.TbVNetInfo{}
+	var emptyRet = tbmodel.VNetInfo{}
 
 	method := "GET"
 	url := fmt.Sprintf("%s/ns/%s/resources/vNet/%s", c.restUrl, nsId, vNetId)
 
 	reqBody := common.NoBody
-	resBody := tbmodel.TbVNetInfo{}
+	resBody := tbmodel.VNetInfo{}
 
 	err := common.ExecuteHttpRequest(
 		c.client,

@@ -9,7 +9,7 @@ import (
 
 // CheckAlibaba checks compatibility between Alibaba Cloud VM spec and OS image
 // Primary focus: NVMe support, Boot mode, and Disk compatibility
-func CheckAlibaba(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckAlibaba(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting Alibaba Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. NVMe support compatibility check (most critical)
@@ -38,7 +38,7 @@ func CheckAlibaba(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool
 
 // isAlibabaNvmeSupportCompatible checks NVMe support compatibility between spec and image
 // This addresses the "No AvailableSystemDisk" error seen in logs
-func isAlibabaNvmeSupportCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specNvmeSupport := extractAlibabaNvmeSupportFromSpecDetails(spec)
 	imageNvmeSupport := extractAlibabaNvmeSupportFromImageDetails(image)
 
@@ -78,7 +78,7 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel
 // === 2. Boot Mode Compatibility ===
 
 // isAlibabaBootModeCompatible checks boot mode compatibility between spec and image
-func isAlibabaBootModeCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAlibabaBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specBootModes := extractAlibabaSupportedBootModesFromSpecDetails(spec)
 	imageBootMode := extractAlibabaBootModeFromImageDetails(image)
 
@@ -116,7 +116,7 @@ func isAlibabaBootModeCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.Tb
 // === 3. Instance Category and Disk Compatibility ===
 
 // isAlibabaInstanceCategoryCompatible checks instance category and disk compatibility
-func isAlibabaInstanceCategoryCompatible(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func isAlibabaInstanceCategoryCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	specCategory := extractAlibabaInstanceCategoryFromSpecDetails(spec)
 	specDiskQuantity := extractAlibabaDiskQuantityFromSpecDetails(spec)
 	imageIoOptimized := extractAlibabaIoOptimizedFromImageDetails(image)
@@ -144,7 +144,7 @@ func isAlibabaInstanceCategoryCompatible(spec cloudmodel.TbSpecInfo, image cloud
 // === Helper Functions for Extracting Details ===
 
 // extractAlibabaNvmeSupportFromSpecDetails extracts NVMe support from VM spec details
-func extractAlibabaNvmeSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAlibabaNvmeSupportFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		if strings.EqualFold(kv.Key, "NvmeSupport") {
 			return strings.ToLower(strings.TrimSpace(kv.Value))
@@ -154,7 +154,7 @@ func extractAlibabaNvmeSupportFromSpecDetails(spec cloudmodel.TbSpecInfo) string
 }
 
 // extractAlibabaNvmeSupportFromImageDetails extracts NVMe support from image details
-func extractAlibabaNvmeSupportFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAlibabaNvmeSupportFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		if strings.EqualFold(kv.Key, "Features") {
 			// Parse Features JSON-like string for NvmeSupport
@@ -172,7 +172,7 @@ func extractAlibabaNvmeSupportFromImageDetails(image cloudmodel.TbImageInfo) str
 }
 
 // extractAlibabaSupportedBootModesFromSpecDetails extracts supported boot modes from VM spec details
-func extractAlibabaSupportedBootModesFromSpecDetails(spec cloudmodel.TbSpecInfo) []string {
+func extractAlibabaSupportedBootModesFromSpecDetails(spec cloudmodel.SpecInfo) []string {
 	for _, kv := range spec.Details {
 		if strings.EqualFold(kv.Key, "SupportedBootModes") {
 			// Parse format: {SupportedBootMode:[BIOS,UEFI]}
@@ -199,7 +199,7 @@ func extractAlibabaSupportedBootModesFromSpecDetails(spec cloudmodel.TbSpecInfo)
 }
 
 // extractAlibabaBootModeFromImageDetails extracts boot mode from image details
-func extractAlibabaBootModeFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAlibabaBootModeFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		if strings.EqualFold(kv.Key, "BootMode") {
 			return strings.TrimSpace(kv.Value)
@@ -209,7 +209,7 @@ func extractAlibabaBootModeFromImageDetails(image cloudmodel.TbImageInfo) string
 }
 
 // extractAlibabaInstanceCategoryFromSpecDetails extracts instance category from VM spec details
-func extractAlibabaInstanceCategoryFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAlibabaInstanceCategoryFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		if strings.EqualFold(kv.Key, "InstanceCategory") {
 			return strings.TrimSpace(kv.Value)
@@ -219,7 +219,7 @@ func extractAlibabaInstanceCategoryFromSpecDetails(spec cloudmodel.TbSpecInfo) s
 }
 
 // extractAlibabaDiskQuantityFromSpecDetails extracts disk quantity from VM spec details
-func extractAlibabaDiskQuantityFromSpecDetails(spec cloudmodel.TbSpecInfo) string {
+func extractAlibabaDiskQuantityFromSpecDetails(spec cloudmodel.SpecInfo) string {
 	for _, kv := range spec.Details {
 		if strings.EqualFold(kv.Key, "DiskQuantity") {
 			return strings.TrimSpace(kv.Value)
@@ -229,7 +229,7 @@ func extractAlibabaDiskQuantityFromSpecDetails(spec cloudmodel.TbSpecInfo) strin
 }
 
 // extractAlibabaIoOptimizedFromImageDetails extracts I/O optimized info from image details
-func extractAlibabaIoOptimizedFromImageDetails(image cloudmodel.TbImageInfo) string {
+func extractAlibabaIoOptimizedFromImageDetails(image cloudmodel.ImageInfo) string {
 	for _, kv := range image.Details {
 		if strings.EqualFold(kv.Key, "IsSupportIoOptimized") {
 			return strings.ToLower(strings.TrimSpace(kv.Value))

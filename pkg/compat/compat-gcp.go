@@ -6,7 +6,7 @@ import (
 )
 
 // CheckGcp checks compatibility between GCP VM spec and OS image
-func CheckGcp(spec cloudmodel.TbSpecInfo, image cloudmodel.TbImageInfo) bool {
+func CheckGcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Debug().Msgf("Starting GCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add GCP-specific compatibility checks using Detail information
