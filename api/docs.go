@@ -1767,6 +1767,92 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.CommandExecutionStatus": {
+            "type": "string",
+            "enum": [
+                "Queued",
+                "Handling",
+                "Completed",
+                "Failed",
+                "Timeout"
+            ],
+            "x-enum-varnames": [
+                "CommandStatusQueued",
+                "CommandStatusHandling",
+                "CommandStatusCompleted",
+                "CommandStatusFailed",
+                "CommandStatusTimeout"
+            ]
+        },
+        "cloudmodel.CommandStatusInfo": {
+            "type": "object",
+            "properties": {
+                "commandExecuted": {
+                    "description": "CommandExecuted is the actual SSH command executed on the VM (may be adjusted)",
+                    "type": "string",
+                    "example": "ls -la"
+                },
+                "commandRequested": {
+                    "description": "CommandRequested is the original command as requested by the user",
+                    "type": "string",
+                    "example": "ls -la"
+                },
+                "completedTime": {
+                    "description": "CompletedTime is when the command execution completed (success or failure)",
+                    "type": "string",
+                    "example": "2024-01-15 10:30:05"
+                },
+                "elapsedTime": {
+                    "description": "ElapsedTime is the duration of command execution in milliseconds",
+                    "type": "integer",
+                    "example": 5000
+                },
+                "errorMessage": {
+                    "description": "ErrorMessage contains error details if the execution failed",
+                    "type": "string",
+                    "example": "SSH connection failed"
+                },
+                "index": {
+                    "description": "Index is sequential identifier for this command execution (1, 2, 3, ...)",
+                    "type": "integer",
+                    "example": 1
+                },
+                "resultSummary": {
+                    "description": "ResultSummary provides a brief summary of the execution result",
+                    "type": "string",
+                    "example": "Command executed successfully"
+                },
+                "startedTime": {
+                    "description": "StartedTime is when the command execution started",
+                    "type": "string",
+                    "example": "2024-01-15 10:30:00"
+                },
+                "status": {
+                    "description": "Status represents the current status of the command execution",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.CommandExecutionStatus"
+                        }
+                    ],
+                    "example": "Completed"
+                },
+                "stderr": {
+                    "description": "Stderr contains the standard error from command execution (truncated for history)",
+                    "type": "string",
+                    "example": ""
+                },
+                "stdout": {
+                    "description": "Stdout contains the standard output from command execution (truncated for history)",
+                    "type": "string",
+                    "example": "total 8\ndrwxr-xr-x 2 user user 4096 Jan 15 10:30 ."
+                },
+                "xRequestId": {
+                    "description": "XRequestId is the request ID from X-Request-ID header when the command was executed",
+                    "type": "string",
+                    "example": "req-12345678-abcd-1234-efgh-123456789012"
+                }
+            }
+        },
         "cloudmodel.ConnConfig": {
             "type": "object",
             "properties": {
@@ -3053,6 +3139,13 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "commandStatus": {
+                    "description": "CommandStatus stores the status and history of remote commands executed on this VM",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CommandStatusInfo"
                     }
                 },
                 "connectionConfig": {

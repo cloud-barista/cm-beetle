@@ -9,9 +9,9 @@ services:
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.3.8
     container_name: cm-beetle
-    # build:
-    #   context: ${COMPOSE_PROJECT_ROOT}
-    #   dockerfile: Dockerfile
+    build:
+      context: ${COMPOSE_PROJECT_ROOT}
+      dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network
@@ -54,7 +54,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.9
+    image: cloudbaristaorg/cb-tumblebug:0.11.13
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
@@ -89,9 +89,9 @@ services:
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
       - TB_POSTGRES_ENDPOINT=cb-tumblebug-postgres:5432
-      - TB_POSTGRES_DATABASE=cb_tumblebug
-      - TB_POSTGRES_USER=cb_tumblebug
-      - TB_POSTGRES_PASSWORD=cb_tumblebug
+      - TB_POSTGRES_DATABASE=tumblebug
+      - TB_POSTGRES_USER=tumblebug
+      - TB_POSTGRES_PASSWORD=tumblebug
       # - TB_TERRARIUM_API_USERNAME=default
       # - TB_TERRARIUM_API_PASSWORD=default
       # - TB_ALLOW_ORIGINS=*
@@ -180,11 +180,11 @@ services:
     volumes:
       - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=cb_tumblebug
-      - POSTGRES_PASSWORD=cb_tumblebug
-      - POSTGRES_DB=cb_tumblebug
+      - POSTGRES_USER=tumblebug
+      - POSTGRES_PASSWORD=tumblebug
+      - POSTGRES_DB=tumblebug
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      test: ["CMD-SHELL", "pg_isready -U tumblebug"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -192,7 +192,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.11.5
+    image: cloudbaristaorg/cb-spider:0.11.13
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -225,7 +225,8 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.11.12
+    # image: cloudbaristaorg/cb-mapui:0.11.12
+    image: cloudbaristaorg/cb-mapui:0.11.15
     container_name: cb-mapui
     # build:
     #   context: ../cb-mapui

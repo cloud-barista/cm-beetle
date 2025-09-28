@@ -9,6 +9,81 @@ definitions:
         example: ap-northeast-2
         type: string
     type: object
+  cloudmodel.CommandExecutionStatus:
+    enum:
+    - Queued
+    - Handling
+    - Completed
+    - Failed
+    - Timeout
+    type: string
+    x-enum-varnames:
+    - CommandStatusQueued
+    - CommandStatusHandling
+    - CommandStatusCompleted
+    - CommandStatusFailed
+    - CommandStatusTimeout
+  cloudmodel.CommandStatusInfo:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      commandRequested:
+        description: CommandRequested is the original command as requested by the
+          user
+        example: ls -la
+        type: string
+      completedTime:
+        description: CompletedTime is when the command execution completed (success
+          or failure)
+        example: "2024-01-15 10:30:05"
+        type: string
+      elapsedTime:
+        description: ElapsedTime is the duration of command execution in milliseconds
+        example: 5000
+        type: integer
+      errorMessage:
+        description: ErrorMessage contains error details if the execution failed
+        example: SSH connection failed
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
+      resultSummary:
+        description: ResultSummary provides a brief summary of the execution result
+        example: Command executed successfully
+        type: string
+      startedTime:
+        description: StartedTime is when the command execution started
+        example: "2024-01-15 10:30:00"
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.CommandExecutionStatus'
+        description: Status represents the current status of the command execution
+        example: Completed
+      stderr:
+        description: Stderr contains the standard error from command execution (truncated
+          for history)
+        example: ""
+        type: string
+      stdout:
+        description: Stdout contains the standard output from command execution (truncated
+          for history)
+        example: |-
+          total 8
+          drwxr-xr-x 2 user user 4096 Jan 15 10:30 .
+        type: string
+      xRequestId:
+        description: XRequestId is the request ID from X-Request-ID header when the
+          command was executed
+        example: req-12345678-abcd-1234-efgh-123456789012
+        type: string
+    type: object
   cloudmodel.ConnConfig:
     properties:
       configName:
@@ -987,6 +1062,12 @@ definitions:
       addtionalDetails:
         items:
           $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      commandStatus:
+        description: CommandStatus stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/cloudmodel.CommandStatusInfo'
         type: array
       connectionConfig:
         $ref: '#/definitions/cloudmodel.ConnConfig'

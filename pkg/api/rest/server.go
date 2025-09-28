@@ -278,42 +278,6 @@ func RunServer(port string) {
 	gMigration.GET("/ns/:nsId/resources/sshKey/:sshKeyId", controller.GetMigratedSSHKey)
 	gMigration.DELETE("/ns/:nsId/resources/sshKey/:sshKeyId", controller.DeleteMigratedSSHKey)
 
-	// gMigration.POST("/ns/:nsId/mci/network", controller.MigrateInfra)
-	// gMigration.POST("/ns/:nsId/mci/storage", controller.MigrateInfra)
-	// gMigration.POST("/ns/:nsId/mci/instance", controller.MigrateInfra)
-
-	// Route
-	// e.GET("/beetle/connConfig", rest_common.RestGetConnConfigList)
-	// e.GET("/beetle/connConfig/:connConfigName", rest_common.RestGetConnConfig)
-
-	// path specific timeout and ratelimit
-	// timeout middleware
-	// timeoutConfig := middleware.TimeoutConfig{
-	// 	Timeout:      60 * time.Second,
-	// 	Skipper:      middleware.DefaultSkipper,
-	// 	ErrorMessage: "Error: request time out (60s)",
-	// }
-
-	// g.GET("/:nsId/mcis/:mcisId", rest_mcis.RestGetMcis, middleware.TimeoutWithConfig(timeoutConfig),
-	// 	middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
-	// g.GET("/:nsId/mcis", rest_mcis.RestGetAllMcis, middleware.TimeoutWithConfig(timeoutConfig),
-	// 	middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
-
-	// g.POST("/:nsId/mcis/:mcisId/vm", rest_mcis.RestPostMcisVm)
-	// g.GET("/:nsId/mcis/:mcisId/vm/:vmId", rest_mcis.RestGetMcisVm)
-	// g.GET("/:nsId/mcis/:mcisId/subgroup", rest_mcis.RestGetMcisGroupIds)
-	// g.GET("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestGetMcisGroupVms)
-	// g.POST("/:nsId/mcis/:mcisId/subgroup/:subgroupId", rest_mcis.RestPostMcisSubGroupScaleOut)
-	// g.DELETE("/:nsId/mcis", rest_mcis.RestDelAllMcis)
-
-	// // Sample API group (for developers to add new API)
-	// gSample := gBeetle.Group("/sample")
-	// gSample.GET("/users", controller.GetUsers)
-	// gSample.GET("/users/:id", controller.GetUser)
-	// gSample.POST("/users", controller.CreateUser)
-	// gSample.PUT("/users/:id", controller.UpdateUser)
-	// gSample.DELETE("/users/:id", controller.DeleteUser)
-
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"

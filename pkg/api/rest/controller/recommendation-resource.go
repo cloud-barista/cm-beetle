@@ -448,7 +448,7 @@ func RecommendVmOsImages(c echo.Context) error {
 			temp := cloudmodel.RecommendedVmOsImage{
 				Status:          string(recommendation.NothingRecommended),
 				SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:     fmt.Sprintf("Recommended VM OS images for server %d: %s", i+1, server.MachineId),
+				Description:     fmt.Sprintf("Failed to recommend VM OS images for server %d: %s", i+1, server.MachineId),
 				TargetVmOsImage: cloudmodel.ImageInfo{},
 			}
 			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)

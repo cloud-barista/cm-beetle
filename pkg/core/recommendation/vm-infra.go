@@ -349,6 +349,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
 			log.Warn().Msgf("no recommended VM specs or OS images found for server %s", server.MachineId)
 		} else {
+
+			// * Note: (opinion) Find multiple compatible pairs and use them as needed in the later process
 			// Find compatible spec and image pair
 			tempSelectedVmSpec, tempSelectedVmOsImage, err := FindCompatibleSpecAndImage(recommendedVmSpecInfoList, recommendedVmOsImageInfoList, csp)
 			if err != nil {
@@ -1056,12 +1058,15 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list model for machine %s: %w", server.MachineId, err)
 	}
 
-	// Sort specs by proximity
-	sortByProximity(vcpus, memory, convertedVmSpecList)
+	// Sort specs by proximity with cost consideration
+	sortByProximityWithCost(vcpus, memory, convertedVmSpecList)
 
-	for i, vmSpec := range convertedVmSpecList {
-		log.Debug().Msgf("Recommended VM specification %d: %+v", i+1, vmSpec)
-	}
+	// // ! Logging section for research purpose
+	// log.Info().Msgf("No.,Provider,Region,VM Spec ID,vCPU,MemoryGiB,CostPerHour")
+	// for i, vmSpec := range convertedVmSpecList {
+	// 	log.Info().Msgf("%d,%s,%s,%s,%d,%.2f,%.4f",
+	// 		i+1, vmSpec.ProviderName, vmSpec.RegionName, vmSpec.CspSpecName, vmSpec.VCPU, vmSpec.MemoryGiB, vmSpec.CostPerHour)
+	// }
 
 	log.Info().
 		Str("machineId", server.MachineId).
@@ -1071,17 +1076,21 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	return convertedVmSpecList, numOfVmSpecs, nil
 }
 
-// Sort VM specs by proximity to the desired resource allocation
-func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
+// Sort VM specs by proximity to the desired resource allocation with cost consideration
+func sortByProximityWithCost(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
 
 	// Derive server's spec type (i.e. compute intensive type, memory intensive type, general purpose type)
 	machineType := deriveMachineType(vcpus, memory)
 
+	log.Debug().Msgf("Sorting VM specs for machine type: %s (vcpus: %d, memory: %d GiB)", machineType, vcpus, memory)
+
+	// Sort based on the machine type
 	switch machineType {
 	case "compute-intensive":
-		// Sort by proximity to desired values
+		// Sort by proximity to desired values with cost as secondary criterion
 		// 1. First sort by vCPU proximity (closest to target first)
 		// 2. Within same vCPU values, sort by memory proximity (closest to target first)
+		// 3. If both are same, sort by cost per hour (lowest cost first)
 		sort.Slice(vmSpecs, func(i, j int) bool {
 			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
 			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
@@ -1094,12 +1103,18 @@ func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
 			// If vCPU differences are same, sort by memory proximity
 			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
 			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
-			return memDiffI < memDiffJ
+			if memDiffI != memDiffJ {
+				return memDiffI < memDiffJ
+			}
+
+			// If both vCPU and memory differences are same, sort by cost per hour
+			return vmSpecs[i].CostPerHour < vmSpecs[j].CostPerHour
 		})
 	case "memory-intensive":
-		// Sort by proximity to desired values
+		// Sort by proximity to desired values with cost as secondary criterion
 		// 1. First sort by memory proximity (closest to target first)
 		// 2. Within same memory values, sort by vCPU proximity (closest to target first)
+		// 3. If both are same, sort by cost per hour (lowest cost first)
 		sort.Slice(vmSpecs, func(i, j int) bool {
 			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
 			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
@@ -1112,13 +1127,18 @@ func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
 			// If memory differences are same, sort by vCPU proximity
 			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
 			vcpuDiffJ := abs(int32(vmSpecs[j].VCPU) - int32(vcpus))
-			return vcpuDiffI < vcpuDiffJ
+			if vcpuDiffI != vcpuDiffJ {
+				return vcpuDiffI < vcpuDiffJ
+			}
+
+			// If both memory and vCPU differences are same, sort by cost per hour
+			return vmSpecs[i].CostPerHour < vmSpecs[j].CostPerHour
 		})
 	default: // "general-purpose"
 		// * Note: Manhattan Distance is preferred over Euclidean distance for VM specs
 		// because CPU and memory are independent resources with different scales
 
-		// Sort by Manhattan distance (L1 norm) for balanced workloads
+		// Sort by Manhattan distance (L1 norm) for balanced workloads with cost as secondary criterion
 		sort.Slice(vmSpecs, func(i, j int) bool {
 			vcpuDiffI := abs(int32(vmSpecs[i].VCPU) - int32(vcpus))
 			memDiffI := abs(int32(vmSpecs[i].MemoryGiB) - int32(memory))
@@ -1128,11 +1148,13 @@ func sortByProximity(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
 			memDiffJ := abs(int32(vmSpecs[j].MemoryGiB) - int32(memory))
 			totalDiffJ := vcpuDiffJ + memDiffJ
 
-			// If total differences are same, sort by spec name for consistency
-			if totalDiffI == totalDiffJ {
-				return vmSpecs[i].CspSpecName < vmSpecs[j].CspSpecName
+			// If total differences are different, sort by total difference
+			if totalDiffI != totalDiffJ {
+				return totalDiffI < totalDiffJ
 			}
-			return totalDiffI < totalDiffJ
+
+			// If total differences are same, sort by cost per hour (lowest cost first)
+			return vmSpecs[i].CostPerHour < vmSpecs[j].CostPerHour
 		})
 	}
 }
@@ -2138,6 +2160,36 @@ func findCompatiblePair(csp string, specs []cloudmodel.SpecInfo, images []cloudm
 	}
 
 	return emptySpec, emptyImage, fmt.Errorf("no compatible spec-image pairs found")
+}
+
+// findCompatiblePairs finds all compatible spec-image pairs using comprehensive compatibility checks
+func findCompatiblePairs(csp string, specs []cloudmodel.SpecInfo, images []cloudmodel.ImageInfo) ([]CompatibleSpecImagePair, error) {
+
+	var compatiblePairs []CompatibleSpecImagePair
+
+	cspLower := strings.ToLower(csp)
+
+	// Use standard compatibility check for all CSPs
+	for _, spec := range specs {
+		for _, image := range images {
+			if isCompatible := compat.CheckCompatibility(cspLower, spec, image); isCompatible {
+				compatiblePairs = append(compatiblePairs, CompatibleSpecImagePair{
+					Spec:  spec,
+					Image: image,
+				})
+				log.Debug().Msgf("Compatible pair - Spec: %s, Image: %s",
+					spec.CspSpecName, image.CspImageName)
+			} else {
+				log.Debug().Msgf("Incompatible pair - Spec: %s, Image: %s",
+					spec.CspSpecName, image.CspImageName)
+			}
+		}
+	}
+	if len(compatiblePairs) == 0 {
+		return nil, fmt.Errorf("no compatible spec-image pairs found")
+	}
+
+	return compatiblePairs, nil
 }
 
 // filterNcpVmSpecsByHypervisor filters NCP VM specs to include only KVM hypervisor specs
