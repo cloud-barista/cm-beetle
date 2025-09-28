@@ -1,6 +1,9 @@
 package recommendation
 
-import tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+import (
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+)
 
 // RecommendationStatus represents the status of a recommendation.
 type RecommendationStatus string
@@ -10,6 +13,11 @@ const (
 	PartiallyRecommended RecommendationStatus = "partial"
 	FullyRecommended     RecommendationStatus = "ok"
 )
+
+type CompatibleSpecImagePair struct {
+	Spec  cloudmodel.SpecInfo  `json:"spec"`
+	Image cloudmodel.ImageInfo `json:"image"`
+}
 
 // // CspRegionPair represents a pair of cloud service provider (CSP) and region.
 // type CspRegionPair struct {
