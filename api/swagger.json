@@ -60,6 +60,59 @@
                 }
             }
         },
+        "/migration/data": {
+            "post": {
+                "description": "Migrate data from source to target\n\n* Only relay mode is supported for now (both source and destination should be remote endpoints).\n* Supported methods: rsync, object storage API (AWS S3 style)\n* Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Data (experimental)"
+                ],
+                "summary": "Migrate data from source to target",
+                "operationId": "MigrateData",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "reqBody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/transx.DataMigrationModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/migration/ns/{nsId}/mci": {
             "get": {
                 "description": "Get the migrated multi-cloud infrastructure (MCI)",
@@ -5055,6 +5108,214 @@
                     "items": {
                         "$ref": "#/definitions/model.VNetInfo"
                     }
+                }
+            }
+        },
+        "transx.DataMigrationModel": {
+            "type": "object",
+            "required": [
+                "destination",
+                "destinationTransferOptions",
+                "source",
+                "sourceTransferOptions"
+            ],
+            "properties": {
+                "destination": {
+                    "description": "Destination endpoint configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.EndpointDetails"
+                        }
+                    ]
+                },
+                "destinationTransferOptions": {
+                    "description": "Destination-specific transfer options",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.TransferOptions"
+                        }
+                    ]
+                },
+                "source": {
+                    "description": "Source endpoint configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.EndpointDetails"
+                        }
+                    ]
+                },
+                "sourceTransferOptions": {
+                    "description": "Source-specific transfer options",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.TransferOptions"
+                        }
+                    ]
+                }
+            }
+        },
+        "transx.EndpointDetails": {
+            "type": "object",
+            "required": [
+                "dataPath"
+            ],
+            "properties": {
+                "backupCmd": {
+                    "description": "Command execution",
+                    "type": "string"
+                },
+                "dataPath": {
+                    "description": "Data location (required)",
+                    "type": "string"
+                },
+                "endpoint": {
+                    "description": "Endpoint configuration (auto-detects protocol based on provided fields)",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Port for SSH host/IP (default: 22) or Object Storage API endpoint (default: 1024)",
+                    "type": "integer"
+                },
+                "restoreCmd": {
+                    "description": "Restore command string to be executed on this endpoint",
+                    "type": "string"
+                }
+            }
+        },
+        "transx.ObjectStorageTransferOption": {
+            "type": "object",
+            "required": [
+                "accessKeyId"
+            ],
+            "properties": {
+                "accessKeyId": {
+                    "description": "AWS S3 Authentication (REQUIRED - must be provided by user)",
+                    "type": "string"
+                },
+                "expiresIn": {
+                    "description": "Presigned URL configuration",
+                    "type": "integer",
+                    "default": 3600
+                },
+                "maxRetries": {
+                    "description": "Maximum number of retry attempts (default: 3)",
+                    "type": "integer",
+                    "default": 3
+                },
+                "timeout": {
+                    "description": "HTTP request configuration (optional)",
+                    "type": "integer",
+                    "default": 300
+                },
+                "verifySSL": {
+                    "description": "Verify SSL certificates (CB-Spider default: false)",
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "transx.RsyncOption": {
+            "type": "object",
+            "properties": {
+                "archive": {
+                    "description": "-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)",
+                    "type": "boolean",
+                    "default": true
+                },
+                "compress": {
+                    "description": "Rsync-specific options",
+                    "type": "boolean",
+                    "default": true
+                },
+                "connectTimeout": {
+                    "description": "SSH connection timeout in seconds",
+                    "type": "integer",
+                    "default": 30
+                },
+                "delete": {
+                    "description": "--delete: Delete extraneous files from dest dirs",
+                    "type": "boolean",
+                    "default": false
+                },
+                "dryRun": {
+                    "description": "Perform a trial run with no changes made",
+                    "type": "boolean",
+                    "default": false
+                },
+                "exclude": {
+                    "description": "--exclude=PATTERN: List of patterns to exclude",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "include": {
+                    "description": "--include=PATTERN: List of patterns to include",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "insecureSkipHostKeyVerification": {
+                    "description": "InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.\nAdds \"-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null\" options.\nWarning: This can be a security risk and should only be used in trusted environments.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "progress": {
+                    "description": "Show progress during transfer",
+                    "type": "boolean",
+                    "default": false
+                },
+                "rsyncPath": {
+                    "description": "Path to the rsync executable (if empty, uses system PATH)",
+                    "type": "string",
+                    "default": "rsync"
+                },
+                "sshPrivateKeyPath": {
+                    "description": "SSH private key path",
+                    "type": "string"
+                },
+                "transferDirContentsOnly": {
+                    "description": "TransferDirContentsOnly, if true, adds a trailing slash to source paths\nto transfer only the contents of the directory and not the directory itself.",
+                    "type": "boolean",
+                    "default": false
+                },
+                "username": {
+                    "description": "SSH connection \u0026 authentication options (integrated)",
+                    "type": "string"
+                },
+                "verbose": {
+                    "description": "Transfer behavior options",
+                    "type": "boolean",
+                    "default": false
+                }
+            }
+        },
+        "transx.TransferOptions": {
+            "type": "object",
+            "required": [
+                "method"
+            ],
+            "properties": {
+                "method": {
+                    "description": "Transfer method specification (required)",
+                    "type": "string"
+                },
+                "objectStorageTransferOptions": {
+                    "description": "Object Storage-specific options (CB-Spider, AWS S3, etc.)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.ObjectStorageTransferOption"
+                        }
+                    ]
+                },
+                "rsyncOptions": {
+                    "description": "Rsync-specific options",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.RsyncOption"
+                        }
+                    ]
                 }
             }
         }
