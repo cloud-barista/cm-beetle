@@ -2521,6 +2521,156 @@ definitions:
           $ref: '#/definitions/model.VNetInfo'
         type: array
     type: object
+  transx.DataMigrationModel:
+    properties:
+      destination:
+        allOf:
+        - $ref: '#/definitions/transx.EndpointDetails'
+        description: Destination endpoint configuration
+      destinationTransferOptions:
+        allOf:
+        - $ref: '#/definitions/transx.TransferOptions'
+        description: Destination-specific transfer options
+      source:
+        allOf:
+        - $ref: '#/definitions/transx.EndpointDetails'
+        description: Source endpoint configuration
+      sourceTransferOptions:
+        allOf:
+        - $ref: '#/definitions/transx.TransferOptions'
+        description: Source-specific transfer options
+    required:
+    - destination
+    - destinationTransferOptions
+    - source
+    - sourceTransferOptions
+    type: object
+  transx.EndpointDetails:
+    properties:
+      backupCmd:
+        description: Command execution
+        type: string
+      dataPath:
+        description: Data location (required)
+        type: string
+      endpoint:
+        description: Endpoint configuration (auto-detects protocol based on provided
+          fields)
+        type: string
+      port:
+        description: 'Port for SSH host/IP (default: 22) or Object Storage API endpoint
+          (default: 1024)'
+        type: integer
+      restoreCmd:
+        description: Restore command string to be executed on this endpoint
+        type: string
+    required:
+    - dataPath
+    type: object
+  transx.ObjectStorageTransferOption:
+    properties:
+      accessKeyId:
+        description: AWS S3 Authentication (REQUIRED - must be provided by user)
+        type: string
+      expiresIn:
+        default: 3600
+        description: Presigned URL configuration
+        type: integer
+      maxRetries:
+        default: 3
+        description: 'Maximum number of retry attempts (default: 3)'
+        type: integer
+      timeout:
+        default: 300
+        description: HTTP request configuration (optional)
+        type: integer
+      verifySSL:
+        default: false
+        description: 'Verify SSL certificates (CB-Spider default: false)'
+        type: boolean
+    required:
+    - accessKeyId
+    type: object
+  transx.RsyncOption:
+    properties:
+      archive:
+        default: true
+        description: '-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)'
+        type: boolean
+      compress:
+        default: true
+        description: Rsync-specific options
+        type: boolean
+      connectTimeout:
+        default: 30
+        description: SSH connection timeout in seconds
+        type: integer
+      delete:
+        default: false
+        description: '--delete: Delete extraneous files from dest dirs'
+        type: boolean
+      dryRun:
+        default: false
+        description: Perform a trial run with no changes made
+        type: boolean
+      exclude:
+        description: '--exclude=PATTERN: List of patterns to exclude'
+        items:
+          type: string
+        type: array
+      include:
+        description: '--include=PATTERN: List of patterns to include'
+        items:
+          type: string
+        type: array
+      insecureSkipHostKeyVerification:
+        default: false
+        description: |-
+          InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.
+          Adds "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" options.
+          Warning: This can be a security risk and should only be used in trusted environments.
+        type: boolean
+      progress:
+        default: false
+        description: Show progress during transfer
+        type: boolean
+      rsyncPath:
+        default: rsync
+        description: Path to the rsync executable (if empty, uses system PATH)
+        type: string
+      sshPrivateKeyPath:
+        description: SSH private key path
+        type: string
+      transferDirContentsOnly:
+        default: false
+        description: |-
+          TransferDirContentsOnly, if true, adds a trailing slash to source paths
+          to transfer only the contents of the directory and not the directory itself.
+        type: boolean
+      username:
+        description: SSH connection & authentication options (integrated)
+        type: string
+      verbose:
+        default: false
+        description: Transfer behavior options
+        type: boolean
+    type: object
+  transx.TransferOptions:
+    properties:
+      method:
+        description: Transfer method specification (required)
+        type: string
+      objectStorageTransferOptions:
+        allOf:
+        - $ref: '#/definitions/transx.ObjectStorageTransferOption'
+        description: Object Storage-specific options (CB-Spider, AWS S3, etc.)
+      rsyncOptions:
+        allOf:
+        - $ref: '#/definitions/transx.RsyncOption'
+        description: Rsync-specific options
+    required:
+    - method
+    type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
   url: http://localhost:8056/tumblebug/api/index.html
@@ -2566,6 +2716,46 @@ paths:
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] System management'
+  /migration/data:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Migrate data from source to target
+
+        * Only relay mode is supported for now (both source and destination should be remote endpoints).
+        * Supported methods: rsync, object storage API (AWS S3 style)
+        * Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples
+      operationId: MigrateData
+      parameters:
+      - description: Request Body
+        in: body
+        name: reqBody
+        required: true
+        schema:
+          $ref: '#/definitions/transx.DataMigrationModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Migrate data from source to target
+      tags:
+      - '[Migration] Data (experimental)'
   /migration/ns/{nsId}/mci:
     get:
       consumes:

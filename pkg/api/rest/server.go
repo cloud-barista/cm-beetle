@@ -207,13 +207,6 @@ func RunServer(port string) {
 	// Test utility APIs
 	gBeetle.GET("/test/tracing", rest_common.TestTracing)
 
-	// Namespace API group
-	// gNamespace := gBeetle.Group("/ns")
-	// gNamespace.POST("", controller.RestPostNs)
-	// gNamespace.GET("", controller.RestGetAllNs)
-	// gNamespace.GET("/:nsId", controller.RestGetNs)
-	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
-
 	/*
 	 * API group for computing infra recommendation
 	 */
@@ -238,6 +231,13 @@ func RunServer(port string) {
 	gMigration := gBeetle.Group("/migration")
 	// Custom middleware to check if the Tumblebug is initialized
 	gMigration.Use(middlewares.TumblebugInitChecker)
+
+	// Namespace APIs
+	// gNamespace := gBeetle.Group("/ns")
+	// gNamespace.POST("", controller.RestPostNs)
+	// gNamespace.GET("", controller.RestGetAllNs)
+	// gNamespace.GET("/:nsId", controller.RestGetNs)
+	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
 
 	// Migration APIs for VM infrastructure
 	gMigration.POST("/ns/:nsId/mciWithDefaults", controller.MigrateInfraWithDefaults)
@@ -277,6 +277,9 @@ func RunServer(port string) {
 	gMigration.POST("/ns/:nsId/resources/sshKey", controller.CreateMigratedSSHKey)
 	gMigration.GET("/ns/:nsId/resources/sshKey/:sshKeyId", controller.GetMigratedSSHKey)
 	gMigration.DELETE("/ns/:nsId/resources/sshKey/:sshKeyId", controller.DeleteMigratedSSHKey)
+
+	// APIs for data migration (Experimental)
+	gMigration.POST("/data", controller.MigrateData)
 
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint
