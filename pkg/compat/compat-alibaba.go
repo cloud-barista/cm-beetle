@@ -45,9 +45,21 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.I
 	log.Debug().Msgf("Alibaba NVMe support check - Spec: %s (%s), Image: %s (%s)",
 		spec.CspSpecName, specNvmeSupport, image.CspImageName, imageNvmeSupport)
 
-	// If no NVMe info available, assume compatible
-	if specNvmeSupport == "" || imageNvmeSupport == "" {
-		log.Debug().Msgf("Alibaba NVMe support info missing, assuming compatible")
+	// If no NVMe info available, assume compatible with different confidence levels
+	if specNvmeSupport == "" && imageNvmeSupport == "" {
+		log.Debug().Msgf("Alibaba NVMe support info completely missing, assuming compatible")
+		return true
+	} else if specNvmeSupport == "" {
+		// Only image info available - be permissive since we don't know spec requirements
+		log.Debug().Msgf("Alibaba spec NVMe support unknown, image: %s, assuming compatible", imageNvmeSupport)
+		return true
+	} else if imageNvmeSupport == "" {
+		// Only spec info available - be permissive since most modern images support NVMe
+		if specNvmeSupport == "required" {
+			log.Debug().Msgf("Alibaba spec requires NVMe but image support unknown, assuming compatible (risky)")
+		} else {
+			log.Debug().Msgf("Alibaba spec NVMe: %s, image support unknown, assuming compatible", specNvmeSupport)
+		}
 		return true
 	}
 
@@ -58,15 +70,30 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.I
 		return imageNvmeSupport == "supported" || imageNvmeSupport == "required"
 
 	case "supported":
-		// Instance supports NVMe, any image is compatible
-		return true
+		// Instance supports NVMe, but compatibility depends on image driver support
+		if imageNvmeSupport == "supported" || imageNvmeSupport == "required" {
+			log.Debug().Msgf("Alibaba NVMe optimal - Spec supports NVMe, Image supports NVMe (optimal performance)")
+			return true
+		} else if imageNvmeSupport == "unsupported" {
+			// WARNING: This combination is risky - NVMe hardware without NVMe drivers
+			// Most modern NVMe SSDs cannot fall back to SATA/AHCI compatibility mode
+			log.Debug().Msgf("Alibaba NVMe risky - Spec supports NVMe, Image doesn't support NVMe (may fail to boot)")
+			return false // Changed from true to false - this combination is actually problematic
+		} else {
+			log.Debug().Msgf("Alibaba NVMe unknown - Spec supports NVMe, Image NVMe support unknown (assuming compatible)")
+			return true
+		}
 
 	case "unsupported":
-		// Instance doesn't support NVMe, image should not require it
-		if imageNvmeSupport == "supported" {
-			log.Debug().Msgf("Alibaba NVMe incompatible - Spec unsupported, Image supported (may cause disk issues)")
+		// Instance doesn't support NVMe hardware
+		// Images with NVMe drivers are still compatible (drivers just won't be used)
+		// Only incompatible if image REQUIRES NVMe (which is rare)
+		if imageNvmeSupport == "required" {
+			log.Debug().Msgf("Alibaba NVMe incompatible - Spec doesn't support NVMe, but Image requires it")
 			return false
 		}
+		// Image with NVMe driver support on non-NVMe hardware is fine
+		log.Debug().Msgf("Alibaba NVMe compatible - Spec unsupported, Image %s (NVMe drivers will be unused)", imageNvmeSupport)
 		return true
 
 	default:

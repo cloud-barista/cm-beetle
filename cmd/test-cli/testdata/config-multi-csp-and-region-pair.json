@@ -10,8 +10,8 @@
     },
     {
       "csp": "azure",
-      "region": "koreacentral",
-      "name": "Azure-Seoul"
+      "region": "koreasouth",
+      "name": "Azure-Busan"
     },
     {
       "csp": "gcp",
