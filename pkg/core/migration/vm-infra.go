@@ -16,6 +16,8 @@ package migration
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -233,6 +235,10 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 
 	sgInfoList := []tbmodel.SecurityGroupInfo{}
 	for _, sgReq := range sgReqList {
+
+		// Check if SSH access rule exists and add if missing
+		sgReq = checkAndSupportSSHAccessRule(sgReq)
+
 		// Create security group
 		log.Debug().Msgf("Creating a security group (nsId: %s, sgReq.sgName: %s, sgReq.VNetId: %s, vNetInfo.vNetId: %s)",
 			nsId, sgReq.Name, sgReq.VNetId, vNetInfo.Id)
@@ -269,6 +275,23 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 		return emptyRet, err
 	}
 	log.Debug().Msgf("tbMciReq: %+v", tbMciReq)
+
+	// // Set post-command for stable mci provisioning if a user didn't set it
+	// // If a user already set it, use it as is
+
+	// if len(tbMciReq.PostCommand.Command) == 0 {
+	// 	log.Debug().Msgf("Setting default post-command for stable MCI provisioning (nsId: %s)", nsId)
+
+	// 	commands := []string{
+	// 		"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip",
+	// 	}
+	// 	username := "cb-user"
+
+	// 	tbMciReq.PostCommand = tbmodel.MciCmdReq{
+	// 		UserName: username,
+	// 		Command:  commands,
+	// 	}
+	// }
 
 	// Create multi-cloud infrastructure
 	mciInfo, err := tbCli.CreateMci(nsId, tbMciReq)
@@ -682,4 +705,122 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	}
 
 	return nil
+}
+
+// checkAndSupportSSHAccessRule checks if SSH access rule exists in the security group and adds it if missing
+// This function provides SSH connectivity support during migration phase
+func checkAndSupportSSHAccessRule(sgReq cloudmodel.SecurityGroupReq) cloudmodel.SecurityGroupReq {
+	// Check if FirewallRules is nil
+	if sgReq.FirewallRules == nil {
+		log.Warn().Msgf("Security group '%s' has no firewall rules defined, adding SSH access rule for remote management", sgReq.Name)
+
+		sshRule := cloudmodel.FirewallRuleReq{
+			Direction: "inbound",
+			Protocol:  "tcp",
+			CIDR:      "0.0.0.0/0",
+			Ports:     "22",
+		}
+
+		rules := []cloudmodel.FirewallRuleReq{sshRule}
+		sgReq.FirewallRules = &rules
+
+		return sgReq
+	}
+
+	// Check if SSH rule exists in the firewall rules
+	hasSSHRule := containsSSHRuleInMigration(*sgReq.FirewallRules)
+
+	if !hasSSHRule {
+		log.Warn().Msgf("Security group '%s' does not have SSH access rule from 0.0.0.0/0, adding SSH access rule for remote management", sgReq.Name)
+
+		sshRule := cloudmodel.FirewallRuleReq{
+			Direction: "inbound",
+			Protocol:  "tcp",
+			CIDR:      "0.0.0.0/0",
+			Ports:     "22",
+		}
+
+		// Add SSH rule to existing rules
+		*sgReq.FirewallRules = append(*sgReq.FirewallRules, sshRule)
+	} else {
+		log.Debug().Msgf("Security group '%s' already has SSH access rule from 0.0.0.0/0", sgReq.Name)
+	}
+
+	return sgReq
+}
+
+// containsSSHRuleInMigration checks if the security group rules contain an SSH access rule from 0.0.0.0/0
+// This function is specifically used during migration phase
+func containsSSHRuleInMigration(rules []cloudmodel.FirewallRuleReq) bool {
+	for _, rule := range rules {
+		// Must be inbound TCP rule from 0.0.0.0/0
+		if rule.Direction != "inbound" || (rule.Protocol != "tcp" && rule.Protocol != "TCP") {
+			continue
+		}
+
+		// Must allow access from anywhere (0.0.0.0/0)
+		if rule.CIDR != "0.0.0.0/0" {
+			continue
+		}
+
+		// Check if port 22 is covered by this rule
+		if isSSHPortCoveredInMigration(rule.Ports) {
+			log.Debug().Msgf("SSH rule found during migration: protocol=%s, direction=%s, ports=%s, cidr=%s",
+				rule.Protocol, rule.Direction, rule.Ports, rule.CIDR)
+			return true
+		}
+	}
+	return false
+}
+
+// isSSHPortCoveredInMigration checks if port 22 is covered by the given port specification
+// Handles three port formats: single port (22), comma-separated ports (22,23,24), port range (22-24)
+func isSSHPortCoveredInMigration(portSpec string) bool {
+	if portSpec == "" {
+		return false
+	}
+
+	portSpec = strings.TrimSpace(portSpec)
+
+	// Case 1: Single port (22)
+	if !strings.Contains(portSpec, ",") && !strings.Contains(portSpec, "-") {
+		return portSpec == "22"
+	}
+
+	// Case 2: Comma-separated ports (22,23,24)
+	if strings.Contains(portSpec, ",") {
+		ports := strings.Split(portSpec, ",")
+		for _, port := range ports {
+			port = strings.TrimSpace(port)
+			if port == "22" {
+				log.Debug().Msgf("SSH port 22 found in comma-separated ports during migration: %s", portSpec)
+				return true
+			}
+		}
+		return false
+	}
+
+	// Case 3: Port range (22-24)
+	if strings.Contains(portSpec, "-") {
+		parts := strings.Split(portSpec, "-")
+		if len(parts) != 2 {
+			log.Warn().Msgf("Invalid port range format during migration: %s", portSpec)
+			return false
+		}
+
+		startPort, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+		endPort, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+
+		if err1 != nil || err2 != nil {
+			log.Warn().Msgf("Invalid port range format - non-numeric values during migration: %s", portSpec)
+			return false
+		}
+
+		if startPort <= 22 && 22 <= endPort {
+			log.Debug().Msgf("SSH port 22 found in port range during migration: %s", portSpec)
+			return true
+		}
+	}
+
+	return false
 }

@@ -1666,26 +1666,21 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	// 	CIDR:       "0.0.0.0/0",
 	// 	FromPort:   "0",
 	// 	ToPort:     "0",
-	// }
-	ruleToAllowSSHInboundTraffic := cloudmodel.FirewallRuleReq{
-		Direction: "inbound",
-		Protocol:  "tcp",
-		CIDR:      "0.0.0.0/0",
-		Ports:     "22",
-	}
-
-	// [Process] Recommend the security group
+	
+	// [Process] Recommend the security group based on server.FirewallTable
 	// Create security group recommendations
 	var sgRules []cloudmodel.FirewallRuleReq
-	// 1. Set default security group rules if no firewall rules are provided
+	var firewallRulesPtr *[]cloudmodel.FirewallRuleReq
+
+	// Generate security group rules based on server firewall configuration
 	if len(firewallRules) == 0 {
-		log.Warn().Msg("no firewall rules provided, using default rules")
-		// Allow all outbound traffic and deny all inbound traffic
-		// TODO: Check if the default rules are OK on testing.
-		// sgRules = append(sgRules, ruleToAllowAllOutboundTraffic)
-		sgRules = append(sgRules, ruleToAllowSSHInboundTraffic)
+		log.Warn().Msg("No firewall rules provided from server.FirewallTable - security group will be created without predefined rules")
+		// Note: SSH access rule will be added during migration phase if needed
+		firewallRulesPtr = nil // Use nil to indicate no rules defined
 	} else {
+		log.Info().Msgf("Generating security group rules based on %d firewall rules from server configuration", len(firewallRules))
 		sgRules = generateSecurityGroupRules(firewallRules)
+		firewallRulesPtr = &sgRules // Point to the generated rules
 	}
 
 	log.Debug().Msgf("sgRules: %+v", sgRules)
@@ -1697,7 +1692,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 		VNetId:         "INSERT_YOUR_VNET_ID",
 		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
 		Description:    fmt.Sprintf("Recommended security group for %s", server.MachineId), // Set MachineId to identify the source server
-		FirewallRules:  &sgRules,
+		FirewallRules:  firewallRulesPtr,
 	}
 
 	log.Debug().Msgf("recommendedSecurityGroup: %+v", recommendedSecurityGroup)
