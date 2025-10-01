@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,9 +15,12 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/ssh"
 
 	// Import Beetle's existing packages
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
+	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
@@ -245,7 +249,7 @@ func main() {
 		Config:        config,
 		Results:       make([]TestResults, 0),
 		CspResults:    make(map[string]TestResults),
-		TotalTests:    6, // Total number of API tests per CSP-Region pair
+		TotalTests:    7, // Total number of API tests per CSP-Region pair
 		TotalCspPairs: len(cspRegionPairs),
 	}
 
@@ -580,13 +584,48 @@ func main() {
 		}
 
 		/*
-		 * Test 6: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
+		 * Test 6: Remote Command to check accessibility of migrated VM
 		 */
 		var result6 TestResults
 		if skipRemainingTests {
 			// Create a skipped test result
 			result6 = TestResults{
-				TestName:     "Test 6: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}",
+				TestName:     "Test 6: Remote Command Accessibility Check",
+				StartTime:    time.Now(),
+				EndTime:      time.Now(),
+				Duration:     0,
+				Success:      false,
+				Skipped:      true,
+				StatusCode:   0,
+				Response:     map[string]interface{}{},
+				Error:        "Test skipped due to previous test failure",
+				ErrorMessage: "Test skipped due to previous test failure",
+				RequestURL:   "N/A (SSH command)",
+			}
+			log.Warn().Msgf("Test 6 skipped for %s due to previous test failure", displayName)
+		} else {
+			result6 = runRemoteCommandTest(client, config, mciId, displayName)
+		}
+
+		suite.Results = append(suite.Results, result6)
+		cspReport.TestResults = append(cspReport.TestResults, result6)
+
+		if result6.Skipped {
+			pairSkipped++
+		} else if !result6.Success {
+			pairFailed++
+		} else {
+			pairPassed++
+		}
+
+		/*
+		 * Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
+		 */
+		var result7 TestResults
+		if skipRemainingTests {
+			// Create a skipped test result
+			result7 = TestResults{
+				TestName:     "Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}",
 				StartTime:    time.Now(),
 				EndTime:      time.Now(),
 				Duration:     0,
@@ -598,20 +637,20 @@ func main() {
 				ErrorMessage: "Test skipped due to previous test failure",
 				RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci/%s", config.BeetleURL, config.NamespaceID, mciId),
 			}
-			log.Warn().Msgf("Test 6 skipped for %s due to previous test failure", displayName)
+			log.Warn().Msgf("Test 7 skipped for %s due to previous test failure", displayName)
 		} else {
-			result6, _ = runDeleteMciTest(client, config, mciId, displayName)
-			if result6.Success {
-				cspReport.DeleteMCIResponse = result6.Response
+			result7, _ = runDeleteMciTest(client, config, mciId, displayName)
+			if result7.Success {
+				cspReport.DeleteMCIResponse = result7.Response
 			}
 		}
 
-		suite.Results = append(suite.Results, result6)
-		cspReport.TestResults = append(cspReport.TestResults, result6)
+		suite.Results = append(suite.Results, result7)
+		cspReport.TestResults = append(cspReport.TestResults, result7)
 
-		if result6.Skipped {
+		if result7.Skipped {
 			pairSkipped++
-		} else if !result6.Success {
+		} else if !result7.Success {
 			pairFailed++
 		} else {
 			pairPassed++
@@ -1205,10 +1244,10 @@ func cleanupMci(client *resty.Client, config TestConfig, mciId, displayName stri
 	}
 }
 
-// runDeleteMciTest performs Test 6: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
+// runDeleteMciTest performs Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
 func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayName string) (TestResults, bool) {
 	if mciId == "" {
-		fmt.Println("⚠️  Test 6 skipped: No MCI ID available")
+		fmt.Println("⚠️  Test 7 skipped: No MCI ID available")
 		return TestResults{
 			TestName: fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
 			Success:  false,
@@ -1217,7 +1256,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 		}, false
 	}
 
-	fmt.Printf("\n--- Test 6: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.NamespaceID, mciId)
+	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.NamespaceID, mciId)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -1285,7 +1324,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	result.RequestURL = url
 	result.RequestBody = nil
 	result.Response = response
-	fmt.Println("✅ Test 6 passed")
+	fmt.Println("✅ Test 7 passed")
 	return result, true
 }
 
@@ -1774,12 +1813,216 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("</details>\n\n")
 	}
 
-	// Test Case 6: Delete MCI (always show if test was attempted)
+	// Test Case 6: Remote Command Accessibility Check
 	if len(report.TestResults) > 5 && report.TestResults[5].TestName != "" {
-		sb.WriteString("### Test Case 6: Delete the migrated computing infra\n\n")
+		sb.WriteString("### Test Case 6: Remote Command Accessibility Check\n\n")
 
 		// API request information
-		sb.WriteString("#### 6.1 API Request Information\n\n")
+		sb.WriteString("#### 6.1 Test Information\n\n")
+		sb.WriteString("- **Test Type**: SSH Connectivity Test for All VMs\n")
+		sb.WriteString("- **Purpose**: Verify that all migrated VMs are accessible via SSH\n")
+		sb.WriteString("- **Method**: Extract public IP and SSH key from MCI access info for each VM, then execute remote command\n")
+		sb.WriteString("- **Command Executed**: `uname -a` (to verify system information)\n")
+		sb.WriteString("- **Authentication**: SSH key-based authentication\n")
+		sb.WriteString("- **Scope**: Tests all VMs across all subgroups in the MCI\n\n")
+
+		// Test result information
+		sb.WriteString("#### 6.2 Test Result Information\n\n")
+		remoteResult := report.TestResults[5] // 6th test is remote command
+		if remoteResult.Success {
+			// Success case - show detailed results for all VMs
+			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+			sb.WriteString("- **Result**: All VMs are accessible via SSH\n\n")
+
+			if response, ok := remoteResult.Response["overallStatus"].(map[string]interface{}); ok {
+				if message, exists := response["message"].(string); exists {
+					sb.WriteString(fmt.Sprintf("**Summary**: %s\n\n", message))
+				}
+			}
+
+			if totalVMs, ok := remoteResult.Response["totalVMs"].(int); ok {
+				if successfulTests, ok := remoteResult.Response["successfulTests"].(int); ok {
+					if failedTests, ok := remoteResult.Response["failedTests"].(int); ok {
+						sb.WriteString("**Test Statistics**:\n\n")
+						sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
+						sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
+						sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
+					}
+				}
+			}
+
+			// Show VM-specific results
+			if vmResults, ok := remoteResult.Response["vmResults"].([]interface{}); ok && len(vmResults) > 0 {
+				sb.WriteString("**Per-VM Test Results**:\n\n")
+				for _, vmResult := range vmResults {
+					if vmMap, ok := vmResult.(map[string]interface{}); ok {
+						if vmId, ok := vmMap["vmId"].(string); ok {
+							sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
+							if publicIP, ok := vmMap["publicIP"].(string); ok {
+								sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
+							}
+							if subGroup, ok := vmMap["subGroup"].(string); ok {
+								sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
+							}
+							if status, ok := vmMap["status"].(string); ok {
+								if status == "success" {
+									sb.WriteString(" - ✅ **SUCCESS**")
+									if command, ok := vmMap["command"].(string); ok && command != "" {
+										sb.WriteString(fmt.Sprintf(" (Command: `%s`)", command))
+									}
+									if output, ok := vmMap["output"].(string); ok && output != "" {
+										sb.WriteString(fmt.Sprintf(" → Output: `%s`", strings.TrimSpace(output)))
+									}
+								} else {
+									sb.WriteString(" - ❌ **FAILED**")
+									if errorMsg, ok := vmMap["error"].(string); ok {
+										sb.WriteString(fmt.Sprintf(" (Error: %s)", errorMsg))
+									}
+								}
+							}
+							sb.WriteString("\n")
+						}
+					}
+				}
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString("**Complete Test Details**:\n\n")
+			sb.WriteString("<details>\n")
+			sb.WriteString("  <summary> <ins>Click to see detailed test results </ins> </summary>\n\n")
+			sb.WriteString("```json\n")
+			remoteJSON, _ := json.MarshalIndent(remoteResult.Response, "", "  ")
+			sb.WriteString(string(remoteJSON))
+			sb.WriteString("\n```\n\n")
+			sb.WriteString("</details>\n\n")
+		} else if remoteResult.Skipped {
+			// Skipped case
+			sb.WriteString("- **Status**: ⏭️ **SKIPPED**\n")
+			sb.WriteString(fmt.Sprintf("- **Reason**: %s\n\n", remoteResult.Error))
+		} else {
+			// Failure case - check if it's partial failure or complete failure
+			if totalVMs, ok := remoteResult.Response["totalVMs"].(int); ok {
+				if successfulTests, ok := remoteResult.Response["successfulTests"].(int); ok {
+					if failedTests, ok := remoteResult.Response["failedTests"].(int); ok {
+						if successfulTests > 0 {
+							// Partial failure
+							sb.WriteString("- **Status**: ⚠️ **PARTIAL SUCCESS**\n")
+							sb.WriteString("- **Result**: Some VMs failed SSH connectivity test\n\n")
+							sb.WriteString("**Test Statistics**:\n\n")
+							sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
+							sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
+							sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
+						} else {
+							// Complete failure
+							sb.WriteString("- **Status**: ❌ **FAILED**\n")
+							sb.WriteString("- **Error**: All SSH connectivity tests failed\n\n")
+						}
+					}
+				}
+			} else {
+				// Complete failure
+				sb.WriteString("- **Status**: ❌ **FAILED**\n")
+				sb.WriteString("- **Error**: SSH connectivity test failed\n\n")
+			}
+
+			if remoteResult.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(remoteResult.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			} else if remoteResult.Error != "" {
+				sb.WriteString("**Error**:\n\n```\n")
+				sb.WriteString(remoteResult.Error)
+				sb.WriteString("\n```\n\n")
+			}
+
+			if remoteResult.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", remoteResult.ErrorDetails))
+			}
+
+			// Show failed VM details if available
+			if vmResults, ok := remoteResult.Response["vmResults"].([]map[string]interface{}); ok && len(vmResults) > 0 {
+				sb.WriteString("**Detailed VM Analysis**:\n\n")
+				for _, vmResult := range vmResults {
+					if vmId, ok := vmResult["vmId"].(string); ok {
+						sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
+						if publicIP, ok := vmResult["publicIP"].(string); ok {
+							sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
+						}
+						if subGroup, ok := vmResult["subGroup"].(string); ok {
+							sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
+						}
+
+						if status, ok := vmResult["status"].(string); ok {
+							if status == "success" {
+								sb.WriteString(" - ✅ **SUCCESS**")
+								if output, ok := vmResult["output"].(string); ok && output != "" {
+									sb.WriteString(fmt.Sprintf(" (Output: `%s`)", strings.TrimSpace(output)))
+								}
+							} else {
+								sb.WriteString(" - ❌ **FAILED**")
+
+								// Show network test result if available
+								if networkTest, ok := vmResult["networkTest"].(map[string]interface{}); ok {
+									if reachable, ok := networkTest["reachable"].(bool); ok {
+										if reachable {
+											if latency, ok := networkTest["latency"].(string); ok {
+												sb.WriteString(fmt.Sprintf(" | Network: ✅ (Latency: %s)", latency))
+											} else {
+												sb.WriteString(" | Network: ✅")
+											}
+										} else {
+											if netErr, ok := networkTest["error"].(string); ok {
+												sb.WriteString(fmt.Sprintf(" | Network: ❌ (%s)", netErr))
+											} else {
+												sb.WriteString(" | Network: ❌")
+											}
+										}
+									}
+								}
+
+								// Show diagnosis if available
+								if diagnosis, ok := vmResult["diagnosis"].(string); ok {
+									sb.WriteString(fmt.Sprintf("\n  - **Diagnosis**: %s", diagnosis))
+								}
+
+								// Show error details
+								if errorMsg, ok := vmResult["error"].(string); ok {
+									sb.WriteString(fmt.Sprintf("\n  - **Error**: %s", errorMsg))
+								}
+							}
+						}
+						sb.WriteString("\n")
+					}
+				}
+				sb.WriteString("\n")
+
+				// Add troubleshooting guide for failed VMs
+				hasFailures := false
+				for _, vmResult := range vmResults {
+					if status, ok := vmResult["status"].(string); ok && status == "failed" {
+						hasFailures = true
+						break
+					}
+				}
+
+				if hasFailures {
+					sb.WriteString("**Troubleshooting Guide**:\n\n")
+					sb.WriteString("1. **Network Issues**: If network test fails, check security group rules for port 22\n")
+					sb.WriteString("2. **SSH Service**: If network test passes but SSH fails, check if SSH service is running on VM\n")
+					sb.WriteString("3. **VM Status**: Verify that VM is fully started and not in a transitional state\n")
+					sb.WriteString("4. **Authentication**: Ensure SSH key matches the key used during VM creation\n")
+					sb.WriteString("5. **User Account**: Try different usernames (ubuntu, ec2-user, admin, root)\n\n")
+				}
+			}
+		}
+	}
+
+	// Test Case 7: Delete MCI (always show if test was attempted)
+	if len(report.TestResults) > 6 && report.TestResults[6].TestName != "" {
+		sb.WriteString("### Test Case 7: Delete the migrated computing infra\n\n")
+
+		// API request information
+		sb.WriteString("#### 7.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Delete the migrated infrastructure and clean up resources\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
@@ -1788,8 +2031,8 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Request Body**: None (DELETE request)\n\n")
 
 		// API response information
-		sb.WriteString("#### 6.2 API Response Information\n\n")
-		deleteResult := report.TestResults[5] // 6th test is delete
+		sb.WriteString("#### 7.2 API Response Information\n\n")
+		deleteResult := report.TestResults[6] // 7th test is delete
 		if deleteResult.Success && len(report.DeleteMCIResponse) > 0 {
 			// Success case - show response
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
@@ -1799,6 +2042,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 			delJSON, _ := json.MarshalIndent(report.DeleteMCIResponse, "", "  ")
 			sb.WriteString(string(delJSON))
 			sb.WriteString("\n```\n\n")
+		} else if deleteResult.Skipped {
+			// Skipped case
+			sb.WriteString("- **Status**: ⏭️ **SKIPPED**\n")
+			sb.WriteString(fmt.Sprintf("- **Reason**: %s\n\n", deleteResult.Error))
 		} else if !deleteResult.Success {
 			// Failure case - show error message
 			sb.WriteString("- **Status**: ❌ **FAILED**\n")
@@ -1834,6 +2081,217 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	}
 
 	return sb.String()
+}
+
+// runRemoteCommandTest performs Test 6: Remote Command to check accessibility of migrated VM
+func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displayName string) TestResults {
+	log.Info().Msg("\n--- Test 6: Remote Command Accessibility Check ---")
+
+	// Wait before test for stability with animation
+	animatedSleep(5*time.Second, "Waiting before VM accessibility test")
+
+	result := TestResults{
+		TestName:   fmt.Sprintf("Test 6: Remote Command Accessibility Check (%s)", displayName),
+		StartTime:  time.Now(),
+		RequestURL: "N/A (SSH command)",
+	}
+
+	defer func() {
+		result.EndTime = time.Now()
+		result.Duration = result.EndTime.Sub(result.StartTime)
+	}()
+
+	// Step 1: Get MCI Access Info
+	log.Info().Msg("Step 1: Getting MCI access information...")
+
+	tbClient := tbclient.NewDefaultClient()
+	accessInfo, err := tbClient.ReadMciAccessInfo(config.NamespaceID, mciId, "accessinfo", "showSshKey")
+	if err != nil {
+		populateErrorInfo(&result, err, 0, "ReadMciAccessInfo", nil)
+		log.Error().Err(err).Msg("Failed to get MCI access info")
+		return result
+	}
+
+	log.Debug().Msgf("Access info retrieved successfully")
+
+	// Step 2: Extract all VM information from all subgroups
+	if len(accessInfo.MciSubGroupAccessInfo) == 0 {
+		err := fmt.Errorf("no subgroups found in MCI access info")
+		populateErrorInfo(&result, err, 0, "Extract VM Info", nil)
+		log.Error().Err(err).Msg("No VM subgroups found")
+		return result
+	}
+
+	// Collect all VMs from all subgroups
+	var allVMs []struct {
+		SubGroupId string
+		VmInfo     interface{}
+	}
+
+	totalVMs := 0
+	for _, subGroup := range accessInfo.MciSubGroupAccessInfo {
+		for _, vmInfo := range subGroup.MciVmAccessInfo {
+			allVMs = append(allVMs, struct {
+				SubGroupId string
+				VmInfo     interface{}
+			}{
+				SubGroupId: subGroup.SubGroupId,
+				VmInfo:     vmInfo,
+			})
+			totalVMs++
+		}
+	}
+
+	if totalVMs == 0 {
+		err := fmt.Errorf("no VMs found in any subgroup")
+		populateErrorInfo(&result, err, 0, "Extract VM Info", nil)
+		log.Error().Err(err).Msg("No VMs found in any subgroup")
+		return result
+	}
+
+	log.Info().Msgf("Step 2: Found %d VMs across %d subgroups for testing", totalVMs, len(accessInfo.MciSubGroupAccessInfo))
+
+	// Step 3: Perform SSH connectivity test for all VMs
+	log.Info().Msg("Step 3: Testing SSH connectivity for all VMs...")
+
+	vmTestResults := make([]map[string]interface{}, 0)
+	successfulTests := 0
+	failedTests := 0
+
+	for i, vm := range allVMs {
+		// Type assertion to get VM info
+		vmInfo, ok := vm.VmInfo.(tbmodel.MciVmAccessInfo)
+		if !ok {
+			log.Error().Msgf("Failed to cast VM info for VM %d", i+1)
+			failedTests++
+			continue
+		}
+
+		publicIP := vmInfo.PublicIP
+		privateKey := vmInfo.PrivateKey
+		vmId := vmInfo.VmId
+		userName := vmInfo.VmUserName
+
+		log.Info().Msgf("Testing VM %d/%d: %s (IP: %s, SubGroup: %s)", i+1, totalVMs, vmId, publicIP, vm.SubGroupId)
+
+		vmResult := map[string]interface{}{
+			"vmId":      vmId,
+			"publicIP":  publicIP,
+			"subGroup":  vm.SubGroupId,
+			"userName":  userName,
+			"testOrder": i + 1,
+		}
+
+		if publicIP == "" {
+			vmResult["status"] = "failed"
+			vmResult["error"] = "no public IP available"
+			vmResult["sshTest"] = "skipped"
+			failedTests++
+			log.Warn().Str("vmId", vmId).Msg("⚠️ Skipping SSH test - no public IP available")
+		} else if privateKey == "" {
+			vmResult["status"] = "failed"
+			vmResult["error"] = "no private key available"
+			vmResult["sshTest"] = "skipped"
+			failedTests++
+			log.Warn().Str("vmId", vmId).Msg("⚠️ Skipping SSH test - no private key available")
+		} else {
+			// Determine username (priority: vmInfo.VmUserName > default "ubuntu")
+			sshUserName := userName
+			if sshUserName == "" {
+				sshUserName = "ubuntu" // Default user for most cloud VMs
+			}
+
+			// Perform SSH connectivity test
+			log.Info().Str("vmId", vmId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
+
+			sshResult, err := testSSHConnectivity(publicIP, privateKey, sshUserName)
+			if err != nil {
+				vmResult["status"] = "failed"
+				vmResult["error"] = err.Error()
+				vmResult["sshTest"] = "failed"
+				failedTests++
+				log.Error().Err(err).Str("vmId", vmId).Str("ip", publicIP).Msg("❌ SSH connectivity test failed")
+			} else {
+				vmResult["status"] = "success"
+				vmResult["sshTest"] = "successful"
+				vmResult["command"] = "uname -a"
+				vmResult["output"] = sshResult
+				successfulTests++
+				log.Info().Str("vmId", vmId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
+			}
+		}
+
+		vmTestResults = append(vmTestResults, vmResult)
+	}
+
+	// Determine overall test result
+	overallSuccess := failedTests == 0
+
+	// Success or partial success
+	result.Success = overallSuccess
+	result.StatusCode = 200
+	result.Response = map[string]interface{}{
+		"totalVMs":        totalVMs,
+		"successfulTests": successfulTests,
+		"failedTests":     failedTests,
+		"overallStatus": map[string]interface{}{
+			"success": overallSuccess,
+			"message": fmt.Sprintf("%d/%d VMs accessible via SSH", successfulTests, totalVMs),
+		},
+		"vmResults": vmTestResults,
+	}
+
+	if overallSuccess {
+		log.Info().Int("successful", successfulTests).Int("total", totalVMs).Msg("✅ All VMs passed SSH connectivity test")
+		fmt.Println("✅ Test 6 passed")
+	} else {
+		log.Warn().Int("successful", successfulTests).Int("failed", failedTests).Int("total", totalVMs).Msg("⚠️ Some VMs failed SSH connectivity test")
+		fmt.Printf("❌ Test 6 failed: %d/%d VMs failed SSH connectivity\n", failedTests, totalVMs)
+	}
+
+	return result
+}
+
+// testSSHConnectivity tests SSH connection to a VM and runs a simple command
+func testSSHConnectivity(host, privateKey, username string) (string, error) {
+	// Parse private key
+	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse private key: %v", err)
+	}
+
+	// SSH client config with reasonable timeout
+	config := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Note: For testing only
+		Timeout:         45 * time.Second,            // Reasonable timeout
+	}
+
+	// Connect to SSH
+	address := net.JoinHostPort(host, "22")
+	conn, err := ssh.Dial("tcp", address, config)
+	if err != nil {
+		return "", fmt.Errorf("failed to connect via SSH: %v", err)
+	}
+	defer conn.Close()
+
+	// Create session
+	session, err := conn.NewSession()
+	if err != nil {
+		return "", fmt.Errorf("failed to create SSH session: %v", err)
+	}
+	defer session.Close()
+
+	// Run command
+	output, err := session.CombinedOutput("uname -a")
+	if err != nil {
+		return "", fmt.Errorf("failed to run command: %v", err)
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
 
 // Animation functions

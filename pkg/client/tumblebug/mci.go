@@ -156,6 +156,43 @@ func (c *TumblebugClient) ReadMci(nsId, mciId string) (tbmodel.MciInfo, error) {
 	return resBody, nil
 }
 
+func (c *TumblebugClient) ReadMciAccessInfo(nsId, mciId, option, accessInfoOption string) (tbmodel.MciAccessInfo, error) {
+	log.Debug().Msg("Retrieving MCI Access Info")
+
+	var emptyRet tbmodel.MciAccessInfo
+
+	method := "GET"
+	url := fmt.Sprintf("%s/ns/%s/mci/%s", c.restUrl, nsId, mciId)
+	if option != "" {
+		url += fmt.Sprintf("?option=%s", option)
+		if accessInfoOption != "" {
+			url += fmt.Sprintf("&accessInfoOption=%s", accessInfoOption)
+		}
+	}
+
+	reqBody := common.NoBody
+	resBody := tbmodel.MciAccessInfo{}
+
+	err := common.ExecuteHttpRequest(
+		c.client,
+		method,
+		url,
+		nil,
+		false,
+		&reqBody,
+		&resBody,
+		common.ShortDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to retrieve MCI Access Info")
+		return emptyRet, err
+	}
+
+	log.Debug().Msgf("Retrieved MCI Access Info (mciId: %s) successfully", mciId)
+	return resBody, nil
+}
+
 func (c *TumblebugClient) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Retrieving MCI IDs")
 
