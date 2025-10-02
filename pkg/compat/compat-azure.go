@@ -66,11 +66,13 @@ func getAzureVmGeneration(vmSize string) string {
 
 	// Gen1-only families (legacy, classic)
 	gen1OnlyPatterns := []string{
-		`^basic_a\d+`,         // Basic A-series (classic)
-		`^standard_a\d+`,      // Standard A-series (classic)
-		`^standard_a\d+_v\d+`, // A-series versions (mostly Gen1 only)
-		`^standard_g\d+`,      // G-series (legacy, Gen1 only)
-		`^standard_gs\d+`,     // GS-series (legacy, Gen1 only)
+		`^basic_a\d+`,           // Basic A-series (classic)
+		`^standard_a\d+`,        // Standard A-series (classic)
+		`^standard_a\d+_v\d+`,   // A-series versions (mostly Gen1 only)
+		`^standard_g\d+`,        // G-series (legacy, Gen1 only)
+		`^standard_gs\d+`,       // GS-series (legacy, Gen1 only)
+		`^standard_d[1-4]_v3$`,  // Small D-v3 series (D1_v3, D2_v3, D3_v3, D4_v3) are Gen1 only
+		`^standard_ds[1-4]_v3$`, // Small DS-v3 series (DS1_v3, DS2_v3, DS3_v3, DS4_v3) are Gen1 only
 	}
 
 	for _, pattern := range gen1OnlyPatterns {

@@ -445,6 +445,17 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		 */
 		// TODO: Select a subnet by the server's network information (for now, select the first one)
 
+		// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
+		// Note: "TYPE1" for RootDiskType is the first in the list
+		// - AWS: ["standard", "gp2", "gp3"],
+		// - Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"],
+		// - GCP: [ "pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"],
+		// - ALIBABA: ["cloud_essd", "cloud_efficiency", "cloud", "cloud_ssd"],
+		// - TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
+		// - NCP: ["HDD"]
+		// - NHN: ["General_HDD", "General_SSD"]
+		// - KT: ["HDD", "SSD"]
+
 		// * Set names to indicate a dependency between resources.
 		tempCreateSubGroupReq := cloudmodel.CreateSubGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
@@ -455,8 +466,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
-			RootDiskSize:     "",                                                   // TBD
-			RootDiskType:     "",                                                   // TBD
+			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
+			RootDiskSize:     "30",                                                 // Set 30 GiB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
 			VmUserPassword:   "",                                                   // TBD
@@ -464,6 +475,12 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Label: map[string]string{
 				"sourceMachineId": server.MachineId,
 			},
+		}
+
+		// ! Set the root disk type for Alibaba Cloud
+		if csp == "alibaba" && tempCreateSubGroupReq.RootDiskType == "" {
+			log.Warn().Msg("set the root disk type to 'cloud_essd' for Alibaba Cloud")
+			tempCreateSubGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
 		}
 
 		// Append the VM request to the list
@@ -1666,7 +1683,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	// 	CIDR:       "0.0.0.0/0",
 	// 	FromPort:   "0",
 	// 	ToPort:     "0",
-	
+
 	// [Process] Recommend the security group based on server.FirewallTable
 	// Create security group recommendations
 	var sgRules []cloudmodel.FirewallRuleReq

@@ -1562,7 +1562,11 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		case 4:
 			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID)
 		case 5:
-			endpoint = fmt.Sprintf("`DELETE /beetle/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID)
+			endpoint = "Remote Command Accessibility Check" // Test 6: SSH connectivity check
+		case 6:
+			endpoint = fmt.Sprintf("`DELETE /beetle/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID) // Test 7: Delete MCI
+		default:
+			endpoint = "" // Handle any additional tests
 		}
 
 		duration := result.Duration.Truncate(time.Millisecond)
@@ -2172,6 +2176,11 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 		vmId := vmInfo.VmId
 		userName := vmInfo.VmUserName
 
+		if userName == "" {
+			log.Warn().Str("vmId", vmId).Msg("No username provided in access info, defaulting to 'cb-user'")
+			userName = "cb-user" // Default user in this platform
+		}
+
 		log.Info().Msgf("Testing VM %d/%d: %s (IP: %s, SubGroup: %s)", i+1, totalVMs, vmId, publicIP, vm.SubGroupId)
 
 		vmResult := map[string]interface{}{
@@ -2195,11 +2204,15 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 			failedTests++
 			log.Warn().Str("vmId", vmId).Msg("⚠️ Skipping SSH test - no private key available")
 		} else {
-			// Determine username (priority: vmInfo.VmUserName > default "ubuntu")
-			sshUserName := userName
-			if sshUserName == "" {
-				sshUserName = "ubuntu" // Default user for most cloud VMs
+			// Debug: Log private key info (safely)
+			keyPreview := privateKey
+			if len(keyPreview) > 100 {
+				keyPreview = keyPreview[:50] + "..." + keyPreview[len(keyPreview)-50:]
 			}
+			log.Debug().Str("vmId", vmId).Str("keyPreview", keyPreview).Bool("hasLiteralNewlines", strings.Contains(privateKey, "\\n")).Msg("Private key info")
+
+			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
+			sshUserName := userName
 
 			// Perform SSH connectivity test
 			log.Info().Str("vmId", vmId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
@@ -2254,8 +2267,17 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 // testSSHConnectivity tests SSH connection to a VM and runs a simple command
 func testSSHConnectivity(host, privateKey, username string) (string, error) {
+	// Clean and normalize private key format
+	// Replace literal \n with actual newlines
+	cleanedKey := strings.ReplaceAll(privateKey, "\\n", "\n")
+
+	// Ensure proper PEM format
+	if !strings.HasPrefix(cleanedKey, "-----BEGIN") {
+		return "", fmt.Errorf("invalid private key format: missing PEM header")
+	}
+
 	// Parse private key
-	signer, err := ssh.ParsePrivateKey([]byte(privateKey))
+	signer, err := ssh.ParsePrivateKey([]byte(cleanedKey))
 	if err != nil {
 		return "", fmt.Errorf("failed to parse private key: %v", err)
 	}
