@@ -276,22 +276,21 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 	}
 	log.Debug().Msgf("tbMciReq: %+v", tbMciReq)
 
-	// // Set post-command for stable mci provisioning if a user didn't set it
-	// // If a user already set it, use it as is
+	// Set post-command for stable mci provisioning if a user didn't set it
+	// If a user already set it, use it as is
+	if len(tbMciReq.PostCommand.Command) == 0 {
+		log.Debug().Msgf("Setting default post-command `uname -a` for stable MCI provisioning (nsId: %s)", nsId)
 
-	// if len(tbMciReq.PostCommand.Command) == 0 {
-	// 	log.Debug().Msgf("Setting default post-command for stable MCI provisioning (nsId: %s)", nsId)
+		commands := []string{
+			"uname -a",
+		}
+		username := "cb-user"
 
-	// 	commands := []string{
-	// 		"client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip",
-	// 	}
-	// 	username := "cb-user"
-
-	// 	tbMciReq.PostCommand = tbmodel.MciCmdReq{
-	// 		UserName: username,
-	// 		Command:  commands,
-	// 	}
-	// }
+		tbMciReq.PostCommand = tbmodel.MciCmdReq{
+			UserName: username,
+			Command:  commands,
+		}
+	}
 
 	// Create multi-cloud infrastructure
 	mciInfo, err := tbCli.CreateMci(nsId, tbMciReq)
