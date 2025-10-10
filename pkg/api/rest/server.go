@@ -149,7 +149,16 @@ func RunServer(port string) {
 				return false, nil
 			},
 		}))
+
+		// TODO: Add security validation for default credentials
+		// Call validation function to warn about default credentials in production
+		// if err := validateAuthSecurity(apiUser, apiPass); err != nil {
+		// 	log.Warn().Err(err).Msg("Security warning detected")
+		// }
 	}
+
+	// TODO: Implement security headers middleware
+	// addSecurityHeaders(e)
 
 	fmt.Println("\n \n ")
 	fmt.Print(banner)
@@ -333,3 +342,66 @@ func RunServer(port string) {
 
 	wg.Wait()
 }
+
+// TODO: Implement authentication security validation
+// validateAuthSecurity checks for security issues with authentication configuration
+// func validateAuthSecurity(username, password string) error {
+// 	// Check if using default credentials
+// 	if username == "default" && password == "default" {
+// 		return errors.New("using default credentials in production environment")
+// 	}
+//
+// 	// Check password strength
+// 	if len(password) < 8 {
+// 		return errors.New("password is too short, minimum 8 characters required")
+// 	}
+//
+// 	// Check for common weak passwords
+// 	weakPasswords := []string{"password", "123456", "admin", "test"}
+// 	for _, weak := range weakPasswords {
+// 		if password == weak {
+// 			return errors.New("password is too weak")
+// 		}
+// 	}
+//
+// 	return nil
+// }
+
+// TODO: Implement security headers middleware
+// addSecurityHeaders adds security-related HTTP headers to all responses
+// func addSecurityHeaders(e *echo.Echo) {
+// 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c echo.Context) error {
+// 			// Security headers
+// 			c.Response().Header().Set("X-Content-Type-Options", "nosniff")
+// 			c.Response().Header().Set("X-Frame-Options", "DENY")
+// 			c.Response().Header().Set("X-XSS-Protection", "1; mode=block")
+// 			c.Response().Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+// 			c.Response().Header().Set("Content-Security-Policy", "default-src 'self'")
+// 			c.Response().Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+//
+// 			return next(c)
+// 		}
+// 	})
+// }
+
+// TODO: Implement rate limiting middleware
+// addRateLimiting adds rate limiting to prevent abuse
+// func addRateLimiting(e *echo.Echo) {
+// 	// Implement rate limiting logic
+// 	// Consider using middleware like echo rate limiter
+// 	// Set appropriate limits for different endpoints
+// }
+
+// TODO: Implement request logging with security context
+// addSecurityLogging adds detailed logging for security-relevant events
+// func addSecurityLogging(e *echo.Echo) {
+// 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+// 		return func(c echo.Context) error {
+// 			// Log authentication attempts
+// 			// Log suspicious request patterns
+// 			// Log failed authorization attempts
+// 			return next(c)
+// 		}
+// 	})
+// }

@@ -28,9 +28,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 
-	//_ "github.com/go-sql-driver/mysql"
 	"github.com/fsnotify/fsnotify"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"

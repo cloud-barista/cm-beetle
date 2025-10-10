@@ -92,7 +92,7 @@ func GetFuncName() string {
 func CheckString(name string) error {
 
 	if name == "" {
-		err := fmt.Errorf("The provided string is empty")
+		err := fmt.Errorf("%s", "the provided string is empty")
 		return err
 	}
 
@@ -100,7 +100,7 @@ func CheckString(name string) error {
 	filtered := r.FindString(name)
 
 	if filtered != name {
-		err := fmt.Errorf(name + ": The first character of name must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.")
+		err := fmt.Errorf("%s: The first character of name must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash", name)
 		return err
 	}
 
@@ -210,28 +210,6 @@ func GenChildResourceKey(nsId string, resourceType string, parentResourceId stri
 	} else {
 		return "/invalidKey"
 	}
-}
-
-// mcirIds is struct for containing id and name of each MCIR type
-type mcirIds struct { // Tumblebug
-	CspImageId           string
-	CspImageName         string
-	CspCustomImageId     string
-	CspCustomImageName   string
-	CspSshKeyName        string
-	CspSpecName          string
-	CspVNetId            string
-	CspVNetName          string
-	CspSecurityGroupId   string
-	CspSecurityGroupName string
-	CspPublicIpId        string
-	CspPublicIpName      string
-	CspVNicId            string
-	CspVNicName          string
-	CspDataDiskId        string
-	CspDataDiskName      string
-
-	ConnectionName string
 }
 
 // // GetCspResourceId is func to retrieve CSP native resource ID
@@ -731,7 +709,7 @@ func CopySrcToDest(src interface{}, dest interface{}) error {
 		return err
 	}
 
-	j, err = json.MarshalIndent(dest, "", "  ")
+	_, err = json.MarshalIndent(dest, "", "  ")
 	if err != nil {
 		return err
 	}
