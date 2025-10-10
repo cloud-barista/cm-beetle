@@ -28,6 +28,12 @@ func GetDefaultSpecsLimit() int {
 // RecommendVmSpecsForImage recommends appropriate VM specs for the server and image
 func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.ServerProperty, limit int, image cloudmodel.ImageInfo) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
 
+	if limit <= 0 {
+		err := fmt.Errorf("invalid 'limit' value: %d, set default: %d", limit, defaultSpecsLimit)
+		log.Warn().Msgf("%s", err.Error())
+		limit = defaultSpecsLimit
+	}
+
 	vmSpecList, length, err = RecommendVmSpecs(csp, region, server, limit)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend VM specs")

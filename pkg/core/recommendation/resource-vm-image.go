@@ -7,6 +7,7 @@ import (
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
@@ -23,6 +24,50 @@ const (
 // GetDefaultImagesLimit returns the default VM images recommendation limit
 func GetDefaultImagesLimit() int {
 	return defaultImagesLimit
+}
+
+// RecommendVmOsImagesForSpec recommends an appropriate VM OS images (e.g., Ubuntu 22.04) for the given VM spec
+func RecommendVmOsImagesForSpec(csp string, region string, server onpremmodel.ServerProperty, limit int, spec cloudmodel.SpecInfo) ([]cloudmodel.ImageInfo, error) {
+
+	var emptyRes = []cloudmodel.ImageInfo{}
+
+	if limit <= 0 {
+		err := fmt.Errorf("invalid 'limit' value: %d, set default: %d", limit, defaultImagesLimit)
+		log.Warn().Msgf("%s", err.Error())
+		limit = defaultImagesLimit
+	}
+
+	// Get all recommended OS images for the server
+	imageList, err := RecommendVmOsImages(csp, region, server, limit)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to recommend VM OS images")
+		return emptyRes, err
+	}
+
+	// Filter images that are compatible with the given VM spec
+	compatibleImages := make([]cloudmodel.ImageInfo, 0, len(imageList))
+
+	for _, image := range imageList {
+		// Check compatibility between spec and image using the existing compatibility checker
+		// This follows the same pattern as RecommendVmSpecsForImage but in reverse
+		if isCompatible := compat.CheckCompatibility(strings.ToLower(csp), spec, image); isCompatible {
+			compatibleImages = append(compatibleImages, image)
+		} else {
+			log.Debug().Msgf("Filtered incompatible image: %s for spec: %s on CSP: %s",
+				image.CspImageName, spec.CspSpecName, csp)
+		}
+	}
+
+	if len(compatibleImages) == 0 {
+		log.Warn().Msgf("No compatible images found for spec %s on CSP %s, returning original list",
+			spec.CspSpecName, csp)
+		return imageList, nil
+	}
+
+	log.Info().Msgf("Filtered %d images to %d compatible images for spec %s on CSP %s",
+		len(imageList), len(compatibleImages), spec.CspSpecName, csp)
+
+	return compatibleImages, nil
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
