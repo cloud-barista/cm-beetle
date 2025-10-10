@@ -68,7 +68,7 @@ func limitConcurrentRequests(requestKey string, limit int) bool {
 	currentCount := count.(int)
 
 	if currentCount >= limit {
-		fmt.Printf("[%s] requests for %s \n", currentCount, requestKey)
+		fmt.Printf("[%d] requests for %s \n", currentCount, requestKey)
 		return false
 	}
 
@@ -121,7 +121,7 @@ func ExecuteHttpRequest[B any, T any](
 		if item, found := clientCache.Load(requestKey); found {
 			cachedItem := item.(CacheItem[T]) // Generic type
 			if time.Now().Before(cachedItem.ExpiresAt) {
-				log.Trace().Msgf("Cache hit! Expires: %v", time.Now().Sub(cachedItem.ExpiresAt))
+				log.Trace().Msgf("Cache hit! Expires: %v", time.Since(cachedItem.ExpiresAt))
 				*result = cachedItem.Response
 				//val := reflect.ValueOf(result).Elem()
 				//cachedVal := reflect.ValueOf(cachedItem.Response)
@@ -144,7 +144,7 @@ func ExecuteHttpRequest[B any, T any](
 			if !limitConcurrentRequests(requestKey, concurrencyLimit) {
 				if retryCount >= retryLimit {
 					log.Debug().Msgf("Too many same requests: %s\n", requestKey)
-					return fmt.Errorf("Too many same requests: %s", requestKey)
+					return fmt.Errorf("too many same requests: %s", requestKey)
 				}
 				time.Sleep(retryWait)
 
@@ -192,7 +192,7 @@ func ExecuteHttpRequest[B any, T any](
 	case "DELETE":
 		resp, err = req.Delete(url)
 	default:
-		return fmt.Errorf("Unsupported rest method: %s", method)
+		return fmt.Errorf("unsupported rest method: %s", method)
 	}
 
 	if err != nil {

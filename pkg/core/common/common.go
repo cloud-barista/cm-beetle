@@ -28,7 +28,6 @@ var SystemReady bool
 
 var TumblebugRestUrl string
 var AutocontrolDurationMs string
-var err error
 
 const (
 	StrTumblebugRestUrl           string = "TUMBLEBUG_REST_URL"
