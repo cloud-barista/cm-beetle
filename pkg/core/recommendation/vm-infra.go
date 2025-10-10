@@ -435,7 +435,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
-			RootDiskSize:     "30",                                                 // Set 30 GiB as a default value
+			RootDiskSize:     "50",                                                 // Set 50 GB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
 			VmUserPassword:   "",                                                   // TBD
