@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.3.9
+    image: cloudbaristaorg/cm-beetle:0.3.10
     container_name: cm-beetle
     build:
       context: ${COMPOSE_PROJECT_ROOT}
@@ -38,9 +38,9 @@ services:
       # - BEETLE_LOGFILE_MAXBACKUPS=3
       # - BEETLE_LOGFILE_MAXAGE=30
       # - BEETLE_LOGFILE_COMPRESS=false
-      - BEETLE_LOGLEVEL=debug
+      # - BEETLE_LOGLEVEL=debug
       # - BEETLE_LOGWRITER=both
-      - BEETLE_NODE_ENV=development
+      # - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000
       - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       # - BEETLE_TUMBLEBUG_API_USERNAME=default
@@ -402,7 +402,6 @@ services:
   #   restart: "no"
   #   # To re-init metabase, remove the marker and metabase data
   #   # sudo rm -rf container-volume/cb-tumblebug-container/meta_db/metabase-*
-
 
   # # CB-Tumblebug pgAdmin Dashboard for PostgreSQL
   # # Enable this service to manage the PostgreSQL database of CB-Tumblebug.

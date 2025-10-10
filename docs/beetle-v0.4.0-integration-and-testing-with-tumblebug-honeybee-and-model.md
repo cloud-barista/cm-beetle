@@ -12,7 +12,7 @@
 
 **Directly integrated**
 
-- Beetle v0.3.9
+- Beetle v0.3.10
 - cm-model v0.0.14
 - Tumblebug v0.11.13 (integrates Spider v0.11.13 and CB-MapUI v0.11.16)
 
@@ -1889,15 +1889,12 @@ Testing was performed by `test-cli`.
 - 🟢 [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
   - ⚠️ Note: Not recommended to use a large number of vCPUs to avoid exceeding approved Total Regional Cores quota
   - ⚠️ Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
+  - ⚠️ Note: Some VM specs (e.g., Standard_B4ms) may require a minimum root disk size (e.g., 34GB)
 - 🟢 [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
-
   - ⚠️ Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - ⚠️ Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
-
 - 🟡 [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
-
   - ⚠️ Note: Set the root disk type "Type1" (i.e., cloud_essd)
-
 - 🟢 [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
   - ⚠️ Note: Deadline exceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
   - ⚠️ Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB)
