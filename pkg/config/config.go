@@ -199,3 +199,78 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.tumblebug.api.username", "BEETLE_TUMBLEBUG_API_USERNAME")
 	viper.BindEnv("beetle.tumblebug.api.password", "BEETLE_TUMBLEBUG_API_PASSWORD")
 }
+
+// TODO: Implement security validation for authentication configuration
+// ValidateAuthConfig validates authentication settings to prevent use of default credentials in production
+// func ValidateAuthConfig(auth ApiConfig) error {
+// 	// Check for default credentials
+// 	if auth.Username == "default" && auth.Password == "default" {
+// 		return errors.New("using default credentials in production is not allowed")
+// 	}
+//
+// 	// Validate password complexity
+// 	if len(auth.Password) < 8 {
+// 		return errors.New("password must be at least 8 characters long")
+// 	}
+//
+// 	// Check for weak passwords
+// 	weakPasswords := []string{"password", "123456", "admin", "default"}
+// 	for _, weak := range weakPasswords {
+// 		if auth.Password == weak {
+// 			return errors.New("password is too weak")
+// 		}
+// 	}
+//
+// 	return nil
+// }
+
+// TODO: Implement comprehensive configuration validation
+// ValidateConfiguration validates all configuration settings for security and operational requirements
+// func ValidateConfiguration() error {
+// 	// Validate authentication configuration
+// 	if err := ValidateAuthConfig(Beetle.API); err != nil {
+// 		return fmt.Errorf("API auth validation failed: %w", err)
+// 	}
+//
+// 	if err := ValidateAuthConfig(ApiConfig{
+// 		Username: Tumblebug.API.Username,
+// 		Password: Tumblebug.API.Password,
+// 	}); err != nil {
+// 		return fmt.Errorf("Tumblebug auth validation failed: %w", err)
+// 	}
+//
+// 	// Validate required settings
+// 	if Beetle.API.Allow.Origins == "" {
+// 		return errors.New("CORS origins must be configured")
+// 	}
+//
+// 	// Validate Tumblebug endpoint connectivity
+// 	if err := validateEndpointConnectivity(Beetle.Tumblebug.Endpoint); err != nil {
+// 		return fmt.Errorf("Tumblebug endpoint validation failed: %w", err)
+// 	}
+//
+// 	// Validate file system permissions
+// 	if err := validateFileSystemPermissions(); err != nil {
+// 		return fmt.Errorf("file system validation failed: %w", err)
+// 	}
+//
+// 	return nil
+// }
+
+// TODO: Implement endpoint connectivity validation
+// validateEndpointConnectivity checks if the given endpoint is reachable
+// func validateEndpointConnectivity(endpoint string) error {
+// 	// Implement HTTP connectivity check
+// 	// Check if endpoint responds within reasonable timeout
+// 	// Validate SSL/TLS configuration if HTTPS
+// 	return nil
+// }
+
+// TODO: Implement file system permissions validation
+// validateFileSystemPermissions checks required directory and file permissions
+// func validateFileSystemPermissions() error {
+// 	// Check if log directory is writable
+// 	// Check if database directory is accessible
+// 	// Validate configuration file permissions
+// 	return nil
+// }

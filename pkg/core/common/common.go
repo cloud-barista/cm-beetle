@@ -85,3 +85,48 @@ type RestGetAllNsResponse struct {
 	//Name string     `json:"name"`
 	Ns []NsInfo `json:"ns"`
 }
+
+// TODO: Implement security utilities for CM-Beetle
+// SecureCredential represents secure credential handling
+// type SecureCredential struct {
+// 	Username     string
+// 	PasswordHash string
+// 	Salt         string
+// 	CreatedAt    time.Time
+// 	ExpiresAt    time.Time
+// }
+
+// TODO: Implement password hashing utilities
+// hashPassword creates a secure hash of the given password
+// func hashPassword(password string) (string, string, error) {
+// 	// Generate random salt
+// 	// Use bcrypt or similar for password hashing
+// 	// Return hash and salt
+// 	return "", "", nil
+// }
+
+// TODO: Implement password verification
+// verifyPassword checks if the given password matches the stored hash
+// func verifyPassword(password, hash, salt string) bool {
+// 	// Verify password against hash and salt
+// 	return false
+// }
+
+// TODO: Implement secure configuration validation
+// ValidateSecuritySettings validates security-related configuration
+// func ValidateSecuritySettings() error {
+// 	// Check for default credentials
+// 	// Validate password policies
+// 	// Check CORS settings
+// 	// Validate SSL/TLS configuration
+// 	return nil
+// }
+
+// TODO: Implement audit logging for security events
+// LogSecurityEvent logs security-related events for audit purposes
+// func LogSecurityEvent(eventType, details string, userContext map[string]interface{}) {
+// 	// Log authentication attempts
+// 	// Log authorization failures
+// 	// Log configuration changes
+// 	// Log suspicious activities
+// }
