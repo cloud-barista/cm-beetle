@@ -27,12 +27,12 @@
         "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "cpu": {
           "architecture": "x86_64",
-          "cpus": 4,
-          "cores": 18,
-          "threads": 36,
-          "maxSpeed": 3.7,
-          "vendor": "GenuineIntel",
-          "model": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+          "cores": 2,
+          "cpus": 1,
+          "maxSpeed": 2.499,
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "threads": 4,
+          "vendor": "GenuineIntel"
         },
         "memory": {
           "type": "DDR4",
@@ -1074,12 +1074,12 @@
         "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
         "cpu": {
           "architecture": "x86_64",
-          "cpus": 4,
-          "cores": 18,
-          "threads": 36,
-          "maxSpeed": 3.7,
-          "vendor": "GenuineIntel",
-          "model": "Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz"
+          "cores": 4,
+          "cpus": 1,
+          "maxSpeed": 3.099,
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "threads": 8,
+          "vendor": "GenuineIntel"
         },
         "memory": {
           "type": "DDR4",
