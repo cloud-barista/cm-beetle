@@ -12,7 +12,7 @@
 
 **Directly integrated**
 
-- Beetle v0.3.10
+- Beetle v0.3.11
 - cm-model v0.0.14
 - Tumblebug v0.11.13 (integrates Spider v0.11.13 and CB-MapUI v0.11.16)
 
