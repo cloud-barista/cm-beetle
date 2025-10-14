@@ -27,6 +27,7 @@ import (
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
@@ -586,34 +587,99 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 		}
 	}
 
-	// Check if each VM's spec is contained in the target VM spec list
-	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
-		found := false
-		for _, vmSpec := range targetVmInfraModel.TargetVmSpecList {
-			if subgroup.SpecId == vmSpec.Id {
-				found = true
-				break
-			}
-		}
-		if !found {
-			log.Error().Msgf("VM spec '%s' not found in target spec list", subgroup.SpecId)
-			return fmt.Errorf("VM spec '%s' not found in target spec list", subgroup.SpecId)
-		}
+	// Initialize Tumblebug client
+	apiConfig := tbclient.ApiConfig{
+		Username: config.Tumblebug.API.Username,
+		Password: config.Tumblebug.API.Password,
+		RestUrl:  config.Tumblebug.RestUrl,
 	}
+	tbCli := tbclient.NewClient(apiConfig)
 
-	// Check if each VM's OS image is contained in the target VM OS image list
+	// Check if each VM's spec and image are valid and compatible
 	for _, subgroup := range targetVmInfraModel.TargetVmInfra.SubGroups {
-		found := false
-		for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-			if subgroup.ImageId == vmOsImage.Id {
-				found = true
-				break
-			}
+
+		specId := strings.TrimSpace(subgroup.SpecId)
+		imageId := strings.TrimSpace(subgroup.ImageId)
+		connectionName := strings.TrimSpace(subgroup.ConnectionName)
+
+		// 1. Validate SpecId is not empty
+		if specId == "" || specId == "empty" {
+			err := fmt.Errorf("invalid SpecId '%s' in subgroup '%s'", specId, subgroup.Name)
+			log.Error().Err(err).Msgf("required SpecId (current SpecId is '%s' for subgroup '%s')", specId, subgroup.Name)
+			return err
 		}
-		if !found {
-			log.Error().Msgf("VM OS image '%s' not found in target image list", subgroup.ImageId)
-			return fmt.Errorf("VM OS image '%s' not found in target image list", subgroup.ImageId)
+
+		// 2. Validate ImageId is not empty
+		if imageId == "" || imageId == "empty" {
+			err := fmt.Errorf("invalid ImageId '%s' in subgroup '%s'", imageId, subgroup.Name)
+			log.Error().Err(err).Msgf("required ImageId (current ImageId is '%s' for subgroup '%s')", imageId, subgroup.Name)
+			return err
 		}
+
+		// 3. Validate ConnectionName is not empty to extract CSP information
+		if connectionName == "" {
+			err := fmt.Errorf("invalid ConnectionName '%s' in subgroup '%s'", connectionName, subgroup.Name)
+			log.Error().Err(err).Msgf("required ConnectionName (current ConnectionName is '%s' for subgroup '%s')", connectionName, subgroup.Name)
+			return err
+		}
+
+		// 4. Extract CSP information from ConnectionName (format: "csp-region")
+		connectionParts := strings.Split(connectionName, "-")
+		if len(connectionParts) < 2 {
+			err := fmt.Errorf("invalid connection name format '%s' in subgroup '%s'", connectionName, subgroup.Name)
+			log.Error().Err(err).Msgf("invalid connection name format '%s' for subgroup '%s', expected format: 'csp-region'",
+				connectionName, subgroup.Name)
+			return err
+		}
+		csp := connectionParts[0]
+
+		// 5. Retrieve SpecInfo
+		specInfo, err := tbCli.ReadVmSpec("system", specId)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to read VM spec (nsId: %s, vmSpecId: %s)", nsId, specId)
+			return fmt.Errorf("failed to read VM spec (nsId: %s, vmSpecId: %s): %w", nsId, specId, err)
+		}
+
+		// 6. Retrieve ImageInfo
+		// Note - current imageId format: csp+cspImageName (e.g., alibaba+ubuntu_22_04_x64_20G_alibase_20250722.vhd)
+		// ref: https://github.com/cloud-barista/cb-tumblebug/pull/2130#issuecomment-3243624048
+		// TODO: ImageId should be updated later as Tumblebug's/ns/{nsId}/resources/image/{imageId}` API changes.
+		imageKey := imageId
+		if !strings.Contains(imageKey, "+") {
+			// If ImageId doesn't contain '+', assume it needs CSP prefix
+			imageKey = fmt.Sprintf("%s+%s", csp, imageId)
+		}
+
+		imageInfo, err := tbCli.ReadVmOsImage("system", imageKey)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s)", nsId, imageKey)
+			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s): %w", nsId, imageKey, err)
+		}
+
+		// 7. Convert models to cloudmodel format for compatibility check
+		specInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.SpecInfo, cloudmodel.SpecInfo](specInfo)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to convert spec info for compatibility check (specId: %s)", specId)
+			return fmt.Errorf("failed to convert spec info for compatibility check (specId: %s): %w", specId, err)
+		}
+
+		imageInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.ImageInfo, cloudmodel.ImageInfo](imageInfo)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to convert image info for compatibility check (imageId: %s)", imageId)
+			return fmt.Errorf("failed to convert image info for compatibility check (imageId: %s): %w", imageId, err)
+		}
+
+		// 8. Check compatibility between spec and image
+		isCompatible := recommendation.CheckSpecImageCompatibility(csp, specInfoConverted, imageInfoConverted)
+		if !isCompatible {
+			log.Error().Msgf("VM spec '%s' and image '%s' are incompatible for CSP '%s' in subgroup '%s'",
+				specId, imageId, csp, subgroup.Name)
+			return fmt.Errorf("VM spec '%s' and image '%s' are incompatible for CSP '%s' in subgroup '%s'",
+				specId, imageId, csp, subgroup.Name)
+		}
+
+		log.Debug().Msgf("VM spec '%s' and image '%s' are compatible for CSP '%s' in subgroup '%s'",
+			specId, imageId, csp, subgroup.Name)
 	}
 
 	// Check if each security group name is contained in the target security group list
@@ -637,14 +703,6 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	}
 
 	// * 3. Validate that the vNet, VM specs, VM OS images, and security groups exist
-	// Initialize Tumblebug client
-	apiConfig := tbclient.ApiConfig{
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-		RestUrl:  config.Tumblebug.RestUrl,
-	}
-	tbCli := tbclient.NewClient(apiConfig)
-
 	// Validate that the vNet exists by the vNet name
 	// For VNet, it's normal if the resource doesn't exist
 	vNetInfo, err := tbCli.ReadVNet(nsId, targetVmInfraModel.TargetVNet.Name)
@@ -667,28 +725,8 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 		return fmt.Errorf("the SSH key already exists (nsId: %s, sshKey.Id: %s)", nsId, sshKeyInfo.Id)
 	}
 
-	// Validate that the VM specs exist by the VM spec ID
-	for _, vmSpec := range targetVmInfraModel.TargetVmSpecList {
-		_, err := tbCli.ReadVmSpec("system", vmSpec.Id)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to read VM spec (nsId: %s, vmSpecId: %s)", nsId, vmSpec.Id)
-			return fmt.Errorf("failed to read VM spec (nsId: %s, vmSpecId: %s): %w", nsId, vmSpec.Id, err)
-		}
-	}
-
-	// Validate that the VM OS images exist by the VM OS image ID
-	// * Note - current imageId format: csp+cspImageName (e.g., alibaba+ubuntu_22_04_x64_20G_alibase_20250722.vhd)
-	// ref: https://github.com/cloud-barista/cb-tumblebug/pull/2130#issuecomment-3243624048
-	// TODO: ImageId should be updated later as Tumblebug's/ns/{nsId}/resources/image/{imageId}` API changes.
-	for _, vmOsImage := range targetVmInfraModel.TargetVmOsImageList {
-		imageKey := fmt.Sprintf("%s+%s", vmOsImage.ProviderName, vmOsImage.Id)
-
-		_, err := tbCli.ReadVmOsImage("system", imageKey)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s)", nsId, imageKey)
-			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s): %w", nsId, imageKey, err)
-		}
-	}
+	// Note: VM specs and VM OS images validation is now handled above in the spec-image compatibility check loop
+	// This provides better validation by checking both existence and compatibility together
 
 	// Validate that the security groups exist by the security group name
 	// For Security Groups, it's normal if the resources don't exist

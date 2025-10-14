@@ -124,11 +124,12 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	}`
 
 	// Extract server specifications from source computing envrionment
-	vcpus := server.CPU.Cpus
+	// * Note: vcpus = cpus * cpuThreads
+	vcpusCalculated := uint32(server.CPU.Cpus * server.CPU.Threads)
 	memory := uint32(server.Memory.TotalSize)
 
 	// Calculate optimal vCPU and memory ranges based on AWS, GCP, and NCP instance patterns
-	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpus, memory)
+	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpusCalculated, memory)
 
 	// Set provider and region names
 	providerName := strings.ToLower(csp)
@@ -146,9 +147,9 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	log.Debug().
 		Str("machineId", server.MachineId).
-		Uint32("originalVcpus", vcpus).
+		Uint32("originalCpu*Threads", vcpusCalculated).
 		Uint32("originalMemory", memory).
-		Float64("memoryVcpuRatio", float64(memory)/float64(vcpus)).
+		Float64("memoryCpuThreadsRatio", float64(memory)/float64(vcpusCalculated)).
 		Uint32("vcpuRange", vcpusMax-vcpusMin).
 		Uint32("memoryRange", memoryMax-memoryMin).
 		Str("provider", providerName).
@@ -184,13 +185,26 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", server.MachineId, err)
 	}
 
+	// Filter if CostPerHour is less then 0
+	validVmSpecs := make([]tbmodel.SpecInfo, 0, len(vmSpecInfoList))
+	for _, spec := range vmSpecInfoList {
+		if spec.CostPerHour >= 0 {
+			validVmSpecs = append(validVmSpecs, spec)
+		} else {
+			log.Debug().Msgf("Filtered spec with negative cost: %s (CostPerHour: %.4f)",
+				spec.CspSpecName, spec.CostPerHour)
+		}
+	}
+	vmSpecInfoList = validVmSpecs
+
+	// Check if any VM specs were found
 	numOfVmSpecs := len(vmSpecInfoList)
 	if numOfVmSpecs == 0 {
-		err := fmt.Errorf("no VM specs recommended for machine %s (vcpus: %d, memory: %d GiB)",
-			server.MachineId, vcpus, memory)
+		err := fmt.Errorf("no VM specs recommended for machine %s (vcpusCalculated: %d, memory: %d GiB)",
+			server.MachineId, vcpusCalculated, memory)
 		log.Warn().Err(err).
 			Str("machineId", server.MachineId).
-			Uint32("vcpus", vcpus).
+			Uint32("vcpusCalculated", vcpusCalculated).
 			Uint32("memory", memory).
 			Msg("No VM specifications found")
 		return emptyResp, -1, err
@@ -199,7 +213,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	log.Info().
 		Str("machineId", server.MachineId).
 		Int("specsFound", numOfVmSpecs).
-		Uint32("vcpus", vcpus).
+		Uint32("vcpusCalculated", vcpusCalculated).
 		Uint32("memory", memory).
 		Msgf("Found %d VM spec recommendations for machine: %s", numOfVmSpecs, server.MachineId)
 
@@ -255,7 +269,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	}
 
 	// Sort specs by proximity with cost consideration
-	sortByProximityWithCost(vcpus, memory, convertedVmSpecList)
+	sortByProximityWithCost(vcpusCalculated, memory, convertedVmSpecList)
 
 	// // ! Logging section for research purpose
 	// log.Info().Msgf("No.,Provider,Region,VM Spec ID,vCPU,MemoryGiB,CostPerHour")

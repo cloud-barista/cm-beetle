@@ -7,11 +7,11 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.3.10
+    image: cloudbaristaorg/cm-beetle:0.3.11
     container_name: cm-beetle
-    build:
-      context: ${COMPOSE_PROJECT_ROOT}
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${COMPOSE_PROJECT_ROOT}
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network

@@ -9,6 +9,27 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// CheckSpecImageCompatibility validates compatibility between a single VM spec and VM image
+func CheckSpecImageCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
+	cspLower := strings.ToLower(csp)
+
+	log.Debug().Msgf("Checking compatibility between spec %s and image %s for CSP %s",
+		spec.CspSpecName, image.CspImageName, csp)
+
+	// Use the centralized compatibility check from compat package
+	isCompatible := compat.CheckCompatibility(cspLower, spec, image)
+
+	if isCompatible {
+		log.Debug().Msgf("Spec %s and Image %s are compatible for CSP %s",
+			spec.CspSpecName, image.CspImageName, csp)
+	} else {
+		log.Debug().Msgf("Spec %s and Image %s are incompatible for CSP %s",
+			spec.CspSpecName, image.CspImageName, csp)
+	}
+
+	return isCompatible
+}
+
 // FindCompatibleSpecAndImage finds a compatible VM spec and image pair by performing CSP-specific compatibility checks
 func FindCompatibleSpecAndImage(specs []cloudmodel.SpecInfo, images []cloudmodel.ImageInfo, csp string) (cloudmodel.SpecInfo, cloudmodel.ImageInfo, error) {
 	var emptySpec cloudmodel.SpecInfo
