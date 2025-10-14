@@ -1893,12 +1893,16 @@ Testing was performed by `test-cli`.
 - 🟢 [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
   - ⚠️ Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - ⚠️ Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
-- 🟡 [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
-  - ⚠️ Note: Set the root disk type "Type1" (i.e., cloud_essd)
 - 🟢 [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
   - ⚠️ Note: Deadline exceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
   - ⚠️ Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB)
     - Default Quota of High Memory M-g3 is 0.
+
+**Test failed**
+
+- 🔴 [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
+  - ⚠️ Note: Sometimes no result with request image
+  - ⚠️ Note: Set the root disk type "Type1" (i.e., cloud_essd)
 
 ---
 
