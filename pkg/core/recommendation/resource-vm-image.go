@@ -131,8 +131,8 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	searchImageReq := tbmodel.SearchImageRequest{
 		// DetailSearchKeys:       []string{},
 		// IncludeDeprecatedImage: &falseValue,
-		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		// IsRegisteredByAsset:    &falseValue,
+		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		IncludeBasicImageOnly: &trueValue,
 		MaxResults:            &limit,
 		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
@@ -290,13 +290,73 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 	}
 
 	// Sort the imageInfoList by highestScore in descending order
+	// If scores are equal, deprioritize images containing "minimal", "k8s", "pro", or "test" in OSDistribution
 	sort.Slice(imageInfoListForSorting, func(i, j int) bool {
-		return imageInfoListForSorting[i].SimilarityScore > imageInfoListForSorting[j].SimilarityScore
+		scoreI := imageInfoListForSorting[i].SimilarityScore
+		scoreJ := imageInfoListForSorting[j].SimilarityScore
+
+		// Primary sort: by similarity score (descending)
+		if scoreI != scoreJ {
+			return scoreI > scoreJ
+		}
+
+		// Secondary sort: prioritize standard images, then "minimal", then "k8s", then "pro-minimal", then "pro", then "test"
+		distI := strings.ToLower(imageInfoListForSorting[i].VmOsImageInfo.OSDistribution)
+		distJ := strings.ToLower(imageInfoListForSorting[j].VmOsImageInfo.OSDistribution)
+
+		// TODO: Modify when the kubernetes images are supported normally
+		hasMinimalI := strings.Contains(distI, "minimal")
+		hasK8sI := strings.Contains(distI, "k8s")
+		hasProI := strings.Contains(distI, "pro")
+		hasTestI := strings.Contains(distI, "test")
+		hasMinimalJ := strings.Contains(distJ, "minimal")
+		hasK8sJ := strings.Contains(distJ, "k8s")
+		hasProJ := strings.Contains(distJ, "pro")
+		hasTestJ := strings.Contains(distJ, "test")
+
+		// Check for pro-minimal (contains both "pro" and "minimal")
+		hasProMinimalI := hasProI && hasMinimalI
+		hasProMinimalJ := hasProJ && hasMinimalJ
+
+		// Calculate priority: 0 (standard) > 1 (minimal) > 2 (k8s) > 3 (pro-minimal) > 4 (pro) > 5 (test)
+		priorityI := 0
+		if hasTestI {
+			priorityI = 5
+		} else if hasProMinimalI {
+			priorityI = 3
+		} else if hasProI {
+			priorityI = 4
+		} else if hasK8sI {
+			priorityI = 2
+		} else if hasMinimalI {
+			priorityI = 1
+		}
+
+		priorityJ := 0
+		if hasTestJ {
+			priorityJ = 5
+		} else if hasProMinimalJ {
+			priorityJ = 3
+		} else if hasProJ {
+			priorityJ = 4
+		} else if hasK8sJ {
+			priorityJ = 2
+		} else if hasMinimalJ {
+			priorityJ = 1
+		}
+
+		// Lower priority value comes first
+		if priorityI != priorityJ {
+			return priorityI < priorityJ
+		}
+
+		// Otherwise, maintain original order (stable sort)
+		return false
 	})
 
 	// List the sorted images
 	for _, imageInfo := range imageInfoListForSorting {
-		log.Debug().Msgf("VmImageName: %s, score: %f, description: %s", imageInfo.VmOsImageInfo.Name, imageInfo.SimilarityScore, imageInfo.VmOsImageInfo.Description)
+		log.Debug().Msgf("VmImageName: %s, score: %f, description: %s, osDist: %s", imageInfo.VmOsImageInfo.Name, imageInfo.SimilarityScore, imageInfo.VmOsImageInfo.Description, imageInfo.VmOsImageInfo.OSDistribution)
 		imageInfoList = append(imageInfoList, imageInfo.VmOsImageInfo)
 	}
 
