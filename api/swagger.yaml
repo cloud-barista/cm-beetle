@@ -1199,6 +1199,35 @@ definitions:
         example: Any message
         type: string
     type: object
+  controller.CORSRule:
+    properties:
+      allowedHeaders:
+        description: Allowed headers (e.g., ["*"])
+        items:
+          type: string
+        type: array
+      allowedMethods:
+        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
+        items:
+          type: string
+        type: array
+      allowedOrigins:
+        description: Allowed origins (e.g., ["*"], ["https://example.com"])
+        items:
+          type: string
+        type: array
+      exposeHeaders:
+        description: Headers to expose (e.g., ["ETag"])
+        items:
+          type: string
+        type: array
+      maxAgeSeconds:
+        description: Preflight request cache time in seconds
+        type: integer
+    required:
+    - allowedMethods
+    - allowedOrigins
+    type: object
   controller.JSONResult:
     type: object
   controller.MigrateInfraRequest:
@@ -1507,6 +1536,32 @@ definitions:
       targetInfra:
         $ref: '#/definitions/model.MciDynamicReq'
     type: object
+  controller.RecommendObjectStorageRequest:
+    properties:
+      desiredCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      sourceObjectStorages:
+        items:
+          $ref: '#/definitions/controller.SourceObjectStorageProperty'
+        minItems: 1
+        type: array
+    required:
+    - desiredCloud
+    - sourceObjectStorages
+    type: object
+  controller.RecommendObjectStorageResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+        type: array
+    type: object
   controller.RecommendSecurityGroupResponse:
     properties:
       count:
@@ -1608,6 +1663,68 @@ definitions:
         type: array
       status:
         type: string
+    type: object
+  controller.SourceObjectStorageProperty:
+    properties:
+      accessFrequency:
+        description: Access pattern (critical for storage class selection)
+        type: string
+      bucketName:
+        description: Basic identification
+        type: string
+      corsEnabled:
+        description: Whether CORS is enabled
+        type: boolean
+      corsRules:
+        description: CORS rules configuration
+        items:
+          $ref: '#/definitions/controller.CORSRule'
+        type: array
+      creationDate:
+        description: Creation date (RFC3339)
+        type: string
+      encryptionEnabled:
+        description: Security settings
+        type: boolean
+      isPublic:
+        description: Whether bucket has public access
+        type: boolean
+      objectCount:
+        description: Total number of objects
+        type: integer
+      tags:
+        additionalProperties:
+          type: string
+        description: Metadata
+        type: object
+      totalSizeBytes:
+        description: Capacity information (for cost estimation and recommendations)
+        type: integer
+      versioningEnabled:
+        description: Feature settings
+        type: boolean
+    required:
+    - bucketName
+    type: object
+  controller.TargetObjectStorageProperty:
+    properties:
+      bucketName:
+        description: Recommended target bucket name with random suffix by xid pkg
+        type: string
+      corsEnabled:
+        description: Whether CORS is configured
+        type: boolean
+      corsRules:
+        description: CORS rules configuration
+        items:
+          $ref: '#/definitions/controller.CORSRule'
+        type: array
+      sourceBucketName:
+        description: Source bucket name for referencing
+        type: string
+      versioningEnabled:
+        description: Whether to enable versioning
+        type: boolean
     type: object
   github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
     properties:
@@ -3694,6 +3811,63 @@ paths:
         multi-cloud infrastructure) with defaults for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
+  /recommendation/middleware/objectStorage:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recommend an appropriate object storage for cloud migration
+
+        [Note] `desiredProvider` and `desiredRegion` are required.
+        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+      operationId: RecommendObjectStorage
+      parameters:
+      - description: Specify the your object storage to be migrated
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendObjectStorageRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The result of recommended object storage
+          schema:
+            $ref: '#/definitions/controller.RecommendObjectStorageResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend an object storage for cloud migration
+      tags:
+      - '[Recommendation] Managed Middleware'
   /recommendation/resources/securityGroups:
     post:
       consumes:

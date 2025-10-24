@@ -235,6 +235,14 @@ func RunServer(port string) {
 	gRecommendation.POST("/resources/vmSpecs", controller.RecommendVmSpecs)
 
 	/*
+	 * API group for managed middleware recommendation
+	 */
+	gRecommendationMiddleware := gRecommendation.Group("/middleware")
+
+	// Recommendation APIs for object storage
+	gRecommendationMiddleware.POST("/objectStorage", controller.RecommendObjectStorage)
+
+	/*
 	 * API group for computing infra migration
 	 */
 	gMigration := gBeetle.Group("/migration")
