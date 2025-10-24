@@ -1459,6 +1459,80 @@
                 }
             }
         },
+        "/recommendation/middleware/objectStorage": {
+            "post": {
+                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed Middleware"
+                ],
+                "summary": "Recommend an object storage for cloud migration",
+                "operationId": "RecommendObjectStorage",
+                "parameters": [
+                    {
+                        "description": "Specify the your object storage to be migrated",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendObjectStorageRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended object storage",
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendObjectStorageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/recommendation/resources/securityGroups": {
             "post": {
                 "description": "Recommend an appropriate security group for cloud migration\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
@@ -3379,6 +3453,47 @@
                 }
             }
         },
+        "controller.CORSRule": {
+            "type": "object",
+            "required": [
+                "allowedMethods",
+                "allowedOrigins"
+            ],
+            "properties": {
+                "allowedHeaders": {
+                    "description": "Allowed headers (e.g., [\"*\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedMethods": {
+                    "description": "Allowed HTTP methods (e.g., [\"GET\", \"PUT\", \"POST\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedOrigins": {
+                    "description": "Allowed origins (e.g., [\"*\"], [\"https://example.com\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exposeHeaders": {
+                    "description": "Headers to expose (e.g., [\"ETag\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "maxAgeSeconds": {
+                    "description": "Preflight request cache time in seconds",
+                    "type": "integer"
+                }
+            }
+        },
         "controller.JSONResult": {
             "type": "object"
         },
@@ -3757,6 +3872,45 @@
                 }
             }
         },
+        "controller.RecommendObjectStorageRequest": {
+            "type": "object",
+            "required": [
+                "desiredCloud",
+                "sourceObjectStorages"
+            ],
+            "properties": {
+                "desiredCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "sourceObjectStorages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/controller.SourceObjectStorageProperty"
+                    }
+                }
+            }
+        },
+        "controller.RecommendObjectStorageResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetObjectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
+                    }
+                }
+            }
+        },
         "controller.RecommendSecurityGroupResponse": {
             "type": "object",
             "properties": {
@@ -3911,6 +4065,92 @@
                 },
                 "status": {
                     "type": "string"
+                }
+            }
+        },
+        "controller.SourceObjectStorageProperty": {
+            "type": "object",
+            "required": [
+                "bucketName"
+            ],
+            "properties": {
+                "accessFrequency": {
+                    "description": "Access pattern (critical for storage class selection)",
+                    "type": "string"
+                },
+                "bucketName": {
+                    "description": "Basic identification",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether CORS is enabled",
+                    "type": "boolean"
+                },
+                "corsRules": {
+                    "description": "CORS rules configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.CORSRule"
+                    }
+                },
+                "creationDate": {
+                    "description": "Creation date (RFC3339)",
+                    "type": "string"
+                },
+                "encryptionEnabled": {
+                    "description": "Security settings",
+                    "type": "boolean"
+                },
+                "isPublic": {
+                    "description": "Whether bucket has public access",
+                    "type": "boolean"
+                },
+                "objectCount": {
+                    "description": "Total number of objects",
+                    "type": "integer"
+                },
+                "tags": {
+                    "description": "Metadata",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "totalSizeBytes": {
+                    "description": "Capacity information (for cost estimation and recommendations)",
+                    "type": "integer"
+                },
+                "versioningEnabled": {
+                    "description": "Feature settings",
+                    "type": "boolean"
+                }
+            }
+        },
+        "controller.TargetObjectStorageProperty": {
+            "type": "object",
+            "properties": {
+                "bucketName": {
+                    "description": "Recommended target bucket name with random suffix by xid pkg",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether CORS is configured",
+                    "type": "boolean"
+                },
+                "corsRules": {
+                    "description": "CORS rules configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.CORSRule"
+                    }
+                },
+                "sourceBucketName": {
+                    "description": "Source bucket name for referencing",
+                    "type": "string"
+                },
+                "versioningEnabled": {
+                    "description": "Whether to enable versioning",
+                    "type": "boolean"
                 }
             }
         },
