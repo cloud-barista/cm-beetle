@@ -125,7 +125,13 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 	// Extract server specifications from source computing envrionment
 	// * Note: vcpus = cpus * cpuThreads
-	vcpusCalculated := uint32(server.CPU.Cpus * server.CPU.Threads)
+	cpus := server.CPU.Cpus
+	threads := server.CPU.Threads
+	if threads == 0 {
+		threads = 1 // Default to 1 thread if not specified
+	}
+
+	vcpusCalculated := uint32(cpus * threads)
 	memory := uint32(server.Memory.TotalSize)
 
 	// Calculate optimal vCPU and memory ranges based on AWS, GCP, and NCP instance patterns
