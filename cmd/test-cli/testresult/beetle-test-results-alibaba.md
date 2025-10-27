@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.0 (2d7d9e3)
+- CM-Beetle: v0.4.1 (a4c4e23)
 - cm-model: v0.0.14
-- CB-Tumblebug: v0.11.13
-- CB-Spider: v0.11.13
-- CB-MapUI: v0.11.16
+- CB-Tumblebug: v0.11.15
+- CB-Spider: v0.11.15
+- CB-MapUI: v0.11.17
 - Target CSP: ALIBABA
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: October 14, 2025
-- Test Time: 12:55:19 KST
-- Test Execution: 2025-10-14 12:55:19 KST
+- Test Date: October 27, 2025
+- Test Time: 19:46:27 KST
+- Test Execution: 2025-10-27 19:46:27 KST
 
 ### Scenario
 
@@ -39,19 +39,19 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 511ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ❌ **FAIL** | 15.102s | Fail |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ⏭️ **SKIP** | 0s | Skip |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ⏭️ **SKIP** | 0s | Skip |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ⏭️ **SKIP** | 0s | Skip |
-| 6 | Remote Command Accessibility Check | ⏭️ **SKIP** | 0s | Skip |
-| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ⏭️ **SKIP** | 0s | Skip |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 512ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 1m7.577s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 134ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 62ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 152ms | Pass |
+| 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
+| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 29.134s | Pass |
 
-**Overall Result**: 1/7 tests passed, 5 skipped ❌
+**Overall Result**: 7/7 tests passed ✅
 
-**Total Duration**: 25.71408686s
+**Total Duration**: 2m13.809003502s
 
-*Test executed on October 14, 2025 at 12:55:19 KST (2025-10-14 12:55:19 KST) using CM-Beetle automated test CLI*
+*Test executed on October 27, 2025 at 19:46:27 KST (2025-10-27 19:46:27 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -1979,7 +1979,7 @@
         "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
         "connectionName": "alibaba-ap-northeast-2",
         "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-        "imageId": "ubuntu_22_04_x64_20G_alibase_20250825.vhd",
+        "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
         "securityGroupIds": [
@@ -1999,7 +1999,7 @@
         "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
         "connectionName": "alibaba-ap-northeast-2",
         "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-        "imageId": "ubuntu_22_04_x64_20G_alibase_20250825.vhd",
+        "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
         "securityGroupIds": [
@@ -2044,7 +2044,7 @@
   "targetVmSpecList": [
     {
       "id": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-      "uid": "d3kbqkt9bnj9363dlr0g",
+      "uid": "d3vjcrmqjs728pq3g4kg",
       "cspSpecName": "ecs.t6-c1m4.xlarge",
       "name": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
       "namespace": "system",
@@ -2245,7 +2245,7 @@
     },
     {
       "id": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-      "uid": "d3kbqkt9bnj9363dlr10",
+      "uid": "d3vjcrmqjs728pq3g4l0",
       "cspSpecName": "ecs.t6-c1m4.2xlarge",
       "name": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
       "namespace": "system",
@@ -2449,23 +2449,29 @@
     {
       "namespace": "system",
       "providerName": "alibaba",
-      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250825.vhd",
+      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
       "regionList": [
         "ap-northeast-1",
         "ap-northeast-2",
+        "ap-southeast-1",
         "ap-southeast-3",
         "ap-southeast-5",
         "ap-southeast-6",
         "ap-southeast-7",
         "cn-beijing",
+        "cn-chengdu",
         "cn-fuzhou",
         "cn-guangzhou",
+        "cn-hangzhou",
         "cn-heyuan",
+        "cn-hongkong",
         "cn-huhehaote",
         "cn-nanjing",
+        "cn-qingdao",
         "cn-shanghai",
         "cn-shenzhen",
         "cn-wuhan-lr",
+        "cn-wulanchabu",
         "cn-zhangjiakou",
         "eu-central-1",
         "eu-west-1",
@@ -2475,11 +2481,11 @@
         "us-east-1",
         "us-west-1"
       ],
-      "id": "ubuntu_22_04_x64_20G_alibase_20250825.vhd",
-      "uid": "d3kbqt59bnj9363ejqig",
-      "name": "ubuntu_22_04_x64_20G_alibase_20250825.vhd",
+      "id": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "uid": "d3vjd0mqjs728pq4adm0",
+      "name": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
       "connectionName": "alibaba-ap-northeast-1",
-      "fetchedTime": "2025.10.10 08:01:56 Fri",
+      "fetchedTime": "2025.10.27 09:08:18 Mon",
       "isBasicImage": true,
       "osType": "Ubuntu 22.04",
       "osArchitecture": "x86_64",
@@ -2495,7 +2501,7 @@
         },
         {
           "key": "ImageId",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250825.vhd"
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
         },
         {
           "key": "ImageOwnerAlias",
@@ -2527,7 +2533,7 @@
         },
         {
           "key": "Description",
-          "value": "Kernel version is 5.15.0-152-generic, 2025.8.28"
+          "value": "Kernel version is 5.15.0-153-generic, 2025.9.17"
         },
         {
           "key": "Usage",
@@ -2543,7 +2549,7 @@
         },
         {
           "key": "ImageVersion",
-          "value": "v2025.8.28"
+          "value": "v2025.9.17"
         },
         {
           "key": "OSType",
@@ -2559,7 +2565,7 @@
         },
         {
           "key": "CreationTime",
-          "value": "2025-08-28T12:25:35Z"
+          "value": "2025-09-17T15:45:18Z"
         },
         {
           "key": "Progress",
@@ -2571,7 +2577,7 @@
         },
         {
           "key": "ImageName",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250825.vhd"
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
         },
         {
           "key": "Status",
@@ -2602,7 +2608,7 @@
           "value": "{DiskDeviceMapping:[]}"
         }
       ],
-      "description": "Kernel version is 5.15.0-152-generic, 2025.8.28"
+      "description": "Kernel version is 5.15.0-153-generic, 2025.9.17"
     }
   ],
   "targetSecurityGroupList": [
@@ -2658,8 +2664,775 @@
 
 #### 2.2 API Response Information
 
-- **Status**: ❌ **FAILED**
-- **Error**: Migration failed
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure migration completed successfully
+
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d3vkr66qjs728ptbeuj0",
+  "name": "mmci01",
+  "status": "Running:2 (R:2/2)",
+  "statusCount": {
+    "countTotal": 2,
+    "countCreating": 0,
+    "countRunning": 2,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d3vkr66qjs728ptbeuj0"
+  },
+  "systemLabel": "",
+  "systemMessage": null,
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+      "uid": "d3vkr66qjs728ptbeul0",
+      "cspResourceName": "d3vkr66qjs728ptbeul0",
+      "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
+      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-10-27 10:47:23",
+      "label": {
+        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+      },
+      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "8.220.210.176",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.142",
+      "privateDNS": "",
+      "rootDiskType": "cloud_essd",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "alibaba-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "providerName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "credentialName": "alibaba",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
+      "cspSpecName": "ecs.t6-c1m4.2xlarge",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-mj71mudehn140olulahhm",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+      "networkInterface": "eni-mj77e8aypk5nsxp58d49",
+      "securityGroupIds": [
+        "mig-sg-02"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+      "vmUserName": "cb-user",
+      "vmUserPassword": "dv1Aq$kj!sr366",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-10-27T10:47:38Z",
+          "completedTime": "2025-10-27T10:47:39Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ImageId",
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+        },
+        {
+          "key": "InstanceType",
+          "value": "ecs.t6-c1m4.2xlarge"
+        },
+        {
+          "key": "DeviceAvailable",
+          "value": "true"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "vpc"
+        },
+        {
+          "key": "LocalStorageAmount",
+          "value": "0"
+        },
+        {
+          "key": "IsSpot",
+          "value": "false"
+        },
+        {
+          "key": "InstanceChargeType",
+          "value": "PostPaid"
+        },
+        {
+          "key": "InstanceName",
+          "value": "d3vkr66qjs728ptbeul0"
+        },
+        {
+          "key": "DeploymentSetGroupNo",
+          "value": "0"
+        },
+        {
+          "key": "CreditSpecification",
+          "value": "Standard"
+        },
+        {
+          "key": "GPUAmount",
+          "value": "0"
+        },
+        {
+          "key": "Connected",
+          "value": "false"
+        },
+        {
+          "key": "InvocationCount",
+          "value": "0"
+        },
+        {
+          "key": "StartTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "InternetMaxBandwidthIn",
+          "value": "320"
+        },
+        {
+          "key": "InternetChargeType",
+          "value": "PayByBandwidth"
+        },
+        {
+          "key": "HostName",
+          "value": "iZmj77e8aypk5nsxp1ledrZ"
+        },
+        {
+          "key": "Status",
+          "value": "Running"
+        },
+        {
+          "key": "CPU",
+          "value": "0"
+        },
+        {
+          "key": "Cpu",
+          "value": "8"
+        },
+        {
+          "key": "SpotPriceLimit",
+          "value": "0.00"
+        },
+        {
+          "key": "OSName",
+          "value": "Ubuntu  22.04 64位"
+        },
+        {
+          "key": "InstanceOwnerId",
+          "value": "0"
+        },
+        {
+          "key": "OSNameEn",
+          "value": "Ubuntu  22.04 64 bit"
+        },
+        {
+          "key": "SerialNumber",
+          "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "IoOptimized",
+          "value": "true"
+        },
+        {
+          "key": "InternetMaxBandwidthOut",
+          "value": "5"
+        },
+        {
+          "key": "InstanceTypeFamily",
+          "value": "ecs.t6"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-mj77e8aypk5nsxp1ledr"
+        },
+        {
+          "key": "Recyclable",
+          "value": "false"
+        },
+        {
+          "key": "ExpiredTime",
+          "value": "2099-12-31T15:59Z"
+        },
+        {
+          "key": "OSType",
+          "value": "linux"
+        },
+        {
+          "key": "Memory",
+          "value": "32768"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "KeyPairName",
+          "value": "d3vkr56qjs728ptbeuhg"
+        },
+        {
+          "key": "LocalStorageCapacity",
+          "value": "0"
+        },
+        {
+          "key": "StoppedMode",
+          "value": "Not-applicable"
+        },
+        {
+          "key": "SpotStrategy",
+          "value": "NoSpot"
+        },
+        {
+          "key": "SpotDuration",
+          "value": "0"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "SecurityGroupIds",
+          "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
+        },
+        {
+          "key": "InnerIpAddress",
+          "value": "{IpAddress:[]}"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "{IpAddress:[8.220.210.176]}"
+        },
+        {
+          "key": "RdmaIpAddress",
+          "value": "{IpAddress:null}"
+        },
+        {
+          "key": "DedicatedHostAttribute",
+          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+        },
+        {
+          "key": "EcsCapacityReservationAttr",
+          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "DedicatedInstanceAttribute",
+          "value": "{Affinity:,Tenancy:}"
+        },
+        {
+          "key": "PrivateDnsNameOptions",
+          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+        },
+        {
+          "key": "AdditionalInfo",
+          "value": "{EnableHighDensityMode:false}"
+        },
+        {
+          "key": "ImageOptions",
+          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+        },
+        {
+          "key": "EipAddress",
+          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+        },
+        {
+          "key": "VpcAttributes",
+          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
+        },
+        {
+          "key": "Tags",
+          "value": "{Tag:null}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+        },
+        {
+          "key": "OperationLocks",
+          "value": "{LockReason:[]}"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d3vkr66qjs728ptbeuk0",
+      "cspResourceName": "d3vkr66qjs728ptbeuk0",
+      "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-10-27 10:47:26",
+      "label": {
+        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "8.220.220.21",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.143",
+      "privateDNS": "",
+      "rootDiskType": "cloud_essd",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "alibaba-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "providerName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "credentialName": "alibaba",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
+      "cspSpecName": "ecs.t6-c1m4.xlarge",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-mj71mudehn140olulahhm",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+      "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+      "vmUserName": "cb-user",
+      "vmUserPassword": "6!6dq3sr1Ajk$v",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-10-27T10:47:38Z",
+          "completedTime": "2025-10-27T10:47:40Z",
+          "elapsedTime": 2,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ImageId",
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+        },
+        {
+          "key": "InstanceType",
+          "value": "ecs.t6-c1m4.xlarge"
+        },
+        {
+          "key": "DeviceAvailable",
+          "value": "true"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "vpc"
+        },
+        {
+          "key": "LocalStorageAmount",
+          "value": "0"
+        },
+        {
+          "key": "IsSpot",
+          "value": "false"
+        },
+        {
+          "key": "InstanceChargeType",
+          "value": "PostPaid"
+        },
+        {
+          "key": "InstanceName",
+          "value": "d3vkr66qjs728ptbeuk0"
+        },
+        {
+          "key": "DeploymentSetGroupNo",
+          "value": "0"
+        },
+        {
+          "key": "CreditSpecification",
+          "value": "Standard"
+        },
+        {
+          "key": "GPUAmount",
+          "value": "0"
+        },
+        {
+          "key": "Connected",
+          "value": "false"
+        },
+        {
+          "key": "InvocationCount",
+          "value": "0"
+        },
+        {
+          "key": "StartTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "InternetMaxBandwidthIn",
+          "value": "160"
+        },
+        {
+          "key": "InternetChargeType",
+          "value": "PayByBandwidth"
+        },
+        {
+          "key": "HostName",
+          "value": "iZmj79jvlx2vp3aj2tq7y2Z"
+        },
+        {
+          "key": "Status",
+          "value": "Running"
+        },
+        {
+          "key": "CPU",
+          "value": "0"
+        },
+        {
+          "key": "Cpu",
+          "value": "4"
+        },
+        {
+          "key": "SpotPriceLimit",
+          "value": "0.00"
+        },
+        {
+          "key": "OSName",
+          "value": "Ubuntu  22.04 64位"
+        },
+        {
+          "key": "InstanceOwnerId",
+          "value": "0"
+        },
+        {
+          "key": "OSNameEn",
+          "value": "Ubuntu  22.04 64 bit"
+        },
+        {
+          "key": "SerialNumber",
+          "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "IoOptimized",
+          "value": "true"
+        },
+        {
+          "key": "InternetMaxBandwidthOut",
+          "value": "5"
+        },
+        {
+          "key": "InstanceTypeFamily",
+          "value": "ecs.t6"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-mj79jvlx2vp3aj2tq7y2"
+        },
+        {
+          "key": "Recyclable",
+          "value": "false"
+        },
+        {
+          "key": "ExpiredTime",
+          "value": "2099-12-31T15:59Z"
+        },
+        {
+          "key": "OSType",
+          "value": "linux"
+        },
+        {
+          "key": "Memory",
+          "value": "16384"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "KeyPairName",
+          "value": "d3vkr56qjs728ptbeuhg"
+        },
+        {
+          "key": "LocalStorageCapacity",
+          "value": "0"
+        },
+        {
+          "key": "StoppedMode",
+          "value": "Not-applicable"
+        },
+        {
+          "key": "SpotStrategy",
+          "value": "NoSpot"
+        },
+        {
+          "key": "SpotDuration",
+          "value": "0"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "SecurityGroupIds",
+          "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
+        },
+        {
+          "key": "InnerIpAddress",
+          "value": "{IpAddress:[]}"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "{IpAddress:[8.220.220.21]}"
+        },
+        {
+          "key": "RdmaIpAddress",
+          "value": "{IpAddress:null}"
+        },
+        {
+          "key": "DedicatedHostAttribute",
+          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+        },
+        {
+          "key": "EcsCapacityReservationAttr",
+          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "DedicatedInstanceAttribute",
+          "value": "{Affinity:,Tenancy:}"
+        },
+        {
+          "key": "PrivateDnsNameOptions",
+          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+        },
+        {
+          "key": "AdditionalInfo",
+          "value": "{EnableHighDensityMode:false}"
+        },
+        {
+          "key": "ImageOptions",
+          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+        },
+        {
+          "key": "EipAddress",
+          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+        },
+        {
+          "key": "VpcAttributes",
+          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
+        },
+        {
+          "key": "Tags",
+          "value": "{Tag:null}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+        },
+        {
+          "key": "OperationLocks",
+          "value": "{LockReason:[]}"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "cb-user",
+    "command": [
+      "uname -a"
+    ]
+  },
+  "postCommandResult": {
+    "results": [
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "vmIp": "8.220.210.176",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "vmIp": "8.220.220.21",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      }
+    ]
+  }
+}
+```
+
+</details>
 
 ### Test Case 3: Get a list of MCIs
 
@@ -2672,13 +3445,797 @@
 
 #### 3.2 API Response Information
 
-- **Status**: ❌ **FAILED**
-- **Error**: No response received
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI list retrieved successfully
 
-**Error Message**:
+**Response Body**:
 
-```
-Test skipped due to previous test failure
+```json
+{
+  "mci": [
+    {
+      "resourceType": "mci",
+      "id": "mmci01",
+      "uid": "d3vkr66qjs728ptbeuj0",
+      "name": "mmci01",
+      "status": "Running:2 (R:2/2)",
+      "statusCount": {
+        "countTotal": 2,
+        "countCreating": 0,
+        "countRunning": 2,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 0,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "None",
+      "targetAction": "None",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "sys.description": "a recommended multi-cloud infrastructure",
+        "sys.id": "mmci01",
+        "sys.labelType": "mci",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "mmci01",
+        "sys.namespace": "mig01",
+        "sys.uid": "d3vkr66qjs728ptbeuj0"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "a recommended multi-cloud infrastructure",
+      "vm": [
+        {
+          "resourceType": "vm",
+          "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+          "uid": "d3vkr66qjs728ptbeul0",
+          "cspResourceName": "d3vkr66qjs728ptbeul0",
+          "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
+          "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+          "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "",
+          "createdTime": "2025-10-27 10:47:23",
+          "label": {
+            "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2025-10-27 10:47:23",
+            "sys.cspResourceId": "i-mj77e8aypk5nsxp1ledr",
+            "sys.cspResourceName": "d3vkr66qjs728ptbeul0",
+            "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+            "sys.labelType": "vm",
+            "sys.manager": "cb-tumblebug",
+            "sys.mciId": "mmci01",
+            "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+            "sys.namespace": "mig01",
+            "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+            "sys.uid": "d3vkr66qjs728ptbeul0"
+          },
+          "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+          "region": {
+            "Region": "ap-northeast-2",
+            "Zone": "ap-northeast-2a"
+          },
+          "publicIP": "8.220.210.176",
+          "sshPort": "22",
+          "publicDNS": "",
+          "privateIP": "192.168.110.142",
+          "privateDNS": "",
+          "rootDiskType": "cloud_essd",
+          "rootDiskSize": "50",
+          "rootDiskName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
+          "cspSpecName": "ecs.t6-c1m4.2xlarge",
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+          "vNetId": "mig-vnet-01",
+          "cspVNetId": "vpc-mj71mudehn140olulahhm",
+          "subnetId": "mig-subnet-01",
+          "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+          "networkInterface": "eni-mj77e8aypk5nsxp58d49",
+          "securityGroupIds": [
+            "mig-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "mig-sshkey-01",
+          "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+          "vmUserName": "cb-user",
+          "vmUserPassword": "dv1Aq$kj!sr366",
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2025-10-27T10:47:38Z",
+              "completedTime": "2025-10-27T10:47:39Z",
+              "elapsedTime": 1,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "ImageId",
+              "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+            },
+            {
+              "key": "InstanceType",
+              "value": "ecs.t6-c1m4.2xlarge"
+            },
+            {
+              "key": "DeviceAvailable",
+              "value": "true"
+            },
+            {
+              "key": "InstanceNetworkType",
+              "value": "vpc"
+            },
+            {
+              "key": "LocalStorageAmount",
+              "value": "0"
+            },
+            {
+              "key": "IsSpot",
+              "value": "false"
+            },
+            {
+              "key": "InstanceChargeType",
+              "value": "PostPaid"
+            },
+            {
+              "key": "InstanceName",
+              "value": "d3vkr66qjs728ptbeul0"
+            },
+            {
+              "key": "DeploymentSetGroupNo",
+              "value": "0"
+            },
+            {
+              "key": "CreditSpecification",
+              "value": "Standard"
+            },
+            {
+              "key": "GPUAmount",
+              "value": "0"
+            },
+            {
+              "key": "Connected",
+              "value": "false"
+            },
+            {
+              "key": "InvocationCount",
+              "value": "0"
+            },
+            {
+              "key": "StartTime",
+              "value": "2025-10-27T10:46Z"
+            },
+            {
+              "key": "ZoneId",
+              "value": "ap-northeast-2a"
+            },
+            {
+              "key": "InternetMaxBandwidthIn",
+              "value": "320"
+            },
+            {
+              "key": "InternetChargeType",
+              "value": "PayByBandwidth"
+            },
+            {
+              "key": "HostName",
+              "value": "iZmj77e8aypk5nsxp1ledrZ"
+            },
+            {
+              "key": "Status",
+              "value": "Running"
+            },
+            {
+              "key": "CPU",
+              "value": "0"
+            },
+            {
+              "key": "Cpu",
+              "value": "8"
+            },
+            {
+              "key": "SpotPriceLimit",
+              "value": "0.00"
+            },
+            {
+              "key": "OSName",
+              "value": "Ubuntu  22.04 64位"
+            },
+            {
+              "key": "InstanceOwnerId",
+              "value": "0"
+            },
+            {
+              "key": "OSNameEn",
+              "value": "Ubuntu  22.04 64 bit"
+            },
+            {
+              "key": "SerialNumber",
+              "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
+            },
+            {
+              "key": "RegionId",
+              "value": "ap-northeast-2"
+            },
+            {
+              "key": "IoOptimized",
+              "value": "true"
+            },
+            {
+              "key": "InternetMaxBandwidthOut",
+              "value": "5"
+            },
+            {
+              "key": "InstanceTypeFamily",
+              "value": "ecs.t6"
+            },
+            {
+              "key": "InstanceId",
+              "value": "i-mj77e8aypk5nsxp1ledr"
+            },
+            {
+              "key": "Recyclable",
+              "value": "false"
+            },
+            {
+              "key": "ExpiredTime",
+              "value": "2099-12-31T15:59Z"
+            },
+            {
+              "key": "OSType",
+              "value": "linux"
+            },
+            {
+              "key": "Memory",
+              "value": "32768"
+            },
+            {
+              "key": "CreationTime",
+              "value": "2025-10-27T10:46Z"
+            },
+            {
+              "key": "KeyPairName",
+              "value": "d3vkr56qjs728ptbeuhg"
+            },
+            {
+              "key": "LocalStorageCapacity",
+              "value": "0"
+            },
+            {
+              "key": "StoppedMode",
+              "value": "Not-applicable"
+            },
+            {
+              "key": "SpotStrategy",
+              "value": "NoSpot"
+            },
+            {
+              "key": "SpotDuration",
+              "value": "0"
+            },
+            {
+              "key": "DeletionProtection",
+              "value": "false"
+            },
+            {
+              "key": "SecurityGroupIds",
+              "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
+            },
+            {
+              "key": "InnerIpAddress",
+              "value": "{IpAddress:[]}"
+            },
+            {
+              "key": "PublicIpAddress",
+              "value": "{IpAddress:[8.220.210.176]}"
+            },
+            {
+              "key": "RdmaIpAddress",
+              "value": "{IpAddress:null}"
+            },
+            {
+              "key": "DedicatedHostAttribute",
+              "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+            },
+            {
+              "key": "EcsCapacityReservationAttr",
+              "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+            },
+            {
+              "key": "CpuOptions",
+              "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+            },
+            {
+              "key": "HibernationOptions",
+              "value": "{Configured:false}"
+            },
+            {
+              "key": "DedicatedInstanceAttribute",
+              "value": "{Affinity:,Tenancy:}"
+            },
+            {
+              "key": "PrivateDnsNameOptions",
+              "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+            },
+            {
+              "key": "AdditionalInfo",
+              "value": "{EnableHighDensityMode:false}"
+            },
+            {
+              "key": "ImageOptions",
+              "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+            },
+            {
+              "key": "EipAddress",
+              "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+            },
+            {
+              "key": "MetadataOptions",
+              "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+            },
+            {
+              "key": "VpcAttributes",
+              "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
+            },
+            {
+              "key": "Tags",
+              "value": "{Tag:null}"
+            },
+            {
+              "key": "NetworkInterfaces",
+              "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+            },
+            {
+              "key": "OperationLocks",
+              "value": "{LockReason:[]}"
+            }
+          ]
+        },
+        {
+          "resourceType": "vm",
+          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "uid": "d3vkr66qjs728ptbeuk0",
+          "cspResourceName": "d3vkr66qjs728ptbeuk0",
+          "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
+          "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+          "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "",
+          "createdTime": "2025-10-27 10:47:26",
+          "label": {
+            "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+            "sys.connectionName": "alibaba-ap-northeast-2",
+            "sys.createdTime": "2025-10-27 10:47:26",
+            "sys.cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
+            "sys.cspResourceName": "d3vkr66qjs728ptbeuk0",
+            "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+            "sys.labelType": "vm",
+            "sys.manager": "cb-tumblebug",
+            "sys.mciId": "mmci01",
+            "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+            "sys.namespace": "mig01",
+            "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+            "sys.uid": "d3vkr66qjs728ptbeuk0"
+          },
+          "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+          "region": {
+            "Region": "ap-northeast-2",
+            "Zone": "ap-northeast-2a"
+          },
+          "publicIP": "8.220.220.21",
+          "sshPort": "22",
+          "publicDNS": "",
+          "privateIP": "192.168.110.143",
+          "privateDNS": "",
+          "rootDiskType": "cloud_essd",
+          "rootDiskSize": "50",
+          "rootDiskName": "",
+          "connectionName": "alibaba-ap-northeast-2",
+          "connectionConfig": {
+            "configName": "alibaba-ap-northeast-2",
+            "providerName": "alibaba",
+            "driverName": "alibaba-driver-v1.0.so",
+            "credentialName": "alibaba",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "alibaba-ap-northeast-2",
+            "regionZoneInfo": {
+              "assignedRegion": "ap-northeast-2",
+              "assignedZone": "ap-northeast-2a"
+            },
+            "regionDetail": {
+              "regionId": "ap-northeast-2",
+              "regionName": "ap-northeast-2",
+              "description": "South Korea (Seoul)",
+              "location": {
+                "display": "South Korea (Seoul)",
+                "latitude": 37.36,
+                "longitude": 126.78
+              },
+              "zones": [
+                "ap-northeast-2a",
+                "ap-northeast-2b"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
+          "cspSpecName": "ecs.t6-c1m4.xlarge",
+          "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+          "vNetId": "mig-vnet-01",
+          "cspVNetId": "vpc-mj71mudehn140olulahhm",
+          "subnetId": "mig-subnet-01",
+          "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+          "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
+          "securityGroupIds": [
+            "mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "mig-sshkey-01",
+          "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+          "vmUserName": "cb-user",
+          "vmUserPassword": "6!6dq3sr1Ajk$v",
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2025-10-27T10:47:38Z",
+              "completedTime": "2025-10-27T10:47:40Z",
+              "elapsedTime": 2,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "ImageId",
+              "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+            },
+            {
+              "key": "InstanceType",
+              "value": "ecs.t6-c1m4.xlarge"
+            },
+            {
+              "key": "DeviceAvailable",
+              "value": "true"
+            },
+            {
+              "key": "InstanceNetworkType",
+              "value": "vpc"
+            },
+            {
+              "key": "LocalStorageAmount",
+              "value": "0"
+            },
+            {
+              "key": "IsSpot",
+              "value": "false"
+            },
+            {
+              "key": "InstanceChargeType",
+              "value": "PostPaid"
+            },
+            {
+              "key": "InstanceName",
+              "value": "d3vkr66qjs728ptbeuk0"
+            },
+            {
+              "key": "DeploymentSetGroupNo",
+              "value": "0"
+            },
+            {
+              "key": "CreditSpecification",
+              "value": "Standard"
+            },
+            {
+              "key": "GPUAmount",
+              "value": "0"
+            },
+            {
+              "key": "Connected",
+              "value": "false"
+            },
+            {
+              "key": "InvocationCount",
+              "value": "0"
+            },
+            {
+              "key": "StartTime",
+              "value": "2025-10-27T10:46Z"
+            },
+            {
+              "key": "ZoneId",
+              "value": "ap-northeast-2a"
+            },
+            {
+              "key": "InternetMaxBandwidthIn",
+              "value": "160"
+            },
+            {
+              "key": "InternetChargeType",
+              "value": "PayByBandwidth"
+            },
+            {
+              "key": "HostName",
+              "value": "iZmj79jvlx2vp3aj2tq7y2Z"
+            },
+            {
+              "key": "Status",
+              "value": "Running"
+            },
+            {
+              "key": "CPU",
+              "value": "0"
+            },
+            {
+              "key": "Cpu",
+              "value": "4"
+            },
+            {
+              "key": "SpotPriceLimit",
+              "value": "0.00"
+            },
+            {
+              "key": "OSName",
+              "value": "Ubuntu  22.04 64位"
+            },
+            {
+              "key": "InstanceOwnerId",
+              "value": "0"
+            },
+            {
+              "key": "OSNameEn",
+              "value": "Ubuntu  22.04 64 bit"
+            },
+            {
+              "key": "SerialNumber",
+              "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
+            },
+            {
+              "key": "RegionId",
+              "value": "ap-northeast-2"
+            },
+            {
+              "key": "IoOptimized",
+              "value": "true"
+            },
+            {
+              "key": "InternetMaxBandwidthOut",
+              "value": "5"
+            },
+            {
+              "key": "InstanceTypeFamily",
+              "value": "ecs.t6"
+            },
+            {
+              "key": "InstanceId",
+              "value": "i-mj79jvlx2vp3aj2tq7y2"
+            },
+            {
+              "key": "Recyclable",
+              "value": "false"
+            },
+            {
+              "key": "ExpiredTime",
+              "value": "2099-12-31T15:59Z"
+            },
+            {
+              "key": "OSType",
+              "value": "linux"
+            },
+            {
+              "key": "Memory",
+              "value": "16384"
+            },
+            {
+              "key": "CreationTime",
+              "value": "2025-10-27T10:46Z"
+            },
+            {
+              "key": "KeyPairName",
+              "value": "d3vkr56qjs728ptbeuhg"
+            },
+            {
+              "key": "LocalStorageCapacity",
+              "value": "0"
+            },
+            {
+              "key": "StoppedMode",
+              "value": "Not-applicable"
+            },
+            {
+              "key": "SpotStrategy",
+              "value": "NoSpot"
+            },
+            {
+              "key": "SpotDuration",
+              "value": "0"
+            },
+            {
+              "key": "DeletionProtection",
+              "value": "false"
+            },
+            {
+              "key": "SecurityGroupIds",
+              "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
+            },
+            {
+              "key": "InnerIpAddress",
+              "value": "{IpAddress:[]}"
+            },
+            {
+              "key": "PublicIpAddress",
+              "value": "{IpAddress:[8.220.220.21]}"
+            },
+            {
+              "key": "RdmaIpAddress",
+              "value": "{IpAddress:null}"
+            },
+            {
+              "key": "DedicatedHostAttribute",
+              "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+            },
+            {
+              "key": "EcsCapacityReservationAttr",
+              "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+            },
+            {
+              "key": "CpuOptions",
+              "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+            },
+            {
+              "key": "HibernationOptions",
+              "value": "{Configured:false}"
+            },
+            {
+              "key": "DedicatedInstanceAttribute",
+              "value": "{Affinity:,Tenancy:}"
+            },
+            {
+              "key": "PrivateDnsNameOptions",
+              "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+            },
+            {
+              "key": "AdditionalInfo",
+              "value": "{EnableHighDensityMode:false}"
+            },
+            {
+              "key": "ImageOptions",
+              "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+            },
+            {
+              "key": "EipAddress",
+              "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+            },
+            {
+              "key": "MetadataOptions",
+              "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+            },
+            {
+              "key": "VpcAttributes",
+              "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
+            },
+            {
+              "key": "Tags",
+              "value": "{Tag:null}"
+            },
+            {
+              "key": "NetworkInterfaces",
+              "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+            },
+            {
+              "key": "OperationLocks",
+              "value": "{LockReason:[]}"
+            }
+          ]
+        }
+      ],
+      "newVmList": null,
+      "postCommand": {
+        "userName": "cb-user",
+        "command": [
+          "uname -a"
+        ]
+      },
+      "postCommandResult": {
+        "results": [
+          {
+            "mciId": "mmci01",
+            "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+            "vmIp": "8.220.210.176",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "mciId": "mmci01",
+            "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+            "vmIp": "8.220.220.21",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          }
+        ]
+      }
+    }
+  ]
+}
 ```
 
 ### Test Case 4: Get a list of MCI IDs
@@ -2693,14 +4250,824 @@ Test skipped due to previous test failure
 
 #### 4.2 API Response Information
 
-- **Status**: ❌ **FAILED**
-- **Error**: No response received
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI IDs retrieved successfully
 
-**Error Message**:
+**Response Body**:
 
+```json
+{
+  "idList": [
+    "mmci01"
+  ]
+}
 ```
-Test skipped due to previous test failure
+
+### Test Case 5: Get a specific MCI
+
+#### 5.1 API Request Information
+
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **Purpose**: Retrieve detailed information for a specific MCI
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
+- **Request Body**: None (GET request)
+
+#### 5.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+- **Response**: MCI details retrieved successfully
+
+**Response Body**:
+
+<details>
+  <summary> <ins>Click to see the response body </ins> </summary>
+
+```json
+{
+  "resourceType": "mci",
+  "id": "mmci01",
+  "uid": "d3vkr66qjs728ptbeuj0",
+  "name": "mmci01",
+  "status": "Running:2 (R:2/2)",
+  "statusCount": {
+    "countTotal": 2,
+    "countCreating": 0,
+    "countRunning": 2,
+    "countFailed": 0,
+    "countSuspended": 0,
+    "countRebooting": 0,
+    "countTerminated": 0,
+    "countSuspending": 0,
+    "countResuming": 0,
+    "countTerminating": 0,
+    "countUndefined": 0
+  },
+  "targetStatus": "None",
+  "targetAction": "None",
+  "installMonAgent": "",
+  "configureCloudAdaptiveNetwork": "",
+  "label": {
+    "sys.description": "a recommended multi-cloud infrastructure",
+    "sys.id": "mmci01",
+    "sys.labelType": "mci",
+    "sys.manager": "cb-tumblebug",
+    "sys.name": "mmci01",
+    "sys.namespace": "mig01",
+    "sys.uid": "d3vkr66qjs728ptbeuj0"
+  },
+  "systemLabel": "",
+  "systemMessage": null,
+  "description": "a recommended multi-cloud infrastructure",
+  "vm": [
+    {
+      "resourceType": "vm",
+      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+      "uid": "d3vkr66qjs728ptbeul0",
+      "cspResourceName": "d3vkr66qjs728ptbeul0",
+      "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
+      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-10-27 10:47:23",
+      "label": {
+        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "sys.connectionName": "alibaba-ap-northeast-2",
+        "sys.createdTime": "2025-10-27 10:47:23",
+        "sys.cspResourceId": "i-mj77e8aypk5nsxp1ledr",
+        "sys.cspResourceName": "d3vkr66qjs728ptbeul0",
+        "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "sys.uid": "d3vkr66qjs728ptbeul0"
+      },
+      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "8.220.210.176",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.142",
+      "privateDNS": "",
+      "rootDiskType": "cloud_essd",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "alibaba-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "providerName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "credentialName": "alibaba",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
+      "cspSpecName": "ecs.t6-c1m4.2xlarge",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-mj71mudehn140olulahhm",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+      "networkInterface": "eni-mj77e8aypk5nsxp58d49",
+      "securityGroupIds": [
+        "mig-sg-02"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+      "vmUserName": "cb-user",
+      "vmUserPassword": "dv1Aq$kj!sr366",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-10-27T10:47:38Z",
+          "completedTime": "2025-10-27T10:47:39Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ImageId",
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+        },
+        {
+          "key": "InstanceType",
+          "value": "ecs.t6-c1m4.2xlarge"
+        },
+        {
+          "key": "DeviceAvailable",
+          "value": "true"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "vpc"
+        },
+        {
+          "key": "LocalStorageAmount",
+          "value": "0"
+        },
+        {
+          "key": "IsSpot",
+          "value": "false"
+        },
+        {
+          "key": "InstanceChargeType",
+          "value": "PostPaid"
+        },
+        {
+          "key": "InstanceName",
+          "value": "d3vkr66qjs728ptbeul0"
+        },
+        {
+          "key": "DeploymentSetGroupNo",
+          "value": "0"
+        },
+        {
+          "key": "CreditSpecification",
+          "value": "Standard"
+        },
+        {
+          "key": "GPUAmount",
+          "value": "0"
+        },
+        {
+          "key": "Connected",
+          "value": "false"
+        },
+        {
+          "key": "InvocationCount",
+          "value": "0"
+        },
+        {
+          "key": "StartTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "InternetMaxBandwidthIn",
+          "value": "320"
+        },
+        {
+          "key": "InternetChargeType",
+          "value": "PayByBandwidth"
+        },
+        {
+          "key": "HostName",
+          "value": "iZmj77e8aypk5nsxp1ledrZ"
+        },
+        {
+          "key": "Status",
+          "value": "Running"
+        },
+        {
+          "key": "CPU",
+          "value": "0"
+        },
+        {
+          "key": "Cpu",
+          "value": "8"
+        },
+        {
+          "key": "SpotPriceLimit",
+          "value": "0.00"
+        },
+        {
+          "key": "OSName",
+          "value": "Ubuntu  22.04 64位"
+        },
+        {
+          "key": "InstanceOwnerId",
+          "value": "0"
+        },
+        {
+          "key": "OSNameEn",
+          "value": "Ubuntu  22.04 64 bit"
+        },
+        {
+          "key": "SerialNumber",
+          "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "IoOptimized",
+          "value": "true"
+        },
+        {
+          "key": "InternetMaxBandwidthOut",
+          "value": "5"
+        },
+        {
+          "key": "InstanceTypeFamily",
+          "value": "ecs.t6"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-mj77e8aypk5nsxp1ledr"
+        },
+        {
+          "key": "Recyclable",
+          "value": "false"
+        },
+        {
+          "key": "ExpiredTime",
+          "value": "2099-12-31T15:59Z"
+        },
+        {
+          "key": "OSType",
+          "value": "linux"
+        },
+        {
+          "key": "Memory",
+          "value": "32768"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "KeyPairName",
+          "value": "d3vkr56qjs728ptbeuhg"
+        },
+        {
+          "key": "LocalStorageCapacity",
+          "value": "0"
+        },
+        {
+          "key": "StoppedMode",
+          "value": "Not-applicable"
+        },
+        {
+          "key": "SpotStrategy",
+          "value": "NoSpot"
+        },
+        {
+          "key": "SpotDuration",
+          "value": "0"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "SecurityGroupIds",
+          "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
+        },
+        {
+          "key": "InnerIpAddress",
+          "value": "{IpAddress:[]}"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "{IpAddress:[8.220.210.176]}"
+        },
+        {
+          "key": "RdmaIpAddress",
+          "value": "{IpAddress:null}"
+        },
+        {
+          "key": "DedicatedHostAttribute",
+          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+        },
+        {
+          "key": "EcsCapacityReservationAttr",
+          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "DedicatedInstanceAttribute",
+          "value": "{Affinity:,Tenancy:}"
+        },
+        {
+          "key": "PrivateDnsNameOptions",
+          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+        },
+        {
+          "key": "AdditionalInfo",
+          "value": "{EnableHighDensityMode:false}"
+        },
+        {
+          "key": "ImageOptions",
+          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+        },
+        {
+          "key": "EipAddress",
+          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+        },
+        {
+          "key": "VpcAttributes",
+          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
+        },
+        {
+          "key": "Tags",
+          "value": "{Tag:null}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+        },
+        {
+          "key": "OperationLocks",
+          "value": "{LockReason:[]}"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "uid": "d3vkr66qjs728ptbeuk0",
+      "cspResourceName": "d3vkr66qjs728ptbeuk0",
+      "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
+      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-10-27 10:47:26",
+      "label": {
+        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.connectionName": "alibaba-ap-northeast-2",
+        "sys.createdTime": "2025-10-27 10:47:26",
+        "sys.cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
+        "sys.cspResourceName": "d3vkr66qjs728ptbeuk0",
+        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sys.uid": "d3vkr66qjs728ptbeuk0"
+      },
+      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "region": {
+        "Region": "ap-northeast-2",
+        "Zone": "ap-northeast-2a"
+      },
+      "publicIP": "8.220.220.21",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "192.168.110.143",
+      "privateDNS": "",
+      "rootDiskType": "cloud_essd",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "alibaba-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "alibaba-ap-northeast-2",
+        "providerName": "alibaba",
+        "driverName": "alibaba-driver-v1.0.so",
+        "credentialName": "alibaba",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "alibaba-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "South Korea (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
+      "cspSpecName": "ecs.t6-c1m4.xlarge",
+      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "vpc-mj71mudehn140olulahhm",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
+      "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
+      "vmUserName": "cb-user",
+      "vmUserPassword": "6!6dq3sr1Ajk$v",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-10-27T10:47:38Z",
+          "completedTime": "2025-10-27T10:47:40Z",
+          "elapsedTime": 2,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ImageId",
+          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
+        },
+        {
+          "key": "InstanceType",
+          "value": "ecs.t6-c1m4.xlarge"
+        },
+        {
+          "key": "DeviceAvailable",
+          "value": "true"
+        },
+        {
+          "key": "InstanceNetworkType",
+          "value": "vpc"
+        },
+        {
+          "key": "LocalStorageAmount",
+          "value": "0"
+        },
+        {
+          "key": "IsSpot",
+          "value": "false"
+        },
+        {
+          "key": "InstanceChargeType",
+          "value": "PostPaid"
+        },
+        {
+          "key": "InstanceName",
+          "value": "d3vkr66qjs728ptbeuk0"
+        },
+        {
+          "key": "DeploymentSetGroupNo",
+          "value": "0"
+        },
+        {
+          "key": "CreditSpecification",
+          "value": "Standard"
+        },
+        {
+          "key": "GPUAmount",
+          "value": "0"
+        },
+        {
+          "key": "Connected",
+          "value": "false"
+        },
+        {
+          "key": "InvocationCount",
+          "value": "0"
+        },
+        {
+          "key": "StartTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "ZoneId",
+          "value": "ap-northeast-2a"
+        },
+        {
+          "key": "InternetMaxBandwidthIn",
+          "value": "160"
+        },
+        {
+          "key": "InternetChargeType",
+          "value": "PayByBandwidth"
+        },
+        {
+          "key": "HostName",
+          "value": "iZmj79jvlx2vp3aj2tq7y2Z"
+        },
+        {
+          "key": "Status",
+          "value": "Running"
+        },
+        {
+          "key": "CPU",
+          "value": "0"
+        },
+        {
+          "key": "Cpu",
+          "value": "4"
+        },
+        {
+          "key": "SpotPriceLimit",
+          "value": "0.00"
+        },
+        {
+          "key": "OSName",
+          "value": "Ubuntu  22.04 64位"
+        },
+        {
+          "key": "InstanceOwnerId",
+          "value": "0"
+        },
+        {
+          "key": "OSNameEn",
+          "value": "Ubuntu  22.04 64 bit"
+        },
+        {
+          "key": "SerialNumber",
+          "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
+        },
+        {
+          "key": "RegionId",
+          "value": "ap-northeast-2"
+        },
+        {
+          "key": "IoOptimized",
+          "value": "true"
+        },
+        {
+          "key": "InternetMaxBandwidthOut",
+          "value": "5"
+        },
+        {
+          "key": "InstanceTypeFamily",
+          "value": "ecs.t6"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-mj79jvlx2vp3aj2tq7y2"
+        },
+        {
+          "key": "Recyclable",
+          "value": "false"
+        },
+        {
+          "key": "ExpiredTime",
+          "value": "2099-12-31T15:59Z"
+        },
+        {
+          "key": "OSType",
+          "value": "linux"
+        },
+        {
+          "key": "Memory",
+          "value": "16384"
+        },
+        {
+          "key": "CreationTime",
+          "value": "2025-10-27T10:46Z"
+        },
+        {
+          "key": "KeyPairName",
+          "value": "d3vkr56qjs728ptbeuhg"
+        },
+        {
+          "key": "LocalStorageCapacity",
+          "value": "0"
+        },
+        {
+          "key": "StoppedMode",
+          "value": "Not-applicable"
+        },
+        {
+          "key": "SpotStrategy",
+          "value": "NoSpot"
+        },
+        {
+          "key": "SpotDuration",
+          "value": "0"
+        },
+        {
+          "key": "DeletionProtection",
+          "value": "false"
+        },
+        {
+          "key": "SecurityGroupIds",
+          "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
+        },
+        {
+          "key": "InnerIpAddress",
+          "value": "{IpAddress:[]}"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "{IpAddress:[8.220.220.21]}"
+        },
+        {
+          "key": "RdmaIpAddress",
+          "value": "{IpAddress:null}"
+        },
+        {
+          "key": "DedicatedHostAttribute",
+          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
+        },
+        {
+          "key": "EcsCapacityReservationAttr",
+          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "DedicatedInstanceAttribute",
+          "value": "{Affinity:,Tenancy:}"
+        },
+        {
+          "key": "PrivateDnsNameOptions",
+          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
+        },
+        {
+          "key": "AdditionalInfo",
+          "value": "{EnableHighDensityMode:false}"
+        },
+        {
+          "key": "ImageOptions",
+          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
+        },
+        {
+          "key": "EipAddress",
+          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
+        },
+        {
+          "key": "VpcAttributes",
+          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
+        },
+        {
+          "key": "Tags",
+          "value": "{Tag:null}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
+        },
+        {
+          "key": "OperationLocks",
+          "value": "{LockReason:[]}"
+        }
+      ]
+    }
+  ],
+  "newVmList": null,
+  "postCommand": {
+    "userName": "cb-user",
+    "command": [
+      "uname -a"
+    ]
+  },
+  "postCommandResult": {
+    "results": [
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "vmIp": "8.220.210.176",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "vmIp": "8.220.220.21",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      }
+    ]
+  }
+}
 ```
+
+</details>
 
 ### Test Case 6: Remote Command Accessibility Check
 
@@ -2715,8 +5082,59 @@ Test skipped due to previous test failure
 
 #### 6.2 Test Result Information
 
-- **Status**: ⏭️ **SKIPPED**
-- **Reason**: Test skipped due to previous test failure
+- **Status**: ✅ **SUCCESS**
+- **Result**: All VMs are accessible via SSH
+
+**Summary**: 2/2 VMs accessible via SSH
+
+**Test Statistics**:
+
+- Total VMs: 2
+- Successful Tests: 2
+- Failed Tests: 0
+
+**Complete Test Details**:
+
+<details>
+  <summary> <ins>Click to see detailed test results </ins> </summary>
+
+```json
+{
+  "failedTests": 0,
+  "overallStatus": {
+    "message": "2/2 VMs accessible via SSH",
+    "success": true
+  },
+  "successfulTests": 2,
+  "totalVMs": 2,
+  "vmResults": [
+    {
+      "command": "uname -a",
+      "output": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "8.220.210.176",
+      "sshTest": "successful",
+      "status": "success",
+      "subGroup": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "testOrder": 1,
+      "userName": "cb-user",
+      "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1"
+    },
+    {
+      "command": "uname -a",
+      "output": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "8.220.220.21",
+      "sshTest": "successful",
+      "status": "success",
+      "subGroup": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "testOrder": 2,
+      "userName": "cb-user",
+      "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1"
+    }
+  ]
+}
+```
+
+</details>
 
 ### Test Case 7: Delete the migrated computing infra
 
@@ -2731,6 +5149,15 @@ Test skipped due to previous test failure
 
 #### 7.2 API Response Information
 
-- **Status**: ⏭️ **SKIPPED**
-- **Reason**: Test skipped due to previous test failure
+- **Status**: ✅ **SUCCESS**
+- **Response**: Infrastructure deletion completed successfully
+
+**Response Body**:
+
+```json
+{
+  "success": true,
+  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+}
+```
 
