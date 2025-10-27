@@ -1475,7 +1475,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Managed Middleware"
+                    "[Recommendation] Managed Middleware (experimental)"
                 ],
                 "summary": "Recommend an object storage for cloud migration",
                 "operationId": "RecommendObjectStorage",
@@ -5435,26 +5435,54 @@ const docTemplate = `{
             ],
             "properties": {
                 "accessKeyId": {
-                    "description": "AWS S3 Authentication (REQUIRED - must be provided by user)",
+                    "description": "Common authentication (REQUIRED - must be provided by user)",
                     "type": "string"
                 },
+                "exclude": {
+                    "description": "File filtering options (applied after listing objects, before upload/download)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "expiresIn": {
-                    "description": "Presigned URL configuration",
+                    "description": "Presigned URL configuration (spider handler only)",
                     "type": "integer",
                     "default": 3600
+                },
+                "handler": {
+                    "description": "Handler selection",
+                    "type": "string",
+                    "default": "spider"
+                },
+                "include": {
+                    "description": "Patterns to include (e.g., \"*.txt\", \"data/*\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "maxRetries": {
                     "description": "Maximum number of retry attempts (default: 3)",
                     "type": "integer",
                     "default": 3
                 },
+                "region": {
+                    "description": "AWS region (for minio handler, default: \"us-east-1\")",
+                    "type": "string",
+                    "default": "us-east-1"
+                },
+                "secretAccessKey": {
+                    "description": "AWS Secret Access Key (REQUIRED for minio handler)",
+                    "type": "string"
+                },
                 "timeout": {
                     "description": "HTTP request configuration (optional)",
                     "type": "integer",
                     "default": 300
                 },
-                "verifySSL": {
-                    "description": "Verify SSL certificates (CB-Spider default: false)",
+                "useSSL": {
+                    "description": "Use HTTPS (default: true)",
                     "type": "boolean",
                     "default": false
                 }

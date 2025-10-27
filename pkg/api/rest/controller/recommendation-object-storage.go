@@ -86,7 +86,7 @@ type TargetObjectStorageProperty struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Managed Middleware
+// @Tags [Recommendation] Managed Middleware (experimental)
 // @Accept json
 // @Produce	json
 // @Param request body RecommendObjectStorageRequest true "Specify the your object storage to be migrated"
