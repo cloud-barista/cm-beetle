@@ -111,6 +111,10 @@ type ObjectStorageTransferOption struct {
 	// HTTP request configuration (optional)
 	Timeout    int `json:"timeout,omitempty" default:"300"`  // HTTP request timeout in seconds (default: 300)
 	MaxRetries int `json:"maxRetries,omitempty" default:"3"` // Maximum number of retry attempts (default: 3)
+
+	// File filtering options (applied after listing objects, before upload/download)
+	Exclude []string `json:"exclude,omitempty"` // Patterns to exclude (e.g., "*.log", "temp/*", ".git/*")
+	Include []string `json:"include,omitempty"` // Patterns to include (e.g., "*.txt", "data/*")
 }
 
 // Validate checks if the fields of DataMigrationModel satisfy basic requirements for transfer tasks.

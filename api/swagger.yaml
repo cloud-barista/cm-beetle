@@ -2687,23 +2687,45 @@ definitions:
   transx.ObjectStorageTransferOption:
     properties:
       accessKeyId:
-        description: AWS S3 Authentication (REQUIRED - must be provided by user)
+        description: Common authentication (REQUIRED - must be provided by user)
         type: string
+      exclude:
+        description: File filtering options (applied after listing objects, before
+          upload/download)
+        items:
+          type: string
+        type: array
       expiresIn:
         default: 3600
-        description: Presigned URL configuration
+        description: Presigned URL configuration (spider handler only)
         type: integer
+      handler:
+        default: spider
+        description: Handler selection
+        type: string
+      include:
+        description: Patterns to include (e.g., "*.txt", "data/*")
+        items:
+          type: string
+        type: array
       maxRetries:
         default: 3
         description: 'Maximum number of retry attempts (default: 3)'
         type: integer
+      region:
+        default: us-east-1
+        description: 'AWS region (for minio handler, default: "us-east-1")'
+        type: string
+      secretAccessKey:
+        description: AWS Secret Access Key (REQUIRED for minio handler)
+        type: string
       timeout:
         default: 300
         description: HTTP request configuration (optional)
         type: integer
-      verifySSL:
+      useSSL:
         default: false
-        description: 'Verify SSL certificates (CB-Spider default: false)'
+        description: 'Use HTTPS (default: true)'
         type: boolean
     required:
     - accessKeyId
@@ -3867,7 +3889,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an object storage for cloud migration
       tags:
-      - '[Recommendation] Managed Middleware'
+      - '[Recommendation] Managed Middleware (experimental)'
   /recommendation/resources/securityGroups:
     post:
       consumes:

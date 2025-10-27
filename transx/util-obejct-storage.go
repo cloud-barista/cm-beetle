@@ -654,3 +654,285 @@ func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, opti
 
 	return objects, nil
 }
+
+// ========================================
+// Object Filtering Functions
+// ========================================
+
+// filterObjectList filters a list of objects based on include/exclude patterns
+// Filtering logic follows rsync-like pattern matching:
+// 1. If include patterns are specified, only matching objects are included
+// 2. Exclude patterns are then applied to remove unwanted objects
+// 3. If no patterns are specified, all objects are included
+func filterObjectList(objects []ObjectInfo, exclude, include []string) []ObjectInfo {
+	if len(include) == 0 && len(exclude) == 0 {
+		return objects // No filtering needed
+	}
+
+	filtered := []ObjectInfo{}
+	for _, obj := range objects {
+		if shouldTransferObject(obj.Key, exclude, include) {
+			filtered = append(filtered, obj)
+		}
+	}
+	return filtered
+}
+
+// shouldTransferObject determines if an object should be transferred based on include/exclude patterns
+// Pattern matching uses filepath.Match syntax:
+// - "*" matches any sequence of non-separator characters
+// - "?" matches any single non-separator character
+// - "[...]" matches any character in the brackets
+// - "**" (double asterisk) is NOT supported by filepath.Match
+//
+// Examples:
+//   - "*.log" matches "app.log", "error.log"
+//   - "temp/*" matches "temp/file.txt", "temp/data.json"
+//   - "data/*.json" matches "data/config.json"
+func shouldTransferObject(objectKey string, exclude, include []string) bool {
+	// Step 1: Apply include patterns (whitelist)
+	// If include patterns exist, object must match at least one
+	if len(include) > 0 {
+		included := false
+		for _, pattern := range include {
+			if matchPattern(objectKey, pattern) {
+				included = true
+				break
+			}
+		}
+		if !included {
+			return false // Object doesn't match any include pattern
+		}
+	}
+
+	// Step 2: Apply exclude patterns (blacklist)
+	// If object matches any exclude pattern, it's filtered out
+	for _, pattern := range exclude {
+		if matchPattern(objectKey, pattern) {
+			return false // Object matches an exclude pattern
+		}
+	}
+
+	return true // Object passed all filters
+}
+
+// matchPattern checks if a file path matches a pattern
+// Supports glob patterns including ** for recursive directory matching
+// Pattern examples:
+//   - "*.log" matches any .log file in any directory
+//   - "data/*" matches files directly in data/ directory
+//   - "data/**" matches all files recursively under data/
+//   - "data/**/*.json" matches all .json files recursively under data/
+func matchPattern(path, pattern string) bool {
+	// Handle ** (double asterisk) for recursive directory matching
+	if strings.Contains(pattern, "**") {
+		return matchPatternWithDoubleAsterisk(path, pattern)
+	}
+
+	// Direct match attempt using filepath.Match
+	matched, err := filepath.Match(pattern, path)
+	if err == nil && matched {
+		return true
+	}
+
+	// Try matching with path prefix for directory patterns
+	// e.g., "logs/*" should match "logs/app.log"
+	if strings.Contains(pattern, "/") {
+		matched, err := filepath.Match(pattern, path)
+		if err == nil && matched {
+			return true
+		}
+	}
+
+	// Try matching basename for simple patterns
+	// e.g., "*.log" should match "subdir/app.log"
+	if !strings.Contains(pattern, "/") {
+		basename := filepath.Base(path)
+		matched, err := filepath.Match(pattern, basename)
+		if err == nil && matched {
+			return true
+		}
+	}
+
+	return false
+}
+
+// matchPatternWithDoubleAsterisk handles patterns with ** for recursive matching
+// Examples:
+//   - "data/**" matches "data/file.txt", "data/sub/file.txt", "data/sub/deep/file.txt"
+//   - "data/**/*.json" matches all .json files under data/ recursively
+//   - "**/test/**" matches any path containing /test/ directory
+//   - "*/raw/2025/**" matches "data/raw/2025/file.txt", "backup/raw/2025/sub/file.txt"
+func matchPatternWithDoubleAsterisk(path, pattern string) bool {
+	// Split pattern by ** to handle different cases
+	parts := strings.Split(pattern, "**")
+
+	if len(parts) == 1 {
+		// No ** found, shouldn't happen but fallback to regular match
+		matched, _ := filepath.Match(pattern, path)
+		return matched
+	}
+
+	// Handle different ** patterns
+	if len(parts) == 2 {
+		prefix := parts[0]
+		suffix := parts[1]
+
+		// Remove trailing / from prefix and leading / from suffix
+		prefix = strings.TrimSuffix(prefix, "/")
+		suffix = strings.TrimPrefix(suffix, "/")
+
+		// Case 1: "data/**" - matches everything under data/
+		if prefix != "" && suffix == "" {
+			// Check if prefix contains wildcards
+			if strings.ContainsAny(prefix, "*?[") {
+				// Use glob matching for prefix
+				return matchPrefixWithGlob(path, prefix)
+			}
+			return strings.HasPrefix(path, prefix+"/") || path == prefix
+		}
+
+		// Case 2: "**/*.json" - matches all .json files anywhere
+		if prefix == "" && suffix != "" {
+			// Extract the basename pattern
+			matched, _ := filepath.Match(suffix, filepath.Base(path))
+			if matched {
+				return true
+			}
+			// Try matching the full suffix against path
+			if strings.HasSuffix(path, suffix) {
+				return true
+			}
+			// Try pattern matching on path segments
+			pathParts := strings.Split(path, "/")
+			for i := range pathParts {
+				subPath := strings.Join(pathParts[i:], "/")
+				matched, _ := filepath.Match(suffix, subPath)
+				if matched {
+					return true
+				}
+			}
+			return false
+		}
+
+		// Case 3: "data/**/file.txt" or "*/raw/2025/**" - matches with prefix pattern
+		if prefix != "" && suffix != "" {
+			// Check if prefix contains wildcards
+			if strings.ContainsAny(prefix, "*?[") {
+				// Match prefix with glob pattern, then check suffix
+				return matchPrefixSuffixWithGlob(path, prefix, suffix)
+			}
+
+			// Simple prefix without wildcards
+			if !strings.HasPrefix(path, prefix+"/") && path != prefix {
+				return false
+			}
+			// Check if suffix matches
+			if suffix == "" {
+				return true
+			}
+			if strings.HasSuffix(path, suffix) {
+				return true
+			}
+			// Try matching suffix pattern
+			pathAfterPrefix := strings.TrimPrefix(path, prefix+"/")
+			pathParts := strings.Split(pathAfterPrefix, "/")
+			for i := range pathParts {
+				subPath := strings.Join(pathParts[i:], "/")
+				matched, _ := filepath.Match(suffix, subPath)
+				if matched {
+					return true
+				}
+			}
+			return false
+		}
+	}
+
+	// Handle multiple ** in pattern (rare case)
+	// For now, use simple contains check
+	return strings.Contains(path, strings.ReplaceAll(pattern, "**", ""))
+}
+
+// matchPrefixWithGlob matches path against a prefix pattern with wildcards
+// Example: prefix="*/raw", path="data/raw/file.txt" -> true
+func matchPrefixWithGlob(path, prefix string) bool {
+	pathParts := strings.Split(path, "/")
+	prefixParts := strings.Split(prefix, "/")
+
+	// Path must have at least as many parts as prefix
+	if len(pathParts) < len(prefixParts) {
+		return false
+	}
+
+	// Try to match prefix parts against path parts
+	for i := 0; i <= len(pathParts)-len(prefixParts); i++ {
+		matched := true
+		for j, prefixPart := range prefixParts {
+			partMatched, _ := filepath.Match(prefixPart, pathParts[i+j])
+			if !partMatched {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			return true
+		}
+	}
+
+	return false
+}
+
+// matchPrefixSuffixWithGlob matches path against prefix and suffix patterns
+// Example: prefix="*/raw/2025", suffix="", path="data/raw/2025/file.txt" -> true
+func matchPrefixSuffixWithGlob(path, prefix, suffix string) bool {
+	pathParts := strings.Split(path, "/")
+	prefixParts := strings.Split(prefix, "/")
+
+	// Path must have at least as many parts as prefix
+	if len(pathParts) < len(prefixParts) {
+		return false
+	}
+
+	// Try to match prefix parts against path parts
+	for i := 0; i <= len(pathParts)-len(prefixParts); i++ {
+		matched := true
+		for j, prefixPart := range prefixParts {
+			partMatched, _ := filepath.Match(prefixPart, pathParts[i+j])
+			if !partMatched {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			// Prefix matched, now check suffix
+			if suffix == "" {
+				return true // No suffix requirement
+			}
+
+			// Get the remaining path after prefix
+			remainingParts := pathParts[i+len(prefixParts):]
+			if len(remainingParts) == 0 {
+				// No remaining parts, check if suffix is empty or matches empty
+				return suffix == ""
+			}
+
+			remainingPath := strings.Join(remainingParts, "/")
+
+			// Try matching suffix
+			if strings.HasSuffix(remainingPath, suffix) {
+				return true
+			}
+
+			// Try pattern matching on remaining parts
+			for k := range remainingParts {
+				subPath := strings.Join(remainingParts[k:], "/")
+				suffixMatched, _ := filepath.Match(suffix, subPath)
+				if suffixMatched {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}

@@ -42,16 +42,22 @@ The `transx` library supports two Object Storage handlers:
 
 ### Configuration Files
 
-Six main configuration files are provided:
+Main configuration files are provided:
 
-| File                          | Handler   | Direction      | Description             |
-| ----------------------------- | --------- | -------------- | ----------------------- |
-| `config-spider-upload.json`   | Spider    | Local → S3     | Upload via CB-Spider    |
-| `config-spider-download.json` | Spider    | S3 → Local     | Download via CB-Spider  |
-| `config-minio-upload.json`    | MinIO SDK | Local → S3     | Upload direct to S3     |
-| `config-minio-download.json`  | MinIO SDK | S3 → Local     | Download direct from S3 |
-| `config-rsync-upload.json`    | rsync     | Local → Remote | Upload via rsync/SSH    |
-| `config-rsync-download.json`  | rsync     | Remote → Local | Download via rsync/SSH  |
+| File                                    | Handler   | Direction      | Description                      |
+| --------------------------------------- | --------- | -------------- | -------------------------------- |
+| `config-spider-upload.json`             | Spider    | Local → S3     | Upload via CB-Spider             |
+| `config-spider-download.json`           | Spider    | S3 → Local     | Download via CB-Spider           |
+| `config-minio-upload.json`              | MinIO SDK | Local → S3     | Upload direct to S3              |
+| `config-minio-download.json`            | MinIO SDK | S3 → Local     | Download direct from S3          |
+| `config-rsync-upload.json`              | rsync     | Local → Remote | Upload via rsync/SSH             |
+| `config-rsync-download.json`            | rsync     | Remote → Local | Download via rsync/SSH           |
+| **Filtering Examples:**                 |           |                |                                  |
+| `config-filtering-combined-upload.json` | Spider    | Local → S3     | Upload with include/exclude      |
+| `config-filtering-combined-download.json` | MinIO   | S3 → Local     | Download with include/exclude    |
+| `config-filtering-exclude-logs.json`    | MinIO     | S3 → Local     | Exclude log/tmp files            |
+| `config-filtering-include-data.json`    | MinIO     | S3 → Local     | Include only JSON/CSV            |
+| `config-filtering-exclude-dirs.json`    | Spider    | Local → S3     | Exclude common directories       |
 
 ### Running Tests
 
@@ -67,6 +73,13 @@ Six main configuration files are provided:
 # rsync (SSH-based file transfer)
 ./migrate.sh -c config-rsync-upload.json -v
 ./migrate.sh -c config-rsync-download.json -v
+
+# File filtering examples
+./migrate.sh -c config-filtering-combined-upload.json -v
+./migrate.sh -c config-filtering-combined-download.json -v
+./migrate.sh -c config-filtering-exclude-logs.json -v
+./migrate.sh -c config-filtering-include-data.json -v
+./migrate.sh -c config-filtering-exclude-dirs.json -v
 
 # Step-by-step execution
 ./migrate.sh -c config-spider-upload.json -s transfer -v
@@ -403,24 +416,88 @@ curl http://localhost:1024/spider/readyz
 
 ### Test Data Setup
 
+#### Quick Test Data
+
 ```bash
-# Create test data
+# Create simple test data
 mkdir -p /tmp/minio-test-data
 echo "test content" > /tmp/minio-test-data/test-file.txt
 ```
 
+#### Comprehensive Test Data (Recommended)
+
+```bash
+# Create test data with multiple depths and file types
+./create-test-data.sh /tmp/transx-test-data
+
+# This creates a structure with:
+# - 4 directory depth levels
+# - Multiple file types (.txt, .json, .csv, .log, .tmp, .go, .md, .pdf, etc.)
+# - ~70+ files across various directories
+# - Common directories to exclude (.git, node_modules, backup, temp)
+```
+
+The test data includes:
+
+- **Root level**: Config files, documentation
+- **Level 1**: src/, docs/, data/, logs/, temp/, backup/
+- **Level 2**: Nested subdirectories (models/, tests/, images/, raw/, processed/)
+- **Level 3**: Deep structures (entities/, 2025/, reports/)
+- **Level 4**: Very deep nesting (Q1/, monthly data)
+
 ### Run Tests
 
 ```bash
-# Test upload
+# Basic upload/download tests
 ./migrate.sh -c config-spider-upload.json -v
-
-# Test download
 ./migrate.sh -c config-spider-download.json -v
 
+# Filtering tests
+# MinIO download with filtering (exclude logs)
+./migrate.sh -c config-filtering-exclude-logs.json -v
+
+# MinIO download with filtering (include only data files)
+./migrate.sh -c config-filtering-include-data.json -v
+
+# Spider upload with filtering (exclude directories)
+./migrate.sh -c config-filtering-exclude-dirs.json -v
+
+# Spider upload with filtering (combined include/exclude)
+./migrate.sh -c config-filtering-combined.json -v
+
 # Verify data integrity
-md5sum /tmp/minio-test-data/*
-md5sum /tmp/download/*
+md5sum /tmp/transx-test-data/*
+md5sum /tmp/transx-download-test/*
+```
+
+### Filtering Test Configurations
+
+Four filtering configuration files demonstrate filtering in different scenarios:
+
+| File                                 | Description                  | Handler | Direction  | Filters                                                                             |
+| ------------------------------------ | ---------------------------- | ------- | ---------- | ----------------------------------------------------------------------------------- |
+| `config-filtering-exclude-logs.json` | Exclude log and temp files   | MinIO   | S3 → Local | `"exclude": ["*.log", "*.tmp"]`                                                     |
+| `config-filtering-include-data.json` | Include only data files      | MinIO   | S3 → Local | `"include": ["*.json", "*.csv"]`                                                    |
+| `config-filtering-exclude-dirs.json` | Exclude common directories   | Spider  | Local → S3 | `"exclude": [".git/*", "node_modules/*", "backup/*", "temp/*"]`                     |
+| `config-filtering-combined.json`     | Combined include and exclude | Spider  | Local → S3 | `"include": ["data/*", "docs/*"]`<br>`"exclude": ["*.log", "*.tmp", "*/archive/*"]` |
+
+**Scenarios:**
+
+- **MinIO Download**: Tests filtering when downloading from S3-compatible storage (sourceTransferOptions)
+- **Spider Upload**: Tests filtering when uploading to Object Storage via CB-Spider (destinationTransferOptions)
+
+### Verify Filtering Results
+
+```bash
+# Count files before and after filtering
+echo "Source files:"
+find /tmp/transx-test-data -type f | wc -l
+
+echo "Files matching include pattern (*.json, *.csv):"
+find /tmp/transx-test-data -type f \( -name "*.json" -o -name "*.csv" \) | wc -l
+
+echo "Files after excluding (*.log, *.tmp):"
+find /tmp/transx-test-data -type f ! \( -name "*.log" -o -name "*.tmp" \) | wc -l
 ```
 
 ## Integration Example
@@ -451,6 +528,109 @@ func main() {
     log.Println("Migration completed successfully")
 }
 ```
+
+## File Filtering
+
+Object Storage transfers support include/exclude patterns for selective file transfer, similar to rsync's filtering mechanism.
+
+### Filtering Options
+
+Add `exclude` and/or `include` arrays to `objectStorageTransferOptions`:
+
+```json
+{
+  "objectStorageTransferOptions": {
+    "handler": "spider",
+    "accessKeyId": "aws-config01",
+    "exclude": ["*.log", "*.tmp", ".git/*"],
+    "include": ["*.json", "*.csv"]
+  }
+}
+```
+
+### Filtering Logic
+
+1. **Include patterns** (whitelist): If specified, only objects matching at least one pattern are transferred
+2. **Exclude patterns** (blacklist): **Always takes precedence** - matching files are excluded even if they match include patterns
+3. **No patterns**: All objects are transferred
+
+**Important**: Exclude has priority over Include for safety (prevents accidental transfer of sensitive files)
+
+### Pattern Syntax
+
+Supports glob patterns with recursive matching:
+
+- `*` - matches any sequence of characters (in single path segment)
+- `?` - matches any single character
+- `[...]` - matches any character in brackets
+- `**` - matches zero or more directories recursively (like rsync)
+
+**Pattern Examples:**
+
+| Pattern          | Matches                                  | Description                       |
+| ---------------- | ---------------------------------------- | --------------------------------- |
+| `*.log`          | `app.log`, `error.log`, `dir/test.log`   | Any .log file (any depth)         |
+| `data/*`         | `data/file.txt`                          | Files directly in data/           |
+| `data/**`        | `data/file.txt`, `data/sub/file.txt`     | All files under data/ recursively |
+| `data/**/*.json` | `data/config.json`, `data/sub/data.json` | All .json files under data/       |
+| `.git/**`        | `.git/config`, `.git/objects/abc`        | Everything under .git/            |
+| `**/test/**`     | `src/test/file.go`, `lib/test/util.go`   | Any path containing /test/        |
+
+### Examples
+
+**Exclude log and temporary files (recursive):**
+
+```json
+{
+  "exclude": ["*.log", "*.tmp", "temp/**"]
+}
+```
+
+**Include only data and docs directories (recursive):**
+
+```json
+{
+  "include": ["data/**", "docs/**"]
+}
+```
+
+**Include only specific file types:**
+
+```json
+{
+  "include": ["*.pdf", "*.docx", "*.txt"]
+}
+```
+
+**Exclude directories recursively:**
+
+```json
+{
+  "exclude": [".git/**", "node_modules/**", "backup/**"]
+}
+```
+
+**Combine include and exclude (recursive):**
+
+```json
+{
+  "include": ["data/**", "docs/**"],
+  "exclude": ["*.log", "*.tmp", "**/archive/**"]
+}
+```
+
+**Result**:
+
+- ✅ Transfers: `data/config.json`, `data/sub/output.csv`, `docs/readme.txt`
+- ❌ Excludes: `data/process.log`, `data/backup.tmp`, `data/archive/old.json`
+
+**Explanation**: Only files under `data/` or `docs/` are included (recursive), but log/tmp files and anything in archive directories are excluded.
+
+### When Filtering is Applied
+
+- **Download**: After listing objects, before transfer
+- **Upload**: During file system walk, before transfer
+- **Performance**: In-memory filtering (no extra API calls)
 
 ## Performance Notes
 

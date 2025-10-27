@@ -394,6 +394,17 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 					return fmt.Errorf("failed to calculate relative path for %s: %w", path, err)
 				}
 
+				// Apply filtering if exclude/include patterns are specified
+				if transferOptions.ObjectStorageTransferOptions != nil {
+					opts := transferOptions.ObjectStorageTransferOptions
+					if len(opts.Exclude) > 0 || len(opts.Include) > 0 {
+						// Use relative path for pattern matching
+						if !shouldTransferObject(relPath, opts.Exclude, opts.Include) {
+							return nil // Skip this file
+						}
+					}
+				}
+
 				// Construct object key by combining destination path with relative path
 				objectPath := filepath.ToSlash(filepath.Join(dmm.Destination.DataPath, relPath))
 
@@ -423,8 +434,16 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 			return fmt.Errorf("failed to list objects: %w", err)
 		}
 
+		// Apply filtering if exclude/include patterns are specified
+		if transferOptions.ObjectStorageTransferOptions != nil {
+			opts := transferOptions.ObjectStorageTransferOptions
+			if len(opts.Exclude) > 0 || len(opts.Include) > 0 {
+				objects = filterObjectList(objects, opts.Exclude, opts.Include)
+			}
+		}
+
 		if len(objects) == 0 {
-			return fmt.Errorf("no objects found with prefix '%s' in bucket '%s'", objectKey, bucket)
+			return fmt.Errorf("no objects found with prefix '%s' in bucket '%s' (after filtering)", objectKey, bucket)
 		}
 
 		// Download each object
