@@ -22,6 +22,7 @@ WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 
 # Copy dependency files to the container
 COPY go.mod go.sum go.work go.work.sum LICENSE ./
+COPY transx ./transx
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download

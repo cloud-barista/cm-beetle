@@ -1,0 +1,21 @@
+{
+  "source": {
+    "endpoint": "",
+    "dataPath": "/tmp/minio-test-data/"
+  },
+  "destination": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "YOUR_BUCKET_NAME/"
+  },
+  "destinationTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "handler": "spider",
+      "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "useSSL": false
+    }
+  }
+}

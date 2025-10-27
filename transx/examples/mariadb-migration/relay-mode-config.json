@@ -1,0 +1,30 @@
+{
+  "source": {
+    "endpoint": "localhost",
+    "dataPath": "/home/ubuntu/mariadb_source_backup/testdb_backup.sql",
+    "backupCmd": "docker exec mariadb_source mariadb-dump -uroot -psource_password --ssl=0 --single-transaction --routines --triggers testdb --result-file=/backup/testdb_backup.sql"
+  },
+  "destination": {
+    "endpoint": "localhost",
+    "dataPath": "/home/ubuntu/mariadb_target_backup/testdb_backup.sql",
+    "restoreCmd": "docker exec mariadb_target mariadb -uroot -ptarget_password --ssl=0 testdb --execute=\"SOURCE /backup/testdb_backup.sql;\""
+  },
+  "sourceTransferOptions": {
+    "method": "rsync",
+    "rsyncOptions": {
+      "username": "ubuntu",
+      "sshPrivateKeyPath": "/home/ubuntu/.ssh/id_rsa",
+      "connectTimeout": 10,
+      "insecureSkipHostKeyVerification": true
+    }
+  },
+  "destinationTransferOptions": {
+    "method": "rsync",
+    "rsyncOptions": {
+      "username": "ubuntu",
+      "sshPrivateKeyPath": "/home/ubuntu/.ssh/id_rsa",
+      "connectTimeout": 10,
+      "insecureSkipHostKeyVerification": true
+    }
+  }
+}
