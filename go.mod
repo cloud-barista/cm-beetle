@@ -1,8 +1,6 @@
 module github.com/cloud-barista/cm-beetle
 
-go 1.24.0
-
-toolchain go1.24.6
+go 1.25.0
 
 // When you need to build cm-beetle with pkgs being developed locally,
 // you can use the following guide.
@@ -25,7 +23,7 @@ toolchain go1.24.6
 // replace github.com/cloud-barista/cm-model => ../cm-model
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.11.13
+	github.com/cloud-barista/cb-tumblebug v0.11.15
 	github.com/cloud-barista/cm-model v0.0.14
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
