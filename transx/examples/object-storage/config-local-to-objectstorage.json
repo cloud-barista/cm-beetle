@@ -1,0 +1,20 @@
+{
+  "source": {
+    "endpoint": "",
+    "dataPath": "/tmp/local-data/"
+  },
+  "destination": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "my-bucket-for-transx/"
+  },
+  "destinationTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "accessKeyId": "conn-kimy-aws",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verifySSL": false
+    }
+  }
+}

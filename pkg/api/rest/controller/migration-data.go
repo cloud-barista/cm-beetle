@@ -19,9 +19,9 @@ import (
 	"net/http"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
-	"github.com/yunkon-kim/transx"
 )
 
 // MigrateData godoc

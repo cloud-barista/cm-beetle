@@ -1,0 +1,20 @@
+{
+  "source": {
+    "endpoint": "",
+    "dataPath": "/tmp/local-data/data.sql"
+  },
+  "destination": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "my-bucket-for-transx/data.sql"
+  },
+  "destinationTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "accessKeyId": "aws-ap-northeast-2",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verifySSL": false
+    }
+  }
+}

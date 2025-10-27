@@ -1,0 +1,37 @@
+{
+  "source": {
+    "endpoint": "user@remote-server.example.com",
+    "dataPath": "/var/backups/database/backup.sql"
+  },
+  "destination": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "my-bucket-for-transx/rsync-backups/backup.sql"
+  },
+  "sourceTransferOptions": {
+    "method": "rsync",
+    "rsyncOptions": {
+      "sshKeyPath": "~/.ssh/id_rsa",
+      "sshPort": 22,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verbose": false,
+      "preservePermissions": true,
+      "compressData": true,
+      "deleteAfterTransfer": false,
+      "additionalOptions": [
+        "--exclude=*.tmp",
+        "--exclude=*.log"
+      ]
+    }
+  },
+  "destinationTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "accessKeyId": "conn-kimy-aws",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verifySSL": false
+    }
+  }
+}

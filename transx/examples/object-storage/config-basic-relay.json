@@ -1,0 +1,30 @@
+{
+  "source": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "my-bucket-for-transx/backup/data.sql"
+  },
+  "destination": {
+    "endpoint": "http://localhost:1024/spider/s3",
+    "dataPath": "my-bucket-for-transx/backup/data.sql"
+  },
+  "sourceTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "accessKeyId": "conn-kimy-aws",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verifySSL": false
+    }
+  },
+  "destinationTransferOptions": {
+    "method": "object-storage-api",
+    "objectStorageTransferOptions": {
+      "accessKeyId": "conn-kimy-aws",
+      "expiresIn": 3600,
+      "timeout": 300,
+      "maxRetries": 3,
+      "verifySSL": false
+    }
+  }
+}
