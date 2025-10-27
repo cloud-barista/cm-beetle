@@ -31,6 +31,12 @@ pkg/cli/cli
 cmd/cm-beetle/cm-beetle
 cmd/test-cli/test-cli
 
+# transx
+transx/examples/object-storage/main
+transx/examples/object-storage/config-*
+!transx/examples/object-storage/template-config-*
+transx/examples/mariadb-migration/main
+
 # Test CLI authentication files
 cmd/test-cli/testdata/auth-config.json
 

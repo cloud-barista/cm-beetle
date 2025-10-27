@@ -1,26 +1,28 @@
 {
   "source": {
-    "endpoint": "http://localhost:1024/spider/s3",
-    "dataPath": "my-bucket-for-transx/backup/data.sql"
+    "endpoint": "http://s3.REGION.amazonaws.com",
+    "dataPath": "YOUR_SOURCE_BUCKET_NAME/"
   },
   "destination": {
     "endpoint": "http://localhost:1024/spider/s3",
-    "dataPath": "my-bucket-for-transx/backup/data.sql"
+    "dataPath": "YOUR_DESTINATION_BUCKET_NAME/"
   },
   "sourceTransferOptions": {
     "method": "object-storage-api",
     "objectStorageTransferOptions": {
-      "accessKeyId": "conn-kimy-aws",
-      "expiresIn": 3600,
+      "handler": "minio",
+      "accessKeyId": "YOUR_AWS_ACCESS_KEY_ID",
+      "secretAccessKey": "YOUR_AWS_SECRET_ACCESS_KEY",
+      "useSSL": true,
       "timeout": 300,
-      "maxRetries": 3,
-      "verifySSL": false
+      "maxRetries": 3
     }
   },
   "destinationTransferOptions": {
     "method": "object-storage-api",
     "objectStorageTransferOptions": {
-      "accessKeyId": "conn-kimy-aws",
+      "handler": "spider",
+      "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
       "expiresIn": 3600,
       "timeout": 300,
       "maxRetries": 3,

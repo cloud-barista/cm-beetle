@@ -1,20 +1,21 @@
 {
   "source": {
     "endpoint": "http://localhost:1024/spider/s3",
-    "dataPath": "my-bucket-for-transx/"
+    "dataPath": "YOUR_BUCKET_NAME/"
   },
   "destination": {
     "endpoint": "",
-    "dataPath": "/tmp/data-from-remote/"
+    "dataPath": "/tmp/minio-download-test/"
   },
   "sourceTransferOptions": {
     "method": "object-storage-api",
     "objectStorageTransferOptions": {
-      "accessKeyId": "conn-kimy-aws",
+      "handler": "spider",
+      "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
       "expiresIn": 3600,
       "timeout": 300,
       "maxRetries": 3,
-      "verifySSL": false
+      "useSSL": true
     }
   }
 }

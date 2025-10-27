@@ -11,6 +11,12 @@ const (
 	TransferMethodObjectStorageAPI = "object-storage-api"
 )
 
+// Object Storage handler constants
+const (
+	ObjectStorageHandlerSpider = "spider" // CB-Spider presigned URL API (default)
+	ObjectStorageHandlerMinio  = "minio"  // MinIO SDK for direct S3-compatible access
+)
+
 // DataMigrationModel defines a single data migration task supporting multiple protocols.
 type DataMigrationModel struct {
 	Source                     EndpointDetails  `json:"source" validate:"required"`                     // Source endpoint configuration
@@ -76,26 +82,35 @@ type RsyncOption struct {
 	TransferDirContentsOnly bool `json:"transferDirContentsOnly,omitempty" default:"false"`
 }
 
-// ObjectStorageTransferOption defines Object Storage transfer options for CB-Spider and similar services.
-// This is specifically designed for CB-Spider's presigned URL API endpoints:
-// - Download: GET /spider/s3/presigned/download/{bucket-name}/{object-key}?ConnectionName={conn}&expires={seconds}
-// - Upload: GET /spider/s3/presigned/upload/{bucket-name}/{object-key}?ConnectionName={conn}&expires={seconds}
+// ObjectStorageTransferOption defines Object Storage transfer options.
+// Supports two handlers:
+// 1. Spider handler (Handler = "spider" or empty, default for backward compatibility)
+//   - Endpoint: CB-Spider API endpoint (e.g., "http://localhost:1024/spider/s3")
+//   - AccessKeyId: CB-Spider connection name (e.g., "aws-config01")
+//   - Uses presigned URLs from CB-Spider for upload/download
 //
-// Configuration Concept:
-// - Source/Destination.Endpoint: Object Storage API endpoint (e.g., "http://localhost:1024/spider/s3")
-// - Source/Destination.DataPath: bucket/object-key format (e.g., "spider-test-bucket/a/b/c/test.txt")
-// - AccessKeyId: Provided via ObjectStorageTransferOption for authentication
+// 2. Minio handler (Handler = "minio")
+//   - Endpoint: S3-compatible storage endpoint (e.g., "s3.amazonaws.com", "play.min.io:9000")
+//   - AccessKeyId: AWS Access Key ID
+//   - SecretAccessKey: AWS Secret Access Key (required for minio handler)
+//   - Region: AWS region (optional, default: "us-east-1")
+//   - UseSSL: Use HTTPS for connections (default: true)
 type ObjectStorageTransferOption struct {
-	// AWS S3 Authentication (REQUIRED - must be provided by user)
-	AccessKeyId string `json:"accessKeyId" validate:"required"` // AWS Access Key ID or CB-Spider connection name (REQUIRED, e.g., "aws-config01", "conn-kimy-aws")
+	// Handler selection
+	Handler string `json:"handler,omitempty" default:"spider"` // Object storage handler: "spider" (default) or "minio"
 
-	// Presigned URL configuration
+	// Common authentication (REQUIRED - must be provided by user)
+	AccessKeyId     string `json:"accessKeyId" validate:"required"`      // AWS Access Key ID or CB-Spider connection name (REQUIRED)
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`            // AWS Secret Access Key (REQUIRED for minio handler)
+	Region          string `json:"region,omitempty" default:"us-east-1"` // AWS region (for minio handler, default: "us-east-1")
+	UseSSL          bool   `json:"useSSL,omitempty" default:"false"`     // Use HTTPS (default: true)
+
+	// Presigned URL configuration (spider handler only)
 	ExpiresIn int `json:"expiresIn,omitempty" default:"3600"` // Presigned URL expiration time in seconds (default: 3600)
 
 	// HTTP request configuration (optional)
-	Timeout    int  `json:"timeout,omitempty" default:"300"`     // HTTP request timeout in seconds (default: 300)
-	MaxRetries int  `json:"maxRetries,omitempty" default:"3"`    // Maximum number of retry attempts (default: 3)
-	VerifySSL  bool `json:"verifySSL,omitempty" default:"false"` // Verify SSL certificates (CB-Spider default: false)
+	Timeout    int `json:"timeout,omitempty" default:"300"`  // HTTP request timeout in seconds (default: 300)
+	MaxRetries int `json:"maxRetries,omitempty" default:"3"` // Maximum number of retry attempts (default: 3)
 }
 
 // Validate checks if the fields of DataMigrationModel satisfy basic requirements for transfer tasks.

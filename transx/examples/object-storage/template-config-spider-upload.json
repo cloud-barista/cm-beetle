@@ -1,20 +1,21 @@
 {
   "source": {
     "endpoint": "",
-    "dataPath": "/tmp/local-data/data.sql"
+    "dataPath": "/tmp/minio-test-data/"
   },
   "destination": {
     "endpoint": "http://localhost:1024/spider/s3",
-    "dataPath": "my-bucket-for-transx/data.sql"
+    "dataPath": "YOUR_BUCKET_NAME/"
   },
   "destinationTransferOptions": {
     "method": "object-storage-api",
     "objectStorageTransferOptions": {
-      "accessKeyId": "aws-ap-northeast-2",
+      "handler": "spider",
+      "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
       "expiresIn": 3600,
       "timeout": 300,
       "maxRetries": 3,
-      "verifySSL": false
+      "useSSL": false
     }
   }
 }

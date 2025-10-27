@@ -1,0 +1,31 @@
+{
+  "source": {
+    "endpoint": "USERNAME@REMOTE_SERVER_IP_OR_HOSTNAME",
+    "dataPath": "/tmp/rsync-upload-test/"
+  },
+  "destination": {
+    "endpoint": "",
+    "dataPath": "/tmp/rsync-download-test/"
+  },
+  "sourceTransferOptions": {
+    "method": "rsync",
+    "rsyncOptions": {
+      "username": "USERNAME",
+      "sshPrivateKeyPath": "~/.ssh/id_rsa",
+      "insecureSkipHostKeyVerification": false,
+      "connectTimeout": 30,
+      "verbose": false,
+      "dryRun": false,
+      "progress": true,
+      "compress": true,
+      "archive": true,
+      "delete": false,
+      "rsyncPath": "rsync",
+      "exclude": [
+        "*.tmp",
+        "*.log"
+      ],
+      "transferDirContentsOnly": true
+    }
+  }
+}

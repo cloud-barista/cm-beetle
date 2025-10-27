@@ -54,6 +54,12 @@ show_usage() {
     echo "  config-basic-relay.json                  # Basic relay mode"
     echo "  config-objectstorage-to-objectstorage.json  # Object Storage to Object Storage"
     echo "  config-rsync-to-objectstorage.json      # Rsync to Object Storage"
+    echo "  config-spider-upload.json                # Upload via Spider (presigned URL)"
+    echo "  config-spider-download.json              # Download via Spider (presigned URL)"
+    echo "  config-minio-upload.json                 # Upload via MinIO SDK (direct S3)"
+    echo "  config-minio-download.json               # Download via MinIO SDK (direct S3)"
+    echo "  config-rsync-upload.json                 # Upload via rsync (local to remote)"
+    echo "  config-rsync-download.json               # Download via rsync (remote to local)"
     echo ""
     echo "Step-by-step execution:"
     echo "  -s, --step STEP           Execute specific step: 'backup', 'transfer', 'restore'"
@@ -64,6 +70,12 @@ show_usage() {
     echo "  $0 -c config-objectstorage-to-local.json -v     # Download from Object Storage"  
     echo "  $0 -c config-objectstorage-to-objectstorage.json -v # Object Storage migration"
     echo "  $0 -c config-rsync-to-objectstorage.json -v     # Rsync to Object Storage"
+    echo "  $0 -c config-spider-upload.json -v               # Upload via Spider"
+    echo "  $0 -c config-spider-download.json -v             # Download via Spider"
+    echo "  $0 -c config-minio-upload.json -v                # Upload via MinIO SDK"
+    echo "  $0 -c config-minio-download.json -v              # Download via MinIO SDK"
+    echo "  $0 -c config-rsync-upload.json -v                # Upload via rsync"
+    echo "  $0 -c config-rsync-download.json -v              # Download via rsync"
     echo "  $0 -s backup                                     # Execute only backup step"
     echo "  $0 -s transfer                                   # Execute only transfer step"
     echo "  $0 -s restore                                    # Execute only restore step"
@@ -166,6 +178,35 @@ go build -o main . || {
 # Create required directories
 print_status "Creating required directories..."
 mkdir -p /tmp/object-storage-migration
+mkdir -p /tmp/minio-download-test
+
+# Test environment setup
+if [[ "$CONFIG" == *"minio"* ]] || [[ "$CONFIG" == *"spider"* ]] || [[ "$CONFIG" == *"rsync"* ]]; then
+    print_status "Setting up test environment..."
+    
+    # Create test data if uploading
+    if [[ "$CONFIG" == *"upload"* ]]; then
+        if [[ ! -d "/tmp/minio-test-data" ]] || [[ -z "$(ls -A /tmp/minio-test-data 2>/dev/null)" ]]; then
+            print_warning "Test data not found. Please ensure test files exist in /tmp/minio-test-data/"
+            print_status "Expected files: sample-database.sql, application.conf, test-data.json, README.txt"
+        else
+            print_status "Found test data:"
+            ls -lh /tmp/minio-test-data/
+        fi
+    fi
+    
+    # Prepare download directory
+    if [[ "$CONFIG" == *"download"* ]]; then
+        if [[ "$CONFIG" == *"rsync"* ]]; then
+            print_status "Preparing download directory: /tmp/rsync-download-test/"
+            rm -rf /tmp/rsync-download-test/*
+            mkdir -p /tmp/rsync-download-test/
+        else
+            print_status "Preparing download directory: /tmp/minio-download-test/"
+            rm -rf /tmp/minio-download-test/*
+        fi
+    fi
+fi
 
 # Execute the migration
 print_status "Executing migration..."
@@ -175,6 +216,37 @@ if ./main "${CMD_ARGS[@]}"; then
     END_TIME=$(date +%s)
     DURATION=$((END_TIME - START_TIME))
     print_success "Migration completed successfully in ${DURATION} seconds"
+    
+    # Post-migration actions
+    if [[ "$CONFIG" == *"minio-download"* ]] || [[ "$CONFIG" == *"spider-download"* ]]; then
+        print_status "Downloaded files:"
+        echo "----------------------------------------"
+        ls -lh /tmp/minio-download-test/ || echo "No files found"
+        echo "----------------------------------------"
+        
+        # Show sample file content if available
+        if [[ -f "/tmp/minio-download-test/README.txt" ]]; then
+            print_status "Sample content (README.txt):"
+            echo "----------------------------------------"
+            head -n 20 /tmp/minio-download-test/README.txt
+            echo "----------------------------------------"
+        fi
+    fi
+    
+    if [[ "$CONFIG" == *"rsync-download"* ]]; then
+        print_status "Downloaded files (rsync):"
+        echo "----------------------------------------"
+        ls -lh /tmp/rsync-download-test/ || echo "No files found"
+        echo "----------------------------------------"
+        
+        # Show sample file content if available
+        if [[ -f "/tmp/rsync-download-test/README.txt" ]]; then
+            print_status "Sample content (README.txt):"
+            echo "----------------------------------------"
+            head -n 20 /tmp/rsync-download-test/README.txt
+            echo "----------------------------------------"
+        fi
+    fi
     
     # Show results if it's a download operation
     if [[ -f "/tmp/object-storage-migration/data.sql" ]]; then
