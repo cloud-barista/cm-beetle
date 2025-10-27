@@ -29,11 +29,20 @@ func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 			epTumblebug := config.Tumblebug.RestUrl
 
 			// Search and set a target VM spec
-			method := "GET"
+			method := "POST"
 			nsId := "system"
-			url := fmt.Sprintf("%s/ns/%s/resources/image", epTumblebug, nsId)
+			url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
 
-			tbReq := common.NoBody
+			// falseValue := false
+			trueValue := true
+			maxResult := 5
+			tbReq := tbmodel.SearchImageRequest{
+				IncludeBasicImageOnly: &trueValue,
+				MaxResults:            &maxResult,
+				OSArchitecture:        "x86_64",
+				OSType:                "ubuntu 22.04",
+			}
+
 			tbRes := tbmodel.SearchImageResponse{}
 
 			err := common.ExecuteHttpRequest(
