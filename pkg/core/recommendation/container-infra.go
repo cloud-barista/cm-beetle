@@ -131,9 +131,9 @@ func RecommendK8sControlPlane(provider, region string, k8sInfoList KubernetesInf
 		Name:            "recommended-k8s-cluster",
 		NodeGroupName:   "recommended-worker-nodegroup",
 		ConnectionName:  fmt.Sprintf("%s-%s", provider, region),
-		SpecId:          "aws+ap-northeast-2+t3a.large", // TODO: Search and assign a recommended spec ID
-		ImageId:         "default",                      // TODO: Search and assign a recommended image ID
-		Version:         "1.29",
+		SpecId:          "azure+koreacentral+standard_b4ms", // TODO: Search and assign a recommended spec ID
+		ImageId:         "default",                          // TODO: Search and assign a recommended image ID
+		Version:         "1.33",
 		DesiredNodeSize: fmt.Sprintf("%d", k8sControlPlaneNodeCount),
 		MinNodeSize:     "1",
 		MaxNodeSize:     fmt.Sprintf("%d", k8sControlPlaneNodeCount),
@@ -208,7 +208,7 @@ func RecommendK8sNodeGroup(provider, region string, k8sInfoList KubernetesInfoLi
 	// Build K8sNodeGroupReq
 	recommendedNodeGroup := tbmodel.K8sNodeGroupReq{
 		Name:            "recommended-worker-nodegroup",
-		SpecId:          "aws+ap-northeast-2+t3a.xlarge", // Hardcoded for testing
+		SpecId:          "azure+koreacentral+standard_b4ms", // Hardcoded for testing
 		ImageId:         "default",
 		DesiredNodeSize: fmt.Sprintf("%d", k8sNodeGroupCount),
 		MinNodeSize:     "1",
