@@ -22,6 +22,7 @@ import (
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
@@ -211,13 +212,129 @@ func RecommendVMInfra(c echo.Context) error {
 }
 
 /*
- * Container Infrastructure Recommendation
+ * K8s Cluster Control Plane and Node Group Recommendation
+ */
+
+type RecommendK8sClusterResponse struct {
+	tbmodel.K8sClusterDynamicReq
+}
+
+// RecommendK8sControlPlane godoc
+// @ID RecommendK8sControlPlane
+// @Summary Recommend K8s control plane configuration
+// @Description Get recommendation for K8s control plane based on honeybee source cluster data
+// @Description Returns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API
+// @Tags [Recommendation] K8s Cluster (prototype)
+// @Accept  json
+// @Produce  json
+// @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
+// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
+// @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Custom request ID"
+// @Success 200 {object} tbmodel.K8sClusterDynamicReq "K8s control plane recommendation (ready for cb-tumblebug API)"
+// @Failure 400 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/k8sControlPlane [post]
+func RecommendK8sControlPlane(c echo.Context) error {
+	desiredProvider := c.QueryParam("desiredProvider")
+	desiredRegion := c.QueryParam("desiredRegion")
+
+	if desiredProvider == "" || desiredRegion == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' and 'desiredRegion' query parameters are required"})
+	}
+
+	reqt := &recommendation.KubernetesInfoList{}
+	if err := c.Bind(reqt); err != nil {
+		log.Error().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	if len(reqt.Servers) == 0 {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "at least one server information is required"})
+	}
+
+	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
+	if !ok {
+		log.Error().Err(err).Msg("invalid provider or region")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	k8sInfoList := recommendation.KubernetesInfoList{
+		Servers: reqt.Servers,
+	}
+
+	result, err := recommendation.RecommendK8sControlPlane(desiredProvider, desiredRegion, k8sInfoList)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend K8s control plane")
+		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
+// RecommendK8sNodeGroup godoc
+// @ID RecommendK8sNodeGroup
+// @Summary Recommend K8s worker node group configuration
+// @Description Get recommendation for K8s worker node group based on honeybee source cluster data
+// @Description Returns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API
+// @Tags [Recommendation] K8s Cluster (prototype)
+// @Accept  json
+// @Produce  json
+// @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
+// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
+// @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Custom request ID"
+// @Success 200 {object} tbmodel.K8sNodeGroupReq "K8s worker node group recommendation (ready for cb-tumblebug API)"
+// @Failure 400 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/k8sNodeGroup [post]
+func RecommendK8sNodeGroup(c echo.Context) error {
+	desiredProvider := c.QueryParam("desiredProvider")
+	desiredRegion := c.QueryParam("desiredRegion")
+
+	if desiredProvider == "" || desiredRegion == "" {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' and 'desiredRegion' query parameters are required"})
+	}
+
+	reqt := &recommendation.KubernetesInfoList{}
+	if err := c.Bind(reqt); err != nil {
+		log.Error().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	if len(reqt.Servers) == 0 {
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "at least one server information is required"})
+	}
+
+	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
+	if !ok {
+		log.Error().Err(err).Msg("invalid provider or region")
+		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+	}
+
+	k8sInfoList := recommendation.KubernetesInfoList{
+		Servers: reqt.Servers,
+	}
+
+	result, err := recommendation.RecommendK8sNodeGroup(desiredProvider, desiredRegion, k8sInfoList)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend K8s node group")
+		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
+/*
+ * Container Infrastructure Recommendation (Legacy - will be deprecated)
  */
 type RecommendInfraRequest struct {
-	DesiredProvider string `json:"desiredProvider" example:"aws"`
-	DesiredRegion   string `json:"desiredRegion" example:"ap-northeast-2"`
-	onpremmodel.OnpremiseInfraModel
+	DesiredProvider string                      `json:"desiredProvider" example:"aws"`
+	DesiredRegion   string                      `json:"desiredRegion" example:"ap-northeast-2"`
+	Servers         []recommendation.Kubernetes `json:"servers"`
 }
+
+// recommendation.KubernetesInfoList is defined in pkg/core/recommendation/container-infra.go
 
 type RecommendInfraResponse struct {
 	recommendation.RecommendedInfraInfo
@@ -225,67 +342,23 @@ type RecommendInfraResponse struct {
 
 // RecommendContainerInfra godoc
 // @ID RecommendContainerInfra
-// @Summary (Under-development) Recommend an appropriate container infrastructure for cloud migration
-// @Description Recommend an appropriate container infrastructure for container-based workloads
+// @Summary (Deprecated) Recommend an appropriate container infrastructure for cloud migration
+// @Description [DEPRECATED] This endpoint is deprecated. Use /recommendation/k8sCluster and /recommendation/k8sNodeGroup instead.
 // @Description
 // @Description [Note] `desiredProvider` and `desiredRegion` are required.
-// @Description - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
-// @Description - If both are set, the values in the request body take precedence.
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Success 200 {object} RecommendInfraResponse "The result of recommended container infrastructure"
+// @Param X-Request-Id header string false "Custom request ID"
+// @Success 200 {object} common.SimpleMsg "Deprecated endpoint notice"
 // @Failure 400 {object} common.SimpleMsg
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
 // @Router /recommendation/containerInfra [post]
+// @Deprecated
 func RecommendContainerInfra(c echo.Context) error {
-
-	desiredProvider := c.QueryParam("desiredProvider")
-	desiredRegion := c.QueryParam("desiredRegion")
-
-	reqt := &RecommendInfraRequest{}
-	if err := c.Bind(reqt); err != nil {
-		log.Error().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
-	}
-
-	if reqt.DesiredProvider == "" && desiredProvider == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' is required"})
-	}
-	if reqt.DesiredRegion == "" && desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredRegion' is required"})
-	}
-
-	provider := reqt.DesiredProvider
-	if provider == "" {
-		provider = desiredProvider
-	}
-	region := reqt.DesiredRegion
-	if region == "" {
-		region = desiredRegion
-	}
-	sourceInfra := reqt.OnpremiseInfraModel.OnpremiseInfraModel
-
-	if provider == "ncp" {
-		provider = provider + "vpc"
-	}
-
-	ok, err := recommendation.IsValidCspAndRegion(provider, region)
-	if !ok {
-		log.Error().Err(err).Msg("invalid provider or region")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
-	}
-
-	result, err := recommendation.RecommendContainer(provider, region, sourceInfra)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to call RecommendContainer")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "container recommendation failed"})
-	}
-
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusGone, common.SimpleMsg{
+		Message: "This endpoint is deprecated. Please use /recommendation/k8sCluster for control plane and /recommendation/k8sNodeGroup for worker nodes.",
+	})
 }
