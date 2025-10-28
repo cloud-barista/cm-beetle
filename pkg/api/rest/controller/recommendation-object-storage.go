@@ -1,13 +1,15 @@
 package controller
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/xid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -91,6 +93,12 @@ type TargetObjectStorageProperty struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description
+// @Description [Warning] the recommended bucket name may be globally unique.
+// @Description - Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.
+// @Description - Suppose that the existing bucket name is unique enough.
+// @Description - Generate a suffix based on the existing bucket name.
+// @Description - e.g., "my-bucket" -> SHA256 hash -> base64 URL-safe encoding (6 bytes) -> lowercase -> "my-bucket-{suffix}"
 // @Tags [Recommendation] Managed middleware (preview)
 // @Accept json
 // @Produce	json
@@ -152,7 +160,8 @@ func RecommendObjectStorage(c echo.Context) error {
 	for _, source := range req.SourceObjectStorages {
 		// Generate unique bucket name with random suffix
 		// Bucket names must be globally unique across all AWS/cloud accounts
-		uniqueSuffix := xid.New().String()
+		// * Suppose that the existing bucket name is unique enough to generate a new unique name
+		uniqueSuffix := createShortSuffix(source.BucketName)
 		targetBucketName := fmt.Sprintf("%s-%s", source.BucketName, uniqueSuffix)
 
 		target := TargetObjectStorageProperty{
@@ -193,4 +202,20 @@ func RecommendObjectStorage(c echo.Context) error {
 		Msg("Object storage recommendation completed successfully")
 
 	return c.JSON(http.StatusOK, response)
+}
+
+func createShortSuffix(existingBucketName string) string {
+
+	// 1. SHA256 hash (returns 32 bytes)
+	hashBytes := sha256.Sum256([]byte(existingBucketName))
+
+	// 2. Base64 URL-Safe encoding (Padding '=' will be removed)
+	// 6 bytes (48 bits) are enough to create an 8-character string.
+	encoded := base64.URLEncoding.EncodeToString(hashBytes[:6])
+	suffix := strings.TrimRight(encoded, "=")
+
+	// 3. Convert to lowercase for S3 bucket name compatibility (S3 only allows lowercase)
+	suffix = strings.ToLower(suffix)
+
+	return suffix
 }
