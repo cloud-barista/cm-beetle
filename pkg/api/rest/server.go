@@ -228,10 +228,10 @@ func RunServer(port string) {
 	gRecommendation.POST("/mciWithDefaults", controller.RecommendVMInfraWithDefaults)
 
 	// Recommendation APIs for K8s Cluster (new endpoints)
-	gRecommendation.POST("/k8sCluster", controller.RecommendK8sCluster)
+	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)
 	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)
 
-	// Deprecated: Use /k8sCluster and /k8sNodeGroup instead
+	// Deprecated: Use /k8sControlPlane and /k8sNodeGroup instead
 	gRecommendation.POST("/containerInfra", controller.RecommendContainerInfra)
 
 	// Recommedation APIs for resources for VM infrastructure

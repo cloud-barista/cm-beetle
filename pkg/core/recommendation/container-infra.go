@@ -76,8 +76,8 @@ type NodeGroupInfo struct {
 	TotalMemory int // in MiB
 }
 
-// RecommendK8sCluster recommends K8s control plane configuration based on honeybee source cluster data
-func RecommendK8sCluster(provider, region string, k8sInfoList KubernetesInfoList) (tbmodel.K8sClusterDynamicReq, error) {
+// RecommendK8sControlPlane recommends K8s control plane configuration based on honeybee source cluster data
+func RecommendK8sControlPlane(provider, region string, k8sInfoList KubernetesInfoList) (tbmodel.K8sClusterDynamicReq, error) {
 	var result tbmodel.K8sClusterDynamicReq
 
 	// TODO: Use the following code when implementing actual API calls

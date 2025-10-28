@@ -219,8 +219,8 @@ type RecommendK8sClusterResponse struct {
 	tbmodel.K8sClusterDynamicReq
 }
 
-// RecommendK8sCluster godoc
-// @ID RecommendK8sCluster
+// RecommendK8sControlPlane godoc
+// @ID RecommendK8sControlPlane
 // @Summary Recommend K8s control plane configuration
 // @Description Get recommendation for K8s control plane based on honeybee source cluster data
 // @Description Returns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API
@@ -234,8 +234,8 @@ type RecommendK8sClusterResponse struct {
 // @Success 200 {object} tbmodel.K8sClusterDynamicReq "K8s control plane recommendation (ready for cb-tumblebug API)"
 // @Failure 400 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
-// @Router /recommendation/k8sCluster [post]
-func RecommendK8sCluster(c echo.Context) error {
+// @Router /recommendation/k8sControlPlane [post]
+func RecommendK8sControlPlane(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
 
@@ -263,9 +263,9 @@ func RecommendK8sCluster(c echo.Context) error {
 		Servers: reqt.Servers,
 	}
 
-	result, err := recommendation.RecommendK8sCluster(desiredProvider, desiredRegion, k8sInfoList)
+	result, err := recommendation.RecommendK8sControlPlane(desiredProvider, desiredRegion, k8sInfoList)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to recommend K8s cluster")
+		log.Error().Err(err).Msg("failed to recommend K8s control plane")
 		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: err.Error()})
 	}
 
