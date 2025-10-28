@@ -1233,7 +1233,7 @@
         },
         "/recommendation/containerInfra": {
             "post": {
-                "description": "Recommend an appropriate container infrastructure for container-based workloads\n\n[Note] `desiredProvider` and `desiredRegion` are required.\n- `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.\n- If both are set, the values in the request body take precedence.",
+                "description": "[DEPRECATED] This endpoint is deprecated. Use /recommendation/k8sCluster and /recommendation/k8sNodeGroup instead.\n\n[Note] `desiredProvider` and `desiredRegion` are required.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1243,8 +1243,9 @@
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "(Under-development) Recommend an appropriate container infrastructure for cloud migration",
+                "summary": "(Deprecated) Recommend an appropriate container infrastructure for cloud migration",
                 "operationId": "RecommendContainerInfra",
+                "deprecated": true,
                 "parameters": [
                     {
                         "description": "Specify the source container infrastructure",
@@ -1278,16 +1279,81 @@
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Custom request ID",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended container infrastructure",
+                        "description": "Deprecated endpoint notice",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendInfraResponse"
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/k8sControlPlane": {
+            "post": {
+                "description": "Get recommendation for K8s control plane based on honeybee source cluster data\nReturns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] K8s Cluster (prototype)"
+                ],
+                "summary": "Recommend K8s control plane configuration",
+                "operationId": "RecommendK8sControlPlane",
+                "parameters": [
+                    {
+                        "description": "Source cluster information from honeybee",
+                        "name": "UserK8sInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/recommendation.KubernetesInfoList"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws"
+                        ],
+                        "type": "string",
+                        "description": "Provider (e.g., aws)",
+                        "name": "desiredProvider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "K8s control plane recommendation (ready for cb-tumblebug API)",
+                        "schema": {
+                            "$ref": "#/definitions/model.K8sClusterDynamicReq"
                         }
                     },
                     "400": {
@@ -1296,8 +1362,73 @@
                             "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/k8sNodeGroup": {
+            "post": {
+                "description": "Get recommendation for K8s worker node group based on honeybee source cluster data\nReturns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] K8s Cluster (prototype)"
+                ],
+                "summary": "Recommend K8s worker node group configuration",
+                "operationId": "RecommendK8sNodeGroup",
+                "parameters": [
+                    {
+                        "description": "Source cluster information from honeybee",
+                        "name": "UserK8sInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/recommendation.KubernetesInfoList"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws"
+                        ],
+                        "type": "string",
+                        "description": "Provider (e.g., aws)",
+                        "name": "desiredProvider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "K8s worker node group recommendation (ready for cb-tumblebug API)",
+                        "schema": {
+                            "$ref": "#/definitions/model.K8sNodeGroupReq"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/common.SimpleMsg"
                         }
@@ -3841,9 +3972,6 @@
         },
         "controller.RecommendInfraRequest": {
             "type": "object",
-            "required": [
-                "onpremiseInfraModel"
-            ],
             "properties": {
                 "desiredProvider": {
                     "type": "string",
@@ -3853,22 +3981,11 @@
                     "type": "string",
                     "example": "ap-northeast-2"
                 },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetInfra": {
-                    "$ref": "#/definitions/model.MciDynamicReq"
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recommendation.Kubernetes"
+                    }
                 }
             }
         },
@@ -4225,72 +4342,6 @@
                 }
             }
         },
-        "model.CreateSubGroupDynamicReq": {
-            "type": "object",
-            "required": [
-                "imageId",
-                "specId"
-            ],
-            "properties": {
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
-                    "type": "string",
-                    "example": "aws-ap-northeast-2"
-                },
-                "description": {
-                    "type": "string",
-                    "example": "Created via CB-Tumblebug"
-                },
-                "imageId": {
-                    "description": "ImageId is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "ami-01f71f215b23ba262"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "example": {
-                        "\"env\"": "\"test\"}",
-                        "{\"role\"": "\"worker\""
-                    }
-                },
-                "name": {
-                    "description": "SubGroup name, actual VM name will be generated with -N postfix.",
-                    "type": "string",
-                    "example": "g1"
-                },
-                "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "50"
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "gp3"
-                },
-                "specId": {
-                    "description": "SpecId is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "aws+ap-northeast-2+t3.nano"
-                },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "default": "1",
-                    "example": "3"
-                },
-                "vmUserPassword": {
-                    "type": "string",
-                    "example": ""
-                }
-            }
-        },
         "model.FirewallRuleInfo": {
             "type": "object",
             "required": [
@@ -4379,6 +4430,148 @@
                 }
             }
         },
+        "model.K8sClusterDynamicReq": {
+            "type": "object",
+            "required": [
+                "imageId",
+                "name",
+                "specId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "type": "string",
+                    "default": "tencent-ap-seoul"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "desiredNodeSize": {
+                    "type": "string",
+                    "default": "1",
+                    "example": "1"
+                },
+                "imageId": {
+                    "description": "ImageId is field for id of a image in common namespace",
+                    "type": "string",
+                    "example": "default, tencent+ap-seoul+ubuntu20.04"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "maxNodeSize": {
+                    "type": "string",
+                    "default": "2",
+                    "example": "3"
+                },
+                "minNodeSize": {
+                    "type": "string",
+                    "default": "1",
+                    "example": "1"
+                },
+                "name": {
+                    "description": "K8sCluster name if it is not empty.",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "nodeGroupName": {
+                    "description": "NodeGroup name if it is not empty",
+                    "type": "string",
+                    "example": "k8sng01"
+                },
+                "onAutoScaling": {
+                    "type": "string",
+                    "default": "true",
+                    "example": "true"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, 30, 42, ..."
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "default": "default",
+                    "example": "default, TYPE1, ..."
+                },
+                "specId": {
+                    "description": "SpecId is field for id of a spec in common namespace",
+                    "type": "string",
+                    "example": "tencent+ap-seoul+S2.MEDIUM4"
+                },
+                "version": {
+                    "description": "K8s Clsuter version",
+                    "type": "string",
+                    "example": "1.29"
+                }
+            }
+        },
+        "model.K8sNodeGroupReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "desiredNodeSize": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "imageId": {
+                    "type": "string",
+                    "example": "image-01"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "maxNodeSize": {
+                    "type": "string",
+                    "example": "3"
+                },
+                "minNodeSize": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "k8sng01"
+                },
+                "onAutoScaling": {
+                    "description": "autoscale config.",
+                    "type": "string",
+                    "example": "true"
+                },
+                "rootDiskSize": {
+                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "type": "string",
+                    "example": "40"
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "cloud_essd"
+                },
+                "specId": {
+                    "type": "string",
+                    "example": "spec-01"
+                },
+                "sshKeyId": {
+                    "type": "string",
+                    "example": "sshkey-01"
+                }
+            }
+        },
         "model.KeyValue": {
             "type": "object",
             "properties": {
@@ -4401,92 +4594,6 @@
                 },
                 "longitude": {
                     "type": "number"
-                }
-            }
-        },
-        "model.MciCmdReq": {
-            "type": "object",
-            "required": [
-                "command"
-            ],
-            "properties": {
-                "command": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
-                },
-                "userName": {
-                    "type": "string",
-                    "example": "cb-user"
-                }
-            }
-        },
-        "model.MciDynamicReq": {
-            "type": "object",
-            "required": [
-                "name",
-                "subGroups"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "Made in CB-TB"
-                },
-                "installMonAgent": {
-                    "description": "InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)",
-                    "type": "string",
-                    "default": "no",
-                    "enum": [
-                        "yes",
-                        "no"
-                    ],
-                    "example": "no"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "mci01"
-                },
-                "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
-                    "type": "string",
-                    "default": "continue",
-                    "enum": [
-                        "continue",
-                        "rollback",
-                        "refine"
-                    ],
-                    "example": "continue"
-                },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.MciCmdReq"
-                        }
-                    ]
-                },
-                "subGroups": {
-                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.CreateSubGroupDynamicReq"
-                    }
-                },
-                "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
-                    "type": "string",
-                    "example": ""
                 }
             }
         },
@@ -5317,6 +5424,95 @@
                     }
                 }
             }
+        },
+        "recommendation.Kubernetes": {
+            "type": "object",
+            "properties": {
+                "node_count": {
+                    "$ref": "#/definitions/recommendation.NodeCount"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recommendation.Node"
+                    }
+                },
+                "workloads": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "recommendation.KubernetesInfoList": {
+            "type": "object",
+            "required": [
+                "servers"
+            ],
+            "properties": {
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/recommendation.Kubernetes"
+                    }
+                }
+            }
+        },
+        "recommendation.Node": {
+            "type": "object",
+            "properties": {
+                "addresses": {},
+                "labels": {},
+                "name": {},
+                "node_info": {},
+                "node_spec": {
+                    "$ref": "#/definitions/recommendation.NodeSpec"
+                },
+                "type": {
+                    "$ref": "#/definitions/recommendation.NodeType"
+                }
+            }
+        },
+        "recommendation.NodeCount": {
+            "type": "object",
+            "properties": {
+                "control_plane": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "worker": {
+                    "type": "integer"
+                }
+            }
+        },
+        "recommendation.NodeSpec": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "description": "cores",
+                    "type": "integer"
+                },
+                "ephemeral_storage": {
+                    "description": "MiB",
+                    "type": "integer"
+                },
+                "memory": {
+                    "description": "MiB",
+                    "type": "integer"
+                }
+            }
+        },
+        "recommendation.NodeType": {
+            "type": "string",
+            "enum": [
+                "control-plane",
+                "worker"
+            ],
+            "x-enum-varnames": [
+                "NodeTypeControlPlane",
+                "NodeTypeWorker"
+            ]
         },
         "resource.RestGetAllSecurityGroupResponse": {
             "type": "object",

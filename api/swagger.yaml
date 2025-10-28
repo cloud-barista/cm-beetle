@@ -1522,19 +1522,10 @@ definitions:
       desiredRegion:
         example: ap-northeast-2
         type: string
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  controller.RecommendInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetInfra:
-        $ref: '#/definitions/model.MciDynamicReq'
+      servers:
+        items:
+          $ref: '#/definitions/recommendation.Kubernetes'
+        type: array
     type: object
   controller.RecommendObjectStorageRequest:
     properties:
@@ -1774,63 +1765,6 @@ definitions:
       verified:
         type: boolean
     type: object
-  model.CreateSubGroupDynamicReq:
-    properties:
-      connectionName:
-        description: |-
-          if ConnectionName is given, the VM tries to use associtated credential.
-          if not, it will use predefined ConnectionName in Spec objects
-        example: aws-ap-northeast-2
-        type: string
-      description:
-        example: Created via CB-Tumblebug
-        type: string
-      imageId:
-        description: ImageId is field for id of a image in common namespace
-        example: ami-01f71f215b23ba262
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        example:
-          '"env"': '"test"}'
-          '{"role"': '"worker"'
-        type: object
-      name:
-        description: SubGroup name, actual VM name will be generated with -N postfix.
-        example: g1
-        type: string
-      rootDiskSize:
-        default: default
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: "50"
-        type: string
-      rootDiskType:
-        default: default
-        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
-          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
-          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: gp3
-        type: string
-      specId:
-        description: SpecId is field for id of a spec in common namespace
-        example: aws+ap-northeast-2+t3.nano
-        type: string
-      subGroupSize:
-        default: "1"
-        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
-          VMs will be created accordingly.
-        example: "3"
-        type: string
-      vmUserPassword:
-        example: ""
-        type: string
-    required:
-    - imageId
-    - specId
-    type: object
   model.FirewallRuleInfo:
     properties:
       CIDR:
@@ -1903,6 +1837,123 @@ definitions:
           type: string
         type: array
     type: object
+  model.K8sClusterDynamicReq:
+    properties:
+      connectionName:
+        default: tencent-ap-seoul
+        description: |-
+          if ConnectionName is given, the VM tries to use associtated credential.
+          if not, it will use predefined ConnectionName in Spec objects
+        type: string
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        default: "1"
+        example: "1"
+        type: string
+      imageId:
+        description: ImageId is field for id of a image in common namespace
+        example: default, tencent+ap-seoul+ubuntu20.04
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        default: "2"
+        example: "3"
+        type: string
+      minNodeSize:
+        default: "1"
+        example: "1"
+        type: string
+      name:
+        description: K8sCluster name if it is not empty.
+        example: k8scluster01
+        type: string
+      nodeGroupName:
+        description: NodeGroup name if it is not empty
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        default: "true"
+        example: "true"
+        type: string
+      rootDiskSize:
+        default: default
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: default, 30, 42, ...
+        type: string
+      rootDiskType:
+        default: default
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      specId:
+        description: SpecId is field for id of a spec in common namespace
+        example: tencent+ap-seoul+S2.MEDIUM4
+        type: string
+      version:
+        description: K8s Clsuter version
+        example: "1.29"
+        type: string
+    required:
+    - imageId
+    - name
+    - specId
+    type: object
+  model.K8sNodeGroupReq:
+    properties:
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        example: "1"
+        type: string
+      imageId:
+        example: image-01
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        example: "3"
+        type: string
+      minNodeSize:
+        example: "1"
+        type: string
+      name:
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        description: autoscale config.
+        example: "true"
+        type: string
+      rootDiskSize:
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: "40"
+        type: string
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: cloud_essd
+        type: string
+      specId:
+        example: spec-01
+        type: string
+      sshKeyId:
+        example: sshkey-01
+        type: string
+    type: object
   model.KeyValue:
     properties:
       key:
@@ -1918,102 +1969,6 @@ definitions:
         type: number
       longitude:
         type: number
-    type: object
-  model.MciCmdReq:
-    properties:
-      command:
-        example:
-        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
-          is: $client_ip'
-        items:
-          type: string
-        type: array
-      userName:
-        example: cb-user
-        type: string
-    required:
-    - command
-    type: object
-  model.MciDynamicReq:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        example: mci01
-        type: string
-      policyOnPartialFailure:
-        default: continue
-        description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
-        enum:
-        - continue
-        - rollback
-        - refine
-        example: continue
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/model.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      subGroups:
-        description: |-
-          SubGroups is array of VM requests for multi-cloud infrastructure
-          Example: Multiple VM groups across different CSPs
-          [
-            {
-              "name": "aws-group",
-              "subGroupSize": "3",
-              "specId": "aws+ap-northeast-2+t3.nano",
-              "imageId": "ami-01f71f215b23ba262",
-              "rootDiskSize": "50",
-              "label": {"role": "worker", "csp": "aws"}
-            },
-            {
-              "name": "azure-group",
-              "subGroupSize": "2",
-              "specId": "azure+koreasouth+standard_b1s",
-              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-              "rootDiskSize": "50",
-              "label": {"role": "head", "csp": "azure"}
-            },
-            {
-              "name": "gcp-group",
-              "subGroupSize": "1",
-              "specId": "gcp+asia-northeast3+g1-small",
-              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-              "rootDiskSize": "50",
-              "label": {"role": "test", "csp": "gcp"}
-            }
-          ]
-        items:
-          $ref: '#/definitions/model.CreateSubGroupDynamicReq'
-        type: array
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-    required:
-    - name
-    - subGroups
     type: object
   model.RegionDetail:
     properties:
@@ -2617,6 +2572,67 @@ definitions:
           $ref: '#/definitions/onpremisemodel.RouteProperty'
         type: array
     type: object
+  recommendation.Kubernetes:
+    properties:
+      node_count:
+        $ref: '#/definitions/recommendation.NodeCount'
+      nodes:
+        items:
+          $ref: '#/definitions/recommendation.Node'
+        type: array
+      workloads:
+        additionalProperties: true
+        type: object
+    type: object
+  recommendation.KubernetesInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/recommendation.Kubernetes'
+        type: array
+    required:
+    - servers
+    type: object
+  recommendation.Node:
+    properties:
+      addresses: {}
+      labels: {}
+      name: {}
+      node_info: {}
+      node_spec:
+        $ref: '#/definitions/recommendation.NodeSpec'
+      type:
+        $ref: '#/definitions/recommendation.NodeType'
+    type: object
+  recommendation.NodeCount:
+    properties:
+      control_plane:
+        type: integer
+      total:
+        type: integer
+      worker:
+        type: integer
+    type: object
+  recommendation.NodeSpec:
+    properties:
+      cpu:
+        description: cores
+        type: integer
+      ephemeral_storage:
+        description: MiB
+        type: integer
+      memory:
+        description: MiB
+        type: integer
+    type: object
+  recommendation.NodeType:
+    enum:
+    - control-plane
+    - worker
+    type: string
+    x-enum-varnames:
+    - NodeTypeControlPlane
+    - NodeTypeWorker
   resource.RestGetAllSecurityGroupResponse:
     properties:
       securityGroup:
@@ -3662,12 +3678,11 @@ paths:
     post:
       consumes:
       - application/json
+      deprecated: true
       description: |-
-        Recommend an appropriate container infrastructure for container-based workloads
+        [DEPRECATED] This endpoint is deprecated. Use /recommendation/k8sCluster and /recommendation/k8sNodeGroup instead.
 
         [Note] `desiredProvider` and `desiredRegion` are required.
-        - `desiredProvider` and `desiredRegion` can be set in the query parameter or the request body.
-        - If both are set, the values in the request body take precedence.
       operationId: RecommendContainerInfra
       parameters:
       - description: Specify the source container infrastructure
@@ -3692,7 +3707,7 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Custom request ID
         in: header
         name: X-Request-Id
         type: string
@@ -3700,25 +3715,118 @@ paths:
       - application/json
       responses:
         "200":
-          description: The result of recommended container infrastructure
+          description: Deprecated endpoint notice
           schema:
-            $ref: '#/definitions/controller.RecommendInfraResponse'
+            $ref: '#/definitions/common.SimpleMsg'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/common.SimpleMsg'
-        "404":
-          description: Not Found
+      summary: (Deprecated) Recommend an appropriate container infrastructure for
+        cloud migration
+      tags:
+      - '[Recommendation] Infrastructure'
+  /recommendation/k8sControlPlane:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Get recommendation for K8s control plane based on honeybee source cluster data
+        Returns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API
+      operationId: RecommendK8sControlPlane
+      parameters:
+      - description: Source cluster information from honeybee
+        in: body
+        name: UserK8sInfra
+        required: true
+        schema:
+          $ref: '#/definitions/recommendation.KubernetesInfoList'
+      - description: Provider (e.g., aws)
+        enum:
+        - aws
+        in: query
+        name: desiredProvider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        required: true
+        type: string
+      - description: Custom request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: K8s control plane recommendation (ready for cb-tumblebug API)
+          schema:
+            $ref: '#/definitions/model.K8sClusterDynamicReq'
+        "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.SimpleMsg'
-      summary: (Under-development) Recommend an appropriate container infrastructure
-        for cloud migration
+      summary: Recommend K8s control plane configuration
       tags:
-      - '[Recommendation] Infrastructure'
+      - '[Recommendation] K8s Cluster (prototype)'
+  /recommendation/k8sNodeGroup:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Get recommendation for K8s worker node group based on honeybee source cluster data
+        Returns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API
+      operationId: RecommendK8sNodeGroup
+      parameters:
+      - description: Source cluster information from honeybee
+        in: body
+        name: UserK8sInfra
+        required: true
+        schema:
+          $ref: '#/definitions/recommendation.KubernetesInfoList'
+      - description: Provider (e.g., aws)
+        enum:
+        - aws
+        in: query
+        name: desiredProvider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        required: true
+        type: string
+      - description: Custom request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: K8s worker node group recommendation (ready for cb-tumblebug
+            API)
+          schema:
+            $ref: '#/definitions/model.K8sNodeGroupReq'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend K8s worker node group configuration
+      tags:
+      - '[Recommendation] K8s Cluster (prototype)'
   /recommendation/mci:
     post:
       consumes:
