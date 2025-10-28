@@ -227,7 +227,7 @@ type RecommendK8sClusterResponse struct {
 // @Tags [Recommendation] K8s Cluster (prototype)
 // @Accept  json
 // @Produce  json
-// @Param K8sRequest body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
+// @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
 // @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID"
