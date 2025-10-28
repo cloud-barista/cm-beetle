@@ -164,7 +164,7 @@ func RecommendK8sNodeGroup(provider, region string, k8sInfoList KubernetesInfoLi
 	// Collect control plane node information
 	// cpInfo := &NodeGroupInfo{Count: 0, TotalCPU: 0, TotalMemory: 0}
 
-	log.Info().Int("totalServers", len(k8sInfoList.Servers)).Msg("Processing K8s servers for control plane recommendation")
+	log.Info().Int("totalServers", len(k8sInfoList.Servers)).Msg("Processing K8s servers for worker node group recommendation")
 
 	// Count kubernetes clusters to check if kubernetes cluster exists
 	k8sCount := 0
