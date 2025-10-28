@@ -8,9 +8,9 @@
     "dataPath": "YOUR_DESTINATION_BUCKET_NAME/"
   },
   "sourceTransferOptions": {
-    "method": "object-storage-api",
-    "objectStorageTransferOptions": {
-      "handler": "minio",
+    "method": "object-storage",
+    "objectStorageOptions": {
+      "client": "minio",
       "accessKeyId": "YOUR_AWS_ACCESS_KEY_ID",
       "secretAccessKey": "YOUR_AWS_SECRET_ACCESS_KEY",
       "useSSL": true,
@@ -19,9 +19,9 @@
     }
   },
   "destinationTransferOptions": {
-    "method": "object-storage-api",
-    "objectStorageTransferOptions": {
-      "handler": "spider",
+    "method": "object-storage",
+    "objectStorageOptions": {
+      "client": "spider",
       "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
       "expiresIn": 3600,
       "timeout": 300,

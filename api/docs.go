@@ -5428,7 +5428,26 @@ const docTemplate = `{
                 }
             }
         },
-        "transx.ObjectStorageTransferOption": {
+        "transx.FilterOption": {
+            "type": "object",
+            "properties": {
+                "exclude": {
+                    "description": "Patterns to exclude (e.g., \"*.log\", \"temp/**\", \".git/**\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "include": {
+                    "description": "Patterns to include (e.g., \"*.txt\", \"data/**\")",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "transx.ObjectStorageOption": {
             "type": "object",
             "required": [
                 "accessKeyId"
@@ -5438,29 +5457,23 @@ const docTemplate = `{
                     "description": "Common authentication (REQUIRED - must be provided by user)",
                     "type": "string"
                 },
-                "exclude": {
-                    "description": "File filtering options (applied after listing objects, before upload/download)",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "expiresIn": {
-                    "description": "Presigned URL configuration (spider handler only)",
-                    "type": "integer",
-                    "default": 3600
-                },
-                "handler": {
-                    "description": "Handler selection",
+                "client": {
+                    "description": "Client selection",
                     "type": "string",
                     "default": "spider"
                 },
-                "include": {
-                    "description": "Patterns to include (e.g., \"*.txt\", \"data/*\")",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "expiresIn": {
+                    "description": "Presigned URL configuration (spider client only)",
+                    "type": "integer",
+                    "default": 3600
+                },
+                "filter": {
+                    "description": "File filtering options (applied after listing objects, before upload/download)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.FilterOption"
+                        }
+                    ]
                 },
                 "maxRetries": {
                     "description": "Maximum number of retry attempts (default: 3)",
@@ -5468,12 +5481,12 @@ const docTemplate = `{
                     "default": 3
                 },
                 "region": {
-                    "description": "AWS region (for minio handler, default: \"us-east-1\")",
+                    "description": "AWS region (for minio client, default: \"us-east-1\")",
                     "type": "string",
                     "default": "us-east-1"
                 },
                 "secretAccessKey": {
-                    "description": "AWS Secret Access Key (REQUIRED for minio handler)",
+                    "description": "AWS Secret Access Key (REQUIRED for minio client)",
                     "type": "string"
                 },
                 "timeout": {
@@ -5516,19 +5529,13 @@ const docTemplate = `{
                     "type": "boolean",
                     "default": false
                 },
-                "exclude": {
-                    "description": "--exclude=PATTERN: List of patterns to exclude",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "include": {
-                    "description": "--include=PATTERN: List of patterns to include",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+                "filter": {
+                    "description": "File filtering options (include/exclude patterns) - use nested structure for better organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.FilterOption"
+                        }
+                    ]
                 },
                 "insecureSkipHostKeyVerification": {
                     "description": "InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.\nAdds \"-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null\" options.\nWarning: This can be a security risk and should only be used in trusted environments.",
@@ -5575,11 +5582,11 @@ const docTemplate = `{
                     "description": "Transfer method specification (required)",
                     "type": "string"
                 },
-                "objectStorageTransferOptions": {
+                "objectStorageOptions": {
                     "description": "Object Storage-specific options (CB-Spider, AWS S3, etc.)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/transx.ObjectStorageTransferOption"
+                            "$ref": "#/definitions/transx.ObjectStorageOption"
                         }
                     ]
                 },

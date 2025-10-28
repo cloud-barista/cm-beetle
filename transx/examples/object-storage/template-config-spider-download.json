@@ -8,9 +8,9 @@
     "dataPath": "/tmp/minio-download-test/"
   },
   "sourceTransferOptions": {
-    "method": "object-storage-api",
-    "objectStorageTransferOptions": {
-      "handler": "spider",
+    "method": "object-storage",
+    "objectStorageOptions": {
+      "client": "spider",
       "accessKeyId": "YOUR_CONNECTION_CONFIG_NAME",
       "expiresIn": 3600,
       "timeout": 300,

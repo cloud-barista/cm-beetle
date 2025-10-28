@@ -52,7 +52,7 @@ func performDirectTransfer(dmm DataMigrationModel) error {
 		}
 		return nil
 
-	case TransferMethodObjectStorageAPI:
+	case TransferMethodObjectStorage:
 		// Use Object Storage API for transfer
 		if err := performObjectStorageTransfer(dmm); err != nil {
 			// If it's already an OperationError, return as is
@@ -239,13 +239,14 @@ func performRsyncTransfer(dmm DataMigrationModel) error {
 	}
 
 	// Configure Exclude and Include options
-	if sourceOptions != nil && sourceOptions.RsyncOptions != nil {
-		for _, ex := range sourceOptions.RsyncOptions.Exclude {
+	if sourceOptions != nil && sourceOptions.RsyncOptions != nil && sourceOptions.RsyncOptions.Filter != nil {
+		filter := sourceOptions.RsyncOptions.Filter
+		for _, ex := range filter.Exclude {
 			if strings.TrimSpace(ex) != "" {
 				args = append(args, "--exclude="+ex)
 			}
 		}
-		for _, inc := range sourceOptions.RsyncOptions.Include {
+		for _, inc := range filter.Include {
 			if strings.TrimSpace(inc) != "" {
 				args = append(args, "--include="+inc)
 			}
@@ -336,15 +337,15 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 		// Upload: Local to Object Storage
 		isUpload = true
 		transferOptions = dmm.DestinationTransferOptions
-		if transferOptions == nil || transferOptions.ObjectStorageTransferOptions == nil {
-			return fmt.Errorf("destination ObjectStorageTransferOptions is required for upload")
+		if transferOptions == nil || transferOptions.ObjectStorageOptions == nil {
+			return fmt.Errorf("destination ObjectStorageOptions is required for upload")
 		}
 	} else if dmm.Source.IsRemote() && dmm.Destination.IsLocal() {
 		// Download: Object Storage to Local
 		isUpload = false
 		transferOptions = dmm.SourceTransferOptions
-		if transferOptions == nil || transferOptions.ObjectStorageTransferOptions == nil {
-			return fmt.Errorf("source ObjectStorageTransferOptions is required for download")
+		if transferOptions == nil || transferOptions.ObjectStorageOptions == nil {
+			return fmt.Errorf("source ObjectStorageOptions is required for download")
 		}
 	} else {
 		return fmt.Errorf("object Storage transfer requires one local and one remote endpoint")
@@ -358,7 +359,7 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 		bucketEndpoint = dmm.Source
 	}
 
-	if err := checkBucketExists(bucketEndpoint, transferOptions.ObjectStorageTransferOptions); err != nil {
+	if err := checkBucketExists(bucketEndpoint, transferOptions.ObjectStorageOptions); err != nil {
 		return fmt.Errorf("bucket validation failed: %w", err)
 	}
 
@@ -375,7 +376,6 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 		if fileInfo.IsDir() {
 			// Handle directory upload recursively
 			return filepath.Walk(localPath, func(path string, info os.FileInfo, err error) error {
-
 				if err != nil {
 					return err
 				}
@@ -394,12 +394,12 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 					return fmt.Errorf("failed to calculate relative path for %s: %w", path, err)
 				}
 
-				// Apply filtering if exclude/include patterns are specified
-				if transferOptions.ObjectStorageTransferOptions != nil {
-					opts := transferOptions.ObjectStorageTransferOptions
-					if len(opts.Exclude) > 0 || len(opts.Include) > 0 {
+				// Apply filtering if filter patterns are specified
+				if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Filter != nil {
+					filter := transferOptions.ObjectStorageOptions.Filter
+					if len(filter.Exclude) > 0 || len(filter.Include) > 0 {
 						// Use relative path for pattern matching
-						if !shouldTransferObject(relPath, opts.Exclude, opts.Include) {
+						if !shouldTransferObject(relPath, filter.Exclude, filter.Include) {
 							return nil // Skip this file
 						}
 					}
@@ -429,16 +429,16 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 		}
 
 		// List objects with the specified prefix
-		objects, err := listBucketObjects(dmm.Source, objectKey, transferOptions.ObjectStorageTransferOptions)
+		objects, err := listBucketObjects(dmm.Source, objectKey, transferOptions.ObjectStorageOptions)
 		if err != nil {
 			return fmt.Errorf("failed to list objects: %w", err)
 		}
 
-		// Apply filtering if exclude/include patterns are specified
-		if transferOptions.ObjectStorageTransferOptions != nil {
-			opts := transferOptions.ObjectStorageTransferOptions
-			if len(opts.Exclude) > 0 || len(opts.Include) > 0 {
-				objects = filterObjectList(objects, opts.Exclude, opts.Include)
+		// Apply filtering if filter patterns are specified
+		if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Filter != nil {
+			filter := transferOptions.ObjectStorageOptions.Filter
+			if len(filter.Exclude) > 0 || len(filter.Include) > 0 {
+				objects = filterObjectList(objects, filter.Exclude, filter.Include)
 			}
 		}
 

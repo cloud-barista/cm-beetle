@@ -7,15 +7,25 @@ import (
 
 // Transfer method constants
 const (
-	TransferMethodRsync            = "rsync"
-	TransferMethodObjectStorageAPI = "object-storage-api"
+	TransferMethodRsync         = "rsync"
+	TransferMethodObjectStorage = "object-storage"
 )
 
-// Object Storage handler constants
+// Object Storage client constants
 const (
-	ObjectStorageHandlerSpider = "spider" // CB-Spider presigned URL API (default)
-	ObjectStorageHandlerMinio  = "minio"  // MinIO SDK for direct S3-compatible access
+	ObjectStorageClientSpider = "spider" // CB-Spider presigned URL API (default)
+	ObjectStorageClientMinio  = "minio"  // MinIO SDK for direct S3-compatible access
 )
+
+// FilterOption defines file filtering options for both rsync and Object Storage transfers.
+// Supports glob patterns with rsync-like filtering behavior:
+// 1. If include patterns are specified, only matching files are included
+// 2. Exclude patterns are applied after include patterns (exclude takes priority)
+// 3. Supports ** for recursive directory matching
+type FilterOption struct {
+	Include []string `json:"include,omitempty"` // Patterns to include (e.g., "*.txt", "data/**")
+	Exclude []string `json:"exclude,omitempty"` // Patterns to exclude (e.g., "*.log", "temp/**", ".git/**")
+}
 
 // DataMigrationModel defines a single data migration task supporting multiple protocols.
 type DataMigrationModel struct {
@@ -43,13 +53,13 @@ type EndpointDetails struct {
 // TransferOptions defines options for various data transfer methods.
 type TransferOptions struct {
 	// Transfer method specification (required)
-	Method string `json:"method" validate:"required"` // Transfer method: "rsync", or "object-storage-api"
+	Method string `json:"method" validate:"required"` // Transfer method: "rsync", "object-storage"
 
 	// Rsync-specific options
 	RsyncOptions *RsyncOption `json:"rsyncOptions,omitempty"`
 
 	// Object Storage-specific options (CB-Spider, AWS S3, etc.)
-	ObjectStorageTransferOptions *ObjectStorageTransferOption `json:"objectStorageTransferOptions,omitempty"`
+	ObjectStorageOptions *ObjectStorageOption `json:"objectStorageOptions,omitempty"`
 }
 
 // RsyncOption defines rsync-specific transfer options and SSH connection options.
@@ -70,42 +80,41 @@ type RsyncOption struct {
 	Progress bool `json:"progress,omitempty" default:"false"` // Show progress during transfer
 
 	// Rsync-specific options
-	Compress  bool     `json:"compress,omitempty" default:"true"`   // -z, --compress: Compress file data during the transfer
-	Archive   bool     `json:"archive,omitempty" default:"true"`    // -a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)
-	Delete    bool     `json:"delete,omitempty" default:"false"`    // --delete: Delete extraneous files from dest dirs
-	RsyncPath string   `json:"rsyncPath,omitempty" default:"rsync"` // Path to the rsync executable (if empty, uses system PATH)
-	Exclude   []string `json:"exclude,omitempty"`                   // --exclude=PATTERN: List of patterns to exclude
-	Include   []string `json:"include,omitempty"`                   // --include=PATTERN: List of patterns to include
+	Compress  bool          `json:"compress,omitempty" default:"true"`   // -z, --compress: Compress file data during the transfer
+	Archive   bool          `json:"archive,omitempty" default:"true"`    // -a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)
+	Delete    bool          `json:"delete,omitempty" default:"false"`    // --delete: Delete extraneous files from dest dirs
+	RsyncPath string        `json:"rsyncPath,omitempty" default:"rsync"` // Path to the rsync executable (if empty, uses system PATH)
+	Filter    *FilterOption `json:"filter,omitempty"`                    // File filtering options (include/exclude patterns) - use nested structure for better organization
 
 	// TransferDirContentsOnly, if true, adds a trailing slash to source paths
 	// to transfer only the contents of the directory and not the directory itself.
 	TransferDirContentsOnly bool `json:"transferDirContentsOnly,omitempty" default:"false"`
 }
 
-// ObjectStorageTransferOption defines Object Storage transfer options.
-// Supports two handlers:
-// 1. Spider handler (Handler = "spider" or empty, default for backward compatibility)
+// ObjectStorageOption defines Object Storage transfer options.
+// Supports two clients:
+// 1. Spider client (Client = "spider" or empty, default for backward compatibility)
 //   - Endpoint: CB-Spider API endpoint (e.g., "http://localhost:1024/spider/s3")
 //   - AccessKeyId: CB-Spider connection name (e.g., "aws-config01")
 //   - Uses presigned URLs from CB-Spider for upload/download
 //
-// 2. Minio handler (Handler = "minio")
+// 2. MinIO client (Client = "minio")
 //   - Endpoint: S3-compatible storage endpoint (e.g., "s3.amazonaws.com", "play.min.io:9000")
 //   - AccessKeyId: AWS Access Key ID
-//   - SecretAccessKey: AWS Secret Access Key (required for minio handler)
+//   - SecretAccessKey: AWS Secret Access Key (required for minio client)
 //   - Region: AWS region (optional, default: "us-east-1")
 //   - UseSSL: Use HTTPS for connections (default: true)
-type ObjectStorageTransferOption struct {
-	// Handler selection
-	Handler string `json:"handler,omitempty" default:"spider"` // Object storage handler: "spider" (default) or "minio"
+type ObjectStorageOption struct {
+	// Client selection
+	Client string `json:"client,omitempty" default:"spider"` // Object storage client: "spider" (default) or "minio"
 
 	// Common authentication (REQUIRED - must be provided by user)
 	AccessKeyId     string `json:"accessKeyId" validate:"required"`      // AWS Access Key ID or CB-Spider connection name (REQUIRED)
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`            // AWS Secret Access Key (REQUIRED for minio handler)
-	Region          string `json:"region,omitempty" default:"us-east-1"` // AWS region (for minio handler, default: "us-east-1")
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`            // AWS Secret Access Key (REQUIRED for minio client)
+	Region          string `json:"region,omitempty" default:"us-east-1"` // AWS region (for minio client, default: "us-east-1")
 	UseSSL          bool   `json:"useSSL,omitempty" default:"false"`     // Use HTTPS (default: true)
 
-	// Presigned URL configuration (spider handler only)
+	// Presigned URL configuration (spider client only)
 	ExpiresIn int `json:"expiresIn,omitempty" default:"3600"` // Presigned URL expiration time in seconds (default: 3600)
 
 	// HTTP request configuration (optional)
@@ -113,8 +122,7 @@ type ObjectStorageTransferOption struct {
 	MaxRetries int `json:"maxRetries,omitempty" default:"3"` // Maximum number of retry attempts (default: 3)
 
 	// File filtering options (applied after listing objects, before upload/download)
-	Exclude []string `json:"exclude,omitempty"` // Patterns to exclude (e.g., "*.log", "temp/*", ".git/*")
-	Include []string `json:"include,omitempty"` // Patterns to include (e.g., "*.txt", "data/*")
+	Filter *FilterOption `json:"filter,omitempty"` // File filtering options (include/exclude patterns) - use nested structure for better organization
 }
 
 // Validate checks if the fields of DataMigrationModel satisfy basic requirements for transfer tasks.
@@ -152,17 +160,17 @@ func Validate(dmm DataMigrationModel) error {
 
 	// Validate Object Storage configuration
 	if dmm.SourceTransferOptions != nil &&
-		dmm.SourceTransferOptions.Method == TransferMethodObjectStorageAPI &&
-		dmm.SourceTransferOptions.ObjectStorageTransferOptions != nil {
-		if err := validateObjectStorageOptions(dmm.SourceTransferOptions.ObjectStorageTransferOptions, "source"); err != nil {
+		dmm.SourceTransferOptions.Method == TransferMethodObjectStorage &&
+		dmm.SourceTransferOptions.ObjectStorageOptions != nil {
+		if err := validateObjectStorageOptions(dmm.SourceTransferOptions.ObjectStorageOptions, "source"); err != nil {
 			return err
 		}
 	}
 
 	if dmm.DestinationTransferOptions != nil &&
-		dmm.DestinationTransferOptions.Method == TransferMethodObjectStorageAPI &&
-		dmm.DestinationTransferOptions.ObjectStorageTransferOptions != nil {
-		if err := validateObjectStorageOptions(dmm.DestinationTransferOptions.ObjectStorageTransferOptions, "destination"); err != nil {
+		dmm.DestinationTransferOptions.Method == TransferMethodObjectStorage &&
+		dmm.DestinationTransferOptions.ObjectStorageOptions != nil {
+		if err := validateObjectStorageOptions(dmm.DestinationTransferOptions.ObjectStorageOptions, "destination"); err != nil {
 			return err
 		}
 	}
@@ -171,7 +179,7 @@ func Validate(dmm DataMigrationModel) error {
 }
 
 // validateObjectStorageOptions validates Object Storage transfer options
-func validateObjectStorageOptions(options *ObjectStorageTransferOption, context string) error {
+func validateObjectStorageOptions(options *ObjectStorageOption, context string) error {
 	if strings.TrimSpace(options.AccessKeyId) == "" {
 		return fmt.Errorf("%s Object Storage AccessKeyId must be provided (e.g., \"aws-config01\", \"conn-kimy-aws\")", context)
 	}
