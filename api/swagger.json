@@ -70,7 +70,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Data (experimental)"
+                    "[Migration] Data (incubating)"
                 ],
                 "summary": "Migrate data from source to target",
                 "operationId": "MigrateData",
@@ -106,6 +106,351 @@
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/objectStorage": {
+            "get": {
+                "description": "Get the list of all object storages (buckets) in the specified cloud provider and region\n\n[Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "List object storages (buckets)",
+                "operationId": "ListObjectStorages",
+                "parameters": [
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Cloud provider",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Cloud region",
+                        "name": "region",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of object storages",
+                        "schema": {
+                            "$ref": "#/definitions/tbclient.ListAllMyBucketsResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note] This API creates object storages (buckets) in the target cloud.\n- Input should be the output from RecommendObjectStorage API\n- Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Migrate object storages to cloud",
+                "operationId": "MigrateObjectStorage",
+                "parameters": [
+                    {
+                        "description": "Object storage migration request (use RecommendObjectStorage response)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateObjectStorageRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK - Object storages created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/objectStorage/{objectStorageName}": {
+            "get": {
+                "description": "Get details of a specific object storage (bucket)\n\n[Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Get object storage (bucket) details",
+                "operationId": "GetObjectStorage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Object Storage Name (bucket name)",
+                        "name": "objectStorageName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Cloud provider",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Cloud region",
+                        "name": "region",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object storage details",
+                        "schema": {
+                            "$ref": "#/definitions/tbclient.ListBucketResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Object storage not found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)\n- The bucket must be empty before deletion",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Delete object storage (bucket)",
+                "operationId": "DeleteObjectStorage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Object Storage Name (bucket name)",
+                        "name": "objectStorageName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Cloud provider",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Cloud region",
+                        "name": "region",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK - Object storage deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Object storage not found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "head": {
+                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Check object storage (bucket) existence",
+                "operationId": "ExistObjectStorage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Object Storage Name (bucket name)",
+                        "name": "objectStorageName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Cloud provider",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Cloud region",
+                        "name": "region",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK - Object storage exists"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Object storage not found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/common.SimpleMsg"
                         }
@@ -1600,7 +1945,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Managed Middleware (experimental)"
+                    "[Recommendation] Managed middleware (preview)"
                 ],
                 "summary": "Recommend an object storage for cloud migration",
                 "operationId": "RecommendObjectStorage",
@@ -3970,6 +4315,26 @@
                 }
             }
         },
+        "controller.MigrateObjectStorageRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetObjectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
+                    }
+                }
+            }
+        },
         "controller.RecommendInfraRequest": {
             "type": "object",
             "properties": {
@@ -5544,6 +5909,79 @@
                     "items": {
                         "$ref": "#/definitions/model.VNetInfo"
                     }
+                }
+            }
+        },
+        "tbclient.Bucket": {
+            "type": "object",
+            "properties": {
+                "creationDate": {
+                    "type": "string",
+                    "example": "2025-09-04T04:18:06Z"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "spider-test-bucket"
+                }
+            }
+        },
+        "tbclient.Buckets": {
+            "type": "object",
+            "properties": {
+                "bucket": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tbclient.Bucket"
+                    }
+                }
+            }
+        },
+        "tbclient.ListAllMyBucketsResult": {
+            "type": "object",
+            "properties": {
+                "buckets": {
+                    "$ref": "#/definitions/tbclient.Buckets"
+                },
+                "owner": {
+                    "$ref": "#/definitions/tbclient.Owner"
+                }
+            }
+        },
+        "tbclient.ListBucketResult": {
+            "type": "object",
+            "properties": {
+                "isTruncated": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "marker": {
+                    "type": "string",
+                    "example": ""
+                },
+                "maxKeys": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "name": {
+                    "type": "string",
+                    "example": "spider-test-bucket"
+                },
+                "prefix": {
+                    "type": "string",
+                    "example": ""
+                }
+            }
+        },
+        "tbclient.Owner": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
                 }
             }
         },

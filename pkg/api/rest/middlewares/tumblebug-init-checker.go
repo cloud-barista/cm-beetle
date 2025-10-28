@@ -18,6 +18,8 @@ var isTbInitalized bool = false
 func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
+		log.Info().Msg("[Middleware] Check and mark Tumblebug initialization status ")
+
 		if !isTbInitalized {
 			// Initialize resty client with basic auth
 			client := resty.New()

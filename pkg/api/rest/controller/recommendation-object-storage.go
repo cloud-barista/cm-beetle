@@ -61,7 +61,12 @@ type SourceObjectStorageProperty struct {
 // ============================================================================
 
 // RecommendObjectStorageResponse represents object storage recommendation response
+
 type RecommendObjectStorageResponse struct {
+	ObjectStorageInfo
+}
+
+type ObjectStorageInfo struct {
 	Status               string                        `json:"status"`
 	Description          string                        `json:"description"`
 	TargetCloud          cloudmodel.CloudProperty      `json:"targetCloud"`
@@ -86,7 +91,7 @@ type TargetObjectStorageProperty struct {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Managed Middleware (experimental)
+// @Tags [Recommendation] Managed middleware (preview)
 // @Accept json
 // @Produce	json
 // @Param request body RecommendObjectStorageRequest true "Specify the your object storage to be migrated"
@@ -170,13 +175,15 @@ func RecommendObjectStorage(c echo.Context) error {
 
 	// Build response
 	response := RecommendObjectStorageResponse{
-		Status:      "success",
-		Description: fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
-		TargetCloud: cloudmodel.CloudProperty{
-			Csp:    desiredProvider,
-			Region: desiredRegion,
+		ObjectStorageInfo: ObjectStorageInfo{
+			Status:      "success",
+			Description: fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
+			TargetCloud: cloudmodel.CloudProperty{
+				Csp:    desiredProvider,
+				Region: desiredRegion,
+			},
+			TargetObjectStorages: targetObjectStorages,
 		},
-		TargetObjectStorages: targetObjectStorages,
 	}
 
 	log.Info().

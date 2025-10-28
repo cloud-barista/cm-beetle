@@ -304,6 +304,18 @@ func RunServer(port string) {
 	// APIs for data migration (Experimental)
 	gMigration.POST("/data", controller.MigrateData)
 
+	/*
+	 * API group for managed middleware migration
+	 */
+	gMigrationMiddleware := gMigration.Group("/middleware")
+
+	// Migration APIs for object storage
+	gMigrationMiddleware.POST("/objectStorage", controller.MigrateObjectStorage)
+	gMigrationMiddleware.GET("/objectStorage", controller.ListObjectStorages)
+	gMigrationMiddleware.GET("/objectStorage/:objectStorageName", controller.GetObjectStorage)
+	gMigrationMiddleware.HEAD("/objectStorage/:objectStorageName", controller.ExistObjectStorage)
+	gMigrationMiddleware.DELETE("/objectStorage/:objectStorageName", controller.DeleteObjectStorage)
+
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"
