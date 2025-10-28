@@ -44,7 +44,7 @@ func (c *TumblebugClient) DeleteSharedResources(nsId string) (tbmodel.IdList, er
 		method,
 		url,
 		nil,
-		false,
+		common.SetUseBody(reqBody),
 		&reqBody,
 		&resBody,
 		common.ShortDuration,
@@ -56,5 +56,36 @@ func (c *TumblebugClient) DeleteSharedResources(nsId string) (tbmodel.IdList, er
 	}
 
 	log.Debug().Msgf("Deleted shared resources in namespace (nsId: %s) successfully", nsId)
+	return resBody, nil
+}
+
+func (c *TumblebugClient) GetConnConfig(connectionConfigName string) (tbmodel.ConnConfig, error) {
+	log.Debug().Msgf("Getting connection config: %s", connectionConfigName)
+
+	emptyRet := tbmodel.ConnConfig{}
+
+	method := "GET"
+	url := fmt.Sprintf("%s/connConfig/%s", c.restUrl, connectionConfigName)
+
+	reqBody := common.NoBody
+	resBody := tbmodel.ConnConfig{}
+
+	err := common.ExecuteHttpRequest(
+		c.client,
+		method,
+		url,
+		nil,
+		common.SetUseBody(reqBody),
+		&reqBody,
+		&resBody,
+		common.ShortDuration,
+	)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get connection config")
+		return emptyRet, err
+	}
+
+	log.Debug().Msgf("Got connection config (name: %s) successfully", connectionConfigName)
 	return resBody, nil
 }

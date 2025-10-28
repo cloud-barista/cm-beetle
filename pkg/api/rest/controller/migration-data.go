@@ -32,7 +32,7 @@ import (
 // @Description * Only relay mode is supported for now (both source and destination should be remote endpoints).
 // @Description * Supported methods: rsync, object storage API (AWS S3 style)
 // @Description * Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples
-// @Tags [Migration] Data (experimental)
+// @Tags [Migration] Data (incubating)
 // @Accept  json
 // @Produce  json
 // @Param reqBody body transx.DataMigrationModel true "Request Body"

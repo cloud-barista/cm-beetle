@@ -1514,6 +1514,19 @@ definitions:
           $ref: '#/definitions/cloudmodel.VmInfo'
         type: array
     type: object
+  controller.MigrateObjectStorageRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+        type: array
+    type: object
   controller.RecommendInfraRequest:
     properties:
       desiredProvider:
@@ -2654,6 +2667,56 @@ definitions:
           $ref: '#/definitions/model.VNetInfo'
         type: array
     type: object
+  tbclient.Bucket:
+    properties:
+      creationDate:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      name:
+        example: spider-test-bucket
+        type: string
+    type: object
+  tbclient.Buckets:
+    properties:
+      bucket:
+        items:
+          $ref: '#/definitions/tbclient.Bucket'
+        type: array
+    type: object
+  tbclient.ListAllMyBucketsResult:
+    properties:
+      buckets:
+        $ref: '#/definitions/tbclient.Buckets'
+      owner:
+        $ref: '#/definitions/tbclient.Owner'
+    type: object
+  tbclient.ListBucketResult:
+    properties:
+      isTruncated:
+        example: false
+        type: boolean
+      marker:
+        example: ""
+        type: string
+      maxKeys:
+        example: 1000
+        type: integer
+      name:
+        example: spider-test-bucket
+        type: string
+      prefix:
+        example: ""
+        type: string
+    type: object
+  tbclient.Owner:
+    properties:
+      displayName:
+        example: aws-ap-northeast-2
+        type: string
+      id:
+        example: aws-ap-northeast-2
+        type: string
+    type: object
   transx.DataMigrationModel:
     properties:
       destination:
@@ -2912,7 +2975,270 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Migrate data from source to target
       tags:
-      - '[Migration] Data (experimental)'
+      - '[Migration] Data (incubating)'
+  /migration/middleware/objectStorage:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get the list of all object storages (buckets) in the specified cloud provider and region
+
+        [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+      operationId: ListObjectStorages
+      parameters:
+      - default: aws
+        description: Cloud provider
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: provider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Cloud region
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of object storages
+          schema:
+            $ref: '#/definitions/tbclient.ListAllMyBucketsResult'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: List object storages (buckets)
+      tags:
+      - '[Migration] Managed middleware (preview)'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Migrate object storages to cloud based on recommendation results
+
+        [Note] This API creates object storages (buckets) in the target cloud.
+        - Input should be the output from RecommendObjectStorage API
+        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+      operationId: MigrateObjectStorage
+      parameters:
+      - description: Object storage migration request (use RecommendObjectStorage
+          response)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.MigrateObjectStorageRequest'
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK - Object storages created successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Migrate object storages to cloud
+      tags:
+      - '[Migration] Managed middleware (preview)'
+  /migration/middleware/objectStorage/{objectStorageName}:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Delete a specific object storage (bucket)
+
+        [Note]
+        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        - The bucket must be empty before deletion
+      operationId: DeleteObjectStorage
+      parameters:
+      - description: Object Storage Name (bucket name)
+        in: path
+        name: objectStorageName
+        required: true
+        type: string
+      - default: aws
+        description: Cloud provider
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: provider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Cloud region
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK - Object storage deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Object storage not found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Delete object storage (bucket)
+      tags:
+      - '[Migration] Managed middleware (preview)'
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Get details of a specific object storage (bucket)
+
+        [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+      operationId: GetObjectStorage
+      parameters:
+      - description: Object Storage Name (bucket name)
+        in: path
+        name: objectStorageName
+        required: true
+        type: string
+      - default: aws
+        description: Cloud provider
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: provider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Cloud region
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object storage details
+          schema:
+            $ref: '#/definitions/tbclient.ListBucketResult'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Object storage not found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Get object storage (bucket) details
+      tags:
+      - '[Migration] Managed middleware (preview)'
+    head:
+      consumes:
+      - application/json
+      description: |-
+        Check if a specific object storage (bucket) exists
+
+        [Note]
+        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
+      operationId: ExistObjectStorage
+      parameters:
+      - description: Object Storage Name (bucket name)
+        in: path
+        name: objectStorageName
+        required: true
+        type: string
+      - default: aws
+        description: Cloud provider
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: provider
+        required: true
+        type: string
+      - default: ap-northeast-2
+        description: Cloud region
+        in: query
+        name: region
+        required: true
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK - Object storage exists
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Object storage not found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Check object storage (bucket) existence
+      tags:
+      - '[Migration] Managed middleware (preview)'
   /migration/ns/{nsId}/mci:
     get:
       consumes:
@@ -3999,7 +4325,7 @@ paths:
             $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an object storage for cloud migration
       tags:
-      - '[Recommendation] Managed Middleware (experimental)'
+      - '[Recommendation] Managed middleware (preview)'
   /recommendation/resources/securityGroups:
     post:
       consumes:
