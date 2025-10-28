@@ -44,24 +44,24 @@ type ObjectInfo struct {
 
 // uploadFileToObjectStorage uploads a single file to Object Storage using presigned URL or SDK
 func uploadFileToObjectStorage(localFilePath, objectPath string, destEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	// Check if minio handler is enabled
-	if transferOptions.ObjectStorageTransferOptions != nil && transferOptions.ObjectStorageTransferOptions.Handler == ObjectStorageHandlerMinio {
+	// Check if minio client is enabled
+	if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Client == ObjectStorageClientMinio {
 		return uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath, destEndpoint, transferOptions)
 	}
 
-	// Use presigned URL API (spider handler - original implementation)
+	// Use presigned URL API (spider client - original implementation)
 	// Generate presigned URL for upload
 	apiEndpoint := destEndpoint.GetEndpoint()
 
-	presignedURL, err := generatePresignedURL(apiEndpoint, "upload", objectPath, transferOptions.ObjectStorageTransferOptions)
+	presignedURL, err := generatePresignedURL(apiEndpoint, "upload", objectPath, transferOptions.ObjectStorageOptions)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned upload URL: %w", err)
 	}
 
 	// Set default options if not provided
-	options := transferOptions.ObjectStorageTransferOptions
+	options := transferOptions.ObjectStorageOptions
 	if options == nil {
-		options = &ObjectStorageTransferOption{
+		options = &ObjectStorageOption{
 			Timeout:    300,
 			MaxRetries: 3,
 			UseSSL:     false,
@@ -123,24 +123,24 @@ func uploadFileToObjectStorage(localFilePath, objectPath string, destEndpoint En
 
 // downloadFileFromObjectStorage downloads a single file from Object Storage using presigned URL or SDK
 func downloadFileFromObjectStorage(localFilePath, objectPath string, sourceEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	// Check if minio handler is enabled
-	if transferOptions.ObjectStorageTransferOptions != nil && transferOptions.ObjectStorageTransferOptions.Handler == ObjectStorageHandlerMinio {
+	// Check if minio client is enabled
+	if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Client == ObjectStorageClientMinio {
 		return downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath, sourceEndpoint, transferOptions)
 	}
 
-	// Use presigned URL API (spider handler - original implementation)
+	// Use presigned URL API (spider client - original implementation)
 	// Generate presigned URL for download
 	apiEndpoint := sourceEndpoint.GetEndpoint()
 
-	presignedURL, err := generatePresignedURL(apiEndpoint, "download", objectPath, transferOptions.ObjectStorageTransferOptions)
+	presignedURL, err := generatePresignedURL(apiEndpoint, "download", objectPath, transferOptions.ObjectStorageOptions)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned download URL: %w", err)
 	}
 
 	// Set default options if not provided
-	options := transferOptions.ObjectStorageTransferOptions
+	options := transferOptions.ObjectStorageOptions
 	if options == nil {
-		options = &ObjectStorageTransferOption{
+		options = &ObjectStorageOption{
 			Timeout:    300,
 			MaxRetries: 3,
 			UseSSL:     false,
@@ -203,9 +203,9 @@ func downloadFileFromObjectStorage(localFilePath, objectPath string, sourceEndpo
 }
 
 // generatePresignedURL generates a presigned URL for Object Storage operations
-func generatePresignedURL(apiEndpoint, operation, objectPath string, options *ObjectStorageTransferOption) (string, error) {
+func generatePresignedURL(apiEndpoint, operation, objectPath string, options *ObjectStorageOption) (string, error) {
 	if options == nil {
-		return "", fmt.Errorf("ObjectStorageTransferOption is required")
+		return "", fmt.Errorf("ObjectStorageOption is required")
 	}
 
 	// Build presigned URL request URL for Object Storage API
@@ -280,15 +280,15 @@ func generatePresignedURL(apiEndpoint, operation, objectPath string, options *Ob
 }
 
 // checkBucketExists checks if the bucket exists using HEAD request or SDK
-func checkBucketExists(endpoint EndpointDetails, options *ObjectStorageTransferOption) error {
-	// Check if minio handler is enabled
-	if options != nil && options.Handler == ObjectStorageHandlerMinio {
+func checkBucketExists(endpoint EndpointDetails, options *ObjectStorageOption) error {
+	// Check if minio client is enabled
+	if options != nil && options.Client == ObjectStorageClientMinio {
 		return checkBucketExistsWithMinioSDK(endpoint, options)
 	}
 
-	// Use presigned URL API (spider handler - original implementation)
+	// Use presigned URL API (spider client - original implementation)
 	if options == nil {
-		return fmt.Errorf("ObjectStorageTransferOption is required")
+		return fmt.Errorf("ObjectStorageOption is required")
 	}
 
 	if options.AccessKeyId == "" {
@@ -340,15 +340,15 @@ func checkBucketExists(endpoint EndpointDetails, options *ObjectStorageTransferO
 }
 
 // listBucketObjects lists objects in a bucket with optional prefix filtering using presigned URL API or SDK
-func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectStorageTransferOption) ([]ObjectInfo, error) {
-	// Check if minio handler is enabled
-	if options != nil && options.Handler == ObjectStorageHandlerMinio {
+func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectStorageOption) ([]ObjectInfo, error) {
+	// Check if minio client is enabled
+	if options != nil && options.Client == ObjectStorageClientMinio {
 		return listBucketObjectsWithMinioSDK(endpoint, prefix, options)
 	}
 
-	// Use presigned URL API (spider handler - original implementation)
+	// Use presigned URL API (spider client - original implementation)
 	if options == nil {
-		return nil, fmt.Errorf("ObjectStorageTransferOption is required")
+		return nil, fmt.Errorf("ObjectStorageOption is required")
 	}
 
 	if options.AccessKeyId == "" {
@@ -414,13 +414,13 @@ func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectS
 // ========================================
 
 // createMinioClient creates a MinIO client for S3-compatible storage
-func createMinioClient(endpoint string, options *ObjectStorageTransferOption) (*minio.Client, error) {
+func createMinioClient(endpoint string, options *ObjectStorageOption) (*minio.Client, error) {
 	if options == nil {
-		return nil, fmt.Errorf("ObjectStorageTransferOption is required")
+		return nil, fmt.Errorf("ObjectStorageOption is required")
 	}
 
-	if options.Handler != ObjectStorageHandlerMinio {
-		return nil, fmt.Errorf("minio handler is not enabled")
+	if options.Client != ObjectStorageClientMinio {
+		return nil, fmt.Errorf("minio client is not enabled")
 	}
 
 	if options.SecretAccessKey == "" {
@@ -449,9 +449,9 @@ func createMinioClient(endpoint string, options *ObjectStorageTransferOption) (*
 
 // uploadFileToObjectStorageWithMinioSDK uploads a file using MinIO SDK
 func uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath string, destEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	options := transferOptions.ObjectStorageTransferOptions
+	options := transferOptions.ObjectStorageOptions
 	if options == nil {
-		return fmt.Errorf("ObjectStorageTransferOption is required")
+		return fmt.Errorf("ObjectStorageOption is required")
 	}
 
 	// Create MinIO client
@@ -506,9 +506,9 @@ func uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath string, des
 
 // downloadFileFromObjectStorageWithMinioSDK downloads a file using MinIO SDK
 func downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath string, sourceEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	options := transferOptions.ObjectStorageTransferOptions
+	options := transferOptions.ObjectStorageOptions
 	if options == nil {
-		return fmt.Errorf("ObjectStorageTransferOption is required")
+		return fmt.Errorf("ObjectStorageOption is required")
 	}
 
 	// Create MinIO client
@@ -565,7 +565,7 @@ func downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath string,
 }
 
 // checkBucketExistsWithMinioSDK checks if a bucket exists using MinIO SDK
-func checkBucketExistsWithMinioSDK(endpoint EndpointDetails, options *ObjectStorageTransferOption) error {
+func checkBucketExistsWithMinioSDK(endpoint EndpointDetails, options *ObjectStorageOption) error {
 	if options == nil {
 		return fmt.Errorf("ObjectStorageTransferOption is required")
 	}
@@ -605,7 +605,7 @@ func checkBucketExistsWithMinioSDK(endpoint EndpointDetails, options *ObjectStor
 }
 
 // listBucketObjectsWithMinioSDK lists objects in a bucket using MinIO SDK
-func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, options *ObjectStorageTransferOption) ([]ObjectInfo, error) {
+func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, options *ObjectStorageOption) ([]ObjectInfo, error) {
 	if options == nil {
 		return nil, fmt.Errorf("ObjectStorageTransferOption is required")
 	}

@@ -8,9 +8,9 @@
     "dataPath": "YOUR_BUCKET_NAME/"
   },
   "destinationTransferOptions": {
-    "method": "object-storage-api",
-    "objectStorageTransferOptions": {
-      "handler": "minio",
+    "method": "object-storage",
+    "objectStorageOptions": {
+      "client": "minio",
       "accessKeyId": "YOUR_AWS_ACCESS_KEY_ID",
       "secretAccessKey": "YOUR_AWS_SECRET_ACCESS_KEY",
       "region": "YOUR_AWS_REGION",

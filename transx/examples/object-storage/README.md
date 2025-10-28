@@ -44,20 +44,21 @@ The `transx` library supports two Object Storage handlers:
 
 Main configuration files are provided:
 
-| File                                    | Handler   | Direction      | Description                      |
-| --------------------------------------- | --------- | -------------- | -------------------------------- |
-| `config-spider-upload.json`             | Spider    | Local → S3     | Upload via CB-Spider             |
-| `config-spider-download.json`           | Spider    | S3 → Local     | Download via CB-Spider           |
-| `config-minio-upload.json`              | MinIO SDK | Local → S3     | Upload direct to S3              |
-| `config-minio-download.json`            | MinIO SDK | S3 → Local     | Download direct from S3          |
-| `config-rsync-upload.json`              | rsync     | Local → Remote | Upload via rsync/SSH             |
-| `config-rsync-download.json`            | rsync     | Remote → Local | Download via rsync/SSH           |
-| **Filtering Examples:**                 |           |                |                                  |
-| `config-filtering-combined-upload.json` | Spider    | Local → S3     | Upload with include/exclude      |
-| `config-filtering-combined-download.json` | MinIO   | S3 → Local     | Download with include/exclude    |
-| `config-filtering-exclude-logs.json`    | MinIO     | S3 → Local     | Exclude log/tmp files            |
-| `config-filtering-include-data.json`    | MinIO     | S3 → Local     | Include only JSON/CSV            |
-| `config-filtering-exclude-dirs.json`    | Spider    | Local → S3     | Exclude common directories       |
+| File                                      | Handler   | Direction      | Description                   |
+| ----------------------------------------- | --------- | -------------- | ----------------------------- |
+| `config-spider-upload.json`               | Spider    | Local → S3     | Upload via CB-Spider          |
+| `config-spider-download.json`             | Spider    | S3 → Local     | Download via CB-Spider        |
+| `config-minio-upload.json`                | MinIO SDK | Local → S3     | Upload direct to S3           |
+| `config-minio-download.json`              | MinIO SDK | S3 → Local     | Download direct from S3       |
+| `config-rsync-upload.json`                | rsync     | Local → Remote | Upload via rsync/SSH          |
+| `config-rsync-download.json`              | rsync     | Remote → Local | Download via rsync/SSH        |
+| **Filtering Examples:**                   |           |                |                               |
+| `config-filtering-combined-upload.json`   | Spider    | Local → S3     | Upload with include/exclude   |
+| `config-filtering-combined-download.json` | MinIO     | S3 → Local     | Download with include/exclude |
+| `config-filtering-exclude-logs.json`      | MinIO     | S3 → Local     | Exclude log/tmp files         |
+| `config-filtering-include-data.json`      | MinIO     | S3 → Local     | Include only JSON/CSV         |
+| `config-filtering-exclude-dirs.json`      | Spider    | Local → S3     | Exclude common directories    |
+| `config-rsync-filtering.json`             | rsync     | Local → Remote | Rsync with include/exclude    |
 
 ### Running Tests
 
@@ -80,6 +81,7 @@ Main configuration files are provided:
 ./migrate.sh -c config-filtering-exclude-logs.json -v
 ./migrate.sh -c config-filtering-include-data.json -v
 ./migrate.sh -c config-filtering-exclude-dirs.json -v
+./migrate.sh -c config-rsync-filtering.json -v
 
 # Step-by-step execution
 ./migrate.sh -c config-spider-upload.json -s transfer -v
@@ -88,8 +90,6 @@ Main configuration files are provided:
 ## Configuration Examples
 
 ### Spider Handler Configuration
-
-**Upload (Local → Object Storage)**:
 
 **Upload (Local → Object Storage)**:
 
@@ -302,7 +302,7 @@ Main configuration files are provided:
 - **`compress`**: Compress data during transfer (default: `true`)
 - **`archive`**: Archive mode, preserves permissions (default: `true`)
 - **`delete`**: Delete files in destination not in source (default: `false`)
-- **`exclude`**: Array of patterns to exclude (e.g., `["*.tmp", "*.log"]`)
+- **`filter`**: File filtering options with `include`/`exclude` patterns (e.g., `{"exclude": ["*.tmp", "*.log"]}`)
 - **`transferDirContentsOnly`**: Transfer directory contents only (default: `true`)
 
 ## Handler Comparison
@@ -535,15 +535,17 @@ Object Storage transfers support include/exclude patterns for selective file tra
 
 ### Filtering Options
 
-Add `exclude` and/or `include` arrays to `objectStorageTransferOptions`:
+Add `filter` object with `include` and/or `exclude` arrays to `objectStorageTransferOptions`:
 
 ```json
 {
   "objectStorageTransferOptions": {
     "handler": "spider",
     "accessKeyId": "aws-config01",
-    "exclude": ["*.log", "*.tmp", ".git/*"],
-    "include": ["*.json", "*.csv"]
+    "filter": {
+      "exclude": ["*.log", "*.tmp", ".git/**"],
+      "include": ["*.json", "*.csv"]
+    }
   }
 }
 ```
@@ -582,7 +584,9 @@ Supports glob patterns with recursive matching:
 
 ```json
 {
-  "exclude": ["*.log", "*.tmp", "temp/**"]
+  "filter": {
+    "exclude": ["*.log", "*.tmp", "temp/**"]
+  }
 }
 ```
 
@@ -590,7 +594,9 @@ Supports glob patterns with recursive matching:
 
 ```json
 {
-  "include": ["data/**", "docs/**"]
+  "filter": {
+    "include": ["data/**", "docs/**"]
+  }
 }
 ```
 
@@ -598,7 +604,9 @@ Supports glob patterns with recursive matching:
 
 ```json
 {
-  "include": ["*.pdf", "*.docx", "*.txt"]
+  "filter": {
+    "include": ["*.pdf", "*.docx", "*.txt"]
+  }
 }
 ```
 
@@ -606,7 +614,9 @@ Supports glob patterns with recursive matching:
 
 ```json
 {
-  "exclude": [".git/**", "node_modules/**", "backup/**"]
+  "filter": {
+    "exclude": [".git/**", "node_modules/**", "backup/**"]
+  }
 }
 ```
 
@@ -614,8 +624,10 @@ Supports glob patterns with recursive matching:
 
 ```json
 {
-  "include": ["data/**", "docs/**"],
-  "exclude": ["*.log", "*.tmp", "**/archive/**"]
+  "filter": {
+    "include": ["data/**", "docs/**"],
+    "exclude": ["*.log", "*.tmp", "**/archive/**"]
+  }
 }
 ```
 
