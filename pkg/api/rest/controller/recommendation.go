@@ -212,7 +212,7 @@ func RecommendVMInfra(c echo.Context) error {
 }
 
 /*
- * K8s Cluster and Node Group Recommendation
+ * K8s Cluster Control Plane and Node Group Recommendation
  */
 
 type RecommendK8sClusterResponse struct {
