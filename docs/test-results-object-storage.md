@@ -398,3 +398,40 @@ All 7 Object Storage APIs have been successfully tested and validated:
 - ✅ **5 Migration APIs** for bucket lifecycle management (Create, List, Exist, Get, Delete)
 
 The APIs are production-ready and provide comprehensive object storage management capabilities for multi-cloud migration scenarios.
+
+---
+
+## Appendix
+
+### Source Object Storage
+
+**Source object storage (bucket)**
+
+<img width="1654" height="525" alt="image" src="https://github.com/user-attachments/assets/7947528c-a495-4d67-bc56-ca67e10e6767" />
+
+### Target Object Storage Recommendation
+
+**Target recommendation request (AWS, ap-northeast-2)**
+
+<img width="1751" height="1339" alt="image" src="https://github.com/user-attachments/assets/00dbdb26-f585-4d30-aabb-e398648dd40e" />
+
+**Target recommendation response (result)**
+
+<img width="1751" height="1142" alt="image" src="https://github.com/user-attachments/assets/97ab2512-fc3c-4097-9cc2-ce3eac47a68e" />
+
+### Object Storage Migration
+
+**Migration request (to recommended target)**
+
+<img width="1754" height="1119" alt="image" src="https://github.com/user-attachments/assets/208544ee-cd8b-4a56-a6a3-6c1af0989d0d" />
+
+**Migration response (result)**
+
+<img width="1753" height="860" alt="image" src="https://github.com/user-attachments/assets/9984e168-12d0-4c94-9651-33efa8498644" />
+
+### Migrated Object Storage
+
+**Source and target (migrated) object storages**
+
+<img width="1653" height="573" alt="image" src="https://github.com/user-attachments/assets/c675f512-c513-4f91-9839-8dbda0379ca9" />
+
