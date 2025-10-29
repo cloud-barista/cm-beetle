@@ -29,9 +29,13 @@ import (
 // @Summary Migrate data from source to target
 // @Description Migrate data from source to target
 // @Description
+// @Description [Note]
 // @Description * Only relay mode is supported for now (both source and destination should be remote endpoints).
-// @Description * Supported methods: rsync, object storage API (AWS S3 style)
-// @Description * Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples
+// @Description * Supported methods: rsync, object storage
+// @Description
+// @Description [Note] 
+// @Description * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
+// @Description
 // @Tags [Migration] Data (incubating)
 // @Accept  json
 // @Produce  json

@@ -1,8 +1,9 @@
 # Data Migration API Test Results
 
 > [!IMPORTANT]
-> * Beetle provides a **relay-style data migration** API for security reasons.
-> * `transx` package supports both **direct and relay-style data transfer**.
+>
+> - Beetle provides a **relay-style data migration** API for security reasons.
+> - `transx` package supports both **direct and relay-style data transfer**.
 
 **Test Date:** October 29, 2025  
 **Source Bucket Name:** `aws-ap-northeast-2-bucket-2uk0i5`  
@@ -135,10 +136,11 @@ cd ~/dev/cloud-barista/cm-beetle/transx/examples/object-storage
 ./migrate.sh -c config-spider-upload.json -v
 ```
 
-**(sample) config-spider-upload.json** 
+**(sample) config-spider-upload.json**
 
 > [!NOTE]
-> * masking secrets (e.g. xxxxxxxxxxxxxxxxx)
+>
+> - masking secrets (e.g. xxxxxxxxxxxxxxxxx)
 
 ```json
 {
@@ -168,8 +170,6 @@ cd ~/dev/cloud-barista/cm-beetle/transx/examples/object-storage
 
 <img width="1651" height="1230" alt="image" src="https://github.com/user-attachments/assets/160c908e-0846-47dd-8c56-3d2bb8c5b3f8" />
 
-
-
 ## Test: Migrate Data from Source to Target Object Storage
 
 **Status:** ✅ SUCCESS
@@ -177,10 +177,11 @@ cd ~/dev/cloud-barista/cm-beetle/transx/examples/object-storage
 **Request:**
 
 > [!NOTE]
-> * masking secrets (e.g. xxxxxxxxxxxxxxxxx)
-> * Use `minio` clinet to access and download data from the source object storage
-> * Use `spider` client to access and upload data to the target object storage
-> * Set spider endpoint `http://cb-spider:1024/spider/s3` on Cloud-Migrator platform
+>
+> - masking secrets (e.g. xxxxxxxxxxxxxxxxx)
+> - Use `minio` clinet to access and download data from the source object storage
+> - Use `spider` client to access and upload data to the target object storage
+> - Set spider endpoint `http://cb-spider:1024/spider/s3` on Cloud-Migrator platform
 
 ```bash
 curl -s -X POST http://localhost:8056/beetle/migration/data \
@@ -242,9 +243,9 @@ curl -s -X POST http://localhost:8056/beetle/migration/data \
 
 ### Test Results
 
-| Test | API                               | Method | Status     | Response Time |
-| ---- | --------------------------------- | ------ | ---------- | ------------- |
-| 1    | MigrateData                       | POST   | ✅ SUCCESS | ~4s           |
+| Test | API         | Method | Status     | Response Time |
+| ---- | ----------- | ------ | ---------- | ------------- |
+| 1    | MigrateData | POST   | ✅ SUCCESS | ~4s           |
 
 --
 

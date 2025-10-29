@@ -1713,7 +1713,7 @@ definitions:
   controller.TargetObjectStorageProperty:
     properties:
       bucketName:
-        description: Recommended target bucket name with random suffix by xid pkg
+        description: Recommended target bucket name with deterministic suffix
         type: string
       corsEnabled:
         description: Whether CORS is configured
@@ -2940,12 +2940,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: |-
+      description: |
         Migrate data from source to target
 
+        [Note]
         * Only relay mode is supported for now (both source and destination should be remote endpoints).
-        * Supported methods: rsync, object storage API (AWS S3 style)
-        * Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples
+        * Supported methods: rsync, object storage
+
+        [Note]
+        * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
       operationId: MigrateData
       parameters:
       - description: Request Body
@@ -2981,21 +2984,18 @@ paths:
       consumes:
       - application/json
       description: |-
-        Get the list of all object storages (buckets) in the specified cloud provider and region
+        Get the list of all object storages (buckets) in the specified cloud service provider and region
 
-        [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
       operationId: ListObjectStorages
       parameters:
       - default: aws
-        description: Cloud provider
+        description: Cloud service provider
         enum:
         - aws
-        - azure
-        - gcp
         - alibaba
-        - ncp
         in: query
-        name: provider
+        name: csp
         required: true
         type: string
       - default: ap-northeast-2
@@ -3029,12 +3029,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: |-
+      description: |
         Migrate object storages to cloud based on recommendation results
 
         [Note] This API creates object storages (buckets) in the target cloud.
         - Input should be the output from RecommendObjectStorage API
-        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
+
+        [Note]
+        * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
       operationId: MigrateObjectStorage
       parameters:
       - description: Object storage migration request (use RecommendObjectStorage
@@ -3072,7 +3075,7 @@ paths:
         Delete a specific object storage (bucket)
 
         [Note]
-        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
         - The bucket must be empty before deletion
       operationId: DeleteObjectStorage
       parameters:
@@ -3082,15 +3085,12 @@ paths:
         required: true
         type: string
       - default: aws
-        description: Cloud provider
+        description: Cloud service provider
         enum:
         - aws
-        - azure
-        - gcp
         - alibaba
-        - ncp
         in: query
-        name: provider
+        name: csp
         required: true
         type: string
       - default: ap-northeast-2
@@ -3129,7 +3129,7 @@ paths:
       description: |-
         Get details of a specific object storage (bucket)
 
-        [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
       operationId: GetObjectStorage
       parameters:
       - description: Object Storage Name (bucket name)
@@ -3138,15 +3138,12 @@ paths:
         required: true
         type: string
       - default: aws
-        description: Cloud provider
+        description: Cloud service provider
         enum:
         - aws
-        - azure
-        - gcp
         - alibaba
-        - ncp
         in: query
-        name: provider
+        name: csp
         required: true
         type: string
       - default: ap-northeast-2
@@ -3188,7 +3185,7 @@ paths:
         Check if a specific object storage (bucket) exists
 
         [Note]
-        - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
         - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
       operationId: ExistObjectStorage
       parameters:
@@ -3198,15 +3195,12 @@ paths:
         required: true
         type: string
       - default: aws
-        description: Cloud provider
+        description: Cloud service provider
         enum:
         - aws
-        - azure
-        - gcp
         - alibaba
-        - ncp
         in: query
-        name: provider
+        name: csp
         required: true
         type: string
       - default: ap-northeast-2
@@ -4276,10 +4270,16 @@ paths:
       description: |-
         Recommend an appropriate object storage for cloud migration
 
-        [Note] `desiredProvider` and `desiredRegion` are required.
-        - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+        [Note] `desiredCsp` and `desiredRegion` are required.
+        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 
-        - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+
+        [Warning] the recommended bucket name may be globally unique.
+        - Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.
+        - Suppose that the existing bucket name is unique enough.
+        - Generate a suffix based on the existing bucket name.
+        - e.g., "my-bucket" -> SHA256 hash -> base64 URL-safe encoding (6 bytes) -> lowercase -> "my-bucket-{suffix}"
       operationId: RecommendObjectStorage
       parameters:
       - description: Specify the your object storage to be migrated
@@ -4289,7 +4289,7 @@ paths:
         schema:
           $ref: '#/definitions/controller.RecommendObjectStorageRequest'
       - default: aws
-        description: Provider (e.g., aws, azure, gcp)
+        description: CSP (e.g., aws, azure, gcp)
         enum:
         - aws
         - azure
@@ -4297,7 +4297,7 @@ paths:
         - alibaba
         - ncp
         in: query
-        name: desiredProvider
+        name: desiredCsp
         type: string
       - default: ap-northeast-2
         description: Region (e.g., ap-northeast-2)
