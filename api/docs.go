@@ -68,7 +68,7 @@ const docTemplate = `{
         },
         "/migration/data": {
             "post": {
-                "description": "Migrate data from source to target\n\n* Only relay mode is supported for now (both source and destination should be remote endpoints).\n* Supported methods: rsync, object storage API (AWS S3 style)\n* Examples: https://github.com/yunkon-kim/transx?tab=readme-ov-file#examples",
+                "description": "Migrate data from source to target\n\n[Note]\n* Only relay mode is supported for now (both source and destination should be remote endpoints).\n* Supported methods: rsync, object storage\n\n[Note]\n* Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -121,7 +121,7 @@ const docTemplate = `{
         },
         "/migration/middleware/objectStorage": {
             "get": {
-                "description": "Get the list of all object storages (buckets) in the specified cloud provider and region\n\n[Note] Connection name format: ` + "`" + `{provider}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
+                "description": "Get the list of all object storages (buckets) in the specified cloud service provider and region\n\n[Note] Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
                 "consumes": [
                     "application/json"
                 ],
@@ -137,15 +137,12 @@ const docTemplate = `{
                     {
                         "enum": [
                             "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
+                            "alibaba"
                         ],
                         "type": "string",
                         "default": "aws",
-                        "description": "Cloud provider",
-                        "name": "provider",
+                        "description": "Cloud service provider",
+                        "name": "csp",
                         "in": "query",
                         "required": true
                     },
@@ -186,7 +183,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note] This API creates object storages (buckets) in the target cloud.\n- Input should be the output from RecommendObjectStorage API\n- Connection name format: ` + "`" + `{provider}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note] This API creates object storages (buckets) in the target cloud.\n- Input should be the output from RecommendObjectStorage API\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n\n[Note]\n* Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -236,7 +233,7 @@ const docTemplate = `{
         },
         "/migration/middleware/objectStorage/{objectStorageName}": {
             "get": {
-                "description": "Get details of a specific object storage (bucket)\n\n[Note] Connection name format: ` + "`" + `{provider}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
+                "description": "Get details of a specific object storage (bucket)\n\n[Note] Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
                 "consumes": [
                     "application/json"
                 ],
@@ -259,15 +256,12 @@ const docTemplate = `{
                     {
                         "enum": [
                             "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
+                            "alibaba"
                         ],
                         "type": "string",
                         "default": "aws",
-                        "description": "Cloud provider",
-                        "name": "provider",
+                        "description": "Cloud service provider",
+                        "name": "csp",
                         "in": "query",
                         "required": true
                     },
@@ -314,7 +308,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- Connection name format: ` + "`" + `{provider}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- The bucket must be empty before deletion",
+                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- The bucket must be empty before deletion",
                 "consumes": [
                     "application/json"
                 ],
@@ -337,15 +331,12 @@ const docTemplate = `{
                     {
                         "enum": [
                             "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
+                            "alibaba"
                         ],
                         "type": "string",
                         "default": "aws",
-                        "description": "Cloud provider",
-                        "name": "provider",
+                        "description": "Cloud service provider",
+                        "name": "csp",
                         "in": "query",
                         "required": true
                     },
@@ -389,7 +380,7 @@ const docTemplate = `{
                 }
             },
             "head": {
-                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Connection name format: ` + "`" + `{provider}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
+                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
                 "consumes": [
                     "application/json"
                 ],
@@ -412,15 +403,12 @@ const docTemplate = `{
                     {
                         "enum": [
                             "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
+                            "alibaba"
                         ],
                         "type": "string",
                         "default": "aws",
-                        "description": "Cloud provider",
-                        "name": "provider",
+                        "description": "Cloud service provider",
+                        "name": "csp",
                         "in": "query",
                         "required": true
                     },
@@ -1943,7 +1931,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/objectStorage": {
             "post": {
-                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Warning] the recommended bucket name may be globally unique.\n- Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.\n- Suppose that the existing bucket name is unique enough.\n- Generate a suffix based on the existing bucket name.\n- e.g., \"my-bucket\" -\u003e SHA256 hash -\u003e base64 URL-safe encoding (6 bytes) -\u003e lowercase -\u003e \"my-bucket-{suffix}\"",
                 "consumes": [
                     "application/json"
                 ],
@@ -1975,8 +1963,8 @@ const docTemplate = `{
                         ],
                         "type": "string",
                         "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredProvider",
+                        "description": "CSP (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
                         "in": "query"
                     },
                     {
@@ -4618,7 +4606,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "bucketName": {
-                    "description": "Recommended target bucket name with random suffix by xid pkg",
+                    "description": "Recommended target bucket name with deterministic suffix",
                     "type": "string"
                 },
                 "corsEnabled": {

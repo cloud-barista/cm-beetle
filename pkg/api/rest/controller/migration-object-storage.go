@@ -46,7 +46,11 @@ type MigrateObjectStorageRequest struct {
 // @Description
 // @Description [Note] This API creates object storages (buckets) in the target cloud.
 // @Description - Input should be the output from RecommendObjectStorage API
-// @Description - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+// @Description - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
+// @Description
+// @Description [Note]
+// @Description * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
+// @Description
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce	json
@@ -92,7 +96,7 @@ func MigrateObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", req.TargetCloud.Csp).
+		Str("csp", req.TargetCloud.Csp).
 		Str("region", req.TargetCloud.Region).
 		Str("connName", connName).
 		Int("targetBuckets", len(req.TargetObjectStorages)).
@@ -144,7 +148,7 @@ func MigrateObjectStorage(c echo.Context) error {
 	//   - Handle errors appropriately (decide whether to fail or continue)
 
 	log.Info().
-		Str("provider", req.TargetCloud.Csp).
+		Str("csp", req.TargetCloud.Csp).
 		Str("region", req.TargetCloud.Region).
 		Int("totalBuckets", len(req.TargetObjectStorages)).
 		Msg("Object storage migration completed successfully")
@@ -159,13 +163,13 @@ func MigrateObjectStorage(c echo.Context) error {
 // ListObjectStorages godoc
 // @ID ListObjectStorages
 // @Summary List object storages (buckets)
-// @Description Get the list of all object storages (buckets) in the specified cloud provider and region
+// @Description Get the list of all object storages (buckets) in the specified cloud service provider and region
 // @Description
-// @Description [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+// @Description [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce json
-// @Param provider query string true "Cloud provider" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} tbclient.ListAllMyBucketsResult "List of object storages"
@@ -173,28 +177,28 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Failure 500 {object} common.SimpleMsg "Internal server error"
 // @Router /migration/middleware/objectStorage [get]
 func ListObjectStorages(c echo.Context) error {
-	// Get provider and region from query params
-	provider := c.QueryParam("provider")
+	// Get csp and region from query params
+	csp := c.QueryParam("csp")
 	region := c.QueryParam("region")
 
 	// Validate required parameters
-	if provider == "" || region == "" {
+	if csp == "" || region == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "provider and region query parameters are required",
+			Message: "csp and region query parameters are required",
 		})
 	}
 
 	// Generate and validate connection name
-	connName, err := GenerateConnectionName(provider, region)
+	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", provider, region, err),
+			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
 		})
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("connName", connName).
 		Msg("Listing object storages")
@@ -212,7 +216,7 @@ func ListObjectStorages(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Int("bucketCount", len(result.Buckets.Bucket)).
 		Msg("Successfully listed object storages")
@@ -225,12 +229,12 @@ func ListObjectStorages(c echo.Context) error {
 // @Summary Get object storage (bucket) details
 // @Description Get details of a specific object storage (bucket)
 // @Description
-// @Description [Note] Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+// @Description [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce json
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
-// @Param provider query string true "Cloud provider" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} tbclient.ListBucketResult "Object storage details"
@@ -247,28 +251,28 @@ func GetObjectStorage(c echo.Context) error {
 		})
 	}
 
-	// Get provider and region from query params
-	provider := c.QueryParam("provider")
+	// Get csp and region from query params
+	csp := c.QueryParam("csp")
 	region := c.QueryParam("region")
 
 	// Validate required parameters
-	if provider == "" || region == "" {
+	if csp == "" || region == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "provider and region query parameters are required",
+			Message: "csp and region query parameters are required",
 		})
 	}
 
 	// Generate and validate connection name
-	connName, err := GenerateConnectionName(provider, region)
+	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", provider, region, err),
+			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
 		})
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("connName", connName).
 		Str("objectStorageName", objectStorageName).
@@ -289,7 +293,7 @@ func GetObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("objectStorageName", objectStorageName).
 		Msg("Successfully retrieved object storage details")
@@ -303,13 +307,13 @@ func GetObjectStorage(c echo.Context) error {
 // @Description Check if a specific object storage (bucket) exists
 // @Description
 // @Description [Note]
-// @Description - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+// @Description - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
 // @Description - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce json
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
-// @Param provider query string true "Cloud provider" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 "OK - Object storage exists"
@@ -326,28 +330,28 @@ func ExistObjectStorage(c echo.Context) error {
 		})
 	}
 
-	// Get provider and region from query params
-	provider := c.QueryParam("provider")
+	// Get csp and region from query params
+	csp := c.QueryParam("csp")
 	region := c.QueryParam("region")
 
 	// Validate required parameters
-	if provider == "" || region == "" {
+	if csp == "" || region == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "provider and region query parameters are required",
+			Message: "csp and region query parameters are required",
 		})
 	}
 
 	// Generate and validate connection name
-	connName, err := GenerateConnectionName(provider, region)
+	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", provider, region, err),
+			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
 		})
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("connName", connName).
 		Str("objectStorageName", objectStorageName).
@@ -368,7 +372,7 @@ func ExistObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("objectStorageName", objectStorageName).
 		Bool("exists", exists).
@@ -389,13 +393,13 @@ func ExistObjectStorage(c echo.Context) error {
 // @Description Delete a specific object storage (bucket)
 // @Description
 // @Description [Note]
-// @Description - Connection name format: `{provider}-{region}` (e.g., aws-ap-northeast-2)
+// @Description - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
 // @Description - The bucket must be empty before deletion
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce json
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
-// @Param provider query string true "Cloud provider" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 "OK - Object storage deleted successfully"
@@ -412,28 +416,28 @@ func DeleteObjectStorage(c echo.Context) error {
 		})
 	}
 
-	// Get provider and region from query params
-	provider := c.QueryParam("provider")
+	// Get csp and region from query params
+	csp := c.QueryParam("csp")
 	region := c.QueryParam("region")
 
 	// Validate required parameters
-	if provider == "" || region == "" {
+	if csp == "" || region == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "provider and region query parameters are required",
+			Message: "csp and region query parameters are required",
 		})
 	}
 
 	// Generate and validate connection name
-	connName, err := GenerateConnectionName(provider, region)
+	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", provider, region, err),
+			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
 		})
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("connName", connName).
 		Str("objectStorageName", objectStorageName).
@@ -454,7 +458,7 @@ func DeleteObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", provider).
+		Str("csp", csp).
 		Str("region", region).
 		Str("objectStorageName", objectStorageName).
 		Msg("Successfully deleted object storage")

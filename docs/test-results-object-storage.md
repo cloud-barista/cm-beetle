@@ -180,7 +180,7 @@ curl -X POST http://localhost:8056/beetle/migration/middleware/objectStorage \
 
 - This API returns HTTP status code only (no response body)
 - Bucket `beetle-bucket-10jqka-panpn5tv` successfully created in AWS S3 ap-northeast-2
-- Connection name format: `aws-ap-northeast-2` (auto-generated from provider + region)
+- Connection name format: `aws-ap-northeast-2` (auto-generated from csp + region)
 
 ---
 
@@ -191,7 +191,7 @@ curl -X POST http://localhost:8056/beetle/migration/middleware/objectStorage \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage?provider=aws&region=ap-northeast-2" \
+curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage?csp=aws&region=ap-northeast-2" \
   -H "Content-Type: application/json" \
   -u "default:default"
 ```
@@ -225,7 +225,7 @@ curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage?pro
 **Request:**
 
 ```bash
-curl -X HEAD "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?provider=aws&region=ap-northeast-2" \
+curl -X HEAD "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?csp=aws&region=ap-northeast-2" \
   -u "default:default"
 ```
 
@@ -251,7 +251,7 @@ curl -X HEAD "http://localhost:8056/beetle/migration/middleware/objectStorage/be
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?provider=aws&region=ap-northeast-2" \
+curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?csp=aws&region=ap-northeast-2" \
   -H "Content-Type: application/json" \
   -u "default:default"
 ```
@@ -285,7 +285,7 @@ curl -X GET "http://localhost:8056/beetle/migration/middleware/objectStorage/bee
 **Request:**
 
 ```bash
-curl -X DELETE "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?provider=aws&region=ap-northeast-2" \
+curl -X DELETE "http://localhost:8056/beetle/migration/middleware/objectStorage/beetle-bucket-10jqka-panpn5tv?csp=aws&region=ap-northeast-2" \
   -H "Content-Type: application/json" \
   -u "default:default"
 ```
@@ -415,4 +415,3 @@ The APIs are production-ready and provide comprehensive object storage managemen
 **Source and target (migrated) object storages**
 
 <img width="1653" height="573" alt="image" src="https://github.com/user-attachments/assets/c675f512-c513-4f91-9839-8dbda0379ca9" />
-

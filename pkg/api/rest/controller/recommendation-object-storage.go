@@ -78,7 +78,7 @@ type ObjectStorageInfo struct {
 // TargetObjectStorageProperty represents recommended target object storage configuration
 type TargetObjectStorageProperty struct {
 	SourceBucketName  string     `json:"sourceBucketName"`    // Source bucket name for referencing
-	BucketName        string     `json:"bucketName"`          // Recommended target bucket name with random suffix by xid pkg
+	BucketName        string     `json:"bucketName"`          // Recommended target bucket name with deterministic suffix
 	VersioningEnabled bool       `json:"versioningEnabled"`   // Whether to enable versioning
 	CORSEnabled       bool       `json:"corsEnabled"`         // Whether CORS is configured
 	CORSRules         []CORSRule `json:"corsRules,omitempty"` // CORS rules configuration
@@ -89,10 +89,10 @@ type TargetObjectStorageProperty struct {
 // @Summary Recommend an object storage for cloud migration
 // @Description Recommend an appropriate object storage for cloud migration
 // @Description
-// @Description [Note] `desiredProvider` and `desiredRegion` are required.
-// @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
+// @Description [Note] `desiredCsp` and `desiredRegion` are required.
+// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
-// @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
 // @Description
 // @Description [Warning] the recommended bucket name may be globally unique.
 // @Description - Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.
@@ -103,7 +103,7 @@ type TargetObjectStorageProperty struct {
 // @Accept json
 // @Produce	json
 // @Param request body RecommendObjectStorageRequest true "Specify the your object storage to be migrated"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredCsp query string false "CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} RecommendObjectStorageResponse "The result of recommended object storage"
@@ -121,22 +121,22 @@ func RecommendObjectStorage(c echo.Context) error {
 		})
 	}
 
-	// Get provider and region from query params (higher priority)
-	desiredProvider := c.QueryParam("desiredProvider")
+	// Get csp and region from query params (higher priority)
+	desiredCsp := c.QueryParam("desiredCsp")
 	desiredRegion := c.QueryParam("desiredRegion")
 
 	// Fallback to request body if query params are not provided
-	if desiredProvider == "" {
-		desiredProvider = req.DesiredCloud.Csp
+	if desiredCsp == "" {
+		desiredCsp = req.DesiredCloud.Csp
 	}
 	if desiredRegion == "" {
 		desiredRegion = req.DesiredCloud.Region
 	}
 
 	// Validate required parameters
-	if desiredProvider == "" || desiredRegion == "" {
+	if desiredCsp == "" || desiredRegion == "" {
 		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "desiredProvider and desiredRegion are required (via query params or request body)",
+			Message: "desiredCsp and desiredRegion are required (via query params or request body)",
 		})
 	}
 
@@ -148,7 +148,7 @@ func RecommendObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", desiredProvider).
+		Str("desiredCsp", desiredCsp).
 		Str("region", desiredRegion).
 		Int("sourceBuckets", len(req.SourceObjectStorages)).
 		Msg("Processing object storage recommendation request")
@@ -187,7 +187,7 @@ func RecommendObjectStorage(c echo.Context) error {
 			Status:      "success",
 			Description: fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
 			TargetCloud: cloudmodel.CloudProperty{
-				Csp:    desiredProvider,
+				Csp:    desiredCsp,
 				Region: desiredRegion,
 			},
 			TargetObjectStorages: targetObjectStorages,
@@ -195,7 +195,7 @@ func RecommendObjectStorage(c echo.Context) error {
 	}
 
 	log.Info().
-		Str("provider", desiredProvider).
+		Str("desiredCsp", desiredCsp).
 		Str("region", desiredRegion).
 		Int("targetBuckets", len(targetObjectStorages)).
 		Msg("Object storage recommendation completed successfully")
