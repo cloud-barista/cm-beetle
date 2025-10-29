@@ -158,9 +158,8 @@ func RecommendObjectStorage(c echo.Context) error {
 	targetObjectStorages := make([]TargetObjectStorageProperty, 0, len(req.SourceObjectStorages))
 
 	for _, source := range req.SourceObjectStorages {
-		// Generate unique bucket name with random suffix
-		// Bucket names must be globally unique across all AWS/cloud accounts
-		// * Suppose that the existing bucket name is unique enough to generate a new unique name
+		// Generate unique bucket name with deterministic suffix
+		// Bucket names must be globally unique across all cloud provider accounts
 		uniqueSuffix := createShortSuffix(source.BucketName)
 		targetBucketName := fmt.Sprintf("%s-%s", source.BucketName, uniqueSuffix)
 
@@ -204,18 +203,12 @@ func RecommendObjectStorage(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func createShortSuffix(existingBucketName string) string {
-
-	// 1. SHA256 hash (returns 32 bytes)
-	hashBytes := sha256.Sum256([]byte(existingBucketName))
-
-	// 2. Base64 URL-Safe encoding (Padding '=' will be removed)
-	// 6 bytes (48 bits) are enough to create an 8-character string.
-	encoded := base64.URLEncoding.EncodeToString(hashBytes[:6])
-	suffix := strings.TrimRight(encoded, "=")
-
-	// 3. Convert to lowercase for S3 bucket name compatibility (S3 only allows lowercase)
-	suffix = strings.ToLower(suffix)
-
-	return suffix
+// createShortSuffix generates a deterministic 8-character suffix from bucket name
+// - Uses SHA256 hash for globally unique, reproducible suffix
+// - Returns lowercase alphanumeric string (a-z, 0-9) only
+func createShortSuffix(bucketName string) string {
+	hash := sha256.Sum256([]byte(bucketName))
+	encoded := base64.RawURLEncoding.EncodeToString(hash[:6])
+	suffix := strings.ToLower(encoded)
+	return strings.ReplaceAll(suffix, "_", "0")
 }

@@ -371,25 +371,6 @@ Typical workflow for object storage migration:
 
 ---
 
-## Code Fix Applied
-
-During testing, discovered that AWS S3 bucket names must be lowercase. Applied fix to ensure generated suffixes are always lowercase:
-
-```go
-// In pkg/api/rest/controller/recommendation-object-storage.go
-func createShortSuffix(existingBucketName string) string {
-    hash := sha256.Sum256([]byte(existingBucketName))
-    suffix := base64.URLEncoding.EncodeToString(hash[:6])
-    suffix = strings.ReplaceAll(suffix, "=", "")
-    suffix = strings.ToLower(suffix)  // ← Added this line
-    return suffix
-}
-```
-
-This ensures compatibility with cloud provider naming requirements.
-
----
-
 ## Conclusion
 
 All 7 Object Storage APIs have been successfully tested and validated:
