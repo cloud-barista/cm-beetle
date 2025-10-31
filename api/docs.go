@@ -2305,6 +2305,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/report/ns/{nsId}/mci/{mciId}": {
+            "get": {
+                "description": "Get a comprehensive migration infrastructure report in JSON or Markdown format",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json",
+                    "text/markdown"
+                ],
+                "tags": [
+                    "[Report] Source/Target Infrastructure"
+                ],
+                "summary": "Get migration infrastructure report",
+                "operationId": "GetInfraReport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mmci01",
+                        "description": "Multi-Cloud Infrastructure (MCI) ID",
+                        "name": "mciId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "json",
+                            "md"
+                        ],
+                        "type": "string",
+                        "default": "json",
+                        "description": "Report format: json or md",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully generated migration report (Markdown format)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/test/tracing": {
             "get": {
                 "description": "Test tracing to Tumblebug",
@@ -4655,6 +4733,780 @@ const docTemplate = `{
                 }
             }
         },
+        "migration.ComputeResources": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportImageInfoWithUsage"
+                    }
+                },
+                "specs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportSpecInfoWithUsage"
+                    }
+                },
+                "vms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportVmInfo"
+                    }
+                }
+            }
+        },
+        "migration.CostByRegion": {
+            "type": "object",
+            "properties": {
+                "costPerHour": {
+                    "type": "number",
+                    "example": 0.4512
+                },
+                "costPerMonth": {
+                    "type": "number",
+                    "example": 324.86
+                },
+                "csp": {
+                    "type": "string",
+                    "example": "AWS"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "vmCount": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "migration.CostByVm": {
+            "type": "object",
+            "properties": {
+                "costPerHour": {
+                    "type": "number",
+                    "example": 0.1504
+                },
+                "costPerMonth": {
+                    "type": "number",
+                    "example": 108.29
+                },
+                "specName": {
+                    "type": "string",
+                    "example": "t3a.xlarge"
+                },
+                "vmName": {
+                    "type": "string",
+                    "example": "migrated-server-1"
+                }
+            }
+        },
+        "migration.CostEstimation": {
+            "type": "object",
+            "properties": {
+                "byRegion": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.CostByRegion"
+                    }
+                },
+                "byVm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.CostByVm"
+                    }
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "totalCostPerDay": {
+                    "type": "number",
+                    "example": 10.83
+                },
+                "totalCostPerHour": {
+                    "type": "number",
+                    "example": 0.4512
+                },
+                "totalCostPerMonth": {
+                    "type": "number",
+                    "example": 324.86
+                }
+            }
+        },
+        "migration.MigrationReport": {
+            "type": "object",
+            "properties": {
+                "computeResources": {
+                    "$ref": "#/definitions/migration.ComputeResources"
+                },
+                "costEstimation": {
+                    "$ref": "#/definitions/migration.CostEstimation"
+                },
+                "networkResources": {
+                    "$ref": "#/definitions/migration.NetworkResources"
+                },
+                "reportMetadata": {
+                    "$ref": "#/definitions/migration.ReportMetadata"
+                },
+                "securityResources": {
+                    "$ref": "#/definitions/migration.SecurityResources"
+                },
+                "summary": {
+                    "$ref": "#/definitions/migration.MigrationSummary"
+                }
+            }
+        },
+        "migration.MigrationSummary": {
+            "type": "object",
+            "properties": {
+                "installMonAgent": {
+                    "type": "string",
+                    "example": "no"
+                },
+                "label": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mciDescription": {
+                    "type": "string",
+                    "example": "Migrated infrastructure"
+                },
+                "mciName": {
+                    "type": "string",
+                    "example": "mmci01"
+                },
+                "runningVmCount": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Running"
+                },
+                "stoppedVmCount": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "targetCloud": {
+                    "type": "string",
+                    "example": "AWS"
+                },
+                "targetRegion": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "totalVmCount": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "migration.NetworkResources": {
+            "type": "object",
+            "properties": {
+                "vnets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportVNetInfo"
+                    }
+                }
+            }
+        },
+        "migration.ReportFirewallRule": {
+            "type": "object",
+            "properties": {
+                "cidr": {
+                    "type": "string",
+                    "example": "0.0.0.0/0"
+                },
+                "direction": {
+                    "type": "string",
+                    "example": "inbound"
+                },
+                "fromPort": {
+                    "type": "string",
+                    "example": "22"
+                },
+                "protocol": {
+                    "type": "string",
+                    "example": "tcp"
+                },
+                "toPort": {
+                    "type": "string",
+                    "example": "22"
+                }
+            }
+        },
+        "migration.ReportImageInfoWithUsage": {
+            "type": "object",
+            "properties": {
+                "commandHistory": {
+                    "description": "CommandHistory stores the status and history of remote commands executed on this VM",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ImageSourceCommandHistory"
+                    }
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "creationDate": {
+                    "type": "string"
+                },
+                "cspImageId": {
+                    "description": "CspImageId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "ami-0d399fba46a30a310"
+                },
+                "cspImageName": {
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "fetchedTime": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageStatus": {
+                    "description": "Available, Deprecated, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ImageStatus"
+                        }
+                    ],
+                    "example": "Available"
+                },
+                "infraType": {
+                    "description": "vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isBasicImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isGPUImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "isKubernetesImage": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "name": {
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "description": "Composite primary key",
+                    "type": "string",
+                    "example": "default"
+                },
+                "osArchitecture": {
+                    "description": "arm64, x86_64 etc.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.OSArchitecture"
+                        }
+                    ],
+                    "example": "x86_64"
+                },
+                "osDiskSizeGB": {
+                    "description": "10, 50, 100 etc.",
+                    "type": "number",
+                    "example": 50
+                },
+                "osDiskType": {
+                    "description": "ebs, HDD, etc.",
+                    "type": "string",
+                    "example": "HDD"
+                },
+                "osDistribution": {
+                    "description": "Ubuntu 22.04~, CentOS 8 etc.",
+                    "type": "string",
+                    "example": "Ubuntu 22.04~"
+                },
+                "osPlatform": {
+                    "description": "Linux/UNIX, Windows, NA",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.OSPlatform"
+                        }
+                    ],
+                    "example": "Linux/UNIX"
+                },
+                "osType": {
+                    "type": "string",
+                    "example": "ubuntu 22.04"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionList": {
+                    "description": "Array field for supporting multiple regions",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "sourceCspImageName": {
+                    "description": "SourceCspImageName is the name of the source CSP image from which this image was created",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "sourceVmUid": {
+                    "description": "SourceVmUid is the UID of the source VM from which this image was created",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "systemLabel": {
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "usageCount": {
+                    "description": "Number of VMs using this image",
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "migration.ReportMetadata": {
+            "type": "object",
+            "properties": {
+                "generatedAt": {
+                    "type": "string",
+                    "example": "2025-10-31T14:30:00Z"
+                },
+                "mciId": {
+                    "type": "string",
+                    "example": "mmci01"
+                },
+                "mciName": {
+                    "type": "string",
+                    "example": "my-migrated-infrastructure"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "mig01"
+                },
+                "reportVersion": {
+                    "type": "string",
+                    "example": "1.0"
+                }
+            }
+        },
+        "migration.ReportSecurityGroupInfo": {
+            "type": "object",
+            "properties": {
+                "cspSecurityGroupId": {
+                    "type": "string",
+                    "example": "sg-065ead8c271abf7a3"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mig-sg-01"
+                },
+                "ruleCount": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportFirewallRule"
+                    }
+                },
+                "vnetName": {
+                    "type": "string",
+                    "example": "mig-vnet-01"
+                }
+            }
+        },
+        "migration.ReportSpecInfoWithUsage": {
+            "type": "object",
+            "properties": {
+                "acceleratorCount": {
+                    "type": "integer"
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number"
+                },
+                "acceleratorModel": {
+                    "type": "string"
+                },
+                "acceleratorType": {
+                    "type": "string"
+                },
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "associatedObjectList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "costPerHour": {
+                    "type": "number"
+                },
+                "cspSpecName": {
+                    "description": "CspSpecName is name of the spec given by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "diskSizeGB": {
+                    "type": "number"
+                },
+                "evaluationScore01": {
+                    "type": "number"
+                },
+                "evaluationScore02": {
+                    "type": "number"
+                },
+                "evaluationScore03": {
+                    "type": "number"
+                },
+                "evaluationScore04": {
+                    "type": "number"
+                },
+                "evaluationScore05": {
+                    "type": "number"
+                },
+                "evaluationScore06": {
+                    "type": "number"
+                },
+                "evaluationScore07": {
+                    "type": "number"
+                },
+                "evaluationScore08": {
+                    "type": "number"
+                },
+                "evaluationScore09": {
+                    "type": "number"
+                },
+                "evaluationScore10": {
+                    "type": "number"
+                },
+                "evaluationStatus": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws+ap-southeast+csp-06eb41e14121c550a"
+                },
+                "infraType": {
+                    "description": "InfraType can be one of vm|k8s|kubernetes|container, etc.",
+                    "type": "string"
+                },
+                "isAutoGenerated": {
+                    "type": "boolean"
+                },
+                "maxTotalStorageTiB": {
+                    "type": "integer"
+                },
+                "memoryGiB": {
+                    "type": "number"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "namespace": {
+                    "type": "string",
+                    "example": "default"
+                },
+                "netBwGbps": {
+                    "type": "integer"
+                },
+                "orderInFilteredResult": {
+                    "type": "integer"
+                },
+                "osType": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionLatitude": {
+                    "type": "number"
+                },
+                "regionLongitude": {
+                    "type": "number"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "string"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "usageCount": {
+                    "description": "Number of VMs using this spec",
+                    "type": "integer",
+                    "example": 2
+                },
+                "vCPU": {
+                    "type": "integer"
+                }
+            }
+        },
+        "migration.ReportSshKeyInfo": {
+            "type": "object",
+            "properties": {
+                "cspSshKeyId": {
+                    "type": "string",
+                    "example": "d3vkftmqjs728ptbetpg"
+                },
+                "fingerprint": {
+                    "type": "string",
+                    "example": "1a:2b:3c:4d:..."
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mig-sshkey-01"
+                },
+                "publicKey": {
+                    "description": "Truncated for security",
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
+        "migration.ReportSubnetInfo": {
+            "type": "object",
+            "properties": {
+                "cidrBlock": {
+                    "type": "string",
+                    "example": "192.168.110.0/24"
+                },
+                "cspSubnetId": {
+                    "type": "string",
+                    "example": "subnet-047dfd6ca50d6791d"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mig-subnet-01"
+                },
+                "zone": {
+                    "type": "string",
+                    "example": "ap-northeast-2a"
+                }
+            }
+        },
+        "migration.ReportVNetInfo": {
+            "type": "object",
+            "properties": {
+                "cidrBlock": {
+                    "type": "string",
+                    "example": "192.168.0.0/16"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "cspVnetId": {
+                    "type": "string",
+                    "example": "vpc-06ea213ee81b3e1c4"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "mig-vnet-01"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "subnetCount": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "subnets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportSubnetInfo"
+                    }
+                }
+            }
+        },
+        "migration.ReportVmImageInfo": {
+            "type": "object",
+            "properties": {
+                "distribution": {
+                    "type": "string",
+                    "example": "Ubuntu"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ubuntu22.04"
+                },
+                "osVersion": {
+                    "type": "string",
+                    "example": "22.04"
+                }
+            }
+        },
+        "migration.ReportVmInfo": {
+            "type": "object",
+            "properties": {
+                "cspVmId": {
+                    "type": "string",
+                    "example": "i-0a1b2c3d4e5f6g7h8"
+                },
+                "image": {
+                    "$ref": "#/definitions/migration.ReportVmImageInfo"
+                },
+                "misc": {
+                    "$ref": "#/definitions/migration.ReportVmMiscInfo"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "migrated-server-1"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "spec": {
+                    "$ref": "#/definitions/migration.ReportVmSpecInfo"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "Running"
+                },
+                "zone": {
+                    "type": "string",
+                    "example": "ap-northeast-2a"
+                }
+            }
+        },
+        "migration.ReportVmMiscInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "privateIp": {
+                    "type": "string",
+                    "example": "192.168.110.10"
+                },
+                "publicIp": {
+                    "type": "string",
+                    "example": "43.201.59.126"
+                },
+                "securityGroups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "mig-sg-01"
+                    ]
+                },
+                "sshKey": {
+                    "type": "string",
+                    "example": "mig-sshkey-01"
+                },
+                "subnet": {
+                    "type": "string",
+                    "example": "mig-subnet-01"
+                },
+                "vnet": {
+                    "type": "string",
+                    "example": "mig-vnet-01"
+                }
+            }
+        },
+        "migration.ReportVmSpecInfo": {
+            "type": "object",
+            "properties": {
+                "architecture": {
+                    "type": "string",
+                    "example": "x86_64"
+                },
+                "memoryGiB": {
+                    "type": "number",
+                    "example": 16
+                },
+                "name": {
+                    "type": "string",
+                    "example": "t3a.xlarge"
+                },
+                "vcpus": {
+                    "type": "integer",
+                    "example": 4
+                }
+            }
+        },
+        "migration.SecurityResources": {
+            "type": "object",
+            "properties": {
+                "securityGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportSecurityGroupInfo"
+                    }
+                },
+                "sshKeys": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.ReportSshKeyInfo"
+                    }
+                }
+            }
+        },
         "model.BastionNode": {
             "type": "object",
             "properties": {
@@ -4788,6 +5640,36 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "model.ImageSourceCommandHistory": {
+            "type": "object",
+            "properties": {
+                "commandExecuted": {
+                    "description": "CommandExecuted is the actual SSH command executed on the VM (may be adjusted)",
+                    "type": "string",
+                    "example": "ls -la"
+                },
+                "index": {
+                    "description": "Index is sequential identifier for this command execution (1, 2, 3, ...)",
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "model.ImageStatus": {
+            "type": "string",
+            "enum": [
+                "Available",
+                "Unavailable",
+                "Deprecated",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "ImageAvailable",
+                "ImageUnavailable",
+                "ImageDeprecated",
+                "ImageNA"
+            ]
         },
         "model.K8sClusterDynamicReq": {
             "type": "object",
@@ -4955,6 +5837,46 @@ const docTemplate = `{
                     "type": "number"
                 }
             }
+        },
+        "model.OSArchitecture": {
+            "type": "string",
+            "enum": [
+                "arm32",
+                "arm64",
+                "arm64_mac",
+                "x86_32",
+                "x86_64",
+                "x86_32_mac",
+                "x86_64_mac",
+                "s390x",
+                "NA",
+                ""
+            ],
+            "x-enum-varnames": [
+                "ARM32",
+                "ARM64",
+                "ARM64_MAC",
+                "X86_32",
+                "X86_64",
+                "X86_32_MAC",
+                "X86_64_MAC",
+                "S390X",
+                "ArchitectureNA",
+                "ArchitectureUnknown"
+            ]
+        },
+        "model.OSPlatform": {
+            "type": "string",
+            "enum": [
+                "Linux/UNIX",
+                "Windows",
+                "NA"
+            ],
+            "x-enum-varnames": [
+                "Linux_UNIX",
+                "Windows",
+                "PlatformNA"
+            ]
         },
         "model.RegionDetail": {
             "type": "object",

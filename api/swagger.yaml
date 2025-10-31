@@ -1748,6 +1748,555 @@ definitions:
         example: Any text
         type: string
     type: object
+  migration.ComputeResources:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/migration.ReportImageInfoWithUsage'
+        type: array
+      specs:
+        items:
+          $ref: '#/definitions/migration.ReportSpecInfoWithUsage'
+        type: array
+      vms:
+        items:
+          $ref: '#/definitions/migration.ReportVmInfo'
+        type: array
+    type: object
+  migration.CostByRegion:
+    properties:
+      costPerHour:
+        example: 0.4512
+        type: number
+      costPerMonth:
+        example: 324.86
+        type: number
+      csp:
+        example: AWS
+        type: string
+      region:
+        example: ap-northeast-2
+        type: string
+      vmCount:
+        example: 3
+        type: integer
+    type: object
+  migration.CostByVm:
+    properties:
+      costPerHour:
+        example: 0.1504
+        type: number
+      costPerMonth:
+        example: 108.29
+        type: number
+      specName:
+        example: t3a.xlarge
+        type: string
+      vmName:
+        example: migrated-server-1
+        type: string
+    type: object
+  migration.CostEstimation:
+    properties:
+      byRegion:
+        items:
+          $ref: '#/definitions/migration.CostByRegion'
+        type: array
+      byVm:
+        items:
+          $ref: '#/definitions/migration.CostByVm'
+        type: array
+      currency:
+        example: USD
+        type: string
+      totalCostPerDay:
+        example: 10.83
+        type: number
+      totalCostPerHour:
+        example: 0.4512
+        type: number
+      totalCostPerMonth:
+        example: 324.86
+        type: number
+    type: object
+  migration.MigrationReport:
+    properties:
+      computeResources:
+        $ref: '#/definitions/migration.ComputeResources'
+      costEstimation:
+        $ref: '#/definitions/migration.CostEstimation'
+      networkResources:
+        $ref: '#/definitions/migration.NetworkResources'
+      reportMetadata:
+        $ref: '#/definitions/migration.ReportMetadata'
+      securityResources:
+        $ref: '#/definitions/migration.SecurityResources'
+      summary:
+        $ref: '#/definitions/migration.MigrationSummary'
+    type: object
+  migration.MigrationSummary:
+    properties:
+      installMonAgent:
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      mciDescription:
+        example: Migrated infrastructure
+        type: string
+      mciName:
+        example: mmci01
+        type: string
+      runningVmCount:
+        example: 3
+        type: integer
+      status:
+        example: Running
+        type: string
+      stoppedVmCount:
+        example: 0
+        type: integer
+      targetCloud:
+        example: AWS
+        type: string
+      targetRegion:
+        example: ap-northeast-2
+        type: string
+      totalVmCount:
+        example: 3
+        type: integer
+    type: object
+  migration.NetworkResources:
+    properties:
+      vnets:
+        items:
+          $ref: '#/definitions/migration.ReportVNetInfo'
+        type: array
+    type: object
+  migration.ReportFirewallRule:
+    properties:
+      cidr:
+        example: 0.0.0.0/0
+        type: string
+      direction:
+        example: inbound
+        type: string
+      fromPort:
+        example: "22"
+        type: string
+      protocol:
+        example: tcp
+        type: string
+      toPort:
+        example: "22"
+        type: string
+    type: object
+  migration.ReportImageInfoWithUsage:
+    properties:
+      commandHistory:
+        description: CommandHistory stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/model.ImageSourceCommandHistory'
+        type: array
+      connectionName:
+        type: string
+      creationDate:
+        type: string
+      cspImageId:
+        description: CspImageId is resource identifier managed by CSP
+        example: ami-0d399fba46a30a310
+        type: string
+      cspImageName:
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      fetchedTime:
+        type: string
+      id:
+        example: aws-ap-southeast-1
+        type: string
+      imageStatus:
+        allOf:
+        - $ref: '#/definitions/model.ImageStatus'
+        description: Available, Deprecated, NA
+        example: Available
+      infraType:
+        description: vm|k8s|kubernetes|container, etc.
+        type: string
+      isBasicImage:
+        default: false
+        type: boolean
+      isGPUImage:
+        default: false
+        type: boolean
+      isKubernetesImage:
+        default: false
+        type: boolean
+      name:
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        description: Composite primary key
+        example: default
+        type: string
+      osArchitecture:
+        allOf:
+        - $ref: '#/definitions/model.OSArchitecture'
+        description: arm64, x86_64 etc.
+        example: x86_64
+      osDiskSizeGB:
+        description: 10, 50, 100 etc.
+        example: 50
+        type: number
+      osDiskType:
+        description: ebs, HDD, etc.
+        example: HDD
+        type: string
+      osDistribution:
+        description: Ubuntu 22.04~, CentOS 8 etc.
+        example: Ubuntu 22.04~
+        type: string
+      osPlatform:
+        allOf:
+        - $ref: '#/definitions/model.OSPlatform'
+        description: Linux/UNIX, Windows, NA
+        example: Linux/UNIX
+      osType:
+        example: ubuntu 22.04
+        type: string
+      providerName:
+        type: string
+      regionList:
+        description: Array field for supporting multiple regions
+        items:
+          type: string
+        type: array
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      sourceCspImageName:
+        description: SourceCspImageName is the name of the source CSP image from which
+          this image was created
+        example: csp-06eb41e14121c550a
+        type: string
+      sourceVmUid:
+        description: SourceVmUid is the UID of the source VM from which this image
+          was created
+        example: wef12awefadf1221edcf
+        type: string
+      systemLabel:
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        example: wef12awefadf1221edcf
+        type: string
+      usageCount:
+        description: Number of VMs using this image
+        example: 3
+        type: integer
+    type: object
+  migration.ReportMetadata:
+    properties:
+      generatedAt:
+        example: "2025-10-31T14:30:00Z"
+        type: string
+      mciId:
+        example: mmci01
+        type: string
+      mciName:
+        example: my-migrated-infrastructure
+        type: string
+      namespace:
+        example: mig01
+        type: string
+      reportVersion:
+        example: "1.0"
+        type: string
+    type: object
+  migration.ReportSecurityGroupInfo:
+    properties:
+      cspSecurityGroupId:
+        example: sg-065ead8c271abf7a3
+        type: string
+      name:
+        example: mig-sg-01
+        type: string
+      ruleCount:
+        example: 5
+        type: integer
+      rules:
+        items:
+          $ref: '#/definitions/migration.ReportFirewallRule'
+        type: array
+      vnetName:
+        example: mig-vnet-01
+        type: string
+    type: object
+  migration.ReportSpecInfoWithUsage:
+    properties:
+      acceleratorCount:
+        type: integer
+      acceleratorMemoryGB:
+        type: number
+      acceleratorModel:
+        type: string
+      acceleratorType:
+        type: string
+      architecture:
+        example: x86_64
+        type: string
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionName:
+        type: string
+      costPerHour:
+        type: number
+      cspSpecName:
+        description: CspSpecName is name of the spec given by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      diskSizeGB:
+        type: number
+      evaluationScore01:
+        type: number
+      evaluationScore02:
+        type: number
+      evaluationScore03:
+        type: number
+      evaluationScore04:
+        type: number
+      evaluationScore05:
+        type: number
+      evaluationScore06:
+        type: number
+      evaluationScore07:
+        type: number
+      evaluationScore08:
+        type: number
+      evaluationScore09:
+        type: number
+      evaluationScore10:
+        type: number
+      evaluationStatus:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws+ap-southeast+csp-06eb41e14121c550a
+        type: string
+      infraType:
+        description: InfraType can be one of vm|k8s|kubernetes|container, etc.
+        type: string
+      isAutoGenerated:
+        type: boolean
+      maxTotalStorageTiB:
+        type: integer
+      memoryGiB:
+        type: number
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        example: default
+        type: string
+      netBwGbps:
+        type: integer
+      orderInFilteredResult:
+        type: integer
+      osType:
+        type: string
+      providerName:
+        type: string
+      regionLatitude:
+        type: number
+      regionLongitude:
+        type: number
+      regionName:
+        type: string
+      rootDiskSize:
+        type: string
+      rootDiskType:
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      usageCount:
+        description: Number of VMs using this spec
+        example: 2
+        type: integer
+      vCPU:
+        type: integer
+    type: object
+  migration.ReportSshKeyInfo:
+    properties:
+      cspSshKeyId:
+        example: d3vkftmqjs728ptbetpg
+        type: string
+      fingerprint:
+        example: 1a:2b:3c:4d:...
+        type: string
+      name:
+        example: mig-sshkey-01
+        type: string
+      publicKey:
+        description: Truncated for security
+        type: string
+      username:
+        example: cb-user
+        type: string
+    type: object
+  migration.ReportSubnetInfo:
+    properties:
+      cidrBlock:
+        example: 192.168.110.0/24
+        type: string
+      cspSubnetId:
+        example: subnet-047dfd6ca50d6791d
+        type: string
+      name:
+        example: mig-subnet-01
+        type: string
+      zone:
+        example: ap-northeast-2a
+        type: string
+    type: object
+  migration.ReportVNetInfo:
+    properties:
+      cidrBlock:
+        example: 192.168.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      cspVnetId:
+        example: vpc-06ea213ee81b3e1c4
+        type: string
+      name:
+        example: mig-vnet-01
+        type: string
+      region:
+        example: ap-northeast-2
+        type: string
+      subnetCount:
+        example: 2
+        type: integer
+      subnets:
+        items:
+          $ref: '#/definitions/migration.ReportSubnetInfo'
+        type: array
+    type: object
+  migration.ReportVmImageInfo:
+    properties:
+      distribution:
+        example: Ubuntu
+        type: string
+      name:
+        example: ubuntu22.04
+        type: string
+      osVersion:
+        example: "22.04"
+        type: string
+    type: object
+  migration.ReportVmInfo:
+    properties:
+      cspVmId:
+        example: i-0a1b2c3d4e5f6g7h8
+        type: string
+      image:
+        $ref: '#/definitions/migration.ReportVmImageInfo'
+      misc:
+        $ref: '#/definitions/migration.ReportVmMiscInfo'
+      name:
+        example: migrated-server-1
+        type: string
+      region:
+        example: ap-northeast-2
+        type: string
+      spec:
+        $ref: '#/definitions/migration.ReportVmSpecInfo'
+      status:
+        example: Running
+        type: string
+      zone:
+        example: ap-northeast-2a
+        type: string
+    type: object
+  migration.ReportVmMiscInfo:
+    properties:
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      privateIp:
+        example: 192.168.110.10
+        type: string
+      publicIp:
+        example: 43.201.59.126
+        type: string
+      securityGroups:
+        example:
+        - mig-sg-01
+        items:
+          type: string
+        type: array
+      sshKey:
+        example: mig-sshkey-01
+        type: string
+      subnet:
+        example: mig-subnet-01
+        type: string
+      vnet:
+        example: mig-vnet-01
+        type: string
+    type: object
+  migration.ReportVmSpecInfo:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      memoryGiB:
+        example: 16
+        type: number
+      name:
+        example: t3a.xlarge
+        type: string
+      vcpus:
+        example: 4
+        type: integer
+    type: object
+  migration.SecurityResources:
+    properties:
+      securityGroups:
+        items:
+          $ref: '#/definitions/migration.ReportSecurityGroupInfo'
+        type: array
+      sshKeys:
+        items:
+          $ref: '#/definitions/migration.ReportSshKeyInfo'
+        type: array
+    type: object
   model.BastionNode:
     properties:
       mciId:
@@ -1850,6 +2399,31 @@ definitions:
           type: string
         type: array
     type: object
+  model.ImageSourceCommandHistory:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
+    type: object
+  model.ImageStatus:
+    enum:
+    - Available
+    - Unavailable
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageAvailable
+    - ImageUnavailable
+    - ImageDeprecated
+    - ImageNA
   model.K8sClusterDynamicReq:
     properties:
       connectionName:
@@ -1983,6 +2557,40 @@ definitions:
       longitude:
         type: number
     type: object
+  model.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  model.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
   model.RegionDetail:
     properties:
       description:
@@ -4559,6 +5167,61 @@ paths:
       summary: Recommend an appropriate VM specification for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
+  /report/ns/{nsId}/mci/{mciId}:
+    get:
+      consumes:
+      - application/json
+      description: Get a comprehensive migration infrastructure report in JSON or
+        Markdown format
+      operationId: GetInfraReport
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - default: mmci01
+        description: Multi-Cloud Infrastructure (MCI) ID
+        in: path
+        name: mciId
+        required: true
+        type: string
+      - default: json
+        description: 'Report format: json or md'
+        enum:
+        - json
+        - md
+        in: query
+        name: format
+        type: string
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      - text/markdown
+      responses:
+        "200":
+          description: Successfully generated migration report (Markdown format)
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+      summary: Get migration infrastructure report
+      tags:
+      - '[Report] Source/Target Infrastructure'
   /test/tracing:
     get:
       consumes:
