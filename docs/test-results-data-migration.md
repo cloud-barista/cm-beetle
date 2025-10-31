@@ -9,7 +9,7 @@
 **Source Bucket Name:** `aws-ap-northeast-2-bucket-2uk0i5`  
 **Target Bucket Name:** `aws-ap-northeast-2-bucket-2uk0i5-radcksl`  
 **Target Cloud:** AWS ap-northeast-2  
-**CM-Beetle Version:** v0.4.1
+**CM-Beetle Version:** v0.4.2
 
 <img width="1651" height="575" alt="image" src="https://github.com/user-attachments/assets/d057a1a9-ecad-4ef0-9365-13477b82b93c" />
 
