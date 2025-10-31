@@ -4,7 +4,7 @@
 **Base Bucket Name:** `beetle-bucket-10jqka`  
 **Generated Bucket Name:** `beetle-bucket-10jqka-panpn5tv`  
 **Target Cloud:** AWS ap-northeast-2  
-**CM-Beetle Version:** v0.4.1
+**CM-Beetle Version:** v0.4.2
 
 ---
 
@@ -362,7 +362,7 @@ Typical workflow for object storage migration:
 
 ## Environment
 
-- **CM-Beetle Version:** v0.4.1
+- **CM-Beetle Version:** v0.4.2
 - **Target Cloud:** AWS (Amazon Web Services)
 - **Region:** ap-northeast-2 (Seoul)
 - **Base Bucket Name:** beetle-bucket-10jqka
