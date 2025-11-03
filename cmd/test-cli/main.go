@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -275,6 +276,16 @@ func main() {
 		log.Info().Msg("🔐 Setting up Basic Authentication...")
 		client.SetBasicAuth(authConfig.BasicAuthUsername, authConfig.BasicAuthPassword)
 		log.Info().Msg("✅ Basic Auth configured")
+	}
+
+	// Output source infrastructure summary before starting tests
+	log.Info().Msgf("%s", "\n"+strings.Repeat("=", 60)+"\n")
+	log.Info().Msg("SOURCE INFRASTRUCTURE SUMMARY")
+	log.Info().Msgf("%s", strings.Repeat("=", 60)+"\n")
+
+	sourceSummaryResult := runSourceSummaryTest(client, config, onpremInfraModel)
+	if !sourceSummaryResult.Success {
+		log.Warn().Msg("Failed to generate source infrastructure summary, but continuing with tests...")
 	}
 
 	// Test each CSP-Region pair sequentially
@@ -616,6 +627,18 @@ func main() {
 			pairFailed++
 		} else {
 			pairPassed++
+		}
+
+		/*
+		 * Target Infrastructure Summary: GET /beetle/summary/target/ns/{nsId}/mci/{mciId}
+		 */
+		if !skipRemainingTests {
+			targetSummaryResult := runTargetSummaryTest(client, config, mciId, cspPair.Csp, displayName)
+			if !targetSummaryResult.Success {
+				log.Warn().Str("csp", displayName).Msg("Failed to generate target infrastructure summary")
+			}
+		} else {
+			log.Info().Msgf("Target summary skipped for %s due to previous test failure", displayName)
 		}
 
 		/*
@@ -2085,6 +2108,200 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	}
 
 	return sb.String()
+}
+
+// runSourceSummaryTest performs Source Summary: POST /beetle/summary/source
+func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraModel onpremmodel.OnpremInfra) TestResults {
+	result := TestResults{
+		TestName:  "Source Summary: POST /beetle/summary/source",
+		StartTime: time.Now(),
+	}
+
+	// Wait before API call for stability with animation
+	animatedSleep(2*time.Second, "Preparing source infrastructure summary...")
+
+	// Log API call details
+	log.Info().Msg("\n--- Source Infrastructure Summary ---")
+
+	// Prepare request body
+	requestBody := map[string]interface{}{
+		"onpremiseInfraModel": onpremInfraModel,
+	}
+
+	// Log request
+	log.Debug().Interface("request", requestBody).Msg("Source summary request body")
+
+	// Make API call with markdown format
+	url := fmt.Sprintf("%s/beetle/summary/source?format=md", config.BeetleURL)
+	result.RequestURL = url
+	result.RequestBody = requestBody
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(requestBody).
+		Post(url)
+
+	result.EndTime = time.Now()
+	result.Duration = result.EndTime.Sub(result.StartTime)
+	result.StatusCode = resp.StatusCode()
+
+	if err != nil {
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, requestBody)
+		log.Error().
+			Err(err).
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Source summary failed")
+		result.Success = false
+		return result
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		err := fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, requestBody)
+		log.Error().
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Source summary failed")
+		result.Success = false
+		return result
+	}
+
+	// Get markdown content
+	markdownContent := string(resp.Body())
+
+	// Log the markdown summary (it's already formatted)
+	log.Info().Msg("\n" + markdownContent)
+
+	// Save markdown to file
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get current working directory")
+		cwd = "."
+	}
+
+	testResultDir := filepath.Join(cwd, "testresult")
+	if err := os.MkdirAll(testResultDir, 0755); err != nil {
+		log.Error().Err(err).Str("path", testResultDir).Msg("Failed to create testresult directory")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to create directory: %v", err)
+		return result
+	}
+
+	filename := "beetle-summary-source.md"
+	filepath := filepath.Join(testResultDir, filename)
+
+	if err := os.WriteFile(filepath, []byte(markdownContent), 0644); err != nil {
+		log.Error().Err(err).Str("file", filepath).Msg("Failed to write source summary file")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to write file: %v", err)
+		return result
+	}
+
+	log.Info().Str("file", filepath).Msg("✅ Source infrastructure summary saved to file")
+
+	result.Success = true
+	result.Response = map[string]interface{}{
+		"markdown": markdownContent,
+		"file":     filepath,
+	}
+
+	return result
+}
+
+// runTargetSummaryTest performs Target Summary: GET /beetle/summary/target/ns/{nsId}/mci/{mciId}
+func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspName, displayName string) TestResults {
+	result := TestResults{
+		TestName:  "Target Summary: GET /beetle/summary/target/ns/{nsId}/mci/{mciId}",
+		StartTime: time.Now(),
+	}
+
+	// Wait before API call for stability with animation
+	animatedSleep(2*time.Second, "Preparing target infrastructure summary...")
+
+	// Log API call details
+	log.Info().Msgf("\n--- Target Infrastructure Summary for %s ---", displayName)
+
+	// Make API call with markdown format
+	url := fmt.Sprintf("%s/beetle/summary/target/ns/%s/mci/%s?format=md",
+		config.BeetleURL, config.NamespaceID, mciId)
+	result.RequestURL = url
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		Get(url)
+
+	result.EndTime = time.Now()
+	result.Duration = result.EndTime.Sub(result.StartTime)
+	result.StatusCode = resp.StatusCode()
+
+	if err != nil {
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, nil)
+		log.Error().
+			Err(err).
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Target summary failed")
+		result.Success = false
+		return result
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		err := fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, nil)
+		log.Error().
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Target summary failed")
+		result.Success = false
+		return result
+	}
+
+	// Get markdown content
+	markdownContent := string(resp.Body())
+
+	// Save markdown to file
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get current working directory")
+		cwd = "."
+	}
+
+	testResultDir := filepath.Join(cwd, "testresult")
+	if err := os.MkdirAll(testResultDir, 0755); err != nil {
+		log.Error().Err(err).Str("path", testResultDir).Msg("Failed to create testresult directory")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to create directory: %v", err)
+		return result
+	}
+
+	filename := fmt.Sprintf("beetle-summary-%s.md", cspName)
+	filepath := filepath.Join(testResultDir, filename)
+
+	if err := os.WriteFile(filepath, []byte(markdownContent), 0644); err != nil {
+		log.Error().Err(err).Str("file", filepath).Msg("Failed to write target summary file")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to write file: %v", err)
+		return result
+	}
+
+	log.Info().Str("file", filepath).Msg("✅ Target infrastructure summary saved to file")
+
+	result.Success = true
+	result.Response = map[string]interface{}{
+		"markdown": markdownContent,
+		"file":     filepath,
+	}
+
+	return result
 }
 
 // runRemoteCommandTest performs Test 6: Remote Command to check accessibility of migrated VM
