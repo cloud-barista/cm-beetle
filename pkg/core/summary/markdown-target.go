@@ -11,71 +11,71 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration provides migration report markdown generation
-package migration
+// Package summary provides infrastructure summary markdown generation
+package summary
 
 import (
 	"fmt"
 	"strings"
 )
 
-// GenerateMarkdownReport converts MigrationReport to markdown format
-func GenerateMarkdownReport(report *MigrationReport) string {
+// GenerateMarkdownSummary converts TargetInfraSummary to markdown format
+func GenerateMarkdownSummary(summary *TargetInfraSummary) string {
 	var md strings.Builder
 
 	// Title and Metadata
-	md.WriteString("# Migration Infrastructure Report\n\n")
-	md.WriteString(fmt.Sprintf("**Generated At:** %s\n\n", report.ReportMetadata.GeneratedAt.Format("2006-01-02 15:04:05")))
-	md.WriteString(fmt.Sprintf("**Namespace:** %s\n\n", report.ReportMetadata.Namespace))
-	md.WriteString(fmt.Sprintf("**MCI Name:** %s\n\n", report.ReportMetadata.MciName))
-	md.WriteString(fmt.Sprintf("**Report Version:** %s\n\n", report.ReportMetadata.ReportVersion))
+	md.WriteString("# Infrastructure Summary\n\n")
+	md.WriteString(fmt.Sprintf("**Generated At:** %s\n\n", summary.SummaryMetadata.GeneratedAt.Format("2006-01-02 15:04:05")))
+	md.WriteString(fmt.Sprintf("**Namespace:** %s\n\n", summary.SummaryMetadata.Namespace))
+	md.WriteString(fmt.Sprintf("**MCI Name:** %s\n\n", summary.SummaryMetadata.MciName))
+	md.WriteString(fmt.Sprintf("**Summary Version:** %s\n\n", summary.SummaryMetadata.SummaryVersion))
 	md.WriteString("---\n\n")
 
-	// Summary Section
-	md.WriteString("## Summary\n\n")
-	md.WriteString(generateSummaryMarkdown(&report.Summary))
-	md.WriteString("\n")
-
-	// Network Resources Section
-	md.WriteString("## Network Resources\n\n")
-	md.WriteString(generateNetworkResourcesMarkdown(&report.NetworkResources))
-	md.WriteString("\n")
-
-	// Security Resources Section
-	md.WriteString("## Security Resources\n\n")
-	md.WriteString(generateSecurityResourcesMarkdown(&report.SecurityResources))
+	// Overview Section
+	md.WriteString("## Overview\n\n")
+	md.WriteString(generateOverviewMarkdown(&summary.Overview))
 	md.WriteString("\n")
 
 	// Compute Resources Section
 	md.WriteString("## Compute Resources\n\n")
-	md.WriteString(generateComputeResourcesMarkdown(&report.ComputeResources))
+	md.WriteString(generateComputeResourcesMarkdown(&summary.ComputeResources))
+	md.WriteString("\n")
+
+	// Network Resources Section
+	md.WriteString("## Network Resources\n\n")
+	md.WriteString(generateNetworkResourcesMarkdown(&summary.NetworkResources))
+	md.WriteString("\n")
+
+	// Security Resources Section
+	md.WriteString("## Security Resources\n\n")
+	md.WriteString(generateSecurityResourcesMarkdown(&summary.SecurityResources))
 	md.WriteString("\n")
 
 	// Cost Estimation Section
 	md.WriteString("## Cost Estimation\n\n")
-	md.WriteString(generateCostEstimationMarkdown(&report.CostEstimation))
+	md.WriteString(generateCostEstimationMarkdown(&summary.CostEstimation))
 	md.WriteString("\n")
 
 	return md.String()
 }
 
-// generateSummaryMarkdown generates markdown for migration summary
-func generateSummaryMarkdown(summary *MigrationSummary) string {
+// generateOverviewMarkdown generates markdown for infrastructure overview
+func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 	var md strings.Builder
 
 	md.WriteString("| Property | Value |\n")
 	md.WriteString("|----------|-------|\n")
-	md.WriteString(fmt.Sprintf("| **MCI Name** | %s |\n", summary.MciName))
-	md.WriteString(fmt.Sprintf("| **Description** | %s |\n", summary.MciDescription))
-	md.WriteString(fmt.Sprintf("| **Status** | %s |\n", summary.Status))
-	md.WriteString(fmt.Sprintf("| **Target Cloud** | %s |\n", summary.TargetCloud))
-	md.WriteString(fmt.Sprintf("| **Target Region** | %s |\n", summary.TargetRegion))
-	md.WriteString(fmt.Sprintf("| **Total VMs** | %d |\n", summary.TotalVmCount))
-	md.WriteString(fmt.Sprintf("| **Running VMs** | %d |\n", summary.RunningVmCount))
-	md.WriteString(fmt.Sprintf("| **Stopped VMs** | %d |\n", summary.StoppedVmCount))
-	if len(summary.Label) > 0 {
+	md.WriteString(fmt.Sprintf("| **MCI Name** | %s |\n", overview.MciName))
+	md.WriteString(fmt.Sprintf("| **Description** | %s |\n", overview.MciDescription))
+	md.WriteString(fmt.Sprintf("| **Status** | %s |\n", overview.Status))
+	md.WriteString(fmt.Sprintf("| **Target Cloud** | %s |\n", overview.TargetCloud))
+	md.WriteString(fmt.Sprintf("| **Target Region** | %s |\n", overview.TargetRegion))
+	md.WriteString(fmt.Sprintf("| **Total VMs** | %d |\n", overview.TotalVmCount))
+	md.WriteString(fmt.Sprintf("| **Running VMs** | %d |\n", overview.RunningVmCount))
+	md.WriteString(fmt.Sprintf("| **Stopped VMs** | %d |\n", overview.StoppedVmCount))
+	if len(overview.Label) > 0 {
 		labelStr := ""
-		for k, v := range summary.Label {
+		for k, v := range overview.Label {
 			if labelStr != "" {
 				labelStr += ", "
 			}
@@ -83,13 +83,13 @@ func generateSummaryMarkdown(summary *MigrationSummary) string {
 		}
 		md.WriteString(fmt.Sprintf("| **Label** | %s |\n", labelStr))
 	}
-	md.WriteString(fmt.Sprintf("| **Monitoring Agent** | %s |\n", summary.InstallMonAgent))
+	md.WriteString(fmt.Sprintf("| **Monitoring Agent** | %s |\n", overview.InstallMonAgent))
 
 	return md.String()
 }
 
 // generateNetworkResourcesMarkdown generates markdown for network resources
-func generateNetworkResourcesMarkdown(resources *NetworkResources) string {
+func generateNetworkResourcesMarkdown(resources *SummaryNetworkResources) string {
 	var md strings.Builder
 
 	md.WriteString("### Virtual Networks\n\n")
@@ -126,7 +126,7 @@ func generateNetworkResourcesMarkdown(resources *NetworkResources) string {
 }
 
 // generateSecurityResourcesMarkdown generates markdown for security resources
-func generateSecurityResourcesMarkdown(resources *SecurityResources) string {
+func generateSecurityResourcesMarkdown(resources *SummarySecurityResources) string {
 	var md strings.Builder
 
 	// SSH Keys Section
@@ -161,7 +161,7 @@ func generateSecurityResourcesMarkdown(resources *SecurityResources) string {
 		md.WriteString("\n")
 
 		if len(sg.Rules) > 0 {
-			md.WriteString("**Firewall Rules:**\n\n")
+			md.WriteString("**Security Group Rules:**\n\n")
 			md.WriteString("| Direction | Protocol | Port | CIDR |\n")
 			md.WriteString("|-----------|----------|------|------|\n")
 			for _, rule := range sg.Rules {
@@ -180,7 +180,7 @@ func generateSecurityResourcesMarkdown(resources *SecurityResources) string {
 }
 
 // generateComputeResourcesMarkdown generates markdown for compute resources
-func generateComputeResourcesMarkdown(resources *ComputeResources) string {
+func generateComputeResourcesMarkdown(resources *SummaryComputeResources) string {
 	var md strings.Builder
 
 	// VM Specifications Section
@@ -241,7 +241,7 @@ func generateComputeResourcesMarkdown(resources *ComputeResources) string {
 }
 
 // generateCostEstimationMarkdown generates markdown for cost estimation
-func generateCostEstimationMarkdown(cost *CostEstimation) string {
+func generateCostEstimationMarkdown(cost *SummaryCostEstimation) string {
 	var md strings.Builder
 
 	md.WriteString("### Total Cost Summary\n\n")

@@ -11,11 +11,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration provides migration report generation logic
-package migration
+// Package summary provides infrastructure summary generation logic
+package summary
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -25,10 +26,10 @@ import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 )
 
-// GenerateMigrationReport generates a comprehensive migration report
+// GenerateInfraSummary generates a comprehensive infrastructure summary
 // Note: This function does NOT modify existing tbmodel structs, only reads from them
-func GenerateMigrationReport(nsId, mciId string) (*MigrationReport, error) {
-	log.Info().Msgf("Generating migration report for MCI (nsId: %s, mciId: %s)", nsId, mciId)
+func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
+	log.Info().Msgf("Generating infrastructure summary for MCI (nsId: %s, mciId: %s)", nsId, mciId)
 
 	// Initialize Tumblebug client
 	tbCli := tbclient.NewDefaultClient()
@@ -71,30 +72,30 @@ func GenerateMigrationReport(nsId, mciId string) (*MigrationReport, error) {
 	// Step 6: Calculate cost estimation
 	costEstimation := calculateCostEstimation(computeResources)
 
-	// Step 7: Build report metadata
-	metadata := ReportMetadata{
-		GeneratedAt:   time.Now(),
-		Namespace:     nsId,
-		MciId:         mciId,
-		MciName:       mciInfo.Name,
-		ReportVersion: "1.0",
+	// Step 7: Build summary metadata
+	metadata := TargetSummaryMetadata{
+		GeneratedAt:    time.Now(),
+		Namespace:      nsId,
+		MciId:          mciId,
+		MciName:        mciInfo.Name,
+		SummaryVersion: "1.0",
 	}
 
-	// Step 8: Build migration summary
-	summary := buildMigrationSummary(&mciInfo)
+	// Step 8: Build infrastructure overview
+	overview := buildInfraOverview(&mciInfo)
 
-	// Step 9: Assemble final report
-	report := &MigrationReport{
-		ReportMetadata:    metadata,
-		Summary:           summary,
+	// Step 9: Assemble final summary
+	infraSummary := &TargetInfraSummary{
+		SummaryMetadata:   metadata,
+		Overview:          overview,
 		NetworkResources:  networkResources,
 		SecurityResources: securityResources,
 		ComputeResources:  computeResources,
 		CostEstimation:    costEstimation,
 	}
 
-	log.Info().Msgf("Successfully generated migration report for MCI: %s", mciId)
-	return report, nil
+	log.Info().Msgf("Successfully generated infrastructure summary for MCI: %s", mciId)
+	return infraSummary, nil
 }
 
 // extractUniqueVNetIds extracts unique VNet IDs from VMs
@@ -180,9 +181,9 @@ func extractUniqueImageIds(vms []tbmodel.VmInfo) []string {
 }
 
 // collectNetworkResources collects VNet and Subnet information
-func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetIds []string) (NetworkResources, error) {
-	var resources NetworkResources
-	resources.VNets = []ReportVNetInfo{}
+func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetIds []string) (SummaryNetworkResources, error) {
+	var resources SummaryNetworkResources
+	resources.VNets = []SummaryVNetInfo{}
 
 	for _, vnetId := range vnetIds {
 		vnetInfo, err := tbCli.ReadVNet(nsId, vnetId)
@@ -192,9 +193,9 @@ func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetI
 		}
 
 		// Convert subnets
-		var subnets []ReportSubnetInfo
+		var subnets []SummarySubnetInfo
 		for _, subnet := range vnetInfo.SubnetInfoList {
-			subnets = append(subnets, ReportSubnetInfo{
+			subnets = append(subnets, SummarySubnetInfo{
 				Name:        subnet.Name,
 				CspSubnetId: subnet.CspResourceId,
 				CidrBlock:   subnet.IPv4_CIDR,
@@ -202,7 +203,7 @@ func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetI
 			})
 		}
 
-		reportVNet := ReportVNetInfo{
+		reportVNet := SummaryVNetInfo{
 			Name:           vnetInfo.Name,
 			CspVNetId:      vnetInfo.CspResourceId,
 			CidrBlock:      vnetInfo.CidrBlock,
@@ -219,10 +220,10 @@ func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetI
 }
 
 // collectSecurityResources collects SSH Key and Security Group information
-func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshKeyIds, securityGroupIds []string) (SecurityResources, error) {
-	var resources SecurityResources
-	resources.SshKeys = []ReportSshKeyInfo{}
-	resources.SecurityGroups = []ReportSecurityGroupInfo{}
+func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshKeyIds, securityGroupIds []string) (SummarySecurityResources, error) {
+	var resources SummarySecurityResources
+	resources.SshKeys = []SummarySshKeyInfo{}
+	resources.SecurityGroups = []SummarySecurityGroupInfo{}
 
 	// Collect SSH Keys
 	for _, sshKeyId := range sshKeyIds {
@@ -238,7 +239,7 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 			publicKey = publicKey[:50] + "..."
 		}
 
-		reportSshKey := ReportSshKeyInfo{
+		reportSshKey := SummarySshKeyInfo{
 			Name:        sshKeyInfo.Name,
 			CspSshKeyId: sshKeyInfo.CspResourceId,
 			Username:    sshKeyInfo.Username,
@@ -258,9 +259,9 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 		}
 
 		// Convert firewall rules
-		var rules []ReportFirewallRule
+		var rules []SummaryFirewallRule
 		for _, rule := range sgInfo.FirewallRules {
-			rules = append(rules, ReportFirewallRule{
+			rules = append(rules, SummaryFirewallRule{
 				Direction: rule.Direction,
 				Protocol:  rule.Protocol,
 				FromPort:  rule.Port,
@@ -269,7 +270,7 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 			})
 		}
 
-		reportSg := ReportSecurityGroupInfo{
+		reportSg := SummarySecurityGroupInfo{
 			Name:               sgInfo.Name,
 			CspSecurityGroupId: sgInfo.CspResourceId,
 			VNetName:           sgInfo.VNetId,
@@ -280,12 +281,17 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 		resources.SecurityGroups = append(resources.SecurityGroups, reportSg)
 	}
 
+	// Sort security groups by name for consistent ordering
+	sort.Slice(resources.SecurityGroups, func(i, j int) bool {
+		return resources.SecurityGroups[i].Name < resources.SecurityGroups[j].Name
+	})
+
 	return resources, nil
 }
 
 // collectComputeResources collects Spec, Image, and VM information
-func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciInfo *tbmodel.MciInfo, specIds, imageIds []string) (ComputeResources, error) {
-	var resources ComputeResources
+func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciInfo *tbmodel.MciInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
+	var resources SummaryComputeResources
 
 	// Collect specs with usage count
 	specMap := make(map[string]*tbmodel.SpecInfo)
@@ -323,7 +329,7 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 
 	// Build spec list for report - using tbmodel.SpecInfo directly
 	for specId, spec := range specMap {
-		specWithUsage := ReportSpecInfoWithUsage{
+		specWithUsage := SummarySpecInfoWithUsage{
 			SpecInfo:   *spec, // Use full SpecInfo from CB-Tumblebug
 			UsageCount: specUsage[specId],
 		}
@@ -332,7 +338,7 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 
 	// Build image list for report - using tbmodel.ImageInfo directly
 	for imageId, image := range imageMap {
-		imageWithUsage := ReportImageInfoWithUsage{
+		imageWithUsage := SummaryImageInfoWithUsage{
 			ImageInfo:  *image, // Use full ImageInfo from CB-Tumblebug
 			UsageCount: imageUsage[imageId],
 		}
@@ -344,22 +350,22 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 		spec := specMap[vm.SpecId]
 		image := imageMap[vm.ImageId]
 
-		reportVm := ReportVmInfo{
+		reportVm := SummaryVmInfo{
 			Name:    vm.Name,
 			CspVmId: vm.CspResourceId,
 			Status:  vm.Status,
-			Spec: ReportVmSpecInfo{
+			Spec: SummaryVmSpecInfo{
 				Name:         extractShortSpecName(vm.CspSpecName),
 				VCpus:        getSpecVCpus(spec),
 				MemoryGiB:    getSpecMemory(spec),
 				Architecture: getSpecArchitecture(spec),
 			},
-			Image: ReportVmImageInfo{
+			Image: SummaryVmImageInfo{
 				Name:         extractShortImageName(image),
 				Distribution: getImageDistribution(image),
 				OsVersion:    getImageOsVersion(image),
 			},
-			Misc: ReportVmMiscInfo{
+			Misc: SummaryVmMiscInfo{
 				VNet:           vm.VNetId,
 				Subnet:         vm.SubnetId,
 				PublicIp:       vm.PublicIP,
@@ -378,8 +384,8 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 	return resources, nil
 }
 
-// buildMigrationSummary builds the migration summary from MCI info
-func buildMigrationSummary(mciInfo *tbmodel.MciInfo) MigrationSummary {
+// buildInfraOverview builds the migration summary from MCI info
+func buildInfraOverview(mciInfo *tbmodel.MciInfo) TargetInfraOverview {
 	runningCount := 0
 	stoppedCount := 0
 
@@ -398,7 +404,7 @@ func buildMigrationSummary(mciInfo *tbmodel.MciInfo) MigrationSummary {
 		targetRegion = mciInfo.Vm[0].Region.Region
 	}
 
-	return MigrationSummary{
+	return TargetInfraOverview{
 		MciName:         mciInfo.Name,
 		MciDescription:  mciInfo.Description,
 		Status:          mciInfo.Status,
@@ -413,10 +419,10 @@ func buildMigrationSummary(mciInfo *tbmodel.MciInfo) MigrationSummary {
 }
 
 // calculateCostEstimation calculates cost estimation
-func calculateCostEstimation(resources ComputeResources) CostEstimation {
+func calculateCostEstimation(resources SummaryComputeResources) SummaryCostEstimation {
 	var totalCostPerHour float32 = 0
-	var byRegionMap = make(map[string]*CostByRegion)
-	var byVmList []CostByVm
+	var byRegionMap = make(map[string]*SummaryCostByRegion)
+	var byVmList []SummaryCostByVm
 
 	// Calculate cost per VM
 	for _, vm := range resources.Vms {
@@ -434,7 +440,7 @@ func calculateCostEstimation(resources ComputeResources) CostEstimation {
 		// Group by region
 		regionKey := vm.Region
 		if _, exists := byRegionMap[regionKey]; !exists {
-			byRegionMap[regionKey] = &CostByRegion{
+			byRegionMap[regionKey] = &SummaryCostByRegion{
 				Csp:    strings.ToUpper(strings.Split(vm.Misc.ConnectionName, "-")[0]),
 				Region: vm.Region,
 			}
@@ -443,7 +449,7 @@ func calculateCostEstimation(resources ComputeResources) CostEstimation {
 		byRegionMap[regionKey].CostPerHour += specCost
 
 		// Add to by-VM list
-		byVmList = append(byVmList, CostByVm{
+		byVmList = append(byVmList, SummaryCostByVm{
 			VmName:       vm.Name,
 			SpecName:     vm.Spec.Name,
 			CostPerHour:  specCost,
@@ -452,13 +458,13 @@ func calculateCostEstimation(resources ComputeResources) CostEstimation {
 	}
 
 	// Convert region map to slice
-	var byRegionList []CostByRegion
+	var byRegionList []SummaryCostByRegion
 	for _, region := range byRegionMap {
 		region.CostPerMonth = region.CostPerHour * 24 * 30
 		byRegionList = append(byRegionList, *region)
 	}
 
-	return CostEstimation{
+	return SummaryCostEstimation{
 		Currency:          "USD",
 		TotalCostPerHour:  totalCostPerHour,
 		TotalCostPerDay:   totalCostPerHour * 24,
