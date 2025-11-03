@@ -316,6 +316,19 @@ func RunServer(port string) {
 	gMigrationMiddleware.HEAD("/objectStorage/:objectStorageName", controller.ExistObjectStorage)
 	gMigrationMiddleware.DELETE("/objectStorage/:objectStorageName", controller.DeleteObjectStorage)
 
+	/*
+	 * API group for infrastructure summary
+	 */
+	gSummary := gBeetle.Group("/summary")
+	// Custom middleware to check if the Tumblebug is initialized
+	gSummary.Use(middlewares.TumblebugInitChecker)
+
+	// Summary APIs for target infrastructure
+	gSummary.GET("/target/ns/:nsId/mci/:mciId", controller.GetInfraSummary)
+
+	// Summary APIs for source infrastructure
+	gSummary.POST("/source", controller.GetSourceInfraSummary)
+
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint
 	apidashboard := " http://" + selfEndpoint + "/beetle/api"
