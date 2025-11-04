@@ -27,7 +27,6 @@ func GenerateSourceMarkdownSummary(summary *SourceInfraSummary) string {
 	md.WriteString("# Source Infrastructure Summary\n\n")
 	md.WriteString(fmt.Sprintf("**Generated At:** %s\n\n", summary.SummaryMetadata.GeneratedAt.Format("2006-01-02 15:04:05")))
 	md.WriteString(fmt.Sprintf("**Infrastructure Name:** %s\n\n", summary.SummaryMetadata.InfraName))
-	md.WriteString(fmt.Sprintf("**Summary Version:** %s\n\n", summary.SummaryMetadata.SummaryVersion))
 	md.WriteString("---\n\n")
 
 	// Overview Section
@@ -55,6 +54,18 @@ func GenerateSourceMarkdownSummary(summary *SourceInfraSummary) string {
 	md.WriteString("## Storage Resources\n\n")
 	md.WriteString(generateSourceStorageResourcesMarkdown(&summary.StorageResources))
 	md.WriteString("\n")
+
+	// Important Notes Section
+	md.WriteString("---\n\n")
+	md.WriteString("## 📝 Important Notes for Cloud Migration\n\n")
+	md.WriteString("### CPU to vCPU Mapping\n\n")
+	md.WriteString("When migrating to cloud VMs, the **Equivalent vCPUs** value is calculated as:\n\n")
+	md.WriteString("```\nEquivalent vCPUs = CPUs × CPU Threads\n```\n\n")
+	md.WriteString("**Example:**\n")
+	md.WriteString("- Source Server: 2 CPUs, 2 Threads per CPU\n")
+	md.WriteString("- Calculation: 2 CPUs × 2 Threads = **4 vCPUs**\n")
+	md.WriteString("- Target VM Spec: Select a VM with **4 vCPUs** (e.g., AWS t3.xlarge)\n\n")
+	md.WriteString("This calculation ensures that the target VM has sufficient processing capacity equivalent to the source server.\n\n")
 
 	return md.String()
 }
@@ -93,6 +104,9 @@ func generateSourceComputeResourcesMarkdown(resources *SourceSummaryComputeResou
 		md.WriteString(fmt.Sprintf("| **CPU CPUs** | %d |\n", server.CPU.CPUs))
 		md.WriteString(fmt.Sprintf("| CPU Cores | %d |\n", server.CPU.Cores))
 		md.WriteString(fmt.Sprintf("| **CPU Threads** | %d |\n", server.CPU.Threads))
+		// Calculate equivalent vCPUs for cloud migration
+		equivalentVCPUs := server.CPU.CPUs * server.CPU.Threads
+		md.WriteString(fmt.Sprintf("| **Equivalent vCPUs** | %d (CPUs × Threads) |\n", equivalentVCPUs))
 		if server.CPU.MaxSpeed > 0 {
 			md.WriteString(fmt.Sprintf("| CPU Speed | %.2f GHz |\n", server.CPU.MaxSpeed))
 		}
@@ -107,9 +121,9 @@ func generateSourceComputeResourcesMarkdown(resources *SourceSummaryComputeResou
 		}
 		md.WriteString(" |\n")
 
-		// Disk
+		// Root Disk
 		if server.Disk.TotalGB > 0 {
-			md.WriteString(fmt.Sprintf("| **Disk** | %d GB (%s) |\n", server.Disk.TotalGB, server.Disk.Type))
+			md.WriteString(fmt.Sprintf("| **Root Disk** | %d GB (%s) |\n", server.Disk.TotalGB, server.Disk.Type))
 		}
 
 		// OS
@@ -295,8 +309,8 @@ func generateSourceSecurityResourcesMarkdown(resources *SourceSummarySecurityRes
 		}
 
 		md.WriteString(fmt.Sprintf("**Firewall Rules:** (%d rules)\n\n", len(serverFw.FirewallRules)))
-		md.WriteString("| Direction | Protocol | Source | Src Ports | Destination | Dst Ports | Action |\n")
-		md.WriteString("|-----------|----------|--------|-----------|-------------|-----------|--------|\n")
+		md.WriteString("| Direction | Protocol | Src CIDR | Src Ports | Dst CIDR | Dst Ports | Action |\n")
+		md.WriteString("|-----------|----------|----------|-----------|----------|-----------|--------|\n")
 
 		for _, rule := range serverFw.FirewallRules {
 			md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s |\n",

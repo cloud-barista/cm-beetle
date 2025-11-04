@@ -362,6 +362,8 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 			},
 			Image: SummaryVmImageInfo{
 				Name:         extractShortImageName(image),
+				Id:           getImageId(image),
+				OsType:       getImageOsType(image),
 				Distribution: getImageDistribution(image),
 				OsVersion:    getImageOsVersion(image),
 			},
@@ -524,6 +526,34 @@ func getImageOsVersion(image *tbmodel.ImageInfo) string {
 		return image.OSType
 	}
 
+	return ""
+}
+
+// Helper function to get image ID safely
+func getImageId(image *tbmodel.ImageInfo) string {
+	if image == nil {
+		return ""
+	}
+	// Use CspImageId (e.g., "ami-010be25c3775061c9" for AWS)
+	if image.CspImageId != "" {
+		return image.CspImageId
+	}
+	// Fallback to Id field
+	if image.Id != "" {
+		return image.Id
+	}
+	return ""
+}
+
+// Helper function to get image OS type safely
+func getImageOsType(image *tbmodel.ImageInfo) string {
+	if image == nil {
+		return ""
+	}
+	// OSType contains OS type with version (e.g., "Ubuntu 22.04")
+	if image.OSType != "" {
+		return image.OSType
+	}
 	return ""
 }
 

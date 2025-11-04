@@ -53,6 +53,7 @@ type SourceSummaryComputeResources struct {
 // SourceServerInfo represents source server information
 type SourceServerInfo struct {
 	Hostname     string                  `json:"hostname" example:"web-server-01"`
+	MachineId    string                  `json:"machineId" example:"00a9f3d4-74b6-e811-906e-000ffee02d5c"`
 	CPU          SourceCPUInfo           `json:"cpu"`
 	Memory       SourceMemoryInfo        `json:"memory"`
 	Disk         SourceDiskInfo          `json:"disk"`
@@ -97,6 +98,7 @@ type SourceDiskInfo struct {
 
 // SourceOSInfo represents OS information
 type SourceOSInfo struct {
+	PrettyName   string `json:"prettyName,omitempty" example:"Ubuntu 22.04.5 LTS"`
 	Name         string `json:"name" example:"Ubuntu"`
 	Version      string `json:"version" example:"22.04"`
 	Architecture string `json:"architecture" example:"x86_64"`

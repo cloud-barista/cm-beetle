@@ -2305,9 +2305,74 @@ const docTemplate = `{
                 }
             }
         },
+        "/report/migration/ns/{nsId}/mci/{mciId}": {
+            "post": {
+                "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "[Summary/Report] Infrastructure Analysis for Migration"
+                ],
+                "summary": "Generate migration report (with source-target correlation analysis)",
+                "operationId": "GenerateMigrationReport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "example": "\"mig01\"",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "mmci01",
+                        "example": "\"mmci01\"",
+                        "description": "MCI ID",
+                        "name": "mciId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Source infrastructure data from on-premise",
+                        "name": "onpremiseInfraModel",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.GenerateMigrationReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Markdown formatted migration report",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/summary/source": {
             "post": {
-                "description": "Get a comprehensive source infrastructure summary from on-premise data in JSON or Markdown format",
+                "description": "Generate a comprehensive source infrastructure summary from on-premise data in JSON or Markdown format",
                 "consumes": [
                     "application/json"
                 ],
@@ -2316,10 +2381,10 @@ const docTemplate = `{
                     "text/markdown"
                 ],
                 "tags": [
-                    "[Summary] Source/Target Infrastructure"
+                    "[Summary/Report] Infrastructure Analysis for Migration"
                 ],
-                "summary": "Get source infrastructure summary",
-                "operationId": "GetSourceInfraSummary",
+                "summary": "Generate source infrastructure summary",
+                "operationId": "GenerateSourceInfraSummary",
                 "parameters": [
                     {
                         "enum": [
@@ -2344,7 +2409,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.GetSourceInfraSummaryRequest"
+                            "$ref": "#/definitions/controller.GenerateSourceInfraSummaryRequest"
                         }
                     }
                 ],
@@ -2387,7 +2452,7 @@ const docTemplate = `{
         },
         "/summary/target/ns/{nsId}/mci/{mciId}": {
             "get": {
-                "description": "Get a comprehensive target infrastructure summary in JSON or Markdown format",
+                "description": "Generate a comprehensive target infrastructure summary in JSON or Markdown format",
                 "consumes": [
                     "application/json"
                 ],
@@ -2396,10 +2461,10 @@ const docTemplate = `{
                     "text/markdown"
                 ],
                 "tags": [
-                    "[Summary] Source/Target Infrastructure"
+                    "[Summary/Report] Infrastructure Analysis for Migration"
                 ],
-                "summary": "Get target infrastructure summary",
-                "operationId": "GetInfraSummary",
+                "summary": "Generate target infrastructure summary",
+                "operationId": "GenerateTargetInfraSummary",
                 "parameters": [
                     {
                         "type": "string",
@@ -4137,7 +4202,18 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.GetSourceInfraSummaryRequest": {
+        "controller.GenerateMigrationReportRequest": {
+            "type": "object",
+            "required": [
+                "onpremiseInfraModel"
+            ],
+            "properties": {
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.GenerateSourceInfraSummaryRequest": {
             "type": "object",
             "required": [
                 "onpremiseInfraModel"

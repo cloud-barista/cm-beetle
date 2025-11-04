@@ -24,11 +24,10 @@ func GenerateMarkdownSummary(summary *TargetInfraSummary) string {
 	var md strings.Builder
 
 	// Title and Metadata
-	md.WriteString("# Infrastructure Summary\n\n")
+	md.WriteString("# Target Cloud Infrastructure Summary\n\n")
 	md.WriteString(fmt.Sprintf("**Generated At:** %s\n\n", summary.SummaryMetadata.GeneratedAt.Format("2006-01-02 15:04:05")))
 	md.WriteString(fmt.Sprintf("**Namespace:** %s\n\n", summary.SummaryMetadata.Namespace))
 	md.WriteString(fmt.Sprintf("**MCI Name:** %s\n\n", summary.SummaryMetadata.MciName))
-	md.WriteString(fmt.Sprintf("**Summary Version:** %s\n\n", summary.SummaryMetadata.SummaryVersion))
 	md.WriteString("---\n\n")
 
 	// Overview Section
@@ -73,16 +72,6 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 	md.WriteString(fmt.Sprintf("| **Total VMs** | %d |\n", overview.TotalVmCount))
 	md.WriteString(fmt.Sprintf("| **Running VMs** | %d |\n", overview.RunningVmCount))
 	md.WriteString(fmt.Sprintf("| **Stopped VMs** | %d |\n", overview.StoppedVmCount))
-	if len(overview.Label) > 0 {
-		labelStr := ""
-		for k, v := range overview.Label {
-			if labelStr != "" {
-				labelStr += ", "
-			}
-			labelStr += fmt.Sprintf("%s=%s", k, v)
-		}
-		md.WriteString(fmt.Sprintf("| **Label** | %s |\n", labelStr))
-	}
 	md.WriteString(fmt.Sprintf("| **Monitoring Agent** | %s |\n", overview.InstallMonAgent))
 
 	return md.String()
@@ -92,7 +81,7 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 func generateNetworkResourcesMarkdown(resources *SummaryNetworkResources) string {
 	var md strings.Builder
 
-	md.WriteString("### Virtual Networks\n\n")
+	md.WriteString("### Virtual Networks (VPC/VNet)\n\n")
 
 	if len(resources.VNets) == 0 {
 		md.WriteString("*No virtual networks found.*\n\n")
@@ -157,13 +146,13 @@ func generateSecurityResourcesMarkdown(resources *SummarySecurityResources) stri
 		md.WriteString(fmt.Sprintf("| **Name** | %s |\n", sg.Name))
 		md.WriteString(fmt.Sprintf("| **CSP Security Group ID** | %s |\n", sg.CspSecurityGroupId))
 		md.WriteString(fmt.Sprintf("| **VNet** | %s |\n", sg.VNetName))
-		md.WriteString(fmt.Sprintf("| **Rule Count** | %d |\n", sg.RuleCount))
+		md.WriteString(fmt.Sprintf("| **Rule Count** | %d rules |\n", sg.RuleCount))
 		md.WriteString("\n")
 
 		if len(sg.Rules) > 0 {
 			md.WriteString("**Security Group Rules:**\n\n")
-			md.WriteString("| Direction | Protocol | Port | CIDR |\n")
-			md.WriteString("|-----------|----------|------|------|\n")
+			md.WriteString("| Direction | Protocol | Port Range | CIDR |\n")
+			md.WriteString("|-----------|----------|------------|------|\n")
 			for _, rule := range sg.Rules {
 				port := rule.FromPort
 				if rule.FromPort != rule.ToPort {
@@ -188,8 +177,8 @@ func generateComputeResourcesMarkdown(resources *SummaryComputeResources) string
 	if len(resources.Specs) == 0 {
 		md.WriteString("*No VM specifications found.*\n\n")
 	} else {
-		md.WriteString("| Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | Usage Count |\n")
-		md.WriteString("|------|-------|--------------|-----|--------------|-----------|-----------------|-------------|\n")
+		md.WriteString("| Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |\n")
+		md.WriteString("|------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|\n")
 		for _, spec := range resources.Specs {
 			gpuInfo := "-"
 			if spec.AcceleratorCount > 0 {
@@ -206,13 +195,22 @@ func generateComputeResourcesMarkdown(resources *SummaryComputeResources) string
 	if len(resources.Images) == 0 {
 		md.WriteString("*No VM images found.*\n\n")
 	} else {
-		md.WriteString("| Name | Distribution | OS Type | OS Platform | Architecture | Disk Type | Disk Size | Usage Count |\n")
-		md.WriteString("|------|--------------|---------|-------------|--------------|-----------|-----------|-------------|\n")
+		md.WriteString("| Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |\n")
+		md.WriteString("|------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|\n")
 		for _, image := range resources.Images {
-			diskSize := fmt.Sprintf("%.0f GB", image.OSDiskSizeGB)
+			// Handle disk size: if -1 or negative, show "-"
+			diskSize := "-"
+			if image.OSDiskSizeGB > 0 {
+				diskSize = fmt.Sprintf("%.0f GB", image.OSDiskSizeGB)
+			}
+			// Handle disk type: if empty, show "-"
+			diskType := image.OSDiskType
+			if diskType == "" {
+				diskType = "-"
+			}
 			md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s | %d |\n",
 				image.CspImageName, image.OSDistribution, image.OSType, string(image.OSPlatform),
-				string(image.OSArchitecture), image.OSDiskType, diskSize, image.UsageCount))
+				string(image.OSArchitecture), diskType, diskSize, image.UsageCount))
 		}
 		md.WriteString("\n")
 	}
@@ -224,12 +222,12 @@ func generateComputeResourcesMarkdown(resources *SummaryComputeResources) string
 		return md.String()
 	}
 
-	md.WriteString("| Instance Name | CSP Instance ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |\n")
-	md.WriteString("|---------------|-----------------|--------|-------------------------|-------|------|\n")
+	md.WriteString("| VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |\n")
+	md.WriteString("|---------|-----------|--------|-------------------------|-------|------|\n")
 	for _, vm := range resources.Vms {
 		specInfo := fmt.Sprintf("%d vCPU, %.1f GiB", vm.Spec.VCpus, vm.Spec.MemoryGiB)
 		imageInfo := fmt.Sprintf("%s (%s)", vm.Image.Distribution, vm.Image.OsVersion)
-		miscInfo := fmt.Sprintf("VNet: %s, Subnet: %s, Public IP: %s, Private IP: %s, SGs: %s, SSH: %s",
+		miscInfo := fmt.Sprintf("**VNet:** %s<br>**Subnet:** %s<br>**Public IP:** %s<br>**Private IP:** %s<br>**SGs:** %s<br>**SSH:** %s",
 			vm.Misc.VNet, vm.Misc.Subnet, vm.Misc.PublicIp, vm.Misc.PrivateIp,
 			strings.Join(vm.Misc.SecurityGroups, ", "), vm.Misc.SshKey)
 		md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s |\n",
