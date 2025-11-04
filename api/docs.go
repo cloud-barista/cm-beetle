@@ -6497,6 +6497,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ubuntu"
                 },
+                "prettyName": {
+                    "type": "string",
+                    "example": "Ubuntu 22.04.5 LTS"
+                },
                 "version": {
                     "type": "string",
                     "example": "22.04"
@@ -6561,6 +6565,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/summary.SourceInterfaceInfo"
                     }
+                },
+                "machineId": {
+                    "type": "string",
+                    "example": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
                 },
                 "memory": {
                     "$ref": "#/definitions/summary.SourceMemoryInfo"
@@ -7305,9 +7313,17 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Ubuntu"
                 },
+                "id": {
+                    "type": "string",
+                    "example": "ami-010be25c3775061c9"
+                },
                 "name": {
                     "type": "string",
                     "example": "ubuntu22.04"
+                },
+                "osType": {
+                    "type": "string",
+                    "example": "Ubuntu 22.04"
                 },
                 "osVersion": {
                     "type": "string",

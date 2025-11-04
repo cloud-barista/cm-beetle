@@ -2926,6 +2926,9 @@ definitions:
       name:
         example: Ubuntu
         type: string
+      prettyName:
+        example: Ubuntu 22.04.5 LTS
+        type: string
       version:
         example: "22.04"
         type: string
@@ -2971,6 +2974,9 @@ definitions:
         items:
           $ref: '#/definitions/summary.SourceInterfaceInfo'
         type: array
+      machineId:
+        example: 00a9f3d4-74b6-e811-906e-000ffee02d5c
+        type: string
       memory:
         $ref: '#/definitions/summary.SourceMemoryInfo'
       network:
@@ -3495,8 +3501,14 @@ definitions:
       distribution:
         example: Ubuntu
         type: string
+      id:
+        example: ami-010be25c3775061c9
+        type: string
       name:
         example: ubuntu22.04
+        type: string
+      osType:
+        example: Ubuntu 22.04
         type: string
       osVersion:
         example: "22.04"
