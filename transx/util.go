@@ -446,10 +446,20 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 			return fmt.Errorf("no objects found with prefix '%s' in bucket '%s' (after filtering)", objectKey, bucket)
 		}
 
+		// Debug: Print first few objects
+		// for i, obj := range objects {
+		// 	fmt.Printf("Object List[%d]: %v\n", i, obj)
+		// 	if i >= 4 {
+		// 		break
+		// 	}
+		// }
+
 		// Download each object
 		for _, obj := range objects {
 			// Calculate local file path
 			// Remove the prefix from object key to get relative path
+			// Note: objectKey is the prefix specified in DataPath (e.g., "resources")
+			// obj.Key is the full object key from bucket (e.g., "resources/story/original/file.png")
 			relativePath := strings.TrimPrefix(obj.Key, objectKey)
 			if relativePath == "" {
 				// If the object key exactly matches the prefix, use the filename only
@@ -461,11 +471,19 @@ func performObjectStorageTransfer(dmm DataMigrationModel) error {
 
 			localFilePath := filepath.Join(dmm.Destination.DataPath, relativePath)
 
-			objectPath := filepath.ToSlash(filepath.Join(dmm.Source.DataPath, relativePath))
+			// Construct object path for download
+			// Both Spider API and MinIO SDK expect format: "bucket/object-key"
+			// - Spider API: presigned URL format is /presigned/{operation}/{bucket}/{object-key}
+			// - MinIO SDK: Internally splits "bucket/object-key" into separate parameters
+			// obj.Key already contains the full object key (e.g., "resources/story/original/file.png")
+			objectPath := filepath.ToSlash(filepath.Join(bucket, obj.Key))
+
+			// Debug: Print mapping info
+			//fmt.Printf("ObjectPath: %s -> LocalFilePath: %s\n", objectPath, localFilePath)
 
 			// Download the individual file
 			if err := downloadFileFromObjectStorage(localFilePath, objectPath, dmm.Source, transferOptions); err != nil {
-				return fmt.Errorf("failed to download object '%s': %w", objectPath, err)
+				return fmt.Errorf("failed to download object '%s' (from bucket '%s', key '%s'): %w", objectPath, bucket, obj.Key, err)
 			}
 		}
 

@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/transx"
@@ -33,7 +34,7 @@ import (
 // @Description * Only relay mode is supported for now (both source and destination should be remote endpoints).
 // @Description * Supported methods: rsync, object storage
 // @Description
-// @Description [Note] 
+// @Description [Note]
 // @Description * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
 // @Description
 // @Tags [Migration] Data (incubating)
@@ -67,13 +68,20 @@ func MigrateData(c echo.Context) error {
 
 	log.Info().Msgf("Migrate data from %s (%s) to %s (%s)", req.Source.GetEndpoint(), req.Source.DataPath, req.Destination.GetEndpoint(), req.Destination.DataPath)
 
+	// Start time measurement
+	startTime := time.Now()
+
 	err = transx.Transfer(*req)
+
+	// Calculate elapsed time
+	elapsedTime := time.Since(startTime)
+
 	if err != nil {
-		log.Error().Err(err).Msg("failed to migrate data")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: err.Error()})
+		log.Error().Err(err).Dur("elapsedTime", elapsedTime).Msg("failed to migrate data")
+		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: fmt.Sprintf("failed to migrate data (elapsed: %s): %s", elapsedTime.Round(time.Millisecond), err.Error())})
 	}
 
-	log.Info().Msg("Data migration completed successfully")
-	return c.JSON(http.StatusOK, common.SimpleMsg{Message: "Data migration completed successfully"})
+	log.Info().Dur("elapsedTime", elapsedTime).Msg("Data migration completed successfully")
+	return c.JSON(http.StatusOK, common.SimpleMsg{Message: fmt.Sprintf("Data migration completed successfully (elapsed: %s)", elapsedTime.Round(time.Millisecond))})
 
 }
