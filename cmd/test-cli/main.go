@@ -642,6 +642,18 @@ func main() {
 		}
 
 		/*
+		 * Migration Report: POST /beetle/report/migration/ns/{nsId}/mci/{mciId}
+		 */
+		if !skipRemainingTests {
+			migrationReportResult := runMigrationReportTest(client, config, onpremInfraModel, mciId, cspPair.Csp, displayName)
+			if !migrationReportResult.Success {
+				log.Warn().Str("csp", displayName).Msg("Failed to generate migration report")
+			}
+		} else {
+			log.Info().Msgf("Migration report skipped for %s due to previous test failure", displayName)
+		}
+
+		/*
 		 * Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
 		 */
 		var result7 TestResults
@@ -2283,7 +2295,7 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 		return result
 	}
 
-	filename := fmt.Sprintf("beetle-summary-%s.md", cspName)
+	filename := fmt.Sprintf("beetle-summary-target-%s.md", cspName)
 	filepath := filepath.Join(testResultDir, filename)
 
 	if err := os.WriteFile(filepath, []byte(markdownContent), 0644); err != nil {
@@ -2294,6 +2306,103 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 	}
 
 	log.Info().Str("file", filepath).Msg("✅ Target infrastructure summary saved to file")
+
+	result.Success = true
+	result.Response = map[string]interface{}{
+		"markdown": markdownContent,
+		"file":     filepath,
+	}
+
+	return result
+}
+
+// runMigrationReportTest performs Migration Report: POST /beetle/report/migration/ns/{nsId}/mci/{mciId}
+func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfraModel onpremmodel.OnpremInfra, mciId, cspName, displayName string) TestResults {
+	result := TestResults{
+		TestName:  "Migration Report: POST /beetle/report/migration/ns/{nsId}/mci/{mciId}",
+		StartTime: time.Now(),
+	}
+
+	// Wait before API call for stability with animation
+	animatedSleep(2*time.Second, "Preparing migration report...")
+
+	// Log API call details
+	log.Info().Msgf("\n--- Migration Report for %s ---", displayName)
+
+	// Prepare request body
+	requestBody := map[string]interface{}{
+		"onpremiseInfraModel": onpremInfraModel,
+	}
+
+	// Make API call
+	url := fmt.Sprintf("%s/beetle/report/migration/ns/%s/mci/%s",
+		config.BeetleURL, config.NamespaceID, mciId)
+	result.RequestURL = url
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(requestBody).
+		Post(url)
+
+	result.EndTime = time.Now()
+	result.Duration = result.EndTime.Sub(result.StartTime)
+	result.StatusCode = resp.StatusCode()
+
+	if err != nil {
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, nil)
+		log.Error().
+			Err(err).
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Migration report failed")
+		result.Success = false
+		return result
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		err := fmt.Errorf("unexpected status code: %d", resp.StatusCode())
+		errorMsg, errorDetails := extractErrorDetails(err, resp.StatusCode())
+		populateErrorInfo(&result, err, resp.StatusCode(), url, nil)
+		log.Error().
+			Int("statusCode", resp.StatusCode()).
+			Str("errorMessage", errorMsg).
+			Str("errorDetails", errorDetails).
+			Msg("Migration report failed")
+		result.Success = false
+		return result
+	}
+
+	// Get markdown content
+	markdownContent := string(resp.Body())
+
+	// Save markdown to file
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to get current working directory")
+		cwd = "."
+	}
+
+	testResultDir := filepath.Join(cwd, "testresult")
+	if err := os.MkdirAll(testResultDir, 0755); err != nil {
+		log.Error().Err(err).Str("path", testResultDir).Msg("Failed to create testresult directory")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to create directory: %v", err)
+		return result
+	}
+
+	filename := fmt.Sprintf("beetle-report-mig-source-to-%s.md", cspName)
+	filepath := filepath.Join(testResultDir, filename)
+
+	if err := os.WriteFile(filepath, []byte(markdownContent), 0644); err != nil {
+		log.Error().Err(err).Str("file", filepath).Msg("Failed to write migration report file")
+		result.Success = false
+		result.Error = fmt.Sprintf("Failed to write file: %v", err)
+		return result
+	}
+
+	log.Info().Str("file", filepath).Msg("✅ Migration report saved to file")
 
 	result.Success = true
 	result.Response = map[string]interface{}{
@@ -2431,23 +2540,47 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
 			sshUserName := userName
 
-			// Perform SSH connectivity test
+			// Perform SSH connectivity test with retry logic
 			log.Info().Str("vmId", vmId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
 
-			sshResult, err := testSSHConnectivity(publicIP, privateKey, sshUserName)
-			if err != nil {
+			const maxRetries = 3
+			const retryDelay = 3 * time.Second
+			var sshResult string
+			var lastErr error
+
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				if attempt > 1 {
+					log.Info().Str("vmId", vmId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying SSH connection...")
+					time.Sleep(retryDelay)
+				}
+
+				sshResult, lastErr = testSSHConnectivity(publicIP, privateKey, sshUserName)
+				if lastErr == nil {
+					// Success
+					vmResult["status"] = "success"
+					vmResult["sshTest"] = "successful"
+					vmResult["command"] = "uname -a"
+					vmResult["output"] = sshResult
+					vmResult["attempts"] = attempt
+					successfulTests++
+					if attempt > 1 {
+						log.Info().Str("vmId", vmId).Str("ip", publicIP).Int("attempt", attempt).Msg("✅ SSH connectivity test passed after retry")
+					} else {
+						log.Info().Str("vmId", vmId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
+					}
+					break
+				} else {
+					log.Warn().Err(lastErr).Str("vmId", vmId).Str("ip", publicIP).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ SSH connection attempt failed")
+				}
+			}
+
+			if lastErr != nil {
 				vmResult["status"] = "failed"
-				vmResult["error"] = err.Error()
+				vmResult["error"] = lastErr.Error()
 				vmResult["sshTest"] = "failed"
+				vmResult["attempts"] = maxRetries
 				failedTests++
-				log.Error().Err(err).Str("vmId", vmId).Str("ip", publicIP).Msg("❌ SSH connectivity test failed")
-			} else {
-				vmResult["status"] = "success"
-				vmResult["sshTest"] = "successful"
-				vmResult["command"] = "uname -a"
-				vmResult["output"] = sshResult
-				successfulTests++
-				log.Info().Str("vmId", vmId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
+				log.Error().Err(lastErr).Str("vmId", vmId).Str("ip", publicIP).Int("maxRetries", maxRetries).Msg("❌ SSH connectivity test failed after all retries")
 			}
 		}
 

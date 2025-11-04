@@ -1,10 +1,8 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2025-11-03 07:13:47
+**Generated At:** 2025-11-04 15:11:23
 
 **Infrastructure Name:** infra-2-servers
-
-**Summary Version:** 1.0
 
 ---
 
@@ -31,11 +29,12 @@
 | **CPU CPUs** | 1 |
 | CPU Cores | 2 |
 | **CPU Threads** | 4 |
+| **Equivalent vCPUs** | 4 (CPUs × Threads) |
 | CPU Speed | 2.50 GHz |
 | Architecture | x86_64 |
 | **Memory** | 16 GB (DDR4) |
-| **Disk** | 1093 GB (HDD) |
-| **OS** | Ubuntu 22.04 |
+| **Root Disk** | 1093 GB (HDD) |
+| **OS** | Ubuntu 22.04.5 LTS (Jammy Jellyfish) |
 | **Primary IP** | 172.29.0.102/24 |
 
 #### 2. cm-web
@@ -46,11 +45,12 @@
 | **CPU CPUs** | 1 |
 | CPU Cores | 4 |
 | **CPU Threads** | 8 |
+| **Equivalent vCPUs** | 8 (CPUs × Threads) |
 | CPU Speed | 3.10 GHz |
 | Architecture | x86_64 |
 | **Memory** | 16 GB (DDR4) |
-| **Disk** | 1312 GB (HDD) |
-| **OS** | Ubuntu 22.04 |
+| **Root Disk** | 1312 GB (HDD) |
+| **OS** | Ubuntu 22.04.5 LTS (Jammy Jellyfish) |
 | **Primary IP** | 172.29.0.103/24 |
 
 
@@ -122,8 +122,8 @@
 
 **Firewall Rules:** (3 rules)
 
-| Direction | Protocol | Source | Src Ports | Destination | Dst Ports | Action |
-|-----------|----------|--------|-----------|-------------|-----------|--------|
+| Direction | Protocol | Src CIDR | Src Ports | Dst CIDR | Dst Ports | Action |
+|-----------|----------|----------|-----------|----------|-----------|--------|
 | inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 10022 | allow |
 | inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 8081,8082 | allow |
 | inbound | udp | 192.168.110.0/24 | * | 0.0.0.0/0 | 53 | allow |
@@ -147,4 +147,23 @@
 | Type | Total (GB) | Servers |
 |------|------------|----------|
 | HDD | 2405 | 2 |
+
+---
+
+## 📝 Important Notes for Cloud Migration
+
+### CPU to vCPU Mapping
+
+When migrating to cloud VMs, the **Equivalent vCPUs** value is calculated as:
+
+```
+Equivalent vCPUs = CPUs × CPU Threads
+```
+
+**Example:**
+- Source Server: 2 CPUs, 2 Threads per CPU
+- Calculation: 2 CPUs × 2 Threads = **4 vCPUs**
+- Target VM Spec: Select a VM with **4 vCPUs** (e.g., AWS t3.xlarge)
+
+This calculation ensures that the target VM has sufficient processing capacity equivalent to the source server.
 
