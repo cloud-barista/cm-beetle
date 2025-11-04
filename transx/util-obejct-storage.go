@@ -631,7 +631,7 @@ func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, opti
 		defer cancel()
 	}
 
-	// List objects
+	// List objects recursively
 	objectCh := minioClient.ListObjects(ctx, bucket, minio.ListObjectsOptions{
 		Prefix:    prefix,
 		Recursive: true,
@@ -641,6 +641,15 @@ func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, opti
 	for object := range objectCh {
 		if object.Err != nil {
 			return nil, fmt.Errorf("error listing objects: %w", object.Err)
+		}
+
+		// Filter out directory markers (placeholder objects created by some S3 clients)
+		// AWS S3/MinIO doesn't have native directory support - it's a flat key-value store.
+		// Some tools (AWS Console, s3cmd, etc.) create empty objects with keys ending in "/"
+		// to simulate directory structure. These should be excluded from file transfers.
+		// Example: "resources/" (Size: 0) is a directory marker, not an actual file.
+		if object.Size == 0 && strings.HasSuffix(object.Key, "/") {
+			continue // Skip directory markers
 		}
 
 		objects = append(objects, ObjectInfo{
