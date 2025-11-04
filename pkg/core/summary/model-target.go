@@ -153,6 +153,8 @@ type SummaryVmSpecInfo struct {
 // SummaryVmImageInfo represents VM Image summary embedded in VM info
 type SummaryVmImageInfo struct {
 	Name         string `json:"name" example:"ubuntu22.04"`
+	Id           string `json:"id,omitempty" example:"ami-010be25c3775061c9"`
+	OsType       string `json:"osType,omitempty" example:"Ubuntu 22.04"`
 	Distribution string `json:"distribution" example:"Ubuntu"`
 	OsVersion    string `json:"osVersion" example:"22.04"`
 }

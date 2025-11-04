@@ -135,8 +135,9 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 		// OS information
 		osInfo := SourceOSInfo{
+			PrettyName:   server.OS.PrettyName,
 			Name:         server.OS.Name,
-			Version:      server.OS.VersionID,
+			Version:      server.OS.Version,
 			Architecture: server.CPU.Architecture,
 		}
 
@@ -191,6 +192,7 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 		serverInfo := SourceServerInfo{
 			Hostname:     server.Hostname,
+			MachineId:    server.MachineId,
 			CPU:          cpuInfo,
 			Memory:       memoryInfo,
 			Disk:         diskInfo,

@@ -25,16 +25,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// GetSourceInfraSummaryRequest represents the request body for source infrastructure summary
-type GetSourceInfraSummaryRequest struct {
-	OnpremiseInfraModel onpremmodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
-}
-
-// GetInfraSummary godoc
-// @ID GetInfraSummary
-// @Summary Get target infrastructure summary
-// @Description Get a comprehensive target infrastructure summary in JSON or Markdown format
-// @Tags [Summary] Source/Target Infrastructure
+// GenerateTargetInfraSummary godoc
+// @ID GenerateTargetInfraSummary
+// @Summary Generate target infrastructure summary
+// @Description Generate a comprehensive target infrastructure summary in JSON or Markdown format
+// @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept  json
 // @Produce  json
 // @Produce  text/markdown
@@ -47,7 +42,7 @@ type GetSourceInfraSummaryRequest struct {
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /summary/target/ns/{nsId}/mci/{mciId} [get]
-func GetInfraSummary(c echo.Context) error {
+func GenerateTargetInfraSummary(c echo.Context) error {
 
 	// [Input]
 	nsId := c.Param("nsId")
@@ -111,22 +106,27 @@ func GetInfraSummary(c echo.Context) error {
 	return c.JSON(http.StatusOK, infraSummary)
 }
 
-// GetSourceInfraSummary godoc
-// @ID GetSourceInfraSummary
-// @Summary Get source infrastructure summary
-// @Description Get a comprehensive source infrastructure summary from on-premise data in JSON or Markdown format
-// @Tags [Summary] Source/Target Infrastructure
+// GenerateSourceInfraSummaryRequest represents the request body for source infrastructure summary
+type GenerateSourceInfraSummaryRequest struct {
+	OnpremiseInfraModel onpremmodel.OnpremInfra `json:"onpremiseInfraModel" validate:"required"`
+}
+
+// GenerateSourceInfraSummary godoc
+// @ID GenerateSourceInfraSummary
+// @Summary Generate source infrastructure summary
+// @Description Generate a comprehensive source infrastructure summary from on-premise data in JSON or Markdown format
+// @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept  json
 // @Produce  json
 // @Produce  text/markdown
 // @Param format query string false "Summary format: json or md" Enums(json,md) default(md)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
-// @Param Request body controller.GetSourceInfraSummaryRequest true "Source infrastructure data"
+// @Param Request body controller.GenerateSourceInfraSummaryRequest true "Source infrastructure data"
 // @Success 200 {object} JSONResult{[MARKDOWN]=string,[JSON]=summary.SourceInfraSummary} "Different return types: json format returns SourceInfraSummary object, md format returns markdown string"
 // @Failure 400 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /summary/source [post]
-func GetSourceInfraSummary(c echo.Context) error {
+func GenerateSourceInfraSummary(c echo.Context) error {
 
 	// [Input]
 	format := c.QueryParam("format")
@@ -144,7 +144,7 @@ func GetSourceInfraSummary(c echo.Context) error {
 	}
 
 	// Bind request body
-	var req GetSourceInfraSummaryRequest
+	var req GenerateSourceInfraSummaryRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
 		res := model.Response{
