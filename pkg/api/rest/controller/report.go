@@ -15,10 +15,12 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	"github.com/cloud-barista/cm-beetle/pkg/core/report"
+	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -32,14 +34,19 @@ type GenerateMigrationReportRequest struct {
 // GenerateMigrationReport godoc
 // @ID GenerateMigrationReport
 // @Summary Generate migration report (with source-target correlation analysis)
-// @Description Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations
+// @Description Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown or HTML format
 // @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept json
-// @Produce plain
+// @Produce text/markdown
+// @Produce text/html
 // @Param nsId path string true "Namespace ID" example("mig01") default(mig01)
 // @Param mciId path string true "MCI ID" example("mmci01") default(mmci01)
+// @Param format query string false "Report format: md or html" Enums(md,html) default(md)
+// @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
-// @Success 200 {string} string "Markdown formatted migration report"
+// @Success 200 {string} string "Migration report in markdown or HTML format"
+// @Header 200 {string} Content-Disposition "inline; filename=\"migration-report.md\" or \"migration-report.html\" (or attachment when download=true)"
+// @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.Response "Invalid request"
 // @Failure 500 {object} model.Response "Internal server error"
 // @Router /report/migration/ns/{nsId}/mci/{mciId} [post]
@@ -58,6 +65,33 @@ func GenerateMigrationReport(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.Response{
 			Success: false,
 			Text:    "mciId is required",
+		})
+	}
+
+	// Extract query parameters
+	format := c.QueryParam("format")
+	if format == "" {
+		format = "md" // default format
+	}
+	if format != "md" && format != "html" {
+		err := fmt.Errorf("invalid request, the format (format: %s) must be 'md' or 'html'", format)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{
+			Success: false,
+			Text:    err.Error(),
+		})
+	}
+
+	download := c.QueryParam("download")
+	if download == "" {
+		download = "false" // default: inline display
+	}
+	if download != "true" && download != "false" {
+		err := fmt.Errorf("invalid request, the download (download: %s) must be 'true' or 'false'", download)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.Response{
+			Success: false,
+			Text:    err.Error(),
 		})
 	}
 
@@ -84,6 +118,8 @@ func GenerateMigrationReport(c echo.Context) error {
 		Str("nsId", nsId).
 		Str("mciId", mciId).
 		Int("sourceServers", len(req.OnpremiseInfraModel.Servers)).
+		Str("format", format).
+		Str("download", download).
 		Msg("Generating migration report")
 
 	migrationReport, err := report.GenerateMigrationReport(nsId, mciId, req.OnpremiseInfraModel)
@@ -95,9 +131,37 @@ func GenerateMigrationReport(c echo.Context) error {
 		})
 	}
 
-	// Generate markdown
-	markdown := report.GenerateMigrationReportMarkdown(migrationReport)
+	// [Output]
+	// Generate markdown report
+	markdownReport := report.GenerateMigrationReportMarkdown(migrationReport)
 
-	// Return markdown with proper content type
-	return c.String(http.StatusOK, markdown)
+	var content []byte
+	var contentType string
+	var fileExtension string
+
+	if format == "html" {
+		// Convert markdown to HTML
+		content = summary.ConvertMarkdownToHTML([]byte(markdownReport))
+		contentType = "text/html; charset=utf-8"
+		fileExtension = "html"
+	} else {
+		// Return as markdown (default)
+		content = []byte(markdownReport)
+		contentType = "text/markdown; charset=utf-8"
+		fileExtension = "md"
+	}
+
+	// Set Content-Disposition header based on download parameter
+	// - "inline": displays content in browser/Swagger UI (allows both viewing and downloading)
+	// - "attachment": forces file download in browser (content not displayed in Swagger UI response body)
+	filename := fmt.Sprintf("migration-report-%s-%s.%s", nsId, mciId, fileExtension)
+	dispositionType := "inline"
+	if download == "true" {
+		dispositionType = "attachment"
+	}
+	disposition := dispositionType + "; filename=\"" + filename + "\""
+	c.Response().Header().Set(echo.HeaderContentDisposition, disposition)
+
+	// Return with proper Content-Type
+	return c.Blob(http.StatusOK, contentType, content)
 }

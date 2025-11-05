@@ -5545,7 +5545,7 @@ paths:
       - application/json
       description: Generate a comprehensive migration report comparing source infrastructure
         with target cloud VMs, including resource mappings, network/security analysis,
-        cost summary, and recommendations
+        cost summary, and recommendations in Markdown or HTML format
       operationId: GenerateMigrationReport
       parameters:
       - default: mig01
@@ -5562,6 +5562,23 @@ paths:
         name: mciId
         required: true
         type: string
+      - default: md
+        description: 'Report format: md or html'
+        enum:
+        - md
+        - html
+        in: query
+        name: format
+        type: string
+      - default: "false"
+        description: 'Download as file: true for file download, false for inline display
+          (only affects browsers/Swagger UI, not curl)'
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: download
+        type: string
       - description: Source infrastructure data from on-premise
         in: body
         name: onpremiseInfraModel
@@ -5569,10 +5586,19 @@ paths:
         schema:
           $ref: '#/definitions/controller.GenerateMigrationReportRequest'
       produces:
-      - text/plain
+      - text/markdown
+      - text/html
       responses:
         "200":
-          description: Markdown formatted migration report
+          description: Migration report in markdown or HTML format
+          headers:
+            Content-Disposition:
+              description: inline; filename=\"migration-report.md\" or \"migration-report.html\"
+                (or attachment when download=true)
+              type: string
+            Content-Type:
+              description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+              type: string
           schema:
             type: string
         "400":
@@ -5591,16 +5617,26 @@ paths:
       consumes:
       - application/json
       description: Generate a comprehensive source infrastructure summary from on-premise
-        data in JSON or Markdown format
+        data in JSON, Markdown, or HTML format
       operationId: GenerateSourceInfraSummary
       parameters:
       - default: md
-        description: 'Summary format: json or md'
+        description: 'Summary format: json, md, or html'
         enum:
         - json
         - md
+        - html
         in: query
         name: format
+        type: string
+      - default: "false"
+        description: 'Download as file: true for file download, false for inline display
+          (only affects browsers/Swagger UI, not curl)'
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: download
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
@@ -5615,14 +5651,25 @@ paths:
       produces:
       - application/json
       - text/markdown
+      - text/html
       responses:
         "200":
           description: 'Different return types: json format returns SourceInfraSummary
-            object, md format returns markdown string'
+            object, md format returns markdown string, html format returns HTML string'
+          headers:
+            Content-Disposition:
+              description: inline; filename=\"source-summary.md\" or \"source-summary.html\"
+                (or attachment when download=true)
+              type: string
+            Content-Type:
+              description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+              type: string
           schema:
             allOf:
             - $ref: '#/definitions/controller.JSONResult'
             - properties:
+                '[HTML]':
+                  type: string
                 '[JSON]':
                   $ref: '#/definitions/summary.SourceInfraSummary'
                 '[MARKDOWN]':
@@ -5643,8 +5690,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Generate a comprehensive target infrastructure summary in JSON
-        or Markdown format
+      description: Generate a comprehensive target infrastructure summary in JSON,
+        Markdown, or HTML format
       operationId: GenerateTargetInfraSummary
       parameters:
       - default: mig01
@@ -5660,12 +5707,22 @@ paths:
         required: true
         type: string
       - default: md
-        description: 'Summary format: json or md'
+        description: 'Summary format: json, md, or html'
         enum:
         - json
         - md
+        - html
         in: query
         name: format
+        type: string
+      - default: "false"
+        description: 'Download as file: true for file download, false for inline display
+          (only affects browsers/Swagger UI, not curl)'
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: download
         type: string
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
@@ -5674,14 +5731,25 @@ paths:
       produces:
       - application/json
       - text/markdown
+      - text/html
       responses:
         "200":
           description: 'Different return types: json format returns TargetInfraSummary
-            object, md format returns markdown string'
+            object, md format returns markdown string, html format returns HTML string'
+          headers:
+            Content-Disposition:
+              description: inline; filename=\"target-summary.md\" or \"target-summary.html\"
+                (or attachment when download=true)
+              type: string
+            Content-Type:
+              description: text/markdown; charset=utf-8 or text/html; charset=utf-8
+              type: string
           schema:
             allOf:
             - $ref: '#/definitions/controller.JSONResult'
             - properties:
+                '[HTML]':
+                  type: string
                 '[JSON]':
                   $ref: '#/definitions/summary.TargetInfraSummary'
                 '[MARKDOWN]':
