@@ -281,16 +281,16 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 
 			protocolLower := strings.ToLower(protocol)
 			switch protocolLower {
-			case "icmp":
+			case "icmp", "all":
 				tbRule := cloudmodel.FirewallRuleReq{
 					Direction: rule.Direction,
 					Protocol:  protocol,
 					CIDR:      srcCIDR,
 				}
 				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created inbound rule for 'ICMP' protocol: %+v", tbRule)
+				log.Debug().Msgf("Created inbound rule for '%s' protocol: %+v", protocol, tbRule)
 
-			case "tcp", "udp", "all":
+			case "tcp", "udp":
 				var dstPorts string
 				// Handle wildcard ports based on protocol
 				if rule.DstPorts == "*" {
