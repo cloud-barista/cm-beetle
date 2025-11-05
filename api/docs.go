@@ -2307,12 +2307,13 @@ const docTemplate = `{
         },
         "/report/migration/ns/{nsId}/mci/{mciId}": {
             "post": {
-                "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations",
+                "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown or HTML format",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "text/plain"
+                    "text/markdown",
+                    "text/html"
                 ],
                 "tags": [
                     "[Summary/Report] Infrastructure Analysis for Migration"
@@ -2339,6 +2340,28 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "md",
+                            "html"
+                        ],
+                        "type": "string",
+                        "default": "md",
+                        "description": "Report format: md or html",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)",
+                        "name": "download",
+                        "in": "query"
+                    },
+                    {
                         "description": "Source infrastructure data from on-premise",
                         "name": "onpremiseInfraModel",
                         "in": "body",
@@ -2350,9 +2373,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Markdown formatted migration report",
+                        "description": "Migration report in markdown or HTML format",
                         "schema": {
                             "type": "string"
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "inline; filename=\\\"migration-report.md\\\" or \\\"migration-report.html\\\" (or attachment when download=true)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+                            }
                         }
                     },
                     "400": {
@@ -2372,13 +2405,14 @@ const docTemplate = `{
         },
         "/summary/source": {
             "post": {
-                "description": "Generate a comprehensive source infrastructure summary from on-premise data in JSON or Markdown format",
+                "description": "Generate a comprehensive source infrastructure summary from on-premise data in JSON, Markdown, or HTML format",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json",
-                    "text/markdown"
+                    "text/markdown",
+                    "text/html"
                 ],
                 "tags": [
                     "[Summary/Report] Infrastructure Analysis for Migration"
@@ -2389,12 +2423,24 @@ const docTemplate = `{
                     {
                         "enum": [
                             "json",
-                            "md"
+                            "md",
+                            "html"
                         ],
                         "type": "string",
                         "default": "md",
-                        "description": "Summary format: json or md",
+                        "description": "Summary format: json, md, or html",
                         "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)",
+                        "name": "download",
                         "in": "query"
                     },
                     {
@@ -2415,7 +2461,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Different return types: json format returns SourceInfraSummary object, md format returns markdown string",
+                        "description": "Different return types: json format returns SourceInfraSummary object, md format returns markdown string, html format returns HTML string",
                         "schema": {
                             "allOf": [
                                 {
@@ -2424,6 +2470,9 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
+                                        "[HTML]": {
+                                            "type": "string"
+                                        },
                                         "[JSON]": {
                                             "$ref": "#/definitions/summary.SourceInfraSummary"
                                         },
@@ -2433,6 +2482,16 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "inline; filename=\\\"source-summary.md\\\" or \\\"source-summary.html\\\" (or attachment when download=true)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+                            }
                         }
                     },
                     "400": {
@@ -2452,13 +2511,14 @@ const docTemplate = `{
         },
         "/summary/target/ns/{nsId}/mci/{mciId}": {
             "get": {
-                "description": "Generate a comprehensive target infrastructure summary in JSON or Markdown format",
+                "description": "Generate a comprehensive target infrastructure summary in JSON, Markdown, or HTML format",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json",
-                    "text/markdown"
+                    "text/markdown",
+                    "text/html"
                 ],
                 "tags": [
                     "[Summary/Report] Infrastructure Analysis for Migration"
@@ -2485,12 +2545,24 @@ const docTemplate = `{
                     {
                         "enum": [
                             "json",
-                            "md"
+                            "md",
+                            "html"
                         ],
                         "type": "string",
                         "default": "md",
-                        "description": "Summary format: json or md",
+                        "description": "Summary format: json, md, or html",
                         "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)",
+                        "name": "download",
                         "in": "query"
                     },
                     {
@@ -2502,7 +2574,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Different return types: json format returns TargetInfraSummary object, md format returns markdown string",
+                        "description": "Different return types: json format returns TargetInfraSummary object, md format returns markdown string, html format returns HTML string",
                         "schema": {
                             "allOf": [
                                 {
@@ -2511,6 +2583,9 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
+                                        "[HTML]": {
+                                            "type": "string"
+                                        },
                                         "[JSON]": {
                                             "$ref": "#/definitions/summary.TargetInfraSummary"
                                         },
@@ -2520,6 +2595,16 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "inline; filename=\\\"target-summary.md\\\" or \\\"target-summary.html\\\" (or attachment when download=true)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "text/markdown; charset=utf-8 or text/html; charset=utf-8"
+                            }
                         }
                     },
                     "400": {

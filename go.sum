@@ -4,6 +4,7 @@ github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPd
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/cloud-barista/cb-tumblebug v0.11.13 h1:KgNDnMiuBR9bo2VZbMasnUzrKIP/A/2CrhDG4cp+bWo=
 github.com/cloud-barista/cb-tumblebug v0.11.13/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
+github.com/cloud-barista/cb-tumblebug v0.11.15/go.mod h1:jxLBQMEqsYxIsOfgdhXC6KOwMg7Ldc3rvw1GAih3gFc=
 github.com/cloud-barista/cm-model v0.0.14 h1:WkfBZHRuzQmCxbvDNeuy+TQJQjZtjbLQ9gWB8XFffm0=
 github.com/cloud-barista/cm-model v0.0.14/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/mc-terrarium v0.0.22 h1:64+7gHeqIRAGtW5TClujlKi1WnpvtsgLfu+2RsQdBQg=
@@ -191,6 +192,10 @@ github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcY
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+github.com/yuin/goldmark v1.7.13 h1:GPddIs617DnBLFFVJFgpo1aBfe/4xcvMc3SB5t/D0pA=
+github.com/yuin/goldmark v1.7.13/go.mod h1:ip/1k0VRfGynBgxOz0yCqHrbZXhcjxyuS66Brc7iBKg=
+github.com/yuin/goldmark-emoji v1.0.6 h1:QWfF2FYaXwL74tfGOW5izeiZepUDroDJfWubQI9HTHs=
+github.com/yuin/goldmark-emoji v1.0.6/go.mod h1:ukxJDKFpdFb5x0a5HqbdlcKtebh086iJpI31LTKmWuA=
 github.com/yunkon-kim/transx v0.0.1 h1:ifjv0VdxniRdwOU98fZBLr6k+hbAjSporE4GntLr1N4=
 github.com/yunkon-kim/transx v0.0.1/go.mod h1:S8Sp4FcqJMvseBnI5KhA4DX6v3D1nWhlbsYR9sG0i8E=
 go.etcd.io/etcd/api/v3 v3.5.12 h1:W4sw5ZoU2Juc9gBWuLk5U6fHfNVyY1WC5g9uiXZio/c=
