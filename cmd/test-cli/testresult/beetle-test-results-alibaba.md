@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.1 (a4c4e23)
+- CM-Beetle: v0.4.2+ (950c02b)
 - cm-model: v0.0.14
 - CB-Tumblebug: v0.11.15
 - CB-Spider: v0.11.15
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: October 27, 2025
-- Test Time: 19:46:27 KST
-- Test Execution: 2025-10-27 19:46:27 KST
+- Test Date: November 5, 2025
+- Test Time: 15:29:25 KST
+- Test Execution: 2025-11-05 15:29:25 KST
 
 ### Scenario
 
@@ -39,19 +39,19 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 512ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 1m7.577s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 134ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 62ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 152ms | Pass |
-| 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 29.134s | Pass |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 742ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ❌ **FAIL** | 27.524s | Fail |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ⏭️ **SKIP** | 0s | Skip |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ⏭️ **SKIP** | 0s | Skip |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ⏭️ **SKIP** | 0s | Skip |
+| 6 | Remote Command Accessibility Check | ⏭️ **SKIP** | 0s | Skip |
+| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ⏭️ **SKIP** | 0s | Skip |
 
-**Overall Result**: 7/7 tests passed ✅
+**Overall Result**: 1/7 tests passed, 5 skipped ❌
 
-**Total Duration**: 2m13.809003502s
+**Total Duration**: 38.337685649s
 
-*Test executed on October 27, 2025 at 19:46:27 KST (2025-10-27 19:46:27 KST) using CM-Beetle automated test CLI*
+*Test executed on November 5, 2025 at 15:29:25 KST (2025-11-05 15:29:25 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -84,14 +84,19 @@
       "ipv4Networks": {
         "defaultGateways": [
           {
-            "ip": "192.168.110.254",
-            "interfaceName": "br-ex",
-            "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c"
           },
           {
-            "ip": "192.168.110.254",
-            "interfaceName": "br-ex",
-            "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939"
+          },
+          {
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4"
           }
         ]
       },
@@ -99,37 +104,27 @@
     },
     "servers": [
       {
-        "hostname": "cm-nfs",
-        "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "hostname": "ip-10-0-1-25",
+        "machineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "cpu": {
           "architecture": "x86_64",
           "cpus": 1,
-          "cores": 2,
-          "threads": 4,
+          "cores": 1,
+          "threads": 2,
           "maxSpeed": 2.499,
           "vendor": "GenuineIntel",
           "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 16,
-          "available": 12,
-          "used": 4
+          "totalSize": 2,
+          "available": 1
         },
         "rootDisk": {
-          "label": "unknown",
-          "type": "HDD",
-          "totalSize": 1093,
-          "available": 972,
-          "used": 65
+          "label": "",
+          "type": "",
+          "totalSize": 0
         },
-        "dataDisks": [
-          {
-            "label": "unknown",
-            "type": "HDD",
-            "totalSize": 0
-          }
-        ],
         "interfaces": [
           {
             "name": "lo",
@@ -143,374 +138,51 @@
             "state": "up"
           },
           {
-            "name": "enp24s0f0",
-            "macAddress": "b4:96:91:52:fa:e8",
-            "mtu": 1500
-          },
-          {
-            "name": "enp24s0f1",
-            "macAddress": "b4:96:91:52:fa:e9",
-            "mtu": 1500
-          },
-          {
-            "name": "eno1np0",
-            "macAddress": "a4:bf:01:5a:b0:03",
+            "name": "ens5",
+            "macAddress": "02:1d:0c:42:f1:51",
             "ipv4CidrBlocks": [
-              "172.29.0.102/24",
-              "172.29.0.200/32"
+              "10.0.1.25/24"
             ],
             "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b003/64"
+              "fe80::1d:cff:fe42:f151/64"
             ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp26s0f0",
-            "macAddress": "b4:96:91:53:01:54",
-            "mtu": 1500
-          },
-          {
-            "name": "enp26s0f1",
-            "macAddress": "b4:96:91:53:01:55",
-            "mtu": 1500
-          },
-          {
-            "name": "eno2np1",
-            "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.200/32"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp175s0f0",
-            "macAddress": "b4:96:91:47:70:f0",
-            "mtu": 1500
-          },
-          {
-            "name": "enp175s0f1",
-            "macAddress": "b4:96:91:47:70:f2",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f0",
-            "macAddress": "b4:96:91:47:80:0c",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f1",
-            "macAddress": "b4:96:91:47:80:0e",
-            "mtu": 1500
-          },
-          {
-            "name": "br-189b10762332",
-            "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": [
-              "172.20.0.1/16"
-            ],
-            "mtu": 1500,
-            "state": "down"
-          },
-          {
-            "name": "br-f67138586d47",
-            "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": [
-              "172.19.0.1/16"
-            ],
-            "mtu": 1500,
-            "state": "down"
-          },
-          {
-            "name": "br-068801a3f047",
-            "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": [
-              "172.17.0.1/16"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::42:ccff:fe24:2530/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "ovs-system",
-            "macAddress": "f6:db:ff:2d:fa:8a",
-            "mtu": 1500
-          },
-          {
-            "name": "octavia-hm0",
-            "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": [
-              "10.1.0.106/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fe9d:89c5/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "genev_sys_6081",
-            "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": [
-              "fe80::2852:51ff:fe36:258b/64"
-            ],
-            "mtu": 65000,
-            "state": "up"
-          },
-          {
-            "name": "br-int",
-            "macAddress": "62:9b:45:53:d2:4f",
-            "mtu": 1442
-          },
-          {
-            "name": "br-ex",
-            "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.102/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0481d752-40",
-            "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": [
-              "fe80::682a:78ff:fe65:4232/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap935cb764-41",
-            "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4c:392b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap19d6d4d9-a4",
-            "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fed5:6f85/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap7422e216-ff",
-            "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4d:319e/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapa53b173c-e4",
-            "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:914b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapabb5f299-74",
-            "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe46:9b72/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapf6929430-67",
-            "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe3e:1510/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap3968711d-8a",
-            "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe65:ad39/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap49d44128-d0",
-            "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe1e:c7fc/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap708d34b6-e0",
-            "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe19:8c71/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1479d90f-c0",
-            "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": [
-              "fe80::780f:53ff:fead:5084/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1a03c4f4-e8",
-            "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": [
-              "10.254.0.27/28",
-              "10.254.0.3/28"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fec9:ea1c/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "veth0b8a5f4",
-            "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": [
-              "fe80::bc22:36ff:fe27:1d2/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "veth87e839e",
-            "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": [
-              "fe80::38f0:78ff:fef7:358/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "veth089f03a",
-            "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": [
-              "fe80::5c87:18ff:fe73:d0dd/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapaf1a281f-c0",
-            "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": [
-              "fe80::303c:e7ff:fe79:eeef/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0e0c519d-d0",
-            "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe8a:c222/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd801f01d-d6",
-            "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe09:e9f5/64"
-            ],
-            "mtu": 1442,
+            "mtu": 9001,
             "state": "up"
           }
         ],
         "routingTable": [
           {
             "destination": "0.0.0.0/0",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.1.0.0/24",
-            "interface": "octavia-hm0",
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.254.0.0/28",
-            "interface": "tap1a03c4f4-e8",
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.254.0.16/28",
-            "interface": "tap1a03c4f4-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "172.17.0.0/16",
-            "interface": "br-068801a3f047",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "172.19.0.0/16",
-            "interface": "br-f67138586d47",
-            "protocol": "kernel",
-            "scope": "link",
-            "source": "172.19.0.1",
-            "linkState": "down"
-          },
-          {
-            "destination": "172.20.0.0/16",
-            "interface": "br-189b10762332",
-            "protocol": "kernel",
-            "scope": "link",
-            "source": "172.20.0.1",
-            "linkState": "down"
-          },
-          {
-            "destination": "172.29.0.0/24",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "192.168.110.0/24",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
@@ -526,192 +198,8 @@
           },
           {
             "destination": "fe80::/64",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "br-068801a3f047",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "octavia-hm0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0481d752-40",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap935cb764-41",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap19d6d4d9-a4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap7422e216-ff",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapa53b173c-e4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapabb5f299-74",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapf6929430-67",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap3968711d-8a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap49d44128-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap708d34b6-e0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1a03c4f4-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth0b8a5f4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth87e839e",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth089f03a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapaf1a281f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0e0c519d-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd801f01d-d6",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -735,362 +223,17 @@
             "linkState": "up"
           },
           {
-            "destination": "fe80::42:ccff:fe24:2530/128",
-            "interface": "br-068801a3f047",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::2852:51ff:fe36:258b/128",
-            "interface": "genev_sys_6081",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::303c:e7ff:fe79:eeef/128",
-            "interface": "tapaf1a281f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::38f0:78ff:fef7:358/128",
-            "interface": "veth87e839e",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::5c87:18ff:fe73:d0dd/128",
-            "interface": "veth089f03a",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::682a:78ff:fe65:4232/128",
-            "interface": "tap0481d752-40",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::780f:53ff:fead:5084/128",
-            "interface": "tap1479d90f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b003/128",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b004/128",
-            "interface": "eno2np1",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b004/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::bc22:36ff:fe27:1d2/128",
-            "interface": "veth0b8a5f4",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::f816:3eff:fe9d:89c5/128",
-            "interface": "octavia-hm0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::f816:3eff:fec9:ea1c/128",
-            "interface": "tap1a03c4f4-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe09:e9f5/128",
-            "interface": "tapd801f01d-d6",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe19:8c71/128",
-            "interface": "tap708d34b6-e0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe1e:c7fc/128",
-            "interface": "tap49d44128-d0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe3e:1510/128",
-            "interface": "tapf6929430-67",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe46:9b72/128",
-            "interface": "tapabb5f299-74",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe4c:392b/128",
-            "interface": "tap935cb764-41",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe4d:319e/128",
-            "interface": "tap7422e216-ff",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe52:914b/128",
-            "interface": "tapa53b173c-e4",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe65:ad39/128",
-            "interface": "tap3968711d-8a",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe8a:c222/128",
-            "interface": "tap0e0c519d-d0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fed5:6f85/128",
-            "interface": "tap19d6d4d9-a4",
+            "destination": "fe80::1d:cff:fe42:f151/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
             "destination": "ff00::/8",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "br-068801a3f047",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "octavia-hm0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0481d752-40",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap935cb764-41",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap19d6d4d9-a4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap7422e216-ff",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapa53b173c-e4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapabb5f299-74",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapf6929430-67",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap3968711d-8a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap49d44128-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap708d34b6-e0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1a03c4f4-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth0b8a5f4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth87e839e",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth089f03a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapaf1a281f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0e0c519d-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd801f01d-d6",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1111,7 +254,61 @@
             "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "10022",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
             "protocol": "tcp",
             "direction": "inbound",
             "action": "allow"
@@ -1120,24 +317,348 @@
             "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8081,8082",
+            "dstPorts": "80",
             "protocol": "tcp",
             "direction": "inbound",
             "action": "allow"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
+            "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "53",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
             "protocol": "udp",
             "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
             "action": "allow"
           }
         ],
         "os": {
-          "prettyName": "Ubuntu 22.04.5 LTS",
-          "version": "22.04.5 LTS (Jammy Jellyfish)",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
           "name": "Ubuntu",
           "versionId": "22.04",
           "versionCodename": "jammy",
@@ -1146,29 +667,26 @@
         }
       },
       {
-        "hostname": "cm-web",
-        "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "hostname": "ip-10-0-1-220",
+        "machineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "cpu": {
           "architecture": "x86_64",
           "cpus": 1,
-          "cores": 4,
-          "threads": 8,
-          "maxSpeed": 3.099,
+          "cores": 2,
+          "threads": 4,
+          "maxSpeed": 2.499,
           "vendor": "GenuineIntel",
           "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
         },
         "memory": {
           "type": "DDR4",
           "totalSize": 16,
-          "available": 12,
-          "used": 4
+          "available": 15
         },
         "rootDisk": {
-          "label": "unknown",
-          "type": "HDD",
-          "totalSize": 1312,
-          "available": 1222,
-          "used": 23
+          "label": "",
+          "type": "",
+          "totalSize": 0
         },
         "interfaces": [
           {
@@ -1183,254 +701,51 @@
             "state": "up"
           },
           {
-            "name": "enp24s0f0",
-            "macAddress": "b4:96:91:53:01:58",
-            "mtu": 1500
-          },
-          {
-            "name": "enp24s0f1",
-            "macAddress": "b4:96:91:53:01:59",
-            "mtu": 1500
-          },
-          {
-            "name": "enp175s0f0",
-            "macAddress": "b4:96:91:55:23:8c",
-            "mtu": 1500
-          },
-          {
-            "name": "eno1np0",
-            "macAddress": "a4:bf:01:5a:b1:1b",
+            "name": "ens5",
+            "macAddress": "02:4c:5f:01:55:b3",
             "ipv4CidrBlocks": [
-              "172.29.0.103/24"
+              "10.0.1.220/24"
             ],
             "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11b/64"
+              "fe80::4c:5fff:fe01:55b3/64"
             ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp26s0f0",
-            "macAddress": "b4:96:91:53:01:6c",
-            "mtu": 1500
-          },
-          {
-            "name": "enp26s0f1",
-            "macAddress": "b4:96:91:53:01:6d",
-            "mtu": 1500
-          },
-          {
-            "name": "eno2np1",
-            "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11c/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp175s0f1",
-            "macAddress": "b4:96:91:55:23:8e",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f0",
-            "macAddress": "b4:96:91:55:1e:04",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f1",
-            "macAddress": "b4:96:91:55:1e:06",
-            "mtu": 1500
-          },
-          {
-            "name": "ovs-system",
-            "macAddress": "6e:a8:ca:69:96:82",
-            "mtu": 1500
-          },
-          {
-            "name": "br-ex",
-            "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv4CidrBlocks": [
-              "192.168.110.103/24"
-            ],
-            "ipv6CidrBlocks": [
-              "2001::1000/64",
-              "fe80::7824:d2ff:fe2c:7330/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "genev_sys_6081",
-            "macAddress": "fa:e3:ea:20:21:0c",
-            "ipv6CidrBlocks": [
-              "fe80::2caf:1eff:fe7f:f78f/64"
-            ],
-            "mtu": 65000,
-            "state": "up"
-          },
-          {
-            "name": "br-int",
-            "macAddress": "ea:d0:e7:43:23:41",
-            "mtu": 1442
-          },
-          {
-            "name": "tap334a688a-76",
-            "macAddress": "fe:16:3e:52:10:6e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:106e/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd4e69ee0-72",
-            "macAddress": "fe:16:3e:2c:59:7a",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2c:597a/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap50ee370b-a7",
-            "macAddress": "fe:16:3e:71:22:43",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe71:2243/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tape46b2f03-d0",
-            "macAddress": "fe:16:3e:e2:ea:0f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fee2:ea0f/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap78b1ab69-36",
-            "macAddress": "fe:16:3e:14:65:fb",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe14:65fb/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tape545ab95-ab",
-            "macAddress": "fe:16:3e:73:24:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe73:2490/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tapadd1bc06-e8",
-            "macAddress": "fe:16:3e:26:ea:51",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe26:ea51/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd7ff0608-f0",
-            "macAddress": "fe:16:3e:2b:75:d6",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2b:75d6/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap26b9063f-c8",
-            "macAddress": "fe:16:3e:6c:c9:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe6c:c990/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0d667e3a-e2",
-            "macAddress": "fe:16:3e:9f:7a:65",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe9f:7a65/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap1df68fb5-f9",
-            "macAddress": "fe:16:3e:13:66:6f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe13:666f/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap3b66c516-59",
-            "macAddress": "fe:16:3e:77:e4:da",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe77:e4da/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap6f653485-7f",
-            "macAddress": "fe:16:3e:7d:85:5b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe7d:855b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1479d90f-c0",
-            "macAddress": "02:b9:31:31:0d:fe",
-            "ipv6CidrBlocks": [
-              "fe80::b9:31ff:fe31:dfe/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap87daf3f9-0f",
-            "macAddress": "fe:16:3e:cb:97:79",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fecb:9779/64"
-            ],
-            "mtu": 1500,
+            "mtu": 9001,
             "state": "up"
           }
         ],
         "routingTable": [
           {
             "destination": "0.0.0.0/0",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "172.29.0.0/24",
-            "interface": "eno1np0",
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "192.168.110.0/24",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
@@ -1445,162 +760,9 @@
             "linkState": "up"
           },
           {
-            "destination": "2001::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
             "destination": "fe80::/64",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap334a688a-76",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd4e69ee0-72",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap50ee370b-a7",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tape46b2f03-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap78b1ab69-36",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tape545ab95-ab",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapadd1bc06-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd7ff0608-f0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap26b9063f-c8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0d667e3a-e2",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1df68fb5-f9",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap3b66c516-59",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap6f653485-7f",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap87daf3f9-0f",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1624,295 +786,17 @@
             "linkState": "up"
           },
           {
-            "destination": "2001::1000/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::b9:31ff:fe31:dfe/128",
-            "interface": "tap1479d90f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::2caf:1eff:fe7f:f78f/128",
-            "interface": "genev_sys_6081",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::7824:d2ff:fe2c:7330/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b11b/128",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b11c/128",
-            "interface": "eno2np1",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe13:666f/128",
-            "interface": "tap1df68fb5-f9",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe14:65fb/128",
-            "interface": "tap78b1ab69-36",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe26:ea51/128",
-            "interface": "tapadd1bc06-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe2b:75d6/128",
-            "interface": "tapd7ff0608-f0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe2c:597a/128",
-            "interface": "tapd4e69ee0-72",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe52:106e/128",
-            "interface": "tap334a688a-76",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe6c:c990/128",
-            "interface": "tap26b9063f-c8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe71:2243/128",
-            "interface": "tap50ee370b-a7",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe73:2490/128",
-            "interface": "tape545ab95-ab",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe77:e4da/128",
-            "interface": "tap3b66c516-59",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe7d:855b/128",
-            "interface": "tap6f653485-7f",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe9f:7a65/128",
-            "interface": "tap0d667e3a-e2",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fecb:9779/128",
-            "interface": "tap87daf3f9-0f",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fee2:ea0f/128",
-            "interface": "tape46b2f03-d0",
+            "destination": "fe80::4c:5fff:fe01:55b3/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
             "destination": "ff00::/8",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap334a688a-76",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd4e69ee0-72",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap50ee370b-a7",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tape46b2f03-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap78b1ab69-36",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tape545ab95-ab",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapadd1bc06-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd7ff0608-f0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap26b9063f-c8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0d667e3a-e2",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1df68fb5-f9",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap3b66c516-59",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap6f653485-7f",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap87daf3f9-0f",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1928,9 +812,1105 @@
             "linkState": "up"
           }
         ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
         "os": {
-          "prettyName": "Ubuntu 22.04.5 LTS",
-          "version": "22.04.5 LTS (Jammy Jellyfish)",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "ip-10-0-1-131",
+        "machineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 1,
+          "threads": 2,
+          "maxSpeed": 2.499,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 8,
+          "available": 7
+        },
+        "rootDisk": {
+          "label": "",
+          "type": "",
+          "totalSize": 0
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:c0:4b:06:72:c7",
+            "ipv4CidrBlocks": [
+              "10.0.1.131/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::c0:4bff:fe06:72c7/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::c0:4bff:fe06:72c7/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
           "name": "Ubuntu",
           "versionId": "22.04",
           "versionCodename": "jammy",
@@ -1971,14 +1951,14 @@
     "description": "a recommended multi-cloud infrastructure",
     "subGroups": [
       {
-        "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "subGroupSize": "",
         "label": {
-          "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+          "sourceMachineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c"
         },
-        "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "description": "a recommended virtual machine 01 for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "connectionName": "alibaba-ap-northeast-2",
-        "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
+        "specId": "alibaba+ap-northeast-2+ecs.t6-c1m1.large",
         "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -1991,19 +1971,39 @@
         "dataDiskIds": null
       },
       {
-        "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "subGroupSize": "",
         "label": {
-          "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+          "sourceMachineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939"
         },
-        "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "description": "a recommended virtual machine 02 for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "connectionName": "alibaba-ap-northeast-2",
-        "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
+        "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
         "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
         "securityGroupIds": [
           "mig-sg-02"
+        ],
+        "sshKeyId": "mig-sshkey-01",
+        "rootDiskType": "TYPE1",
+        "rootDiskSize": "50",
+        "dataDiskIds": null
+      },
+      {
+        "name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "subGroupSize": "",
+        "label": {
+          "sourceMachineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4"
+        },
+        "description": "a recommended virtual machine 03 for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "connectionName": "alibaba-ap-northeast-2",
+        "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.large",
+        "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": [
+          "mig-sg-03"
         ],
         "sshKeyId": "mig-sshkey-01",
         "rootDiskType": "TYPE1",
@@ -2020,11 +2020,11 @@
   "targetVNet": {
     "name": "mig-vnet-01",
     "connectionName": "alibaba-ap-northeast-2",
-    "cidrBlock": "192.168.96.0/19",
+    "cidrBlock": "10.0.0.0/21",
     "subnetInfoList": [
       {
         "name": "mig-subnet-01",
-        "ipv4_CIDR": "192.168.110.0/24",
+        "ipv4_CIDR": "10.0.1.0/24",
         "description": "a recommended subnet for migration"
       }
     ],
@@ -2042,6 +2042,207 @@
     "privateKey": ""
   },
   "targetVmSpecList": [
+    {
+      "id": "alibaba+ap-northeast-2+ecs.t6-c1m1.large",
+      "uid": "d3vjcrmqjs728pq3g4jg",
+      "cspSpecName": "ecs.t6-c1m1.large",
+      "name": "alibaba+ap-northeast-2+ecs.t6-c1m1.large",
+      "namespace": "system",
+      "connectionName": "alibaba-ap-northeast-2",
+      "providerName": "alibaba",
+      "regionName": "ap-northeast-2",
+      "regionLatitude": 37.36,
+      "regionLongitude": 126.78,
+      "infraType": "vm",
+      "architecture": "x86_64",
+      "vCPU": 2,
+      "memoryGiB": 2,
+      "diskSizeGB": -1,
+      "costPerHour": 0.02139,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": -1,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": "-1",
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "MemorySize",
+          "value": "2.00"
+        },
+        {
+          "key": "InstancePpsRx",
+          "value": "100000"
+        },
+        {
+          "key": "EriQuantity",
+          "value": "0"
+        },
+        {
+          "key": "EniPrivateIpAddressQuantity",
+          "value": "2"
+        },
+        {
+          "key": "CpuCoreCount",
+          "value": "2"
+        },
+        {
+          "key": "EniTotalQuantity",
+          "value": "2"
+        },
+        {
+          "key": "NetworkEncryptionSupport",
+          "value": "false"
+        },
+        {
+          "key": "Cores",
+          "value": "0"
+        },
+        {
+          "key": "NetworkCardQuantity",
+          "value": "0"
+        },
+        {
+          "key": "JumboFrameSupport",
+          "value": "false"
+        },
+        {
+          "key": "InstanceTypeId",
+          "value": "ecs.t6-c1m1.large"
+        },
+        {
+          "key": "InstanceBandwidthRx",
+          "value": "81920"
+        },
+        {
+          "key": "QueuePairNumber",
+          "value": "0"
+        },
+        {
+          "key": "EniQuantity",
+          "value": "2"
+        },
+        {
+          "key": "InstanceTypeFamily",
+          "value": "ecs.t6"
+        },
+        {
+          "key": "InitialCredit",
+          "value": "60"
+        },
+        {
+          "key": "InstancePpsTx",
+          "value": "100000"
+        },
+        {
+          "key": "InstanceFamilyLevel",
+          "value": "CreditEntryLevel"
+        },
+        {
+          "key": "LocalStorageAmount",
+          "value": "0"
+        },
+        {
+          "key": "TotalEniQueueQuantity",
+          "value": "2"
+        },
+        {
+          "key": "CpuArchitecture",
+          "value": "X86"
+        },
+        {
+          "key": "SecondaryEniQueueNumber",
+          "value": "1"
+        },
+        {
+          "key": "InstanceBandwidthTx",
+          "value": "81920"
+        },
+        {
+          "key": "MaximumQueueNumberPerEni",
+          "value": "0"
+        },
+        {
+          "key": "DiskQuantity",
+          "value": "17"
+        },
+        {
+          "key": "PrimaryEniQueueNumber",
+          "value": "1"
+        },
+        {
+          "key": "Memory",
+          "value": "0"
+        },
+        {
+          "key": "CpuTurboFrequency",
+          "value": "3.20"
+        },
+        {
+          "key": "BaselineCredit",
+          "value": "40"
+        },
+        {
+          "key": "EniTrunkSupported",
+          "value": "false"
+        },
+        {
+          "key": "GPUAmount",
+          "value": "0"
+        },
+        {
+          "key": "GPUMemorySize",
+          "value": "0.00"
+        },
+        {
+          "key": "NvmeSupport",
+          "value": "unsupported"
+        },
+        {
+          "key": "InstanceCategory",
+          "value": "Shared"
+        },
+        {
+          "key": "EniIpv6AddressQuantity",
+          "value": "1"
+        },
+        {
+          "key": "LocalStorageCapacity",
+          "value": "0"
+        },
+        {
+          "key": "CpuSpeedFrequency",
+          "value": "2.50"
+        },
+        {
+          "key": "PhysicalProcessorModel",
+          "value": "Intel Xeon (Cascade Lake) Platinum 8269CY"
+        },
+        {
+          "key": "SupportedBootModes",
+          "value": "{SupportedBootMode:[BIOS,UEFI]}"
+        },
+        {
+          "key": "EnhancedNetwork",
+          "value": "{EnableSriov:false,SriovSupport:false,RssSupport:false,VfQueueNumberPerEni:0,EnableRss:false}"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:0,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:0,SupportedTopologyTypes:{SupportedTopologyType:null}}"
+        },
+        {
+          "key": "NetworkCards",
+          "value": "{NetworkCardInfo:null}"
+        }
+      ]
+    },
     {
       "id": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
       "uid": "d3vjcrmqjs728pq3g4kg",
@@ -2244,10 +2445,10 @@
       ]
     },
     {
-      "id": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-      "uid": "d3vjcrmqjs728pq3g4l0",
-      "cspSpecName": "ecs.t6-c1m4.2xlarge",
-      "name": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
+      "id": "alibaba+ap-northeast-2+ecs.t6-c1m4.large",
+      "uid": "d3vjcrmqjs728pq3g4lg",
+      "cspSpecName": "ecs.t6-c1m4.large",
+      "name": "alibaba+ap-northeast-2+ecs.t6-c1m4.large",
       "namespace": "system",
       "connectionName": "alibaba-ap-northeast-2",
       "providerName": "alibaba",
@@ -2256,10 +2457,10 @@
       "regionLongitude": 126.78,
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 8,
-      "memoryGiB": 32,
+      "vCPU": 2,
+      "memoryGiB": 8,
       "diskSizeGB": -1,
-      "costPerHour": 0.33852,
+      "costPerHour": 0.08463,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
       "evaluationScore03": -1,
@@ -2276,11 +2477,11 @@
       "details": [
         {
           "key": "MemorySize",
-          "value": "32.00"
+          "value": "8.00"
         },
         {
           "key": "InstancePpsRx",
-          "value": "400000"
+          "value": "100000"
         },
         {
           "key": "EriQuantity",
@@ -2288,11 +2489,11 @@
         },
         {
           "key": "EniPrivateIpAddressQuantity",
-          "value": "6"
+          "value": "2"
         },
         {
           "key": "CpuCoreCount",
-          "value": "8"
+          "value": "2"
         },
         {
           "key": "EniTotalQuantity",
@@ -2316,11 +2517,11 @@
         },
         {
           "key": "InstanceTypeId",
-          "value": "ecs.t6-c1m4.2xlarge"
+          "value": "ecs.t6-c1m4.large"
         },
         {
           "key": "InstanceBandwidthRx",
-          "value": "327680"
+          "value": "81920"
         },
         {
           "key": "QueuePairNumber",
@@ -2336,11 +2537,11 @@
         },
         {
           "key": "InitialCredit",
-          "value": "240"
+          "value": "60"
         },
         {
           "key": "InstancePpsTx",
-          "value": "400000"
+          "value": "100000"
         },
         {
           "key": "InstanceFamilyLevel",
@@ -2352,7 +2553,7 @@
         },
         {
           "key": "TotalEniQueueQuantity",
-          "value": "3"
+          "value": "2"
         },
         {
           "key": "CpuArchitecture",
@@ -2364,7 +2565,7 @@
         },
         {
           "key": "InstanceBandwidthTx",
-          "value": "327680"
+          "value": "81920"
         },
         {
           "key": "MaximumQueueNumberPerEni",
@@ -2376,7 +2577,7 @@
         },
         {
           "key": "PrimaryEniQueueNumber",
-          "value": "2"
+          "value": "1"
         },
         {
           "key": "Memory",
@@ -2388,7 +2589,7 @@
         },
         {
           "key": "BaselineCredit",
-          "value": "320"
+          "value": "60"
         },
         {
           "key": "EniTrunkSupported",
@@ -2616,25 +2817,85 @@
       "name": "mig-sg-01",
       "connectionName": "alibaba-ap-northeast-2",
       "vNetId": "mig-vnet-01",
-      "description": "Recommended security group for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "description": "Recommended security group for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
       "firewallRules": [
         {
-          "Ports": "10022",
-          "Protocol": "tcp",
+          "Ports": "",
+          "Protocol": "icmp",
           "Direction": "inbound",
           "CIDR": "0.0.0.0/0"
         },
         {
-          "Ports": "8081,8082",
-          "Protocol": "tcp",
-          "Direction": "inbound",
-          "CIDR": "0.0.0.0/0"
-        },
-        {
-          "Ports": "53",
+          "Ports": "68",
           "Protocol": "udp",
           "Direction": "inbound",
-          "CIDR": "192.168.110.0/24"
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "80",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "9113",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9113",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
         }
       ],
       "cspResourceId": ""
@@ -2643,8 +2904,234 @@
       "name": "mig-sg-02",
       "connectionName": "alibaba-ap-northeast-2",
       "vNetId": "mig-vnet-01",
-      "description": "Recommended security group for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "firewallRules": null,
+      "description": "Recommended security group for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+      "firewallRules": [
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "2049",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "2049",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "111",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "111",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "20048",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "20048",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "32803",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "32803",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    },
+    {
+      "name": "mig-sg-03",
+      "connectionName": "alibaba-ap-northeast-2",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+      "firewallRules": [
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "3306",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "3306",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4567",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4567",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4568",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4568",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4444",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4444",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
       "cspResourceId": ""
     }
   ]
@@ -2664,775 +3151,8 @@
 
 #### 2.2 API Response Information
 
-- **Status**: ✅ **SUCCESS**
-- **Response**: Infrastructure migration completed successfully
-
-**Response Body**:
-
-<details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-{
-  "resourceType": "mci",
-  "id": "mmci01",
-  "uid": "d3vkr66qjs728ptbeuj0",
-  "name": "mmci01",
-  "status": "Running:2 (R:2/2)",
-  "statusCount": {
-    "countTotal": 2,
-    "countCreating": 0,
-    "countRunning": 2,
-    "countFailed": 0,
-    "countSuspended": 0,
-    "countRebooting": 0,
-    "countTerminated": 0,
-    "countSuspending": 0,
-    "countResuming": 0,
-    "countTerminating": 0,
-    "countUndefined": 0
-  },
-  "targetStatus": "None",
-  "targetAction": "None",
-  "installMonAgent": "",
-  "configureCloudAdaptiveNetwork": "",
-  "label": {
-    "sys.description": "a recommended multi-cloud infrastructure",
-    "sys.id": "mmci01",
-    "sys.labelType": "mci",
-    "sys.manager": "cb-tumblebug",
-    "sys.name": "mmci01",
-    "sys.namespace": "mig01",
-    "sys.uid": "d3vkr66qjs728ptbeuj0"
-  },
-  "systemLabel": "",
-  "systemMessage": null,
-  "description": "a recommended multi-cloud infrastructure",
-  "vm": [
-    {
-      "resourceType": "vm",
-      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d3vkr66qjs728ptbeul0",
-      "cspResourceName": "d3vkr66qjs728ptbeul0",
-      "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
-      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-10-27 10:47:23",
-      "label": {
-        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
-      },
-      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "ap-northeast-2",
-        "Zone": "ap-northeast-2a"
-      },
-      "publicIP": "8.220.210.176",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.142",
-      "privateDNS": "",
-      "rootDiskType": "cloud_essd",
-      "rootDiskSize": "50",
-      "rootDiskName": "",
-      "connectionName": "alibaba-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "alibaba-ap-northeast-2",
-        "providerName": "alibaba",
-        "driverName": "alibaba-driver-v1.0.so",
-        "credentialName": "alibaba",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "alibaba-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "South Korea (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-      "cspSpecName": "ecs.t6-c1m4.2xlarge",
-      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj71mudehn140olulahhm",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-      "networkInterface": "eni-mj77e8aypk5nsxp58d49",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-      "vmUserName": "cb-user",
-      "vmUserPassword": "dv1Aq$kj!sr366",
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2025-10-27T10:47:38Z",
-          "completedTime": "2025-10-27T10:47:39Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ImageId",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-        },
-        {
-          "key": "InstanceType",
-          "value": "ecs.t6-c1m4.2xlarge"
-        },
-        {
-          "key": "DeviceAvailable",
-          "value": "true"
-        },
-        {
-          "key": "InstanceNetworkType",
-          "value": "vpc"
-        },
-        {
-          "key": "LocalStorageAmount",
-          "value": "0"
-        },
-        {
-          "key": "IsSpot",
-          "value": "false"
-        },
-        {
-          "key": "InstanceChargeType",
-          "value": "PostPaid"
-        },
-        {
-          "key": "InstanceName",
-          "value": "d3vkr66qjs728ptbeul0"
-        },
-        {
-          "key": "DeploymentSetGroupNo",
-          "value": "0"
-        },
-        {
-          "key": "CreditSpecification",
-          "value": "Standard"
-        },
-        {
-          "key": "GPUAmount",
-          "value": "0"
-        },
-        {
-          "key": "Connected",
-          "value": "false"
-        },
-        {
-          "key": "InvocationCount",
-          "value": "0"
-        },
-        {
-          "key": "StartTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "ZoneId",
-          "value": "ap-northeast-2a"
-        },
-        {
-          "key": "InternetMaxBandwidthIn",
-          "value": "320"
-        },
-        {
-          "key": "InternetChargeType",
-          "value": "PayByBandwidth"
-        },
-        {
-          "key": "HostName",
-          "value": "iZmj77e8aypk5nsxp1ledrZ"
-        },
-        {
-          "key": "Status",
-          "value": "Running"
-        },
-        {
-          "key": "CPU",
-          "value": "0"
-        },
-        {
-          "key": "Cpu",
-          "value": "8"
-        },
-        {
-          "key": "SpotPriceLimit",
-          "value": "0.00"
-        },
-        {
-          "key": "OSName",
-          "value": "Ubuntu  22.04 64位"
-        },
-        {
-          "key": "InstanceOwnerId",
-          "value": "0"
-        },
-        {
-          "key": "OSNameEn",
-          "value": "Ubuntu  22.04 64 bit"
-        },
-        {
-          "key": "SerialNumber",
-          "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
-        },
-        {
-          "key": "RegionId",
-          "value": "ap-northeast-2"
-        },
-        {
-          "key": "IoOptimized",
-          "value": "true"
-        },
-        {
-          "key": "InternetMaxBandwidthOut",
-          "value": "5"
-        },
-        {
-          "key": "InstanceTypeFamily",
-          "value": "ecs.t6"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-mj77e8aypk5nsxp1ledr"
-        },
-        {
-          "key": "Recyclable",
-          "value": "false"
-        },
-        {
-          "key": "ExpiredTime",
-          "value": "2099-12-31T15:59Z"
-        },
-        {
-          "key": "OSType",
-          "value": "linux"
-        },
-        {
-          "key": "Memory",
-          "value": "32768"
-        },
-        {
-          "key": "CreationTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "KeyPairName",
-          "value": "d3vkr56qjs728ptbeuhg"
-        },
-        {
-          "key": "LocalStorageCapacity",
-          "value": "0"
-        },
-        {
-          "key": "StoppedMode",
-          "value": "Not-applicable"
-        },
-        {
-          "key": "SpotStrategy",
-          "value": "NoSpot"
-        },
-        {
-          "key": "SpotDuration",
-          "value": "0"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
-        },
-        {
-          "key": "InnerIpAddress",
-          "value": "{IpAddress:[]}"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.210.176]}"
-        },
-        {
-          "key": "RdmaIpAddress",
-          "value": "{IpAddress:null}"
-        },
-        {
-          "key": "DedicatedHostAttribute",
-          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-        },
-        {
-          "key": "EcsCapacityReservationAttr",
-          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "DedicatedInstanceAttribute",
-          "value": "{Affinity:,Tenancy:}"
-        },
-        {
-          "key": "PrivateDnsNameOptions",
-          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-        },
-        {
-          "key": "AdditionalInfo",
-          "value": "{EnableHighDensityMode:false}"
-        },
-        {
-          "key": "ImageOptions",
-          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-        },
-        {
-          "key": "EipAddress",
-          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-        },
-        {
-          "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
-        },
-        {
-          "key": "Tags",
-          "value": "{Tag:null}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-        },
-        {
-          "key": "OperationLocks",
-          "value": "{LockReason:[]}"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d3vkr66qjs728ptbeuk0",
-      "cspResourceName": "d3vkr66qjs728ptbeuk0",
-      "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-10-27 10:47:26",
-      "label": {
-        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
-      },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "ap-northeast-2",
-        "Zone": "ap-northeast-2a"
-      },
-      "publicIP": "8.220.220.21",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.143",
-      "privateDNS": "",
-      "rootDiskType": "cloud_essd",
-      "rootDiskSize": "50",
-      "rootDiskName": "",
-      "connectionName": "alibaba-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "alibaba-ap-northeast-2",
-        "providerName": "alibaba",
-        "driverName": "alibaba-driver-v1.0.so",
-        "credentialName": "alibaba",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "alibaba-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "South Korea (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-      "cspSpecName": "ecs.t6-c1m4.xlarge",
-      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj71mudehn140olulahhm",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-      "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
-      "securityGroupIds": [
-        "mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-      "vmUserName": "cb-user",
-      "vmUserPassword": "6!6dq3sr1Ajk$v",
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2025-10-27T10:47:38Z",
-          "completedTime": "2025-10-27T10:47:40Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ImageId",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-        },
-        {
-          "key": "InstanceType",
-          "value": "ecs.t6-c1m4.xlarge"
-        },
-        {
-          "key": "DeviceAvailable",
-          "value": "true"
-        },
-        {
-          "key": "InstanceNetworkType",
-          "value": "vpc"
-        },
-        {
-          "key": "LocalStorageAmount",
-          "value": "0"
-        },
-        {
-          "key": "IsSpot",
-          "value": "false"
-        },
-        {
-          "key": "InstanceChargeType",
-          "value": "PostPaid"
-        },
-        {
-          "key": "InstanceName",
-          "value": "d3vkr66qjs728ptbeuk0"
-        },
-        {
-          "key": "DeploymentSetGroupNo",
-          "value": "0"
-        },
-        {
-          "key": "CreditSpecification",
-          "value": "Standard"
-        },
-        {
-          "key": "GPUAmount",
-          "value": "0"
-        },
-        {
-          "key": "Connected",
-          "value": "false"
-        },
-        {
-          "key": "InvocationCount",
-          "value": "0"
-        },
-        {
-          "key": "StartTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "ZoneId",
-          "value": "ap-northeast-2a"
-        },
-        {
-          "key": "InternetMaxBandwidthIn",
-          "value": "160"
-        },
-        {
-          "key": "InternetChargeType",
-          "value": "PayByBandwidth"
-        },
-        {
-          "key": "HostName",
-          "value": "iZmj79jvlx2vp3aj2tq7y2Z"
-        },
-        {
-          "key": "Status",
-          "value": "Running"
-        },
-        {
-          "key": "CPU",
-          "value": "0"
-        },
-        {
-          "key": "Cpu",
-          "value": "4"
-        },
-        {
-          "key": "SpotPriceLimit",
-          "value": "0.00"
-        },
-        {
-          "key": "OSName",
-          "value": "Ubuntu  22.04 64位"
-        },
-        {
-          "key": "InstanceOwnerId",
-          "value": "0"
-        },
-        {
-          "key": "OSNameEn",
-          "value": "Ubuntu  22.04 64 bit"
-        },
-        {
-          "key": "SerialNumber",
-          "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
-        },
-        {
-          "key": "RegionId",
-          "value": "ap-northeast-2"
-        },
-        {
-          "key": "IoOptimized",
-          "value": "true"
-        },
-        {
-          "key": "InternetMaxBandwidthOut",
-          "value": "5"
-        },
-        {
-          "key": "InstanceTypeFamily",
-          "value": "ecs.t6"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-mj79jvlx2vp3aj2tq7y2"
-        },
-        {
-          "key": "Recyclable",
-          "value": "false"
-        },
-        {
-          "key": "ExpiredTime",
-          "value": "2099-12-31T15:59Z"
-        },
-        {
-          "key": "OSType",
-          "value": "linux"
-        },
-        {
-          "key": "Memory",
-          "value": "16384"
-        },
-        {
-          "key": "CreationTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "KeyPairName",
-          "value": "d3vkr56qjs728ptbeuhg"
-        },
-        {
-          "key": "LocalStorageCapacity",
-          "value": "0"
-        },
-        {
-          "key": "StoppedMode",
-          "value": "Not-applicable"
-        },
-        {
-          "key": "SpotStrategy",
-          "value": "NoSpot"
-        },
-        {
-          "key": "SpotDuration",
-          "value": "0"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
-        },
-        {
-          "key": "InnerIpAddress",
-          "value": "{IpAddress:[]}"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.220.21]}"
-        },
-        {
-          "key": "RdmaIpAddress",
-          "value": "{IpAddress:null}"
-        },
-        {
-          "key": "DedicatedHostAttribute",
-          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-        },
-        {
-          "key": "EcsCapacityReservationAttr",
-          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "DedicatedInstanceAttribute",
-          "value": "{Affinity:,Tenancy:}"
-        },
-        {
-          "key": "PrivateDnsNameOptions",
-          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-        },
-        {
-          "key": "AdditionalInfo",
-          "value": "{EnableHighDensityMode:false}"
-        },
-        {
-          "key": "ImageOptions",
-          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-        },
-        {
-          "key": "EipAddress",
-          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-        },
-        {
-          "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
-        },
-        {
-          "key": "Tags",
-          "value": "{Tag:null}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-        },
-        {
-          "key": "OperationLocks",
-          "value": "{LockReason:[]}"
-        }
-      ]
-    }
-  ],
-  "newVmList": null,
-  "postCommand": {
-    "userName": "cb-user",
-    "command": [
-      "uname -a"
-    ]
-  },
-  "postCommandResult": {
-    "results": [
-      {
-        "mciId": "mmci01",
-        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "vmIp": "8.220.210.176",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "mciId": "mmci01",
-        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "vmIp": "8.220.220.21",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      }
-    ]
-  }
-}
-```
-
-</details>
+- **Status**: ❌ **FAILED**
+- **Error**: Migration failed
 
 ### Test Case 3: Get a list of MCIs
 
@@ -3445,797 +3165,13 @@
 
 #### 3.2 API Response Information
 
-- **Status**: ✅ **SUCCESS**
-- **Response**: MCI list retrieved successfully
+- **Status**: ❌ **FAILED**
+- **Error**: No response received
 
-**Response Body**:
+**Error Message**:
 
-```json
-{
-  "mci": [
-    {
-      "resourceType": "mci",
-      "id": "mmci01",
-      "uid": "d3vkr66qjs728ptbeuj0",
-      "name": "mmci01",
-      "status": "Running:2 (R:2/2)",
-      "statusCount": {
-        "countTotal": 2,
-        "countCreating": 0,
-        "countRunning": 2,
-        "countFailed": 0,
-        "countSuspended": 0,
-        "countRebooting": 0,
-        "countTerminated": 0,
-        "countSuspending": 0,
-        "countResuming": 0,
-        "countTerminating": 0,
-        "countUndefined": 0
-      },
-      "targetStatus": "None",
-      "targetAction": "None",
-      "installMonAgent": "",
-      "configureCloudAdaptiveNetwork": "",
-      "label": {
-        "sys.description": "a recommended multi-cloud infrastructure",
-        "sys.id": "mmci01",
-        "sys.labelType": "mci",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "mmci01",
-        "sys.namespace": "mig01",
-        "sys.uid": "d3vkr66qjs728ptbeuj0"
-      },
-      "systemLabel": "",
-      "systemMessage": null,
-      "description": "a recommended multi-cloud infrastructure",
-      "vm": [
-        {
-          "resourceType": "vm",
-          "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "uid": "d3vkr66qjs728ptbeul0",
-          "cspResourceName": "d3vkr66qjs728ptbeul0",
-          "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
-          "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2025-10-27 10:47:23",
-          "label": {
-            "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
-            "sys.connectionName": "alibaba-ap-northeast-2",
-            "sys.createdTime": "2025-10-27 10:47:23",
-            "sys.cspResourceId": "i-mj77e8aypk5nsxp1ledr",
-            "sys.cspResourceName": "d3vkr66qjs728ptbeul0",
-            "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-            "sys.labelType": "vm",
-            "sys.manager": "cb-tumblebug",
-            "sys.mciId": "mmci01",
-            "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-            "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-            "sys.uid": "d3vkr66qjs728ptbeul0"
-          },
-          "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
-          "region": {
-            "Region": "ap-northeast-2",
-            "Zone": "ap-northeast-2a"
-          },
-          "publicIP": "8.220.210.176",
-          "sshPort": "22",
-          "publicDNS": "",
-          "privateIP": "192.168.110.142",
-          "privateDNS": "",
-          "rootDiskType": "cloud_essd",
-          "rootDiskSize": "50",
-          "rootDiskName": "",
-          "connectionName": "alibaba-ap-northeast-2",
-          "connectionConfig": {
-            "configName": "alibaba-ap-northeast-2",
-            "providerName": "alibaba",
-            "driverName": "alibaba-driver-v1.0.so",
-            "credentialName": "alibaba",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "alibaba-ap-northeast-2",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-northeast-2",
-              "assignedZone": "ap-northeast-2a"
-            },
-            "regionDetail": {
-              "regionId": "ap-northeast-2",
-              "regionName": "ap-northeast-2",
-              "description": "South Korea (Seoul)",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.36,
-                "longitude": 126.78
-              },
-              "zones": [
-                "ap-northeast-2a",
-                "ap-northeast-2b"
-              ]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-          "cspSpecName": "ecs.t6-c1m4.2xlarge",
-          "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-          "vNetId": "mig-vnet-01",
-          "cspVNetId": "vpc-mj71mudehn140olulahhm",
-          "subnetId": "mig-subnet-01",
-          "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-          "networkInterface": "eni-mj77e8aypk5nsxp58d49",
-          "securityGroupIds": [
-            "mig-sg-02"
-          ],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-          "vmUserName": "cb-user",
-          "vmUserPassword": "dv1Aq$kj!sr366",
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2025-10-27T10:47:38Z",
-              "completedTime": "2025-10-27T10:47:39Z",
-              "elapsedTime": 1,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "ImageId",
-              "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-            },
-            {
-              "key": "InstanceType",
-              "value": "ecs.t6-c1m4.2xlarge"
-            },
-            {
-              "key": "DeviceAvailable",
-              "value": "true"
-            },
-            {
-              "key": "InstanceNetworkType",
-              "value": "vpc"
-            },
-            {
-              "key": "LocalStorageAmount",
-              "value": "0"
-            },
-            {
-              "key": "IsSpot",
-              "value": "false"
-            },
-            {
-              "key": "InstanceChargeType",
-              "value": "PostPaid"
-            },
-            {
-              "key": "InstanceName",
-              "value": "d3vkr66qjs728ptbeul0"
-            },
-            {
-              "key": "DeploymentSetGroupNo",
-              "value": "0"
-            },
-            {
-              "key": "CreditSpecification",
-              "value": "Standard"
-            },
-            {
-              "key": "GPUAmount",
-              "value": "0"
-            },
-            {
-              "key": "Connected",
-              "value": "false"
-            },
-            {
-              "key": "InvocationCount",
-              "value": "0"
-            },
-            {
-              "key": "StartTime",
-              "value": "2025-10-27T10:46Z"
-            },
-            {
-              "key": "ZoneId",
-              "value": "ap-northeast-2a"
-            },
-            {
-              "key": "InternetMaxBandwidthIn",
-              "value": "320"
-            },
-            {
-              "key": "InternetChargeType",
-              "value": "PayByBandwidth"
-            },
-            {
-              "key": "HostName",
-              "value": "iZmj77e8aypk5nsxp1ledrZ"
-            },
-            {
-              "key": "Status",
-              "value": "Running"
-            },
-            {
-              "key": "CPU",
-              "value": "0"
-            },
-            {
-              "key": "Cpu",
-              "value": "8"
-            },
-            {
-              "key": "SpotPriceLimit",
-              "value": "0.00"
-            },
-            {
-              "key": "OSName",
-              "value": "Ubuntu  22.04 64位"
-            },
-            {
-              "key": "InstanceOwnerId",
-              "value": "0"
-            },
-            {
-              "key": "OSNameEn",
-              "value": "Ubuntu  22.04 64 bit"
-            },
-            {
-              "key": "SerialNumber",
-              "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
-            },
-            {
-              "key": "RegionId",
-              "value": "ap-northeast-2"
-            },
-            {
-              "key": "IoOptimized",
-              "value": "true"
-            },
-            {
-              "key": "InternetMaxBandwidthOut",
-              "value": "5"
-            },
-            {
-              "key": "InstanceTypeFamily",
-              "value": "ecs.t6"
-            },
-            {
-              "key": "InstanceId",
-              "value": "i-mj77e8aypk5nsxp1ledr"
-            },
-            {
-              "key": "Recyclable",
-              "value": "false"
-            },
-            {
-              "key": "ExpiredTime",
-              "value": "2099-12-31T15:59Z"
-            },
-            {
-              "key": "OSType",
-              "value": "linux"
-            },
-            {
-              "key": "Memory",
-              "value": "32768"
-            },
-            {
-              "key": "CreationTime",
-              "value": "2025-10-27T10:46Z"
-            },
-            {
-              "key": "KeyPairName",
-              "value": "d3vkr56qjs728ptbeuhg"
-            },
-            {
-              "key": "LocalStorageCapacity",
-              "value": "0"
-            },
-            {
-              "key": "StoppedMode",
-              "value": "Not-applicable"
-            },
-            {
-              "key": "SpotStrategy",
-              "value": "NoSpot"
-            },
-            {
-              "key": "SpotDuration",
-              "value": "0"
-            },
-            {
-              "key": "DeletionProtection",
-              "value": "false"
-            },
-            {
-              "key": "SecurityGroupIds",
-              "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
-            },
-            {
-              "key": "InnerIpAddress",
-              "value": "{IpAddress:[]}"
-            },
-            {
-              "key": "PublicIpAddress",
-              "value": "{IpAddress:[8.220.210.176]}"
-            },
-            {
-              "key": "RdmaIpAddress",
-              "value": "{IpAddress:null}"
-            },
-            {
-              "key": "DedicatedHostAttribute",
-              "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-            },
-            {
-              "key": "EcsCapacityReservationAttr",
-              "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-            },
-            {
-              "key": "CpuOptions",
-              "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-            },
-            {
-              "key": "HibernationOptions",
-              "value": "{Configured:false}"
-            },
-            {
-              "key": "DedicatedInstanceAttribute",
-              "value": "{Affinity:,Tenancy:}"
-            },
-            {
-              "key": "PrivateDnsNameOptions",
-              "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-            },
-            {
-              "key": "AdditionalInfo",
-              "value": "{EnableHighDensityMode:false}"
-            },
-            {
-              "key": "ImageOptions",
-              "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-            },
-            {
-              "key": "EipAddress",
-              "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-            },
-            {
-              "key": "MetadataOptions",
-              "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-            },
-            {
-              "key": "VpcAttributes",
-              "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
-            },
-            {
-              "key": "Tags",
-              "value": "{Tag:null}"
-            },
-            {
-              "key": "NetworkInterfaces",
-              "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-            },
-            {
-              "key": "OperationLocks",
-              "value": "{LockReason:[]}"
-            }
-          ]
-        },
-        {
-          "resourceType": "vm",
-          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d3vkr66qjs728ptbeuk0",
-          "cspResourceName": "d3vkr66qjs728ptbeuk0",
-          "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
-          "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2025-10-27 10:47:26",
-          "label": {
-            "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
-            "sys.connectionName": "alibaba-ap-northeast-2",
-            "sys.createdTime": "2025-10-27 10:47:26",
-            "sys.cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
-            "sys.cspResourceName": "d3vkr66qjs728ptbeuk0",
-            "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-            "sys.labelType": "vm",
-            "sys.manager": "cb-tumblebug",
-            "sys.mciId": "mmci01",
-            "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-            "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-            "sys.uid": "d3vkr66qjs728ptbeuk0"
-          },
-          "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-          "region": {
-            "Region": "ap-northeast-2",
-            "Zone": "ap-northeast-2a"
-          },
-          "publicIP": "8.220.220.21",
-          "sshPort": "22",
-          "publicDNS": "",
-          "privateIP": "192.168.110.143",
-          "privateDNS": "",
-          "rootDiskType": "cloud_essd",
-          "rootDiskSize": "50",
-          "rootDiskName": "",
-          "connectionName": "alibaba-ap-northeast-2",
-          "connectionConfig": {
-            "configName": "alibaba-ap-northeast-2",
-            "providerName": "alibaba",
-            "driverName": "alibaba-driver-v1.0.so",
-            "credentialName": "alibaba",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "alibaba-ap-northeast-2",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-northeast-2",
-              "assignedZone": "ap-northeast-2a"
-            },
-            "regionDetail": {
-              "regionId": "ap-northeast-2",
-              "regionName": "ap-northeast-2",
-              "description": "South Korea (Seoul)",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.36,
-                "longitude": 126.78
-              },
-              "zones": [
-                "ap-northeast-2a",
-                "ap-northeast-2b"
-              ]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-          "cspSpecName": "ecs.t6-c1m4.xlarge",
-          "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-          "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-          "vNetId": "mig-vnet-01",
-          "cspVNetId": "vpc-mj71mudehn140olulahhm",
-          "subnetId": "mig-subnet-01",
-          "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-          "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
-          "securityGroupIds": [
-            "mig-sg-01"
-          ],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-          "vmUserName": "cb-user",
-          "vmUserPassword": "6!6dq3sr1Ajk$v",
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2025-10-27T10:47:38Z",
-              "completedTime": "2025-10-27T10:47:40Z",
-              "elapsedTime": 2,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "ImageId",
-              "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-            },
-            {
-              "key": "InstanceType",
-              "value": "ecs.t6-c1m4.xlarge"
-            },
-            {
-              "key": "DeviceAvailable",
-              "value": "true"
-            },
-            {
-              "key": "InstanceNetworkType",
-              "value": "vpc"
-            },
-            {
-              "key": "LocalStorageAmount",
-              "value": "0"
-            },
-            {
-              "key": "IsSpot",
-              "value": "false"
-            },
-            {
-              "key": "InstanceChargeType",
-              "value": "PostPaid"
-            },
-            {
-              "key": "InstanceName",
-              "value": "d3vkr66qjs728ptbeuk0"
-            },
-            {
-              "key": "DeploymentSetGroupNo",
-              "value": "0"
-            },
-            {
-              "key": "CreditSpecification",
-              "value": "Standard"
-            },
-            {
-              "key": "GPUAmount",
-              "value": "0"
-            },
-            {
-              "key": "Connected",
-              "value": "false"
-            },
-            {
-              "key": "InvocationCount",
-              "value": "0"
-            },
-            {
-              "key": "StartTime",
-              "value": "2025-10-27T10:46Z"
-            },
-            {
-              "key": "ZoneId",
-              "value": "ap-northeast-2a"
-            },
-            {
-              "key": "InternetMaxBandwidthIn",
-              "value": "160"
-            },
-            {
-              "key": "InternetChargeType",
-              "value": "PayByBandwidth"
-            },
-            {
-              "key": "HostName",
-              "value": "iZmj79jvlx2vp3aj2tq7y2Z"
-            },
-            {
-              "key": "Status",
-              "value": "Running"
-            },
-            {
-              "key": "CPU",
-              "value": "0"
-            },
-            {
-              "key": "Cpu",
-              "value": "4"
-            },
-            {
-              "key": "SpotPriceLimit",
-              "value": "0.00"
-            },
-            {
-              "key": "OSName",
-              "value": "Ubuntu  22.04 64位"
-            },
-            {
-              "key": "InstanceOwnerId",
-              "value": "0"
-            },
-            {
-              "key": "OSNameEn",
-              "value": "Ubuntu  22.04 64 bit"
-            },
-            {
-              "key": "SerialNumber",
-              "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
-            },
-            {
-              "key": "RegionId",
-              "value": "ap-northeast-2"
-            },
-            {
-              "key": "IoOptimized",
-              "value": "true"
-            },
-            {
-              "key": "InternetMaxBandwidthOut",
-              "value": "5"
-            },
-            {
-              "key": "InstanceTypeFamily",
-              "value": "ecs.t6"
-            },
-            {
-              "key": "InstanceId",
-              "value": "i-mj79jvlx2vp3aj2tq7y2"
-            },
-            {
-              "key": "Recyclable",
-              "value": "false"
-            },
-            {
-              "key": "ExpiredTime",
-              "value": "2099-12-31T15:59Z"
-            },
-            {
-              "key": "OSType",
-              "value": "linux"
-            },
-            {
-              "key": "Memory",
-              "value": "16384"
-            },
-            {
-              "key": "CreationTime",
-              "value": "2025-10-27T10:46Z"
-            },
-            {
-              "key": "KeyPairName",
-              "value": "d3vkr56qjs728ptbeuhg"
-            },
-            {
-              "key": "LocalStorageCapacity",
-              "value": "0"
-            },
-            {
-              "key": "StoppedMode",
-              "value": "Not-applicable"
-            },
-            {
-              "key": "SpotStrategy",
-              "value": "NoSpot"
-            },
-            {
-              "key": "SpotDuration",
-              "value": "0"
-            },
-            {
-              "key": "DeletionProtection",
-              "value": "false"
-            },
-            {
-              "key": "SecurityGroupIds",
-              "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
-            },
-            {
-              "key": "InnerIpAddress",
-              "value": "{IpAddress:[]}"
-            },
-            {
-              "key": "PublicIpAddress",
-              "value": "{IpAddress:[8.220.220.21]}"
-            },
-            {
-              "key": "RdmaIpAddress",
-              "value": "{IpAddress:null}"
-            },
-            {
-              "key": "DedicatedHostAttribute",
-              "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-            },
-            {
-              "key": "EcsCapacityReservationAttr",
-              "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-            },
-            {
-              "key": "CpuOptions",
-              "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-            },
-            {
-              "key": "HibernationOptions",
-              "value": "{Configured:false}"
-            },
-            {
-              "key": "DedicatedInstanceAttribute",
-              "value": "{Affinity:,Tenancy:}"
-            },
-            {
-              "key": "PrivateDnsNameOptions",
-              "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-            },
-            {
-              "key": "AdditionalInfo",
-              "value": "{EnableHighDensityMode:false}"
-            },
-            {
-              "key": "ImageOptions",
-              "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-            },
-            {
-              "key": "EipAddress",
-              "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-            },
-            {
-              "key": "MetadataOptions",
-              "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-            },
-            {
-              "key": "VpcAttributes",
-              "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
-            },
-            {
-              "key": "Tags",
-              "value": "{Tag:null}"
-            },
-            {
-              "key": "NetworkInterfaces",
-              "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-            },
-            {
-              "key": "OperationLocks",
-              "value": "{LockReason:[]}"
-            }
-          ]
-        }
-      ],
-      "newVmList": null,
-      "postCommand": {
-        "userName": "cb-user",
-        "command": [
-          "uname -a"
-        ]
-      },
-      "postCommandResult": {
-        "results": [
-          {
-            "mciId": "mmci01",
-            "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-            "vmIp": "8.220.210.176",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "err": null
-          },
-          {
-            "mciId": "mmci01",
-            "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-            "vmIp": "8.220.220.21",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "err": null
-          }
-        ]
-      }
-    }
-  ]
-}
+```
+Test skipped due to previous test failure
 ```
 
 ### Test Case 4: Get a list of MCI IDs
@@ -4250,824 +3186,14 @@
 
 #### 4.2 API Response Information
 
-- **Status**: ✅ **SUCCESS**
-- **Response**: MCI IDs retrieved successfully
+- **Status**: ❌ **FAILED**
+- **Error**: No response received
 
-**Response Body**:
+**Error Message**:
 
-```json
-{
-  "idList": [
-    "mmci01"
-  ]
-}
 ```
-
-### Test Case 5: Get a specific MCI
-
-#### 5.1 API Request Information
-
-- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
-- **Purpose**: Retrieve detailed information for a specific MCI
-- **Namespace ID**: `mig01`
-- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
-- **Request Body**: None (GET request)
-
-#### 5.2 API Response Information
-
-- **Status**: ✅ **SUCCESS**
-- **Response**: MCI details retrieved successfully
-
-**Response Body**:
-
-<details>
-  <summary> <ins>Click to see the response body </ins> </summary>
-
-```json
-{
-  "resourceType": "mci",
-  "id": "mmci01",
-  "uid": "d3vkr66qjs728ptbeuj0",
-  "name": "mmci01",
-  "status": "Running:2 (R:2/2)",
-  "statusCount": {
-    "countTotal": 2,
-    "countCreating": 0,
-    "countRunning": 2,
-    "countFailed": 0,
-    "countSuspended": 0,
-    "countRebooting": 0,
-    "countTerminated": 0,
-    "countSuspending": 0,
-    "countResuming": 0,
-    "countTerminating": 0,
-    "countUndefined": 0
-  },
-  "targetStatus": "None",
-  "targetAction": "None",
-  "installMonAgent": "",
-  "configureCloudAdaptiveNetwork": "",
-  "label": {
-    "sys.description": "a recommended multi-cloud infrastructure",
-    "sys.id": "mmci01",
-    "sys.labelType": "mci",
-    "sys.manager": "cb-tumblebug",
-    "sys.name": "mmci01",
-    "sys.namespace": "mig01",
-    "sys.uid": "d3vkr66qjs728ptbeuj0"
-  },
-  "systemLabel": "",
-  "systemMessage": null,
-  "description": "a recommended multi-cloud infrastructure",
-  "vm": [
-    {
-      "resourceType": "vm",
-      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d3vkr66qjs728ptbeul0",
-      "cspResourceName": "d3vkr66qjs728ptbeul0",
-      "cspResourceId": "i-mj77e8aypk5nsxp1ledr",
-      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-10-27 10:47:23",
-      "label": {
-        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-10-27 10:47:23",
-        "sys.cspResourceId": "i-mj77e8aypk5nsxp1ledr",
-        "sys.cspResourceName": "d3vkr66qjs728ptbeul0",
-        "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "sys.labelType": "vm",
-        "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mmci01",
-        "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d3vkr66qjs728ptbeul0"
-      },
-      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "ap-northeast-2",
-        "Zone": "ap-northeast-2a"
-      },
-      "publicIP": "8.220.210.176",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.142",
-      "privateDNS": "",
-      "rootDiskType": "cloud_essd",
-      "rootDiskSize": "50",
-      "rootDiskName": "",
-      "connectionName": "alibaba-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "alibaba-ap-northeast-2",
-        "providerName": "alibaba",
-        "driverName": "alibaba-driver-v1.0.so",
-        "credentialName": "alibaba",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "alibaba-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "South Korea (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.2xlarge",
-      "cspSpecName": "ecs.t6-c1m4.2xlarge",
-      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj71mudehn140olulahhm",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-      "networkInterface": "eni-mj77e8aypk5nsxp58d49",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-      "vmUserName": "cb-user",
-      "vmUserPassword": "dv1Aq$kj!sr366",
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2025-10-27T10:47:38Z",
-          "completedTime": "2025-10-27T10:47:39Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ImageId",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-        },
-        {
-          "key": "InstanceType",
-          "value": "ecs.t6-c1m4.2xlarge"
-        },
-        {
-          "key": "DeviceAvailable",
-          "value": "true"
-        },
-        {
-          "key": "InstanceNetworkType",
-          "value": "vpc"
-        },
-        {
-          "key": "LocalStorageAmount",
-          "value": "0"
-        },
-        {
-          "key": "IsSpot",
-          "value": "false"
-        },
-        {
-          "key": "InstanceChargeType",
-          "value": "PostPaid"
-        },
-        {
-          "key": "InstanceName",
-          "value": "d3vkr66qjs728ptbeul0"
-        },
-        {
-          "key": "DeploymentSetGroupNo",
-          "value": "0"
-        },
-        {
-          "key": "CreditSpecification",
-          "value": "Standard"
-        },
-        {
-          "key": "GPUAmount",
-          "value": "0"
-        },
-        {
-          "key": "Connected",
-          "value": "false"
-        },
-        {
-          "key": "InvocationCount",
-          "value": "0"
-        },
-        {
-          "key": "StartTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "ZoneId",
-          "value": "ap-northeast-2a"
-        },
-        {
-          "key": "InternetMaxBandwidthIn",
-          "value": "320"
-        },
-        {
-          "key": "InternetChargeType",
-          "value": "PayByBandwidth"
-        },
-        {
-          "key": "HostName",
-          "value": "iZmj77e8aypk5nsxp1ledrZ"
-        },
-        {
-          "key": "Status",
-          "value": "Running"
-        },
-        {
-          "key": "CPU",
-          "value": "0"
-        },
-        {
-          "key": "Cpu",
-          "value": "8"
-        },
-        {
-          "key": "SpotPriceLimit",
-          "value": "0.00"
-        },
-        {
-          "key": "OSName",
-          "value": "Ubuntu  22.04 64位"
-        },
-        {
-          "key": "InstanceOwnerId",
-          "value": "0"
-        },
-        {
-          "key": "OSNameEn",
-          "value": "Ubuntu  22.04 64 bit"
-        },
-        {
-          "key": "SerialNumber",
-          "value": "a0bc0e2a-e292-4ad3-a37d-49e664594b65"
-        },
-        {
-          "key": "RegionId",
-          "value": "ap-northeast-2"
-        },
-        {
-          "key": "IoOptimized",
-          "value": "true"
-        },
-        {
-          "key": "InternetMaxBandwidthOut",
-          "value": "5"
-        },
-        {
-          "key": "InstanceTypeFamily",
-          "value": "ecs.t6"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-mj77e8aypk5nsxp1ledr"
-        },
-        {
-          "key": "Recyclable",
-          "value": "false"
-        },
-        {
-          "key": "ExpiredTime",
-          "value": "2099-12-31T15:59Z"
-        },
-        {
-          "key": "OSType",
-          "value": "linux"
-        },
-        {
-          "key": "Memory",
-          "value": "32768"
-        },
-        {
-          "key": "CreationTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "KeyPairName",
-          "value": "d3vkr56qjs728ptbeuhg"
-        },
-        {
-          "key": "LocalStorageCapacity",
-          "value": "0"
-        },
-        {
-          "key": "StoppedMode",
-          "value": "Not-applicable"
-        },
-        {
-          "key": "SpotStrategy",
-          "value": "NoSpot"
-        },
-        {
-          "key": "SpotDuration",
-          "value": "0"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj77e8aypk5nsxp4gtaz]}"
-        },
-        {
-          "key": "InnerIpAddress",
-          "value": "{IpAddress:[]}"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.210.176]}"
-        },
-        {
-          "key": "RdmaIpAddress",
-          "value": "{IpAddress:null}"
-        },
-        {
-          "key": "DedicatedHostAttribute",
-          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-        },
-        {
-          "key": "EcsCapacityReservationAttr",
-          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:4,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "DedicatedInstanceAttribute",
-          "value": "{Affinity:,Tenancy:}"
-        },
-        {
-          "key": "PrivateDnsNameOptions",
-          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-        },
-        {
-          "key": "AdditionalInfo",
-          "value": "{EnableHighDensityMode:false}"
-        },
-        {
-          "key": "ImageOptions",
-          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-        },
-        {
-          "key": "EipAddress",
-          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-        },
-        {
-          "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.142]}}"
-        },
-        {
-          "key": "Tags",
-          "value": "{Tag:null}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:37,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj77e8aypk5nsxp58d49,PrimaryIpAddress:192.168.110.142,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.142,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-        },
-        {
-          "key": "OperationLocks",
-          "value": "{LockReason:[]}"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d3vkr66qjs728ptbeuk0",
-      "cspResourceName": "d3vkr66qjs728ptbeuk0",
-      "cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-10-27 10:47:26",
-      "label": {
-        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.connectionName": "alibaba-ap-northeast-2",
-        "sys.createdTime": "2025-10-27 10:47:26",
-        "sys.cspResourceId": "i-mj79jvlx2vp3aj2tq7y2",
-        "sys.cspResourceName": "d3vkr66qjs728ptbeuk0",
-        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.labelType": "vm",
-        "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mmci01",
-        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d3vkr66qjs728ptbeuk0"
-      },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "ap-northeast-2",
-        "Zone": "ap-northeast-2a"
-      },
-      "publicIP": "8.220.220.21",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.143",
-      "privateDNS": "",
-      "rootDiskType": "cloud_essd",
-      "rootDiskSize": "50",
-      "rootDiskName": "",
-      "connectionName": "alibaba-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "alibaba-ap-northeast-2",
-        "providerName": "alibaba",
-        "driverName": "alibaba-driver-v1.0.so",
-        "credentialName": "alibaba",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "alibaba-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "South Korea (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-      "cspSpecName": "ecs.t6-c1m4.xlarge",
-      "imageId": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "cspImageName": "ubuntu_22_04_x64_20G_alibase_20250917.vhd",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-mj71mudehn140olulahhm",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "vsw-mj7aqhrfahhn1x8miwq30",
-      "networkInterface": "eni-mj79jvlx2vp3aj2s72cm",
-      "securityGroupIds": [
-        "mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d3vkr56qjs728ptbeuhg",
-      "vmUserName": "cb-user",
-      "vmUserPassword": "6!6dq3sr1Ajk$v",
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2025-10-27T10:47:38Z",
-          "completedTime": "2025-10-27T10:47:40Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ImageId",
-          "value": "ubuntu_22_04_x64_20G_alibase_20250917.vhd"
-        },
-        {
-          "key": "InstanceType",
-          "value": "ecs.t6-c1m4.xlarge"
-        },
-        {
-          "key": "DeviceAvailable",
-          "value": "true"
-        },
-        {
-          "key": "InstanceNetworkType",
-          "value": "vpc"
-        },
-        {
-          "key": "LocalStorageAmount",
-          "value": "0"
-        },
-        {
-          "key": "IsSpot",
-          "value": "false"
-        },
-        {
-          "key": "InstanceChargeType",
-          "value": "PostPaid"
-        },
-        {
-          "key": "InstanceName",
-          "value": "d3vkr66qjs728ptbeuk0"
-        },
-        {
-          "key": "DeploymentSetGroupNo",
-          "value": "0"
-        },
-        {
-          "key": "CreditSpecification",
-          "value": "Standard"
-        },
-        {
-          "key": "GPUAmount",
-          "value": "0"
-        },
-        {
-          "key": "Connected",
-          "value": "false"
-        },
-        {
-          "key": "InvocationCount",
-          "value": "0"
-        },
-        {
-          "key": "StartTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "ZoneId",
-          "value": "ap-northeast-2a"
-        },
-        {
-          "key": "InternetMaxBandwidthIn",
-          "value": "160"
-        },
-        {
-          "key": "InternetChargeType",
-          "value": "PayByBandwidth"
-        },
-        {
-          "key": "HostName",
-          "value": "iZmj79jvlx2vp3aj2tq7y2Z"
-        },
-        {
-          "key": "Status",
-          "value": "Running"
-        },
-        {
-          "key": "CPU",
-          "value": "0"
-        },
-        {
-          "key": "Cpu",
-          "value": "4"
-        },
-        {
-          "key": "SpotPriceLimit",
-          "value": "0.00"
-        },
-        {
-          "key": "OSName",
-          "value": "Ubuntu  22.04 64位"
-        },
-        {
-          "key": "InstanceOwnerId",
-          "value": "0"
-        },
-        {
-          "key": "OSNameEn",
-          "value": "Ubuntu  22.04 64 bit"
-        },
-        {
-          "key": "SerialNumber",
-          "value": "7f8f1c72-ff40-41ed-9b1a-16b1bc0f9f24"
-        },
-        {
-          "key": "RegionId",
-          "value": "ap-northeast-2"
-        },
-        {
-          "key": "IoOptimized",
-          "value": "true"
-        },
-        {
-          "key": "InternetMaxBandwidthOut",
-          "value": "5"
-        },
-        {
-          "key": "InstanceTypeFamily",
-          "value": "ecs.t6"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-mj79jvlx2vp3aj2tq7y2"
-        },
-        {
-          "key": "Recyclable",
-          "value": "false"
-        },
-        {
-          "key": "ExpiredTime",
-          "value": "2099-12-31T15:59Z"
-        },
-        {
-          "key": "OSType",
-          "value": "linux"
-        },
-        {
-          "key": "Memory",
-          "value": "16384"
-        },
-        {
-          "key": "CreationTime",
-          "value": "2025-10-27T10:46Z"
-        },
-        {
-          "key": "KeyPairName",
-          "value": "d3vkr56qjs728ptbeuhg"
-        },
-        {
-          "key": "LocalStorageCapacity",
-          "value": "0"
-        },
-        {
-          "key": "StoppedMode",
-          "value": "Not-applicable"
-        },
-        {
-          "key": "SpotStrategy",
-          "value": "NoSpot"
-        },
-        {
-          "key": "SpotDuration",
-          "value": "0"
-        },
-        {
-          "key": "DeletionProtection",
-          "value": "false"
-        },
-        {
-          "key": "SecurityGroupIds",
-          "value": "{SecurityGroupId:[sg-mj7bdaysvwp31kdgdj3j]}"
-        },
-        {
-          "key": "InnerIpAddress",
-          "value": "{IpAddress:[]}"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "{IpAddress:[8.220.220.21]}"
-        },
-        {
-          "key": "RdmaIpAddress",
-          "value": "{IpAddress:null}"
-        },
-        {
-          "key": "DedicatedHostAttribute",
-          "value": "{DedicatedHostName:,DedicatedHostClusterId:,DedicatedHostId:}"
-        },
-        {
-          "key": "EcsCapacityReservationAttr",
-          "value": "{CapacityReservationPreference:,CapacityReservationId:}"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{Core:0,HyperThreadingAdjustable:false,CoreCount:2,CoreFactor:0,Numa:,TopologyType:,ThreadsPerCore:2,SupportedTopologyTypes:{SupportedTopologyType:null}}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "DedicatedInstanceAttribute",
-          "value": "{Affinity:,Tenancy:}"
-        },
-        {
-          "key": "PrivateDnsNameOptions",
-          "value": "{EnableInstanceIdDnsARecord:false,EnableInstanceIdDnsAAAARecord:false,EnableIpDnsARecord:false,EnableIpDnsPtrRecord:false,HostnameType:}"
-        },
-        {
-          "key": "AdditionalInfo",
-          "value": "{EnableHighDensityMode:false}"
-        },
-        {
-          "key": "ImageOptions",
-          "value": "{ImageFamily:,LoginAsNonRoot:false,ImageName:,Description:,CurrentOSNVMeSupported:false,ImageFeatures:{NvmeSupport:},ImageTags:{ImageTag:null}}"
-        },
-        {
-          "key": "EipAddress",
-          "value": "{IsSupportUnassociate:false,InternetChargeType:,IpAddress:,Bandwidth:0,AllocationId:}"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:,HttpPutResponseHopLimit:0,HttpTokens:}"
-        },
-        {
-          "key": "VpcAttributes",
-          "value": "{VSwitchId:vsw-mj7aqhrfahhn1x8miwq30,VpcId:vpc-mj71mudehn140olulahhm,NatIpAddress:,PrivateIpAddress:{IpAddress:[192.168.110.143]}}"
-        },
-        {
-          "key": "Tags",
-          "value": "{Tag:null}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{NetworkInterface:[{SecurityGroupId:,VSwitchId:,DeleteOnRelease:false,InstanceType:,MacAddress:00:16:3e:03:d1:38,NetworkInterfaceTrafficMode:,NetworkInterfaceName:,NetworkInterfaceId:eni-mj79jvlx2vp3aj2s72cm,PrimaryIpAddress:192.168.110.143,Description:,Type:Primary,SecurityGroupIds:{SecurityGroupId:null},Ipv6PrefixSets:{Ipv6PrefixSet:null},Ipv4PrefixSets:{Ipv4PrefixSet:null},Ipv6Sets:{Ipv6Set:null},PrivateIpSets:{PrivateIpSet:[{PrivateIpAddress:192.168.110.143,PrivateDnsName:,Primary:true,AssociatedPublicIp:{PublicIpAddress:,AllocationId:}}]}}]}"
-        },
-        {
-          "key": "OperationLocks",
-          "value": "{LockReason:[]}"
-        }
-      ]
-    }
-  ],
-  "newVmList": null,
-  "postCommand": {
-    "userName": "cb-user",
-    "command": [
-      "uname -a"
-    ]
-  },
-  "postCommandResult": {
-    "results": [
-      {
-        "mciId": "mmci01",
-        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "vmIp": "8.220.210.176",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "mciId": "mmci01",
-        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "vmIp": "8.220.220.21",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      }
-    ]
-  }
-}
+Test skipped due to previous test failure
 ```
-
-</details>
 
 ### Test Case 6: Remote Command Accessibility Check
 
@@ -5082,59 +3208,8 @@
 
 #### 6.2 Test Result Information
 
-- **Status**: ✅ **SUCCESS**
-- **Result**: All VMs are accessible via SSH
-
-**Summary**: 2/2 VMs accessible via SSH
-
-**Test Statistics**:
-
-- Total VMs: 2
-- Successful Tests: 2
-- Failed Tests: 0
-
-**Complete Test Details**:
-
-<details>
-  <summary> <ins>Click to see detailed test results </ins> </summary>
-
-```json
-{
-  "failedTests": 0,
-  "overallStatus": {
-    "message": "2/2 VMs accessible via SSH",
-    "success": true
-  },
-  "successfulTests": 2,
-  "totalVMs": 2,
-  "vmResults": [
-    {
-      "command": "uname -a",
-      "output": "Linux iZmj77e8aypk5nsxp1ledrZ 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "8.220.210.176",
-      "sshTest": "successful",
-      "status": "success",
-      "subGroup": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "testOrder": 1,
-      "userName": "cb-user",
-      "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1"
-    },
-    {
-      "command": "uname -a",
-      "output": "Linux iZmj79jvlx2vp3aj2tq7y2Z 5.15.0-153-generic #163-Ubuntu SMP Thu Aug 7 16:37:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "8.220.220.21",
-      "sshTest": "successful",
-      "status": "success",
-      "subGroup": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "testOrder": 2,
-      "userName": "cb-user",
-      "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1"
-    }
-  ]
-}
-```
-
-</details>
+- **Status**: ⏭️ **SKIPPED**
+- **Reason**: Test skipped due to previous test failure
 
 ### Test Case 7: Delete the migrated computing infra
 
@@ -5149,15 +3224,6 @@
 
 #### 7.2 API Response Information
 
-- **Status**: ✅ **SUCCESS**
-- **Response**: Infrastructure deletion completed successfully
-
-**Response Body**:
-
-```json
-{
-  "success": true,
-  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
-}
-```
+- **Status**: ⏭️ **SKIPPED**
+- **Reason**: Test skipped due to previous test failure
 

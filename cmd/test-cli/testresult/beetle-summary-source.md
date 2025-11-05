@@ -1,8 +1,8 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2025-11-04 15:11:23
+**Generated At:** 2025-11-05 05:52:29
 
-**Infrastructure Name:** infra-2-servers
+**Infrastructure Name:** infra-3-servers
 
 ---
 
@@ -10,18 +10,33 @@
 
 | Metric | Value |
 |--------|-------|
-| Infrastructure Name | infra-2-servers |
-| Total Servers | 2 |
-| Total CPU Cores | 6 |
-| Total Memory (GB) | 32 |
-| Total Disk (GB) | 2405 |
-| Total Networks | 2 |
+| Infrastructure Name | infra-3-servers |
+| Total Servers | 3 |
+| Total CPU Cores | 4 |
+| Total Memory (GB) | 26 |
+| Total Disk (GB) | 0 |
+| Total Networks | 3 |
 
 ## Compute Resources
 
-### Servers (2)
+### Servers (3)
 
-#### 1. cm-nfs
+#### 1. ip-10-0-1-25
+
+| Component | Details |
+|-----------|----------|
+| CPU | Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz |
+| **CPU CPUs** | 1 |
+| CPU Cores | 1 |
+| **CPU Threads** | 2 |
+| **Equivalent vCPUs** | 2 (CPUs × Threads) |
+| CPU Speed | 2.50 GHz |
+| Architecture | x86_64 |
+| **Memory** | 2 GB (DDR4) |
+| **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
+| **Primary IP** | 10.0.1.25/24 |
+
+#### 2. ip-10-0-1-220
 
 | Component | Details |
 |-----------|----------|
@@ -33,25 +48,23 @@
 | CPU Speed | 2.50 GHz |
 | Architecture | x86_64 |
 | **Memory** | 16 GB (DDR4) |
-| **Root Disk** | 1093 GB (HDD) |
-| **OS** | Ubuntu 22.04.5 LTS (Jammy Jellyfish) |
-| **Primary IP** | 172.29.0.102/24 |
+| **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
+| **Primary IP** | 10.0.1.220/24 |
 
-#### 2. cm-web
+#### 3. ip-10-0-1-131
 
 | Component | Details |
 |-----------|----------|
 | CPU | Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz |
 | **CPU CPUs** | 1 |
-| CPU Cores | 4 |
-| **CPU Threads** | 8 |
-| **Equivalent vCPUs** | 8 (CPUs × Threads) |
-| CPU Speed | 3.10 GHz |
+| CPU Cores | 1 |
+| **CPU Threads** | 2 |
+| **Equivalent vCPUs** | 2 (CPUs × Threads) |
+| CPU Speed | 2.50 GHz |
 | Architecture | x86_64 |
-| **Memory** | 16 GB (DDR4) |
-| **Root Disk** | 1312 GB (HDD) |
-| **OS** | Ubuntu 22.04.5 LTS (Jammy Jellyfish) |
-| **Primary IP** | 172.29.0.103/24 |
+| **Memory** | 8 GB (DDR4) |
+| **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
+| **Primary IP** | 10.0.1.131/24 |
 
 
 ## Network Resources
@@ -62,91 +75,220 @@
 
 | Property | Value |
 |----------|-------|
-| Network CIDR | 192.168.110.0/24 |
-| Gateway | 192.168.110.254 |
-| Connected Servers | 2 |
-| Description | Network with gateway 192.168.110.254 |
+| Network CIDR | 10.0.1.0/24 |
+| Gateway | 10.0.1.1 |
+| Connected Servers | 3 |
+| Description | Network with gateway 10.0.1.1 |
 
-### Network Details by Server (2 servers)
+### Network Details by Server (3 servers)
 
-#### 1. cm-nfs
-
-**Active Interfaces:**
-
-| Interface | IP Address | State |
-|-----------|------------|-------|
-| lo | 127.0.0.1/8 | up |
-| eno1np0 | 172.29.0.102/24, 172.29.0.200/32 | up |
-| eno2np1 | 192.168.110.200/32 | up |
-| br-189b10762332 | 172.20.0.1/16 | down |
-| br-f67138586d47 | 172.19.0.1/16 | down |
-| br-068801a3f047 | 172.17.0.1/16 | up |
-| br-ex | 192.168.110.102/24 | up |
-
-**Main Routes:**
-
-| Destination | Gateway | Interface |
-|-------------|---------|-----------|
-| 0.0.0.0/0 | 192.168.110.254 | br-ex |
-| 172.17.0.0/16 | on-link | br-068801a3f047 |
-| 172.19.0.0/16 | on-link | br-f67138586d47 |
-| 172.20.0.0/16 | on-link | br-189b10762332 |
-| 172.29.0.0/24 | on-link | eno1np0 |
-| 192.168.110.0/24 | 192.168.110.254 | br-ex |
-
-#### 2. cm-web
+#### 1. ip-10-0-1-25
 
 **Active Interfaces:**
 
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
-| eno1np0 | 172.29.0.103/24 | up |
-| eno2np1 | - | up |
-| br-ex | 192.168.110.103/24 | up |
 
-**Main Routes:**
+#### 2. ip-10-0-1-220
 
-| Destination | Gateway | Interface |
-|-------------|---------|-----------|
-| 0.0.0.0/0 | 192.168.110.254 | br-ex |
-| 172.29.0.0/24 | on-link | eno1np0 |
-| 192.168.110.0/24 | 192.168.110.254 | br-ex |
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
+
+#### 3. ip-10-0-1-131
+
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
 
 
 ## Security Resources
 
-### Firewall Rules by Server (2 servers)
+### Firewall Rules by Server (3 servers)
 
-#### 1. cm-nfs
+#### 1. ip-10-0-1-25
 
-**Firewall Rules:** (3 rules)
+**Firewall Rules:** (45 rules)
 
 | Direction | Protocol | Src CIDR | Src Ports | Dst CIDR | Dst Ports | Action |
 |-----------|----------|----------|-----------|----------|-----------|--------|
-| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 10022 | allow |
-| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 8081,8082 | allow |
-| inbound | udp | 192.168.110.0/24 | * | 0.0.0.0/0 | 53 | allow |
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | deny |
+| inbound | icmp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | udp | 0.0.0.0/0 | 67 | 0.0.0.0/0 | 68 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 224.0.0.251/32 | 5353 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 239.255.255.250/32 | 1900 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 22 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 80 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 443 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 8080 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 3306 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 5432 | deny |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9113 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9113 | allow |
+| inbound | * | 10.0.0.0/16 | * | 0.0.0.0/0 | * | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 23 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 135 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 139 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 445 | deny |
+| outbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | deny |
+| inbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| inbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| inbound | udp | fe80::/10 | 547 | fe80::/10 | 546 | allow |
+| inbound | udp | ::/0 | * | ff02::fb/128 | 5353 | allow |
+| inbound | udp | ::/0 | * | ff02::f/128 | 1900 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 22 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 80 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 443 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 8080 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 3306 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 5432 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 23 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 135 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 139 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 445 | deny |
+| outbound | * | ::/0 | * | ::/0 | * | allow |
+| outbound | * | ::/0 | * | ::/0 | * | deny |
+| outbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| outbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| outbound | tcp | ::/0 | * | ::/0 | * | allow |
+| outbound | udp | ::/0 | * | ::/0 | * | allow |
 
-#### 2. cm-web
+#### 2. ip-10-0-1-220
 
-*No firewall rules*
+**Firewall Rules:** (51 rules)
+
+| Direction | Protocol | Src CIDR | Src Ports | Dst CIDR | Dst Ports | Action |
+|-----------|----------|----------|-----------|----------|-----------|--------|
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | deny |
+| inbound | icmp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | udp | 0.0.0.0/0 | 67 | 0.0.0.0/0 | 68 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 224.0.0.251/32 | 5353 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 239.255.255.250/32 | 1900 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 22 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 2049 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | 2049 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 111 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | 111 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 20048 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 20048 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 32803 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 32803 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 80 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 443 | deny |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9100 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9100 | allow |
+| inbound | * | 10.0.0.0/16 | * | 0.0.0.0/0 | * | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 23 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 135 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 139 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 445 | deny |
+| outbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | deny |
+| inbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| inbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| inbound | udp | fe80::/10 | 547 | fe80::/10 | 546 | allow |
+| inbound | udp | ::/0 | * | ff02::fb/128 | 5353 | allow |
+| inbound | udp | ::/0 | * | ff02::f/128 | 1900 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 22 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 2049 | allow |
+| inbound | udp | ::/0 | * | ::/0 | 2049 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 111 | allow |
+| inbound | udp | ::/0 | * | ::/0 | 111 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 80 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 443 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 23 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 135 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 139 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 445 | deny |
+| outbound | * | ::/0 | * | ::/0 | * | allow |
+| outbound | * | ::/0 | * | ::/0 | * | deny |
+| outbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| outbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| outbound | tcp | ::/0 | * | ::/0 | * | allow |
+| outbound | udp | ::/0 | * | ::/0 | * | allow |
+
+#### 3. ip-10-0-1-131
+
+**Firewall Rules:** (53 rules)
+
+| Direction | Protocol | Src CIDR | Src Ports | Dst CIDR | Dst Ports | Action |
+|-----------|----------|----------|-----------|----------|-----------|--------|
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | deny |
+| inbound | icmp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | udp | 0.0.0.0/0 | 67 | 0.0.0.0/0 | 68 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 224.0.0.251/32 | 5353 | allow |
+| inbound | udp | 0.0.0.0/0 | * | 239.255.255.250/32 | 1900 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 22 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 3306 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 3306 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4567 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4567 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4568 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4568 | allow |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4444 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 4444 | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 80 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 443 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 8080 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 3306 | deny |
+| inbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | 3306 | deny |
+| inbound | tcp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9104 | allow |
+| inbound | udp | 10.0.0.0/16 | * | 0.0.0.0/0 | 9104 | allow |
+| inbound | * | 10.0.0.0/16 | * | 0.0.0.0/0 | * | allow |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 23 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 135 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 139 | deny |
+| inbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | 445 | deny |
+| outbound | * | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | tcp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| outbound | udp | 0.0.0.0/0 | * | 0.0.0.0/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | allow |
+| inbound | * | ::/0 | * | ::/0 | * | deny |
+| inbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| inbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| inbound | udp | fe80::/10 | 547 | fe80::/10 | 546 | allow |
+| inbound | udp | ::/0 | * | ff02::fb/128 | 5353 | allow |
+| inbound | udp | ::/0 | * | ff02::f/128 | 1900 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 22 | allow |
+| inbound | tcp | ::/0 | * | ::/0 | 80 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 443 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 8080 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 3306 | deny |
+| inbound | udp | ::/0 | * | ::/0 | 3306 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 23 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 135 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 139 | deny |
+| inbound | tcp | ::/0 | * | ::/0 | 445 | deny |
+| outbound | * | ::/0 | * | ::/0 | * | allow |
+| outbound | * | ::/0 | * | ::/0 | * | deny |
+| outbound | icmpv6 | ::/0 | * | ::/0 | * | allow |
+| outbound | icmpv6 | fe80::/10 | * | ::/0 | * | allow |
+| outbound | tcp | ::/0 | * | ::/0 | * | allow |
+| outbound | udp | ::/0 | * | ::/0 | * | allow |
 
 
 ## Storage Resources
-
-### Storage by Server (2 servers)
-
-| Hostname | RootDisk (GB) | Type |
-|----------|---------------|------|
-| cm-nfs | 1093 | HDD |
-| cm-web | 1312 | HDD |
 
 ### Storage by Type
 
 | Type | Total (GB) | Servers |
 |------|------------|----------|
-| HDD | 2405 | 2 |
+|  | 0 | 0 |
 
 ---
 

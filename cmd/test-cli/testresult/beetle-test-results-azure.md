@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.1 (a4c4e23)
+- CM-Beetle: v0.4.2+ (950c02b)
 - cm-model: v0.0.14
 - CB-Tumblebug: v0.11.15
 - CB-Spider: v0.11.15
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: October 27, 2025
-- Test Time: 19:25:50 KST
-- Test Execution: 2025-10-27 19:25:50 KST
+- Test Date: November 5, 2025
+- Test Time: 14:55:39 KST
+- Test Execution: 2025-11-05 14:55:39 KST
 
 ### Scenario
 
@@ -39,19 +39,19 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 489ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 3m6.623s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 1.653s | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 62ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1.714s | Pass |
+| 1 | `POST /beetle/recommendation/mci` | ✅ **PASS** | 950ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 4m33.622s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 2.97s | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 85ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 4.109s | Pass |
 | 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m10.246s | Pass |
+| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m22.95s | Pass |
 
 **Overall Result**: 7/7 tests passed ✅
 
-**Total Duration**: 6m4.288128841s
+**Total Duration**: 8m16.163659262s
 
-*Test executed on October 27, 2025 at 19:25:50 KST (2025-10-27 19:25:50 KST) using CM-Beetle automated test CLI*
+*Test executed on November 5, 2025 at 14:55:39 KST (2025-11-05 14:55:39 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -84,14 +84,19 @@
       "ipv4Networks": {
         "defaultGateways": [
           {
-            "ip": "192.168.110.254",
-            "interfaceName": "br-ex",
-            "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c"
           },
           {
-            "ip": "192.168.110.254",
-            "interfaceName": "br-ex",
-            "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939"
+          },
+          {
+            "ip": "10.0.1.1",
+            "interfaceName": "ens5",
+            "machineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4"
           }
         ]
       },
@@ -99,37 +104,27 @@
     },
     "servers": [
       {
-        "hostname": "cm-nfs",
-        "machineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "hostname": "ip-10-0-1-25",
+        "machineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "cpu": {
           "architecture": "x86_64",
           "cpus": 1,
-          "cores": 2,
-          "threads": 4,
+          "cores": 1,
+          "threads": 2,
           "maxSpeed": 2.499,
           "vendor": "GenuineIntel",
           "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
         },
         "memory": {
           "type": "DDR4",
-          "totalSize": 16,
-          "available": 12,
-          "used": 4
+          "totalSize": 2,
+          "available": 1
         },
         "rootDisk": {
-          "label": "unknown",
-          "type": "HDD",
-          "totalSize": 1093,
-          "available": 972,
-          "used": 65
+          "label": "",
+          "type": "",
+          "totalSize": 0
         },
-        "dataDisks": [
-          {
-            "label": "unknown",
-            "type": "HDD",
-            "totalSize": 0
-          }
-        ],
         "interfaces": [
           {
             "name": "lo",
@@ -143,374 +138,51 @@
             "state": "up"
           },
           {
-            "name": "enp24s0f0",
-            "macAddress": "b4:96:91:52:fa:e8",
-            "mtu": 1500
-          },
-          {
-            "name": "enp24s0f1",
-            "macAddress": "b4:96:91:52:fa:e9",
-            "mtu": 1500
-          },
-          {
-            "name": "eno1np0",
-            "macAddress": "a4:bf:01:5a:b0:03",
+            "name": "ens5",
+            "macAddress": "02:1d:0c:42:f1:51",
             "ipv4CidrBlocks": [
-              "172.29.0.102/24",
-              "172.29.0.200/32"
+              "10.0.1.25/24"
             ],
             "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b003/64"
+              "fe80::1d:cff:fe42:f151/64"
             ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp26s0f0",
-            "macAddress": "b4:96:91:53:01:54",
-            "mtu": 1500
-          },
-          {
-            "name": "enp26s0f1",
-            "macAddress": "b4:96:91:53:01:55",
-            "mtu": 1500
-          },
-          {
-            "name": "eno2np1",
-            "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.200/32"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp175s0f0",
-            "macAddress": "b4:96:91:47:70:f0",
-            "mtu": 1500
-          },
-          {
-            "name": "enp175s0f1",
-            "macAddress": "b4:96:91:47:70:f2",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f0",
-            "macAddress": "b4:96:91:47:80:0c",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f1",
-            "macAddress": "b4:96:91:47:80:0e",
-            "mtu": 1500
-          },
-          {
-            "name": "br-189b10762332",
-            "macAddress": "02:42:32:c2:37:0e",
-            "ipv4CidrBlocks": [
-              "172.20.0.1/16"
-            ],
-            "mtu": 1500,
-            "state": "down"
-          },
-          {
-            "name": "br-f67138586d47",
-            "macAddress": "02:42:6e:92:df:03",
-            "ipv4CidrBlocks": [
-              "172.19.0.1/16"
-            ],
-            "mtu": 1500,
-            "state": "down"
-          },
-          {
-            "name": "br-068801a3f047",
-            "macAddress": "02:42:cc:24:25:30",
-            "ipv4CidrBlocks": [
-              "172.17.0.1/16"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::42:ccff:fe24:2530/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "ovs-system",
-            "macAddress": "f6:db:ff:2d:fa:8a",
-            "mtu": 1500
-          },
-          {
-            "name": "octavia-hm0",
-            "macAddress": "fa:16:3e:9d:89:c5",
-            "ipv4CidrBlocks": [
-              "10.1.0.106/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fe9d:89c5/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "genev_sys_6081",
-            "macAddress": "de:4b:8c:92:4c:db",
-            "ipv6CidrBlocks": [
-              "fe80::2852:51ff:fe36:258b/64"
-            ],
-            "mtu": 65000,
-            "state": "up"
-          },
-          {
-            "name": "br-int",
-            "macAddress": "62:9b:45:53:d2:4f",
-            "mtu": 1442
-          },
-          {
-            "name": "br-ex",
-            "macAddress": "a4:bf:01:5a:b0:04",
-            "ipv4CidrBlocks": [
-              "192.168.110.102/24"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b004/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0481d752-40",
-            "macAddress": "6a:2a:78:65:42:32",
-            "ipv6CidrBlocks": [
-              "fe80::682a:78ff:fe65:4232/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap935cb764-41",
-            "macAddress": "fe:16:3e:4c:39:2b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4c:392b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap19d6d4d9-a4",
-            "macAddress": "fe:16:3e:d5:6f:85",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fed5:6f85/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap7422e216-ff",
-            "macAddress": "fe:16:3e:4d:31:9e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe4d:319e/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapa53b173c-e4",
-            "macAddress": "fe:16:3e:52:91:4b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:914b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapabb5f299-74",
-            "macAddress": "fe:16:3e:46:9b:72",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe46:9b72/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapf6929430-67",
-            "macAddress": "fe:16:3e:3e:15:10",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe3e:1510/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap3968711d-8a",
-            "macAddress": "fe:16:3e:65:ad:39",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe65:ad39/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap49d44128-d0",
-            "macAddress": "fe:16:3e:1e:c7:fc",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe1e:c7fc/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap708d34b6-e0",
-            "macAddress": "fe:16:3e:19:8c:71",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe19:8c71/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1479d90f-c0",
-            "macAddress": "7a:0f:53:ad:50:84",
-            "ipv6CidrBlocks": [
-              "fe80::780f:53ff:fead:5084/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1a03c4f4-e8",
-            "macAddress": "fa:16:3e:c9:ea:1c",
-            "ipv4CidrBlocks": [
-              "10.254.0.27/28",
-              "10.254.0.3/28"
-            ],
-            "ipv6CidrBlocks": [
-              "fe80::f816:3eff:fec9:ea1c/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "veth0b8a5f4",
-            "macAddress": "be:22:36:27:01:d2",
-            "ipv6CidrBlocks": [
-              "fe80::bc22:36ff:fe27:1d2/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "veth87e839e",
-            "macAddress": "32:de:9f:d7:cd:24",
-            "ipv6CidrBlocks": [
-              "fe80::38f0:78ff:fef7:358/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "veth089f03a",
-            "macAddress": "2a:8f:e3:66:fd:99",
-            "ipv6CidrBlocks": [
-              "fe80::5c87:18ff:fe73:d0dd/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapaf1a281f-c0",
-            "macAddress": "32:3c:e7:79:ee:ef",
-            "ipv6CidrBlocks": [
-              "fe80::303c:e7ff:fe79:eeef/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0e0c519d-d0",
-            "macAddress": "fe:16:3e:8a:c2:22",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe8a:c222/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd801f01d-d6",
-            "macAddress": "fe:16:3e:09:e9:f5",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe09:e9f5/64"
-            ],
-            "mtu": 1442,
+            "mtu": 9001,
             "state": "up"
           }
         ],
         "routingTable": [
           {
             "destination": "0.0.0.0/0",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.1.0.0/24",
-            "interface": "octavia-hm0",
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.254.0.0/28",
-            "interface": "tap1a03c4f4-e8",
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "10.254.0.16/28",
-            "interface": "tap1a03c4f4-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "172.17.0.0/16",
-            "interface": "br-068801a3f047",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "172.19.0.0/16",
-            "interface": "br-f67138586d47",
-            "protocol": "kernel",
-            "scope": "link",
-            "source": "172.19.0.1",
-            "linkState": "down"
-          },
-          {
-            "destination": "172.20.0.0/16",
-            "interface": "br-189b10762332",
-            "protocol": "kernel",
-            "scope": "link",
-            "source": "172.20.0.1",
-            "linkState": "down"
-          },
-          {
-            "destination": "172.29.0.0/24",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "192.168.110.0/24",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
@@ -526,192 +198,8 @@
           },
           {
             "destination": "fe80::/64",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "br-068801a3f047",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "octavia-hm0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0481d752-40",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap935cb764-41",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap19d6d4d9-a4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap7422e216-ff",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapa53b173c-e4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapabb5f299-74",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapf6929430-67",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap3968711d-8a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap49d44128-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap708d34b6-e0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1a03c4f4-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth0b8a5f4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth87e839e",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "veth089f03a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapaf1a281f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0e0c519d-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd801f01d-d6",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -735,362 +223,17 @@
             "linkState": "up"
           },
           {
-            "destination": "fe80::42:ccff:fe24:2530/128",
-            "interface": "br-068801a3f047",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::2852:51ff:fe36:258b/128",
-            "interface": "genev_sys_6081",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::303c:e7ff:fe79:eeef/128",
-            "interface": "tapaf1a281f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::38f0:78ff:fef7:358/128",
-            "interface": "veth87e839e",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::5c87:18ff:fe73:d0dd/128",
-            "interface": "veth089f03a",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::682a:78ff:fe65:4232/128",
-            "interface": "tap0481d752-40",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::780f:53ff:fead:5084/128",
-            "interface": "tap1479d90f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b003/128",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b004/128",
-            "interface": "eno2np1",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b004/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::bc22:36ff:fe27:1d2/128",
-            "interface": "veth0b8a5f4",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::f816:3eff:fe9d:89c5/128",
-            "interface": "octavia-hm0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::f816:3eff:fec9:ea1c/128",
-            "interface": "tap1a03c4f4-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe09:e9f5/128",
-            "interface": "tapd801f01d-d6",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe19:8c71/128",
-            "interface": "tap708d34b6-e0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe1e:c7fc/128",
-            "interface": "tap49d44128-d0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe3e:1510/128",
-            "interface": "tapf6929430-67",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe46:9b72/128",
-            "interface": "tapabb5f299-74",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe4c:392b/128",
-            "interface": "tap935cb764-41",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe4d:319e/128",
-            "interface": "tap7422e216-ff",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe52:914b/128",
-            "interface": "tapa53b173c-e4",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe65:ad39/128",
-            "interface": "tap3968711d-8a",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe8a:c222/128",
-            "interface": "tap0e0c519d-d0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fed5:6f85/128",
-            "interface": "tap19d6d4d9-a4",
+            "destination": "fe80::1d:cff:fe42:f151/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
             "destination": "ff00::/8",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "br-068801a3f047",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "octavia-hm0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0481d752-40",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap935cb764-41",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap19d6d4d9-a4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap7422e216-ff",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapa53b173c-e4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapabb5f299-74",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapf6929430-67",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap3968711d-8a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap49d44128-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap708d34b6-e0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1a03c4f4-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth0b8a5f4",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth87e839e",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "veth089f03a",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapaf1a281f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0e0c519d-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd801f01d-d6",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1111,7 +254,61 @@
             "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "10022",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
             "protocol": "tcp",
             "direction": "inbound",
             "action": "allow"
@@ -1120,24 +317,348 @@
             "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "8081,8082",
+            "dstPorts": "80",
             "protocol": "tcp",
             "direction": "inbound",
             "action": "allow"
           },
           {
-            "srcCIDR": "192.168.110.0/24",
+            "srcCIDR": "0.0.0.0/0",
             "srcPorts": "*",
             "dstCIDR": "0.0.0.0/0",
-            "dstPorts": "53",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9113",
             "protocol": "udp",
             "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "5432",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
             "action": "allow"
           }
         ],
         "os": {
-          "prettyName": "Ubuntu 22.04.5 LTS",
-          "version": "22.04.5 LTS (Jammy Jellyfish)",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
           "name": "Ubuntu",
           "versionId": "22.04",
           "versionCodename": "jammy",
@@ -1146,29 +667,26 @@
         }
       },
       {
-        "hostname": "cm-web",
-        "machineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "hostname": "ip-10-0-1-220",
+        "machineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "cpu": {
           "architecture": "x86_64",
           "cpus": 1,
-          "cores": 4,
-          "threads": 8,
-          "maxSpeed": 3.099,
+          "cores": 2,
+          "threads": 4,
+          "maxSpeed": 2.499,
           "vendor": "GenuineIntel",
           "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
         },
         "memory": {
           "type": "DDR4",
           "totalSize": 16,
-          "available": 12,
-          "used": 4
+          "available": 15
         },
         "rootDisk": {
-          "label": "unknown",
-          "type": "HDD",
-          "totalSize": 1312,
-          "available": 1222,
-          "used": 23
+          "label": "",
+          "type": "",
+          "totalSize": 0
         },
         "interfaces": [
           {
@@ -1183,254 +701,51 @@
             "state": "up"
           },
           {
-            "name": "enp24s0f0",
-            "macAddress": "b4:96:91:53:01:58",
-            "mtu": 1500
-          },
-          {
-            "name": "enp24s0f1",
-            "macAddress": "b4:96:91:53:01:59",
-            "mtu": 1500
-          },
-          {
-            "name": "enp175s0f0",
-            "macAddress": "b4:96:91:55:23:8c",
-            "mtu": 1500
-          },
-          {
-            "name": "eno1np0",
-            "macAddress": "a4:bf:01:5a:b1:1b",
+            "name": "ens5",
+            "macAddress": "02:4c:5f:01:55:b3",
             "ipv4CidrBlocks": [
-              "172.29.0.103/24"
+              "10.0.1.220/24"
             ],
             "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11b/64"
+              "fe80::4c:5fff:fe01:55b3/64"
             ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp26s0f0",
-            "macAddress": "b4:96:91:53:01:6c",
-            "mtu": 1500
-          },
-          {
-            "name": "enp26s0f1",
-            "macAddress": "b4:96:91:53:01:6d",
-            "mtu": 1500
-          },
-          {
-            "name": "eno2np1",
-            "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv6CidrBlocks": [
-              "fe80::a6bf:1ff:fe5a:b11c/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "enp175s0f1",
-            "macAddress": "b4:96:91:55:23:8e",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f0",
-            "macAddress": "b4:96:91:55:1e:04",
-            "mtu": 1500
-          },
-          {
-            "name": "enp177s0f1",
-            "macAddress": "b4:96:91:55:1e:06",
-            "mtu": 1500
-          },
-          {
-            "name": "ovs-system",
-            "macAddress": "6e:a8:ca:69:96:82",
-            "mtu": 1500
-          },
-          {
-            "name": "br-ex",
-            "macAddress": "a4:bf:01:5a:b1:1c",
-            "ipv4CidrBlocks": [
-              "192.168.110.103/24"
-            ],
-            "ipv6CidrBlocks": [
-              "2001::1000/64",
-              "fe80::7824:d2ff:fe2c:7330/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "genev_sys_6081",
-            "macAddress": "fa:e3:ea:20:21:0c",
-            "ipv6CidrBlocks": [
-              "fe80::2caf:1eff:fe7f:f78f/64"
-            ],
-            "mtu": 65000,
-            "state": "up"
-          },
-          {
-            "name": "br-int",
-            "macAddress": "ea:d0:e7:43:23:41",
-            "mtu": 1442
-          },
-          {
-            "name": "tap334a688a-76",
-            "macAddress": "fe:16:3e:52:10:6e",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe52:106e/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd4e69ee0-72",
-            "macAddress": "fe:16:3e:2c:59:7a",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2c:597a/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap50ee370b-a7",
-            "macAddress": "fe:16:3e:71:22:43",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe71:2243/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tape46b2f03-d0",
-            "macAddress": "fe:16:3e:e2:ea:0f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fee2:ea0f/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap78b1ab69-36",
-            "macAddress": "fe:16:3e:14:65:fb",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe14:65fb/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tape545ab95-ab",
-            "macAddress": "fe:16:3e:73:24:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe73:2490/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tapadd1bc06-e8",
-            "macAddress": "fe:16:3e:26:ea:51",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe26:ea51/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tapd7ff0608-f0",
-            "macAddress": "fe:16:3e:2b:75:d6",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe2b:75d6/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap26b9063f-c8",
-            "macAddress": "fe:16:3e:6c:c9:90",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe6c:c990/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap0d667e3a-e2",
-            "macAddress": "fe:16:3e:9f:7a:65",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe9f:7a65/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap1df68fb5-f9",
-            "macAddress": "fe:16:3e:13:66:6f",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe13:666f/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap3b66c516-59",
-            "macAddress": "fe:16:3e:77:e4:da",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe77:e4da/64"
-            ],
-            "mtu": 1442,
-            "state": "up"
-          },
-          {
-            "name": "tap6f653485-7f",
-            "macAddress": "fe:16:3e:7d:85:5b",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fe7d:855b/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap1479d90f-c0",
-            "macAddress": "02:b9:31:31:0d:fe",
-            "ipv6CidrBlocks": [
-              "fe80::b9:31ff:fe31:dfe/64"
-            ],
-            "mtu": 1500,
-            "state": "up"
-          },
-          {
-            "name": "tap87daf3f9-0f",
-            "macAddress": "fe:16:3e:cb:97:79",
-            "ipv6CidrBlocks": [
-              "fe80::fc16:3eff:fecb:9779/64"
-            ],
-            "mtu": 1500,
+            "mtu": 9001,
             "state": "up"
           }
         ],
         "routingTable": [
           {
             "destination": "0.0.0.0/0",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "172.29.0.0/24",
-            "interface": "eno1np0",
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
-            "destination": "192.168.110.0/24",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
@@ -1445,162 +760,9 @@
             "linkState": "up"
           },
           {
-            "destination": "2001::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
             "destination": "fe80::/64",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap334a688a-76",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd4e69ee0-72",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap50ee370b-a7",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tape46b2f03-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap78b1ab69-36",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tape545ab95-ab",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapadd1bc06-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tapd7ff0608-f0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap26b9063f-c8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap0d667e3a-e2",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1df68fb5-f9",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap3b66c516-59",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap6f653485-7f",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::/64",
-            "interface": "tap87daf3f9-0f",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1624,295 +786,17 @@
             "linkState": "up"
           },
           {
-            "destination": "2001::1000/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::b9:31ff:fe31:dfe/128",
-            "interface": "tap1479d90f-c0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::2caf:1eff:fe7f:f78f/128",
-            "interface": "genev_sys_6081",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::7824:d2ff:fe2c:7330/128",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b11b/128",
-            "interface": "eno1np0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::a6bf:1ff:fe5a:b11c/128",
-            "interface": "eno2np1",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe13:666f/128",
-            "interface": "tap1df68fb5-f9",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe14:65fb/128",
-            "interface": "tap78b1ab69-36",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe26:ea51/128",
-            "interface": "tapadd1bc06-e8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe2b:75d6/128",
-            "interface": "tapd7ff0608-f0",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe2c:597a/128",
-            "interface": "tapd4e69ee0-72",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe52:106e/128",
-            "interface": "tap334a688a-76",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe6c:c990/128",
-            "interface": "tap26b9063f-c8",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe71:2243/128",
-            "interface": "tap50ee370b-a7",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe73:2490/128",
-            "interface": "tape545ab95-ab",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe77:e4da/128",
-            "interface": "tap3b66c516-59",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe7d:855b/128",
-            "interface": "tap6f653485-7f",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fe9f:7a65/128",
-            "interface": "tap0d667e3a-e2",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fecb:9779/128",
-            "interface": "tap87daf3f9-0f",
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "fe80::fc16:3eff:fee2:ea0f/128",
-            "interface": "tape46b2f03-d0",
+            "destination": "fe80::4c:5fff:fe01:55b3/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "protocol": "kernel",
             "scope": "universe",
             "linkState": "up"
           },
           {
             "destination": "ff00::/8",
-            "interface": "eno2np1",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "eno1np0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "gateway": "192.168.110.254",
-            "interface": "br-ex",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "genev_sys_6081",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap334a688a-76",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd4e69ee0-72",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap50ee370b-a7",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tape46b2f03-d0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap78b1ab69-36",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tape545ab95-ab",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapadd1bc06-e8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tapd7ff0608-f0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap26b9063f-c8",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap0d667e3a-e2",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1df68fb5-f9",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap3b66c516-59",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap6f653485-7f",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap1479d90f-c0",
-            "metric": 256,
-            "protocol": "kernel",
-            "scope": "universe",
-            "linkState": "up"
-          },
-          {
-            "destination": "ff00::/8",
-            "interface": "tap87daf3f9-0f",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
             "metric": 256,
             "protocol": "kernel",
             "scope": "universe",
@@ -1928,9 +812,1105 @@
             "linkState": "up"
           }
         ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "20048",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "32803",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9100",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "2049",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "111",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
         "os": {
-          "prettyName": "Ubuntu 22.04.5 LTS",
-          "version": "22.04.5 LTS (Jammy Jellyfish)",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "name": "Ubuntu",
+          "versionId": "22.04",
+          "versionCodename": "jammy",
+          "id": "ubuntu",
+          "idLike": "debian"
+        }
+      },
+      {
+        "hostname": "ip-10-0-1-131",
+        "machineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "cpu": {
+          "architecture": "x86_64",
+          "cpus": 1,
+          "cores": 1,
+          "threads": 2,
+          "maxSpeed": 2.499,
+          "vendor": "GenuineIntel",
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz"
+        },
+        "memory": {
+          "type": "DDR4",
+          "totalSize": 8,
+          "available": 7
+        },
+        "rootDisk": {
+          "label": "",
+          "type": "",
+          "totalSize": 0
+        },
+        "interfaces": [
+          {
+            "name": "lo",
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "state": "up"
+          },
+          {
+            "name": "ens5",
+            "macAddress": "02:c0:4b:06:72:c7",
+            "ipv4CidrBlocks": [
+              "10.0.1.131/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::c0:4bff:fe06:72c7/64"
+            ],
+            "mtu": 9001,
+            "state": "up"
+          }
+        ],
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.0.2/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "10.0.1.1/32",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::/64",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::1/128",
+            "gateway": "on-link",
+            "interface": "lo",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "fe80::c0:4bff:fe06:72c7/128",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "ff00::/8",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "metric": 256,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          },
+          {
+            "destination": "::/0",
+            "gateway": "on-link",
+            "interface": "lo",
+            "metric": 2147483647,
+            "protocol": "kernel",
+            "scope": "universe",
+            "linkState": "up"
+          }
+        ],
+        "firewallTable": [
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "icmp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "67",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "68",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "224.0.0.251/32",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "239.255.255.250/32",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4567",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4568",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "4444",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9104",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "547",
+            "dstCIDR": "fe80::/10",
+            "dstPorts": "546",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::fb/128",
+            "dstPorts": "5353",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "ff02::f/128",
+            "dstPorts": "1900",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "80",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "443",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "8080",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "3306",
+            "protocol": "udp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "23",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "135",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "139",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "445",
+            "protocol": "tcp",
+            "direction": "inbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "direction": "outbound",
+            "action": "deny"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "fe80::/10",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "icmpv6",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "tcp",
+            "direction": "outbound",
+            "action": "allow"
+          },
+          {
+            "srcCIDR": "::/0",
+            "srcPorts": "*",
+            "dstCIDR": "::/0",
+            "dstPorts": "*",
+            "protocol": "udp",
+            "direction": "outbound",
+            "action": "allow"
+          }
+        ],
+        "os": {
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
           "name": "Ubuntu",
           "versionId": "22.04",
           "versionCodename": "jammy",
@@ -1971,14 +1951,14 @@
     "description": "a recommended multi-cloud infrastructure",
     "subGroups": [
       {
-        "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "subGroupSize": "",
         "label": {
-          "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
+          "sourceMachineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c"
         },
-        "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "description": "a recommended virtual machine 01 for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "connectionName": "azure-koreasouth",
-        "specId": "azure+koreasouth+standard_b4as_v2",
+        "specId": "azure+koreasouth+standard_b2als_v2",
         "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
@@ -1990,19 +1970,38 @@
         "dataDiskIds": null
       },
       {
-        "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "subGroupSize": "",
         "label": {
-          "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+          "sourceMachineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939"
         },
-        "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "description": "a recommended virtual machine 02 for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
         "connectionName": "azure-koreasouth",
-        "specId": "azure+koreasouth+standard_b8als_v2",
+        "specId": "azure+koreasouth+standard_b4as_v2",
         "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
         "vNetId": "mig-vnet-01",
         "subnetId": "mig-subnet-01",
         "securityGroupIds": [
           "mig-sg-02"
+        ],
+        "sshKeyId": "mig-sshkey-01",
+        "rootDiskSize": "50",
+        "dataDiskIds": null
+      },
+      {
+        "name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "subGroupSize": "",
+        "label": {
+          "sourceMachineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4"
+        },
+        "description": "a recommended virtual machine 03 for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "connectionName": "azure-koreasouth",
+        "specId": "azure+koreasouth+standard_b2as_v2",
+        "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+        "vNetId": "mig-vnet-01",
+        "subnetId": "mig-subnet-01",
+        "securityGroupIds": [
+          "mig-sg-03"
         ],
         "sshKeyId": "mig-sshkey-01",
         "rootDiskSize": "50",
@@ -2018,11 +2017,11 @@
   "targetVNet": {
     "name": "mig-vnet-01",
     "connectionName": "azure-koreasouth",
-    "cidrBlock": "192.168.96.0/19",
+    "cidrBlock": "10.0.0.0/21",
     "subnetInfoList": [
       {
         "name": "mig-subnet-01",
-        "ipv4_CIDR": "192.168.110.0/24",
+        "ipv4_CIDR": "10.0.1.0/24",
         "description": "a recommended subnet for migration"
       }
     ],
@@ -2040,6 +2039,62 @@
     "privateKey": ""
   },
   "targetVmSpecList": [
+    {
+      "id": "azure+koreasouth+standard_b2als_v2",
+      "uid": "d3vjcu6qjs728pq3oru0",
+      "cspSpecName": "Standard_B2als_v2",
+      "name": "azure+koreasouth+standard_b2als_v2",
+      "namespace": "system",
+      "connectionName": "azure-koreasouth",
+      "providerName": "azure",
+      "regionName": "koreasouth",
+      "regionLatitude": 35.1796,
+      "regionLongitude": 129.0756,
+      "infraType": "vm",
+      "architecture": "x86_64",
+      "vCPU": 2,
+      "memoryGiB": 3.90625,
+      "costPerHour": 0.0432,
+      "evaluationScore01": -1,
+      "evaluationScore02": -1,
+      "evaluationScore03": -1,
+      "evaluationScore04": -1,
+      "evaluationScore05": -1,
+      "evaluationScore06": -1,
+      "evaluationScore07": -1,
+      "evaluationScore08": -1,
+      "evaluationScore09": -1,
+      "evaluationScore10": -1,
+      "rootDiskType": "",
+      "rootDiskSize": "0",
+      "systemLabel": "auto-gen",
+      "details": [
+        {
+          "key": "MaxDataDiskCount",
+          "value": "4"
+        },
+        {
+          "key": "MemoryInMB",
+          "value": "4096"
+        },
+        {
+          "key": "Name",
+          "value": "Standard_B2als_v2"
+        },
+        {
+          "key": "NumberOfCores",
+          "value": "2"
+        },
+        {
+          "key": "OSDiskSizeInMB",
+          "value": "1047552"
+        },
+        {
+          "key": "ResourceDiskSizeInMB",
+          "value": "0"
+        }
+      ]
+    },
     {
       "id": "azure+koreasouth+standard_b4as_v2",
       "uid": "d3vjcu6qjs728pq3os00",
@@ -2097,10 +2152,10 @@
       ]
     },
     {
-      "id": "azure+koreasouth+standard_b8als_v2",
-      "uid": "d3vjcu6qjs728pq3os0g",
-      "cspSpecName": "Standard_B8als_v2",
-      "name": "azure+koreasouth+standard_b8als_v2",
+      "id": "azure+koreasouth+standard_b2as_v2",
+      "uid": "d3vjcu6qjs728pq3orug",
+      "cspSpecName": "Standard_B2as_v2",
+      "name": "azure+koreasouth+standard_b2as_v2",
       "namespace": "system",
       "connectionName": "azure-koreasouth",
       "providerName": "azure",
@@ -2109,9 +2164,9 @@
       "regionLongitude": 129.0756,
       "infraType": "vm",
       "architecture": "x86_64",
-      "vCPU": 8,
-      "memoryGiB": 15.625,
-      "costPerHour": 0.306,
+      "vCPU": 2,
+      "memoryGiB": 7.8125,
+      "costPerHour": 0.0865,
       "evaluationScore01": -1,
       "evaluationScore02": -1,
       "evaluationScore03": -1,
@@ -2128,19 +2183,19 @@
       "details": [
         {
           "key": "MaxDataDiskCount",
-          "value": "16"
+          "value": "4"
         },
         {
           "key": "MemoryInMB",
-          "value": "16384"
+          "value": "8192"
         },
         {
           "key": "Name",
-          "value": "Standard_B8als_v2"
+          "value": "Standard_B2as_v2"
         },
         {
           "key": "NumberOfCores",
-          "value": "8"
+          "value": "2"
         },
         {
           "key": "OSDiskSizeInMB",
@@ -2202,25 +2257,85 @@
       "name": "mig-sg-01",
       "connectionName": "azure-koreasouth",
       "vNetId": "mig-vnet-01",
-      "description": "Recommended security group for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "description": "Recommended security group for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
       "firewallRules": [
         {
-          "Ports": "10022",
-          "Protocol": "tcp",
+          "Ports": "",
+          "Protocol": "icmp",
           "Direction": "inbound",
           "CIDR": "0.0.0.0/0"
         },
         {
-          "Ports": "8081,8082",
-          "Protocol": "tcp",
-          "Direction": "inbound",
-          "CIDR": "0.0.0.0/0"
-        },
-        {
-          "Ports": "53",
+          "Ports": "68",
           "Protocol": "udp",
           "Direction": "inbound",
-          "CIDR": "192.168.110.0/24"
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "80",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "443",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "8080",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "9113",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9113",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
         }
       ],
       "cspResourceId": ""
@@ -2229,8 +2344,234 @@
       "name": "mig-sg-02",
       "connectionName": "azure-koreasouth",
       "vNetId": "mig-vnet-01",
-      "description": "Recommended security group for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
-      "firewallRules": null,
+      "description": "Recommended security group for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+      "firewallRules": [
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "2049",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "2049",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "111",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "111",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "20048",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "20048",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "32803",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "32803",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9100",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
+      "cspResourceId": ""
+    },
+    {
+      "name": "mig-sg-03",
+      "connectionName": "azure-koreasouth",
+      "vNetId": "mig-vnet-01",
+      "description": "Recommended security group for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+      "firewallRules": [
+        {
+          "Ports": "",
+          "Protocol": "icmp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "68",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "5353",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1900",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "22",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "3306",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "3306",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4567",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4567",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4568",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4568",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4444",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "4444",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "tcp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "9104",
+          "Protocol": "udp",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "",
+          "Protocol": "ALL",
+          "Direction": "inbound",
+          "CIDR": "10.0.0.0/16"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "tcp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        },
+        {
+          "Ports": "1-65535",
+          "Protocol": "udp",
+          "Direction": "outbound",
+          "CIDR": "0.0.0.0/0"
+        }
+      ],
       "cspResourceId": ""
     }
   ]
@@ -2262,13 +2603,13 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d3vki1uqjs728ptbeu10",
+  "uid": "d45ef0mbkq5v9sddgis0",
   "name": "mmci01",
-  "status": "Running:2 (R:2/2)",
+  "status": "Running:3 (R:3/3)",
   "statusCount": {
-    "countTotal": 2,
+    "countTotal": 3,
     "countCreating": 0,
-    "countRunning": 2,
+    "countRunning": 3,
     "countFailed": 0,
     "countSuspended": 0,
     "countRebooting": 0,
@@ -2289,7 +2630,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d3vki1uqjs728ptbeu10"
+    "sys.uid": "d45ef0mbkq5v9sddgis0"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -2297,12 +2638,12 @@
   "vm": [
     {
       "resourceType": "vm",
-      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d3vki1uqjs728ptbeu30",
-      "cspResourceName": "d3vki1uqjs728ptbeu30",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30",
-      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "id": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+      "uid": "d45ef0mbkq5v9sddgiu0",
+      "cspResourceName": "d45ef0mbkq5v9sddgiu0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0",
+      "name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+      "subGroupId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
       "location": {
         "display": "Korea South",
         "latitude": 35.1796,
@@ -2314,142 +2655,19 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-10-27 10:28:17",
+      "createdTime": "2025-11-05 05:58:56",
       "label": {
-        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c"
+        "sourceMachineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939"
       },
-      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "description": "a recommended virtual machine 02 for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
       "region": {
         "Region": "koreasouth",
         "Zone": ""
       },
-      "publicIP": "52.231.220.248",
+      "publicIP": "52.231.218.136",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.5",
-      "privateDNS": "",
-      "rootDiskType": "PremiumSSD",
-      "rootDiskSize": "50",
-      "rootDiskName": "",
-      "connectionName": "azure-koreasouth",
-      "connectionConfig": {
-        "configName": "azure-koreasouth",
-        "providerName": "azure",
-        "driverName": "azure-driver-v1.0.so",
-        "credentialName": "azure",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "azure-koreasouth",
-        "regionZoneInfo": {
-          "assignedRegion": "koreasouth",
-          "assignedZone": "N/A"
-        },
-        "regionDetail": {
-          "regionId": "koreasouth",
-          "regionName": "koreasouth",
-          "description": "Korea South",
-          "location": {
-            "display": "Korea South",
-            "latitude": 35.1796,
-            "longitude": 129.0756
-          },
-          "zones": []
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "azure+koreasouth+standard_b8als_v2",
-      "cspSpecName": "Standard_B8als_v2",
-      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
-      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-      "networkInterface": "d3vki1uqjs728ptbeu30-7147-VNic",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
-      "vmUserName": "cb-user",
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2025-10-27T10:28:45Z",
-          "completedTime": "2025-10-27T10:28:51Z",
-          "elapsedTime": 6,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "Location",
-          "value": "koreasouth"
-        },
-        {
-          "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B8als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu30-7147-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu30,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,osType:Linux}},timeCreated:2025-10-27T10:27:31.8595441Z,vmId:c2d78dd6-24a5-42f6-a82d-b5705885624a}"
-        },
-        {
-          "key": "Tags",
-          "value": "{createdBy:d3vki1uqjs728ptbeu30,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu30-71689-PublicIP}"
-        },
-        {
-          "key": "Etag",
-          "value": "\\1\\"
-        },
-        {
-          "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30"
-        },
-        {
-          "key": "Name",
-          "value": "d3vki1uqjs728ptbeu30"
-        },
-        {
-          "key": "Type",
-          "value": "Microsoft.Compute/virtualMachines"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d3vki1uqjs728ptbeu20",
-      "cspResourceName": "d3vki1uqjs728ptbeu20",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "location": {
-        "display": "Korea South",
-        "latitude": 35.1796,
-        "longitude": 129.0756
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2025-10-27 10:28:15",
-      "label": {
-        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c"
-      },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
-      "region": {
-        "Region": "koreasouth",
-        "Zone": ""
-      },
-      "publicIP": "52.231.220.186",
-      "sshPort": "22",
-      "publicDNS": "",
-      "privateIP": "192.168.110.4",
+      "privateIP": "10.0.1.5",
       "privateDNS": "",
       "rootDiskType": "PremiumSSD",
       "rootDiskSize": "50",
@@ -2485,16 +2703,16 @@
       "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-      "networkInterface": "d3vki1uqjs728ptbeu20-60294-VNic",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgiu0-35893-VNic",
       "securityGroupIds": [
-        "mig-sg-01"
+        "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -2502,11 +2720,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-10-27T10:28:45Z",
-          "completedTime": "2025-10-27T10:28:49Z",
-          "elapsedTime": 4,
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:01Z",
+          "elapsedTime": 2,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -2517,11 +2735,11 @@
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu20-60294-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu20,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,osType:Linux}},timeCreated:2025-10-27T10:27:29.3751482Z,vmId:9e640d3e-bf80-4c32-9424-3a024469ccf0}"
+          "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiu0-35893-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiu0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,osType:Linux}},timeCreated:2025-11-05T05:58:40.2592836Z,vmId:de2bd721-3edb-49c7-a3bd-3d13e8ccd345}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d3vki1uqjs728ptbeu20,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu20-94940-PublicIP}"
+          "value": "{createdBy:d45ef0mbkq5v9sddgiu0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiu0-38010-PublicIP}"
         },
         {
           "key": "Etag",
@@ -2529,11 +2747,257 @@
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0"
         },
         {
           "key": "Name",
-          "value": "d3vki1uqjs728ptbeu20"
+          "value": "d45ef0mbkq5v9sddgiu0"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.Compute/virtualMachines"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+      "uid": "d45ef0mbkq5v9sddgiv0",
+      "cspResourceName": "d45ef0mbkq5v9sddgiv0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0",
+      "name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+      "subGroupId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+      "location": {
+        "display": "Korea South",
+        "latitude": 35.1796,
+        "longitude": 129.0756
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-11-05 05:58:56",
+      "label": {
+        "sourceMachineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4"
+      },
+      "description": "a recommended virtual machine 03 for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+      "region": {
+        "Region": "koreasouth",
+        "Zone": ""
+      },
+      "publicIP": "52.231.218.134",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "10.0.1.4",
+      "privateDNS": "",
+      "rootDiskType": "PremiumSSD",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "azure-koreasouth",
+      "connectionConfig": {
+        "configName": "azure-koreasouth",
+        "providerName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "credentialName": "azure",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "azure-koreasouth",
+        "regionZoneInfo": {
+          "assignedRegion": "koreasouth",
+          "assignedZone": "N/A"
+        },
+        "regionDetail": {
+          "regionId": "koreasouth",
+          "regionName": "koreasouth",
+          "description": "Korea South",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "zones": []
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "azure+koreasouth+standard_b2as_v2",
+      "cspSpecName": "Standard_B2as_v2",
+      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgiv0-60606-VNic",
+      "securityGroupIds": [
+        "mig-sg-03"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
+      "vmUserName": "cb-user",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:04Z",
+          "elapsedTime": 5,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "Location",
+          "value": "koreasouth"
+        },
+        {
+          "key": "Properties",
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiv0-60606-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiv0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,osType:Linux}},timeCreated:2025-11-05T05:58:40.0404788Z,vmId:1ac5ffa2-b0e6-4ca1-8d85-a6c3b45b954d}"
+        },
+        {
+          "key": "Tags",
+          "value": "{createdBy:d45ef0mbkq5v9sddgiv0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiv0-74045-PublicIP}"
+        },
+        {
+          "key": "Etag",
+          "value": "\\1\\"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0"
+        },
+        {
+          "key": "Name",
+          "value": "d45ef0mbkq5v9sddgiv0"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.Compute/virtualMachines"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+      "uid": "d45ef0mbkq5v9sddgit0",
+      "cspResourceName": "d45ef0mbkq5v9sddgit0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0",
+      "name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+      "subGroupId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
+      "location": {
+        "display": "Korea South",
+        "latitude": 35.1796,
+        "longitude": 129.0756
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-11-05 05:59:07",
+      "label": {
+        "sourceMachineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c"
+      },
+      "description": "a recommended virtual machine 01 for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
+      "region": {
+        "Region": "koreasouth",
+        "Zone": ""
+      },
+      "publicIP": "52.231.218.177",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "10.0.1.6",
+      "privateDNS": "",
+      "rootDiskType": "PremiumSSD",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "azure-koreasouth",
+      "connectionConfig": {
+        "configName": "azure-koreasouth",
+        "providerName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "credentialName": "azure",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "azure-koreasouth",
+        "regionZoneInfo": {
+          "assignedRegion": "koreasouth",
+          "assignedZone": "N/A"
+        },
+        "regionDetail": {
+          "regionId": "koreasouth",
+          "regionName": "koreasouth",
+          "description": "Korea South",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "zones": []
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "azure+koreasouth+standard_b2als_v2",
+      "cspSpecName": "Standard_B2als_v2",
+      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgit0-61596-VNic",
+      "securityGroupIds": [
+        "mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
+      "vmUserName": "cb-user",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:02Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "Location",
+          "value": "koreasouth"
+        },
+        {
+          "key": "Properties",
+          "value": "{hardwareProfile:{vmSize:Standard_B2als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgit0-61596-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgit0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,osType:Linux}},timeCreated:2025-11-05T05:58:42.4780295Z,vmId:04a60f24-9d19-4071-8ebf-095eaa72585f}"
+        },
+        {
+          "key": "Tags",
+          "value": "{createdBy:d45ef0mbkq5v9sddgit0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgit0-76681-PublicIP}"
+        },
+        {
+          "key": "Etag",
+          "value": "\\1\\"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0"
+        },
+        {
+          "key": "Name",
+          "value": "d45ef0mbkq5v9sddgit0"
         },
         {
           "key": "Type",
@@ -2553,13 +3017,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "vmIp": "52.231.220.186",
+        "vmId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+        "vmIp": "52.231.218.136",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -2568,13 +3032,28 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "vmIp": "52.231.220.248",
+        "vmId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+        "vmIp": "52.231.218.177",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+        "vmIp": "52.231.218.134",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -2610,13 +3089,13 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d3vki1uqjs728ptbeu10",
+      "uid": "d45ef0mbkq5v9sddgis0",
       "name": "mmci01",
-      "status": "Running:2 (R:2/2)",
+      "status": "Running:3 (R:3/3)",
       "statusCount": {
-        "countTotal": 2,
+        "countTotal": 3,
         "countCreating": 0,
-        "countRunning": 2,
+        "countRunning": 3,
         "countFailed": 0,
         "countSuspended": 0,
         "countRebooting": 0,
@@ -2637,7 +3116,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "mmci01",
         "sys.namespace": "mig01",
-        "sys.uid": "d3vki1uqjs728ptbeu10"
+        "sys.uid": "d45ef0mbkq5v9sddgis0"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -2645,12 +3124,12 @@
       "vm": [
         {
           "resourceType": "vm",
-          "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "uid": "d3vki1uqjs728ptbeu30",
-          "cspResourceName": "d3vki1uqjs728ptbeu30",
-          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30",
-          "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-          "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+          "id": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+          "uid": "d45ef0mbkq5v9sddgit0",
+          "cspResourceName": "d45ef0mbkq5v9sddgit0",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0",
+          "name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+          "subGroupId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
           "location": {
             "display": "Korea South",
             "latitude": 35.1796,
@@ -2662,31 +3141,31 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2025-10-27 10:28:17",
+          "createdTime": "2025-11-05 05:59:07",
           "label": {
-            "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+            "sourceMachineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
             "sys.connectionName": "azure-koreasouth",
-            "sys.createdTime": "2025-10-27 10:28:17",
-            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30",
-            "sys.cspResourceName": "d3vki1uqjs728ptbeu30",
-            "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+            "sys.createdTime": "2025-11-05 05:59:07",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0",
+            "sys.cspResourceName": "d45ef0mbkq5v9sddgit0",
+            "sys.id": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
             "sys.mciId": "mmci01",
-            "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+            "sys.name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-            "sys.uid": "d3vki1uqjs728ptbeu30"
+            "sys.subGroupId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
+            "sys.uid": "d45ef0mbkq5v9sddgit0"
           },
-          "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+          "description": "a recommended virtual machine 01 for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
           "region": {
             "Region": "koreasouth",
             "Zone": ""
           },
-          "publicIP": "52.231.220.248",
+          "publicIP": "52.231.218.177",
           "sshPort": "22",
           "publicDNS": "",
-          "privateIP": "192.168.110.5",
+          "privateIP": "10.0.1.6",
           "privateDNS": "",
           "rootDiskType": "PremiumSSD",
           "rootDiskSize": "50",
@@ -2717,21 +3196,21 @@
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "azure+koreasouth+standard_b8als_v2",
-          "cspSpecName": "Standard_B8als_v2",
+          "specId": "azure+koreasouth+standard_b2als_v2",
+          "cspSpecName": "Standard_B2als_v2",
           "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
           "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
           "vNetId": "mig-vnet-01",
-          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
           "subnetId": "mig-subnet-01",
-          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-          "networkInterface": "d3vki1uqjs728ptbeu30-7147-VNic",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+          "networkInterface": "d45ef0mbkq5v9sddgit0-61596-VNic",
           "securityGroupIds": [
-            "mig-sg-02"
+            "mig-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
           "vmUserName": "cb-user",
           "commandStatus": [
             {
@@ -2739,11 +3218,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2025-10-27T10:28:45Z",
-              "completedTime": "2025-10-27T10:28:51Z",
-              "elapsedTime": 6,
+              "startedTime": "2025-11-05T05:59:59Z",
+              "completedTime": "2025-11-05T06:00:02Z",
+              "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -2754,11 +3233,11 @@
             },
             {
               "key": "Properties",
-              "value": "{hardwareProfile:{vmSize:Standard_B8als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu30-7147-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu30,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,osType:Linux}},timeCreated:2025-10-27T10:27:31.8595441Z,vmId:c2d78dd6-24a5-42f6-a82d-b5705885624a}"
+              "value": "{hardwareProfile:{vmSize:Standard_B2als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgit0-61596-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgit0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,osType:Linux}},timeCreated:2025-11-05T05:58:42.4780295Z,vmId:04a60f24-9d19-4071-8ebf-095eaa72585f}"
             },
             {
               "key": "Tags",
-              "value": "{createdBy:d3vki1uqjs728ptbeu30,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu30-71689-PublicIP}"
+              "value": "{createdBy:d45ef0mbkq5v9sddgit0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgit0-76681-PublicIP}"
             },
             {
               "key": "Etag",
@@ -2766,11 +3245,11 @@
             },
             {
               "key": "ID",
-              "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30"
+              "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0"
             },
             {
               "key": "Name",
-              "value": "d3vki1uqjs728ptbeu30"
+              "value": "d45ef0mbkq5v9sddgit0"
             },
             {
               "key": "Type",
@@ -2780,12 +3259,12 @@
         },
         {
           "resourceType": "vm",
-          "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "uid": "d3vki1uqjs728ptbeu20",
-          "cspResourceName": "d3vki1uqjs728ptbeu20",
-          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20",
-          "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-          "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+          "id": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+          "uid": "d45ef0mbkq5v9sddgiv0",
+          "cspResourceName": "d45ef0mbkq5v9sddgiv0",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0",
+          "name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+          "subGroupId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
           "location": {
             "display": "Korea South",
             "latitude": 35.1796,
@@ -2797,31 +3276,166 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2025-10-27 10:28:15",
+          "createdTime": "2025-11-05 05:58:56",
           "label": {
-            "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+            "sourceMachineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
             "sys.connectionName": "azure-koreasouth",
-            "sys.createdTime": "2025-10-27 10:28:15",
-            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20",
-            "sys.cspResourceName": "d3vki1uqjs728ptbeu20",
-            "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+            "sys.createdTime": "2025-11-05 05:58:56",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0",
+            "sys.cspResourceName": "d45ef0mbkq5v9sddgiv0",
+            "sys.id": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
             "sys.mciId": "mmci01",
-            "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+            "sys.name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-            "sys.uid": "d3vki1uqjs728ptbeu20"
+            "sys.subGroupId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+            "sys.uid": "d45ef0mbkq5v9sddgiv0"
           },
-          "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+          "description": "a recommended virtual machine 03 for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
           "region": {
             "Region": "koreasouth",
             "Zone": ""
           },
-          "publicIP": "52.231.220.186",
+          "publicIP": "52.231.218.134",
           "sshPort": "22",
           "publicDNS": "",
-          "privateIP": "192.168.110.4",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": "50",
+          "rootDiskName": "",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": "N/A"
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_b2as_v2",
+          "cspSpecName": "Standard_B2as_v2",
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+          "vNetId": "mig-vnet-01",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
+          "subnetId": "mig-subnet-01",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+          "networkInterface": "d45ef0mbkq5v9sddgiv0-60606-VNic",
+          "securityGroupIds": [
+            "mig-sg-03"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "mig-sshkey-01",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
+          "vmUserName": "cb-user",
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2025-11-05T05:59:59Z",
+              "completedTime": "2025-11-05T06:00:04Z",
+              "elapsedTime": 5,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "Location",
+              "value": "koreasouth"
+            },
+            {
+              "key": "Properties",
+              "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiv0-60606-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiv0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,osType:Linux}},timeCreated:2025-11-05T05:58:40.0404788Z,vmId:1ac5ffa2-b0e6-4ca1-8d85-a6c3b45b954d}"
+            },
+            {
+              "key": "Tags",
+              "value": "{createdBy:d45ef0mbkq5v9sddgiv0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiv0-74045-PublicIP}"
+            },
+            {
+              "key": "Etag",
+              "value": "\\1\\"
+            },
+            {
+              "key": "ID",
+              "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0"
+            },
+            {
+              "key": "Name",
+              "value": "d45ef0mbkq5v9sddgiv0"
+            },
+            {
+              "key": "Type",
+              "value": "Microsoft.Compute/virtualMachines"
+            }
+          ]
+        },
+        {
+          "resourceType": "vm",
+          "id": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+          "uid": "d45ef0mbkq5v9sddgiu0",
+          "cspResourceName": "d45ef0mbkq5v9sddgiu0",
+          "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0",
+          "name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+          "subGroupId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "",
+          "createdTime": "2025-11-05 05:58:56",
+          "label": {
+            "sourceMachineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2025-11-05 05:58:56",
+            "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0",
+            "sys.cspResourceName": "d45ef0mbkq5v9sddgiu0",
+            "sys.id": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+            "sys.labelType": "vm",
+            "sys.manager": "cb-tumblebug",
+            "sys.mciId": "mmci01",
+            "sys.name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+            "sys.namespace": "mig01",
+            "sys.subGroupId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+            "sys.uid": "d45ef0mbkq5v9sddgiu0"
+          },
+          "description": "a recommended virtual machine 02 for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+          "region": {
+            "Region": "koreasouth",
+            "Zone": ""
+          },
+          "publicIP": "52.231.218.136",
+          "sshPort": "22",
+          "publicDNS": "",
+          "privateIP": "10.0.1.5",
           "privateDNS": "",
           "rootDiskType": "PremiumSSD",
           "rootDiskSize": "50",
@@ -2857,16 +3471,16 @@
           "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
           "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
           "vNetId": "mig-vnet-01",
-          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
+          "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
           "subnetId": "mig-subnet-01",
-          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-          "networkInterface": "d3vki1uqjs728ptbeu20-60294-VNic",
+          "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+          "networkInterface": "d45ef0mbkq5v9sddgiu0-35893-VNic",
           "securityGroupIds": [
-            "mig-sg-01"
+            "mig-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
+          "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
           "vmUserName": "cb-user",
           "commandStatus": [
             {
@@ -2874,11 +3488,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2025-10-27T10:28:45Z",
-              "completedTime": "2025-10-27T10:28:49Z",
-              "elapsedTime": 4,
+              "startedTime": "2025-11-05T05:59:59Z",
+              "completedTime": "2025-11-05T06:00:01Z",
+              "elapsedTime": 2,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -2889,11 +3503,11 @@
             },
             {
               "key": "Properties",
-              "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu20-60294-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu20,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,osType:Linux}},timeCreated:2025-10-27T10:27:29.3751482Z,vmId:9e640d3e-bf80-4c32-9424-3a024469ccf0}"
+              "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiu0-35893-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiu0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,osType:Linux}},timeCreated:2025-11-05T05:58:40.2592836Z,vmId:de2bd721-3edb-49c7-a3bd-3d13e8ccd345}"
             },
             {
               "key": "Tags",
-              "value": "{createdBy:d3vki1uqjs728ptbeu20,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu20-94940-PublicIP}"
+              "value": "{createdBy:d45ef0mbkq5v9sddgiu0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiu0-38010-PublicIP}"
             },
             {
               "key": "Etag",
@@ -2901,11 +3515,11 @@
             },
             {
               "key": "ID",
-              "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20"
+              "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0"
             },
             {
               "key": "Name",
-              "value": "d3vki1uqjs728ptbeu20"
+              "value": "d45ef0mbkq5v9sddgiu0"
             },
             {
               "key": "Type",
@@ -2925,13 +3539,13 @@
         "results": [
           {
             "mciId": "mmci01",
-            "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-            "vmIp": "52.231.220.186",
+            "vmId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+            "vmIp": "52.231.218.136",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -2940,13 +3554,28 @@
           },
           {
             "mciId": "mmci01",
-            "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-            "vmIp": "52.231.220.248",
+            "vmId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+            "vmIp": "52.231.218.177",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "mciId": "mmci01",
+            "vmId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+            "vmIp": "52.231.218.134",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -3009,13 +3638,13 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d3vki1uqjs728ptbeu10",
+  "uid": "d45ef0mbkq5v9sddgis0",
   "name": "mmci01",
-  "status": "Running:2 (R:2/2)",
+  "status": "Running:3 (R:3/3)",
   "statusCount": {
-    "countTotal": 2,
+    "countTotal": 3,
     "countCreating": 0,
-    "countRunning": 2,
+    "countRunning": 3,
     "countFailed": 0,
     "countSuspended": 0,
     "countRebooting": 0,
@@ -3036,7 +3665,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d3vki1uqjs728ptbeu10"
+    "sys.uid": "d45ef0mbkq5v9sddgis0"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3044,12 +3673,12 @@
   "vm": [
     {
       "resourceType": "vm",
-      "id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "uid": "d3vki1uqjs728ptbeu30",
-      "cspResourceName": "d3vki1uqjs728ptbeu30",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30",
-      "name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "id": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+      "uid": "d45ef0mbkq5v9sddgit0",
+      "cspResourceName": "d45ef0mbkq5v9sddgit0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0",
+      "name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+      "subGroupId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
       "location": {
         "display": "Korea South",
         "latitude": 35.1796,
@@ -3061,31 +3690,31 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-10-27 10:28:17",
+      "createdTime": "2025-11-05 05:59:07",
       "label": {
-        "sourceMachineId": "0036e4b9-c8b4-e811-906e-000ffee02d5c",
+        "sourceMachineId": "ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
         "sys.connectionName": "azure-koreasouth",
-        "sys.createdTime": "2025-10-27 10:28:17",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30",
-        "sys.cspResourceName": "d3vki1uqjs728ptbeu30",
-        "sys.id": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "sys.createdTime": "2025-11-05 05:59:07",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0",
+        "sys.cspResourceName": "d45ef0mbkq5v9sddgit0",
+        "sys.id": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
         "sys.mciId": "mmci01",
-        "sys.name": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
+        "sys.name": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
-        "sys.uid": "d3vki1uqjs728ptbeu30"
+        "sys.subGroupId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
+        "sys.uid": "d45ef0mbkq5v9sddgit0"
       },
-      "description": "a recommended virtual machine 02 for 0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "description": "a recommended virtual machine 01 for ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
       "region": {
         "Region": "koreasouth",
         "Zone": ""
       },
-      "publicIP": "52.231.220.248",
+      "publicIP": "52.231.218.177",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.5",
+      "privateIP": "10.0.1.6",
       "privateDNS": "",
       "rootDiskType": "PremiumSSD",
       "rootDiskSize": "50",
@@ -3116,21 +3745,21 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "azure+koreasouth+standard_b8als_v2",
-      "cspSpecName": "Standard_B8als_v2",
+      "specId": "azure+koreasouth+standard_b2als_v2",
+      "cspSpecName": "Standard_B2als_v2",
       "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-      "networkInterface": "d3vki1uqjs728ptbeu30-7147-VNic",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgit0-61596-VNic",
       "securityGroupIds": [
-        "mig-sg-02"
+        "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -3138,11 +3767,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-10-27T10:28:45Z",
-          "completedTime": "2025-10-27T10:28:51Z",
-          "elapsedTime": 6,
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:02Z",
+          "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -3153,11 +3782,11 @@
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B8als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu30-7147-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu30,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu30_OsDisk_1_30c2faf293f540e4a6f9c0d092a08592,osType:Linux}},timeCreated:2025-10-27T10:27:31.8595441Z,vmId:c2d78dd6-24a5-42f6-a82d-b5705885624a}"
+          "value": "{hardwareProfile:{vmSize:Standard_B2als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgit0-61596-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgit0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgit0_disk1_c88aa34e5acd4670b76dd7a27c9dabfc,osType:Linux}},timeCreated:2025-11-05T05:58:42.4780295Z,vmId:04a60f24-9d19-4071-8ebf-095eaa72585f}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d3vki1uqjs728ptbeu30,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu30-71689-PublicIP}"
+          "value": "{createdBy:d45ef0mbkq5v9sddgit0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgit0-76681-PublicIP}"
         },
         {
           "key": "Etag",
@@ -3165,11 +3794,11 @@
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu30"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgit0"
         },
         {
           "key": "Name",
-          "value": "d3vki1uqjs728ptbeu30"
+          "value": "d45ef0mbkq5v9sddgit0"
         },
         {
           "key": "Type",
@@ -3179,12 +3808,12 @@
     },
     {
       "resourceType": "vm",
-      "id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "uid": "d3vki1uqjs728ptbeu20",
-      "cspResourceName": "d3vki1uqjs728ptbeu20",
-      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20",
-      "name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-      "subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "id": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+      "uid": "d45ef0mbkq5v9sddgiv0",
+      "cspResourceName": "d45ef0mbkq5v9sddgiv0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0",
+      "name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+      "subGroupId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
       "location": {
         "display": "Korea South",
         "latitude": 35.1796,
@@ -3196,31 +3825,166 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-10-27 10:28:15",
+      "createdTime": "2025-11-05 05:58:56",
       "label": {
-        "sourceMachineId": "00a9f3d4-74b6-e811-906e-000ffee02d5c",
+        "sourceMachineId": "ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
         "sys.connectionName": "azure-koreasouth",
-        "sys.createdTime": "2025-10-27 10:28:15",
-        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20",
-        "sys.cspResourceName": "d3vki1uqjs728ptbeu20",
-        "sys.id": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.createdTime": "2025-11-05 05:58:56",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0",
+        "sys.cspResourceName": "d45ef0mbkq5v9sddgiv0",
+        "sys.id": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
         "sys.mciId": "mmci01",
-        "sys.name": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
+        "sys.name": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
-        "sys.uid": "d3vki1uqjs728ptbeu20"
+        "sys.subGroupId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
+        "sys.uid": "d45ef0mbkq5v9sddgiv0"
       },
-      "description": "a recommended virtual machine 01 for 00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "description": "a recommended virtual machine 03 for ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
       "region": {
         "Region": "koreasouth",
         "Zone": ""
       },
-      "publicIP": "52.231.220.186",
+      "publicIP": "52.231.218.134",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "192.168.110.4",
+      "privateIP": "10.0.1.4",
+      "privateDNS": "",
+      "rootDiskType": "PremiumSSD",
+      "rootDiskSize": "50",
+      "rootDiskName": "",
+      "connectionName": "azure-koreasouth",
+      "connectionConfig": {
+        "configName": "azure-koreasouth",
+        "providerName": "azure",
+        "driverName": "azure-driver-v1.0.so",
+        "credentialName": "azure",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "azure-koreasouth",
+        "regionZoneInfo": {
+          "assignedRegion": "koreasouth",
+          "assignedZone": "N/A"
+        },
+        "regionDetail": {
+          "regionId": "koreasouth",
+          "regionName": "koreasouth",
+          "description": "Korea South",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "zones": []
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "azure+koreasouth+standard_b2as_v2",
+      "cspSpecName": "Standard_B2as_v2",
+      "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
+      "vNetId": "mig-vnet-01",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
+      "subnetId": "mig-subnet-01",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgiv0-60606-VNic",
+      "securityGroupIds": [
+        "mig-sg-03"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "mig-sshkey-01",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
+      "vmUserName": "cb-user",
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:04Z",
+          "elapsedTime": 5,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "Location",
+          "value": "koreasouth"
+        },
+        {
+          "key": "Properties",
+          "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiv0-60606-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiv0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiv0_disk1_dca2e0d7a4ce44a8ab0c1d2b6142bcd1,osType:Linux}},timeCreated:2025-11-05T05:58:40.0404788Z,vmId:1ac5ffa2-b0e6-4ca1-8d85-a6c3b45b954d}"
+        },
+        {
+          "key": "Tags",
+          "value": "{createdBy:d45ef0mbkq5v9sddgiv0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiv0-74045-PublicIP}"
+        },
+        {
+          "key": "Etag",
+          "value": "\\1\\"
+        },
+        {
+          "key": "ID",
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiv0"
+        },
+        {
+          "key": "Name",
+          "value": "d45ef0mbkq5v9sddgiv0"
+        },
+        {
+          "key": "Type",
+          "value": "Microsoft.Compute/virtualMachines"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+      "uid": "d45ef0mbkq5v9sddgiu0",
+      "cspResourceName": "d45ef0mbkq5v9sddgiu0",
+      "cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0",
+      "name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+      "subGroupId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+      "location": {
+        "display": "Korea South",
+        "latitude": 35.1796,
+        "longitude": 129.0756
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2025-11-05 05:58:56",
+      "label": {
+        "sourceMachineId": "ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+        "sys.connectionName": "azure-koreasouth",
+        "sys.createdTime": "2025-11-05 05:58:56",
+        "sys.cspResourceId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0",
+        "sys.cspResourceName": "d45ef0mbkq5v9sddgiu0",
+        "sys.id": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+        "sys.labelType": "vm",
+        "sys.manager": "cb-tumblebug",
+        "sys.mciId": "mmci01",
+        "sys.name": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+        "sys.namespace": "mig01",
+        "sys.subGroupId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+        "sys.uid": "d45ef0mbkq5v9sddgiu0"
+      },
+      "description": "a recommended virtual machine 02 for ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+      "region": {
+        "Region": "koreasouth",
+        "Zone": ""
+      },
+      "publicIP": "52.231.218.136",
+      "sshPort": "22",
+      "publicDNS": "",
+      "privateIP": "10.0.1.5",
       "privateDNS": "",
       "rootDiskType": "PremiumSSD",
       "rootDiskSize": "50",
@@ -3256,16 +4020,16 @@
       "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "cspImageName": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202510230",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug",
+      "cspVNetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d3vkhemqjs728ptbetug/subnets/d3vkhemqjs728ptbetv0",
-      "networkInterface": "d3vki1uqjs728ptbeu20-60294-VNic",
+      "cspSubnetId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d45edpubkq5v9sddgip0/subnets/d45edpubkq5v9sddgipg",
+      "networkInterface": "d45ef0mbkq5v9sddgiu0-35893-VNic",
       "securityGroupIds": [
-        "mig-sg-01"
+        "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d3vkhguqjs728ptbetvg",
+      "cspSshKeyId": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/d45edsubkq5v9sddgiq0",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -3273,11 +4037,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-10-27T10:28:45Z",
-          "completedTime": "2025-10-27T10:28:49Z",
-          "elapsedTime": 4,
+          "startedTime": "2025-11-05T05:59:59Z",
+          "completedTime": "2025-11-05T06:00:01Z",
+          "elapsedTime": 2,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -3288,11 +4052,11 @@
         },
         {
           "key": "Properties",
-          "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d3vki1uqjs728ptbeu20-60294-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d3vki1uqjs728ptbeu20,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCnrG+Dp4u2HtES0eVzJ1iK/2VOWxY1Lva0VDGl0MZC/dv3Kunz9Z+kszGx3ylZ0WBZeSzplNhCbrkViGrdC/jiaJ1RJa4PTP/X+JIpf6+pf6NRVcAGNiqv77cY8i0YnL7sCCPIu+O/P2JgVwgDFwm+ttxZWMTCG+5BGsnAr35ADk4XMdMqxmwRwGKZmbXuT8XHGBd8BDexxUfbTAAS7C6HbZE2HjSMmnpRq+LZi8lAazV8aamm0D4kD197GLJWCzsjv6lPzsiNINgGELwNswPj6LSnrdJqWzyj2HwIrA6sGeGrIbS3FX0balbooiECMJTXh8ckMpoV55fQxaNImGiNtY6w2w74xZrnHjJ9fAMWiV+uk/eHR5q02x7qnjwYHNRUqSx6o13Upe7qyNCRLR1hU3iy5czxMwCDQ4zplCJWnJLDkvWR+sadneKEvQc9P7yjX5AlcjqYFJ6USU7AV62rjrbNivnd+rp7qtv/x3wJIkdZnhdd7s4KW8FB78/yXKCel6e2f0OUQJoK7wOJMsUzENtfELaIwDAyvA9iuijq5bgbhqCfOiCpQpQul81gfoqy3t7afexcQuCSVfczim1ZFsfB0MdOvgAAw+rX+7WLUbG/SC0uKceQma+ICET8nHGUpzX4z56FO3Zjrcd/CcY//mjpPHkSaELp19obngonEQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,storageAccountType:Premium_LRS},name:d3vki1uqjs728ptbeu20_OsDisk_1_1f1f78e398074d3d918fe08c67c066ba,osType:Linux}},timeCreated:2025-10-27T10:27:29.3751482Z,vmId:9e640d3e-bf80-4c32-9424-3a024469ccf0}"
+          "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/d45ef0mbkq5v9sddgiu0-35893-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:d45ef0mbkq5v9sddgiu0,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC4TpIwx9Ycurmzq2iLlm2E77W4WO7kXvfQIfjMXzseZPb8XMJ+mAzHP4C5tkN7TtwJM8ShJJ2rTN+NUQU6+KoTovqGaru7THLm/r3WMMoQqrJdbiHy9AQDs4qFPx1RZ4ya6KZ4Fg/Wy59R42QtYWtP5/02mEan2d9imgMOW7wGGLpa+ye1KBgwKenApee5F5tOOrBCLtwQT9UHYacIpSj2LOgEfFOnacz84Fjqiv+j2H2wMT39GA4QId4EJsPUol3bsiIf4HM1tFpdLIz/VKNOL4v9pW2DOhM7uDVF2IrIrnuxLuFaIBi2zgP29Wy9+Z8w0baUxA25hmiDKvk172nshaxqzhoGi3trXAOGplpzcWs87XuGau4iBpNFHE0mI6SEjEsavxigH3KyhrqxOl05jkbrsd/W+oPPr4j5rzn0YdAU56zILcJYFLlKWR0CzGRoi8OJT9IkBGfzbr5ikSsbJJfI1vHaYsUPlHiz0R+oZJNSBCNQN/iR+Y9IZb4xV6NhFZjUHmJxXQBUl6tGC87OHt7ofSBYTVB2+jGcRNN81nRUW8l22DfcE/xDeJdvjOLP9R8HHOklo06+P73lZTzKCBMWrgg3Y+mIRh3ymZyztr5UuBQU5Hp7N44tZnETu3rXrQk0o4IYE/JanSZ7xACdcmceep2BtTuWYjsvWfBbAQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202510230,offer:0001-com-ubuntu-server-jammy,publisher:Canonical,sku:22_04-lts-gen2,version:22.04.202510230},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:50,managedDisk:{id:/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,storageAccountType:Premium_LRS},name:d45ef0mbkq5v9sddgiu0_disk1_69b3c1d3812e4843a85e7572d1d58348,osType:Linux}},timeCreated:2025-11-05T05:58:40.2592836Z,vmId:de2bd721-3edb-49c7-a3bd-3d13e8ccd345}"
         },
         {
           "key": "Tags",
-          "value": "{createdBy:d3vki1uqjs728ptbeu20,keypair:d3vkhguqjs728ptbetvg,publicip:d3vki1uqjs728ptbeu20-94940-PublicIP}"
+          "value": "{createdBy:d45ef0mbkq5v9sddgiu0,keypair:d45edsubkq5v9sddgiq0,publicip:d45ef0mbkq5v9sddgiu0-38010-PublicIP}"
         },
         {
           "key": "Etag",
@@ -3300,11 +4064,11 @@
         },
         {
           "key": "ID",
-          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d3vki1uqjs728ptbeu20"
+          "value": "/subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d45ef0mbkq5v9sddgiu0"
         },
         {
           "key": "Name",
-          "value": "d3vki1uqjs728ptbeu20"
+          "value": "d45ef0mbkq5v9sddgiu0"
         },
         {
           "key": "Type",
@@ -3324,13 +4088,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1",
-        "vmIp": "52.231.220.186",
+        "vmId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1",
+        "vmIp": "52.231.218.136",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -3339,13 +4103,28 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1",
-        "vmIp": "52.231.220.248",
+        "vmId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1",
+        "vmIp": "52.231.218.177",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "mciId": "mmci01",
+        "vmId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1",
+        "vmIp": "52.231.218.134",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -3375,12 +4154,12 @@
 - **Status**: ✅ **SUCCESS**
 - **Result**: All VMs are accessible via SSH
 
-**Summary**: 2/2 VMs accessible via SSH
+**Summary**: 3/3 VMs accessible via SSH
 
 **Test Statistics**:
 
-- Total VMs: 2
-- Successful Tests: 2
+- Total VMs: 3
+- Successful Tests: 3
 - Failed Tests: 0
 
 **Complete Test Details**:
@@ -3392,33 +4171,47 @@
 {
   "failedTests": 0,
   "overallStatus": {
-    "message": "2/2 VMs accessible via SSH",
+    "message": "3/3 VMs accessible via SSH",
     "success": true
   },
-  "successfulTests": 2,
-  "totalVMs": 2,
+  "successfulTests": 3,
+  "totalVMs": 3,
   "vmResults": [
     {
+      "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d3vki1uqjs728ptbeu30 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "52.231.220.248",
+      "output": "Linux d45ef0mbkq5v9sddgit0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "52.231.218.177",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c",
+      "subGroup": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c",
       "testOrder": 1,
       "userName": "cb-user",
-      "vmId": "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1"
+      "vmId": "migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1"
     },
     {
+      "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d3vki1uqjs728ptbeu20 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "52.231.220.186",
+      "output": "Linux d45ef0mbkq5v9sddgiv0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "52.231.218.134",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c",
+      "subGroup": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4",
       "testOrder": 2,
       "userName": "cb-user",
-      "vmId": "migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1"
+      "vmId": "migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1"
+    },
+    {
+      "attempts": 1,
+      "command": "uname -a",
+      "output": "Linux d45ef0mbkq5v9sddgiu0 6.8.0-1041-azure #47~22.04.1-Ubuntu SMP Fri Oct  3 20:43:01 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "52.231.218.136",
+      "sshTest": "successful",
+      "status": "success",
+      "subGroup": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939",
+      "testOrder": 3,
+      "userName": "cb-user",
+      "vmId": "migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1"
     }
   ]
 }
