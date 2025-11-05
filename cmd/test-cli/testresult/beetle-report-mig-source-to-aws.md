@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2025-11-04 15:13:04*
+*Report generated: 2025-11-05 05:54:00*
 
 ---
 
@@ -16,11 +16,11 @@ This report provides a comprehensive summary of the infrastructure migration fro
 
 **Migration Status:** Completed
 
-**Total Servers:** 2
+**Total Servers:** 3
 
-**Migrated Servers:** 2
+**Migrated Servers:** 3
 
-**💰 Estimated Monthly Cost:** $382.46 USD
+**💰 Estimated Monthly Cost:** $219.02 USD
 
 ---
 
@@ -30,35 +30,37 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
-| 1 | **Virtual Machine** | 2 | ✅ Created | 2 running, 2 total |
-| 2 | **VM Spec** | 2 | ✅ Selected | c5a.2xlarge, t3a.xlarge |
+| 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
+| 2 | **VM Spec** | 3 | ✅ Selected | t3a.small, t3a.large, t3a.xlarge |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
-| 4 | **VNet (VPC)** | 1 | ✅ Created | mig-vnet-01, CIDR: 192.168.96.0/19 |
-| 5 | **Subnet** | 1 | ✅ Created | 192.168.110.0/24 (in mig-vnet-01) |
-| 6 | **Security Group** | 2 security groups | ✅ Created | Total 8 rules in 2 sgs |
+| 4 | **VNet (VPC)** | 1 | ✅ Created | mig-vnet-01, CIDR: 10.0.0.0/21 |
+| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in mig-vnet-01) |
+| 6 | **Security Group** | 3 security groups | ✅ Created | Total 52 rules in 3 sgs |
 | 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
 
 ---
 
 ## 💻 Virtual Machines (VMs)
 
-**Summary:** 2 VM(s) have been successfully created in the target cloud, migrated from 2 source server(s) in the on-premise infrastructure.
+**Summary:** 3 VM(s) have been successfully created in the target cloud, migrated from 3 source server(s) in the on-premise infrastructure.
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1<br>**VM ID:** i-0af60931229c7ed22<br>**Label(sourceMachineId):** 0036e4b9-c8b4-e811-906e-000ffee02d5c | **Hostname:** cm-web<br>**Machine ID:** 0036e4b9-c8b4-e811-906e-000ffee02d5c |
-| 2 | **VM Name:** migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1<br>**VM ID:** i-0f42c57ec9c0984b0<br>**Label(sourceMachineId):** 00a9f3d4-74b6-e811-906e-000ffee02d5c | **Hostname:** cm-nfs<br>**Machine ID:** 00a9f3d4-74b6-e811-906e-000ffee02d5c |
+| 1 | **VM Name:** migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1<br>**VM ID:** i-0af96d8e7c4ccc947<br>**Label(sourceMachineId):** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c |
+| 2 | **VM Name:** migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1<br>**VM ID:** i-0eb6b39fb3f52dbdb<br>**Label(sourceMachineId):** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 |
+| 3 | **VM Name:** migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1<br>**VM ID:** i-0d9728a06e2f19230<br>**Label(sourceMachineId):** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 |
 
 ---
 
 ## ⚙️ VM Specs
 
-**Summary:** 2 VM specification(s) have been selected and used for the migrated VMs.
+**Summary:** 3 VM specification(s) have been selected and used for the migrated VMs.
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1 | **Spec ID:** c5a.2xlarge<br>**vCPUs:** 8<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** cm-web<br>**Machine ID:** 0036e4b9-c8b4-e811-906e-000ffee02d5c | **CPUs:** 1<br>**Threads:** 8<br>**Memory:** 16 GB<br>**Root Disk:** 1312 GB |
-| 2 | migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** cm-nfs<br>**Machine ID:** 00a9f3d4-74b6-e811-906e-000ffee02d5c | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 1093 GB |
+| 1 | migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
+| 2 | migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
+| 3 | migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
 
 ---
 
@@ -68,50 +70,109 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** cm-web<br>**Machine ID:** 0036e4b9-c8b4-e811-906e-000ffee02d5c | **PrettyName:** Ubuntu 22.04.5 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.5 LTS (Jammy Jellyfish) |
-| 2 | migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** cm-nfs<br>**Machine ID:** 00a9f3d4-74b6-e811-906e-000ffee02d5c | **PrettyName:** Ubuntu 22.04.5 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.5 LTS (Jammy Jellyfish) |
+| 1 | migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
 ## 🔒 Security Groups
 
-**Summary:** 2 security group(s) with 8 security rule(s) have been created and configured for the migrated VMs.
+**Summary:** 3 security group(s) with 52 security rule(s) have been created and configured for the migrated VMs.
 
 ### Security Group: mig-sg-01
 
-**CSP ID:** sg-0a751c7bb2497f7b3 | **VNet:** mig-vnet-01 | **Rules:** 6
+**CSP ID:** sg-07c15215a78b7d944 | **VNet:** mig-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
-- **VM:** migrated-00a9f3d4-74b6-e811-906e-000ffee02d5c-1
-  - **Source Server:** **Hostname:** cm-nfs, **Machine ID:** 00a9f3d4-74b6-e811-906e-000ffee02d5c
+- **VM:** migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1
+  - **Source Server:** **Hostname:** ip-10-0-1-25, **Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c
 
 **Security Rules:**
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 22 | 0.0.0.0/0 | - | Created by system |
-| 2 | inbound | TCP | 10022 | 0.0.0.0/0 | inbound tcp 10022 | Migrated from source |
-| 3 | inbound | TCP | 8082 | 0.0.0.0/0 | inbound tcp 8081,8082 | Migrated from source |
-| 4 | inbound | UDP | 53 | 192.168.110.0/24 | inbound udp 53 from 192.168.110.0/24 | Migrated from source |
-| 5 | inbound | TCP | 8081 | 0.0.0.0/0 | inbound tcp 8081,8082 | Migrated from source |
-| 6 | outbound | ALL |  | 0.0.0.0/0 | - | Created by system |
+| 1 | inbound | TCP | 80 | 0.0.0.0/0 | inbound tcp 80 | Migrated from source |
+| 2 | inbound | TCP | 8080 | 0.0.0.0/0 | inbound tcp 8080 | Migrated from source |
+| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | UDP | 9113 | 10.0.0.0/16 | inbound udp 9113 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 6 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 7 | inbound | TCP | 9113 | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 9 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 10 | inbound | TCP | 443 | 0.0.0.0/0 | inbound tcp 443 | Migrated from source |
+| 11 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 12 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 13 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 14 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
 ### Security Group: mig-sg-02
 
-**CSP ID:** sg-00808f305bd1562e3 | **VNet:** mig-vnet-01 | **Rules:** 2
+**CSP ID:** sg-0157bcad679291ae4 | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1
-  - **Source Server:** **Hostname:** cm-web, **Machine ID:** 0036e4b9-c8b4-e811-906e-000ffee02d5c
+- **VM:** migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1
+  - **Source Server:** **Hostname:** ip-10-0-1-220, **Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939
 
 **Security Rules:**
 
 | No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
 |-----|-----------|----------|------|------|----------------------|------|
-| 1 | inbound | TCP | 22 | 0.0.0.0/0 | - | Created by system |
-| 2 | outbound | ALL |  | 0.0.0.0/0 | - | Created by system |
+| 1 | inbound | UDP | 9100 | 10.0.0.0/16 | inbound udp 9100 from 10.0.0.0/16 | Migrated from source |
+| 2 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 3 | inbound | UDP | 20048 | 10.0.0.0/16 | inbound udp 20048 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 2049 | 0.0.0.0/0 | inbound tcp 2049 | Migrated from source |
+| 5 | inbound | TCP | 32803 | 10.0.0.0/16 | inbound tcp 32803 from 10.0.0.0/16 | Migrated from source |
+| 6 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | TCP | 20048 | 10.0.0.0/16 | inbound tcp 20048 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 9 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 10 | inbound | UDP | 2049 | 0.0.0.0/0 | inbound udp 2049 | Migrated from source |
+| 11 | inbound | TCP | 111 | 0.0.0.0/0 | inbound tcp 111 | Migrated from source |
+| 12 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 13 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 14 | inbound | UDP | 32803 | 10.0.0.0/16 | inbound udp 32803 from 10.0.0.0/16 | Migrated from source |
+| 15 | inbound | TCP | 9100 | 10.0.0.0/16 | inbound tcp 9100 from 10.0.0.0/16 | Migrated from source |
+| 16 | inbound | UDP | 111 | 0.0.0.0/0 | inbound udp 111 | Migrated from source |
+| 17 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 18 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+
+### Security Group: mig-sg-03
+
+**CSP ID:** sg-020e6d4ab5817eb59 | **VNet:** mig-vnet-01 | **Rules:** 19
+
+**Assigned VMs:**
+
+- **VM:** migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1
+  - **Source Server:** **Hostname:** ip-10-0-1-131, **Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4
+
+**Security Rules:**
+
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 4568 | 10.0.0.0/16 | inbound udp 4568 from 10.0.0.0/16 | Migrated from source |
+| 2 | inbound | UDP | 4444 | 10.0.0.0/16 | inbound udp 4444 from 10.0.0.0/16 | Migrated from source |
+| 3 | inbound | UDP | 9104 | 10.0.0.0/16 | inbound udp 9104 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9104 | 10.0.0.0/16 | inbound tcp 9104 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 6 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 8 | inbound | TCP | 4444 | 10.0.0.0/16 | inbound tcp 4444 from 10.0.0.0/16 | Migrated from source |
+| 9 | inbound | UDP | 3306 | 10.0.0.0/16 | inbound udp 3306 from 10.0.0.0/16 | Migrated from source |
+| 10 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 11 | inbound | TCP | 4568 | 10.0.0.0/16 | inbound tcp 4568 from 10.0.0.0/16 | Migrated from source |
+| 12 | inbound | UDP | 4567 | 10.0.0.0/16 | inbound udp 4567 from 10.0.0.0/16 | Migrated from source |
+| 13 | inbound | TCP | 4567 | 10.0.0.0/16 | inbound tcp 4567 from 10.0.0.0/16 | Migrated from source |
+| 14 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 15 | inbound | TCP | 3306 | 10.0.0.0/16 | inbound tcp 3306 from 10.0.0.0/16 | Migrated from source |
+| 16 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 17 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 18 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
 ---
 
@@ -123,63 +184,43 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-02eba736ffc6c3057 | 192.168.96.0/19 |
+| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-0387ea91245f5c2af | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-0f185c6541a811d62 | 192.168.110.0/24 | mig-vnet-01 |
+| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-02f503e8d25a4b3fc | 10.0.1.0/24 | mig-vnet-01 |
 
 ### Source Network Information
 
-**CIDR:** 192.168.110.0/24 | **Gateway:** 192.168.110.254 | **Connected Servers:** 2
+**CIDR:** 10.0.1.0/24 | **Gateway:** 10.0.1.1 | **Connected Servers:** 3
 
-### Network Details by Server (2 servers)
+### Network Details by Server (3 servers)
 
-#### 1. cm-nfs
-
-**Active Interfaces:**
-
-| Interface | IP Address | State |
-|-----------|------------|-------|
-| lo | 127.0.0.1/8 | up |
-| eno1np0 | 172.29.0.102/24, 172.29.0.200/32 | up |
-| eno2np1 | 192.168.110.200/32 | up |
-| br-189b10762332 | 172.20.0.1/16 | down |
-| br-f67138586d47 | 172.19.0.1/16 | down |
-| br-068801a3f047 | 172.17.0.1/16 | up |
-| br-ex | 192.168.110.102/24 | up |
-
-**Main Routes:**
-
-| Destination | Gateway | Interface |
-|-------------|---------||-----------|
-| 0.0.0.0/0 | 192.168.110.254 | br-ex |
-| 172.17.0.0/16 | on-link | br-068801a3f047 |
-| 172.19.0.0/16 | on-link | br-f67138586d47 |
-| 172.20.0.0/16 | on-link | br-189b10762332 |
-| 172.29.0.0/24 | on-link | eno1np0 |
-| 192.168.110.0/24 | 192.168.110.254 | br-ex |
-
-#### 2. cm-web
+#### 1. ip-10-0-1-25
 
 **Active Interfaces:**
 
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
-| eno1np0 | 172.29.0.103/24 | up |
-| eno2np1 | - | up |
-| br-ex | 192.168.110.103/24 | up |
 
-**Main Routes:**
+#### 2. ip-10-0-1-220
 
-| Destination | Gateway | Interface |
-|-------------|---------||-----------|
-| 0.0.0.0/0 | 192.168.110.254 | br-ex |
-| 172.29.0.0/24 | on-link | eno1np0 |
-| 192.168.110.0/24 | 192.168.110.254 | br-ex |
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
+
+#### 3. ip-10-0-1-131
+
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
 
 ---
 
@@ -191,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | mig-sshkey-01 | d451fbmqjs728pra18vg | 05:24:1b:8e:6c:18:45:9c:1d:5c:a5:f9:7b:ce:18:cd:76:ed:d9:27 | Used by all 2 VMs |
+| 1 | mig-sshkey-01 | d45ecbebkq5v9sddgii0 | 38:c0:cb:a8:73:93:1e:16:08:1e:69:fa:4a:fa:78:b3:00:94:29:80 | Used by all 3 VMs |
 
 ---
 
@@ -201,17 +242,18 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | Period | Cost (USD) |
 |--------|------------|
-| Hourly | $0.5312 |
-| Daily | $12.75 |
-| Monthly | $382.46 |
-| Yearly | $4589.57 |
+| Hourly | $0.3042 |
+| Daily | $7.30 |
+| Monthly | $219.02 |
+| Yearly | $2628.29 |
 
 ### Cost Breakdown by Component
 
 | Component | Spec | Monthly Cost | Percentage |
 |-----------|------|--------------|------------|
-| cm-nfs (migrated) | t3a.xlarge | $134.78 | 35.2% |
-| cm-web (migrated) | c5a.2xlarge | $247.68 | 64.8% |
+| ip-10-0-1-25 (migrated) | t3a.small | $16.85 | 7.7% |
+| ip-10-0-1-220 (migrated) | t3a.xlarge | $134.78 | 61.5% |
+| ip-10-0-1-131 (migrated) | t3a.large | $67.39 | 30.8% |
 
 ---
 
