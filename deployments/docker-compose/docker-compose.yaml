@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.4.2
+    image: cloudbaristaorg/cm-beetle:0.4.3
     container_name: cm-beetle
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}
@@ -54,7 +54,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.15
+    image: cloudbaristaorg/cb-tumblebug:0.11.19
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
@@ -192,7 +192,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.11.15
+    image: cloudbaristaorg/cb-spider:0.11.16
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -226,10 +226,10 @@ services:
 
   # cb-mapui
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.11.17
+    image: cloudbaristaorg/cb-mapui:0.11.19
     container_name: cb-mapui
     # build:
-    #   context: ../cb-mapui
+    #   context: ${COMPOSE_PROJECT_ROOT}/../cb-mapui
     #   dockerfile: Dockerfile
     networks:
       - internal_network

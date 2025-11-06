@@ -1539,7 +1539,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	// Environment and scenario
 	sb.WriteString("## Environment and scenario\n\n")
 	sb.WriteString("### Environment\n\n")
-	sb.WriteString(fmt.Sprintf("- CM-Beetle: v0.4.1 (%s)\n", getGitHash()))
+	sb.WriteString(fmt.Sprintf("- CM-Beetle: v0.4.3 (%s)\n", getGitHash()))
 	sb.WriteString(fmt.Sprintf("- cm-model: %s\n", getCmModelVersionFromGoMod()))
 	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: v%s\n", getVersionFromDockerCompose("cb-tumblebug")))
 	sb.WriteString(fmt.Sprintf("- CB-Spider: v%s\n", getVersionFromDockerCompose("cb-spider")))
