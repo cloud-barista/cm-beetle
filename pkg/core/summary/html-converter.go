@@ -19,10 +19,10 @@ import (
 	"fmt"
 
 	"github.com/yuin/goldmark"
+	emoji "github.com/yuin/goldmark-emoji"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
-	emoji "github.com/yuin/goldmark-emoji"
 )
 
 // ConvertMarkdownToHTML converts markdown content to HTML

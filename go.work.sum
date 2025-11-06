@@ -154,10 +154,11 @@ github.com/clipperhouse/uax29/v2 v2.2.0 h1:ChwIKnQN3kcZteTXMgb1wztSgaU+ZemkgWdoh
 github.com/clipperhouse/uax29/v2 v2.2.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/cloud-barista/cb-tumblebug v0.11.0 h1:UGY2X3Pg7zrNFqjLY4taCBi+XSoyT9Qcak3QUW5YzeM=
 github.com/cloud-barista/cb-tumblebug v0.11.0/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
+github.com/cloud-barista/cb-tumblebug v0.11.1 h1:iq+Jn04MOXHT+zLkEGi1jsjOCj/epkLjw+XthXyPKIU=
+github.com/cloud-barista/cb-tumblebug v0.11.1/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cb-tumblebug v0.11.9 h1:GgJZAk/cvrZZr8x6heKkCGD/QgNUBKpJRUsWtY5xXlo=
 github.com/cloud-barista/cb-tumblebug v0.11.9/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cb-tumblebug v0.11.15 h1:6sz2NREfMOOfZSBL9d8i96y9hce96zFFlLssQKpt5+A=
-github.com/cloud-barista/cb-tumblebug v0.11.15/go.mod h1:jxLBQMEqsYxIsOfgdhXC6KOwMg7Ldc3rvw1GAih3gFc=
 github.com/cloud-barista/cm-model v0.0.10 h1:vGaYam3/VX8IvagHdtWx10ZgH36xZ+44Db2ZG/uSvA4=
 github.com/cloud-barista/cm-model v0.0.10/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
