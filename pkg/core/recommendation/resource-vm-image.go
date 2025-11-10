@@ -125,27 +125,6 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		limit = defaultImagesLimit
 	}
 
-	// Request body
-	falseValue := false
-	trueValue := true
-	searchImageReq := tbmodel.SearchImageRequest{
-		// DetailSearchKeys:       []string{},
-		// IncludeDeprecatedImage: &falseValue,
-		// IsRegisteredByAsset:    &falseValue,
-		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
-		IncludeBasicImageOnly: &trueValue,
-		MaxResults:            &limit,
-		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
-		OSType:                server.OS.Name + " " + server.OS.VersionID,
-		ProviderName:          csp,
-		RegionName:            region,
-	}
-
-	// TODO: Add condition to check if searchImageReq.IsGPUImage is set, when GPU information is confirmed in the source model
-	searchImageReq.IsGPUImage = &falseValue
-
-	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
-
 	// Call Tumblebug API to search VM OS images
 	apiConfig := tbclient.ApiConfig{
 		RestUrl:  config.Tumblebug.RestUrl,
@@ -155,25 +134,65 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	tbCli := tbclient.NewClient(apiConfig)
 	nsId := "system" // default
 
+	var filteredImages []tbmodel.ImageInfo
+
+	// Note - (sample) the extracted OS information in case of Ubuntu 22.04
+	// "os": {
+	// 	"prettyName": "Ubuntu 22.04.3 LTS",
+	// 	"version": "22.04.3 LTS (Jammy Jellyfish)",
+	// 	"name": "Ubuntu",
+	// 	"versionId": "22.04",
+	// 	"versionCodename": "jammy",
+	// 	"id": "ubuntu",
+	// 	"idLike": "debian"
+	// }
+
+	// Note - (sample) the extracted OS information in case of Debian 13
+	// "os": {
+	// 		"id": "debian",
+	// 		"name": "Debian GNU/Linux",
+	// 		"prettyName": "Debian GNU/Linux 13 (trixie)",
+	// 		"version": "13 (trixie)",
+	// 		"versionCodename": "trixie",
+	// 		"versionId": "13"
+	// }
+
+	// Request body
+	falseValue := false
+	trueValue := true
+
+	osType := server.OS.ID + " " + server.OS.VersionID
+	// if server.OS.ID == "debian" {
+	// 	log.Warn().Msg("Tumblebug currently does not support 'versionID' for debian images; using only 'debian' as OSType")
+	// 	osType = server.OS.ID // TODO: Check Tumblebug API to append 'versionID' for debian when debian images are available in CSPs
+	// }
+
+	// Try first search with OS ID + Version ID
+	searchImageReq := tbmodel.SearchImageRequest{
+		// DetailSearchKeys:       []string{},
+		// IncludeDeprecatedImage: &falseValue,
+		// IsRegisteredByAsset:    &falseValue,
+		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
+		IncludeBasicImageOnly: &trueValue,
+		MaxResults:            &limit,
+		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSType:                osType,
+		ProviderName:          csp,
+		RegionName:            region,
+	}
+
+	// TODO: Add condition to check if searchImageReq.IsGPUImage is set, when GPU information is confirmed in the source model
+	searchImageReq.IsGPUImage = &falseValue
+
+	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
+
 	resSearchImage, err := tbCli.SearchVmOsImage(nsId, searchImageReq)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRes, err
 	}
 
-	// Debug logging up to 3 images to avoid excessive output
-	if len(resSearchImage.ImageList) > 3 {
-		for i := range 3 {
-			log.Debug().Msgf("[Response from Tumblebug] resSearchImage.ImageList[%d]: %+v", i, resSearchImage.ImageList[i])
-		}
-	} else {
-		for i := range resSearchImage.ImageList {
-			log.Debug().Msgf("[Response from Tumblebug] resSearchImage.ImageList[%d]: %+v", i, resSearchImage.ImageList[i])
-		}
-	}
-
 	// Filter VM OS images to support stability
-	var filteredImages []tbmodel.ImageInfo
 	for _, img := range resSearchImage.ImageList {
 		if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
 			continue
@@ -181,6 +200,53 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		// Add more filters as needed
 
 		filteredImages = append(filteredImages, img)
+	}
+
+	// If no images found after filtering, retry with OS ID only (without version)
+	if len(filteredImages) == 0 {
+		log.Warn().Msgf("No images found with osType '%s', retrying with OS ID only: '%s'", osType, server.OS.ID)
+
+		// Update search request to use OS ID only
+		searchImageReq.OSType = server.OS.ID
+
+		log.Debug().Msgf("Retry searchImageReq: %+v", searchImageReq)
+
+		resSearchImage, err = tbCli.SearchVmOsImage(nsId, searchImageReq)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to retry image search with OS ID only")
+			return emptyRes, err
+		}
+
+		// Filter VM OS images again
+		filteredImages = []tbmodel.ImageInfo{} // Reset filtered images
+		for _, img := range resSearchImage.ImageList {
+			if strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+				continue
+			}
+			// Add more filters as needed
+
+			filteredImages = append(filteredImages, img)
+		}
+
+		if len(filteredImages) > 0 {
+			log.Info().Msgf("Found %d images after retrying with OS ID only: '%s'", len(filteredImages), server.OS.ID)
+		}
+	}
+
+	if len(filteredImages) == 0 {
+		err := fmt.Errorf("no VM OS images found for the given server even though retrying with OS ID only")
+		return emptyRes, err
+	}
+
+	// Debug logging up to 3 images to avoid excessive output
+	if len(filteredImages) > 3 {
+		for i := range 3 {
+			log.Debug().Msgf("Searched and filtered images[%d]: %+v", i, filteredImages[i])
+		}
+	} else {
+		for i := range filteredImages {
+			log.Debug().Msgf("Searched and filtered images[%d]: %+v", i, filteredImages[i])
+		}
 	}
 
 	// Convert model from '[]tbmodel.ImageInfo' to '[]cloudmodel.ImageInfo'
@@ -220,7 +286,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 func setKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []string, []string) {
 	keywords := fmt.Sprintf("%s %s %s %s %s",
-		server.OS.Name,
+		server.OS.ID,
 		server.OS.VersionID,
 		server.OS.VersionCodename,
 		server.CPU.Architecture,
