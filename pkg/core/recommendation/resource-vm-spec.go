@@ -134,9 +134,6 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	vcpusCalculated := uint32(cpus * threads)
 	memory := uint32(server.Memory.TotalSize)
 
-	// Calculate optimal vCPU and memory ranges based on AWS, GCP, and NCP instance patterns
-	vcpusMin, vcpusMax, memoryMin, memoryMax := calculateOptimalRange(vcpusCalculated, memory)
-
 	// Set provider and region names
 	providerName := strings.ToLower(csp)
 	regionName := strings.ToLower(region)
@@ -147,109 +144,141 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		architecture = defaultArchitecture
 	}
 
-	// Set OS name and version
-	osNameAndVersion := server.OS.Name + " " + server.OS.Version
-	osNameWithVersion := strings.ToLower(osNameAndVersion)
-
-	log.Debug().
-		Str("machineId", server.MachineId).
-		Uint32("originalCpu*Threads", vcpusCalculated).
-		Uint32("originalMemory", memory).
-		Float64("memoryCpuThreadsRatio", float64(memory)/float64(vcpusCalculated)).
-		Uint32("vcpuRange", vcpusMax-vcpusMin).
-		Uint32("memoryRange", memoryMax-memoryMin).
-		Str("provider", providerName).
-		Str("region", regionName).
-		Str("architecture", architecture).
-		Str("osNameWithVersion", osNameWithVersion).
-		Msgf("Calculating VM spec recommendations for machine: %s", server.MachineId)
-
-	// Create deployment plan with calculated parameters
-	deploymentPlan := fmt.Sprintf(planTemplate,
-		vcpusMin, vcpusMax,
-		memoryMin, memoryMax,
-		providerName, regionName, architecture,
-		limit,
+	// Iterative search with increasing rangeWeight to find suitable VM specs
+	const (
+		initialRangeWeight = 1
+		maxRangeWeight     = 5
 	)
-	log.Debug().Msgf("Deployment plan for machine %s: %s", server.MachineId, deploymentPlan)
 
-	// Initialize Tumblebug API client
-	tbCli := tbclient.NewClient(tbclient.ApiConfig{
-		RestUrl:  config.Tumblebug.RestUrl,
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-	})
+	var (
+		vmSpecInfoList       []tbmodel.SpecInfo
+		vcpusMin, vcpusMax   uint32
+		memoryMin, memoryMax uint32
+	)
 
-	// Call Tumblebug API to get recommended VM specs
-	vmSpecInfoList, err := tbCli.MciRecommendSpec(deploymentPlan)
-	if err != nil {
-		log.Error().Err(err).
+	// Retry loop: increase rangeWeight if no specs are found
+	for rangeWeight := initialRangeWeight; rangeWeight <= maxRangeWeight; rangeWeight++ {
+		// Calculate optimal vCPU and memory ranges based on AWS, GCP, and NCP instance patterns
+		vcpusMin, vcpusMax, memoryMin, memoryMax = calculateOptimalRange(vcpusCalculated, memory, rangeWeight)
+
+		log.Debug().
 			Str("machineId", server.MachineId).
+			Int("rangeWeight", rangeWeight).
+			Uint32("originalCpu*Threads", vcpusCalculated).
+			Uint32("originalMemory", memory).
+			Float64("memoryCpuThreadsRatio", float64(memory)/float64(vcpusCalculated)).
+			Uint32("vcpuRange", vcpusMax-vcpusMin).
+			Uint32("memoryRange", memoryMax-memoryMin).
 			Str("provider", providerName).
-			Str("region", region).
-			Msg("Failed to get VM spec recommendations from Tumblebug")
-		return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", server.MachineId, err)
-	}
+			Str("region", regionName).
+			Str("architecture", architecture).
+			Msgf("Calculating VM spec recommendations for machine: %s (attempt %d/%d)", server.MachineId, rangeWeight, maxRangeWeight)
 
-	// Filter if CostPerHour is less then 0
-	validVmSpecs := make([]tbmodel.SpecInfo, 0, len(vmSpecInfoList))
-	for _, spec := range vmSpecInfoList {
-		if spec.CostPerHour >= 0 {
-			validVmSpecs = append(validVmSpecs, spec)
-		} else {
-			log.Debug().Msgf("Filtered spec with negative cost: %s (CostPerHour: %.4f)",
-				spec.CspSpecName, spec.CostPerHour)
+		// Create a plan to search proper VM specs with calculated parameters
+		planToSearchProperVm := fmt.Sprintf(planTemplate,
+			vcpusMin, vcpusMax,
+			memoryMin, memoryMax,
+			providerName, regionName, architecture,
+			limit,
+		)
+		log.Debug().Msgf("Deployment plan for machine %s: %s", server.MachineId, planToSearchProperVm)
+
+		// Initialize Tumblebug API client
+		tbCli := tbclient.NewClient(tbclient.ApiConfig{
+			RestUrl:  config.Tumblebug.RestUrl,
+			Username: config.Tumblebug.API.Username,
+			Password: config.Tumblebug.API.Password,
+		})
+
+		// Call Tumblebug API to get recommended VM specs
+		var err error
+		vmSpecInfoList, err = tbCli.MciRecommendSpec(planToSearchProperVm)
+		if err != nil {
+			log.Error().Err(err).
+				Str("machineId", server.MachineId).
+				Str("provider", providerName).
+				Str("region", regionName).
+				Int("rangeWeight", rangeWeight).
+				Msg("Failed to get VM spec recommendations from Tumblebug")
+			return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", server.MachineId, err)
 		}
-	}
-	vmSpecInfoList = validVmSpecs
 
-	// Check if any VM specs were found
+		// Filter specs with valid cost
+		validVmSpecs := make([]tbmodel.SpecInfo, 0, len(vmSpecInfoList))
+		for _, spec := range vmSpecInfoList {
+			if spec.CostPerHour >= 0 {
+				validVmSpecs = append(validVmSpecs, spec)
+			} else {
+				log.Debug().Msgf("Filtered spec with negative cost: %s (CostPerHour: %.4f)",
+					spec.CspSpecName, spec.CostPerHour)
+			}
+		}
+		vmSpecInfoList = validVmSpecs
+
+		// NCP-specific filtering for KVM hypervisor
+		if strings.Contains(strings.ToLower(csp), "ncp") {
+			log.Debug().
+				Str("machineId", server.MachineId).
+				Int("rangeWeight", rangeWeight).
+				Msg("Filtering VM specs for KVM hypervisor (NCP)")
+
+			kvmVmSpecs := make([]tbmodel.SpecInfo, 0, len(vmSpecInfoList))
+			for _, vmSpec := range vmSpecInfoList {
+				for _, detail := range vmSpec.Details {
+					if detail.Key == "HypervisorType" && strings.Contains(strings.ToLower(detail.Value), "kvm") {
+						kvmVmSpecs = append(kvmVmSpecs, vmSpec)
+						break
+					}
+				}
+			}
+
+			if len(kvmVmSpecs) > 0 {
+				vmSpecInfoList = kvmVmSpecs
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Int("kvmSpecs", len(kvmVmSpecs)).
+					Int("rangeWeight", rangeWeight).
+					Msg("Filtered to KVM-compatible specs for NCP")
+			} else {
+				log.Debug().
+					Str("machineId", server.MachineId).
+					Int("rangeWeight", rangeWeight).
+					Msg("No KVM-compatible specs found for NCP at this rangeWeight, will retry with increased range")
+				// Continue to retry with increased rangeWeight
+				continue
+			}
+		}
+
+		// Check if any VM specs were found
+		if len(vmSpecInfoList) > 0 {
+			log.Info().
+				Str("machineId", server.MachineId).
+				Int("specsFound", len(vmSpecInfoList)).
+				Int("rangeWeight", rangeWeight).
+				Uint32("vcpusCalculated", vcpusCalculated).
+				Uint32("memory", memory).
+				Msgf("Found %d VM spec recommendations for machine: %s with rangeWeight: %d", len(vmSpecInfoList), server.MachineId, rangeWeight)
+			break // Exit loop if specs found
+		}
+
+		log.Warn().
+			Str("machineId", server.MachineId).
+			Int("rangeWeight", rangeWeight).
+			Int("maxRangeWeight", maxRangeWeight).
+			Msgf("No VM specs found for machine %s with rangeWeight %d, retrying with increased range...", server.MachineId, rangeWeight)
+	}
+
+	// Final check after all retry attempts
 	numOfVmSpecs := len(vmSpecInfoList)
 	if numOfVmSpecs == 0 {
-		err := fmt.Errorf("no VM specs recommended for machine %s (vcpusCalculated: %d, memory: %d GiB)",
-			server.MachineId, vcpusCalculated, memory)
+		err := fmt.Errorf("no VM specs recommended for machine %s after %d attempts (vcpusCalculated: %d, memory: %d GiB)",
+			server.MachineId, maxRangeWeight, vcpusCalculated, memory)
 		log.Warn().Err(err).
 			Str("machineId", server.MachineId).
 			Uint32("vcpusCalculated", vcpusCalculated).
 			Uint32("memory", memory).
 			Msg("No VM specifications found")
 		return emptyResp, -1, err
-	}
-
-	log.Info().
-		Str("machineId", server.MachineId).
-		Int("specsFound", numOfVmSpecs).
-		Uint32("vcpusCalculated", vcpusCalculated).
-		Uint32("memory", memory).
-		Msgf("Found %d VM spec recommendations for machine: %s", numOfVmSpecs, server.MachineId)
-
-	// NCP-specific filtering for KVM hypervisor
-	if strings.Contains(strings.ToLower(csp), "ncp") {
-		log.Debug().
-			Str("machineId", server.MachineId).
-			Msg("Filtering VM specs for KVM hypervisor (NCP)")
-
-		kvmVmSpecs := make([]tbmodel.SpecInfo, 0, len(vmSpecInfoList))
-		for _, vmSpec := range vmSpecInfoList {
-			for _, detail := range vmSpec.Details {
-				if detail.Key == "HypervisorType" && strings.Contains(strings.ToLower(detail.Value), "kvm") {
-					kvmVmSpecs = append(kvmVmSpecs, vmSpec)
-					break
-				}
-			}
-		}
-
-		if len(kvmVmSpecs) > 0 {
-			vmSpecInfoList = kvmVmSpecs
-			log.Debug().
-				Str("machineId", server.MachineId).
-				Int("kvmSpecs", len(kvmVmSpecs)).
-				Msg("Filtered to KVM-compatible specs for NCP")
-		} else {
-			log.Warn().
-				Str("machineId", server.MachineId).
-				Msg("No KVM-compatible specs found for NCP, using all available specs")
-		}
 	}
 
 	// [Output]
@@ -411,7 +440,7 @@ func deriveMachineType(vcpus uint32, memory uint32) (machineType string) {
 }
 
 // calculateOptimalRange calculates optimal vCPU and memory ranges based on AWS instance patterns
-func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+func calculateOptimalRange(vcpus uint32, memory uint32, rangeWeight int) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
 	// Constants for instance type thresholds and ratios
 	const (
 		computeIntensiveRatioThreshold = 3.0 // 1:2 ratio instances
@@ -425,21 +454,38 @@ func calculateOptimalRange(vcpus uint32, memory uint32) (vcpusMin, vcpusMax, mem
 
 	switch {
 	case memoryToVcpuRatio <= computeIntensiveRatioThreshold: // Compute Intensive (1:2)
-		return calculateComputeIntensiveRange(vcpus, memory)
+		return calculateComputeIntensiveRange(vcpus, memory, rangeWeight)
 	case memoryToVcpuRatio >= memoryIntensiveRatioThreshold: // Memory Intensive (1:8)
-		return calculateMemoryIntensiveRange(vcpus, memory)
+		return calculateMemoryIntensiveRange(vcpus, memory, rangeWeight)
 	default: // General Purpose (1:4)
-		return calculateGeneralPurposeRange(vcpus, memory)
+		return calculateGeneralPurposeRange(vcpus, memory, rangeWeight)
 	}
 }
 
-func calculateComputeIntensiveRange(vcpus, memory uint32) (vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax uint32) {
+func calculateComputeIntensiveRange(vcpus, memory uint32, rangeWeight int) (vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax uint32) {
+
+	log.Debug().Msgf("Classified as Compute Intensive workload (vcpus: %d, memory: %d GiB)", vcpus, memory)
+
 	const (
-		memoryMultiplier = 4 // Memory multiplier for max calculation
+		memoryMultiplier             = 4 // Memory multiplier for max calculation
+		primeNumSearchIterationCount = 2 // Number of prime number search iterations per direction (previously: prev-prev for min, next-next for max)
 	)
 
-	vcpusRangeMin = findPreviousPrimeOrDecrementOne(vcpus)
-	vcpusRangeMax = calculateRangeMax(vcpus) // find the next next prime number
+	// Note: The value of 2 for primeNumSearchIterationCount was determined heuristically
+	// to provide an optimal balance between range flexibility and recommendation precision.
+	// This allows searching 2 prime numbers backward (for min) and forward (for max),
+	// which empirically yields appropriate VM spec recommendations across various workloads.
+	vcpusRangeMin = vcpus
+	vcpusRangeMax = vcpus
+	for i := 0; i < primeNumSearchIterationCount*rangeWeight; i++ {
+		vcpusRangeMin = findPreviousPrimeOrDecrementOne(vcpusRangeMin)
+		vcpusRangeMax = findNextPrimeNumber(vcpusRangeMax)
+	}
+
+	// Expand the range if it's too narrow
+	if vcpusRangeMax-vcpus < 4 {
+		vcpusRangeMax = findNextPrimeNumber(vcpusRangeMax)
+	}
 
 	// Set a wide search range for memory for compute-intensive workloads
 	memoryRangeMin = 0
@@ -448,13 +494,30 @@ func calculateComputeIntensiveRange(vcpus, memory uint32) (vcpusRangeMin, vcpusR
 	return vcpusRangeMin, vcpusRangeMax, memoryRangeMin, memoryRangeMax
 }
 
-func calculateMemoryIntensiveRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax uint32) {
+func calculateMemoryIntensiveRange(vcpus, memory uint32, rangeWeight int) (vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax uint32) {
+
+	log.Debug().Msgf("Classified as Memory Intensive workload (vcpus: %d, memory: %d GiB)", vcpus, memory)
+
 	const (
-		memoryToCpuRatio = 7 // memory to CPU ratio for calculation (Standard: 8)
+		memoryToCpuRatio             = 7 // memory to CPU ratio for calculation (Standard: 8)
+		primeNumSearchIterationCount = 2 // Number of prime number search iterations per direction (previously: prev-prev for min, next-next for max)
 	)
 
-	memoryRangeMin = calculateRangeMin(memory)
-	memoryRangeMax = calculateRangeMax(memory)
+	// Note: The value of 2 for primeNumSearchIterationCount was determined heuristically
+	// to provide an optimal balance between range flexibility and recommendation precision.
+	// This allows searching 2 prime numbers backward (for min) and forward (for max),
+	// which empirically yields appropriate VM spec recommendations across various workloads.
+	memoryRangeMin = memory
+	memoryRangeMax = memory
+	for i := 0; i < primeNumSearchIterationCount*rangeWeight; i++ {
+		memoryRangeMin = findPreviousPrimeOrDecrementOne(memoryRangeMin)
+		memoryRangeMax = findNextPrimeNumber(memoryRangeMax)
+	}
+
+	// Expand the range if it's too narrow
+	if memoryRangeMax-memory < 4 {
+		memoryRangeMax = findNextPrimeNumber(memoryRangeMax)
+	}
 
 	// Set a wide search range for vCPU for memory-intensive workloads
 	vcpusMin = 0
@@ -463,43 +526,68 @@ func calculateMemoryIntensiveRange(vcpus, memory uint32) (vcpusMin, vcpusMax, me
 	return vcpusMin, vcpusMax, memoryRangeMin, memoryRangeMax
 }
 
-func calculateGeneralPurposeRange(vcpus, memory uint32) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+func calculateGeneralPurposeRange(vcpus, memory uint32, rangeWeight int) (vcpusMin, vcpusMax, memoryMin, memoryMax uint32) {
+
+	log.Debug().Msgf("Classified as General Purpose workload (vcpus: %d, memory: %d GiB)", vcpus, memory)
 	// For General Purpose workloads, provide balanced flexibility for both vCPU and memory
 	// The input has already been classified as General Purpose in calculateOptimalRange
 
-	vcpusMin = findPreviousPrimeOrDecrementOne(vcpus)
-	vcpusMax = calculateRangeMax(vcpus) // find the next next prime number
+	const primeNumSearchIterationCount = 2 // Number of prime number search iterations per direction (previously: prev-prev for min, next-next for max)
 
-	memoryMin = calculateRangeMin(memory)
-	memoryMax = calculateRangeMax(memory)
+	// Note: The value of 2 for primeNumSearchIterationCount was determined heuristically
+	// to provide an optimal balance between range flexibility and recommendation precision.
+	// This allows searching 2 prime numbers backward (for min) and forward (for max),
+	// which empirically yields appropriate VM spec recommendations across various workloads.
+	vcpusMin = vcpus
+	vcpusMax = vcpus
+	for i := 0; i < primeNumSearchIterationCount*rangeWeight; i++ {
+		vcpusMin = findPreviousPrimeOrDecrementOne(vcpusMin)
+		vcpusMax = findNextPrimeNumber(vcpusMax)
+	}
+
+	// Expand the range if it's too narrow
+	if vcpusMax-vcpus < 4 {
+		vcpusMax = findNextPrimeNumber(vcpusMax)
+	}
+
+	memoryMin = memory
+	memoryMax = memory
+	for i := 0; i < primeNumSearchIterationCount*rangeWeight; i++ {
+		memoryMin = findPreviousPrimeOrDecrementOne(memoryMin)
+		memoryMax = findNextPrimeNumber(memoryMax)
+	}
+	// Expand the range if it's too narrow
+	if memoryMax-memory < 4 {
+		memoryMax = findNextPrimeNumber(memoryMax)
+	}
 
 	return vcpusMin, vcpusMax, memoryMin, memoryMax
 }
 
-// calculateRangeMin calculates the minimum value for a range based on a given number
-func calculateRangeMin(n uint32) uint32 {
+// // calculateRangeMin calculates the minimum value for a range based on a given number
+// func calculateRangeMin(n uint32) uint32 {
 
-	// Calculate previous previous prime number
-	min := findPreviousPrimeOrDecrementOne(n)
-	min = findPreviousPrimeOrDecrementOne(min)
+// 	// Calculate previous previous prime number
+// 	min := findPreviousPrimeOrDecrementOne(n)
+// 	min = findPreviousPrimeOrDecrementOne(min)
 
-	return min
-}
+// 	return min
+// }
 
-// calculateRangeMax calculates the maximum value for a range based on a given number
-func calculateRangeMax(n uint32) uint32 {
+// // calculateRangeMax calculates the maximum value for a range based on a given number
+// func calculateRangeMax(n uint32) uint32 {
 
-	// Calculate next next prime number
-	max := findNextPrimeNumber(n)
-	max = findNextPrimeNumber(max)
+// 	// Calculate next next prime number
+// 	max := findNextPrimeNumber(n)
+// 	max = findNextPrimeNumber(max)
 
-	// Expand the range if it's too narrow
-	if max-n < 4 {
-		max = findNextPrimeNumber(max)
-	}
+// 	// Expand the range if it's too narrow
+// 	if max-n < 4 {
+// 		max = findNextPrimeNumber(max)
+// 	}
 
-	return max
-}
+// 	return max
+// }
 
 // isPrimeNumber checks if a number is prime
 func isPrimeNumber(n uint32) bool {
