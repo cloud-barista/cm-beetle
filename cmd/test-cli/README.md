@@ -10,19 +10,38 @@ This CLI automates testing of CM-Beetle's infrastructure recommendation and migr
 
 - **Multi-CSP Support**: Test across AWS, Azure, GCP, Alibaba Cloud, and NCP simultaneously
 - **Complete Workflow**: End-to-end testing from recommendation to migration to cleanup
+- **Comprehensive Testing**: 7 API tests + 2 report generations + 1 cleanup operation per CSP-Region pair
+- **SSH Connectivity Test**: Verify actual accessibility of migrated VMs
 - **Automated Reports**: Generate detailed Markdown test reports for each CSP
+- **Infrastructure Summaries**: Source and target infrastructure analysis
+- **Migration Reports**: Detailed comparison and migration analysis
 - **Real Data**: Uses actual on-premise infrastructure data for realistic testing
+- **Error Handling**: Skips remaining tests if early test fails to prevent cascading issues
 
 ### Test Workflow
 
-Each CSP-Region pair executes 6 sequential tests:
+#### Initial Setup
+
+Before testing CSP-Region pairs, the CLI performs:
+
+- **CM-Beetle Readiness Check**: `GET /beetle/readyz` - Verify service availability
+- **Source Infrastructure Summary**: `POST /beetle/summary/source` - Generate summary of on-premise infrastructure
+
+#### Per CSP-Region Pair Tests
+
+Each CSP-Region pair executes the following sequential operations:
 
 1. `POST /beetle/recommendation/mci` - Infrastructure recommendation
 2. `POST /beetle/migration/ns/{nsId}/mci` - Infrastructure migration
 3. `GET /beetle/migration/ns/{nsId}/mci` - List MCIs
 4. `GET /beetle/migration/ns/{nsId}/mci?option=id` - List MCI IDs
 5. `GET /beetle/migration/ns/{nsId}/mci/{mciId}` - Get specific MCI
-6. `DELETE /beetle/migration/ns/{nsId}/mci/{mciId}` - Delete MCI
+6. **Remote Command Test** - SSH connectivity and accessibility check for migrated VMs
+7. **Target Infrastructure Summary**: `GET /beetle/summary/target/ns/{nsId}/mci/{mciId}` - Generate summary of migrated infrastructure
+8. **Migration Report**: `POST /beetle/report/migration/ns/{nsId}/mci/{mciId}` - Comprehensive migration analysis report
+9. `DELETE /beetle/migration/ns/{nsId}/mci/{mciId}?option=terminate` - Delete MCI
+
+**Note**: If any test fails, remaining tests for that CSP-Region pair are skipped.
 
 ## Quick Start
 
@@ -120,6 +139,11 @@ cd cmd/test-cli
 
 ```
 ============================================================
+SOURCE INFRASTRUCTURE SUMMARY
+============================================================
+✅ Source summary generated successfully
+
+============================================================
 Testing CSP-Region Pair 1/5: AWS-Seoul
 ============================================================
 
@@ -129,13 +153,36 @@ Testing CSP-Region Pair 1/5: AWS-Seoul
 --- Test 2: POST /beetle/migration/ns/mig01/mci ---
 ✅ Test 2 passed (Duration: 37.999s)
 
+--- Test 3: GET /beetle/migration/ns/mig01/mci ---
+✅ Test 3 passed (Duration: 125ms)
+
+--- Test 4: GET /beetle/migration/ns/mig01/mci?option=id ---
+✅ Test 4 passed (Duration: 98ms)
+
+--- Test 5: GET /beetle/migration/ns/mig01/mci/{mciId} ---
+✅ Test 5 passed (Duration: 142ms)
+
+--- Test 6: Remote Command Accessibility Check ---
+✅ Test 6 passed (Duration: 3.2s)
+   - VM web-server-01: ✅ Connected successfully
+   - VM was-server-01: ✅ Connected successfully
+
+--- Target Infrastructure Summary ---
+✅ Target summary generated successfully
+
+--- Migration Report ---
+✅ Migration report generated successfully
+
+--- Test 7: DELETE /beetle/migration/ns/mig01/mci/{mciId} ---
+✅ Test 7 passed (Duration: 25.3s)
+
 ============================================================
 OVERALL TEST SUMMARY
 ============================================================
 Total CSP-Region Pairs: 5
 Successful Pairs: 4/5
-Total Tests: 30
-Passed Tests: 24/30
+Total Tests: 35
+Passed Tests: 28/35
 Overall Time: 3m45s
 ```
 
@@ -143,11 +190,14 @@ Overall Time: 3m45s
 
 Individual Markdown reports are generated in `testresult/`:
 
-- `beetle-test-results-aws.md`
-- `beetle-test-results-azure.md`
-- `beetle-test-results-gcp.md`
-- `beetle-test-results-alibaba.md`
-- `beetle-test-results-ncp.md`
+- `source-infra-summary.md` - On-premise infrastructure summary
+- `beetle-test-results-aws.md` - AWS test results
+- `beetle-test-results-azure.md` - Azure test results
+- `beetle-test-results-gcp.md` - GCP test results
+- `beetle-test-results-alibaba.md` - Alibaba Cloud test results
+- `beetle-test-results-ncp.md` - NCP test results
+- `target-infra-summary-{csp}-{mciId}.md` - Target infrastructure summaries (per CSP)
+- `migration-report-{csp}-{mciId}.md` - Migration reports (per CSP)
 
 ## Custom Configuration
 
@@ -185,6 +235,7 @@ Create custom config file:
 3. CSP credentials configured for each cloud provider
 4. Network connectivity to CM-Beetle and cloud providers
 5. **Authentication setup**: Copy `testdata/template-auth-config.json` to `testdata/auth-config.json` and configure credentials
+6. **SSH access**: Ensure VMs can be accessed via SSH for Test 6 (Remote Command Test)
 
 ## Troubleshooting
 
