@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2025-11-10 11:29:06*
+*Report generated: 2025-11-12 10:58:52*
 
 ---
 
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1<br>**VM ID:** i-00d6a753a0f60bfcc<br>**Label(sourceMachineId):** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c |
-| 2 | **VM Name:** migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1<br>**VM ID:** i-078b4f0b237d3f9d2<br>**Label(sourceMachineId):** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 |
-| 3 | **VM Name:** migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1<br>**VM ID:** i-0552b4b3d8c4a254e<br>**Label(sourceMachineId):** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 |
+| 1 | **VM Name:** migrated-ec266012-92f5-d3bc-99a9-2a49201f5158-1<br>**VM ID:** i-07f246a33c9569972<br>**Label(sourceMachineId):** ec266012-92f5-d3bc-99a9-2a49201f5158 | **Hostname:** ip-10-0-1-5<br>**Machine ID:** ec266012-92f5-d3bc-99a9-2a49201f5158 |
+| 2 | **VM Name:** migrated-ec2a4cef-a613-1856-a953-0b12211163ab-1<br>**VM ID:** i-02b33c9711dbf5e6b<br>**Label(sourceMachineId):** ec2a4cef-a613-1856-a953-0b12211163ab | **Hostname:** ip-10-0-1-184<br>**Machine ID:** ec2a4cef-a613-1856-a953-0b12211163ab |
+| 3 | **VM Name:** migrated-ec2cd540-09af-4961-c40d-c5336d4cb7e8-1<br>**VM ID:** i-0ab1964fc4fd28517<br>**Label(sourceMachineId):** ec2cd540-09af-4961-c40d-c5336d4cb7e8 | **Hostname:** ip-10-0-1-187<br>**Machine ID:** ec2cd540-09af-4961-c40d-c5336d4cb7e8 |
 
 ---
 
@@ -58,9 +58,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
-| 2 | migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
-| 3 | migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
+| 1 | migrated-ec266012-92f5-d3bc-99a9-2a49201f5158-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-5<br>**Machine ID:** ec266012-92f5-d3bc-99a9-2a49201f5158 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
+| 2 | migrated-ec2a4cef-a613-1856-a953-0b12211163ab-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-184<br>**Machine ID:** ec2a4cef-a613-1856-a953-0b12211163ab | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
+| 3 | migrated-ec2cd540-09af-4961-c40d-c5336d4cb7e8-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-187<br>**Machine ID:** ec2cd540-09af-4961-c40d-c5336d4cb7e8 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
 
 ---
 
@@ -70,9 +70,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-25<br>**Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2 | migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-131<br>**Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3 | migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-220<br>**Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 1 | migrated-ec266012-92f5-d3bc-99a9-2a49201f5158-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-5<br>**Machine ID:** ec266012-92f5-d3bc-99a9-2a49201f5158 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | migrated-ec2a4cef-a613-1856-a953-0b12211163ab-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-184<br>**Machine ID:** ec2a4cef-a613-1856-a953-0b12211163ab | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | migrated-ec2cd540-09af-4961-c40d-c5336d4cb7e8-1 | **Image ID:** ami-010be25c3775061c9<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 | **Hostname:** ip-10-0-1-187<br>**Machine ID:** ec2cd540-09af-4961-c40d-c5336d4cb7e8 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
@@ -82,12 +82,12 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-01
 
-**CSP ID:** sg-0743c4bc2898687ec | **VNet:** mig-vnet-01 | **Rules:** 14
+**CSP ID:** sg-0a8d04bd0faf7296e | **VNet:** mig-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
-- **VM:** migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1
-  - **Source Server:** **Hostname:** ip-10-0-1-25, **Machine ID:** ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c
+- **VM:** migrated-ec2a4cef-a613-1856-a953-0b12211163ab-1
+  - **Source Server:** **Hostname:** ip-10-0-1-184, **Machine ID:** ec2a4cef-a613-1856-a953-0b12211163ab
 
 **Security Rules:**
 
@@ -110,12 +110,12 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-02
 
-**CSP ID:** sg-0563e41492e56a208 | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-01143e841e912180f | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1
-  - **Source Server:** **Hostname:** ip-10-0-1-220, **Machine ID:** ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939
+- **VM:** migrated-ec266012-92f5-d3bc-99a9-2a49201f5158-1
+  - **Source Server:** **Hostname:** ip-10-0-1-5, **Machine ID:** ec266012-92f5-d3bc-99a9-2a49201f5158
 
 **Security Rules:**
 
@@ -143,12 +143,12 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-03
 
-**CSP ID:** sg-08c4607d62d7afd37 | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-0550a048d6b979fb7 | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1
-  - **Source Server:** **Hostname:** ip-10-0-1-131, **Machine ID:** ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4
+- **VM:** migrated-ec2cd540-09af-4961-c40d-c5336d4cb7e8-1
+  - **Source Server:** **Hostname:** ip-10-0-1-187, **Machine ID:** ec2cd540-09af-4961-c40d-c5336d4cb7e8
 
 **Security Rules:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-0eacf88ff5ccf726b | 10.0.0.0/21 |
+| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-0b317699f1e0e44dc | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-0be49b7ce9a842111 | 10.0.1.0/24 | mig-vnet-01 |
+| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-05576ccec57029cb8 | 10.0.1.0/24 | mig-vnet-01 |
 
 ### Source Network Information
 
@@ -198,7 +198,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Network Details by Server (3 servers)
 
-#### 1. ip-10-0-1-25
+#### 1. ip-10-0-1-184
 
 **Active Interfaces:**
 
@@ -206,7 +206,7 @@ Summary of key infrastructure resources created or configured in the target clou
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
 
-#### 2. ip-10-0-1-220
+#### 2. ip-10-0-1-5
 
 **Active Interfaces:**
 
@@ -214,7 +214,7 @@ Summary of key infrastructure resources created or configured in the target clou
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
 
-#### 3. ip-10-0-1-131
+#### 3. ip-10-0-1-187
 
 **Active Interfaces:**
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | mig-sshkey-01 | d48sod8t49avt161vn4g | c0:4c:8f:90:f3:4d:c0:32:58:96:88:79:92:b1:db:95:7f:bc:08:96 | Used by all 3 VMs |
+| 1 | mig-sshkey-01 | d4a6g67o5uas73f10l30 | 99:a1:68:1d:d3:58:9d:51:9e:39:8d:45:53:58:07:95:9c:be:90:29 | Used by all 3 VMs |
 
 ---
 
@@ -251,9 +251,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | Component | Spec | Monthly Cost | Percentage |
 |-----------|------|--------------|------------|
-| ip-10-0-1-25 (migrated) | t3a.small | $16.85 | 7.7% |
-| ip-10-0-1-220 (migrated) | t3a.xlarge | $134.78 | 61.5% |
-| ip-10-0-1-131 (migrated) | t3a.large | $67.39 | 30.8% |
+| ip-10-0-1-184 (migrated) | t3a.small | $16.85 | 7.7% |
+| ip-10-0-1-5 (migrated) | t3a.xlarge | $134.78 | 61.5% |
+| ip-10-0-1-187 (migrated) | t3a.large | $67.39 | 30.8% |
 
 ---
 

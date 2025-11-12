@@ -1,6 +1,6 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2025-11-10 11:27:30
+**Generated At:** 2025-11-12 10:57:10
 
 **Infrastructure Name:** infra-3-servers
 
@@ -21,7 +21,7 @@
 
 ### Servers (3)
 
-#### 1. ip-10-0-1-25
+#### 1. ip-10-0-1-184
 
 | Component | Details |
 |-----------|----------|
@@ -34,9 +34,9 @@
 | Architecture | x86_64 |
 | **Memory** | 2 GB (DDR4) |
 | **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
-| **Primary IP** | 10.0.1.25/24 |
+| **Primary IP** | 10.0.1.184/24 |
 
-#### 2. ip-10-0-1-220
+#### 2. ip-10-0-1-5
 
 | Component | Details |
 |-----------|----------|
@@ -49,9 +49,9 @@
 | Architecture | x86_64 |
 | **Memory** | 16 GB (DDR4) |
 | **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
-| **Primary IP** | 10.0.1.220/24 |
+| **Primary IP** | 10.0.1.5/24 |
 
-#### 3. ip-10-0-1-131
+#### 3. ip-10-0-1-187
 
 | Component | Details |
 |-----------|----------|
@@ -64,7 +64,7 @@
 | Architecture | x86_64 |
 | **Memory** | 8 GB (DDR4) |
 | **OS** | Ubuntu 22.04.3 LTS (Jammy Jellyfish) |
-| **Primary IP** | 10.0.1.131/24 |
+| **Primary IP** | 10.0.1.187/24 |
 
 
 ## Network Resources
@@ -82,7 +82,7 @@
 
 ### Network Details by Server (3 servers)
 
-#### 1. ip-10-0-1-25
+#### 1. ip-10-0-1-184
 
 **Active Interfaces:**
 
@@ -90,7 +90,7 @@
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
 
-#### 2. ip-10-0-1-220
+#### 2. ip-10-0-1-5
 
 **Active Interfaces:**
 
@@ -98,7 +98,7 @@
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
 
-#### 3. ip-10-0-1-131
+#### 3. ip-10-0-1-187
 
 **Active Interfaces:**
 
@@ -111,7 +111,7 @@
 
 ### Firewall Rules by Server (3 servers)
 
-#### 1. ip-10-0-1-25
+#### 1. ip-10-0-1-184
 
 **Firewall Rules:** (45 rules)
 
@@ -163,7 +163,7 @@
 | outbound | tcp | ::/0 | * | ::/0 | * | allow |
 | outbound | udp | ::/0 | * | ::/0 | * | allow |
 
-#### 2. ip-10-0-1-220
+#### 2. ip-10-0-1-5
 
 **Firewall Rules:** (51 rules)
 
@@ -221,7 +221,7 @@
 | outbound | tcp | ::/0 | * | ::/0 | * | allow |
 | outbound | udp | ::/0 | * | ::/0 | * | allow |
 
-#### 3. ip-10-0-1-131
+#### 3. ip-10-0-1-187
 
 **Firewall Rules:** (53 rules)
 
