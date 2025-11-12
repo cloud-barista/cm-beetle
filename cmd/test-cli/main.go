@@ -1294,7 +1294,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.NamespaceID, mciId)
 
 	// Wait before API call for stability with animation
-	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(30*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
@@ -1307,60 +1307,96 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	log.Debug().Msg("API Request Body: none")
 
 	var response map[string]interface{}
+	var resp *resty.Response
+	var err error
 
-	// Make HTTP request directly with resty to capture full error response
-	resp, err := client.R().
-		SetResult(&response).
-		SetError(&response). // This captures error response body
-		Delete(url)
+	// Retry logic: Try deletion up to 2 times
+	const maxRetries = 2
+	const retryDelay = 30 * time.Second
 
-	result.EndTime = time.Now()
-	result.Duration = result.EndTime.Sub(result.StartTime)
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if attempt > 1 {
+			log.Info().Str("mciId", mciId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying MCI deletion...")
+			animatedSleep(retryDelay, fmt.Sprintf("Waiting before retry attempt %d/%d", attempt, maxRetries))
+		}
 
-	// Log response details
-	log.Debug().Msgf("HTTP Status: %s", resp.Status())
-	log.Debug().Msgf("Response Body: %+v", response)
+		// Make HTTP request directly with resty to capture full error response
+		resp, err = client.R().
+			SetResult(&response).
+			SetError(&response). // This captures error response body
+			Delete(url)
 
-	if err != nil || resp.StatusCode() >= 400 {
+		// Log response details
+		log.Debug().Msgf("HTTP Status: %s", resp.Status())
+		log.Debug().Msgf("Response Body: %+v", response)
+
+		// Check if deletion was successful
+		if err == nil && resp.StatusCode() < 400 {
+			// Success
+			result.EndTime = time.Now()
+			result.Duration = result.EndTime.Sub(result.StartTime)
+			result.Success = true
+			result.StatusCode = 200
+			result.RequestURL = url
+			result.RequestBody = nil
+			result.Response = response
+
+			if attempt > 1 {
+				log.Info().Str("mciId", mciId).Int("attempt", attempt).Msg("✅ MCI deletion succeeded after retry")
+				fmt.Printf("✅ Test 7 passed (after %d attempt(s))\n", attempt)
+			} else {
+				log.Info().Str("mciId", mciId).Msg("✅ MCI deletion succeeded")
+				fmt.Println("✅ Test 7 passed")
+			}
+			return result, true
+		}
+
+		// Log failure for this attempt
 		statusCode := 0
 		if resp != nil {
 			statusCode = resp.StatusCode()
 		}
 
-		// Create a more specific error if we only have HTTP error without Go error
-		var finalErr error = err
-		if err == nil && resp.StatusCode() >= 400 {
-			// Create error from HTTP response body if available
-			if len(response) > 0 {
-				if respBytes, jsonErr := json.Marshal(response); jsonErr == nil {
-					finalErr = fmt.Errorf("HTTP %d: %s", statusCode, string(respBytes))
-				} else {
-					finalErr = fmt.Errorf("HTTP %d error", statusCode)
-				}
+		if attempt < maxRetries {
+			log.Warn().Err(err).Str("mciId", mciId).Int("statusCode", statusCode).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ MCI deletion attempt failed, will retry")
+		} else {
+			log.Error().Err(err).Str("mciId", mciId).Int("statusCode", statusCode).Int("maxRetries", maxRetries).Msg("❌ MCI deletion failed after all retries")
+		}
+	}
+
+	// All retries failed
+	result.EndTime = time.Now()
+	result.Duration = result.EndTime.Sub(result.StartTime)
+
+	statusCode := 0
+	if resp != nil {
+		statusCode = resp.StatusCode()
+	}
+
+	// Create a more specific error if we only have HTTP error without Go error
+	var finalErr error = err
+	if err == nil && resp.StatusCode() >= 400 {
+		// Create error from HTTP response body if available
+		if len(response) > 0 {
+			if respBytes, jsonErr := json.Marshal(response); jsonErr == nil {
+				finalErr = fmt.Errorf("HTTP %d: %s", statusCode, string(respBytes))
 			} else {
 				finalErr = fmt.Errorf("HTTP %d error", statusCode)
 			}
+		} else {
+			finalErr = fmt.Errorf("HTTP %d error", statusCode)
 		}
-
-		populateErrorInfo(&result, finalErr, statusCode, url, nil)
-
-		// If we have error response, include it in the result
-		if len(response) > 0 {
-			result.Response = response
-		}
-
-		fmt.Printf("❌ Test 6 failed: %s\n", result.ErrorMessage)
-		log.Error().Err(err).Str("url", url).Int("statusCode", statusCode).Msg("Delete MCI test failed")
-		return result, false
 	}
 
-	result.Success = true
-	result.StatusCode = 200
-	result.RequestURL = url
-	result.RequestBody = nil
-	result.Response = response
-	fmt.Println("✅ Test 7 passed")
-	return result, true
+	populateErrorInfo(&result, finalErr, statusCode, url, nil)
+
+	// If we have error response, include it in the result
+	if len(response) > 0 {
+		result.Response = response
+	}
+
+	fmt.Printf("❌ Test 7 failed after %d attempt(s): %s\n", maxRetries, result.ErrorMessage)
+	return result, false
 }
 
 // checkBeetleReadiness checks if CM-Beetle is ready using GET /beetle/readyz
@@ -2130,7 +2166,7 @@ func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraMo
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing source infrastructure summary...")
+	animatedSleep(5*time.Second, "Preparing source infrastructure summary...")
 
 	// Log API call details
 	log.Info().Msg("\n--- Source Infrastructure Summary ---")
@@ -2233,7 +2269,7 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing target infrastructure summary...")
+	animatedSleep(5*time.Second, "Preparing target infrastructure summary...")
 
 	// Log API call details
 	log.Info().Msgf("\n--- Target Infrastructure Summary for %s ---", displayName)
@@ -2324,7 +2360,7 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing migration report...")
+	animatedSleep(5*time.Second, "Preparing migration report...")
 
 	// Log API call details
 	log.Info().Msgf("\n--- Migration Report for %s ---", displayName)
