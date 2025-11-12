@@ -297,7 +297,7 @@ func main() {
 
 		// Add delay between CSP-Region pairs (except for the first one)
 		if pairIndex > 0 {
-			animatedSleep(10*time.Second, fmt.Sprintf("Waiting for a while before testing %s", displayName))
+			animatedSleep(15*time.Second, fmt.Sprintf("Waiting for a while before testing %s", displayName))
 		}
 
 		log.Info().Msgf("%s", "\n"+strings.Repeat("=", 60)+"\n")
@@ -1294,7 +1294,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.NamespaceID, mciId)
 
 	// Wait before API call for stability with animation
-	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
+	animatedSleep(60*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
 		TestName:  fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
@@ -2130,7 +2130,7 @@ func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraMo
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing source infrastructure summary...")
+	animatedSleep(5*time.Second, "Preparing source infrastructure summary...")
 
 	// Log API call details
 	log.Info().Msg("\n--- Source Infrastructure Summary ---")
@@ -2233,7 +2233,7 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing target infrastructure summary...")
+	animatedSleep(5*time.Second, "Preparing target infrastructure summary...")
 
 	// Log API call details
 	log.Info().Msgf("\n--- Target Infrastructure Summary for %s ---", displayName)
@@ -2324,7 +2324,7 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 	}
 
 	// Wait before API call for stability with animation
-	animatedSleep(2*time.Second, "Preparing migration report...")
+	animatedSleep(5*time.Second, "Preparing migration report...")
 
 	// Log API call details
 	log.Info().Msgf("\n--- Migration Report for %s ---", displayName)
@@ -2418,7 +2418,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 	log.Info().Msg("\n--- Test 6: Remote Command Accessibility Check ---")
 
 	// Wait before test for stability with animation
-	animatedSleep(5*time.Second, "Waiting before VM accessibility test")
+	animatedSleep(10*time.Second, "Waiting before VM accessibility test")
 
 	result := TestResults{
 		TestName:   fmt.Sprintf("Test 6: Remote Command Accessibility Check (%s)", displayName),
