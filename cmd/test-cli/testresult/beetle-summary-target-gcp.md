@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-11-10 11:46:51
+**Generated At:** 2025-11-17 05:06:42
 
 **Namespace:** mig01
 
@@ -28,23 +28,23 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
+| e2-standard-2 | 2 | 7.8 | - | x86_64 |  | $0.0860 | 1 |
 | e2-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.1719 | 1 |
 | e2-small | 2 | 2.0 | - | x86_64 |  | $0.0215 | 1 |
-| e2-standard-2 | 2 | 7.8 | - | x86_64 |  | $0.0860 | 1 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251023 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 3 |
+| https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251111 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | d48t0k8t49avt161vnng | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.50.33.86<br>**Private IP:** 10.0.1.3<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | d48t0k8t49avt161vnpg | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.193.4<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | d48t0k8t49avt161vnog | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.50.23.84<br>**Private IP:** 10.0.1.2<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec21fd51-16bb-7e10-5e23-12ef283b2204-1 | d4daq1qp2foc73bcek10 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.97.113<br>**Private IP:** 10.0.1.3<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2643f0-9388-3d97-f3a4-f387cd52696c-1 | d4daq1qp2foc73bcek00 | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.253.204<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2876a6-3c84-7e62-aaf9-c3203f12e0b8-1 | d4daq1qp2foc73bcek20 | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-11-11) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.47.82.114<br>**Private IP:** 10.0.1.2<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | d48strot49avt161vnjg |
+| **CSP VNet ID** | d4danaip2foc73bcejs0 |
 | **CIDR Block** | GCP VPC does not support IPv4_CIDR |
 | **Connection** | gcp-asia-northeast3 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | d48strot49avt161vnk0 | 10.0.1.0/24 |  |
+| mig-subnet-01 | d4danaip2foc73bcejsg | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | d48su38t49avt161vnkg |  |  |
+| mig-sshkey-01 | d4daniip2foc73bcejt0 |  |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | d48su3gt49avt161vnl0 |
+| **CSP Security Group ID** | d4danj2p2foc73bcejtg |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | d48supgt49avt161vnlg |
+| **CSP Security Group ID** | d4dao7qp2foc73bceju0 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | d48svkgt49avt161vnm0 |
+| **CSP Security Group ID** | d4dap5ip2foc73bcejug |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -193,8 +193,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | e2-small | $0.0215 | $15.47 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | e2-standard-2 | $0.0860 | $61.90 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | e2-standard-4 | $0.1719 | $123.79 |
+| migrated-ec21fd51-16bb-7e10-5e23-12ef283b2204-1 | e2-standard-4 | $0.1719 | $123.79 |
+| migrated-ec2643f0-9388-3d97-f3a4-f387cd52696c-1 | e2-small | $0.0215 | $15.47 |
+| migrated-ec2876a6-3c84-7e62-aaf9-c3203f12e0b8-1 | e2-standard-2 | $0.0860 | $61.90 |
 
 

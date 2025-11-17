@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-11-10 11:29:03
+**Generated At:** 2025-11-17 04:48:10
 
 **Namespace:** mig01
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | i-00d6a753a0f60bfcc | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 43.202.68.213<br>**Private IP:** 10.0.1.103<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | i-078b4f0b237d3f9d2 | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 13.125.81.176<br>**Private IP:** 10.0.1.98<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | i-0552b4b3d8c4a254e | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 43.201.45.60<br>**Private IP:** 10.0.1.187<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec21fd51-16bb-7e10-5e23-12ef283b2204-1 | i-0dfa1890fcefba4be | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 43.203.121.210<br>**Private IP:** 10.0.1.62<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2643f0-9388-3d97-f3a4-f387cd52696c-1 | i-00c25957c7fdb5cfc | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 13.124.191.35<br>**Private IP:** 10.0.1.241<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2876a6-3c84-7e62-aaf9-c3203f12e0b8-1 | i-0a5882b217e54f74f | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251015) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 3.39.6.146<br>**Private IP:** 10.0.1.185<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | vpc-0eacf88ff5ccf726b |
+| **CSP VNet ID** | vpc-0330b15879aede8d2 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | aws-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | subnet-0be49b7ce9a842111 | 10.0.1.0/24 | ap-northeast-2a |
+| mig-subnet-01 | subnet-00440b2d1ddf6b379 | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | d48sod8t49avt161vn4g |  | c0:4c:8f:90:f3:4d:c0:32:58:96:88:79:92:b1:db:95:7f:bc:08:96 |
+| mig-sshkey-01 | d4dahgap2foc73bcejd0 |  | d5:4b:aa:0f:d4:eb:7d:20:44:88:f0:5f:fc:e4:c8:1a:ee:9b:82:34 |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | sg-0743c4bc2898687ec |
+| **CSP Security Group ID** | sg-08d51712b18745856 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | sg-0563e41492e56a208 |
+| **CSP Security Group ID** | sg-0893e1a7e93bcf006 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | sg-08c4607d62d7afd37 |
+| **CSP Security Group ID** | sg-023e0f0b2c789b8f8 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -193,8 +193,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | t3a.small | $0.0234 | $16.85 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | t3a.large | $0.0936 | $67.39 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | t3a.xlarge | $0.1872 | $134.78 |
+| migrated-ec21fd51-16bb-7e10-5e23-12ef283b2204-1 | t3a.xlarge | $0.1872 | $134.78 |
+| migrated-ec2643f0-9388-3d97-f3a4-f387cd52696c-1 | t3a.small | $0.0234 | $16.85 |
+| migrated-ec2876a6-3c84-7e62-aaf9-c3203f12e0b8-1 | t3a.large | $0.0936 | $67.39 |
 
 
