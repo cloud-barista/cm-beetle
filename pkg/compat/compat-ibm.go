@@ -7,12 +7,12 @@ import (
 
 // CheckIbm checks compatibility between IBM Cloud VM spec and OS image
 func CheckIbm(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting IBM Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting IBM Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add IBM Cloud-specific compatibility checks using Detail information
 	log.Info().Msg("IBM Cloud compatibility validation is planned for future implementation")
 
-	log.Debug().Msgf("IBM Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("IBM Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 

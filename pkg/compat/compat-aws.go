@@ -16,27 +16,27 @@ import (
 // 3. Boot Mode compatibility
 // 4. Xen-on-Nitro compatibility (when applicable)
 func CheckAws(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting AWS compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting AWS compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. Virtualization Type compatibility check
 	if !isAwsVirtualizationTypeCompatible(spec, image) {
-		log.Debug().Msgf("AWS virtualization type compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("AWS virtualization type compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
 	// 2. Hypervisor and Driver compatibility check (most critical)
 	if !isAwsHypervisorAndDriverCompatible(spec, image) {
-		log.Debug().Msgf("AWS hypervisor and driver compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("AWS hypervisor and driver compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
 	// 3. Boot Mode compatibility check
 	if !isAwsBootModeCompatible(spec, image) {
-		log.Debug().Msgf("AWS boot mode compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("AWS boot mode compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
-	log.Debug().Msgf("AWS compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("AWS compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 
@@ -48,20 +48,20 @@ func isAwsVirtualizationTypeCompatible(spec cloudmodel.SpecInfo, image cloudmode
 	imageVirtType := extractAwsVirtualizationTypeFromImageDetails(image)
 
 	if len(supportedVirtTypes) == 0 || imageVirtType == "" {
-		log.Debug().Msgf("AWS virtualization type check - insufficient info, assuming compatible")
+		log.Trace().Msgf("AWS virtualization type check - insufficient info, assuming compatible")
 		return true
 	}
 
 	// Check if image's virtualization type is supported by the spec
 	for _, supportedType := range supportedVirtTypes {
 		if imageVirtType == supportedType {
-			log.Debug().Msgf("AWS virtualization type compatible - Spec supports: %v, Image: %s",
+			log.Trace().Msgf("AWS virtualization type compatible - Spec supports: %v, Image: %s",
 				supportedVirtTypes, imageVirtType)
 			return true
 		}
 	}
 
-	log.Debug().Msgf("AWS virtualization type incompatible - Spec supports: %v, Image: %s",
+	log.Trace().Msgf("AWS virtualization type incompatible - Spec supports: %v, Image: %s",
 		supportedVirtTypes, imageVirtType)
 	return false
 }
@@ -103,12 +103,12 @@ func isAwsHypervisorAndDriverCompatible(spec cloudmodel.SpecInfo, image cloudmod
 	specHypervisor := extractAwsHypervisorFromSpecDetails(spec)
 	imageHypervisor := extractAwsHypervisorFromImageDetails(image)
 
-	log.Debug().Msgf("AWS hypervisor and driver compatibility check - Spec: %s (%s), Image: %s (%s)",
+	log.Trace().Msgf("AWS hypervisor and driver compatibility check - Spec: %s (%s), Image: %s (%s)",
 		spec.CspSpecName, specHypervisor, image.CspImageName, imageHypervisor)
 
 	// If no hypervisor info, assume compatible (basic check)
 	if specHypervisor == "" || imageHypervisor == "" {
-		log.Debug().Msgf("AWS hypervisor info missing, checking drivers only")
+		log.Trace().Msgf("AWS hypervisor info missing, checking drivers only")
 		return isAwsDriverCompatible(spec, image)
 	}
 
@@ -118,7 +118,7 @@ func isAwsHypervisorAndDriverCompatible(spec cloudmodel.SpecInfo, image cloudmod
 
 	// Critical compatibility analysis for Nitro instances + Xen AMI
 	if specHyp == "nitro" && imageHyp == "xen" {
-		log.Debug().Msgf("AWS CRITICAL: Nitro instance with Xen AMI - checking Xen-on-Nitro compatibility")
+		log.Trace().Msgf("AWS CRITICAL: Nitro instance with Xen AMI - checking Xen-on-Nitro compatibility")
 
 		// For Nitro instances with Xen AMIs (Xen-on-Nitro)
 		// ENA is required, but NVMe is optional - many Xen AMIs work without NVMe drivers
@@ -126,14 +126,14 @@ func isAwsHypervisorAndDriverCompatible(spec cloudmodel.SpecInfo, image cloudmod
 		nvmeCompatible := isAwsNvmeDriverCompatible(spec, image)
 
 		if !enaCompatible {
-			log.Debug().Msgf("AWS Xen-on-Nitro incompatible - ENA required but not supported")
+			log.Trace().Msgf("AWS Xen-on-Nitro incompatible - ENA required but not supported")
 			return false
 		}
 
 		if !nvmeCompatible {
-			log.Debug().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t (NVMe optional for Xen AMIs)", enaCompatible, nvmeCompatible)
+			log.Trace().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t (NVMe optional for Xen AMIs)", enaCompatible, nvmeCompatible)
 		} else {
-			log.Debug().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
+			log.Trace().Msgf("AWS Xen-on-Nitro compatible - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
 		}
 		return true
 	}
@@ -147,7 +147,7 @@ func isAwsDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo)
 	enaCompatible := isAwsEnaDriverCompatible(spec, image)
 	nvmeCompatible := isAwsNvmeDriverCompatible(spec, image)
 
-	log.Debug().Msgf("AWS driver compatibility - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
+	log.Trace().Msgf("AWS driver compatibility - ENA: %t, NVMe: %t", enaCompatible, nvmeCompatible)
 	return enaCompatible && nvmeCompatible
 }
 
@@ -158,14 +158,14 @@ func isAwsEnaDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageIn
 
 	// If spec requires ENA but image doesn't support it: INCOMPATIBLE
 	if specEnaSupport == "required" && (imageEnaSupport == "unsupported" || imageEnaSupport == "false") {
-		log.Debug().Msgf("AWS ENA incompatible - Spec requires ENA, Image doesn't support it")
+		log.Trace().Msgf("AWS ENA incompatible - Spec requires ENA, Image doesn't support it")
 		return false
 	}
 
 	// Be more permissive: if we don't have clear incompatibility, assume compatible
 	// Most modern AMIs support ENA even if not explicitly documented
 	if specEnaSupport == "unknown" || imageEnaSupport == "unknown" {
-		log.Debug().Msgf("AWS ENA compatibility unknown, assuming compatible")
+		log.Trace().Msgf("AWS ENA compatibility unknown, assuming compatible")
 		return true
 	}
 
@@ -179,14 +179,14 @@ func isAwsNvmeDriverCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageI
 
 	// If spec requires NVMe but image doesn't support it: INCOMPATIBLE
 	if specNvmeSupport == "required" && (imageNvmeSupport == "unsupported" || imageNvmeSupport == "false") {
-		log.Debug().Msgf("AWS NVMe incompatible - Spec requires NVMe, Image doesn't support it")
+		log.Trace().Msgf("AWS NVMe incompatible - Spec requires NVMe, Image doesn't support it")
 		return false
 	}
 
 	// Be more permissive: if we don't have clear incompatibility, assume compatible
 	// Most modern AMIs support NVMe even if not explicitly documented
 	if specNvmeSupport == "unknown" || imageNvmeSupport == "unknown" {
-		log.Debug().Msgf("AWS NVMe compatibility unknown, assuming compatible")
+		log.Trace().Msgf("AWS NVMe compatibility unknown, assuming compatible")
 		return true
 	}
 
@@ -238,12 +238,12 @@ func extractAwsEnaSupportFromImageDetails(image cloudmodel.ImageInfo) string {
 
 		// Direct ENA support check (EnaSupport key)
 		if key == "enasupport" {
-			log.Debug().Msgf("Found ENA support in image %s: %s = %s", image.CspImageName, kv.Key, kv.Value)
+			log.Trace().Msgf("Found ENA support in image %s: %s = %s", image.CspImageName, kv.Key, kv.Value)
 			return isEnaSupport(value)
 		}
 	}
 
-	log.Debug().Msgf("No ENA support information found in image %s", image.CspImageName)
+	log.Trace().Msgf("No ENA support information found in image %s", image.CspImageName)
 	return "unknown"
 }
 
@@ -266,13 +266,13 @@ func extractAwsEnaSupportFromSpecDetails(spec cloudmodel.SpecInfo) string {
 
 			if len(matches) >= 2 {
 				enaValue := strings.TrimSpace(matches[1])
-				log.Debug().Msgf("Found ENA support in NetworkInfo of %s: EnaSupport = %s", spec.CspSpecName, enaValue)
+				log.Trace().Msgf("Found ENA support in NetworkInfo of %s: EnaSupport = %s", spec.CspSpecName, enaValue)
 				return isEnaSupport(enaValue)
 			}
 		}
 	}
 
-	log.Debug().Msgf("No ENA support information found in spec %s", spec.CspSpecName)
+	log.Trace().Msgf("No ENA support information found in spec %s", spec.CspSpecName)
 	return "unknown"
 }
 
@@ -288,7 +288,7 @@ func isEnaSupport(value string) string {
 	case "false", "unsupported", "disabled":
 		return "unsupported"
 	default:
-		log.Debug().Msgf("Unknown ENA support value: %s", value)
+		log.Trace().Msgf("Unknown ENA support value: %s", value)
 		return "unknown"
 	}
 }
@@ -345,7 +345,7 @@ func isAwsBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInf
 	imageBootMode := extractAwsBootModeFromImageDetails(image)
 
 	if len(supportedBootModes) == 0 || imageBootMode == "" {
-		log.Debug().Msgf("AWS boot mode check - insufficient info, assuming compatible")
+		log.Trace().Msgf("AWS boot mode check - insufficient info, assuming compatible")
 		return true
 	}
 
@@ -353,7 +353,7 @@ func isAwsBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInf
 	if imageBootMode == "uefi-preferred" {
 		for _, mode := range supportedBootModes {
 			if mode == "uefi" || mode == "legacy-bios" {
-				log.Debug().Msgf("AWS boot mode compatible - Image: %s, Spec supports: %v",
+				log.Trace().Msgf("AWS boot mode compatible - Image: %s, Spec supports: %v",
 					imageBootMode, supportedBootModes)
 				return true
 			}
@@ -362,14 +362,14 @@ func isAwsBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInf
 		// Direct mode matching
 		for _, mode := range supportedBootModes {
 			if mode == imageBootMode {
-				log.Debug().Msgf("AWS boot mode compatible - Image: %s, Spec supports: %v",
+				log.Trace().Msgf("AWS boot mode compatible - Image: %s, Spec supports: %v",
 					imageBootMode, supportedBootModes)
 				return true
 			}
 		}
 	}
 
-	log.Debug().Msgf("AWS boot mode incompatible - Image: %s, Spec supports: %v",
+	log.Trace().Msgf("AWS boot mode incompatible - Image: %s, Spec supports: %v",
 		imageBootMode, supportedBootModes)
 	return false
 }

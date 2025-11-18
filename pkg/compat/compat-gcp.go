@@ -7,12 +7,12 @@ import (
 
 // CheckGcp checks compatibility between GCP VM spec and OS image
 func CheckGcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting GCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting GCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add GCP-specific compatibility checks using Detail information
 	log.Info().Msg("GCP compatibility validation is planned for future implementation")
 
-	log.Debug().Msgf("GCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("GCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 

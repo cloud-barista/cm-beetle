@@ -11,16 +11,16 @@ import (
 
 // CheckNcp checks compatibility between NCP VM spec and OS image
 func CheckNcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting NCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting NCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// NCP Image ID compatibility check using CorrespondingImageIds
 	if !isNcpImageCompatible(spec, image) {
-		log.Debug().Msgf("NCP image compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("NCP image compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
 	// Add other NCP-specific compatibility checks here if needed
-	log.Debug().Msgf("NCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("NCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 
@@ -31,26 +31,26 @@ func isNcpImageCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) 
 	// Extract CorrespondingImageIds from spec details
 	correspondingImageIds := extractNcpCorrespondingImageIds(spec)
 	if len(correspondingImageIds) == 0 {
-		log.Debug().Msgf("No CorrespondingImageIds found for NCP spec: %s, allowing all images", spec.CspSpecName)
+		log.Trace().Msgf("No CorrespondingImageIds found for NCP spec: %s, allowing all images", spec.CspSpecName)
 		return true // If no corresponding image IDs specified, allow all images
 	}
 
 	// Extract image ID from image (could be in CspImageName or other fields)
 	imageId := extractNcpImageId(image)
 	if imageId == "" {
-		log.Debug().Msgf("Could not extract image ID from NCP image: %s", image.CspImageName)
+		log.Trace().Msgf("Could not extract image ID from NCP image: %s", image.CspImageName)
 		return true // If we can't extract image ID, be permissive
 	}
 
 	// Check if image ID is in the corresponding image IDs list
 	for _, correspondingId := range correspondingImageIds {
 		if imageId == correspondingId {
-			log.Debug().Msgf("NCP image ID %s matches corresponding image ID for spec %s", imageId, spec.CspSpecName)
+			log.Trace().Msgf("NCP image ID %s matches corresponding image ID for spec %s", imageId, spec.CspSpecName)
 			return true
 		}
 	}
 
-	log.Debug().Msgf("NCP image ID %s not found in corresponding image IDs %v for spec %s",
+	log.Trace().Msgf("NCP image ID %s not found in corresponding image IDs %v for spec %s",
 		imageId, correspondingImageIds, spec.CspSpecName)
 	return false
 }
@@ -68,7 +68,7 @@ func extractNcpCorrespondingImageIds(spec cloudmodel.SpecInfo) []string {
 					cleanedIds = append(cleanedIds, cleanedId)
 				}
 			}
-			log.Debug().Msgf("Extracted NCP CorrespondingImageIds: %v", cleanedIds)
+			log.Trace().Msgf("Extracted NCP CorrespondingImageIds: %v", cleanedIds)
 			return cleanedIds
 		}
 	}
@@ -79,7 +79,7 @@ func extractNcpCorrespondingImageIds(spec cloudmodel.SpecInfo) []string {
 func extractNcpImageId(image cloudmodel.ImageInfo) string {
 	// Try to extract from CspImageName first (might contain the ID directly)
 	if image.CspImageName != "" {
-		log.Debug().Msgf("NCP image CspImageName: %s", image.CspImageName)
+		log.Trace().Msgf("NCP image CspImageName: %s", image.CspImageName)
 		// If CspImageName is numeric, use it directly
 		if isNumeric(image.CspImageName) {
 			return image.CspImageName
@@ -92,7 +92,7 @@ func extractNcpImageId(image cloudmodel.ImageInfo) string {
 			strings.EqualFold(detail.Key, "Id") ||
 			strings.EqualFold(detail.Key, "NcpImageId") {
 			if detail.Value != "" && isNumeric(detail.Value) {
-				log.Debug().Msgf("Extracted NCP image ID from Details[%s]: %s", detail.Key, detail.Value)
+				log.Trace().Msgf("Extracted NCP image ID from Details[%s]: %s", detail.Key, detail.Value)
 				return detail.Value
 			}
 		}
@@ -112,13 +112,13 @@ func extractNcpImageId(image cloudmodel.ImageInfo) string {
 				}
 			}
 			if longestMatch != "" {
-				log.Debug().Msgf("Extracted NCP image ID from CspImageName pattern: %s", longestMatch)
+				log.Trace().Msgf("Extracted NCP image ID from CspImageName pattern: %s", longestMatch)
 				return longestMatch
 			}
 		}
 	}
 
-	log.Debug().Msgf("Could not extract numeric image ID from NCP image: %s", image.CspImageName)
+	log.Trace().Msgf("Could not extract numeric image ID from NCP image: %s", image.CspImageName)
 	return ""
 }
 
@@ -143,7 +143,7 @@ func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 		return vmSpecs
 	}
 
-	log.Debug().Msgf("NCP filtering: checking %d VM specs for KVM hypervisor", len(vmSpecs))
+	log.Trace().Msgf("NCP filtering: checking %d VM specs for KVM hypervisor", len(vmSpecs))
 
 	var filteredSpecs []cloudmodel.SpecInfo
 
@@ -161,13 +161,13 @@ func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 
 		if hasKvmHypervisor {
 			filteredSpecs = append(filteredSpecs, spec)
-			log.Debug().Msgf("NCP: included VM spec %s (KVM hypervisor found)", spec.CspSpecName)
+			log.Trace().Msgf("NCP: included VM spec %s (KVM hypervisor found)", spec.CspSpecName)
 		} else {
-			log.Debug().Msgf("NCP: filtered out VM spec %s (no KVM hypervisor)", spec.CspSpecName)
+			log.Trace().Msgf("NCP: filtered out VM spec %s (no KVM hypervisor)", spec.CspSpecName)
 		}
 	}
 
-	log.Debug().Msgf("NCP filtering: %d VM specs filtered to %d KVM specs", len(vmSpecs), len(filteredSpecs))
+	log.Trace().Msgf("NCP filtering: %d VM specs filtered to %d KVM specs", len(vmSpecs), len(filteredSpecs))
 
 	// If no KVM specs found, return original list with warning
 	if len(filteredSpecs) == 0 {

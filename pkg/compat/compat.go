@@ -45,7 +45,7 @@ func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.I
 	case "openstack":
 		return CheckOpenstack(spec, image)
 	default:
-		log.Debug().Msgf("No specific compatibility checks for CSP: %s", csp)
+		log.Trace().Msgf("No specific compatibility checks for CSP: %s", csp)
 		return true
 	}
 }
@@ -54,11 +54,11 @@ func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.I
 func isArchitectureCompatible(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	if spec.Architecture != "" && string(image.OSArchitecture) != "" {
 		if spec.Architecture != string(image.OSArchitecture) {
-			log.Debug().Msgf("%s architecture mismatch - Spec: %s (%s), Image: %s (%s)",
+			log.Trace().Msgf("%s architecture mismatch - Spec: %s (%s), Image: %s (%s)",
 				strings.ToUpper(csp), spec.CspSpecName, spec.Architecture, image.CspImageName, string(image.OSArchitecture))
 			return false
 		}
-		log.Debug().Msgf("%s architecture match - %s", strings.ToUpper(csp), spec.Architecture)
+		log.Trace().Msgf("%s architecture match - %s", strings.ToUpper(csp), spec.Architecture)
 	}
 	return true
 }
