@@ -82,7 +82,7 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Find the best VM OS image
@@ -103,7 +103,7 @@ func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerPr
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	vmOsImageId := FindBestVmOsImageNameUsedInCsp(keywords, kwDelimiters, imageList, imgDelimiters)
@@ -257,7 +257,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := setKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
@@ -284,7 +284,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	return vmOsImageInfoList, nil
 }
 
-func setKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []string, []string) {
+func SetKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []string, []string) {
 	keywords := fmt.Sprintf("%s %s %s %s %s",
 		server.OS.ID,
 		server.OS.VersionID,

@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
@@ -26,6 +27,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -124,7 +126,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	return c.JSON(http.StatusOK, recommendedInfraInfoList)
 }
 
-type RecommendVmInfraRequest struct {
+type RecommendVMInfraRequest struct {
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -145,7 +147,7 @@ type RecommendVmInfraResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVMInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
@@ -209,6 +211,100 @@ func RecommendVMInfra(c echo.Context) error {
 	//
 
 	return c.JSON(http.StatusOK, recommendedInfra)
+}
+
+type RecommendVmInfraRequest struct {
+	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
+}
+
+// RecommendVmInfra godoc
+// @ID RecommendVmInfra
+// @Summary Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Description Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Description
+// @Description [Note] `desiredCsp` and `desiredRegion` are required.
+// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+// @Description
+// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description
+// @Description [Note] `limit` is optional. The default value is 3.
+// @Description - `limit` specifies the maximum number of recommended infrastructures to return.
+// @Description - If not specified, the default value of 3 will be used.
+// @Description
+// @Tags [Recommendation] Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "The result of recommended infrastructure"
+// @Failure 404 {object} common.SimpleMsg
+// @Failure 500 {object} common.SimpleMsg
+// @Router /recommendation/vmInfra [post]
+func RecommendVmInfra(c echo.Context) error {
+
+	// [Input]
+	desiredCsp := c.QueryParam("desiredCsp")
+	desiredRegion := c.QueryParam("desiredRegion")
+	limitStr := c.QueryParam("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		limit = 3 // default value
+	}
+
+	reqt := &RecommendVmInfraRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind a request body")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	log.Trace().Msgf("reqt: %v\n", reqt)
+
+	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
+		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
+		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
+		resp := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, resp)
+	}
+
+	csp := reqt.DesiredCspAndRegionPair.Csp
+	if csp == "" {
+		csp = desiredCsp
+	}
+	region := reqt.DesiredCspAndRegionPair.Region
+	if region == "" {
+		region = desiredRegion
+	}
+	sourceInfra := reqt.OnpremiseInfraModel
+
+	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	if !ok {
+		log.Error().Err(err).Msg("failed to validate CSP and region")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
+	// [Process]
+	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (MCI) for cloud migration")
+		res := common.SimpleMsg{Message: err.Error()}
+		return c.JSON(http.StatusNotFound, res)
+	}
+
+	// [Ouput]
+	response := model.SuccessListResponse(recommendedInfraCandidates)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 /*

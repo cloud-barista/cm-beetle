@@ -1802,7 +1802,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendVMInfraRequest"
                         }
                     },
                     {
@@ -2288,6 +2288,86 @@ const docTemplate = `{
                         "description": "The result of recommended VM specifications",
                         "schema": {
                             "$ref": "#/definitions/controller.RecommendVmSpecResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/vmInfra": {
+            "post": {
+                "description": "Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Note] ` + "`" + `limit` + "`" + ` is optional. The default value is 3.\n- ` + "`" + `limit` + "`" + ` specifies the maximum number of recommended infrastructures to return.\n- If not specified, the default value of 3 will be used.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration",
+                "operationId": "RecommendVmInfra",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit (default: 3) the number of recommended infrastructures",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended infrastructure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra"
                         }
                     },
                     "404": {
@@ -3568,6 +3648,47 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.MciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                }
+            }
+        },
         "cloudmodel.RecommendedVmInfraDynamic": {
             "type": "object",
             "properties": {
@@ -4752,6 +4873,17 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.RecommendVMInfraRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
         "controller.RecommendVNetResponse": {
             "type": "object",
             "properties": {
@@ -4997,6 +5129,51 @@ const docTemplate = `{
                 "text": {
                     "type": "string",
                     "example": "Any text"
+                }
+            }
+        },
+        "model.ApiError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Error code that can be parsed by the client",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "Message that can be displayed to the user",
+                    "type": "string"
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Contains error details for failed responses",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ApiError"
+                        }
+                    ]
+                },
+                "item": {
+                    "description": "Contains a single item for successful responses",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                        }
+                    ]
+                },
+                "items": {
+                    "description": "Contains multiple items for successful list responses",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    }
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean"
                 }
             }
         },

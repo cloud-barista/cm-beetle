@@ -724,6 +724,33 @@ definitions:
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
     type: object
+  cloudmodel.RecommendedVmInfra:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.MciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+    type: object
   cloudmodel.RecommendedVmInfraDynamic:
     properties:
       description:
@@ -1593,6 +1620,13 @@ definitions:
           $ref: '#/definitions/cloudmodel.RecommendedSecurityGroup'
         type: array
     type: object
+  controller.RecommendVMInfraRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
   controller.RecommendVNetResponse:
     properties:
       count:
@@ -1761,6 +1795,34 @@ definitions:
       text:
         example: Any text
         type: string
+    type: object
+  model.ApiError:
+    properties:
+      code:
+        description: Error code that can be parsed by the client
+        type: string
+      message:
+        description: Message that can be displayed to the user
+        type: string
+    type: object
+  model.ApiResponse-cloudmodel_RecommendedVmInfra:
+    properties:
+      error:
+        allOf:
+        - $ref: '#/definitions/model.ApiError'
+        description: Contains error details for failed responses
+      item:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        description: Contains a single item for successful responses
+      items:
+        description: Contains multiple items for successful list responses
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        type: array
+      success:
+        description: Indicates whether the API call was successful
+        type: boolean
     type: object
   model.BastionNode:
     properties:
@@ -5145,7 +5207,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVMInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5539,6 +5601,72 @@ paths:
       summary: Recommend an appropriate VM specification for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
+  /recommendation/vmInfra:
+    post:
+      consumes:
+      - application/json
+      description: |
+        Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+
+        [Note] `desiredCsp` and `desiredRegion` are required.
+        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+
+        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+
+        [Note] `limit` is optional. The default value is 3.
+        - `limit` specifies the maximum number of recommended infrastructures to return.
+        - If not specified, the default value of 3 will be used.
+      operationId: RecommendVmInfra
+      parameters:
+      - description: Specify the your infrastructure to be migrated
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
+      - default: aws
+        description: Provider (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: desiredCsp
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - description: 'Limit (default: 3) the number of recommended infrastructures'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The result of recommended infrastructure
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Recommend multiple candidates of appropriate VM infrastructure (i.e.,
+        MCI, multi-cloud infrastructure) for cloud migration
+      tags:
+      - '[Recommendation] Infrastructure'
   /report/migration/ns/{nsId}/mci/{mciId}:
     post:
       consumes:
