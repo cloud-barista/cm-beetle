@@ -11,11 +11,11 @@ import (
 // CheckAzure checks compatibility between Azure VM spec and OS image
 // Primary focus: Hypervisor Generation compatibility (V1 vs V2)
 func CheckAzure(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting Azure compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting Azure compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. Hypervisor Generation compatibility check (most critical for Azure)
 	if !isAzureHypervisorGenerationCompatible(spec, image) {
-		log.Debug().Msgf("Azure hypervisor generation compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("Azure hypervisor generation compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
@@ -23,12 +23,12 @@ func CheckAzure(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	// TODO: Enable when Azure provides consistent NVMe support information in VM spec and image Details
 	/*
 		if !isAzureNvmeSupportCompatible(spec, image) {
-			log.Debug().Msgf("Azure NVMe support compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+			log.Trace().Msgf("Azure NVMe support compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 			return false
 		}
 	*/
 
-	log.Debug().Msgf("Azure compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Azure compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 
@@ -37,7 +37,7 @@ func isAzureHypervisorGenerationCompatible(spec cloudmodel.SpecInfo, image cloud
 	specGeneration := getAzureVmGeneration(spec.CspSpecName)
 	imageGeneration := getAzureImageGeneration(image)
 
-	log.Debug().Msgf("Azure generation check - VM: %s (%s), Image: %s (%s)",
+	log.Trace().Msgf("Azure generation check - VM: %s (%s), Image: %s (%s)",
 		spec.CspSpecName, specGeneration, image.CspImageName, imageGeneration)
 
 	// Critical compatibility rules based on Azure documentation
@@ -138,23 +138,23 @@ func isAzureNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.Ima
 	specNvmeSupport := extractAzureNvmeSupportFromSpecDetails(spec)
 	imageNvmeSupport := extractAzureNvmeSupportFromImageDetails(image)
 
-	log.Debug().Msgf("Azure NVMe support check - Spec: %s (%s), Image: %s (%s)",
+	log.Trace().Msgf("Azure NVMe support check - Spec: %s (%s), Image: %s (%s)",
 		spec.CspSpecName, specNvmeSupport, image.CspImageName, imageNvmeSupport)
 
 	// If no NVMe info available, assume compatible with different confidence levels
 	if specNvmeSupport == "" && imageNvmeSupport == "" {
-		log.Debug().Msgf("Azure NVMe support info completely missing, assuming compatible")
+		log.Trace().Msgf("Azure NVMe support info completely missing, assuming compatible")
 		return true
 	} else if specNvmeSupport == "" {
 		// Only image info available - be permissive since we don't know spec requirements
-		log.Debug().Msgf("Azure spec NVMe support unknown, image: %s, assuming compatible", imageNvmeSupport)
+		log.Trace().Msgf("Azure spec NVMe support unknown, image: %s, assuming compatible", imageNvmeSupport)
 		return true
 	} else if imageNvmeSupport == "" {
 		// Only spec info available - be permissive since most modern Azure images support NVMe
 		if specNvmeSupport == "required" {
-			log.Debug().Msgf("Azure spec requires NVMe but image support unknown, assuming compatible (risky)")
+			log.Trace().Msgf("Azure spec requires NVMe but image support unknown, assuming compatible (risky)")
 		} else {
-			log.Debug().Msgf("Azure spec NVMe: %s, image support unknown, assuming compatible", specNvmeSupport)
+			log.Trace().Msgf("Azure spec NVMe: %s, image support unknown, assuming compatible", specNvmeSupport)
 		}
 		return true
 	}
@@ -168,15 +168,15 @@ func isAzureNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.Ima
 	case "supported":
 		// Instance supports NVMe, but compatibility depends on image driver support
 		if imageNvmeSupport == "supported" || imageNvmeSupport == "required" {
-			log.Debug().Msgf("Azure NVMe optimal - Spec supports NVMe, Image supports NVMe (optimal performance)")
+			log.Trace().Msgf("Azure NVMe optimal - Spec supports NVMe, Image supports NVMe (optimal performance)")
 			return true
 		} else if imageNvmeSupport == "unsupported" {
 			// WARNING: This combination is risky - NVMe hardware without NVMe drivers
 			// Most modern NVMe SSDs cannot fall back to SATA/AHCI compatibility mode
-			log.Debug().Msgf("Azure NVMe risky - Spec supports NVMe, Image doesn't support NVMe (may fail to boot)")
+			log.Trace().Msgf("Azure NVMe risky - Spec supports NVMe, Image doesn't support NVMe (may fail to boot)")
 			return false
 		} else {
-			log.Debug().Msgf("Azure NVMe unknown - Spec supports NVMe, Image NVMe support unknown (assuming compatible)")
+			log.Trace().Msgf("Azure NVMe unknown - Spec supports NVMe, Image NVMe support unknown (assuming compatible)")
 			return true
 		}
 
@@ -185,14 +185,14 @@ func isAzureNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.Ima
 		// Images with NVMe drivers are still compatible (drivers just won't be used)
 		// Only incompatible if image REQUIRES NVMe
 		if imageNvmeSupport == "required" {
-			log.Debug().Msgf("Azure NVMe incompatible - Spec doesn't support NVMe, but Image requires it")
+			log.Trace().Msgf("Azure NVMe incompatible - Spec doesn't support NVMe, but Image requires it")
 			return false
 		}
-		log.Debug().Msgf("Azure NVMe compatible - Spec unsupported, Image %s (NVMe drivers will be unused)", imageNvmeSupport)
+		log.Trace().Msgf("Azure NVMe compatible - Spec unsupported, Image %s (NVMe drivers will be unused)", imageNvmeSupport)
 		return true
 
 	default:
-		log.Debug().Msgf("Unknown NVMe support value: %s", specNvmeSupport)
+		log.Trace().Msgf("Unknown NVMe support value: %s", specNvmeSupport)
 		return true
 	}
 }

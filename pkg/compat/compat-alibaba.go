@@ -10,27 +10,27 @@ import (
 // CheckAlibaba checks compatibility between Alibaba Cloud VM spec and OS image
 // Primary focus: NVMe support, Boot mode, and Disk compatibility
 func CheckAlibaba(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting Alibaba Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting Alibaba Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// 1. NVMe support compatibility check (most critical)
 	if !isAlibabaNvmeSupportCompatible(spec, image) {
-		log.Debug().Msgf("Alibaba NVMe support compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("Alibaba NVMe support compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
 	// 2. Boot mode compatibility check
 	if !isAlibabaBootModeCompatible(spec, image) {
-		log.Debug().Msgf("Alibaba boot mode compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("Alibaba boot mode compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
 	// 3. Instance category and disk compatibility check
 	if !isAlibabaInstanceCategoryCompatible(spec, image) {
-		log.Debug().Msgf("Alibaba instance category compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+		log.Trace().Msgf("Alibaba instance category compatibility failed - Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 		return false
 	}
 
-	log.Debug().Msgf("Alibaba Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Alibaba Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 
@@ -42,23 +42,23 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.I
 	specNvmeSupport := extractAlibabaNvmeSupportFromSpecDetails(spec)
 	imageNvmeSupport := extractAlibabaNvmeSupportFromImageDetails(image)
 
-	log.Debug().Msgf("Alibaba NVMe support check - Spec: %s (%s), Image: %s (%s)",
+	log.Trace().Msgf("Alibaba NVMe support check - Spec: %s (%s), Image: %s (%s)",
 		spec.CspSpecName, specNvmeSupport, image.CspImageName, imageNvmeSupport)
 
 	// If no NVMe info available, assume compatible with different confidence levels
 	if specNvmeSupport == "" && imageNvmeSupport == "" {
-		log.Debug().Msgf("Alibaba NVMe support info completely missing, assuming compatible")
+		log.Trace().Msgf("Alibaba NVMe support info completely missing, assuming compatible")
 		return true
 	} else if specNvmeSupport == "" {
 		// Only image info available - be permissive since we don't know spec requirements
-		log.Debug().Msgf("Alibaba spec NVMe support unknown, image: %s, assuming compatible", imageNvmeSupport)
+		log.Trace().Msgf("Alibaba spec NVMe support unknown, image: %s, assuming compatible", imageNvmeSupport)
 		return true
 	} else if imageNvmeSupport == "" {
 		// Only spec info available - be permissive since most modern images support NVMe
 		if specNvmeSupport == "required" {
-			log.Debug().Msgf("Alibaba spec requires NVMe but image support unknown, assuming compatible (risky)")
+			log.Trace().Msgf("Alibaba spec requires NVMe but image support unknown, assuming compatible (risky)")
 		} else {
-			log.Debug().Msgf("Alibaba spec NVMe: %s, image support unknown, assuming compatible", specNvmeSupport)
+			log.Trace().Msgf("Alibaba spec NVMe: %s, image support unknown, assuming compatible", specNvmeSupport)
 		}
 		return true
 	}
@@ -72,15 +72,15 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.I
 	case "supported":
 		// Instance supports NVMe, but compatibility depends on image driver support
 		if imageNvmeSupport == "supported" || imageNvmeSupport == "required" {
-			log.Debug().Msgf("Alibaba NVMe optimal - Spec supports NVMe, Image supports NVMe (optimal performance)")
+			log.Trace().Msgf("Alibaba NVMe optimal - Spec supports NVMe, Image supports NVMe (optimal performance)")
 			return true
 		} else if imageNvmeSupport == "unsupported" {
 			// WARNING: This combination is risky - NVMe hardware without NVMe drivers
 			// Most modern NVMe SSDs cannot fall back to SATA/AHCI compatibility mode
-			log.Debug().Msgf("Alibaba NVMe risky - Spec supports NVMe, Image doesn't support NVMe (may fail to boot)")
+			log.Trace().Msgf("Alibaba NVMe risky - Spec supports NVMe, Image doesn't support NVMe (may fail to boot)")
 			return false // Changed from true to false - this combination is actually problematic
 		} else {
-			log.Debug().Msgf("Alibaba NVMe unknown - Spec supports NVMe, Image NVMe support unknown (assuming compatible)")
+			log.Trace().Msgf("Alibaba NVMe unknown - Spec supports NVMe, Image NVMe support unknown (assuming compatible)")
 			return true
 		}
 
@@ -89,15 +89,15 @@ func isAlibabaNvmeSupportCompatible(spec cloudmodel.SpecInfo, image cloudmodel.I
 		// Images with NVMe drivers are still compatible (drivers just won't be used)
 		// Only incompatible if image REQUIRES NVMe (which is rare)
 		if imageNvmeSupport == "required" {
-			log.Debug().Msgf("Alibaba NVMe incompatible - Spec doesn't support NVMe, but Image requires it")
+			log.Trace().Msgf("Alibaba NVMe incompatible - Spec doesn't support NVMe, but Image requires it")
 			return false
 		}
 		// Image with NVMe driver support on non-NVMe hardware is fine
-		log.Debug().Msgf("Alibaba NVMe compatible - Spec unsupported, Image %s (NVMe drivers will be unused)", imageNvmeSupport)
+		log.Trace().Msgf("Alibaba NVMe compatible - Spec unsupported, Image %s (NVMe drivers will be unused)", imageNvmeSupport)
 		return true
 
 	default:
-		log.Debug().Msgf("Unknown NVMe support value: %s", specNvmeSupport)
+		log.Trace().Msgf("Unknown NVMe support value: %s", specNvmeSupport)
 		return true
 	}
 }
@@ -109,12 +109,12 @@ func isAlibabaBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.Imag
 	specBootModes := extractAlibabaSupportedBootModesFromSpecDetails(spec)
 	imageBootMode := extractAlibabaBootModeFromImageDetails(image)
 
-	log.Debug().Msgf("Alibaba boot mode check - Spec supports: %v, Image: %s",
+	log.Trace().Msgf("Alibaba boot mode check - Spec supports: %v, Image: %s",
 		specBootModes, imageBootMode)
 
 	// If no boot mode info, assume compatible
 	if len(specBootModes) == 0 || imageBootMode == "" {
-		log.Debug().Msgf("Alibaba boot mode info missing, assuming compatible")
+		log.Trace().Msgf("Alibaba boot mode info missing, assuming compatible")
 		return true
 	}
 
@@ -135,7 +135,7 @@ func isAlibabaBootModeCompatible(spec cloudmodel.SpecInfo, image cloudmodel.Imag
 		}
 	}
 
-	log.Debug().Msgf("Alibaba boot mode incompatible - Spec supports: %v, Image requires: %s",
+	log.Trace().Msgf("Alibaba boot mode incompatible - Spec supports: %v, Image requires: %s",
 		specBootModes, imageBootMode)
 	return false
 }
@@ -148,14 +148,14 @@ func isAlibabaInstanceCategoryCompatible(spec cloudmodel.SpecInfo, image cloudmo
 	specDiskQuantity := extractAlibabaDiskQuantityFromSpecDetails(spec)
 	imageIoOptimized := extractAlibabaIoOptimizedFromImageDetails(image)
 
-	log.Debug().Msgf("Alibaba instance category check - Spec: %s (disks: %s), Image IoOptimized: %s",
+	log.Trace().Msgf("Alibaba instance category check - Spec: %s (disks: %s), Image IoOptimized: %s",
 		specCategory, specDiskQuantity, imageIoOptimized)
 
 	// Special handling for shared instances with limited disk support
 	if specCategory == "Shared" && specDiskQuantity != "" {
 		if specDiskQuantity == "17" && imageIoOptimized == "true" {
 			// Shared instances with limited disk quantity might have issues with I/O optimized images
-			log.Debug().Msgf("Alibaba potential compatibility issue - Shared instance with I/O optimized image")
+			log.Trace().Msgf("Alibaba potential compatibility issue - Shared instance with I/O optimized image")
 			return true // Allow but log warning
 		}
 	}

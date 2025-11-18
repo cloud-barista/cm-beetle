@@ -7,12 +7,12 @@ import (
 
 // CheckKt checks compatibility between KT Cloud VM spec and OS image
 func CheckKt(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
-	log.Debug().Msgf("Starting KT Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("Starting KT Cloud compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add KT Cloud-specific compatibility checks using Detail information
 	log.Info().Msg("KT Cloud compatibility validation is planned for future implementation")
 
-	log.Debug().Msgf("KT Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
+	log.Trace().Msgf("KT Cloud compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
 }
 
