@@ -1802,7 +1802,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendVMInfraRequest"
                         }
                     },
                     {
@@ -2300,6 +2300,92 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/vmInfra": {
+            "post": {
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "Recommend multiple VM infrastructure candidates for cloud migration",
+                "operationId": "RecommendVmInfra",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit (default: 3) the number of recommended infrastructures",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "name": "minMatchRate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The result of recommended infrastructure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -3568,6 +3654,47 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                },
+                "targetVmInfra": {
+                    "$ref": "#/definitions/cloudmodel.MciReq"
+                },
+                "targetVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                }
+            }
+        },
         "cloudmodel.RecommendedVmInfraDynamic": {
             "type": "object",
             "properties": {
@@ -4752,6 +4879,17 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.RecommendVMInfraRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
         "controller.RecommendVNetResponse": {
             "type": "object",
             "properties": {
@@ -4997,6 +5135,63 @@ const docTemplate = `{
                 "text": {
                     "type": "string",
                     "example": "Any text"
+                }
+            }
+        },
+        "model.ApiResponse-any": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string"
+                },
+                "item": {
+                    "description": "Contains a single object for successful responses"
+                },
+                "items": {
+                    "description": "Contains an array of objects for successful list responses",
+                    "type": "array",
+                    "items": {}
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string"
+                },
+                "item": {
+                    "description": "Contains a single object for successful responses",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                        }
+                    ]
+                },
+                "items": {
+                    "description": "Contains an array of objects for successful list responses",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                    }
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean"
                 }
             }
         },

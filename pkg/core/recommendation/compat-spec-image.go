@@ -66,6 +66,44 @@ func FindCompatibleSpecAndImage(specs []cloudmodel.SpecInfo, images []cloudmodel
 	return bestSpec, bestImage, nil
 }
 
+// FindCompatibleVmSpecAndImagePairs finds all compatible VM spec and image pairs by performing CSP-specific compatibility checks
+func FindCompatibleVmSpecAndImagePairs(specs []cloudmodel.SpecInfo, images []cloudmodel.ImageInfo, csp string) ([]CompatibleSpecImagePair, error) {
+
+	if len(specs) == 0 {
+		return nil, fmt.Errorf("no VM specs provided")
+	}
+	if len(images) == 0 {
+		return nil, fmt.Errorf("no VM images provided")
+	}
+
+	log.Debug().Msgf("Finding compatible spec and image for CSP: %s, specs: %d, images: %d", csp, len(specs), len(images))
+
+	// Pre-filter specs and images based on CSP-specific rules
+	filteredSpecs, filteredImages := preFilterByCsp(csp, specs, images)
+
+	if len(filteredSpecs) == 0 {
+		return nil, fmt.Errorf("no compatible VM specs found after CSP-specific filtering")
+	}
+	if len(filteredImages) == 0 {
+		return nil, fmt.Errorf("no compatible VM images found after CSP-specific filtering")
+	}
+
+	log.Debug().Msgf("After pre-filtering - specs: %d, images: %d", len(filteredSpecs), len(filteredImages))
+
+	// Find best compatible pair without scoring
+	compatiblePairs, err := findCompatiblePairs(csp, filteredSpecs, filteredImages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find compatible spec-image pair: %w", err)
+	}
+
+	log.Info().Msgf("Found compatible pairs - Count: %d", len(compatiblePairs))
+	// For now, just return the first compatible pair
+	if len(compatiblePairs) > 0 {
+		return compatiblePairs, nil
+	}
+	return nil, fmt.Errorf("no compatible spec-image pairs found")
+}
+
 // preFilterByCsp performs CSP-specific pre-filtering with integrated logic
 func preFilterByCsp(csp string, specs []cloudmodel.SpecInfo, images []cloudmodel.ImageInfo) ([]cloudmodel.SpecInfo, []cloudmodel.ImageInfo) {
 	cspLower := strings.ToLower(csp)
@@ -104,8 +142,8 @@ func findCompatiblePair(csp string, specs []cloudmodel.SpecInfo, images []cloudm
 	cspLower := strings.ToLower(csp)
 
 	// Use standard compatibility check for all CSPs
-	for _, spec := range specs {
-		for _, image := range images {
+	for _, image := range images {
+		for _, spec := range specs {
 			if isCompatible := compat.CheckCompatibility(cspLower, spec, image); isCompatible {
 				log.Info().Msgf("Found compatible pair - Spec: %s, Image: %s",
 					spec.CspSpecName, image.CspImageName)
@@ -127,8 +165,8 @@ func findCompatiblePairs(csp string, specs []cloudmodel.SpecInfo, images []cloud
 	cspLower := strings.ToLower(csp)
 
 	// Use standard compatibility check for all CSPs
-	for _, spec := range specs {
-		for _, image := range images {
+	for _, image := range images {
+		for _, spec := range specs {
 			if isCompatible := compat.CheckCompatibility(cspLower, spec, image); isCompatible {
 				compatiblePairs = append(compatiblePairs, CompatibleSpecImagePair{
 					Spec:  spec,

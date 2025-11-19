@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
@@ -26,6 +27,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -124,7 +126,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	return c.JSON(http.StatusOK, recommendedInfraInfoList)
 }
 
-type RecommendVmInfraRequest struct {
+type RecommendVMInfraRequest struct {
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -145,7 +147,7 @@ type RecommendVmInfraResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVMInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
@@ -209,6 +211,117 @@ func RecommendVMInfra(c echo.Context) error {
 	//
 
 	return c.JSON(http.StatusOK, recommendedInfra)
+}
+
+type RecommendVmInfraRequest struct {
+	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
+	OnpremiseInfraModel     onpremmodel.OnpremInfra
+}
+
+// RecommendVmInfra godoc
+// @ID RecommendVmInfra
+// @Summary Recommend multiple VM infrastructure candidates for cloud migration
+// @Description Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
+// @Description
+// @Description - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
+// @Description
+// @Description **[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.
+// @Description - if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.
+// @Description
+// @Description **[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)
+// @Description
+// @Description **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+// @Description
+// @Description **[Response Field: `status`]** Candidate status based on the match rate threshold
+// @Description - **highly-matched**: Candidates meet or exceed the match rate threshold
+// @Description - **partially-matched**: Valid candidates below the match rate threshold
+// @Description
+// @Description **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
+// @Description - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
+// @Description
+// @Tags [Recommendation] Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
+// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
+// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "The result of recommended infrastructure"
+// @Failure 400 {object} model.ApiResponse[any] "Bad Request"
+// @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
+// @Router /recommendation/vmInfra [post]
+func RecommendVmInfra(c echo.Context) error {
+
+	// [Input]
+	desiredCsp := c.QueryParam("desiredCsp")
+	desiredRegion := c.QueryParam("desiredRegion")
+	limitStr := c.QueryParam("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		limit = 3 // default value
+	}
+
+	// Parse minMatchRate parameter (default: 90.0)
+	minMatchRateStr := c.QueryParam("minMatchRate")
+	minMatchRate := 90.0 // default value
+	if minMatchRateStr != "" {
+		parsedRate, err := strconv.ParseFloat(minMatchRateStr, 64)
+		if err != nil {
+			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 90.0", minMatchRateStr)
+		} else if parsedRate < 0 || parsedRate > 100 {
+			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 90.0", parsedRate)
+		} else {
+			minMatchRate = parsedRate
+		}
+	}
+
+	reqt := &RecommendVmInfraRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind a request body")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+	log.Trace().Msgf("reqt: %v\n", reqt)
+
+	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
+		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredCsp' is required"))
+	}
+	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
+		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
+		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredRegion' is required"))
+	}
+
+	csp := reqt.DesiredCspAndRegionPair.Csp
+	if csp == "" {
+		csp = desiredCsp
+	}
+	region := reqt.DesiredCspAndRegionPair.Region
+	if region == "" {
+		region = desiredRegion
+	}
+	sourceInfra := reqt.OnpremiseInfraModel
+
+	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	if !ok {
+		log.Error().Err(err).Msg("failed to validate CSP and region")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// [Process]
+	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (MCI) for cloud migration")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// [Ouput]
+	response := model.SuccessListResponse(recommendedInfraCandidates)
+
+	return c.JSON(http.StatusOK, response)
 }
 
 /*
