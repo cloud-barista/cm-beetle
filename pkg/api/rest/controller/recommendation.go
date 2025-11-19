@@ -220,17 +220,24 @@ type RecommendVmInfraRequest struct {
 
 // RecommendVmInfra godoc
 // @ID RecommendVmInfra
-// @Summary Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
-// @Description Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Summary Recommend multiple VM infrastructure candidates for cloud migration
+// @Description Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
 // @Description
-// @Description [Note] `desiredCsp` and `desiredRegion` are required.
-// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+// @Description - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
 // @Description
-// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description **[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.
+// @Description - if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.
 // @Description
-// @Description [Note] `limit` is optional. The default value is 3.
-// @Description - `limit` specifies the maximum number of recommended infrastructures to return.
-// @Description - If not specified, the default value of 3 will be used.
+// @Description **[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)
+// @Description
+// @Description **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+// @Description
+// @Description **[Response Field: `status`]** Candidate status based on the match rate threshold
+// @Description - **highly-matched**: Candidates meet or exceed the match rate threshold
+// @Description - **partially-matched**: Valid candidates below the match rate threshold
+// @Description
+// @Description **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
+// @Description - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
 // @Description
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
@@ -239,10 +246,11 @@ type RecommendVmInfraRequest struct {
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
+// @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "The result of recommended infrastructure"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Failure 400 {object} model.ApiResponse[any] "Bad Request"
+// @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
 // @Router /recommendation/vmInfra [post]
 func RecommendVmInfra(c echo.Context) error {
 
@@ -255,25 +263,36 @@ func RecommendVmInfra(c echo.Context) error {
 		limit = 3 // default value
 	}
 
+	// Parse minMatchRate parameter (default: 90.0)
+	minMatchRateStr := c.QueryParam("minMatchRate")
+	minMatchRate := 90.0 // default value
+	if minMatchRateStr != "" {
+		parsedRate, err := strconv.ParseFloat(minMatchRateStr, 64)
+		if err != nil {
+			log.Warn().Err(err).Msgf("invalid minMatchRate value: %s, using default 90.0", minMatchRateStr)
+		} else if parsedRate < 0 || parsedRate > 100 {
+			log.Warn().Msgf("minMatchRate out of range [0-100]: %.1f, using default 90.0", parsedRate)
+		} else {
+			minMatchRate = parsedRate
+		}
+	}
+
 	reqt := &RecommendVmInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind a request body")
-		res := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, res)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 	log.Trace().Msgf("reqt: %v\n", reqt)
 
 	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
 		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
 		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
-		resp := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, resp)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredCsp' is required"))
 	}
 	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
 		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
 		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
-		resp := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, resp)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredRegion' is required"))
 	}
 
 	csp := reqt.DesiredCspAndRegionPair.Csp
@@ -289,16 +308,14 @@ func RecommendVmInfra(c echo.Context) error {
 	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
-		res := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, res)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
 	// [Process]
-	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit)
+	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (MCI) for cloud migration")
-		res := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusNotFound, res)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
 	// [Ouput]

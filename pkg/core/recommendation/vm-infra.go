@@ -14,6 +14,52 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// MatchRateVector represents multi-dimensional match rate scores for infrastructure recommendation
+// Each dimension is independently evaluated (0-100%), making the system extensible without weight tuning
+type MatchRateVector struct {
+	CPU    float64 // CPU resource match rate (0-100%)
+	Memory float64 // Memory resource match rate (0-100%)
+	Image  float64 // OS image similarity match rate (0-100%)
+	// Future extensibility: add Disk, Network, etc. without changing existing logic
+}
+
+// MinMatchRate returns the minimum match rate score across all dimensions
+// Rationale: Overall match rate is limited by the weakest dimension
+func (q MatchRateVector) MinMatchRate() float64 {
+	minVal := q.CPU
+	if q.Memory < minVal {
+		minVal = q.Memory
+	}
+	if q.Image < minVal {
+		minVal = q.Image
+	}
+	return minVal
+}
+
+// MaxMatchRate returns the maximum match rate score across all dimensions
+// Rationale: Represents the strongest dimension match
+func (q MatchRateVector) MaxMatchRate() float64 {
+	maxVal := q.CPU
+	if q.Memory > maxVal {
+		maxVal = q.Memory
+	}
+	if q.Image > maxVal {
+		maxVal = q.Image
+	}
+	return maxVal
+}
+
+// IsMatched checks if all dimensions meet the match rate threshold
+// Rationale: "Best effort" requires ALL resources to be sufficiently matched
+func (q MatchRateVector) IsMatched(threshold float64) bool {
+	return q.CPU >= threshold && q.Memory >= threshold && q.Image >= threshold
+}
+
+// AverageMatchRate returns the average match rate across all dimensions
+func (q MatchRateVector) AverageMatchRate() float64 {
+	return (q.CPU + q.Memory + q.Image) / 3.0
+}
+
 func isSupportedCSP(csp string) bool {
 	supportedCSPs := map[string]bool{
 		"aws":     true,
@@ -470,7 +516,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 }
 
 // RecommendVmInfraCandidates an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int) ([]cloudmodel.RecommendedVmInfra, error) {
+func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedVmInfra, error) {
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
 	// * this function estimates, recommends or just generates vNets, subnets, SSH key pair, and security groups
@@ -703,6 +749,14 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		Int("maxAvailablePairs", actualLimit).
 		Msg("Determined actual candidate limit")
 
+	// Generate multiple infrastructure candidates based on Pareto efficiency principles.
+	// For each source server, compatible spec-image pairs are ranked by match rate
+	// (CPU, Memory, Image similarity to the original server).
+	// - Candidate 0: Best match pairs (highest similarity to source servers)
+	// - Candidate i: i-th ranked pairs (alternative solutions with different characteristics)
+	// This provides a Pareto frontier of solutions exploring performance-availability trade-offs.
+	// Note: Cost optimization is planned for future implementation.
+
 	// For each candidate up to the actual limit
 	for i := 0; i < actualLimit; i++ {
 
@@ -723,6 +777,10 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 				continue
 			}
 
+			// Pareto optimal selection: Select the i-th ranked pair for this candidate.
+			// Pairs are ranked by match rate to the source server (CPU, Memory, Image similarity).
+			// This explores alternative solutions in the multi-dimensional space.
+
 			// If the i-th pair exists, select it; otherwise skip this server for this candidate
 			var pair CompatibleSpecImagePair
 			if i < len(compatiblePairs) {
@@ -735,7 +793,10 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			selectedVmSpec = pair.Spec
 			selectedVmOsImage = pair.Image
 
-			// Log candidate and spec selection details
+			// Calculate match rate vector for this server-VM pair
+			matchRateVec := calculateMatchRateVector(server, selectedVmSpec, selectedVmOsImage)
+
+			// Log candidate and spec selection details with match rate
 			log.Debug().
 				Str("machineId", server.MachineId).
 				Int("candidateIndex", i).
@@ -746,6 +807,9 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 				Str("selectedSpecName", selectedVmSpec.CspSpecName).
 				Str("selectedImageId", selectedVmOsImage.Id).
 				Str("selectedImageName", selectedVmOsImage.CspImageName).
+				Float64("cpuMatchRate", matchRateVec.CPU).
+				Float64("memoryMatchRate", matchRateVec.Memory).
+				Float64("imageMatchRate", matchRateVec.Image).
 				Msg("Selected spec-image pair for candidate")
 
 			// Log CPU comparison
@@ -778,6 +842,16 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// * Set the selected spec and image IDs to the corresponding SubGroup
 			tempSubGroupList[j].SpecId = selectedVmSpec.Id
 			tempSubGroupList[j].ImageId = selectedVmOsImage.Id
+
+			// * Include match rate vector in SubGroup description for transparency
+			// Format: "Recommended VM for {serverId} | Match Rate: CPU={x}% Memory={y}% Image={z}% (Min={min}% Avg={avg}%)"
+			tempSubGroupList[j].Description = fmt.Sprintf(
+				"Recommended VM for %s | Match Rate: CPU=%.1f%% Memory=%.1f%% Image=%.1f%%",
+				server.MachineId,
+				matchRateVec.CPU,
+				matchRateVec.Memory,
+				matchRateVec.Image,
+			)
 
 			// Check duplicates and append the recommended VM specs
 			// * Note: Use the name of the VM spec managed by Tumblebug
@@ -817,14 +891,22 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		candidateInfra.TargetVmSpecList = deduplicatedVmSpecList
 		candidateInfra.TargetVmOsImageList = deduplicatedVmOsImageList
 		candidateInfra.TargetSecurityGroupList = deduplicatedSecurityGroupList
-		candidateInfra.TargetVmInfra.Description = fmt.Sprintf("candidate #%d: recommended VMs comprising multi-cloud infrastructure", i+1)
+		candidateInfra.TargetVmInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
 
-		// Calculate overall quality for the candidate infrastructure
-		overallQuality, overallQualityDesc, _, _ := calculateCandidateQuality(tempSubGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList)
+		// Calculate overall match rate with detailed information
+		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(tempSubGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
 
-		// Set the status and description based on the overall quality
-		candidateInfra.Status = overallQuality
-		candidateInfra.Description = fmt.Sprintf("Infrastructure recommendation for candidate %d - %s", i+1, overallQualityDesc)
+		// Set the status and enhanced description with match rate summary
+		candidateInfra.Status = overallStatus
+		candidateInfra.Description = fmt.Sprintf(
+			"Candidate #%d | %s | Overall Match Rate: Min=%.1f%% Max=%.1f%% Avg=%.1f%% | %s",
+			i+1,
+			overallStatus,
+			infraMatchRateSummary.MinMatchRate,
+			infraMatchRateSummary.MaxMatchRate,
+			infraMatchRateSummary.AvgMatchRate,
+			overallStatusDesc,
+		)
 
 		recommendedVmInfraCandidates = append(recommendedVmInfraCandidates, candidateInfra)
 	}
@@ -837,9 +919,150 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	return recommendedVmInfraCandidates, nil
 }
 
-// calculateComprehensiveQualityScore calculates comprehensive quality score using Manhattan distance
-// Returns: (weightedScore, specScore, imageScore)
-func calculateComprehensiveQualityScore(server onpremmodel.ServerProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) (float64, float64, float64) {
+// InfraMatchRateSummary represents overall infrastructure match rate metrics
+type InfraMatchRateSummary struct {
+	MinMatchRate   float64 // Minimum match rate across all VMs (weakest link)
+	MaxMatchRate   float64 // Maximum match rate across all VMs (best match)
+	AvgMatchRate   float64 // Average match rate across all VMs
+	BestEffortRate float64 // Percentage of VMs meeting best-effort threshold
+	TotalVMs       int     // Total number of VMs evaluated
+}
+
+// calculateCandidateMatchRateWithDetails calculates overall match rate with detailed summary
+// minMatchRate: Minimum match rate (0-100) for highly-matched classification (typically 90.0)
+func calculateCandidateMatchRateWithDetails(tempSubGroupList []cloudmodel.CreateSubGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo, minMatchRate float64) (string, string, InfraMatchRateSummary) {
+
+	var overallStatus string
+	var overallStatusDesc string
+	var summary InfraMatchRateSummary
+
+	if len(tempSubGroupList) == 0 {
+		overallStatus = "nothing-to-recommend"
+		overallStatusDesc = "No VMs available for recommendation"
+		summary = InfraMatchRateSummary{MinMatchRate: 0, MaxMatchRate: 0, AvgMatchRate: 0, BestEffortRate: 0, TotalVMs: 0}
+		return overallStatus, overallStatusDesc, summary
+	}
+
+	var lowestMatchRate float64 = 100.0
+	var highestMatchRate float64 = 0.0
+	var totalMatchRate float64 = 0.0
+	var bestEffortCount int = 0
+	var validServerCount int = 0
+
+	for j, subGroup := range tempSubGroupList {
+		if subGroup.SpecId != "" && subGroup.ImageId != "" {
+			server := srcInfra.Servers[j]
+
+			// Find the spec and image from deduplicated lists
+			var selectedSpec cloudmodel.SpecInfo
+			var selectedImage cloudmodel.ImageInfo
+
+			for _, spec := range deduplicatedVmSpecList {
+				if spec.Id == subGroup.SpecId {
+					selectedSpec = spec
+					break
+				}
+			}
+
+			for _, image := range deduplicatedVmOsImageList {
+				if image.Id == subGroup.ImageId {
+					selectedImage = image
+					break
+				}
+			}
+
+			if selectedSpec.Id != "" && selectedImage.Id != "" {
+				// Calculate match rate vector
+				matchRateVec := calculateMatchRateVector(server, selectedSpec, selectedImage)
+				validServerCount++
+
+				vmMinMatchRate := matchRateVec.MinMatchRate()
+				vmMaxMatchRate := matchRateVec.MaxMatchRate()
+				vmAvgMatchRate := matchRateVec.AverageMatchRate()
+
+				// Track minimum match rate across all VMs (weakest dimension across all VMs)
+				if vmMinMatchRate < lowestMatchRate {
+					lowestMatchRate = vmMinMatchRate
+				}
+
+				// Track maximum match rate across all VMs (strongest dimension across all VMs)
+				if vmMaxMatchRate > highestMatchRate {
+					highestMatchRate = vmMaxMatchRate
+				}
+
+				// Accumulate all dimension match rates for true average calculation
+				totalMatchRate += matchRateVec.CPU + matchRateVec.Memory + matchRateVec.Image
+
+				// Count best-effort VMs based on minMatchRate threshold
+				if matchRateVec.IsMatched(minMatchRate) {
+					bestEffortCount++
+				}
+
+				log.Trace().
+					Str("machineId", server.MachineId).
+					Float64("cpuMatchRate", matchRateVec.CPU).
+					Float64("memoryMatchRate", matchRateVec.Memory).
+					Float64("imageMatchRate", matchRateVec.Image).
+					Float64("vmMinMatchRate", vmMinMatchRate).
+					Float64("vmMaxMatchRate", vmMaxMatchRate).
+					Float64("vmAvgMatchRate", vmAvgMatchRate).
+					Str("specId", selectedSpec.Id).
+					Str("imageId", selectedImage.Id).
+					Msg("Individual server match rate assessment")
+			}
+		}
+	}
+
+	if validServerCount == 0 {
+		overallStatus = "nothing-to-recommend"
+		overallStatusDesc = "No valid VM spec-image pairs found"
+		summary = InfraMatchRateSummary{MinMatchRate: 0, MaxMatchRate: 0, AvgMatchRate: 0, BestEffortRate: 0, TotalVMs: 0}
+		return overallStatus, overallStatusDesc, summary
+	}
+
+	// Calculate true average: sum of all dimension values / total number of dimensions
+	avgMatchRate := totalMatchRate / float64(validServerCount*3)
+	bestEffortRate := float64(bestEffortCount) / float64(validServerCount) * 100.0
+
+	// Determine overall status: highly-matched only if ALL VMs meet threshold
+	if bestEffortCount == validServerCount {
+		overallStatus = "highly-matched"
+	} else {
+		overallStatus = "partially-matched"
+	}
+
+	overallStatusDesc = fmt.Sprintf(
+		"VMs: %d total, %d matched, %d acceptable",
+		validServerCount,
+		bestEffortCount,
+		validServerCount-bestEffortCount,
+	)
+
+	summary = InfraMatchRateSummary{
+		MinMatchRate:   lowestMatchRate,
+		MaxMatchRate:   highestMatchRate,
+		AvgMatchRate:   avgMatchRate,
+		BestEffortRate: bestEffortRate,
+		TotalVMs:       validServerCount,
+	}
+
+	log.Info().
+		Float64("lowestMatchRate", lowestMatchRate).
+		Float64("highestMatchRate", highestMatchRate).
+		Float64("avgMatchRate", avgMatchRate).
+		Float64("bestEffortRate", bestEffortRate).
+		Str("overallStatus", overallStatus).
+		Int("bestEffortCount", bestEffortCount).
+		Int("validServerCount", validServerCount).
+		Msg("Overall candidate match rate assessment")
+
+	return overallStatus, overallStatusDesc, summary
+}
+
+// calculateMatchRateVector calculates multi-dimensional match rate scores without weights
+// Returns: MatchRateVector with independent CPU, Memory, and Image match rate scores (0-100%)
+// Rationale: Each dimension is evaluated independently, making the system extensible and transparent
+func calculateMatchRateVector(server onpremmodel.ServerProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) MatchRateVector {
 	// Log server and VM specifications for comparison
 	log.Debug().
 		Str("machineId", server.MachineId).
@@ -855,65 +1078,73 @@ func calculateComprehensiveQualityScore(server onpremmodel.ServerProperty, vmSpe
 		Str("vmImageOS", fmt.Sprintf("%s %s %s", vmImage.OSType, vmImage.OSDistribution, vmImage.OSArchitecture)).
 		Msg("Server and VM specification comparison")
 
-	// 1. Calculate Manhattan distance between server and VM spec resources
-	// Server: vCPUs = CPUs * Threads (fallback to CPUs if Threads is 0), Memory = TotalSize
+	// 1. Calculate CPU match rate using relative error (scale-independent)
+	// Server: vCPUs = CPUs * Threads (fallback to 1 thread if not specified)
 	serverThreads := server.CPU.Threads
 	if serverThreads == 0 {
 		serverThreads = 1 // Default to 1 thread per CPU if not specified
 	}
 	serverVCPUs := float64(server.CPU.Cpus * serverThreads)
-	serverMemoryGB := float64(server.Memory.TotalSize)
-
-	// VM Spec: vCPUs, Memory in GiB
 	vmSpecVCPUs := float64(vmSpec.VCPU)
+
+	// Relative error: min(a,b) / max(a,b) gives 0-100% match (100% = perfect match)
+	cpuMatchRate := calculateRelativeMatch(serverVCPUs, vmSpecVCPUs)
+
+	// 2. Calculate Memory match rate using relative error (scale-independent)
+	serverMemoryGB := float64(server.Memory.TotalSize)
 	vmSpecMemoryGiB := float64(vmSpec.MemoryGiB)
 
-	// Calculate Manhattan distance: |server_vcpus - vmspec_vcpus| + |server_memory - vmspec_memory|
-	cpuDistance := absFloat64(serverVCPUs - vmSpecVCPUs)
-	memoryDistance := absFloat64(serverMemoryGB - vmSpecMemoryGiB)
+	memoryMatchRate := calculateRelativeMatch(serverMemoryGB, vmSpecMemoryGiB)
 
-	// Manhattan distance (absolute differences)
-	manhattanDistance := cpuDistance + memoryDistance
+	// 3. Calculate image similarity match rate
+	imageMatchRate := calculateImageMatchRateScore(server, vmImage)
+	imageMatchRate = imageMatchRate * 100.0 // Convert to percentage (0-100%)
 
-	// Normalize to percentage: convert Manhattan distance to similarity score (0-100%)
-	// Perfect match (distance=0) = 100% similarity, larger distances = lower similarity
-	// Use the maximum of server and VM spec magnitude for better scaling
-	serverMagnitude := serverVCPUs + serverMemoryGB
-	vmSpecMagnitude := vmSpecVCPUs + vmSpecMemoryGiB
-	maxMagnitude := serverMagnitude
-	if vmSpecMagnitude > maxMagnitude {
-		maxMagnitude = vmSpecMagnitude
-	}
-	if maxMagnitude == 0 {
-		maxMagnitude = 1.0 // Avoid division by zero
+	// Create match rate vector
+	matchRateVec := MatchRateVector{
+		CPU:    cpuMatchRate,
+		Memory: memoryMatchRate,
+		Image:  imageMatchRate,
 	}
 
-	// Calculate similarity: 100% - (distance/maxMagnitude * 100%)
-	specSimilarityScore := 100.0 - ((manhattanDistance / maxMagnitude) * 100.0)
-
-	// Ensure similarity score is within 0-100% range
-	if specSimilarityScore < 0 {
-		specSimilarityScore = 0
-	} else if specSimilarityScore > 100 {
-		specSimilarityScore = 100
-	}
-
-	// 2. Calculate image similarity quality (lower similarity = higher difference score)
-	imageQualityScore := calculateImageQualityScore(server, vmImage)
-	imageQualityScore = imageQualityScore * 100.0 // Convert to percentage
-
-	// 3. Combine spec and image quality with weights
-	// Weight: 70% for spec quality, 30% for image quality
-	comprehensiveScore := (specSimilarityScore * 0.7) + (imageQualityScore * 0.3)
 	log.Debug().
 		Str("machineId", server.MachineId).
-		Msgf("Quality Score - total weighted score: %.1f%%, spec score: %.1f%%, image score: %.1f%%",
-			comprehensiveScore, specSimilarityScore, imageQualityScore)
-	return comprehensiveScore, specSimilarityScore, imageQualityScore
+		Float64("cpuMatchRate", cpuMatchRate).
+		Float64("memoryMatchRate", memoryMatchRate).
+		Float64("imageMatchRate", imageMatchRate).
+		Msg("Match rate vector calculated")
+
+	return matchRateVec
 }
 
-// calculateImageQualityScore calculates image quality score based on OS similarity
-func calculateImageQualityScore(server onpremmodel.ServerProperty, vmImage cloudmodel.ImageInfo) float64 {
+// calculateRelativeMatch calculates match rate score using relative error method
+// Returns: 0-100% where 100% is perfect match, scale-independent
+// Formula: (min(a,b) / max(a,b)) * 100%
+func calculateRelativeMatch(serverValue, vmValue float64) float64 {
+	if serverValue == 0 && vmValue == 0 {
+		return 100.0 // Both zero = perfect match
+	}
+	if serverValue == 0 || vmValue == 0 {
+		return 0.0 // One zero, one non-zero = worst match
+	}
+
+	minVal := serverValue
+	maxVal := vmValue
+	if vmValue < serverValue {
+		minVal = vmValue
+		maxVal = serverValue
+	}
+
+	// Relative match: min/max * 100%
+	// Example: 8 CPUs vs 16 CPUs = 8/16 * 100% = 50%
+	// Example: 16 GB vs 16 GB = 16/16 * 100% = 100%
+	relativeMatch := (minVal / maxVal) * 100.0
+
+	return relativeMatch
+}
+
+// calculateImageMatchRateScore calculates image match rate score based on OS similarity
+func calculateImageMatchRateScore(server onpremmodel.ServerProperty, vmImage cloudmodel.ImageInfo) float64 {
 	// Set keywords and delimiters similar to existing image recommendation logic
 	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 
@@ -946,132 +1177,7 @@ func calculateImageQualityScore(server onpremmodel.ServerProperty, vmImage cloud
 		Str("serverKeywords", keywords).
 		Str("imageKeywords", vmImgKeywords).
 		Float64("similarity", similarityScore).
-		Msg("Image quality calculation")
+		Msg("Image match rate calculation")
 
 	return similarityScore
-}
-
-// absFloat64 returns the absolute value of a float64
-func absFloat64(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-// determineRecommendationQuality determines if the recommendation is "best effort" or "alternative" based on similarity score
-func determineRecommendationQuality(similarityScore, threshold float64) string {
-	if similarityScore >= threshold {
-		return "best-effort"
-	}
-	return "alternative"
-}
-
-// calculateCandidateQuality calculates overall quality for a candidate infrastructure
-func calculateCandidateQuality(tempSubGroupList []cloudmodel.CreateSubGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo) (string, string, int, int) {
-	// Calculate overall quality based on all servers - only "best-effort" if ALL servers are best-effort
-	var overallQuality string
-	var overallQualityDesc string
-	var bestOptionCount int
-	var alternativeCount int
-
-	if len(tempSubGroupList) > 0 {
-		// Calculate individual quality for each server
-		var totalQualityScore float64
-		var totalSpecScore float64
-		var totalImageScore float64
-		var validServerCount int
-
-		for j, subGroup := range tempSubGroupList {
-			if subGroup.SpecId != "" && subGroup.ImageId != "" {
-				// Find the corresponding spec and image for quality calculation
-				server := srcInfra.Servers[j]
-
-				// Find the spec and image from deduplicated lists
-				var selectedSpec cloudmodel.SpecInfo
-				var selectedImage cloudmodel.ImageInfo
-
-				for _, spec := range deduplicatedVmSpecList {
-					if spec.Id == subGroup.SpecId {
-						selectedSpec = spec
-						break
-					}
-				}
-
-				for _, image := range deduplicatedVmOsImageList {
-					if image.Id == subGroup.ImageId {
-						selectedImage = image
-						break
-					}
-				}
-
-				if selectedSpec.Id != "" && selectedImage.Id != "" {
-					qualityScore, specScore, imageScore := calculateComprehensiveQualityScore(server, selectedSpec, selectedImage)
-					totalQualityScore += qualityScore
-					totalSpecScore += specScore
-					totalImageScore += imageScore
-					validServerCount++
-
-					// Check if this individual server is best-effort
-					// For similarity score: higher score = better match, use >= threshold
-					var individualQuality string
-					if qualityScore == 100.0 {
-						// Perfect match - definitely best-effort
-						individualQuality = "best-effort"
-					} else {
-						// Apply threshold for non-perfect matches (70% similarity threshold)
-						individualQuality = determineRecommendationQuality(qualityScore, 70.0) // 70% similarity threshold
-					}
-					if individualQuality == "best-effort" {
-						bestOptionCount++
-					} else {
-						alternativeCount++
-					}
-
-					log.Trace().
-						Str("machineId", server.MachineId).
-						Float64("qualityScore", qualityScore).
-						Str("individualQuality", individualQuality).
-						Str("specId", selectedSpec.Id).
-						Str("imageId", selectedImage.Id).
-						Msg("Individual server quality assessment")
-				}
-			}
-		}
-
-		if validServerCount > 0 {
-			averageQualityScore := totalQualityScore / float64(validServerCount)
-
-			// Overall quality is "best-effort" only if ALL valid servers are best-effort
-			if bestOptionCount == validServerCount {
-				overallQuality = "best-effort"
-			} else {
-				overallQuality = "alternative"
-			}
-
-			overallQualityDesc = fmt.Sprintf("VM total: %d, Best effort option: %d, Alternatives: %d (avg score: %.1f/10.0)",
-				validServerCount, bestOptionCount, alternativeCount, averageQualityScore/10.0)
-
-			log.Info().
-				Float64("averageQualityScore", averageQualityScore).
-				Str("overallQuality", overallQuality).
-				Int("bestOptionCount", bestOptionCount).
-				Int("alternativeCount", alternativeCount).
-				Int("validServerCount", validServerCount).
-				Msg("Overall candidate quality assessment")
-		} else {
-			overallQuality = "nothing-to-recommend"
-			overallQualityDesc = "VM total: 0, Best effort option: 0, Alternatives: 0 (Unable to assess quality - no valid spec-image pairs)"
-			bestOptionCount = 0
-			alternativeCount = 0
-		}
-	} else {
-		// No SubGroups available
-		overallQuality = "nothing-to-recommend"
-		overallQualityDesc = "VM total: 0, Best effort option: 0, Alternatives: 0 (no recommendations available)"
-		bestOptionCount = 0
-		alternativeCount = 0
-	}
-
-	return overallQuality, overallQualityDesc, bestOptionCount, alternativeCount
 }

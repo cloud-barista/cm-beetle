@@ -1796,30 +1796,41 @@ definitions:
         example: Any text
         type: string
     type: object
-  model.ApiError:
+  model.ApiResponse-any:
     properties:
-      code:
-        description: Error code that can be parsed by the client
+      error:
+        description: Error message for failed responses
         type: string
+      item:
+        description: Contains a single object for successful responses
+      items:
+        description: Contains an array of objects for successful list responses
+        items: {}
+        type: array
       message:
-        description: Message that can be displayed to the user
+        description: Optional message for additional context
         type: string
+      success:
+        description: Indicates whether the API call was successful
+        type: boolean
     type: object
   model.ApiResponse-cloudmodel_RecommendedVmInfra:
     properties:
       error:
-        allOf:
-        - $ref: '#/definitions/model.ApiError'
-        description: Contains error details for failed responses
+        description: Error message for failed responses
+        type: string
       item:
         allOf:
         - $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
-        description: Contains a single item for successful responses
+        description: Contains a single object for successful responses
       items:
-        description: Contains multiple items for successful list responses
+        description: Contains an array of objects for successful list responses
         items:
           $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
         type: array
+      message:
+        description: Optional message for additional context
+        type: string
       success:
         description: Indicates whether the API call was successful
         type: boolean
@@ -5606,16 +5617,23 @@ paths:
       consumes:
       - application/json
       description: |
-        Recommend multiple candidates of appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+        Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
 
-        [Note] `desiredCsp` and `desiredRegion` are required.
-        - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
+        - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
 
-        - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+        **[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.
+        - if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.
 
-        [Note] `limit` is optional. The default value is 3.
-        - `limit` specifies the maximum number of recommended infrastructures to return.
-        - If not specified, the default value of 3 will be used.
+        **[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)
+
+        **[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)
+
+        **[Response Field: `status`]** Candidate status based on the match rate threshold
+        - **highly-matched**: Candidates meet or exceed the match rate threshold
+        - **partially-matched**: Valid candidates below the match rate threshold
+
+        **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
+        - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
       operationId: RecommendVmInfra
       parameters:
       - description: Specify the your infrastructure to be migrated
@@ -5644,6 +5662,11 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: 'Minimum match rate for highly-matched classification (default:
+          90.0, range: 0-100)'
+        in: query
+        name: minMatchRate
+        type: number
       - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
         in: header
         name: X-Request-Id
@@ -5655,16 +5678,15 @@ paths:
           description: The result of recommended infrastructure
           schema:
             $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra'
-        "404":
-          description: Not Found
+        "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
-      summary: Recommend multiple candidates of appropriate VM infrastructure (i.e.,
-        MCI, multi-cloud infrastructure) for cloud migration
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Recommend multiple VM infrastructure candidates for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
   /report/migration/ns/{nsId}/mci/{mciId}:
