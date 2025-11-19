@@ -137,8 +137,8 @@ type RecommendVmInfraResponse struct {
 
 // RecommendVMInfra godoc
 // @ID RecommendVMInfra
-// @Summary Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
-// @Description Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Summary **(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+// @Description **(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
 // @Description
 // @Description [Note] `desiredCsp` and `desiredRegion` are required.
 // @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.

@@ -5205,7 +5205,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
+        **(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
 
         [Note] `desiredCsp` and `desiredRegion` are required.
         - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
@@ -5254,8 +5254,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.SimpleMsg'
-      summary: Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud
-        infrastructure) for cloud migration
+      summary: '**(To be deprecated)** Recommend an appropriate VM infrastructure
+        (i.e., MCI, multi-cloud infrastructure) for cloud migration'
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/mciWithDefaults:

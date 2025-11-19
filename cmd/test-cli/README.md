@@ -31,7 +31,7 @@ Before testing CSP-Region pairs, the CLI performs:
 
 Each CSP-Region pair executes the following sequential operations:
 
-1. `POST /beetle/recommendation/mci` - Infrastructure recommendation
+1. `POST /beetle/recommendation/vmInfra` - Infrastructure recommendation (returns multiple candidates, uses first one)
 2. `POST /beetle/migration/ns/{nsId}/mci` - Infrastructure migration
 3. `GET /beetle/migration/ns/{nsId}/mci` - List MCIs
 4. `GET /beetle/migration/ns/{nsId}/mci?option=id` - List MCI IDs
@@ -147,7 +147,7 @@ SOURCE INFRASTRUCTURE SUMMARY
 Testing CSP-Region Pair 1/5: AWS-Seoul
 ============================================================
 
---- Test 1: POST /beetle/recommendation/mci ---
+--- Test 1: POST /beetle/recommendation/vmInfra ---
 ✅ Test 1 passed (Duration: 541ms)
 
 --- Test 2: POST /beetle/migration/ns/mig01/mci ---

@@ -1783,7 +1783,7 @@ const docTemplate = `{
         },
         "/recommendation/mci": {
             "post": {
-                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "**(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1793,7 +1793,7 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration",
+                "summary": "**(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration",
                 "operationId": "RecommendVMInfra",
                 "parameters": [
                     {
