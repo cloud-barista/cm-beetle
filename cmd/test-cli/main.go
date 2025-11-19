@@ -21,6 +21,7 @@ import (
 	// Import Beetle's existing packages
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -41,7 +42,7 @@ type CSPTestReport struct {
 	NamespaceID            string
 	OnpremiseInfraModel    onpremmodel.OnpremInfra
 	RecommendationRequest  controller.RecommendVmInfraRequest
-	RecommendationResponse *controller.RecommendVmInfraResponse
+	RecommendationResponse *model.ApiResponse[cloudmodel.RecommendedVmInfra]
 	MigrationResponse      *controller.MigrateInfraResponse
 	ListMCIResponse        *cloudmodel.MciInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
@@ -337,9 +338,9 @@ func main() {
 		var mciId string // Will be extracted from migration response
 
 		/*
-		 * Test 1: POST /beetle/recommendation/mci
+		 * Test 1: POST /beetle/recommendation/vmInfra
 		 */
-		recommendedVmInfra, result1 := runRecommendationTest(client, config, cspPair, recommendRequest, displayName)
+		recommendationApiResponse, result1 := runRecommendationTest(client, config, cspPair, recommendRequest, displayName)
 		suite.Results = append(suite.Results, result1)
 		cspReport.TestResults = append(cspReport.TestResults, result1)
 
@@ -396,11 +397,14 @@ func main() {
 
 		// Test 1 succeeded, continue with processing
 		if result1.Success {
-			if structuredResponse, err := convertMapToRecommendVmInfraResponse(result1.Response); err == nil {
-				cspReport.RecommendationResponse = structuredResponse
-				recommendedVmInfra = *structuredResponse
+			// Store the full API response in CSP report
+			cspReport.RecommendationResponse = &recommendationApiResponse
+
+			// Log the first candidate that will be used for migration
+			if len(recommendationApiResponse.Items) > 0 {
+				log.Info().Msgf("Selected first candidate (index 0) out of %d for migration", len(recommendationApiResponse.Items))
 			} else {
-				log.Warn().Err(err).Msg("Failed to convert recommendation response")
+				log.Warn().Msg("No recommendation candidates available for migration")
 			}
 			pairPassed++
 		} else if result1.Skipped {
@@ -428,9 +432,29 @@ func main() {
 			}
 			log.Warn().Msgf("Test 2 skipped for %s due to previous test failure", displayName)
 		} else {
-			// Convert RecommendVmInfraResponse to MigrateInfraRequest
-			migrationRequest := controller.MigrateInfraRequest(recommendedVmInfra)
-			result2 = runMigrationTest(client, config, migrationRequest, displayName)
+			// Check if we have a valid recommendation before migration
+			if len(recommendationApiResponse.Items) == 0 {
+				log.Error().Msg("Cannot proceed with migration: no recommendation candidates available")
+				result2 = TestResults{
+					TestName:     "Test 2: POST /beetle/migration/ns/{nsId}/mci",
+					StartTime:    time.Now(),
+					EndTime:      time.Now(),
+					Duration:     0,
+					Success:      false,
+					Skipped:      false,
+					StatusCode:   0,
+					Response:     map[string]interface{}{},
+					Error:        "No recommendation candidates available",
+					ErrorMessage: "Cannot proceed with migration: no recommendation candidates available",
+					RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci", config.BeetleURL, config.NamespaceID),
+				}
+			} else {
+				// Convert RecommendedVmInfra to MigrateInfraRequest
+				migrationRequest := controller.MigrateInfraRequest{
+					RecommendedVmInfra: recommendationApiResponse.Items[0],
+				}
+				result2 = runMigrationTest(client, config, migrationRequest, displayName)
+			}
 		}
 
 		suite.Results = append(suite.Results, result2)
@@ -929,26 +953,27 @@ func convertMapToVmInfraInfo(responseMap map[string]interface{}) (*cloudmodel.Vm
 	return &response, nil
 }
 
-// runRecommendationTest performs Test 1: POST /beetle/recommendation/mci
-func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (controller.RecommendVmInfraResponse, TestResults) {
-	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/mci ---")
+// runRecommendationTest performs Test 1: POST /beetle/recommendation/vmInfra
+func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (model.ApiResponse[cloudmodel.RecommendedVmInfra], TestResults) {
+	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/vmInfra ---")
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("POST /beetle/recommendation/mci (%s)", displayName),
+		TestName:  fmt.Sprintf("POST /beetle/recommendation/vmInfra (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/recommendation/mci?desiredCsp=%s&desiredRegion=%s", config.BeetleURL, cspPair.Csp, cspPair.Region)
+	url := fmt.Sprintf("%s/beetle/recommendation/vmInfra?desiredCsp=%s&desiredRegion=%s", config.BeetleURL, cspPair.Csp, cspPair.Region)
 	log.Debug().Msgf("API Request URL: %s", url)
 
 	// Log request body
 	log.Debug().Msgf("API Request Body: %+v", recommendRequest)
 
-	var response controller.RecommendVmInfraResponse
+	// The new API returns multiple candidates using generic ApiResponse
+	var apiResponse model.ApiResponse[cloudmodel.RecommendedVmInfra]
 	err := common.ExecuteHttpRequest(
 		client,
 		"POST",
@@ -956,12 +981,12 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		nil,  // no custom headers
 		true, // use body
 		&recommendRequest,
-		&response,
+		&apiResponse,
 		0, // no cache duration
 	)
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", response)
+	log.Debug().Msgf("API Response Body: %+v", apiResponse)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -970,8 +995,23 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		populateErrorInfo(&result, err, 0, url, recommendRequest)
 		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
 		log.Error().Err(err).Str("url", url).Msg("Recommendation test failed")
-		return controller.RecommendVmInfraResponse{}, result
+		return model.ApiResponse[cloudmodel.RecommendedVmInfra]{}, result
 	}
+
+	// Check if we have at least one candidate
+	if !apiResponse.Success || len(apiResponse.Items) == 0 {
+		errMsg := "No recommendation candidates returned"
+		if apiResponse.Error != "" {
+			errMsg = apiResponse.Error
+		}
+		populateErrorInfo(&result, fmt.Errorf("%s", errMsg), 0, url, recommendRequest)
+		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
+		log.Error().Str("url", url).Msg("No recommendation candidates found")
+		return model.ApiResponse[cloudmodel.RecommendedVmInfra]{}, result
+	}
+
+	// Log number of candidates received
+	log.Info().Msgf("Received %d recommendation candidate(s)", len(apiResponse.Items))
 
 	result.Success = true
 	result.StatusCode = 200
@@ -980,11 +1020,11 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 
 	// Convert struct response to map for TestResults compatibility
 	responseMap := make(map[string]interface{})
-	jsonBytes, _ := json.Marshal(response)
+	jsonBytes, _ := json.Marshal(apiResponse)
 	json.Unmarshal(jsonBytes, &responseMap)
 	result.Response = responseMap
 	fmt.Println("✅ Test 1 passed")
-	return response, result
+	return apiResponse, result
 }
 
 // runMigrationTest performs Test 2: POST /beetle/migration/ns/{nsId}/mci
@@ -1476,6 +1516,27 @@ func getGitHash() string {
 	return strings.TrimSpace(string(output))
 }
 
+// getBeetleVersion returns the CM-Beetle version from git tags or commit hash
+func getBeetleVersion() string {
+	// Try to get the latest git tag
+	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	output, err := cmd.Output()
+	if err == nil {
+		version := strings.TrimSpace(string(output))
+		if version != "" {
+			return version
+		}
+	}
+
+	// Fallback to commit hash with version prefix
+	commitHash := getGitHash()
+	if commitHash != "unknown" {
+		return fmt.Sprintf("v0.4.5+ (%s)", commitHash)
+	}
+
+	return "v0.4.5+ (unknown)"
+}
+
 // getVersionFromDockerCompose extracts version from docker-compose.yaml for a given service
 func getVersionFromDockerCompose(serviceName string) string {
 	dockerComposePath := "../../deployments/docker-compose/docker-compose.yaml"
@@ -1575,7 +1636,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	// Environment and scenario
 	sb.WriteString("## Environment and scenario\n\n")
 	sb.WriteString("### Environment\n\n")
-	sb.WriteString(fmt.Sprintf("- CM-Beetle: v0.4.4+ (%s)\n", getGitHash()))
+	sb.WriteString(fmt.Sprintf("- CM-Beetle: %s\n", getBeetleVersion()))
 	sb.WriteString(fmt.Sprintf("- cm-model: %s\n", getCmModelVersionFromGoMod()))
 	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: v%s\n", getVersionFromDockerCompose("cb-tumblebug")))
 	sb.WriteString(fmt.Sprintf("- CB-Spider: v%s\n", getVersionFromDockerCompose("cb-spider")))
@@ -1623,7 +1684,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		var endpoint string
 		switch i {
 		case 0:
-			endpoint = "`POST /beetle/recommendation/mci`"
+			endpoint = "`POST /beetle/recommendation/vmInfra`"
 		case 1:
 			endpoint = fmt.Sprintf("`POST /beetle/migration/ns/%s/mci`", report.NamespaceID)
 		case 2:
@@ -1698,7 +1759,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// API request information
 	sb.WriteString("#### 1.1 API Request Information\n\n")
-	sb.WriteString("- **API Endpoint**: `POST /beetle/recommendation/mci`\n")
+	sb.WriteString("- **API Endpoint**: `POST /beetle/recommendation/vmInfra`\n")
 	sb.WriteString("- **Purpose**: Get infrastructure recommendations for migration\n")
 	sb.WriteString("- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body\n\n")
 
