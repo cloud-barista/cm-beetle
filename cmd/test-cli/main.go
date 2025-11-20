@@ -965,8 +965,11 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		StartTime: time.Now(),
 	}
 
+	// Set limit to 2 candidates for testing
+	limit := 2
+
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/recommendation/vmInfra?desiredCsp=%s&desiredRegion=%s", config.BeetleURL, cspPair.Csp, cspPair.Region)
+	url := fmt.Sprintf("%s/beetle/recommendation/vmInfra?desiredCsp=%s&desiredRegion=%s&limit=%d", config.BeetleURL, cspPair.Csp, cspPair.Region, limit)
 	log.Debug().Msgf("API Request URL: %s", url)
 
 	// Log request body

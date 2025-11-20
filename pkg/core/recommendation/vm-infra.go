@@ -530,13 +530,16 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	var limitSpecs int = GetDefaultSpecsLimit()
 	var limitImages int = GetDefaultImagesLimit()
 
+	csp := strings.ToLower(desiredCsp)
+	region := strings.ToLower(desiredRegion)
+
 	// Initialize the response body
 	skeletonVmInfra := cloudmodel.RecommendedVmInfra{
 		Description: "This is a recommended target infrastructures and resources. Please review and use them.",
 		Status:      "",
 		TargetCloud: cloudmodel.CloudProperty{
-			Csp:    desiredCsp,
-			Region: desiredRegion,
+			Csp:    csp,
+			Region: region,
 		},
 		TargetVmInfra: cloudmodel.MciReq{
 			Name:      "mmci01",
@@ -544,9 +547,6 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// Description: "Recommended VMs comprising the multi-cloud infrastructure",
 		},
 	}
-
-	csp := strings.ToLower(desiredCsp)
-	region := strings.ToLower(desiredRegion)
 
 	/*
 	 * [Process]
