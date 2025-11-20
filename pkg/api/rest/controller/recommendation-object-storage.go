@@ -2,10 +2,8 @@ package controller
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
@@ -204,11 +202,22 @@ func RecommendObjectStorage(c echo.Context) error {
 }
 
 // createShortSuffix generates a deterministic 8-character suffix from bucket name
-// - Uses SHA256 hash for globally unique, reproducible suffix
-// - Returns lowercase alphanumeric string (a-z, 0-9) only
+// - Uses SHA256 hash (32 bytes) and XOR folding to create 4 bytes
+// - XOR folding ensures all 32 bytes contribute to the final suffix
+// - Returns lowercase alphanumeric string (0-9, a-f) only
+// - Ensures the suffix does not end with a hyphen
 func createShortSuffix(bucketName string) string {
 	hash := sha256.Sum256([]byte(bucketName))
-	encoded := base64.RawURLEncoding.EncodeToString(hash[:6])
-	suffix := strings.ToLower(encoded)
-	return strings.ReplaceAll(suffix, "_", "0")
+
+	// XOR folding: combine all 32 bytes into 4 bytes
+	// This utilizes the entire hash for better uniqueness
+	var foldedHash [4]byte
+	for i := 0; i < 32; i++ {
+		foldedHash[i%4] ^= hash[i]
+	}
+
+	// Convert 4 bytes to hex string (8 characters)
+	hexStr := fmt.Sprintf("%x", foldedHash)
+
+	return hexStr
 }
