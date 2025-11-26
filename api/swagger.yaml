@@ -1620,13 +1620,6 @@ definitions:
           $ref: '#/definitions/cloudmodel.RecommendedSecurityGroup'
         type: array
     type: object
-  controller.RecommendVMInfraRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/cloudmodel.CloudProperty'
-      onpremiseInfraModel:
-        $ref: '#/definitions/onpremisemodel.OnpremInfra'
-    type: object
   controller.RecommendVNetResponse:
     properties:
       count:
@@ -5218,7 +5211,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/controller.RecommendVMInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
