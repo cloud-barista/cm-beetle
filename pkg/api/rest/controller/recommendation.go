@@ -126,7 +126,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	return c.JSON(http.StatusOK, recommendedInfraInfoList)
 }
 
-type RecommendVMInfraRequest struct {
+type RecommendVmInfraRequest struct {
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -147,7 +147,7 @@ type RecommendVmInfraResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVMInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
@@ -211,11 +211,6 @@ func RecommendVMInfra(c echo.Context) error {
 	//
 
 	return c.JSON(http.StatusOK, recommendedInfra)
-}
-
-type RecommendVmInfraRequest struct {
-	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
-	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
 // RecommendVmInfra godoc

@@ -1802,7 +1802,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVMInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
                         }
                     },
                     {
@@ -4876,17 +4876,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroup"
                     }
-                }
-            }
-        },
-        "controller.RecommendVMInfraRequest": {
-            "type": "object",
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
             }
         },
