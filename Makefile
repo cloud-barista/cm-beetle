@@ -111,32 +111,27 @@ compose-down: ## Down services by docker compose
 	@echo "Removing services by docker compose..."
 	@cd deployments/docker-compose && docker compose down	
 
-apidiff: ## Compare Swagger JSON between two branches (Usage: make apidiff <old_branch> <new_branch>)
-	@OLD_BRANCH=$(word 2,$(MAKECMDGOALS)); \
-	NEW_BRANCH=$(word 3,$(MAKECMDGOALS)); \
-	if [ -z "$$OLD_BRANCH" ] || [ -z "$$NEW_BRANCH" ]; then \
-		echo "Error: Please specify both old and new branch names"; \
-		echo "Usage: make apidiff <old_branch> <new_branch>"; \
-		echo "Example: make apidiff v0.3.7 dev-tumblebug-sync"; \
+apidiff: ## Compare Swagger API differences (Usage: make apidiff <old_ver> [new_ver] [OPTS="..."])
+	@OLD_VER=$(word 2,$(MAKECMDGOALS)); \
+	NEW_VER=$(word 3,$(MAKECMDGOALS)); \
+	if [ -z "$$OLD_VER" ]; then \
+		echo "Error: Please specify at least the old version"; \
+		echo "Usage: make apidiff <old_ver> [new_ver] [OPTS=\"...\"]"; \
+		echo "Example 1: make apidiff v0.4.0 (Compare v0.4.0 with local)"; \
+		echo "Example 2: make apidiff v0.4.0 v0.4.1 (Compare v0.4.0 with v0.4.1)"; \
+		echo "Example 3: make apidiff v0.4.0 OPTS=\"-f markdown -o api/diff.md\""; \
 		exit 1; \
 	fi; \
-	echo "Comparing Swagger API differences between $$OLD_BRANCH and $$NEW_BRANCH..."; \
-	echo "Extracting swagger.json from $$OLD_BRANCH..."; \
-	git show $$OLD_BRANCH:api/swagger.json > api/old_swagger.json; \
-	echo "Extracting swagger.json from $$NEW_BRANCH..."; \
-	git show $$NEW_BRANCH:api/swagger.json > api/new_swagger.json; \
-	echo "Generating API diff using oasdiff..."; \
-	if command -v oasdiff >/dev/null 2>&1; then \
-		oasdiff diff api/old_swagger.json api/new_swagger.json --format markdown > api/diff.md; \
-		echo "API diff generated: api/diff.md"; \
+	OLD_URL="https://raw.githubusercontent.com/cloud-barista/cm-beetle/$$OLD_VER/api/swagger.yaml"; \
+	if [ -z "$$NEW_VER" ]; then \
+		NEW_SPEC="api/swagger.yaml"; \
+		echo "Comparing $$OLD_VER (remote) with local api/swagger.yaml..."; \
 	else \
-		echo "Error: oasdiff is not installed. Please install it first:"; \
-		echo "  go install github.com/oasdiff/oasdiff@latest"; \
-		exit 1; \
+		NEW_SPEC="https://raw.githubusercontent.com/cloud-barista/cm-beetle/$$NEW_VER/api/swagger.yaml"; \
+		echo "Comparing $$OLD_VER (remote) with $$NEW_VER (remote)..."; \
 	fi; \
-	echo "Cleaning up temporary files..."; \
-	rm -f api/old_swagger.json api/new_swagger.json; \
-	echo "API diff comparison completed!"
+	echo "Running deepdiffgo..."; \
+	go run deepdiffgo/cmd/deepdiffgo/main.go $$OLD_URL $$NEW_SPEC $(OPTS)
 
 # Dummy targets to prevent make from interpreting branch names as targets
 %:
