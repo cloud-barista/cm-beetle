@@ -1,0 +1,106 @@
+name: Manual API Diff Report to PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      previous_tag:
+        description: "Previous Tag (e.g., v0.4.1)"
+        required: true
+      target_branch:
+        description: "Target branch (e.g., main)"
+        required: true
+        default: "main"
+
+env:
+  API_DOC_PATH: api/swagger.yaml
+  REPORT_FILE_PATH: api/api-diff.md
+
+jobs:
+  generate_and_create_pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Install DeepDiffGo
+        run: |
+          go install github.com/cloud-barista/cm-beetle/deepdiffgo/cmd/deepdiffgo@latest
+
+      - name: Generate API Diff Report
+        id: deepdiff
+        run: |
+          # ========================================================
+          # 1. Setup Variables
+          # ========================================================
+          PREV_TAG="${{ inputs.previous_tag }}"
+          REPORT_FILE="${{ env.REPORT_FILE_PATH }}"
+          PREV_SPEC_FILE="prev_spec.yaml"
+          CURR_SPEC_FILE="${{ env.API_DOC_PATH }}"
+
+          # ========================================================
+          # 2. Extract Previous API Spec (from Tag)
+          # ========================================================
+          echo "Extracting '${{ env.API_DOC_PATH }}' from tag '$PREV_TAG'..."
+
+          if git show "$PREV_TAG:${{ env.API_DOC_PATH }}" > "$PREV_SPEC_FILE"; then
+            echo "Successfully extracted previous spec."
+          else
+            echo "Error: Could not extract '${{ env.API_DOC_PATH }}' from tag '$PREV_TAG'."
+            exit 1
+          fi
+
+          # Ensure output directory exists
+          mkdir -p $(dirname "$REPORT_FILE")
+
+          # ========================================================
+          # 3. Execute DeepDiffGo
+          # ========================================================
+          echo "Running DeepDiffGo..."
+          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" --format markdown --output "$REPORT_FILE"; then
+            echo "DeepDiffGo completed successfully."
+          else
+            echo "DeepDiffGo failed execution."
+            exit 1
+          fi
+
+          # ========================================================
+          # 4. Prepare PR Body
+          # ========================================================
+          echo "report_body_brief<<EOF" >> $GITHUB_OUTPUT
+          head -n 20 "$REPORT_FILE" >> $GITHUB_OUTPUT
+          echo "..." >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Docs: Add API Diff Report (${{ inputs.previous_tag }} -> ${{ inputs.target_branch }})"
+          branch: "docs/api-diff-with-${{ inputs.previous_tag }}"
+          base: ${{ inputs.target_branch }}
+          title: "[Report] API Diff: ${{ inputs.previous_tag }} -> ${{ inputs.target_branch }}"
+          body: |
+            ## 📜 API Diff Report
+
+            This PR adds the API difference report between tag **${{ inputs.previous_tag }}** and branch **${{ inputs.target_branch }}**.
+
+            Please review the **${{ env.REPORT_FILE_PATH }}** file.
+
+            ---
+            **Report Preview (First 20 lines):**
+            ${{ steps.deepdiff.outputs.report_body_brief }}
+          add-paths: |
+            ${{ env.REPORT_FILE_PATH }}
+          delete-branch: true
