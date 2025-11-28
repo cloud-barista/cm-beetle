@@ -1,0 +1,115 @@
+name: PR API Diff Check
+
+on:
+  # Use pull_request_target to enable write permissions for PRs from forks
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+env:
+  API_DOC_PATH: api/swagger.yaml
+
+jobs:
+  api_diff_check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          # Explicitly checkout the PR head to access the new API spec
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Install DeepDiffGo
+        run: |
+          go install github.com/cloud-barista/cm-beetle/deepdiffgo/cmd/deepdiffgo@latest
+
+      - name: Run DeepDiffGo and Generate Report
+        id: deepdiff
+        run: |
+          # ========================================================
+          # 1. Setup Variables
+          # ========================================================
+          REPORT_FILE="api_diff_report.txt"
+          PREV_SPEC_FILE="prev_spec.yaml"
+          CURR_SPEC_FILE="${{ env.API_DOC_PATH }}"
+          BASE_REF="origin/${{ github.base_ref }}"
+
+          # ========================================================
+          # 2. Extract Previous API Spec (from Base Branch)
+          # ========================================================
+          echo "Extracting '$CURR_SPEC_FILE' from '$BASE_REF'..."
+
+          # Ensure we have the base branch reference available
+          git fetch origin ${{ github.base_ref }} --depth=1
+
+          if git show "$BASE_REF:$CURR_SPEC_FILE" > "$PREV_SPEC_FILE"; then
+            echo "Successfully extracted previous spec."
+          else
+            echo "Warning: Could not extract '$CURR_SPEC_FILE' from base branch."
+            echo "   -> Assuming this is a new file. Creating an empty file for comparison."
+            touch "$PREV_SPEC_FILE"
+          fi
+
+          # ========================================================
+          # 3. Execute DeepDiffGo (Compare Prev vs Curr)
+          # ========================================================
+          echo "Running DeepDiffGo..."
+
+          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" --format text --output "$REPORT_FILE"; then
+            echo "DeepDiffGo completed successfully."
+          else
+            echo "DeepDiffGo failed execution."
+            # Fail gracefully without posting a comment
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # ========================================================
+          # 4. Process Output
+          # ========================================================
+          if [ -s "$REPORT_FILE" ]; then
+              echo "API changes detected. Setting output..."
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "report_body<<EOF" >> $GITHUB_OUTPUT
+              cat "$REPORT_FILE" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+          else
+              echo "No API changes detected."
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Comment to PR
+        if: ${{ steps.deepdiff.outputs.has_changes == 'true' }}
+        uses: actions/github-script@v7
+        env:
+          REPORT_BODY: ${{ steps.deepdiff.outputs.report_body }}
+        with:
+          script: |
+            // Retrieve the report body from the previous step
+            const reportBody = process.env.REPORT_BODY;
+
+            const commentBody = [
+              '## API Change Report',
+              '',
+              'The following API changes have been detected in this Pull Request compared to the base branch.',
+              '',
+              '```text',
+              reportBody,
+              '```'
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
