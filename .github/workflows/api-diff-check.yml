@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Explicitly checkout the PR head to access the new API spec
           ref: ${{ github.event.pull_request.head.sha }}
