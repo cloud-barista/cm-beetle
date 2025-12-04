@@ -109,6 +109,9 @@ func RunServer(port string) {
 	// Custom middleware for tracing
 	e.Use(middlewares.TracingMiddleware)
 
+	// Custom middleware to dump response body and update request details
+	e.Use(middlewares.ResponseBodyDump())
+
 	e.HideBanner = true
 	//e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
 
@@ -211,10 +214,16 @@ func RunServer(port string) {
 
 	// System management APIs
 	gBeetle.GET("/readyz", rest_common.GetReadyz)
-	gBeetle.GET("/httpVersion", rest_common.CheckHTTPVersion)
+	gBeetle.GET("/httpVersion", controller.CheckHTTPVersion)
 
 	// Test utility APIs
-	gBeetle.GET("/test/tracing", rest_common.TestTracing)
+	gBeetle.GET("/test/tracing", controller.TestTracing)
+
+	// API Request Management APIs
+	gBeetle.GET("/request/:reqId", controller.RestGetRequest)
+	gBeetle.GET("/requests", controller.RestGetAllRequests)
+	gBeetle.DELETE("/request/:reqId", controller.RestDeleteRequest)
+	gBeetle.DELETE("/requests", controller.RestDeleteAllRequests)
 
 	/*
 	 * API group for computing infra recommendation

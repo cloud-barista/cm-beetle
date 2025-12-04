@@ -154,6 +154,9 @@ func main() {
 
 	log.Info().Msg("successfully load data from the lkvstore (file).")
 
+	// Start the request cleanup scheduler (cleanup every 24 hours, remove requests older than 1 week)
+	common.StartRequestCleanupScheduler(24*time.Hour, common.DefaultRequestRetentionPeriod)
+
 	defer func() {
 		// Save the current state of the key-value store to file
 		if err := lkvstore.SaveLkvStore(); err != nil {
