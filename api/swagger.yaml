@@ -1214,6 +1214,45 @@ definitions:
       vmUserPassword:
         type: string
     type: object
+  common.RequestDetails:
+    properties:
+      endTime:
+        description: The time when the request was fully processed.
+        type: string
+      errorResponse:
+        description: A message describing any error that occurred during request processing.
+        type: string
+      requestInfo:
+        allOf:
+        - $ref: '#/definitions/common.RequestInfo'
+        description: Extracted information about the request.
+      responseData:
+        description: The data sent back in response to the request.
+      startTime:
+        description: The time when the request was received by the server.
+        type: string
+      status:
+        description: The current status of the request (e.g., "Handling", "Error",
+          "Success").
+        type: string
+    type: object
+  common.RequestInfo:
+    properties:
+      body:
+        description: 'Optional: request body'
+      header:
+        additionalProperties:
+          type: string
+        description: Key-value pairs of the request headers.
+        type: object
+      method:
+        description: HTTP method (GET, POST, etc.), indicating the request's action
+          type.
+        type: string
+      url:
+        description: The URL the request is made to.
+        type: string
+    type: object
   common.SimpleMessage:
     properties:
       message:
@@ -3956,11 +3995,15 @@ paths:
     get:
       consumes:
       - application/json
-      description: Checks and logs the HTTP version of the incoming request to the
-        server console.
+      description: |-
+        Checks and returns the HTTP protocol version of the incoming request.
+
+        [Note]
+        - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug when Beetle calls its APIs for distributed tracing.
       operationId: CheckHTTPVersion
       parameters:
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Custom request ID (auto-generated if not provided). Used as a
+          trace ID for log correlation across Beetle and Tumblebug.
         in: header
         name: X-Request-Id
         type: string
@@ -3970,18 +4013,18 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Check HTTP version of incoming request
       tags:
-      - '[Admin] System management'
+      - '[Admin] API Request Management'
   /migration/data:
     post:
       consumes:
@@ -5755,6 +5798,168 @@ paths:
       summary: Generate migration report (with source-target correlation analysis)
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
+  /request/{reqId}:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Deletes the tracking details of a specific API request from Beetle.
+
+        [Note]
+        - This only removes the request tracking record from Beetle's memory.
+        - It does NOT affect any data in Tumblebug or cancel any ongoing operations.
+      operationId: DeleteRequest
+      parameters:
+      - description: Request ID to delete (from X-Request-Id header of a previous
+          Beetle API call)
+        in: path
+        name: reqId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Delete a specific request's details
+      tags:
+      - '[Admin] API Request Management'
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieves the details of a specific API request tracked by Beetle.
+
+        [Note]
+        - Request tracking is managed independently by Beetle (not shared with Tumblebug).
+        - The reqId corresponds to the X-Request-Id header value from a previous API call.
+        - Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.
+
+        [Status Values]
+        - received: Request has been received and registered (for async operations)
+        - in-progress: Request is currently being processed
+        - completed: Request completed successfully
+        - failed: Request failed with an error
+      operationId: GetRequest
+      parameters:
+      - description: Request ID (from X-Request-Id header of a previous Beetle API
+          call)
+        in: path
+        name: reqId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.RequestDetails'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Get request details
+      tags:
+      - '[Admin] API Request Management'
+  /requests:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Deletes all API request tracking records from Beetle.
+
+        [Note]
+        - This only clears Beetle's request tracking memory.
+        - It does NOT affect any data in Tumblebug or cancel any ongoing operations.
+      operationId: DeleteAllRequests
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.SimpleMsg'
+      summary: Delete all requests' details
+      tags:
+      - '[Admin] API Request Management'
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieves all API requests tracked by Beetle with optional filters.
+
+        [Note]
+        - Request tracking is managed independently by Beetle (not shared with Tumblebug).
+        - This API only returns requests made to Beetle, not to Tumblebug.
+
+        [Status Values]
+        - received: Request has been received and registered (for async operations)
+        - in-progress: Request is currently being processed
+        - completed: Request completed successfully
+        - failed: Request failed with an error
+      operationId: GetAllRequests
+      parameters:
+      - default: ""
+        description: Filter by request status
+        enum:
+        - received
+        - in-progress
+        - completed
+        - failed
+        in: query
+        name: status
+        type: string
+      - default: ""
+        description: Filter by HTTP method (GET, POST, PUT, DELETE, etc.)
+        enum:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        in: query
+        name: method
+        type: string
+      - description: Filter by request URL
+        in: query
+        name: url
+        type: string
+      - description: Filter by time in minutes from now (to get recent requests)
+        in: query
+        name: time
+        type: string
+      - default: "false"
+        description: Option to save the results to a file (set 'true' to activate)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: savefile
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/common.RequestDetails'
+              type: array
+            type: object
+      summary: Get all requests
+      tags:
+      - '[Admin] API Request Management'
   /summary/source:
     post:
       consumes:
@@ -5917,10 +6122,16 @@ paths:
     get:
       consumes:
       - application/json
-      description: Test tracing to Tumblebug
+      description: |-
+        Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.
+
+        [Note]
+        - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.
+        - Use this API to verify that tracing works correctly between Beetle and Tumblebug.
       operationId: TestTracing
       parameters:
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Custom request ID (auto-generated if not provided). Used as a
+          trace ID for log correlation across Beetle and Tumblebug.
         in: header
         name: X-Request-Id
         type: string
@@ -5930,14 +6141,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/common.SimpleMsg'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/common.SimpleMessage'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Test tracing to Tumblebug
       tags:
-      - '[Test] Utility'
+      - '[Admin] API Request Management'
 securityDefinitions:
   BasicAuth:
     type: basic

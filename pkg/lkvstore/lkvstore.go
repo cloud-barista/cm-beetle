@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -21,7 +23,7 @@ type Config struct {
 
 type KeyValue struct {
 	Key   string
-	Value string
+	Value any
 }
 
 func Init(config Config) {
@@ -38,9 +40,15 @@ func SaveLkvStore() error {
 		return fmt.Errorf("db file path is not set")
 	}
 
-	// Create the directory if it doesn't exist
-	if err := os.MkdirAll(filepath.Dir(dbFilePath), 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+	// Ensure the DB file directory exists before creating the log file
+	dir := filepath.Dir(dbFilePath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		// Create the directory if it does not exist
+		err = os.MkdirAll(dir, 0755) // Set permissions as needed
+		if err != nil {
+			log.Error().Msgf("Failed to create the DB directory: [%v]", err)
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
 	}
 
 	file, err := os.Create(dbFilePath)
@@ -49,8 +57,8 @@ func SaveLkvStore() error {
 	}
 	defer file.Close()
 
-	tempMap := make(map[string]interface{})
-	lkvstore.Range(func(key, value interface{}) bool {
+	tempMap := make(map[string]any)
+	lkvstore.Range(func(key, value any) bool {
 		tempMap[key.(string)] = value
 		return true
 	})
@@ -79,7 +87,7 @@ func LoadLkvStore() error {
 	}
 	defer file.Close()
 
-	var tempMap map[string]interface{}
+	var tempMap map[string]any
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&tempMap); err != nil {
 		return fmt.Errorf("failed to decode map: %w", err)
@@ -93,60 +101,126 @@ func LoadLkvStore() error {
 }
 
 // Get returns the value for a given key.
-func Get(key string) (string, bool) {
-	if value, ok := lkvstore.Load(key); ok {
-		return value.(string), true
+func Get(key string) (any, bool) {
+	value, ok := lkvstore.Load(key)
+	if !ok {
+		return nil, false
 	}
-	return "", false
+
+	var result any
+
+	switch v := value.(type) {
+	case string:
+		// Unmarshal JSON if value is string
+		if err := json.Unmarshal([]byte(v), &result); err != nil {
+			return nil, false // Stop when failing to unmarshal
+		}
+	case map[string]any:
+		// already map type
+		result = v
+	default:
+		// unknown type
+		result = v
+	}
+
+	return result, true
 }
 
 // GetWithPrefix returns the values for a given key prefix.
-func GetWithPrefix(keyPrefix string) ([]string, bool) {
-	var results []string
+func GetWithPrefix(keyPrefix string) ([]any, bool) {
+	var results []any
 	var exists bool
-	lkvstore.Range(func(key, value interface{}) bool {
+
+	lkvstore.Range(func(key, value any) bool {
 		if strings.HasPrefix(key.(string), keyPrefix) {
-			results = append(results, value.(string))
+			var result any
+
+			switch v := value.(type) {
+			case string:
+				// Unmarshal JSON if value is string
+				if err := json.Unmarshal([]byte(v), &result); err != nil {
+					return false // Stop when failing to unmarshal
+				}
+			case map[string]any:
+				// already map type
+				result = v
+			default:
+				// unknown type
+				result = v
+			}
+
+			results = append(results, result)
 			exists = true
 		}
 		return true
 	})
-	return results, exists
+
+	if !exists {
+		return nil, false
+	}
+
+	return results, true
 }
 
 // GetKv returns the key-value pair for a given key.
 func GetKv(key string) (KeyValue, bool) {
-	var kv KeyValue
-	var exists bool
-	if value, ok := lkvstore.Load(key); ok {
-		kv.Key = key
-		kv.Value = value.(string)
-		exists = true
+	value, ok := Get(key)
+	if !ok {
+		return KeyValue{}, false
 	}
-	return kv, exists
+	return KeyValue{Key: key, Value: value}, true
 }
 
-// GetKvWIthPrefix returns the key-value pairs for a given key prefix.
-func GetKvWIthPrefix(keyPrefix string) ([]KeyValue, bool) {
+// GetKvWithPrefix returns the key-value pairs for a given key prefix.
+func GetKvWithPrefix(keyPrefix string) ([]KeyValue, bool) {
 	var results []KeyValue
 	var exists bool
-	lkvstore.Range(func(key, value interface{}) bool {
+
+	lkvstore.Range(func(key, value any) bool {
 		if strings.HasPrefix(key.(string), keyPrefix) {
-			kv := KeyValue{Key: key.(string), Value: value.(string)}
-			results = append(results, kv)
+			var result any
+
+			switch v := value.(type) {
+			case string:
+				// Unmarshal JSON if value is string
+				if err := json.Unmarshal([]byte(v), &result); err != nil {
+					return false // Stop when failing to unmarshal
+				}
+			case map[string]any:
+				// already map type
+				result = v
+			default:
+				// unknown type
+				result = v
+			}
+
+			results = append(results, KeyValue{Key: key.(string), Value: result})
 			exists = true
 		}
 		return true
 	})
-	return results, exists
+
+	if !exists {
+		return nil, false
+	}
+
+	return results, true
 }
 
-// Put the key-value pair.
-func Put(key string, value string) {
-	lkvstore.Store(key, value)
+// Put stores the key-value pair.
+func Put(key string, value any) error {
+	// Marshal the value to JSON
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to marshal value: %w", err)
+	}
+
+	// Store the JSON string
+	lkvstore.Store(key, string(jsonValue))
+	return nil
 }
 
-// Delete the key-value pair for a given key.
+// Delete removes the key-value pair for a given key.
 func Delete(key string) {
 	lkvstore.Delete(key)
 }

@@ -2,6 +2,8 @@ package middlewares
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -11,6 +13,11 @@ import (
 func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// log.Debug().Msg("Start - Request ID middleware")
+
+		// Skip request tracking for API documentation paths
+		if strings.HasPrefix(c.Path(), "/beetle/api") {
+			return next(c)
+		}
 
 		// Make X-Request-Id visible to all handlers
 		c.Response().Header().Set("Access-Control-Expose-Headers", echo.HeaderXRequestID)
@@ -23,8 +30,10 @@ func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		//log.Trace().Msgf("(Request ID middleware) Request ID: %s", reqID)
-		if _, ok := common.RequestMap.Load(reqID); ok {
-			return fmt.Errorf("the X-Request-Id is already in use")
+		if common.HasRequest(reqID) {
+			return echo.NewHTTPError(http.StatusConflict,
+				fmt.Sprintf("the X-Request-Id '%s' is already in use; "+
+					"use DELETE /beetle/request/{reqId} to remove it, or omit the header to auto-generate a new one", reqID))
 		}
 
 		// Set "X-Request-Id" in response header
@@ -32,10 +41,12 @@ func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 
 		details := common.RequestDetails{
 			StartTime:   time.Now(),
-			Status:      "Handling",
+			Status:      common.RequestStatusInProgress,
 			RequestInfo: common.ExtractRequestInfo(c.Request()),
 		}
-		common.RequestMap.Store(reqID, details)
+		if err := common.SetRequest(reqID, details); err != nil {
+			return fmt.Errorf("failed to store request details: %w", err)
+		}
 
 		// log.Debug().Msg("End - Request ID middleware")
 

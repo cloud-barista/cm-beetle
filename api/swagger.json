@@ -18,7 +18,7 @@
     "paths": {
         "/httpVersion": {
             "get": {
-                "description": "Checks and logs the HTTP version of the incoming request to the server console.",
+                "description": "Checks and returns the HTTP protocol version of the incoming request.\n\n[Note]\n- The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug when Beetle calls its APIs for distributed tracing.",
                 "consumes": [
                     "application/json"
                 ],
@@ -26,14 +26,14 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Admin] System management"
+                    "[Admin] API Request Management"
                 ],
                 "summary": "Check HTTP version of incoming request",
                 "operationId": "CheckHTTPVersion",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -42,19 +42,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMessage"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMessage"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMessage"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
@@ -2483,6 +2483,191 @@
                 }
             }
         },
+        "/request/{reqId}": {
+            "get": {
+                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- received: Request has been received and registered (for async operations)\n- in-progress: Request is currently being processed\n- completed: Request completed successfully\n- failed: Request failed with an error",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] API Request Management"
+                ],
+                "summary": "Get request details",
+                "operationId": "GetRequest",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID (from X-Request-Id header of a previous Beetle API call)",
+                        "name": "reqId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.RequestDetails"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes the tracking details of a specific API request from Beetle.\n\n[Note]\n- This only removes the request tracking record from Beetle's memory.\n- It does NOT affect any data in Tumblebug or cancel any ongoing operations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] API Request Management"
+                ],
+                "summary": "Delete a specific request's details",
+                "operationId": "DeleteRequest",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Request ID to delete (from X-Request-Id header of a previous Beetle API call)",
+                        "name": "reqId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
+        "/requests": {
+            "get": {
+                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- received: Request has been received and registered (for async operations)\n- in-progress: Request is currently being processed\n- completed: Request completed successfully\n- failed: Request failed with an error",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] API Request Management"
+                ],
+                "summary": "Get all requests",
+                "operationId": "GetAllRequests",
+                "parameters": [
+                    {
+                        "enum": [
+                            "received",
+                            "in-progress",
+                            "completed",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "default": "",
+                        "description": "Filter by request status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "type": "string",
+                        "default": "",
+                        "description": "Filter by HTTP method (GET, POST, PUT, DELETE, etc.)",
+                        "name": "method",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by request URL",
+                        "name": "url",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by time in minutes from now (to get recent requests)",
+                        "name": "time",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "true",
+                            "false"
+                        ],
+                        "type": "string",
+                        "default": "false",
+                        "description": "Option to save the results to a file (set 'true' to activate)",
+                        "name": "savefile",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/common.RequestDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes all API request tracking records from Beetle.\n\n[Note]\n- This only clears Beetle's request tracking memory.\n- It does NOT affect any data in Tumblebug or cancel any ongoing operations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Admin] API Request Management"
+                ],
+                "summary": "Delete all requests' details",
+                "operationId": "DeleteAllRequests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.SimpleMsg"
+                        }
+                    }
+                }
+            }
+        },
         "/summary/source": {
             "post": {
                 "description": "Generate a comprehensive source infrastructure summary from on-premise data in JSON, Markdown, or HTML format",
@@ -2710,7 +2895,7 @@
         },
         "/test/tracing": {
             "get": {
-                "description": "Test tracing to Tumblebug",
+                "description": "Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.\n\n[Note]\n- The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.\n- Use this API to verify that tracing works correctly between Beetle and Tumblebug.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2718,14 +2903,14 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Test] Utility"
+                    "[Admin] API Request Management"
                 ],
                 "summary": "Test tracing to Tumblebug",
                 "operationId": "TestTracing",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2734,13 +2919,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMessage"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     },
                     "503": {
                         "description": "Service Unavailable",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMessage"
+                            "$ref": "#/definitions/common.SimpleMsg"
                         }
                     }
                 }
@@ -4345,6 +4530,61 @@
                     "type": "string"
                 },
                 "vmUserPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.RequestDetails": {
+            "type": "object",
+            "properties": {
+                "endTime": {
+                    "description": "The time when the request was fully processed.",
+                    "type": "string"
+                },
+                "errorResponse": {
+                    "description": "A message describing any error that occurred during request processing.",
+                    "type": "string"
+                },
+                "requestInfo": {
+                    "description": "Extracted information about the request.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.RequestInfo"
+                        }
+                    ]
+                },
+                "responseData": {
+                    "description": "The data sent back in response to the request."
+                },
+                "startTime": {
+                    "description": "The time when the request was received by the server.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The current status of the request (e.g., \"Handling\", \"Error\", \"Success\").",
+                    "type": "string"
+                }
+            }
+        },
+        "common.RequestInfo": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "Optional: request body"
+                },
+                "header": {
+                    "description": "Key-value pairs of the request headers.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "method": {
+                    "description": "HTTP method (GET, POST, etc.), indicating the request's action type.",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "The URL the request is made to.",
                     "type": "string"
                 }
             }
