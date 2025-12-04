@@ -1,9 +1,11 @@
-name: PR API Diff Check
+name: Check API Diff on PR
 
 on:
   # Use pull_request_target to enable write permissions for PRs from forks
   pull_request_target:
     types: [opened, reopened, synchronize]
+    paths:
+      - "api/swagger.yaml"
 
 env:
   API_DOC_PATH: api/swagger.yaml
