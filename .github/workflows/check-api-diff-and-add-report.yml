@@ -1,4 +1,4 @@
-name: Manual API Diff Report to PR
+name: Check API Diff and Add Report by PR
 
 on:
   workflow_dispatch:
@@ -76,14 +76,23 @@ jobs:
           fi
 
           # ========================================================
-          # 4. Prepare PR Body
+          # 4. Check for Changes and Prepare PR Body
           # ========================================================
-          echo "report_body_brief<<EOF" >> $GITHUB_OUTPUT
-          head -n 20 "$REPORT_FILE" >> $GITHUB_OUTPUT
-          echo "..." >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          if grep -q "No changes found." "$REPORT_FILE"; then
+            echo "No API changes detected. Skipping PR creation."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "API changes detected."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            
+            echo "report_body_brief<<EOF" >> $GITHUB_OUTPUT
+            head -n 20 "$REPORT_FILE" >> $GITHUB_OUTPUT
+            echo "..." >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Pull Request
+        if: ${{ steps.deepdiff.outputs.has_changes == 'true' }}
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
