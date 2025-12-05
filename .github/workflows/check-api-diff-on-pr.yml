@@ -95,6 +95,7 @@ jobs:
         env:
           REPORT_BODY: ${{ steps.deepdiff.outputs.report_body }}
         with:
+          github-token: ${{ secrets.CR_PAT }} # Replace with appropriate token if needed (e.g., secrets.GITHUB_TOKEN)
           script: |
             // Retrieve the report body from the previous step
             const reportBody = process.env.REPORT_BODY;
