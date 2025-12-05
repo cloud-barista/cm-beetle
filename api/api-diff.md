@@ -4,9 +4,9 @@
 - New: `api/swagger.yaml`
 
 ### [*] GET `/httpVersion`
-- * `Response (500, body, common.SimpleMessage, object)`: Structure changed (From: `common.SimpleMessage`, To: `common.SimpleMsg`)
 - * `Response (200, body, common.SimpleMessage, object)`: Structure changed (From: `common.SimpleMessage`, To: `common.SimpleMsg`)
 - * `Response (404, body, common.SimpleMessage, object)`: Structure changed (From: `common.SimpleMessage`, To: `common.SimpleMsg`)
+- * `Response (500, body, common.SimpleMessage, object)`: Structure changed (From: `common.SimpleMessage`, To: `common.SimpleMsg`)
 
 ### [+] POST `/recommendation/vmInfra` (New API)
 
