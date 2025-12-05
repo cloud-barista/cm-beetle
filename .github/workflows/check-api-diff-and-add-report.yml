@@ -38,6 +38,13 @@ jobs:
         run: |
           go install github.com/cloud-barista/cm-beetle/deepdiffgo/cmd/deepdiffgo@latest
 
+      - name: Get Target Branch Short SHA
+        id: get_sha
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Target branch HEAD short SHA: $SHORT_SHA"
+
       - name: Generate API Diff Report
         id: deepdiff
         run: |
@@ -95,15 +102,15 @@ jobs:
         if: ${{ steps.deepdiff.outputs.has_changes == 'true' }}
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Docs: Add API Diff Report (${{ inputs.previous_tag }} -> ${{ inputs.target_branch }})"
+          token: ${{ secrets.CR_PAT }} # Replace with appropriate token if needed (e.g., secrets.GITHUB_TOKEN)
+          commit-message: "Docs: Add API Diff Report for ${{ inputs.previous_tag }} to ${{ inputs.target_branch }} (${{ steps.get_sha.outputs.short_sha }})"
           branch: "docs/api-diff-with-${{ inputs.previous_tag }}"
           base: ${{ inputs.target_branch }}
-          title: "[Report] API Diff: ${{ inputs.previous_tag }} -> ${{ inputs.target_branch }}"
+          title: "[Report] API Diff: ${{ inputs.previous_tag }} to ${{ inputs.target_branch }} (${{ steps.get_sha.outputs.short_sha }})"
           body: |
             ## 📜 API Diff Report
 
-            This PR adds the API difference report between tag **${{ inputs.previous_tag }}** and branch **${{ inputs.target_branch }}**.
+            This PR adds the API difference report between tag **${{ inputs.previous_tag }}** and branch **${{ inputs.target_branch }}** (`${{ steps.get_sha.outputs.short_sha }}`).
 
             Please review the **${{ env.REPORT_FILE_PATH }}** file.
 
