@@ -4,6 +4,8 @@ github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPd
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/cloud-barista/cb-tumblebug v0.11.18 h1:rC7X07ZuXME0JONy0E83tpaxvPh+tvTlBRdfh/7BIQc=
 github.com/cloud-barista/cb-tumblebug v0.11.18/go.mod h1:jxLBQMEqsYxIsOfgdhXC6KOwMg7Ldc3rvw1GAih3gFc=
+github.com/cloud-barista/cb-tumblebug v0.11.19 h1:rFix5oyedl12XSUwiWCoIGh07ATWdi7F3CzTBmXrgcY=
+github.com/cloud-barista/cb-tumblebug v0.11.19/go.mod h1:jxLBQMEqsYxIsOfgdhXC6KOwMg7Ldc3rvw1GAih3gFc=
 github.com/cloud-barista/cm-beetle/transx v0.0.0-20251124111900-c89c3b457dd5 h1:Yc0rdLkfuuUwVWxj8wfmFMrm9MOD/JzS2HkTNj6olC4=
 github.com/cloud-barista/cm-beetle/transx v0.0.0-20251124111900-c89c3b457dd5/go.mod h1:LTzfOs6aeAgFR/FYESc8q83nWQhIMtwO02OR7PZp764=
 github.com/cloud-barista/cm-model v0.0.14 h1:WkfBZHRuzQmCxbvDNeuy+TQJQjZtjbLQ9gWB8XFffm0=

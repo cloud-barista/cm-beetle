@@ -159,6 +159,8 @@ github.com/cloud-barista/cb-tumblebug v0.11.1/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajr
 github.com/cloud-barista/cb-tumblebug v0.11.9 h1:GgJZAk/cvrZZr8x6heKkCGD/QgNUBKpJRUsWtY5xXlo=
 github.com/cloud-barista/cb-tumblebug v0.11.9/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cb-tumblebug v0.11.15 h1:6sz2NREfMOOfZSBL9d8i96y9hce96zFFlLssQKpt5+A=
+github.com/cloud-barista/cb-tumblebug v0.11.19 h1:rFix5oyedl12XSUwiWCoIGh07ATWdi7F3CzTBmXrgcY=
+github.com/cloud-barista/cb-tumblebug v0.11.19/go.mod h1:jxLBQMEqsYxIsOfgdhXC6KOwMg7Ldc3rvw1GAih3gFc=
 github.com/cloud-barista/cm-model v0.0.10 h1:vGaYam3/VX8IvagHdtWx10ZgH36xZ+44Db2ZG/uSvA4=
 github.com/cloud-barista/cm-model v0.0.10/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
@@ -337,7 +339,6 @@ github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/imdario/mergo v0.3.16 h1:wwQJbIsHYGMUyLSPrEq1CT16AhnhNJQ51+4fdHUnCl4=
 github.com/imdario/mergo v0.3.16/go.mod h1:WBLT9ZmE3lPoWsEzCh9LPo3TiwVN+ZKEjmz+hD27ysY=
-github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/jackc/chunkreader/v2 v2.0.1/go.mod h1:odVSm741yZoC3dpHEUXIqA9tQRhFrgOHwnPIn9lDKlk=
 github.com/jackc/pgconn v1.14.0/go.mod h1:9mBNlny0UvkgJdCDvdVHYSjI+8tD2rnKK69Wz8ti++E=
 github.com/jackc/pgio v1.0.0/go.mod h1:oP+2QK2wFfUWgr+gxjoBH9KGBb31Eio69xUb0w5bYf8=
