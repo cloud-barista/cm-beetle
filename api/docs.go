@@ -39,7 +39,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug.",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -156,7 +156,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -207,7 +207,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -275,7 +275,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -350,7 +350,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -422,7 +422,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -486,7 +486,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -545,7 +545,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -605,7 +605,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -674,7 +674,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -735,7 +735,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1549,7 +1549,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1618,7 +1618,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1683,7 +1683,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1754,7 +1754,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1828,7 +1828,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1902,7 +1902,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -1976,7 +1976,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2050,7 +2050,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2124,7 +2124,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2198,7 +2198,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2278,7 +2278,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2364,7 +2364,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2491,7 +2491,7 @@ const docTemplate = `{
         },
         "/request/{reqId}": {
             "get": {
-                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- received: Request has been received and registered (for async operations)\n- in-progress: Request is currently being processed\n- completed: Request completed successfully\n- failed: Request failed with an error",
+                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error",
                 "consumes": [
                     "application/json"
                 ],
@@ -2573,7 +2573,7 @@ const docTemplate = `{
         },
         "/requests": {
             "get": {
-                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- received: Request has been received and registered (for async operations)\n- in-progress: Request is currently being processed\n- completed: Request completed successfully\n- failed: Request failed with an error",
+                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error",
                 "consumes": [
                     "application/json"
                 ],
@@ -2588,10 +2588,9 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "received",
-                            "in-progress",
-                            "completed",
-                            "failed"
+                            "Handling",
+                            "Success",
+                            "Error"
                         ],
                         "type": "string",
                         "default": "",
@@ -2716,7 +2715,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     },
@@ -2838,7 +2837,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Custom request ID (NOTE: It will be used as a trace ID.)",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }
@@ -2941,7 +2940,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug.",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }

@@ -51,7 +51,7 @@ type RecommendVNetResponse struct {
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendVNetResponse "The result of recommended vNet"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -145,7 +145,7 @@ type RecommendSecurityGroupResponse struct {
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendSecurityGroupResponse "The result of recommended security groups"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -212,7 +212,7 @@ type RecommendVmSpecResponse struct {
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param targetMachineId query string false "Target Machine ID to focus recommendation on (optional)"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendVmSpecResponse "The result of recommended VM specifications"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -405,7 +405,7 @@ type RecommendVmOsImageResponse struct {
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendVmOsImageResponse "The result of recommended VM OS images"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg

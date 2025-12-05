@@ -14,13 +14,13 @@ import (
 //
 // This middleware runs BEFORE the Echo handler processes the request.
 // It captures the incoming request, assigns or validates the X-Request-Id,
-// and initializes the request tracking with "in-progress" status.
+// and initializes the request tracking with "Handling" status.
 //
 // Flow:
-//  1. Request arrives → this middleware sets status to "in-progress"
+//  1. Request arrives → this middleware sets status to "Handling"
 //  2. Calls next(c) to pass control to Echo handler
 //  3. Echo handler processes the request and writes response
-//  4. ResponseBodyDump middleware updates status to "completed" or "failed"
+//  4. ResponseBodyDump middleware updates status to "Success" or "Error"
 func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// log.Debug().Msg("Start - Request ID middleware")
@@ -52,7 +52,7 @@ func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 
 		details := common.RequestDetails{
 			StartTime:   time.Now(),
-			Status:      common.RequestStatusInProgress,
+			Status:      common.RequestStatusHandling,
 			RequestInfo: common.ExtractRequestInfo(c.Request()),
 		}
 		if err := common.SetRequest(reqID, details); err != nil {

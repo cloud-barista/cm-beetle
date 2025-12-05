@@ -76,7 +76,7 @@ type SimpleMessage struct {
 // @Tags [Admin] System management
 // @Accept  json
 // @Produce  json
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} SimpleMessage
 // @Failure 503 {object} SimpleMessage
 // @Router /readyz [get]

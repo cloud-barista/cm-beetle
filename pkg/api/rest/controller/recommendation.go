@@ -63,7 +63,7 @@ type RecommendVmInfraWithDefaultsResponse struct {
 // @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendVmInfraWithDefaultsResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -150,7 +150,7 @@ type RecommendVmInfraResponse struct {
 // @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendVmInfraResponse "The result of recommended infrastructure"
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -242,7 +242,7 @@ func RecommendVMInfra(c echo.Context) error {
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "The result of recommended infrastructure"
 // @Failure 400 {object} model.ApiResponse[any] "Bad Request"
 // @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
@@ -338,7 +338,7 @@ type RecommendK8sClusterResponse struct {
 // @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
 // @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} tbmodel.K8sClusterDynamicReq "K8s control plane recommendation (ready for cb-tumblebug API)"
 // @Failure 400 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -391,7 +391,7 @@ func RecommendK8sControlPlane(c echo.Context) error {
 // @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
 // @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} tbmodel.K8sNodeGroupReq "K8s worker node group recommendation (ready for cb-tumblebug API)"
 // @Failure 400 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -460,7 +460,7 @@ type RecommendInfraResponse struct {
 // @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} common.SimpleMsg "Deprecated endpoint notice"
 // @Failure 400 {object} common.SimpleMsg
 // @Router /recommendation/containerInfra [post]

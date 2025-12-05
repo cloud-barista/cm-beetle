@@ -103,7 +103,7 @@ type TargetObjectStorageProperty struct {
 // @Param request body RecommendObjectStorageRequest true "Specify the your object storage to be migrated"
 // @Param desiredCsp query string false "CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} RecommendObjectStorageResponse "The result of recommended object storage"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 500 {object} common.SimpleMsg "Internal server error"

@@ -65,21 +65,24 @@ type ProgressInfo struct {
 }
 
 // RequestStatus constants define the possible states of a request.
-// Status Flow: received → in-progress → completed/failed
-// - received: Request has been received and registered (async operations)
-// - in-progress: Request is currently being processed
-// - completed: Request completed successfully
-// - failed: Request failed with an error
+// Status Flow: Handling → Success/Error
+// - Handling: Request is currently being processed
+// - Success: Request completed successfully
+// - Error: Request failed with an error
+// Note: These values are aligned with CB-Tumblebug's status values.
 const (
-	// RequestStatusReceived indicates the request has been received and registered.
-	// Used for async operations where the request is queued for later processing.
-	RequestStatusReceived = "received"
-	// RequestStatusInProgress indicates the request is currently being processed.
-	RequestStatusInProgress = "in-progress"
-	// RequestStatusCompleted indicates the request completed successfully.
-	RequestStatusCompleted = "completed"
-	// RequestStatusFailed indicates the request failed with an error.
-	RequestStatusFailed = "failed"
+	// RequestStatusHandling indicates the request is currently being processed.
+	RequestStatusHandling = "Handling"
+	// RequestStatusSuccess indicates the request completed successfully.
+	RequestStatusSuccess = "Success"
+	// RequestStatusError indicates the request failed with an error.
+	RequestStatusError = "Error"
+
+	// Deprecated: Legacy status constants (kept for reference)
+	// RequestStatusReceived   = "received"
+	// RequestStatusInProgress = "in-progress"
+	// RequestStatusCompleted  = "completed"
+	// RequestStatusFailed     = "failed"
 )
 
 // requestKeyPrefix is the key prefix for request details in lkvstore
@@ -87,7 +90,7 @@ const requestKeyPrefix = "/beetle/request/"
 
 // RequestFilter defines filter criteria for querying requests
 type RequestFilter struct {
-	Status string    // Filter by status (in-progress, completed, failed)
+	Status string    // Filter by status (Handling, Success, Error)
 	Method string    // Filter by HTTP method
 	URL    string    // Filter by URL (partial match)
 	Since  time.Time // Filter by start time (requests after this time)
@@ -137,7 +140,7 @@ func RemoveAllRequests() {
 const DefaultRequestRetentionPeriod = 7 * 24 * time.Hour // 1 week
 
 // CleanupOldRequests removes completed or failed requests older than the specified duration.
-// Requests with "received" or "in-progress" status are not removed regardless of age.
+// Requests with "Handling" status are not removed regardless of age.
 // Returns the number of removed requests.
 func CleanupOldRequests(maxAge time.Duration) int {
 	kvList, ok := lkvstore.GetKvWithPrefix(requestKeyPrefix)
@@ -154,9 +157,8 @@ func CleanupOldRequests(maxAge time.Duration) int {
 			continue
 		}
 
-		// Skip requests that are still being processed or pending
-		if strings.EqualFold(details.Status, RequestStatusReceived) ||
-			strings.EqualFold(details.Status, RequestStatusInProgress) {
+		// Skip requests that are still being processed
+		if strings.EqualFold(details.Status, RequestStatusHandling) {
 			continue
 		}
 

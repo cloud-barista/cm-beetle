@@ -55,7 +55,7 @@ type MigrateObjectStorageRequest struct {
 // @Accept json
 // @Produce	json
 // @Param request body MigrateObjectStorageRequest true "Object storage migration request (use RecommendObjectStorage response)"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 "OK - Object storages created successfully"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 500 {object} common.SimpleMsg "Internal server error"
@@ -171,7 +171,7 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Produce json
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} tbclient.ListAllMyBucketsResult "List of object storages"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 500 {object} common.SimpleMsg "Internal server error"
@@ -236,7 +236,7 @@ func ListObjectStorages(c echo.Context) error {
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} tbclient.ListBucketResult "Object storage details"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 404 {object} common.SimpleMsg "Object storage not found"
@@ -315,7 +315,7 @@ func GetObjectStorage(c echo.Context) error {
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 "OK - Object storage exists"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 404 {object} common.SimpleMsg "Object storage not found"
@@ -401,7 +401,7 @@ func ExistObjectStorage(c echo.Context) error {
 // @Param objectStorageName path string true "Object Storage Name (bucket name)"
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 "OK - Object storage deleted successfully"
 // @Failure 400 {object} common.SimpleMsg "Invalid request"
 // @Failure 404 {object} common.SimpleMsg "Object storage not found"
