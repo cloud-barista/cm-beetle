@@ -2893,6 +2893,31 @@
                 }
             }
         },
+        "/test/streaming": {
+            "get": {
+                "description": "Returns multiple JSON objects as newline-delimited JSON (JSON Lines format)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Test] Utilities"
+                ],
+                "summary": "Test streaming response (JSON Lines)",
+                "operationId": "TestStreamingResponse",
+                "responses": {
+                    "200": {
+                        "description": "Multiple JSON objects",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/test/tracing": {
             "get": {
                 "description": "Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.\n\n[Note]\n- The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.\n- Use this API to verify that tracing works correctly between Beetle and Tumblebug.",
