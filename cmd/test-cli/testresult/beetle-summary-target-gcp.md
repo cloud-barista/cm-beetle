@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-12-05 06:52:33
+**Generated At:** 2025-12-05 08:44:19
 
 **Namespace:** mig01
 
@@ -28,9 +28,9 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
+| e2-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.1719 | 1 |
 | e2-small | 2 | 2.0 | - | x86_64 |  | $0.0215 | 1 |
 | e2-standard-2 | 2 | 7.8 | - | x86_64 |  | $0.0860 | 1 |
-| e2-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.1719 | 1 |
 
 ### VM Images
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | d4p81h6chgjmd93omso0 | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.241.31<br>**Private IP:** 10.0.1.2<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | d4p81h6chgjmd93omsq0 | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.50.61.196<br>**Private IP:** 10.0.1.3<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | d4p81h6chgjmd93omsp0 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.189.117<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | d4p9lpuchgjmd9125dk0 | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.50.61.196<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | d4p9lpuchgjmd9125dm0 | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.241.31<br>**Private IP:** 10.0.1.2<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | d4p9lpuchgjmd9125dl0 | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2025-10-23) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 34.64.189.117<br>**Private IP:** 10.0.1.3<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | d4p7tjmchgjmd93omsk0 |
+| **CSP VNet ID** | d4p9ibuchgjmd9125dg0 |
 | **CIDR Block** | GCP VPC does not support IPv4_CIDR |
 | **Connection** | gcp-asia-northeast3 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | d4p7tjmchgjmd93omskg | 10.0.1.0/24 |  |
+| mig-subnet-01 | d4p9ibuchgjmd9125dgg | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | d4p7tu6chgjmd93omsl0 |  |  |
+| mig-sshkey-01 | d4p9ilechgjmd9125dh0 |  |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | d4p7tuechgjmd93omslg |
+| **CSP Security Group ID** | d4p9ilechgjmd9125dhg |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | d4p7usuchgjmd93omsm0 |
+| **CSP Security Group ID** | d4p9jhechgjmd9125di0 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | d4p7vu6chgjmd93omsmg |
+| **CSP Security Group ID** | d4p9kk6chgjmd9125dig |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 

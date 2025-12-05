@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2025-12-05 06:52:42*
+*Report generated: 2025-12-05 08:44:29*
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | e2-small, e2-standard-2, e2-standard-4 |
+| 2 | **VM Spec** | 3 | ✅ Selected | e2-standard-2, e2-standard-4, e2-small |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | mig-vnet-01, CIDR: GCP VPC does not support IPv4_CIDR |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in mig-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** d4p81h6chgjmd93omso0<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** d4p81h6chgjmd93omsq0<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** d4p81h6chgjmd93omsp0<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** d4p9lpuchgjmd9125dk0<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** d4p9lpuchgjmd9125dm0<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** d4p9lpuchgjmd9125dl0<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-01
 
-**CSP ID:** d4p7tuechgjmd93omslg | **VNet:** mig-vnet-01 | **Rules:** 14
+**CSP ID:** d4p9ilechgjmd9125dhg | **VNet:** mig-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-02
 
-**CSP ID:** d4p7usuchgjmd93omsm0 | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** d4p9jhechgjmd9125di0 | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-03
 
-**CSP ID:** d4p7vu6chgjmd93omsmg | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** d4p9kk6chgjmd9125dig | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** mig-vnet-01<br>**ID:** d4p7tjmchgjmd93omsk0 | GCP VPC does not support IPv4_CIDR |
+| 1 | **Name:** mig-vnet-01<br>**ID:** d4p9ibuchgjmd9125dg0 | GCP VPC does not support IPv4_CIDR |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** mig-subnet-01<br>**ID:** d4p7tjmchgjmd93omskg | 10.0.1.0/24 | mig-vnet-01 |
+| 1 | **Name:** mig-subnet-01<br>**ID:** d4p9ibuchgjmd9125dgg | 10.0.1.0/24 | mig-vnet-01 |
 
 ### Source Network Information
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | mig-sshkey-01 | d4p7tu6chgjmd93omsl0 |  | Used by all 3 VMs |
+| 1 | mig-sshkey-01 | d4p9ilechgjmd9125dh0 |  | Used by all 3 VMs |
 
 ---
 

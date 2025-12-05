@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2025-12-05 08:05:14*
+*Report generated: 2025-12-05 08:23:58*
 
 ---
 
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-07d1ac15ea34230df<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0c0acd51cd3747b97<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-08ceaa8d7f490622a<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-02041e7640b9a8942<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0cf2bd739c72dc30a<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-02136754906cc2d12<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-01
 
-**CSP ID:** sg-06ad4d4cc8fbb76b3 | **VNet:** mig-vnet-01 | **Rules:** 14
+**CSP ID:** sg-00968e3f206eaaf98 | **VNet:** mig-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-02
 
-**CSP ID:** sg-025b62d4bf917a322 | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-0047fb2da6b06485c | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-03
 
-**CSP ID:** sg-09bee9c47b966c52c | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-016605671b14a3ba4 | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-044dd9671019e916e | 10.0.0.0/21 |
+| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-033a74eabf734f458 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-0e20f8d9896bee9dc | 10.0.1.0/24 | mig-vnet-01 |
+| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-0ca7bdb178755c286 | 10.0.1.0/24 | mig-vnet-01 |
 
 ### Source Network Information
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | mig-sshkey-01 | d4p93puchgjmd967fid0 | bf:95:84:6d:7b:f8:5b:45:4e:d3:0c:73:e3:2d:f1:e3:4f:f8:dc:cd | Used by all 3 VMs |
+| 1 | mig-sshkey-01 | d4p9cimchgjmd9125d10 | 57:a5:be:99:4c:73:82:ce:83:d9:24:dc:f4:22:09:45:4a:db:f9:be | Used by all 3 VMs |
 
 ---
 

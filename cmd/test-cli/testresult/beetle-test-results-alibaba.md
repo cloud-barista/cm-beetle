@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.5+ (ed85eeb)
+- CM-Beetle: v0.4.5+ (34feba6)
 - cm-model: v0.0.14
 - CB-Tumblebug: v0.11.19
 - CB-Spider: v0.11.16
@@ -18,8 +18,8 @@
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
 - Test Date: December 5, 2025
-- Test Time: 16:16:07 KST
-- Test Execution: 2025-12-05 16:16:07 KST
+- Test Time: 18:06:47 KST
+- Test Execution: 2025-12-05 18:06:47 KST
 
 ### Scenario
 
@@ -39,8 +39,8 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 764ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ❌ **FAIL** | 26.496s | Fail |
+| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 746ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ❌ **FAIL** | 25.247s | Fail |
 | 3 | `GET /beetle/migration/ns/mig01/mci` | ⏭️ **SKIP** | 0s | Skip |
 | 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ⏭️ **SKIP** | 0s | Skip |
 | 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ⏭️ **SKIP** | 0s | Skip |
@@ -49,9 +49,9 @@
 
 **Overall Result**: 1/7 tests passed, 5 skipped ❌
 
-**Total Duration**: 37.316146806s
+**Total Duration**: 36.036843088s
 
-*Test executed on December 5, 2025 at 16:16:07 KST (2025-12-05 16:16:07 KST) using CM-Beetle automated test CLI*
+*Test executed on December 5, 2025 at 18:06:47 KST (2025-12-05 18:06:47 KST) using CM-Beetle automated test CLI*
 
 ---
 
