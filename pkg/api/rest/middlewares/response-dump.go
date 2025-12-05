@@ -20,9 +20,9 @@ import (
 // has finished writing the response.
 //
 // Flow:
-//  1. Request arrives → request-id middleware sets status to "in-progress"
+//  1. Request arrives → request-id middleware sets status to "Handling"
 //  2. Echo handler processes the request and writes response
-//  3. BodyDump Handler is called (this middleware) → status updated to "completed" or "failed"
+//  3. BodyDump Handler is called (this middleware) → status updated to "Success" or "Error"
 func ResponseBodyDump() echo.MiddlewareFunc {
 	return middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
 		Skipper: func(c echo.Context) bool {
@@ -55,9 +55,9 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 			//log.Trace().Msg("OK, common.GetRequest(reqID)")
 			details.EndTime = time.Now()
 
-			details.Status = common.RequestStatusCompleted
+			details.Status = common.RequestStatusSuccess
 			if c.Response().Status >= 400 {
-				details.Status = common.RequestStatusFailed
+				details.Status = common.RequestStatusError
 			}
 
 			// Set "X-Request-Id" in response header

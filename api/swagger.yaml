@@ -4002,8 +4002,8 @@ paths:
         - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug when Beetle calls its APIs for distributed tracing.
       operationId: CheckHTTPVersion
       parameters:
-      - description: Custom request ID (auto-generated if not provided). Used as a
-          trace ID for log correlation across Beetle and Tumblebug.
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4093,7 +4093,8 @@ paths:
         name: region
         required: true
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4136,7 +4137,8 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateObjectStorageRequest'
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4188,7 +4190,8 @@ paths:
         name: region
         required: true
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4241,7 +4244,8 @@ paths:
         name: region
         required: true
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4298,7 +4302,8 @@ paths:
         name: region
         required: true
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4341,7 +4346,8 @@ paths:
         in: query
         name: option
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4383,7 +4389,8 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateInfraRequest'
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4433,7 +4440,8 @@ paths:
         in: query
         name: option
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4474,7 +4482,8 @@ paths:
         name: mciId
         required: true
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -4517,7 +4526,8 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateInfraWithDefaultsRequest'
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5065,7 +5075,8 @@ paths:
       description: Check Beetle is ready
       operationId: GetReadyz
       parameters:
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5116,7 +5127,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: Custom request ID
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5163,7 +5175,8 @@ paths:
         name: desiredRegion
         required: true
         type: string
-      - description: Custom request ID
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5213,7 +5226,8 @@ paths:
         name: desiredRegion
         required: true
         type: string
-      - description: Custom request ID
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5271,7 +5285,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5329,7 +5344,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5393,7 +5409,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5450,7 +5467,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5507,7 +5525,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5564,7 +5583,8 @@ paths:
         in: query
         name: desiredRegion
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5626,7 +5646,8 @@ paths:
         in: query
         name: targetMachineId
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5703,7 +5724,8 @@ paths:
         in: query
         name: minMatchRate
         type: number
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -5842,10 +5864,9 @@ paths:
         - Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.
 
         [Status Values]
-        - received: Request has been received and registered (for async operations)
-        - in-progress: Request is currently being processed
-        - completed: Request completed successfully
-        - failed: Request failed with an error
+        - Handling: Request is currently being processed
+        - Success: Request completed successfully
+        - Error: Request failed with an error
       operationId: GetRequest
       parameters:
       - description: Request ID (from X-Request-Id header of a previous Beetle API
@@ -5904,19 +5925,17 @@ paths:
         - This API only returns requests made to Beetle, not to Tumblebug.
 
         [Status Values]
-        - received: Request has been received and registered (for async operations)
-        - in-progress: Request is currently being processed
-        - completed: Request completed successfully
-        - failed: Request failed with an error
+        - Handling: Request is currently being processed
+        - Success: Request completed successfully
+        - Error: Request failed with an error
       operationId: GetAllRequests
       parameters:
       - default: ""
         description: Filter by request status
         enum:
-        - received
-        - in-progress
-        - completed
-        - failed
+        - Handling
+        - Success
+        - Error
         in: query
         name: status
         type: string
@@ -5986,7 +6005,8 @@ paths:
         in: query
         name: download
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -6072,7 +6092,8 @@ paths:
         in: query
         name: download
         type: string
-      - description: 'Custom request ID (NOTE: It will be used as a trace ID.)'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string
@@ -6148,8 +6169,8 @@ paths:
         - Use this API to verify that tracing works correctly between Beetle and Tumblebug.
       operationId: TestTracing
       parameters:
-      - description: Custom request ID (auto-generated if not provided). Used as a
-          trace ID for log correlation across Beetle and Tumblebug.
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
         in: header
         name: X-Request-Id
         type: string

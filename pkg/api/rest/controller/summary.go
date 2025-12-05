@@ -38,7 +38,7 @@ import (
 // @Param mciId path string true "Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
 // @Param format query string false "Summary format: json, md, or html" Enums(json,md,html) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} JSONResult{[MARKDOWN]=string,[HTML]=string,[JSON]=summary.TargetInfraSummary} "Different return types: json format returns TargetInfraSummary object, md format returns markdown string, html format returns HTML string"
 // @Header 200 {string} Content-Disposition "inline; filename=\"target-summary.md\" or \"target-summary.html\" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
@@ -169,7 +169,7 @@ type GenerateSourceInfraSummaryRequest struct {
 // @Produce  text/html
 // @Param format query string false "Summary format: json, md, or html" Enums(json,md,html) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Request body controller.GenerateSourceInfraSummaryRequest true "Source infrastructure data"
 // @Success 200 {object} JSONResult{[MARKDOWN]=string,[HTML]=string,[JSON]=summary.SourceInfraSummary} "Different return types: json format returns SourceInfraSummary object, md format returns markdown string, html format returns HTML string"
 // @Header 200 {string} Content-Disposition "inline; filename=\"source-summary.md\" or \"source-summary.html\" (or attachment when download=true)"

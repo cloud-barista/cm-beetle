@@ -41,7 +41,7 @@ import (
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
-// @Param X-Request-Id header string false "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug."
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} common.SimpleMsg
 // @Failure 404 {object} common.SimpleMsg
 // @Failure 500 {object} common.SimpleMsg
@@ -65,7 +65,7 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
-// @Param X-Request-Id header string false "Custom request ID (auto-generated if not provided). Used as a trace ID for log correlation across Beetle and Tumblebug."
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} common.SimpleMsg
 // @Failure 503 {object} common.SimpleMsg
 // @Router /test/tracing [get]
@@ -128,10 +128,9 @@ func TestTracing(c echo.Context) error {
 // @Description - Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.
 // @Description
 // @Description [Status Values]
-// @Description - received: Request has been received and registered (for async operations)
-// @Description - in-progress: Request is currently being processed
-// @Description - completed: Request completed successfully
-// @Description - failed: Request failed with an error
+// @Description - Handling: Request is currently being processed
+// @Description - Success: Request completed successfully
+// @Description - Error: Request failed with an error
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
@@ -160,14 +159,13 @@ func RestGetRequest(c echo.Context) error {
 // @Description - This API only returns requests made to Beetle, not to Tumblebug.
 // @Description
 // @Description [Status Values]
-// @Description - received: Request has been received and registered (for async operations)
-// @Description - in-progress: Request is currently being processed
-// @Description - completed: Request completed successfully
-// @Description - failed: Request failed with an error
+// @Description - Handling: Request is currently being processed
+// @Description - Success: Request completed successfully
+// @Description - Error: Request failed with an error
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
-// @Param status query string false "Filter by request status" Enums(received, in-progress, completed, failed) default()
+// @Param status query string false "Filter by request status" Enums(Handling, Success, Error) default()
 // @Param method query string false "Filter by HTTP method (GET, POST, PUT, DELETE, etc.)" Enums(GET, POST, PUT, DELETE) default()
 // @Param url query string false "Filter by request URL"
 // @Param time query string false "Filter by time in minutes from now (to get recent requests)"

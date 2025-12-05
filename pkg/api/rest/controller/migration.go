@@ -49,7 +49,7 @@ type MigrateInfraWithDefaultsResponse struct {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraWithDefaultsRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} MigrateInfraWithDefaultsResponse "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
@@ -117,7 +117,7 @@ type MigrateInfraResponse struct {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} MigrateInfraResponse "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
@@ -175,7 +175,7 @@ func MigrateInfra(c echo.Context) error {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option for getting the migrated multi-cloud infrastructure" Enums(id)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} cloudmodel.MciInfoList "The info list of the migrated multi-cloud infrastructure (MCI)"
 // @Success 200 {object} cloudmodel.IdList "The ID list of The migrated multi-cloud infrastructure (MCI)"
 // @Failure 404 {object} model.Response
@@ -245,7 +245,7 @@ func ListInfra(c echo.Context) error {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} MigrateInfraResponse "The migrated multi-cloud infrastructure (MCI) information"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
@@ -301,7 +301,7 @@ func GetInfra(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
 // @Param option query string false "Option for deletion" Enums(terminate,force) default(terminate)
-// @Param X-Request-Id header string false "Custom request ID (NOTE: It will be used as a trace ID.)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.Response "The result of deleting the migrated multi-cloud infrastructure (MCI)"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
