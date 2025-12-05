@@ -1520,24 +1520,33 @@ func getGitHash() string {
 }
 
 // getBeetleVersion returns the CM-Beetle version from git tags or commit hash
+// Expected format: v0.4.5 (exact tag) or v0.4.5+ (short hash) for commits after tag
 func getBeetleVersion() string {
-	// Try to get the latest git tag
-	cmd := exec.Command("git", "describe", "--tags", "--abbrev=0")
-	output, err := cmd.Output()
-	if err == nil {
-		version := strings.TrimSpace(string(output))
-		if version != "" {
-			return version
+	commitHash := getGitHash()
+
+	// Check if we are exactly on a tag
+	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match")
+	if exactTag, err := cmdExact.Output(); err == nil {
+		return strings.TrimSpace(string(exactTag))
+	}
+
+	// Get the latest tag (we are ahead of it)
+	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	if tag, err := cmdTag.Output(); err == nil {
+		tagStr := strings.TrimSpace(string(tag))
+		if tagStr != "" {
+			if commitHash != "unknown" {
+				return fmt.Sprintf("%s+ (%s)", tagStr, commitHash)
+			}
+			return fmt.Sprintf("%s+", tagStr)
 		}
 	}
 
-	// Fallback to commit hash with version prefix
-	commitHash := getGitHash()
+	// No tags available, fallback to main (hash)
 	if commitHash != "unknown" {
-		return fmt.Sprintf("v0.4.5+ (%s)", commitHash)
+		return fmt.Sprintf("main (%s)", commitHash)
 	}
-
-	return "v0.4.5+ (unknown)"
+	return "main (unknown)"
 }
 
 // getVersionFromDockerCompose extracts version from docker-compose.yaml for a given service

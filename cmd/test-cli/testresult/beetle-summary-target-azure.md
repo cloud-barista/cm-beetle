@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-11-10 11:36:40
+**Generated At:** 2025-12-05 06:38:43
 
 **Namespace:** mig01
 
@@ -13,7 +13,7 @@
 | Property | Value |
 |----------|-------|
 | **MCI Name** | mmci01 |
-| **Description** | a recommended multi-cloud infrastructure |
+| **Description** | Recommended VMs comprising multi-cloud infrastructure |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | AZURE |
 | **Target Region** | koreasouth |
@@ -28,9 +28,9 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
+| Standard_B4as_v2 | 4 | 15.6 | - | x86_64 |  | $0.1730 | 1 |
 | Standard_B2als_v2 | 2 | 3.9 | - | x86_64 |  | $0.0432 | 1 |
 | Standard_B2as_v2 | 2 | 7.8 | - | x86_64 |  | $0.0865 | 1 |
-| Standard_B4as_v2 | 4 | 15.6 | - | x86_64 |  | $0.1730 | 1 |
 
 ### VM Images
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d48sr98t49avt161vnfg | Running | 2 vCPU, 3.9 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.222.41<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d48sr98t49avt161vnhg | Running | 2 vCPU, 7.8 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.222.58<br>**Private IP:** 10.0.1.5<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d48sr98t49avt161vngg | Running | 4 vCPU, 15.6 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.222.74<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d4p7qi6chgjmd93omsg0 | Running | 2 vCPU, 3.9 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.227.120<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d4p7qi6chgjmd93omsi0 | Running | 2 vCPU, 7.8 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.228.238<br>**Private IP:** 10.0.1.5<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d4p7qi6chgjmd93omsh0 | Running | 4 vCPU, 15.6 GiB | 0001-com-ubuntu-server-jammy:22_04-lts-gen2 (0001-com-ubuntu-server-jammy:22_04-lts-gen2) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 52.231.229.55<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d48spv0t49avt161vnbg |
+| **CSP VNet ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d4p7p9echgjmd93omsc0 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | azure-koreasouth |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d48spv0t49avt161vnbg/subnets/d48spv0t49avt161vnc0 | 10.0.1.0/24 |  |
+| mig-subnet-01 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d4p7p9echgjmd93omsc0/subnets/d4p7p9echgjmd93omscg | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d48sq3ot49avt161vncg |  |  |
+| mig-sshkey-01 | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d4p7pc6chgjmd93omsd0 |  |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d48sqc8t49avt161vnd0 |
+| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d4p7pkuchgjmd93omsdg |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d48sql8t49avt161vndg |
+| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d4p7puechgjmd93omse0 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d48squ8t49avt161vne0 |
+| **CSP Security Group ID** | /subscriptions/a20fed83-96bd-4480-92a9-140b8e3b7c3a/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d4p7q7mchgjmd93omseg |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -193,8 +193,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | Standard_B2als_v2 | $0.0432 | $31.10 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | Standard_B2as_v2 | $0.0865 | $62.28 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | Standard_B4as_v2 | $0.1730 | $124.56 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | Standard_B2als_v2 | $0.0432 | $31.10 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | Standard_B2as_v2 | $0.0865 | $62.28 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | Standard_B4as_v2 | $0.1730 | $124.56 |
 
 

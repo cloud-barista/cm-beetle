@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-11-10 12:02:10
+**Generated At:** 2025-12-05 07:12:56
 
 **Namespace:** mig01
 
@@ -13,7 +13,7 @@
 | Property | Value |
 |----------|-------|
 | **MCI Name** | mmci01 |
-| **Description** | a recommended multi-cloud infrastructure |
+| **Description** | Recommended VMs comprising multi-cloud infrastructure |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | NCP |
 | **Target Region** | KR |
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | 113285925 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 211.188.53.151<br>**Private IP:** 10.0.1.8<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | 113285909 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 49.50.136.114<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | 113285915 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 223.130.150.61<br>**Private IP:** 10.0.1.7<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | 115215012 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 110.165.16.190<br>**Private IP:** 10.0.1.7<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 115215010 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 49.50.139.61<br>**Private IP:** 10.0.1.8<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 115215004 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 223.130.132.151<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | 128346 |
+| **CSP VNet ID** | 130030 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | 272565 | 10.0.1.0/24 | KR-1 |
+| mig-subnet-01 | 277529 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | d48t5bot49avt161vnsg | cb-user |  |
+| mig-sshkey-01 | d4p87jechgjmd93omst0 | cb-user |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | 319020 |
+| **CSP Security Group ID** | 324504 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 15 rules |
 
@@ -112,7 +112,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | 319022 |
+| **CSP Security Group ID** | 324505 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -146,7 +146,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | 319023 |
+| **CSP Security Group ID** | 324507 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -196,8 +196,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| migrated-ec2241d9-56e0-d4d7-5d88-07af0e2b7a9c-1 | ci2-g3 | $0.0730 | $52.56 |
-| migrated-ec26f82e-8ce4-1bb1-7a14-c379e4d50ec4-1 | s2-g3 | $0.0848 | $61.06 |
-| migrated-ec2db2cd-7f2b-f86d-97f8-6b5ea91ea939-1 | s4-g3 | $0.1747 | $125.78 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730 | $52.56 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3 | $0.0848 | $61.06 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3 | $0.1747 | $125.78 |
 
 
