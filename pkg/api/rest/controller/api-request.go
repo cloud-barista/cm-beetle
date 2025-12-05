@@ -199,8 +199,8 @@ func RestGetAllRequests(c echo.Context) error {
 
 	// Option to save the filtered results to a file
 	if c.QueryParam("savefile") == "true" {
-		cbTumblebugRoot := os.Getenv("TB_ROOT_PATH")
-		logPath := filepath.Join(cbTumblebugRoot, "log", "request_log_"+time.Now().Format("20060102_150405")+".json")
+		beetleRoot := config.Beetle.Root
+		logPath := filepath.Join(beetleRoot, "log", "request_log_"+time.Now().Format("20060102_150405")+".json")
 		file, err := os.Create(logPath)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "Failed to create log file"})

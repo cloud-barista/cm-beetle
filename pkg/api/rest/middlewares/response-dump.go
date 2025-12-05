@@ -12,6 +12,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ResponseBodyDump returns a middleware that captures and processes response bodies.
+//
+// This middleware uses Echo's BodyDump, which wraps the response writer to capture
+// the response body. The Handler function is called AFTER the response is complete,
+// because the response body and HTTP status code are only available once the handler
+// has finished writing the response.
+//
+// Flow:
+//  1. Request arrives → request-id middleware sets status to "in-progress"
+//  2. Echo handler processes the request and writes response
+//  3. BodyDump Handler is called (this middleware) → status updated to "completed" or "failed"
 func ResponseBodyDump() echo.MiddlewareFunc {
 	return middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
 		Skipper: func(c echo.Context) bool {
@@ -35,98 +46,85 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 			// log.Debug().Msgf("Request body: %s", string(reqBody))
 			// log.Debug().Msgf("Response body: %s", string(resBody))
 
-			// Dump the response body if content type is "application/json"
-			if contentType == echo.MIMEApplicationJSON {
-				// Load the request details by ID
-				details, ok := common.GetRequest(reqID)
-				if !ok {
-					log.Error().Msg("Request ID not found")
-					return
-				}
-				//log.Trace().Msg("OK, common.GetRequest(reqID)")
-				details.EndTime = time.Now()
+			// Load the request details by ID
+			details, ok := common.GetRequest(reqID)
+			if !ok {
+				log.Error().Msg("Request ID not found")
+				return
+			}
+			//log.Trace().Msg("OK, common.GetRequest(reqID)")
+			details.EndTime = time.Now()
 
-				// Set "X-Request-Id" in response header
-				c.Response().Header().Set(echo.HeaderXRequestID, reqID)
+			details.Status = common.RequestStatusCompleted
+			if c.Response().Status >= 400 {
+				details.Status = common.RequestStatusFailed
+			}
 
-				// Split the response body by newlines to handle multiple JSON objects (i.e., streaming response)
-				parts := bytes.Split(resBody, []byte("\n"))
-				if len(parts) == 0 {
-					log.Error().Msg("Response body is empty")
-					return
-				}
-				responseJsonLines := parts[:len(parts)-1]
+			// Set "X-Request-Id" in response header
+			c.Response().Header().Set(echo.HeaderXRequestID, reqID)
 
-				// Check if responseJsonLines has any content
-				if len(responseJsonLines) == 0 {
-					log.Error().Msg("No valid response JSON lines found")
-					return
-				}
+			// Process response body based on content type
+		processResponse:
+			switch contentType {
+			case echo.MIMEApplicationJSON:
 
-				// Unmarshal the latest response body
-				latestResponse := responseJsonLines[len(responseJsonLines)-1]
-				var resData any
-				if err := json.Unmarshal(latestResponse, &resData); err != nil {
-					log.Error().Err(err).Msg("Error while unmarshaling response body")
-					return
+				// Split the response body by newlines to handle JSON lines (streaming response)
+				resBodies := bytes.Split(resBody, []byte("\n"))
+
+				// Remove trailing empty element if present (caused by trailing newline)
+				if len(resBodies) > 0 && len(resBodies[len(resBodies)-1]) == 0 {
+					resBodies = resBodies[:len(resBodies)-1]
 				}
 
-				// Check and store error response
-				// 1XX: Information responses
-				// 2XX: Successful responses (200 OK, 201 Created, 202 Accepted, 204 No Content)
-				// 3XX: Redirection messages
-				// 4XX: Client error responses (400 Bad Request, 401 Unauthorized, 404 Not Found, 408 Request Timeout)
-				// 5XX: Server error responses (500 Internal Server Error, 501 Not Implemented, 503 Service Unavailable)
-				details.Status = common.RequestStatusCompleted
+				// Check if we have any valid JSON content
+				if len(resBodies) == 0 || len(resBodies[0]) == 0 {
+					log.Error().Msg("No valid response JSON found")
+					break processResponse
+				}
+
+				// Extract error message from JSON response for failed requests
 				if c.Response().Status >= 400 {
-					details.Status = common.RequestStatusFailed
-					if data, ok := resData.(map[string]any); ok {
-						if message, exists := data["message"]; exists && message != nil {
-							if msgStr, ok := message.(string); ok {
-								details.ErrorResponse = msgStr
-							} else {
-								details.ErrorResponse = "Error response message is not a string"
-							}
+					// Unmarshal the last response (error info is in the last object)
+					var lastResData map[string]any
+					if err := json.Unmarshal(resBodies[len(resBodies)-1], &lastResData); err != nil {
+						log.Error().Err(err).Msg("Error while unmarshaling error response")
+						break processResponse
+					}
+
+					if message, exists := lastResData["message"]; exists && message != nil {
+						if msgStr, ok := message.(string); ok {
+							details.ErrorResponse = msgStr
 						} else {
-							details.ErrorResponse = "No error message found"
+							details.ErrorResponse = "Error response message is not a string"
 						}
+					} else {
+						details.ErrorResponse = "No error message found"
 					}
+					break processResponse
 				}
 
-				// Store the response data
-				if len(responseJsonLines) > 1 {
-					// handle streaming response
-					// convert JSON lines to JSON array
-					var responseJsonArray []any
-					for _, jsonLine := range responseJsonLines {
-						var obj any
-						err := json.Unmarshal(jsonLine, &obj)
-						if err != nil {
-							log.Error().Err(err).Msg("error unmarshalling JSON line")
-							continue
-						}
-						responseJsonArray = append(responseJsonArray, obj)
+				// Store the response data for successful requests
+				var responseData []any
+				for _, resBody := range resBodies {
+					var obj any
+					if err := json.Unmarshal(resBody, &obj); err != nil {
+						log.Error().Err(err).Msg("Error unmarshalling JSON line")
+						continue
 					}
-					details.ResponseData = responseJsonArray
+					responseData = append(responseData, obj)
+				}
+
+				// Store as single object if only one, otherwise as array
+				if len(responseData) == 1 {
+					details.ResponseData = responseData[0]
 				} else {
-					// single response
-					// type casting is required
-					switch data := resData.(type) {
-					case map[string]any:
-						details.ResponseData = data
-					case []any:
-						details.ResponseData = data
-					case string:
-						details.ResponseData = data
-					default:
-						log.Error().Msgf("unexpected response data type (%T)", data)
-					}
+					details.ResponseData = responseData
 				}
+			}
 
-				// Store details of the request
-				if err := common.SetRequest(reqID, details); err != nil {
-					log.Error().Err(err).Msg("Failed to store request details")
-				}
+			// Store details of the request (always executed for all content types)
+			if err := common.SetRequest(reqID, details); err != nil {
+				log.Error().Err(err).Msg("Failed to store request details")
 			}
 			// log.Debug().Msg("End - BodyDump() middleware")
 		},

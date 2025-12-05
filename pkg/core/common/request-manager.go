@@ -137,7 +137,7 @@ func RemoveAllRequests() {
 const DefaultRequestRetentionPeriod = 7 * 24 * time.Hour // 1 week
 
 // CleanupOldRequests removes completed or failed requests older than the specified duration.
-// Requests with "Handling" status are not removed regardless of age.
+// Requests with "received" or "in-progress" status are not removed regardless of age.
 // Returns the number of removed requests.
 func CleanupOldRequests(maxAge time.Duration) int {
 	kvList, ok := lkvstore.GetKvWithPrefix(requestKeyPrefix)

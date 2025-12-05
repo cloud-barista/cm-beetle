@@ -218,6 +218,7 @@ func RunServer(port string) {
 
 	// Test utility APIs
 	gBeetle.GET("/test/tracing", controller.TestTracing)
+	gBeetle.GET("/test/streaming", controller.TestStreamingResponse)
 
 	// API Request Management APIs
 	gBeetle.GET("/request/:reqId", controller.RestGetRequest)

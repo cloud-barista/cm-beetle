@@ -6118,6 +6118,24 @@ paths:
       summary: Generate target infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
+  /test/streaming:
+    get:
+      consumes:
+      - application/json
+      description: Returns multiple JSON objects as newline-delimited JSON (JSON Lines
+        format)
+      operationId: TestStreamingResponse
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Multiple JSON objects
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Test streaming response (JSON Lines)
+      tags:
+      - '[Test] Utilities'
   /test/tracing:
     get:
       consumes:
