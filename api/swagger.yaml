@@ -1811,6 +1811,8 @@ definitions:
         type: boolean
     type: object
   github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
+    description: '**(To be deprecated)** This structure is currently in use but will
+      be replaced by the generic `ApiResponse[T]` in the future.'
     properties:
       details:
         example: Any details
@@ -1830,41 +1832,39 @@ definitions:
     type: object
   model.ApiResponse-any:
     properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
+        example: Error message if failure
         type: string
-      item:
-        description: Contains a single object for successful responses
-      items:
-        description: Contains an array of objects for successful list responses
-        items: {}
-        type: array
       message:
         description: Optional message for additional context
+        example: Operation successful
         type: string
       success:
         description: Indicates whether the API call was successful
+        example: true
         type: boolean
     type: object
-  model.ApiResponse-cloudmodel_RecommendedVmInfra:
+  model.ApiResponse-array_cloudmodel_RecommendedVmInfra:
     properties:
-      error:
-        description: Error message for failed responses
-        type: string
-      item:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
-        description: Contains a single object for successful responses
-      items:
-        description: Contains an array of objects for successful list responses
+      data:
+        description: Contains the actual response data (single object, list, or page)
         items:
           $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
         type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
       message:
         description: Optional message for additional context
+        example: Operation successful
         type: string
       success:
         description: Indicates whether the API call was successful
+        example: true
         type: boolean
     type: object
   model.BastionNode:
@@ -5733,9 +5733,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: The result of recommended infrastructure
+          description: List of recommended infrastructure candidates
           schema:
-            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra'
+            $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra'
         "400":
           description: Bad Request
           schema:

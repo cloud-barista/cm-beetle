@@ -700,6 +700,14 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		} else {
 			// Find compatible VM spec and image pairs
 			compatiblePairsForEachServer[i], err = FindCompatibleVmSpecAndImagePairs(recommendedVmSpecInfoList, recommendedVmOsImageInfoList, csp)
+
+			// * Uncomment to check specs of compatible pairs
+			// tempLoggingLimit := 5
+			// for idx := 0; idx < len(compatiblePairsForEachServer[i]) && idx < tempLoggingLimit; idx++ {
+			// 	spec := compatiblePairsForEachServer[i][idx].Spec
+			// 	log.Debug().Msgf("(temp logging) compatiblePairsForEachServer[%d][%d]: %s (%d vCPU, %.1f GiB Memory)", i, idx, spec.Id, spec.VCPU, spec.MemoryGiB)
+			// }
+
 			if err != nil {
 				log.Warn().Msgf("failed to find compatible spec-image pair for server %s: %v", server.MachineId, err)
 				// Use fallback selection (first spec, first image)

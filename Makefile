@@ -41,7 +41,7 @@ swag swagger: ## Generate Swagger API documentation
 	@echo ""
 	@echo "Generating Swagger API documentation..."
 	@ln -sf cmd/$(MODULE_NAME)/main.go ./main.go
-	@$(SWAG) i --parseDependency --generalInfo ./main.go --dir ./ --output ./api
+	@$(SWAG) i --parseDependency --generalInfo ./main.go --dir ./ --exclude deepdiffgo,transx/examples --output ./api
 	@rm ./main.go
 	@echo "Generated Swagger API documentation!"
 
