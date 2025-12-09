@@ -13,78 +13,119 @@ limitations under the License.
 
 package model
 
+// Response represents a legacy API response structure.
+// @Description **(To be deprecated)** This structure is currently in use but will be replaced by the generic `ApiResponse[T]` in the future.
+type Response struct {
+	Success bool                   `json:"success" example:"true"`
+	Text    string                 `json:"text" example:"Any text"`
+	Detail  string                 `json:"details,omitempty" example:"Any details"`
+	Object  map[string]interface{} `json:"object,omitempty"`
+	List    []interface{}          `json:"list,omitempty"`
+}
+
 // ApiResponse represents a standardized API response structure.
 // It uses generics to support different data types for successful responses.
+//
 // For successful responses:
-//   - Item field contains a single object
-//   - Items field contains an array of objects
+//   - Data field contains the result object, array, or paginated result
 //
 // For error responses:
 //   - Error field contains the error message
-//
-// The Message field is optional and can provide additional context when needed.
 type ApiResponse[T any] struct {
-	Success bool   `json:"success"`           // Indicates whether the API call was successful
-	Item    *T     `json:"item,omitempty"`    // Contains a single object for successful responses
-	Items   []T    `json:"items,omitempty"`   // Contains an array of objects for successful list responses
-	Message string `json:"message,omitempty"` // Optional message for additional context
-	Error   string `json:"error,omitempty"`   // Error message for failed responses
+	Success bool `json:"success" example:"true"` // Indicates whether the API call was successful
+
+	// Code is reserved for internal error/status codes.
+	// Uncomment this field when internal status codes are needed.
+	// Code int `json:"code,omitempty"`
+
+	Data    T      `json:"data,omitempty"`                                     // Contains the actual response data (single object, list, or page)
+	Message string `json:"message,omitempty" example:"Operation successful"`   // Optional message for additional context
+	Error   string `json:"error,omitempty" example:"Error message if failure"` // Error message for failed responses
 }
 
-// Helper functions to create API responses
+// Page represents a standardized structure for paginated results.
+// This struct is intended to be used within the ApiResponse.Data field.
+type Page[T any] struct {
+	Items      []T   `json:"items"`                   // List of items in the current page
+	TotalCount int64 `json:"total_count" example:"1"` // Total number of items across all pages
+	Page       int   `json:"page" example:"1"`        // Current page number (1-based index)
+	Size       int   `json:"size" example:"10"`       // Number of items per page
+	HasNext    bool  `json:"has_next" example:"true"` // Indicates if there is a next page
+}
 
-// SuccessResponse creates a successful API response for a single object.
-// It returns an ApiResponse with success=true and the provided item.
-func SuccessResponse[T any](item T) ApiResponse[T] {
+// -------------------------------------------------------------------
+// Helper functions to create API responses
+// -------------------------------------------------------------------
+
+// SuccessResponse creates a successful API response for a single object or any generic data.
+// Usage:
+//   - Single Object: SuccessResponse(user) -> Data: User
+//   - Raw List:      SuccessResponse(users) -> Data: []User
+func SuccessResponse[T any](data T) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: true,
-		Item:    &item,
+		Data:    data,
 	}
 }
 
 // SuccessResponseWithMessage creates a successful API response with a custom message.
-// The message field can provide additional context about the successful operation.
-func SuccessResponseWithMessage[T any](item T, message string) ApiResponse[T] {
+func SuccessResponseWithMessage[T any](data T, message string) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: true,
-		Item:    &item,
+		Data:    data,
 		Message: message,
 	}
 }
 
-// SuccessListResponse creates a successful API response for a list of objects.
-// It returns an ApiResponse with success=true and the provided items array.
-func SuccessListResponse[T any](items []T) ApiResponse[T] {
-	return ApiResponse[T]{
+// SuccessListResponse is a convenience wrapper for list responses.
+// It explicitly takes a slice and returns ApiResponse[[]T].
+// This ensures that the Data field is always a JSON array.
+func SuccessListResponse[T any](items []T) ApiResponse[[]T] {
+	return ApiResponse[[]T]{
 		Success: true,
-		Items:   items,
+		Data:    items,
 	}
 }
 
 // SuccessListResponseWithMessage creates a successful list API response with a custom message.
-// The message field can provide additional context about the successful operation.
-func SuccessListResponseWithMessage[T any](items []T, message string) ApiResponse[T] {
-	return ApiResponse[T]{
+func SuccessListResponseWithMessage[T any](items []T, message string) ApiResponse[[]T] {
+	return ApiResponse[[]T]{
 		Success: true,
-		Items:   items,
+		Data:    items,
 		Message: message,
 	}
 }
 
+// SuccessPagedResponse creates a successful API response with pagination details.
+// It automatically wraps the items and metadata into a Page struct.
+func SuccessPagedResponse[T any](items []T, totalCount int64, page, size int) ApiResponse[Page[T]] {
+	hasNext := totalCount > int64(page*size)
+
+	pageData := Page[T]{
+		Items:      items,
+		TotalCount: totalCount,
+		Page:       page,
+		Size:       size,
+		HasNext:    hasNext,
+	}
+
+	return ApiResponse[Page[T]]{
+		Success: true,
+		Data:    pageData,
+	}
+}
+
 // ErrorResponse creates an error API response with a structured error.
-// When an error occurs, T cannot be a specific type, so we use 'any'.
-// It returns an ApiResponse with success=false and the error message.
-func ErrorResponse(errorMessage, Message string) ApiResponse[any] {
+// T is set to 'any' as there is no data to return.
+func ErrorResponse(errorMessage, message string) ApiResponse[any] {
 	return ApiResponse[any]{
 		Success: false,
 		Error:   errorMessage,
-		Message: Message,
+		Message: message,
 	}
 }
 
 // SimpleErrorResponse creates an error API response from a simple error message.
-// This is a convenience function for quick error responses.
-// It returns an ApiResponse with success=false and the error message.
 func SimpleErrorResponse(errorMessage string) ApiResponse[any] {
 	return ApiResponse[any]{
 		Success: false,

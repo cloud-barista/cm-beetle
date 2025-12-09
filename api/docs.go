@@ -501,13 +501,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -560,13 +560,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -620,13 +620,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -683,19 +683,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -750,13 +750,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -2371,9 +2371,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended infrastructure",
+                        "description": "List of recommended infrastructure candidates",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra"
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra"
                         }
                     },
                     "400": {
@@ -2477,13 +2477,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -2767,13 +2767,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -2880,19 +2880,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -5366,7 +5366,8 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response": {
+            "description": "**(To be deprecated)** This structure is currently in use but will be replaced by the generic ` + "`" + `ApiResponse[T]` + "`" + ` in the future.",
             "type": "object",
             "properties": {
                 "details": {
@@ -5394,57 +5395,50 @@ const docTemplate = `{
         "model.ApiResponse-any": {
             "type": "object",
             "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)"
+                },
                 "error": {
                     "description": "Error message for failed responses",
-                    "type": "string"
-                },
-                "item": {
-                    "description": "Contains a single object for successful responses"
-                },
-                "items": {
-                    "description": "Contains an array of objects for successful list responses",
-                    "type": "array",
-                    "items": {}
+                    "type": "string",
+                    "example": "Error message if failure"
                 },
                 "message": {
                     "description": "Optional message for additional context",
-                    "type": "string"
+                    "type": "string",
+                    "example": "Operation successful"
                 },
                 "success": {
                     "description": "Indicates whether the API call was successful",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
-        "model.ApiResponse-cloudmodel_RecommendedVmInfra": {
+        "model.ApiResponse-array_cloudmodel_RecommendedVmInfra": {
             "type": "object",
             "properties": {
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string"
-                },
-                "item": {
-                    "description": "Contains a single object for successful responses",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
-                        }
-                    ]
-                },
-                "items": {
-                    "description": "Contains an array of objects for successful list responses",
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                     }
                 },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
                 "message": {
                     "description": "Optional message for additional context",
-                    "type": "string"
+                    "type": "string",
+                    "example": "Operation successful"
                 },
                 "success": {
                     "description": "Indicates whether the API call was successful",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

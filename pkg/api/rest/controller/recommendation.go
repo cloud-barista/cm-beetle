@@ -243,7 +243,7 @@ func RecommendVMInfra(c echo.Context) error {
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "The result of recommended infrastructure"
+// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedVmInfra] "List of recommended infrastructure candidates"
 // @Failure 400 {object} model.ApiResponse[any] "Bad Request"
 // @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
 // @Router /recommendation/vmInfra [post]

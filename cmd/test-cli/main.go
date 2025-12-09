@@ -42,7 +42,7 @@ type CSPTestReport struct {
 	NamespaceID            string
 	OnpremiseInfraModel    onpremmodel.OnpremInfra
 	RecommendationRequest  controller.RecommendVmInfraRequest
-	RecommendationResponse *model.ApiResponse[cloudmodel.RecommendedVmInfra]
+	RecommendationResponse *model.ApiResponse[[]cloudmodel.RecommendedVmInfra]
 	MigrationResponse      *controller.MigrateInfraResponse
 	ListMCIResponse        *cloudmodel.MciInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
@@ -400,9 +400,11 @@ func main() {
 			// Store the full API response in CSP report
 			cspReport.RecommendationResponse = &recommendationApiResponse
 
+			recommendedCandidates := recommendationApiResponse.Data
+
 			// Log the first candidate that will be used for migration
-			if len(recommendationApiResponse.Items) > 0 {
-				log.Info().Msgf("Selected first candidate (index 0) out of %d for migration", len(recommendationApiResponse.Items))
+			if len(recommendedCandidates) > 0 {
+				log.Info().Msgf("Selected first candidate (index 0) out of %d for migration", len(recommendedCandidates))
 			} else {
 				log.Warn().Msg("No recommendation candidates available for migration")
 			}
@@ -432,8 +434,10 @@ func main() {
 			}
 			log.Warn().Msgf("Test 2 skipped for %s due to previous test failure", displayName)
 		} else {
+			recommendedCandidates := recommendationApiResponse.Data
+
 			// Check if we have a valid recommendation before migration
-			if len(recommendationApiResponse.Items) == 0 {
+			if len(recommendedCandidates) == 0 {
 				log.Error().Msg("Cannot proceed with migration: no recommendation candidates available")
 				result2 = TestResults{
 					TestName:     "Test 2: POST /beetle/migration/ns/{nsId}/mci",
@@ -451,7 +455,7 @@ func main() {
 			} else {
 				// Convert RecommendedVmInfra to MigrateInfraRequest
 				migrationRequest := controller.MigrateInfraRequest{
-					RecommendedVmInfra: recommendationApiResponse.Items[0],
+					RecommendedVmInfra: recommendedCandidates[0],
 				}
 				result2 = runMigrationTest(client, config, migrationRequest, displayName)
 			}
@@ -954,7 +958,7 @@ func convertMapToVmInfraInfo(responseMap map[string]interface{}) (*cloudmodel.Vm
 }
 
 // runRecommendationTest performs Test 1: POST /beetle/recommendation/vmInfra
-func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (model.ApiResponse[cloudmodel.RecommendedVmInfra], TestResults) {
+func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (model.ApiResponse[[]cloudmodel.RecommendedVmInfra], TestResults) {
 	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/vmInfra ---")
 
 	// Wait before API call for stability with animation
@@ -976,7 +980,7 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 	log.Debug().Msgf("API Request Body: %+v", recommendRequest)
 
 	// The new API returns multiple candidates using generic ApiResponse
-	var apiResponse model.ApiResponse[cloudmodel.RecommendedVmInfra]
+	var apiResponse model.ApiResponse[[]cloudmodel.RecommendedVmInfra]
 	err := common.ExecuteHttpRequest(
 		client,
 		"POST",
@@ -998,11 +1002,11 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		populateErrorInfo(&result, err, 0, url, recommendRequest)
 		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
 		log.Error().Err(err).Str("url", url).Msg("Recommendation test failed")
-		return model.ApiResponse[cloudmodel.RecommendedVmInfra]{}, result
+		return model.ApiResponse[[]cloudmodel.RecommendedVmInfra]{}, result
 	}
 
 	// Check if we have at least one candidate
-	if !apiResponse.Success || len(apiResponse.Items) == 0 {
+	if !apiResponse.Success || len(apiResponse.Data) == 0 {
 		errMsg := "No recommendation candidates returned"
 		if apiResponse.Error != "" {
 			errMsg = apiResponse.Error
@@ -1010,11 +1014,11 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		populateErrorInfo(&result, fmt.Errorf("%s", errMsg), 0, url, recommendRequest)
 		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
 		log.Error().Str("url", url).Msg("No recommendation candidates found")
-		return model.ApiResponse[cloudmodel.RecommendedVmInfra]{}, result
+		return model.ApiResponse[[]cloudmodel.RecommendedVmInfra]{}, result
 	}
 
 	// Log number of candidates received
-	log.Info().Msgf("Received %d recommendation candidate(s)", len(apiResponse.Items))
+	log.Info().Msgf("Received %d recommendation candidate(s)", len(apiResponse.Data))
 
 	result.Success = true
 	result.StatusCode = 200

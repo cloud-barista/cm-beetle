@@ -1810,7 +1810,9 @@ definitions:
         description: Whether to enable versioning
         type: boolean
     type: object
-  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response:
+    description: '**(To be deprecated)** This structure is currently in use but will
+      be replaced by the generic `ApiResponse[T]` in the future.'
     properties:
       details:
         example: Any details
@@ -1830,41 +1832,39 @@ definitions:
     type: object
   model.ApiResponse-any:
     properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
+        example: Error message if failure
         type: string
-      item:
-        description: Contains a single object for successful responses
-      items:
-        description: Contains an array of objects for successful list responses
-        items: {}
-        type: array
       message:
         description: Optional message for additional context
+        example: Operation successful
         type: string
       success:
         description: Indicates whether the API call was successful
+        example: true
         type: boolean
     type: object
-  model.ApiResponse-cloudmodel_RecommendedVmInfra:
+  model.ApiResponse-array_cloudmodel_RecommendedVmInfra:
     properties:
-      error:
-        description: Error message for failed responses
-        type: string
-      item:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
-        description: Contains a single object for successful responses
-      items:
-        description: Contains an array of objects for successful list responses
+      data:
+        description: Contains the actual response data (single object, list, or page)
         items:
           $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
         type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
       message:
         description: Optional message for additional context
+        example: Operation successful
         type: string
       success:
         description: Indicates whether the API call was successful
+        example: true
         type: boolean
     type: object
   model.BastionNode:
@@ -4361,11 +4361,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4404,11 +4404,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -4452,15 +4452,15 @@ paths:
           description: The result of deleting the migrated multi-cloud infrastructure
             (MCI)
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Delete the migrated mult-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4497,11 +4497,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4541,11 +4541,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -5733,9 +5733,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: The result of recommended infrastructure
+          description: List of recommended infrastructure candidates
           schema:
-            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra'
+            $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra'
         "400":
           description: Bad Request
           schema:
@@ -5812,11 +5812,11 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Generate migration report (with source-target correlation analysis)
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
@@ -6046,11 +6046,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Generate source infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
@@ -6127,15 +6127,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
       summary: Generate target infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
