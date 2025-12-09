@@ -22,7 +22,7 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 

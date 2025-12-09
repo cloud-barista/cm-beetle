@@ -1,95 +1,6 @@
 basePath: /beetle
 definitions:
-  ApiResponse-any:
-    properties:
-      data:
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  ApiResponse-array_RecommendedVmInfra:
-    properties:
-      data:
-        description: Contains the actual response data (single object, list, or page)
-        items:
-          $ref: '#/definitions/RecommendedVmInfra'
-        type: array
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  BastionNode:
-    properties:
-      mciId:
-        type: string
-      vmId:
-        type: string
-    type: object
-  Bucket:
-    properties:
-      creationDate:
-        example: "2025-09-04T04:18:06Z"
-        type: string
-      name:
-        example: spider-test-bucket
-        type: string
-    type: object
-  Buckets:
-    properties:
-      bucket:
-        items:
-          $ref: '#/definitions/Bucket'
-        type: array
-    type: object
-  CORSRule:
-    properties:
-      allowedHeaders:
-        description: Allowed headers (e.g., ["*"])
-        items:
-          type: string
-        type: array
-      allowedMethods:
-        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
-        items:
-          type: string
-        type: array
-      allowedOrigins:
-        description: Allowed origins (e.g., ["*"], ["https://example.com"])
-        items:
-          type: string
-        type: array
-      exposeHeaders:
-        description: Headers to expose (e.g., ["ETag"])
-        items:
-          type: string
-        type: array
-      maxAgeSeconds:
-        description: Preflight request cache time in seconds
-        type: integer
-    required:
-    - allowedMethods
-    - allowedOrigins
-    type: object
-  CloudProperty:
+  cloudmodel.CloudProperty:
     properties:
       csp:
         example: aws
@@ -98,7 +9,7 @@ definitions:
         example: ap-northeast-2
         type: string
     type: object
-  CommandExecutionStatus:
+  cloudmodel.CommandExecutionStatus:
     enum:
     - Queued
     - Handling
@@ -112,7 +23,7 @@ definitions:
     - CommandStatusCompleted
     - CommandStatusFailed
     - CommandStatusTimeout
-  CommandStatusInfo:
+  cloudmodel.CommandStatusInfo:
     properties:
       commandExecuted:
         description: CommandExecuted is the actual SSH command executed on the VM
@@ -152,7 +63,7 @@ definitions:
         type: string
       status:
         allOf:
-        - $ref: '#/definitions/CommandExecutionStatus'
+        - $ref: '#/definitions/cloudmodel.CommandExecutionStatus'
         description: Status represents the current status of the command execution
         example: Completed
       stderr:
@@ -173,7 +84,7 @@ definitions:
         example: req-12345678-abcd-1234-efgh-123456789012
         type: string
     type: object
-  ConnConfig:
+  cloudmodel.ConnConfig:
     properties:
       configName:
         type: string
@@ -186,50 +97,17 @@ definitions:
       providerName:
         type: string
       regionDetail:
-        $ref: '#/definitions/RegionDetail'
+        $ref: '#/definitions/cloudmodel.RegionDetail'
       regionRepresentative:
         type: boolean
       regionZoneInfo:
-        $ref: '#/definitions/RegionZoneInfo'
+        $ref: '#/definitions/cloudmodel.RegionZoneInfo'
       regionZoneInfoName:
         type: string
       verified:
         type: boolean
     type: object
-  CpuProperty:
-    properties:
-      architecture:
-        example: x86_64
-        type: string
-      cores:
-        description: Number of physical cores per CPU
-        example: 18
-        type: integer
-      cpus:
-        description: Number of physical CPUs (sockets)
-        example: 2
-        type: integer
-      maxSpeed:
-        description: Maximum speed in GHz
-        example: 3.6
-        type: number
-      model:
-        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
-        type: string
-      threads:
-        description: Number of logical CPUs (threads) per CPU with hyper-threading
-          enabled
-        example: 36
-        type: integer
-      vendor:
-        example: GenuineIntel
-        type: string
-    required:
-    - cores
-    - cpus
-    - threads
-    type: object
-  CreateSubGroupDynamicReq:
+  cloudmodel.CreateSubGroupDynamicReq:
     properties:
       connectionName:
         description: |-
@@ -286,7 +164,7 @@ definitions:
     - imageId
     - specId
     type: object
-  CreateSubGroupReq:
+  cloudmodel.CreateSubGroupReq:
     properties:
       connectionName:
         example: testcloud01-seoul
@@ -358,144 +236,7 @@ definitions:
     - subnetId
     - vNetId
     type: object
-  DataMigrationModel:
-    properties:
-      destination:
-        allOf:
-        - $ref: '#/definitions/EndpointDetails'
-        description: Destination endpoint configuration
-      destinationTransferOptions:
-        allOf:
-        - $ref: '#/definitions/TransferOptions'
-        description: Destination-specific transfer options
-      source:
-        allOf:
-        - $ref: '#/definitions/EndpointDetails'
-        description: Source endpoint configuration
-      sourceTransferOptions:
-        allOf:
-        - $ref: '#/definitions/TransferOptions'
-        description: Source-specific transfer options
-    required:
-    - destination
-    - destinationTransferOptions
-    - source
-    - sourceTransferOptions
-    type: object
-  DiskProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      label:
-        type: string
-      totalSize:
-        description: Unit GiB
-        example: 1024
-        type: integer
-      type:
-        description: SSD, HDD
-        example: SSD
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - label
-    - totalSize
-    - type
-    type: object
-  EndpointDetails:
-    properties:
-      backupCmd:
-        description: Command execution
-        type: string
-      dataPath:
-        description: Data location (required)
-        type: string
-      endpoint:
-        description: Endpoint configuration (auto-detects protocol based on provided
-          fields)
-        type: string
-      port:
-        description: 'Port for SSH host/IP (default: 22) or Object Storage API endpoint
-          (default: 1024)'
-        type: integer
-      restoreCmd:
-        description: Restore command string to be executed on this endpoint
-        type: string
-    required:
-    - dataPath
-    type: object
-  FilterOption:
-    properties:
-      exclude:
-        description: Patterns to exclude (e.g., "*.log", "temp/**", ".git/**")
-        items:
-          type: string
-        type: array
-      include:
-        description: Patterns to include (e.g., "*.txt", "data/**")
-        items:
-          type: string
-        type: array
-    type: object
-  FirewallRuleInfo:
-    properties:
-      CIDR:
-        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
-        example: 0.0.0.0/0
-        type: string
-      Direction:
-        description: Direction is the direction of the rule (inbound or outbound)
-        enum:
-        - inbound
-        - outbound
-        example: inbound
-        type: string
-      Port:
-        description: Port is the single port (e.g. "22") or port range (e.g. "1-65535")
-          for the rule
-        example: 1-65535
-        type: string
-      Protocol:
-        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)
-        enum:
-        - TCP
-        - UDP
-        - ICMP
-        - ALL
-        example: TCP
-        type: string
-    required:
-    - Direction
-    - Protocol
-    type: object
-  FirewallRuleProperty:
-    properties:
-      action:
-        description: e.g., allow, deny
-        type: string
-      direction:
-        description: e.g., inbound, outbound
-        type: string
-      dstCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      dstPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-      protocol:
-        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
-        type: string
-      srcCIDR:
-        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
-        type: string
-      srcPorts:
-        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
-        type: string
-    type: object
-  FirewallRuleReq:
+  cloudmodel.FirewallRuleReq:
     properties:
       CIDR:
         description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
@@ -529,40 +270,14 @@ definitions:
     - Direction
     - Protocol
     type: object
-  GatewayProperty:
-    properties:
-      interfaceName:
-        description: Name of the network interface associated with the gateway
-        type: string
-      ip:
-        description: IP address of the gateway
-        type: string
-      machineId:
-        description: Unique identifier for the machine (e.g., UUID)
-        type: string
-    type: object
-  GenerateMigrationReportRequest:
-    properties:
-      onpremiseInfraModel:
-        $ref: '#/definitions/OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  GenerateSourceInfraSummaryRequest:
-    properties:
-      onpremiseInfraModel:
-        $ref: '#/definitions/OnpremInfra'
-    required:
-    - onpremiseInfraModel
-    type: object
-  IdList:
+  cloudmodel.IdList:
     properties:
       idList:
         items:
           type: string
         type: array
     type: object
-  ImageInfo:
+  cloudmodel.ImageInfo:
     properties:
       connectionName:
         type: string
@@ -575,7 +290,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/KeyValue'
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
       fetchedTime:
         type: string
@@ -584,7 +299,7 @@ definitions:
         type: string
       imageStatus:
         allOf:
-        - $ref: '#/definitions/ImageStatus'
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
         description: Available, Deprecated, NA
         example: Available
       infraType:
@@ -608,7 +323,7 @@ definitions:
         type: string
       osArchitecture:
         allOf:
-        - $ref: '#/definitions/OSArchitecture'
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
         description: arm64, x86_64 etc.
         example: x86_64
       osDiskSizeGB:
@@ -625,7 +340,7 @@ definitions:
         type: string
       osPlatform:
         allOf:
-        - $ref: '#/definitions/OSPlatform'
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
         description: Linux/UNIX, Windows, NA
         example: Linux/UNIX
       osType:
@@ -645,20 +360,7 @@ definitions:
         example: wef12awefadf1221edcf
         type: string
     type: object
-  ImageSourceCommandHistory:
-    properties:
-      commandExecuted:
-        description: CommandExecuted is the actual SSH command executed on the VM
-          (may be adjusted)
-        example: ls -la
-        type: string
-      index:
-        description: Index is sequential identifier for this command execution (1,
-          2, 3, ...)
-        example: 1
-        type: integer
-    type: object
-  ImageStatus:
+  cloudmodel.ImageStatus:
     enum:
     - Available
     - Unavailable
@@ -670,179 +372,14 @@ definitions:
     - ImageUnavailable
     - ImageDeprecated
     - ImageNA
-  JSONResult:
-    type: object
-  K8sClusterDynamicReq:
-    properties:
-      connectionName:
-        default: tencent-ap-seoul
-        description: |-
-          if ConnectionName is given, the VM tries to use associtated credential.
-          if not, it will use predefined ConnectionName in Spec objects
-        type: string
-      description:
-        example: Description
-        type: string
-      desiredNodeSize:
-        default: "1"
-        example: "1"
-        type: string
-      imageId:
-        description: ImageId is field for id of a image in common namespace
-        example: default, tencent+ap-seoul+ubuntu20.04
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      maxNodeSize:
-        default: "2"
-        example: "3"
-        type: string
-      minNodeSize:
-        default: "1"
-        example: "1"
-        type: string
-      name:
-        description: K8sCluster name if it is not empty.
-        example: k8scluster01
-        type: string
-      nodeGroupName:
-        description: NodeGroup name if it is not empty
-        example: k8sng01
-        type: string
-      onAutoScaling:
-        default: "true"
-        example: "true"
-        type: string
-      rootDiskSize:
-        default: default
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
-        type: string
-      rootDiskType:
-        default: default
-        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
-          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
-          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: default, TYPE1, ...
-        type: string
-      specId:
-        description: SpecId is field for id of a spec in common namespace
-        example: tencent+ap-seoul+S2.MEDIUM4
-        type: string
-      version:
-        description: K8s Clsuter version
-        example: "1.29"
-        type: string
-    required:
-    - imageId
-    - name
-    - specId
-    type: object
-  K8sNodeGroupReq:
-    properties:
-      description:
-        example: Description
-        type: string
-      desiredNodeSize:
-        example: "1"
-        type: string
-      imageId:
-        example: image-01
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      maxNodeSize:
-        example: "3"
-        type: string
-      minNodeSize:
-        example: "1"
-        type: string
-      name:
-        example: k8sng01
-        type: string
-      onAutoScaling:
-        description: autoscale config.
-        example: "true"
-        type: string
-      rootDiskSize:
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: "40"
-        type: string
-      rootDiskType:
-        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
-          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
-          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: cloud_essd
-        type: string
-      specId:
-        example: spec-01
-        type: string
-      sshKeyId:
-        example: sshkey-01
-        type: string
-    type: object
-  KeyValue:
+  cloudmodel.KeyValue:
     properties:
       key:
         type: string
       value:
         type: string
     type: object
-  Kubernetes:
-    properties:
-      node_count:
-        $ref: '#/definitions/NodeCount'
-      nodes:
-        items:
-          $ref: '#/definitions/Node'
-        type: array
-      workloads:
-        additionalProperties: true
-        type: object
-    type: object
-  KubernetesInfoList:
-    properties:
-      servers:
-        items:
-          $ref: '#/definitions/Kubernetes'
-        type: array
-    required:
-    - servers
-    type: object
-  ListAllMyBucketsResult:
-    properties:
-      buckets:
-        $ref: '#/definitions/Buckets'
-      owner:
-        $ref: '#/definitions/Owner'
-    type: object
-  ListBucketResult:
-    properties:
-      isTruncated:
-        example: false
-        type: boolean
-      marker:
-        example: ""
-        type: string
-      maxKeys:
-        example: 1000
-        type: integer
-      name:
-        example: spider-test-bucket
-        type: string
-      prefix:
-        example: ""
-        type: string
-    type: object
-  Location:
+  cloudmodel.Location:
     properties:
       display:
         type: string
@@ -851,7 +388,7 @@ definitions:
       longitude:
         type: number
     type: object
-  MciCmdReq:
+  cloudmodel.MciCmdReq:
     properties:
       command:
         example:
@@ -866,7 +403,7 @@ definitions:
     required:
     - command
     type: object
-  MciCreationErrors:
+  cloudmodel.MciCreationErrors:
     properties:
       failedVmCount:
         description: FailedVmCount is the number of VMs that failed to be created
@@ -885,16 +422,16 @@ definitions:
       vmCreationErrors:
         description: VmCreationErrors contains errors from actual VM creation phase
         items:
-          $ref: '#/definitions/VmCreationError'
+          $ref: '#/definitions/cloudmodel.VmCreationError'
         type: array
       vmObjectCreationErrors:
         description: VmObjectCreationErrors contains errors from VM object creation
           phase
         items:
-          $ref: '#/definitions/VmCreationError'
+          $ref: '#/definitions/cloudmodel.VmCreationError'
         type: array
     type: object
-  MciDynamicReq:
+  cloudmodel.MciDynamicReq:
     properties:
       description:
         example: Made in CB-TB
@@ -931,7 +468,7 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       subGroups:
         description: |-
@@ -964,7 +501,7 @@ definitions:
             }
           ]
         items:
-          $ref: '#/definitions/CreateSubGroupDynamicReq'
+          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
         type: array
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
@@ -975,7 +512,7 @@ definitions:
     - name
     - subGroups
     type: object
-  MciInfo:
+  cloudmodel.MciInfo:
     properties:
       configureCloudAdaptiveNetwork:
         default: "no"
@@ -988,7 +525,7 @@ definitions:
         type: string
       creationErrors:
         allOf:
-        - $ref: '#/definitions/MciCreationErrors'
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
         description: CreationErrors contains information about VM creation failures
           (if any)
       description:
@@ -1025,11 +562,11 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       postCommandResult:
         allOf:
-        - $ref: '#/definitions/MciSshCmdResult'
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
         description: PostCommandResult is the result of the command for bootstraping
           the VMs
       resourceType:
@@ -1038,7 +575,7 @@ definitions:
       status:
         type: string
       statusCount:
-        $ref: '#/definitions/StatusCountInfo'
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
@@ -1060,17 +597,17 @@ definitions:
         type: string
       vm:
         items:
-          $ref: '#/definitions/VmInfo'
+          $ref: '#/definitions/cloudmodel.VmInfo'
         type: array
     type: object
-  MciInfoList:
+  cloudmodel.MciInfoList:
     properties:
       mci:
         items:
-          $ref: '#/definitions/MciInfo'
+          $ref: '#/definitions/cloudmodel.MciInfo'
         type: array
     type: object
-  MciReq:
+  cloudmodel.MciReq:
     properties:
       description:
         example: Made in CB-TB
@@ -1109,11 +646,11 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/MciCmdReq'
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
       subGroups:
         items:
-          $ref: '#/definitions/CreateSubGroupReq'
+          $ref: '#/definitions/cloudmodel.CreateSubGroupReq'
         type: array
       systemLabel:
         description: SystemLabel is for describing the mci in a keyword (any string
@@ -1124,418 +661,14 @@ definitions:
     - name
     - subGroups
     type: object
-  MciSshCmdResult:
+  cloudmodel.MciSshCmdResult:
     properties:
       results:
         items:
-          $ref: '#/definitions/SshCmdResult'
+          $ref: '#/definitions/cloudmodel.SshCmdResult'
         type: array
     type: object
-  MemoryProperty:
-    properties:
-      available:
-        description: Unit GiB
-        type: integer
-      totalSize:
-        description: Unit GiB
-        example: 128
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        description: Unit GiB
-        type: integer
-    required:
-    - totalSize
-    - type
-    type: object
-  MigrateInfraRequest:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/CloudProperty'
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/SecurityGroupReq'
-        type: array
-      targetSshKey:
-        $ref: '#/definitions/SshKeyReq'
-      targetVNet:
-        $ref: '#/definitions/VNetReq'
-      targetVmInfra:
-        $ref: '#/definitions/MciReq'
-      targetVmOsImageList:
-        items:
-          $ref: '#/definitions/ImageInfo'
-        type: array
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/SpecInfo'
-        type: array
-    type: object
-  MigrateInfraResponse:
-    properties:
-      configureCloudAdaptiveNetwork:
-        default: "no"
-        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
-          Adaptive Network (CLADNet) ([yes/no] default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "yes"
-        type: string
-      creationErrors:
-        allOf:
-        - $ref: '#/definitions/MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
-          (if any)
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
-        items:
-          type: string
-        type: array
-      placementAlgo:
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      postCommandResult:
-        allOf:
-        - $ref: '#/definitions/MciSshCmdResult'
-        description: PostCommandResult is the result of the command for bootstraping
-          the VMs
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      status:
-        type: string
-      statusCount:
-        $ref: '#/definitions/StatusCountInfo'
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        items:
-          type: string
-        type: array
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/VmInfo'
-        type: array
-    type: object
-  MigrateInfraWithDefaultsRequest:
-    properties:
-      description:
-        example: Made in CB-TB
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        example: mci01
-        type: string
-      policyOnPartialFailure:
-        default: continue
-        description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
-        enum:
-        - continue
-        - rollback
-        - refine
-        example: continue
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      subGroups:
-        description: |-
-          SubGroups is array of VM requests for multi-cloud infrastructure
-          Example: Multiple VM groups across different CSPs
-          [
-            {
-              "name": "aws-group",
-              "subGroupSize": "3",
-              "specId": "aws+ap-northeast-2+t3.nano",
-              "imageId": "ami-01f71f215b23ba262",
-              "rootDiskSize": "50",
-              "label": {"role": "worker", "csp": "aws"}
-            },
-            {
-              "name": "azure-group",
-              "subGroupSize": "2",
-              "specId": "azure+koreasouth+standard_b1s",
-              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-              "rootDiskSize": "50",
-              "label": {"role": "head", "csp": "azure"}
-            },
-            {
-              "name": "gcp-group",
-              "subGroupSize": "1",
-              "specId": "gcp+asia-northeast3+g1-small",
-              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-              "rootDiskSize": "50",
-              "label": {"role": "test", "csp": "gcp"}
-            }
-          ]
-        items:
-          $ref: '#/definitions/CreateSubGroupDynamicReq'
-        type: array
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: ""
-        type: string
-    required:
-    - name
-    - subGroups
-    type: object
-  MigrateInfraWithDefaultsResponse:
-    properties:
-      configureCloudAdaptiveNetwork:
-        default: "no"
-        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
-          Adaptive Network (CLADNet) ([yes/no] default:yes)
-        enum:
-        - "yes"
-        - "no"
-        example: "yes"
-        type: string
-      creationErrors:
-        allOf:
-        - $ref: '#/definitions/MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
-          (if any)
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      installMonAgent:
-        default: "no"
-        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
-          default:no)
-        enum:
-        - "yes"
-        - "no"
-        example: "no"
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
-        items:
-          type: string
-        type: array
-      placementAlgo:
-        type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      postCommandResult:
-        allOf:
-        - $ref: '#/definitions/MciSshCmdResult'
-        description: PostCommandResult is the result of the command for bootstraping
-          the VMs
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      status:
-        type: string
-      statusCount:
-        $ref: '#/definitions/StatusCountInfo'
-      systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
-          can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        items:
-          type: string
-        type: array
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vm:
-        items:
-          $ref: '#/definitions/VmInfo'
-        type: array
-    type: object
-  MigrateObjectStorageRequest:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/CloudProperty'
-      targetObjectStorages:
-        items:
-          $ref: '#/definitions/TargetObjectStorageProperty'
-        type: array
-    type: object
-  NetworkDetail:
-    properties:
-      cidrBlocks:
-        items:
-          type: string
-        type: array
-      defaultGateways:
-        items:
-          $ref: '#/definitions/GatewayProperty'
-        type: array
-    type: object
-  NetworkInterfaceProperty:
-    properties:
-      ipv4CidrBlocks:
-        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
-          of inet addr, Bcast, and Mask
-        items:
-          type: string
-        type: array
-      ipv6CidrBlocks:
-        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
-        items:
-          type: string
-        type: array
-      macAddress:
-        description: MAC address
-        type: string
-      mtu:
-        description: Maximum Transmission Unit (MTU) in bytes
-        type: integer
-      name:
-        description: Interface name (e.g., eth0, ens01, enp0s3)
-        type: string
-      state:
-        description: Interface state (e.g., UP, DOWN)
-        type: string
-    required:
-    - name
-    type: object
-  NetworkProperty:
-    properties:
-      ipv4Networks:
-        $ref: '#/definitions/NetworkDetail'
-      ipv6Networks:
-        allOf:
-        - $ref: '#/definitions/NetworkDetail'
-        description: TBD
-    type: object
-  Node:
-    properties:
-      addresses: {}
-      labels: {}
-      name: {}
-      node_info: {}
-      node_spec:
-        $ref: '#/definitions/NodeSpec'
-      type:
-        $ref: '#/definitions/NodeType'
-    type: object
-  NodeCount:
-    properties:
-      control_plane:
-        type: integer
-      total:
-        type: integer
-      worker:
-        type: integer
-    type: object
-  NodeSpec:
-    properties:
-      cpu:
-        description: cores
-        type: integer
-      ephemeral_storage:
-        description: MiB
-        type: integer
-      memory:
-        description: MiB
-        type: integer
-    type: object
-  NodeType:
-    enum:
-    - control-plane
-    - worker
-    type: string
-    x-enum-varnames:
-    - NodeTypeControlPlane
-    - NodeTypeWorker
-  OSArchitecture:
+  cloudmodel.OSArchitecture:
     enum:
     - arm32
     - arm64
@@ -1559,7 +692,7 @@ definitions:
     - S390X
     - ArchitectureNA
     - ArchitectureUnknown
-  OSPlatform:
+  cloudmodel.OSPlatform:
     enum:
     - Linux/UNIX
     - Windows
@@ -1569,236 +702,7 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  ObjectStorageOption:
-    properties:
-      accessKeyId:
-        description: Common authentication (REQUIRED - must be provided by user)
-        type: string
-      client:
-        default: spider
-        description: Client selection
-        type: string
-      expiresIn:
-        default: 3600
-        description: Presigned URL configuration (spider client only)
-        type: integer
-      filter:
-        allOf:
-        - $ref: '#/definitions/FilterOption'
-        description: File filtering options (applied after listing objects, before
-          upload/download)
-      maxRetries:
-        default: 3
-        description: 'Maximum number of retry attempts (default: 3)'
-        type: integer
-      region:
-        default: us-east-1
-        description: 'AWS region (for minio client, default: "us-east-1")'
-        type: string
-      secretAccessKey:
-        description: AWS Secret Access Key (REQUIRED for minio client)
-        type: string
-      timeout:
-        default: 300
-        description: HTTP request configuration (optional)
-        type: integer
-      useSSL:
-        default: false
-        description: 'Use HTTPS (default: true)'
-        type: boolean
-    required:
-    - accessKeyId
-    type: object
-  OnpremInfra:
-    properties:
-      network:
-        $ref: '#/definitions/NetworkProperty'
-      servers:
-        items:
-          $ref: '#/definitions/ServerProperty'
-        type: array
-    required:
-    - servers
-    type: object
-  OsProperty:
-    properties:
-      id:
-        example: ubuntu
-        type: string
-      idLike:
-        example: debian
-        type: string
-      name:
-        example: Ubuntu
-        type: string
-      prettyName:
-        description: Pretty name
-        example: Ubuntu 22.04.3 LTS
-        type: string
-      version:
-        description: Full version string
-        example: 22.04.3 LTS (Jammy Jellyfish)
-        type: string
-      versionCodename:
-        example: jammy
-        type: string
-      versionId:
-        example: "22.04"
-        type: string
-    required:
-    - prettyName
-    type: object
-  Owner:
-    properties:
-      displayName:
-        example: aws-ap-northeast-2
-        type: string
-      id:
-        example: aws-ap-northeast-2
-        type: string
-    type: object
-  RecommendInfraRequest:
-    properties:
-      desiredProvider:
-        example: aws
-        type: string
-      desiredRegion:
-        example: ap-northeast-2
-        type: string
-      servers:
-        items:
-          $ref: '#/definitions/Kubernetes'
-        type: array
-    type: object
-  RecommendObjectStorageRequest:
-    properties:
-      desiredCloud:
-        $ref: '#/definitions/CloudProperty'
-      sourceObjectStorages:
-        items:
-          $ref: '#/definitions/SourceObjectStorageProperty'
-        minItems: 1
-        type: array
-    required:
-    - desiredCloud
-    - sourceObjectStorages
-    type: object
-  RecommendObjectStorageResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/CloudProperty'
-      targetObjectStorages:
-        items:
-          $ref: '#/definitions/TargetObjectStorageProperty'
-        type: array
-    type: object
-  RecommendSecurityGroupResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      status:
-        type: string
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/RecommendedSecurityGroup'
-        type: array
-    type: object
-  RecommendVNetResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      targetVNetList:
-        items:
-          $ref: '#/definitions/RecommendedVNet'
-        type: array
-    type: object
-  RecommendVmInfraRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/CloudProperty'
-      onpremiseInfraModel:
-        $ref: '#/definitions/OnpremInfra'
-    type: object
-  RecommendVmInfraResponse:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/CloudProperty'
-      targetSecurityGroupList:
-        items:
-          $ref: '#/definitions/SecurityGroupReq'
-        type: array
-      targetSshKey:
-        $ref: '#/definitions/SshKeyReq'
-      targetVNet:
-        $ref: '#/definitions/VNetReq'
-      targetVmInfra:
-        $ref: '#/definitions/MciReq'
-      targetVmOsImageList:
-        items:
-          $ref: '#/definitions/ImageInfo'
-        type: array
-      targetVmSpecList:
-        items:
-          $ref: '#/definitions/SpecInfo'
-        type: array
-    type: object
-  RecommendVmInfraWithDefaultsRequest:
-    properties:
-      desiredCspAndRegionPair:
-        $ref: '#/definitions/CloudProperty'
-      onpremiseInfraModel:
-        $ref: '#/definitions/OnpremInfra'
-    type: object
-  RecommendVmInfraWithDefaultsResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      targetVmInfraList:
-        items:
-          $ref: '#/definitions/RecommendedVmInfraDynamic'
-        type: array
-    type: object
-  RecommendVmOsImageResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      recommendedVmOsImageList:
-        items:
-          $ref: '#/definitions/RecommendedVmOsImage'
-        type: array
-      status:
-        type: string
-    type: object
-  RecommendVmSpecResponse:
-    properties:
-      count:
-        type: integer
-      description:
-        type: string
-      recommendedVmSpecList:
-        items:
-          $ref: '#/definitions/RecommendedVmSpec'
-        type: array
-      status:
-        type: string
-    type: object
-  RecommendedSecurityGroup:
+  cloudmodel.RecommendedSecurityGroup:
     properties:
       description:
         type: string
@@ -1809,54 +713,54 @@ definitions:
       status:
         type: string
       targetSecurityGroup:
-        $ref: '#/definitions/SecurityGroupReq'
+        $ref: '#/definitions/cloudmodel.SecurityGroupReq'
     type: object
-  RecommendedVNet:
+  cloudmodel.RecommendedVNet:
     properties:
       description:
         type: string
       status:
         type: string
       targetVNet:
-        $ref: '#/definitions/VNetReq'
+        $ref: '#/definitions/cloudmodel.VNetReq'
     type: object
-  RecommendedVmInfra:
+  cloudmodel.RecommendedVmInfra:
     properties:
       description:
         type: string
       status:
         type: string
       targetCloud:
-        $ref: '#/definitions/CloudProperty'
+        $ref: '#/definitions/cloudmodel.CloudProperty'
       targetSecurityGroupList:
         items:
-          $ref: '#/definitions/SecurityGroupReq'
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
         type: array
       targetSshKey:
-        $ref: '#/definitions/SshKeyReq'
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
       targetVNet:
-        $ref: '#/definitions/VNetReq'
+        $ref: '#/definitions/cloudmodel.VNetReq'
       targetVmInfra:
-        $ref: '#/definitions/MciReq'
+        $ref: '#/definitions/cloudmodel.MciReq'
       targetVmOsImageList:
         items:
-          $ref: '#/definitions/ImageInfo'
+          $ref: '#/definitions/cloudmodel.ImageInfo'
         type: array
       targetVmSpecList:
         items:
-          $ref: '#/definitions/SpecInfo'
+          $ref: '#/definitions/cloudmodel.SpecInfo'
         type: array
     type: object
-  RecommendedVmInfraDynamic:
+  cloudmodel.RecommendedVmInfraDynamic:
     properties:
       description:
         type: string
       status:
         type: string
       targetVmInfra:
-        $ref: '#/definitions/MciDynamicReq'
+        $ref: '#/definitions/cloudmodel.MciDynamicReq'
     type: object
-  RecommendedVmOsImage:
+  cloudmodel.RecommendedVmOsImage:
     properties:
       description:
         type: string
@@ -1867,9 +771,9 @@ definitions:
       status:
         type: string
       targetVmOsImage:
-        $ref: '#/definitions/ImageInfo'
+        $ref: '#/definitions/cloudmodel.ImageInfo'
     type: object
-  RecommendedVmSpec:
+  cloudmodel.RecommendedVmSpec:
     properties:
       description:
         type: string
@@ -1880,14 +784,14 @@ definitions:
       status:
         type: string
       targetVmSpec:
-        $ref: '#/definitions/SpecInfo'
+        $ref: '#/definitions/cloudmodel.SpecInfo'
     type: object
-  RegionDetail:
+  cloudmodel.RegionDetail:
     properties:
       description:
         type: string
       location:
-        $ref: '#/definitions/Location'
+        $ref: '#/definitions/cloudmodel.Location'
       regionId:
         type: string
       regionName:
@@ -1897,242 +801,21 @@ definitions:
           type: string
         type: array
     type: object
-  RegionInfo:
+  cloudmodel.RegionInfo:
     properties:
       region:
         type: string
       zone:
         type: string
     type: object
-  RegionZoneInfo:
+  cloudmodel.RegionZoneInfo:
     properties:
       assignedRegion:
         type: string
       assignedZone:
         type: string
     type: object
-  RequestDetails:
-    properties:
-      endTime:
-        description: The time when the request was fully processed.
-        type: string
-      errorResponse:
-        description: A message describing any error that occurred during request processing.
-        type: string
-      requestInfo:
-        allOf:
-        - $ref: '#/definitions/RequestInfo'
-        description: Extracted information about the request.
-      responseData:
-        description: The data sent back in response to the request.
-      startTime:
-        description: The time when the request was received by the server.
-        type: string
-      status:
-        description: The current status of the request (e.g., "Handling", "Error",
-          "Success").
-        type: string
-    type: object
-  RequestInfo:
-    properties:
-      body:
-        description: 'Optional: request body'
-      header:
-        additionalProperties:
-          type: string
-        description: Key-value pairs of the request headers.
-        type: object
-      method:
-        description: HTTP method (GET, POST, etc.), indicating the request's action
-          type.
-        type: string
-      url:
-        description: The URL the request is made to.
-        type: string
-    type: object
-  Response:
-    description: '**(To be deprecated)** This structure is currently in use but will
-      be replaced by the generic `ApiResponse[T]` in the future.'
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
-        type: boolean
-      text:
-        example: Any text
-        type: string
-    type: object
-  RestGetAllSecurityGroupResponse:
-    properties:
-      securityGroup:
-        items:
-          $ref: '#/definitions/SecurityGroupInfo'
-        type: array
-    type: object
-  RestGetAllSshKeyResponse:
-    properties:
-      sshKey:
-        items:
-          $ref: '#/definitions/SshKeyInfo'
-        type: array
-    type: object
-  RestGetAllVNetResponse:
-    properties:
-      vNet:
-        items:
-          $ref: '#/definitions/VNetInfo'
-        type: array
-    type: object
-  RouteProperty:
-    properties:
-      destination:
-        description: Destination network, expressed in CIDR format
-        type: string
-      gateway:
-        description: Gateway address to which packets are forwarded
-        type: string
-      interface:
-        description: Network interface associated with the route
-        type: string
-      linkState:
-        description: Link state of the route (e.g., UP, DOWN)
-        type: string
-      metric:
-        description: Metric value indicating the priority of the route
-        type: integer
-      protocol:
-        description: Protocol used to set the route (e.g., kernel, static)
-        type: string
-      scope:
-        description: Scope of the route (e.g., global, link, host)
-        type: string
-      source:
-        description: Optionally stores the source address (used for policy-based routing)
-        type: string
-    type: object
-  RsyncOption:
-    properties:
-      archive:
-        default: true
-        description: '-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)'
-        type: boolean
-      compress:
-        default: true
-        description: Rsync-specific options
-        type: boolean
-      connectTimeout:
-        default: 30
-        description: SSH connection timeout in seconds
-        type: integer
-      delete:
-        default: false
-        description: '--delete: Delete extraneous files from dest dirs'
-        type: boolean
-      dryRun:
-        default: false
-        description: Perform a trial run with no changes made
-        type: boolean
-      filter:
-        allOf:
-        - $ref: '#/definitions/FilterOption'
-        description: File filtering options (include/exclude patterns) - use nested
-          structure for better organization
-      insecureSkipHostKeyVerification:
-        default: false
-        description: |-
-          InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.
-          Adds "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" options.
-          Warning: This can be a security risk and should only be used in trusted environments.
-        type: boolean
-      progress:
-        default: false
-        description: Show progress during transfer
-        type: boolean
-      rsyncPath:
-        default: rsync
-        description: Path to the rsync executable (if empty, uses system PATH)
-        type: string
-      sshPrivateKeyPath:
-        description: SSH private key path
-        type: string
-      transferDirContentsOnly:
-        default: false
-        description: |-
-          TransferDirContentsOnly, if true, adds a trailing slash to source paths
-          to transfer only the contents of the directory and not the directory itself.
-        type: boolean
-      username:
-        description: SSH connection & authentication options (integrated)
-        type: string
-      verbose:
-        default: false
-        description: Transfer behavior options
-        type: boolean
-    type: object
-  SecurityGroupInfo:
-    properties:
-      associatedObjectList:
-        items:
-          type: string
-        type: array
-      connectionConfig:
-        $ref: '#/definitions/ConnConfig'
-      connectionName:
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
-        type: string
-      description:
-        type: string
-      firewallRules:
-        items:
-          $ref: '#/definitions/FirewallRuleInfo'
-        type: array
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      isAutoGenerated:
-        type: boolean
-      keyValueList:
-        items:
-          $ref: '#/definitions/KeyValue'
-        type: array
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the Resource in a keyword (any
-          string can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vNetId:
-        type: string
-    type: object
-  SecurityGroupReq:
+  cloudmodel.SecurityGroupReq:
     properties:
       connectionName:
         type: string
@@ -2145,7 +828,7 @@ definitions:
       firewallRules:
         description: validate:"required"`
         items:
-          $ref: '#/definitions/FirewallRuleReq'
+          $ref: '#/definitions/cloudmodel.FirewallRuleReq'
         type: array
       name:
         type: string
@@ -2156,445 +839,7 @@ definitions:
     - name
     - vNetId
     type: object
-  ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/DiskProperty'
-        type: array
-      firewallTable:
-        items:
-          $ref: '#/definitions/FirewallRuleProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/NetworkInterfaceProperty'
-        type: array
-      machineId:
-        description: Unique identifier for the server (e.g., UUID)
-        type: string
-      memory:
-        $ref: '#/definitions/MemoryProperty'
-      os:
-        $ref: '#/definitions/OsProperty'
-      rootDisk:
-        $ref: '#/definitions/DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/RouteProperty'
-        type: array
-    type: object
-  SimpleMessage:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
-  SimpleMsg:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
-  SourceCPUInfo:
-    properties:
-      architecture:
-        example: x86_64
-        type: string
-      cores:
-        example: 8
-        type: integer
-      cpus:
-        example: 1
-        type: integer
-      maxSpeed:
-        example: 2.4
-        type: number
-      model:
-        example: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
-        type: string
-      threads:
-        example: 16
-        type: integer
-      utilization:
-        example: 45.2
-        type: number
-      vendor:
-        example: GenuineIntel
-        type: string
-    type: object
-  SourceDiskInfo:
-    properties:
-      available:
-        example: 200
-        type: integer
-      label:
-        example: /dev/sda
-        type: string
-      totalGb:
-        example: 500
-        type: integer
-      type:
-        example: SSD
-        type: string
-      used:
-        example: 300
-        type: integer
-      utilization:
-        example: 60
-        type: number
-    type: object
-  SourceFirewallRule:
-    properties:
-      action:
-        example: allow
-        type: string
-      direction:
-        example: inbound
-        type: string
-      dstCidr:
-        example: 0.0.0.0/0
-        type: string
-      dstPorts:
-        example: 22,80,443
-        type: string
-      protocol:
-        example: tcp
-        type: string
-      srcCidr:
-        example: 0.0.0.0/0
-        type: string
-      srcPorts:
-        example: '*'
-        type: string
-    type: object
-  SourceInfraSummary:
-    properties:
-      computeResources:
-        $ref: '#/definitions/SourceSummaryComputeResources'
-      networkResources:
-        $ref: '#/definitions/SourceSummaryNetworkResources'
-      overview:
-        $ref: '#/definitions/SourceSummaryInfraOverview'
-      securityResources:
-        $ref: '#/definitions/SourceSummarySecurityResources'
-      storageResources:
-        $ref: '#/definitions/SourceSummaryStorageResources'
-      summaryMetadata:
-        $ref: '#/definitions/SourceSummaryMetadata'
-    type: object
-  SourceInterfaceInfo:
-    properties:
-      ipAddress:
-        example: 192.168.1.10
-        type: string
-      ipv4CidrBlocks:
-        example:
-        - 192.168.1.10/24
-        items:
-          type: string
-        type: array
-      ipv6CidrBlocks:
-        example:
-        - fe80::1/64
-        items:
-          type: string
-        type: array
-      macAddress:
-        example: 00:1a:2b:3c:4d:5e
-        type: string
-      mtu:
-        example: 1500
-        type: integer
-      name:
-        example: eth0
-        type: string
-      state:
-        example: up
-        type: string
-    type: object
-  SourceMemoryInfo:
-    properties:
-      available:
-        example: 20
-        type: integer
-      totalGb:
-        example: 32
-        type: integer
-      type:
-        example: DDR4
-        type: string
-      used:
-        example: 12
-        type: integer
-      utilization:
-        example: 37.5
-        type: number
-    type: object
-  SourceNetworkBrief:
-    properties:
-      ipAddress:
-        example: 192.168.1.10
-        type: string
-      macAddress:
-        example: 00:1a:2b:3c:4d:5e
-        type: string
-      networkName:
-        example: office-lan
-        type: string
-      publicIp:
-        example: 203.0.113.45
-        type: string
-    type: object
-  SourceNetworkInfo:
-    properties:
-      description:
-        example: Office LAN network
-        type: string
-      dnsServers:
-        example:
-        - 8.8.8.8
-        - 8.8.4.4
-        items:
-          type: string
-        type: array
-      gateway:
-        example: 192.168.1.1
-        type: string
-      networkCidr:
-        example: 192.168.1.0/24
-        type: string
-      networkName:
-        example: office-lan
-        type: string
-      serverCount:
-        example: 5
-        type: integer
-    type: object
-  SourceOSInfo:
-    properties:
-      architecture:
-        example: x86_64
-        type: string
-      kernel:
-        example: 5.15.0-91-generic
-        type: string
-      name:
-        example: Ubuntu
-        type: string
-      prettyName:
-        example: Ubuntu 22.04.5 LTS
-        type: string
-      version:
-        example: "22.04"
-        type: string
-    type: object
-  SourceObjectStorageProperty:
-    properties:
-      accessFrequency:
-        description: Access pattern (critical for storage class selection)
-        type: string
-      bucketName:
-        description: Basic identification
-        type: string
-      corsEnabled:
-        description: Whether CORS is enabled
-        type: boolean
-      corsRules:
-        description: CORS rules configuration
-        items:
-          $ref: '#/definitions/CORSRule'
-        type: array
-      creationDate:
-        description: Creation date (RFC3339)
-        type: string
-      encryptionEnabled:
-        description: Security settings
-        type: boolean
-      isPublic:
-        description: Whether bucket has public access
-        type: boolean
-      objectCount:
-        description: Total number of objects
-        type: integer
-      tags:
-        additionalProperties:
-          type: string
-        description: Metadata
-        type: object
-      totalSizeBytes:
-        description: Capacity information (for cost estimation and recommendations)
-        type: integer
-      versioningEnabled:
-        description: Feature settings
-        type: boolean
-    required:
-    - bucketName
-    type: object
-  SourceRoutingTableRow:
-    properties:
-      destination:
-        example: 0.0.0.0/0
-        type: string
-      gateway:
-        example: 192.168.1.1
-        type: string
-      interface:
-        example: eth0
-        type: string
-      metric:
-        example: 100
-        type: integer
-      protocol:
-        example: kernel
-        type: string
-    type: object
-  SourceServerFirewall:
-    properties:
-      firewallRules:
-        items:
-          $ref: '#/definitions/SourceFirewallRule'
-        type: array
-      hostname:
-        example: web-server-01
-        type: string
-    type: object
-  SourceServerInfo:
-    properties:
-      cpu:
-        $ref: '#/definitions/SourceCPUInfo'
-      disk:
-        $ref: '#/definitions/SourceDiskInfo'
-      hostname:
-        example: web-server-01
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/SourceInterfaceInfo'
-        type: array
-      machineId:
-        example: 00a9f3d4-74b6-e811-906e-000ffee02d5c
-        type: string
-      memory:
-        $ref: '#/definitions/SourceMemoryInfo'
-      network:
-        $ref: '#/definitions/SourceNetworkBrief'
-      os:
-        $ref: '#/definitions/SourceOSInfo'
-      rootDiskSize:
-        example: 100
-        type: integer
-      rootDiskType:
-        example: SSD
-        type: string
-      routingTable:
-        items:
-          $ref: '#/definitions/SourceRoutingTableRow'
-        type: array
-    type: object
-  SourceStorageByServer:
-    properties:
-      hostname:
-        example: web-server-01
-        type: string
-      totalGb:
-        example: 500
-        type: integer
-      type:
-        example: SSD
-        type: string
-    type: object
-  SourceStorageByType:
-    properties:
-      serverCount:
-        example: 3
-        type: integer
-      totalGb:
-        example: 1000
-        type: integer
-      type:
-        example: SSD
-        type: string
-    type: object
-  SourceSummaryComputeResources:
-    properties:
-      servers:
-        items:
-          $ref: '#/definitions/SourceServerInfo'
-        type: array
-    type: object
-  SourceSummaryInfraOverview:
-    properties:
-      infraName:
-        example: datacenter-seoul-1
-        type: string
-      totalCpuCores:
-        example: 40
-        type: integer
-      totalDiskGb:
-        example: 2000
-        type: integer
-      totalMemoryGb:
-        example: 160
-        type: integer
-      totalNetworks:
-        example: 3
-        type: integer
-      totalServerCount:
-        example: 5
-        type: integer
-    type: object
-  SourceSummaryMetadata:
-    properties:
-      generatedAt:
-        example: "2025-10-31T14:30:00Z"
-        type: string
-      infraName:
-        example: datacenter-seoul-1
-        type: string
-      summaryVersion:
-        example: "1.0"
-        type: string
-    type: object
-  SourceSummaryNetworkResources:
-    properties:
-      networks:
-        items:
-          $ref: '#/definitions/SourceNetworkInfo'
-        type: array
-    type: object
-  SourceSummarySecurityResources:
-    properties:
-      serverFirewalls:
-        items:
-          $ref: '#/definitions/SourceServerFirewall'
-        type: array
-    type: object
-  SourceSummaryStorageResources:
-    properties:
-      availableGb:
-        example: 800
-        type: integer
-      byServer:
-        items:
-          $ref: '#/definitions/SourceStorageByServer'
-        type: array
-      byType:
-        items:
-          $ref: '#/definitions/SourceStorageByType'
-        type: array
-      totalGb:
-        example: 2000
-        type: integer
-      usedGb:
-        example: 1200
-        type: integer
-    type: object
-  SpecInfo:
+  cloudmodel.SpecInfo:
     properties:
       acceleratorCount:
         type: integer
@@ -2623,7 +868,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/KeyValue'
+          $ref: '#/definitions/cloudmodel.KeyValue'
         type: array
       diskSizeGB:
         type: number
@@ -2700,7 +945,7 @@ definitions:
       vCPU:
         type: integer
     type: object
-  SshCmdResult:
+  cloudmodel.SshCmdResult:
     properties:
       command:
         additionalProperties:
@@ -2722,66 +967,7 @@ definitions:
       vmIp:
         type: string
     type: object
-  SshKeyInfo:
-    properties:
-      associatedObjectList:
-        items:
-          type: string
-        type: array
-      connectionConfig:
-        $ref: '#/definitions/ConnConfig'
-      connectionName:
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
-        type: string
-      description:
-        type: string
-      fingerprint:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      isAutoGenerated:
-        type: boolean
-      keyValueList:
-        items:
-          $ref: '#/definitions/KeyValue'
-        type: array
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      privateKey:
-        type: string
-      publicKey:
-        type: string
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      systemLabel:
-        description: SystemLabel is for describing the Resource in a keyword (any
-          string can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      username:
-        type: string
-      verifiedUsername:
-        type: string
-    type: object
-  SshKeyReq:
+  cloudmodel.SshKeyReq:
     properties:
       connectionName:
         type: string
@@ -2808,7 +994,7 @@ definitions:
     - connectionName
     - name
     type: object
-  StatusCountInfo:
+  cloudmodel.StatusCountInfo:
     properties:
       countCreating:
         description: CountCreating is for counting Creating
@@ -2844,14 +1030,1338 @@ definitions:
         description: CountUndefined is for counting Undefined
         type: integer
     type: object
-  SubnetInfo:
+  cloudmodel.SubnetReq:
+    properties:
+      description:
+        example: subnet00 managed by CB-Tumblebug
+        type: string
+      ipv4_CIDR:
+        example: 10.0.1.0/24
+        type: string
+      name:
+        example: subnet00
+        type: string
+      zone:
+        type: string
+    required:
+    - ipv4_CIDR
+    - name
+    type: object
+  cloudmodel.VNetReq:
+    properties:
+      cidrBlock:
+        example: 10.0.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      description:
+        example: vnet00 managed by CB-Tumblebug
+        type: string
+      name:
+        example: vnet00
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/cloudmodel.SubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
+    type: object
+  cloudmodel.VmCreationError:
+    properties:
+      error:
+        description: Error is the error message
+        type: string
+      phase:
+        description: Phase indicates when the error occurred
+        type: string
+      timestamp:
+        description: Timestamp when the error occurred
+        type: string
+      vmName:
+        description: VmName is the name of the VM that failed
+        type: string
+    type: object
+  cloudmodel.VmInfo:
+    properties:
+      addtionalDetails:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      commandStatus:
+        description: CommandStatus stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/cloudmodel.CommandStatusInfo'
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/cloudmodel.ConnConfig'
+      connectionName:
+        type: string
+      createdTime:
+        description: Created time
+        example: "2022-11-10 23:00:00"
+        type: string
+      cspImageName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      cspSpecName:
+        type: string
+      cspSshKeyId:
+        type: string
+      cspSubnetId:
+        type: string
+      cspVNetId:
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      imageId:
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      location:
+        $ref: '#/definitions/cloudmodel.Location'
+      monAgentStatus:
+        description: Montoring agent status
+        example: '[installed, notInstalled, failed]'
+        type: string
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      networkAgentStatus:
+        description: NetworkAgent status
+        example: '[notInstalled, installing, installed, failed]'
+        type: string
+      networkInterface:
+        type: string
+      privateDNS:
+        type: string
+      privateIP:
+        type: string
+      publicDNS:
+        type: string
+      publicIP:
+        type: string
+      region:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.RegionInfo'
+        description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      rootDiskName:
+        type: string
+      rootDiskSize:
+        type: string
+      rootDiskType:
+        type: string
+      securityGroupIds:
+        items:
+          type: string
+        type: array
+      specId:
+        type: string
+      sshKeyId:
+        type: string
+      sshPort:
+        type: string
+      status:
+        description: Required by CB-Tumblebug
+        type: string
+      subGroupId:
+        description: defined if the VM is in a group
+        type: string
+      subnetId:
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vNetId:
+        type: string
+      vmUserName:
+        type: string
+      vmUserPassword:
+        type: string
+    type: object
+  common.RequestDetails:
+    properties:
+      endTime:
+        description: The time when the request was fully processed.
+        type: string
+      errorResponse:
+        description: A message describing any error that occurred during request processing.
+        type: string
+      requestInfo:
+        allOf:
+        - $ref: '#/definitions/common.RequestInfo'
+        description: Extracted information about the request.
+      responseData:
+        description: The data sent back in response to the request.
+      startTime:
+        description: The time when the request was received by the server.
+        type: string
+      status:
+        description: The current status of the request (e.g., "Handling", "Error",
+          "Success").
+        type: string
+    type: object
+  common.RequestInfo:
+    properties:
+      body:
+        description: 'Optional: request body'
+      header:
+        additionalProperties:
+          type: string
+        description: Key-value pairs of the request headers.
+        type: object
+      method:
+        description: HTTP method (GET, POST, etc.), indicating the request's action
+          type.
+        type: string
+      url:
+        description: The URL the request is made to.
+        type: string
+    type: object
+  common.SimpleMessage:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  common.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  controller.CORSRule:
+    properties:
+      allowedHeaders:
+        description: Allowed headers (e.g., ["*"])
+        items:
+          type: string
+        type: array
+      allowedMethods:
+        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
+        items:
+          type: string
+        type: array
+      allowedOrigins:
+        description: Allowed origins (e.g., ["*"], ["https://example.com"])
+        items:
+          type: string
+        type: array
+      exposeHeaders:
+        description: Headers to expose (e.g., ["ETag"])
+        items:
+          type: string
+        type: array
+      maxAgeSeconds:
+        description: Preflight request cache time in seconds
+        type: integer
+    required:
+    - allowedMethods
+    - allowedOrigins
+    type: object
+  controller.GenerateMigrationReportRequest:
+    properties:
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    required:
+    - onpremiseInfraModel
+    type: object
+  controller.GenerateSourceInfraSummaryRequest:
+    properties:
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    required:
+    - onpremiseInfraModel
+    type: object
+  controller.JSONResult:
+    type: object
+  controller.MigrateInfraRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.MciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+    type: object
+  controller.MigrateInfraResponse:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        items:
+          type: string
+        type: array
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.VmInfo'
+        type: array
+    type: object
+  controller.MigrateInfraWithDefaultsRequest:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: mci01
+        type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle VM creation failures
+          - "continue": Continue with partial MCI creation (default)
+          - "rollback": Cleanup entire MCI when any VM fails
+          - "refine": Mark failed VMs for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      subGroups:
+        description: |-
+          SubGroups is array of VM requests for multi-cloud infrastructure
+          Example: Multiple VM groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "subGroupSize": "3",
+              "specId": "aws+ap-northeast-2+t3.nano",
+              "imageId": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "subGroupSize": "2",
+              "specId": "azure+koreasouth+standard_b1s",
+              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "subGroupSize": "1",
+              "specId": "gcp+asia-northeast3+g1-small",
+              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
+        items:
+          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+    required:
+    - name
+    - subGroups
+    type: object
+  controller.MigrateInfraWithDefaultsResponse:
+    properties:
+      configureCloudAdaptiveNetwork:
+        default: "no"
+        description: ConfigureCloudAdaptiveNetwork is an option to configure Cloud
+          Adaptive Network (CLADNet) ([yes/no] default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "yes"
+        type: string
+      creationErrors:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
+        description: CreationErrors contains information about VM creation failures
+          (if any)
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:no)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      newVmList:
+        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
+          This field should be used for return body only.
+        items:
+          type: string
+        type: array
+      placementAlgo:
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciCmdReq'
+        description: PostCommand is for the command to bootstrap the VMs
+      postCommandResult:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        description: PostCommandResult is the result of the command for bootstraping
+          the VMs
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      statusCount:
+        $ref: '#/definitions/cloudmodel.StatusCountInfo'
+      systemLabel:
+        description: SystemLabel is for describing the mci in a keyword (any string
+          can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        items:
+          type: string
+        type: array
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vm:
+        items:
+          $ref: '#/definitions/cloudmodel.VmInfo'
+        type: array
+    type: object
+  controller.MigrateObjectStorageRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+        type: array
+    type: object
+  controller.RecommendInfraRequest:
+    properties:
+      desiredProvider:
+        example: aws
+        type: string
+      desiredRegion:
+        example: ap-northeast-2
+        type: string
+      servers:
+        items:
+          $ref: '#/definitions/recommendation.Kubernetes'
+        type: array
+    type: object
+  controller.RecommendObjectStorageRequest:
+    properties:
+      desiredCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      sourceObjectStorages:
+        items:
+          $ref: '#/definitions/controller.SourceObjectStorageProperty'
+        minItems: 1
+        type: array
+    required:
+    - desiredCloud
+    - sourceObjectStorages
+    type: object
+  controller.RecommendObjectStorageResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+        type: array
+    type: object
+  controller.RecommendSecurityGroupResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      status:
+        type: string
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedSecurityGroup'
+        type: array
+    type: object
+  controller.RecommendVNetResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVNetList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVNet'
+        type: array
+    type: object
+  controller.RecommendVmInfraRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+      targetVmInfra:
+        $ref: '#/definitions/cloudmodel.MciReq'
+      targetVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+    type: object
+  controller.RecommendVmInfraWithDefaultsRequest:
+    properties:
+      desiredCspAndRegionPair:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    type: object
+  controller.RecommendVmInfraWithDefaultsResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      targetVmInfraList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfraDynamic'
+        type: array
+    type: object
+  controller.RecommendVmOsImageResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      recommendedVmOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmOsImage'
+        type: array
+      status:
+        type: string
+    type: object
+  controller.RecommendVmSpecResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      recommendedVmSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmSpec'
+        type: array
+      status:
+        type: string
+    type: object
+  controller.SourceObjectStorageProperty:
+    properties:
+      accessFrequency:
+        description: Access pattern (critical for storage class selection)
+        type: string
+      bucketName:
+        description: Basic identification
+        type: string
+      corsEnabled:
+        description: Whether CORS is enabled
+        type: boolean
+      corsRules:
+        description: CORS rules configuration
+        items:
+          $ref: '#/definitions/controller.CORSRule'
+        type: array
+      creationDate:
+        description: Creation date (RFC3339)
+        type: string
+      encryptionEnabled:
+        description: Security settings
+        type: boolean
+      isPublic:
+        description: Whether bucket has public access
+        type: boolean
+      objectCount:
+        description: Total number of objects
+        type: integer
+      tags:
+        additionalProperties:
+          type: string
+        description: Metadata
+        type: object
+      totalSizeBytes:
+        description: Capacity information (for cost estimation and recommendations)
+        type: integer
+      versioningEnabled:
+        description: Feature settings
+        type: boolean
+    required:
+    - bucketName
+    type: object
+  controller.TargetObjectStorageProperty:
+    properties:
+      bucketName:
+        description: Recommended target bucket name with deterministic suffix
+        type: string
+      corsEnabled:
+        description: Whether CORS is configured
+        type: boolean
+      corsRules:
+        description: CORS rules configuration
+        items:
+          $ref: '#/definitions/controller.CORSRule'
+        type: array
+      sourceBucketName:
+        description: Source bucket name for referencing
+        type: string
+      versioningEnabled:
+        description: Whether to enable versioning
+        type: boolean
+    type: object
+  github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response:
+    description: '**(To be deprecated)** This structure is currently in use but will
+      be replaced by the generic `ApiResponse[T]` in the future.'
+    properties:
+      details:
+        example: Any details
+        type: string
+      list:
+        items: {}
+        type: array
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
+        type: string
+    type: object
+  model.ApiResponse-any:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-array_cloudmodel_RecommendedVmInfra:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+        items:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+        type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.BastionNode:
+    properties:
+      mciId:
+        type: string
+      vmId:
+        type: string
+    type: object
+  model.ConnConfig:
+    properties:
+      configName:
+        type: string
+      credentialHolder:
+        type: string
+      credentialName:
+        type: string
+      driverName:
+        type: string
+      providerName:
+        type: string
+      regionDetail:
+        $ref: '#/definitions/model.RegionDetail'
+      regionRepresentative:
+        type: boolean
+      regionZoneInfo:
+        $ref: '#/definitions/model.RegionZoneInfo'
+      regionZoneInfoName:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  model.FirewallRuleInfo:
+    properties:
+      CIDR:
+        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+        example: 0.0.0.0/0
+        type: string
+      Direction:
+        description: Direction is the direction of the rule (inbound or outbound)
+        enum:
+        - inbound
+        - outbound
+        example: inbound
+        type: string
+      Port:
+        description: Port is the single port (e.g. "22") or port range (e.g. "1-65535")
+          for the rule
+        example: 1-65535
+        type: string
+      Protocol:
+        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP, ALL)
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        - ALL
+        example: TCP
+        type: string
+    required:
+    - Direction
+    - Protocol
+    type: object
+  model.FirewallRuleReq:
+    properties:
+      CIDR:
+        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+        example: 0.0.0.0/0
+        type: string
+      Direction:
+        description: Direction is the direction of the rule (inbound or outbound)
+        enum:
+        - inbound
+        - outbound
+        example: inbound
+        type: string
+      Ports:
+        description: |-
+          Ports is to get multiple ports or port ranges as a string (e.g. "22,900-1000,2000-3000")
+          This allows flexibility in specifying single ports or ranges in a comma-separated format.
+          This field is used to handle both single ports and port ranges in a unified way.
+          It can accept a single port (e.g. "22"), a range (e.g. "900-1000"), or multiple ports/ranges (e.g. "22,900-1000,2000-3000").
+        example: 22,900-1000,2000-3000
+        type: string
+      Protocol:
+        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP).
+          Don't use ALL here.
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        example: TCP
+        type: string
+    required:
+    - Direction
+    - Protocol
+    type: object
+  model.IdList:
+    properties:
+      output:
+        items:
+          type: string
+        type: array
+    type: object
+  model.ImageSourceCommandHistory:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
+    type: object
+  model.ImageStatus:
+    enum:
+    - Available
+    - Unavailable
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageAvailable
+    - ImageUnavailable
+    - ImageDeprecated
+    - ImageNA
+  model.K8sClusterDynamicReq:
+    properties:
+      connectionName:
+        default: tencent-ap-seoul
+        description: |-
+          if ConnectionName is given, the VM tries to use associtated credential.
+          if not, it will use predefined ConnectionName in Spec objects
+        type: string
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        default: "1"
+        example: "1"
+        type: string
+      imageId:
+        description: ImageId is field for id of a image in common namespace
+        example: default, tencent+ap-seoul+ubuntu20.04
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        default: "2"
+        example: "3"
+        type: string
+      minNodeSize:
+        default: "1"
+        example: "1"
+        type: string
+      name:
+        description: K8sCluster name if it is not empty.
+        example: k8scluster01
+        type: string
+      nodeGroupName:
+        description: NodeGroup name if it is not empty
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        default: "true"
+        example: "true"
+        type: string
+      rootDiskSize:
+        default: default
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: default, 30, 42, ...
+        type: string
+      rootDiskType:
+        default: default
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      specId:
+        description: SpecId is field for id of a spec in common namespace
+        example: tencent+ap-seoul+S2.MEDIUM4
+        type: string
+      version:
+        description: K8s Clsuter version
+        example: "1.29"
+        type: string
+    required:
+    - imageId
+    - name
+    - specId
+    type: object
+  model.K8sNodeGroupReq:
+    properties:
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        example: "1"
+        type: string
+      imageId:
+        example: image-01
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        example: "3"
+        type: string
+      minNodeSize:
+        example: "1"
+        type: string
+      name:
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        description: autoscale config.
+        example: "true"
+        type: string
+      rootDiskSize:
+        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        example: "40"
+        type: string
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: cloud_essd
+        type: string
+      specId:
+        example: spec-01
+        type: string
+      sshKeyId:
+        example: sshkey-01
+        type: string
+    type: object
+  model.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  model.Location:
+    properties:
+      display:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  model.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  model.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
+  model.RegionDetail:
+    properties:
+      description:
+        type: string
+      location:
+        $ref: '#/definitions/model.Location'
+      regionId:
+        type: string
+      regionName:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  model.RegionZoneInfo:
+    properties:
+      assignedRegion:
+        type: string
+      assignedZone:
+        type: string
+    type: object
+  model.SecurityGroupInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      firewallRules:
+        items:
+          $ref: '#/definitions/model.FirewallRuleInfo'
+        type: array
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vNetId:
+        type: string
+    type: object
+  model.SecurityGroupReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is required to register object from CSP (option=register)
+        example: 'required for option=register only. ex: csp-06eb41e14121c550a'
+        type: string
+      description:
+        type: string
+      firewallRules:
+        description: validate:"required"`
+        items:
+          $ref: '#/definitions/model.FirewallRuleReq'
+        type: array
+      name:
+        type: string
+      vNetId:
+        type: string
+    required:
+    - connectionName
+    - name
+    - vNetId
+    type: object
+  model.SimpleMsg:
+    properties:
+      message:
+        example: Any message
+        type: string
+    type: object
+  model.SshKeyInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    type: object
+  model.SshKeyReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing SSH keys" feature
+          CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    required:
+    - connectionName
+    - name
+    type: object
+  model.SubnetInfo:
     properties:
       bastionNodes:
         items:
-          $ref: '#/definitions/BastionNode'
+          $ref: '#/definitions/model.BastionNode'
         type: array
       connectionConfig:
-        $ref: '#/definitions/ConnConfig'
+        $ref: '#/definitions/model.ConnConfig'
       connectionName:
         type: string
       cspResourceId:
@@ -2881,7 +2391,7 @@ definitions:
         type: string
       keyValueList:
         items:
-          $ref: '#/definitions/KeyValue'
+          $ref: '#/definitions/model.KeyValue'
         type: array
       name:
         description: Name is human-readable string to represent the object
@@ -2900,7 +2410,7 @@ definitions:
       zone:
         type: string
     type: object
-  SubnetReq:
+  model.SubnetReq:
     properties:
       description:
         example: subnet00 managed by CB-Tumblebug
@@ -2917,22 +2427,792 @@ definitions:
     - ipv4_CIDR
     - name
     type: object
-  SummaryComputeResources:
+  model.VNetInfo:
+    properties:
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      cidrBlock:
+        type: string
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      isAutoGenerated:
+        type: boolean
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      status:
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/model.SubnetInfo'
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  model.VNetReq:
+    properties:
+      cidrBlock:
+        example: 10.0.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      description:
+        example: vnet00 managed by CB-Tumblebug
+        type: string
+      name:
+        example: vnet00
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/model.SubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
+    type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.ServerProperty'
+        type: array
+    required:
+    - servers
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  onpremisemodel.ServerProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the server (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
+  recommendation.Kubernetes:
+    properties:
+      node_count:
+        $ref: '#/definitions/recommendation.NodeCount'
+      nodes:
+        items:
+          $ref: '#/definitions/recommendation.Node'
+        type: array
+      workloads:
+        additionalProperties: true
+        type: object
+    type: object
+  recommendation.KubernetesInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/recommendation.Kubernetes'
+        type: array
+    required:
+    - servers
+    type: object
+  recommendation.Node:
+    properties:
+      addresses: {}
+      labels: {}
+      name: {}
+      node_info: {}
+      node_spec:
+        $ref: '#/definitions/recommendation.NodeSpec'
+      type:
+        $ref: '#/definitions/recommendation.NodeType'
+    type: object
+  recommendation.NodeCount:
+    properties:
+      control_plane:
+        type: integer
+      total:
+        type: integer
+      worker:
+        type: integer
+    type: object
+  recommendation.NodeSpec:
+    properties:
+      cpu:
+        description: cores
+        type: integer
+      ephemeral_storage:
+        description: MiB
+        type: integer
+      memory:
+        description: MiB
+        type: integer
+    type: object
+  recommendation.NodeType:
+    enum:
+    - control-plane
+    - worker
+    type: string
+    x-enum-varnames:
+    - NodeTypeControlPlane
+    - NodeTypeWorker
+  resource.RestGetAllSecurityGroupResponse:
+    properties:
+      securityGroup:
+        items:
+          $ref: '#/definitions/model.SecurityGroupInfo'
+        type: array
+    type: object
+  resource.RestGetAllSshKeyResponse:
+    properties:
+      sshKey:
+        items:
+          $ref: '#/definitions/model.SshKeyInfo'
+        type: array
+    type: object
+  resource.RestGetAllVNetResponse:
+    properties:
+      vNet:
+        items:
+          $ref: '#/definitions/model.VNetInfo'
+        type: array
+    type: object
+  summary.SourceCPUInfo:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        example: 8
+        type: integer
+      cpus:
+        example: 1
+        type: integer
+      maxSpeed:
+        example: 2.4
+        type: number
+      model:
+        example: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
+        type: string
+      threads:
+        example: 16
+        type: integer
+      utilization:
+        example: 45.2
+        type: number
+      vendor:
+        example: GenuineIntel
+        type: string
+    type: object
+  summary.SourceDiskInfo:
+    properties:
+      available:
+        example: 200
+        type: integer
+      label:
+        example: /dev/sda
+        type: string
+      totalGb:
+        example: 500
+        type: integer
+      type:
+        example: SSD
+        type: string
+      used:
+        example: 300
+        type: integer
+      utilization:
+        example: 60
+        type: number
+    type: object
+  summary.SourceFirewallRule:
+    properties:
+      action:
+        example: allow
+        type: string
+      direction:
+        example: inbound
+        type: string
+      dstCidr:
+        example: 0.0.0.0/0
+        type: string
+      dstPorts:
+        example: 22,80,443
+        type: string
+      protocol:
+        example: tcp
+        type: string
+      srcCidr:
+        example: 0.0.0.0/0
+        type: string
+      srcPorts:
+        example: '*'
+        type: string
+    type: object
+  summary.SourceInfraSummary:
+    properties:
+      computeResources:
+        $ref: '#/definitions/summary.SourceSummaryComputeResources'
+      networkResources:
+        $ref: '#/definitions/summary.SourceSummaryNetworkResources'
+      overview:
+        $ref: '#/definitions/summary.SourceSummaryInfraOverview'
+      securityResources:
+        $ref: '#/definitions/summary.SourceSummarySecurityResources'
+      storageResources:
+        $ref: '#/definitions/summary.SourceSummaryStorageResources'
+      summaryMetadata:
+        $ref: '#/definitions/summary.SourceSummaryMetadata'
+    type: object
+  summary.SourceInterfaceInfo:
+    properties:
+      ipAddress:
+        example: 192.168.1.10
+        type: string
+      ipv4CidrBlocks:
+        example:
+        - 192.168.1.10/24
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        example:
+        - fe80::1/64
+        items:
+          type: string
+        type: array
+      macAddress:
+        example: 00:1a:2b:3c:4d:5e
+        type: string
+      mtu:
+        example: 1500
+        type: integer
+      name:
+        example: eth0
+        type: string
+      state:
+        example: up
+        type: string
+    type: object
+  summary.SourceMemoryInfo:
+    properties:
+      available:
+        example: 20
+        type: integer
+      totalGb:
+        example: 32
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        example: 12
+        type: integer
+      utilization:
+        example: 37.5
+        type: number
+    type: object
+  summary.SourceNetworkBrief:
+    properties:
+      ipAddress:
+        example: 192.168.1.10
+        type: string
+      macAddress:
+        example: 00:1a:2b:3c:4d:5e
+        type: string
+      networkName:
+        example: office-lan
+        type: string
+      publicIp:
+        example: 203.0.113.45
+        type: string
+    type: object
+  summary.SourceNetworkInfo:
+    properties:
+      description:
+        example: Office LAN network
+        type: string
+      dnsServers:
+        example:
+        - 8.8.8.8
+        - 8.8.4.4
+        items:
+          type: string
+        type: array
+      gateway:
+        example: 192.168.1.1
+        type: string
+      networkCidr:
+        example: 192.168.1.0/24
+        type: string
+      networkName:
+        example: office-lan
+        type: string
+      serverCount:
+        example: 5
+        type: integer
+    type: object
+  summary.SourceOSInfo:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      kernel:
+        example: 5.15.0-91-generic
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        example: Ubuntu 22.04.5 LTS
+        type: string
+      version:
+        example: "22.04"
+        type: string
+    type: object
+  summary.SourceRoutingTableRow:
+    properties:
+      destination:
+        example: 0.0.0.0/0
+        type: string
+      gateway:
+        example: 192.168.1.1
+        type: string
+      interface:
+        example: eth0
+        type: string
+      metric:
+        example: 100
+        type: integer
+      protocol:
+        example: kernel
+        type: string
+    type: object
+  summary.SourceServerFirewall:
+    properties:
+      firewallRules:
+        items:
+          $ref: '#/definitions/summary.SourceFirewallRule'
+        type: array
+      hostname:
+        example: web-server-01
+        type: string
+    type: object
+  summary.SourceServerInfo:
+    properties:
+      cpu:
+        $ref: '#/definitions/summary.SourceCPUInfo'
+      disk:
+        $ref: '#/definitions/summary.SourceDiskInfo'
+      hostname:
+        example: web-server-01
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/summary.SourceInterfaceInfo'
+        type: array
+      machineId:
+        example: 00a9f3d4-74b6-e811-906e-000ffee02d5c
+        type: string
+      memory:
+        $ref: '#/definitions/summary.SourceMemoryInfo'
+      network:
+        $ref: '#/definitions/summary.SourceNetworkBrief'
+      os:
+        $ref: '#/definitions/summary.SourceOSInfo'
+      rootDiskSize:
+        example: 100
+        type: integer
+      rootDiskType:
+        example: SSD
+        type: string
+      routingTable:
+        items:
+          $ref: '#/definitions/summary.SourceRoutingTableRow'
+        type: array
+    type: object
+  summary.SourceStorageByServer:
+    properties:
+      hostname:
+        example: web-server-01
+        type: string
+      totalGb:
+        example: 500
+        type: integer
+      type:
+        example: SSD
+        type: string
+    type: object
+  summary.SourceStorageByType:
+    properties:
+      serverCount:
+        example: 3
+        type: integer
+      totalGb:
+        example: 1000
+        type: integer
+      type:
+        example: SSD
+        type: string
+    type: object
+  summary.SourceSummaryComputeResources:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/summary.SourceServerInfo'
+        type: array
+    type: object
+  summary.SourceSummaryInfraOverview:
+    properties:
+      infraName:
+        example: datacenter-seoul-1
+        type: string
+      totalCpuCores:
+        example: 40
+        type: integer
+      totalDiskGb:
+        example: 2000
+        type: integer
+      totalMemoryGb:
+        example: 160
+        type: integer
+      totalNetworks:
+        example: 3
+        type: integer
+      totalServerCount:
+        example: 5
+        type: integer
+    type: object
+  summary.SourceSummaryMetadata:
+    properties:
+      generatedAt:
+        example: "2025-10-31T14:30:00Z"
+        type: string
+      infraName:
+        example: datacenter-seoul-1
+        type: string
+      summaryVersion:
+        example: "1.0"
+        type: string
+    type: object
+  summary.SourceSummaryNetworkResources:
+    properties:
+      networks:
+        items:
+          $ref: '#/definitions/summary.SourceNetworkInfo'
+        type: array
+    type: object
+  summary.SourceSummarySecurityResources:
+    properties:
+      serverFirewalls:
+        items:
+          $ref: '#/definitions/summary.SourceServerFirewall'
+        type: array
+    type: object
+  summary.SourceSummaryStorageResources:
+    properties:
+      availableGb:
+        example: 800
+        type: integer
+      byServer:
+        items:
+          $ref: '#/definitions/summary.SourceStorageByServer'
+        type: array
+      byType:
+        items:
+          $ref: '#/definitions/summary.SourceStorageByType'
+        type: array
+      totalGb:
+        example: 2000
+        type: integer
+      usedGb:
+        example: 1200
+        type: integer
+    type: object
+  summary.SummaryComputeResources:
     properties:
       images:
         items:
-          $ref: '#/definitions/SummaryImageInfoWithUsage'
+          $ref: '#/definitions/summary.SummaryImageInfoWithUsage'
         type: array
       specs:
         items:
-          $ref: '#/definitions/SummarySpecInfoWithUsage'
+          $ref: '#/definitions/summary.SummarySpecInfoWithUsage'
         type: array
       vms:
         items:
-          $ref: '#/definitions/SummaryVmInfo'
+          $ref: '#/definitions/summary.SummaryVmInfo'
         type: array
     type: object
-  SummaryCostByRegion:
+  summary.SummaryCostByRegion:
     properties:
       costPerHour:
         example: 0.4512
@@ -2950,7 +3230,7 @@ definitions:
         example: 3
         type: integer
     type: object
-  SummaryCostByVm:
+  summary.SummaryCostByVm:
     properties:
       costPerHour:
         example: 0.1504
@@ -2965,15 +3245,15 @@ definitions:
         example: migrated-server-1
         type: string
     type: object
-  SummaryCostEstimation:
+  summary.SummaryCostEstimation:
     properties:
       byRegion:
         items:
-          $ref: '#/definitions/SummaryCostByRegion'
+          $ref: '#/definitions/summary.SummaryCostByRegion'
         type: array
       byVm:
         items:
-          $ref: '#/definitions/SummaryCostByVm'
+          $ref: '#/definitions/summary.SummaryCostByVm'
         type: array
       currency:
         example: USD
@@ -2988,7 +3268,7 @@ definitions:
         example: 324.86
         type: number
     type: object
-  SummaryFirewallRule:
+  summary.SummaryFirewallRule:
     properties:
       cidr:
         example: 0.0.0.0/0
@@ -3006,13 +3286,13 @@ definitions:
         example: "22"
         type: string
     type: object
-  SummaryImageInfoWithUsage:
+  summary.SummaryImageInfoWithUsage:
     properties:
       commandHistory:
         description: CommandHistory stores the status and history of remote commands
           executed on this VM
         items:
-          $ref: '#/definitions/ImageSourceCommandHistory'
+          $ref: '#/definitions/model.ImageSourceCommandHistory'
         type: array
       connectionName:
         type: string
@@ -3029,7 +3309,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/KeyValue'
+          $ref: '#/definitions/model.KeyValue'
         type: array
       fetchedTime:
         type: string
@@ -3038,7 +3318,7 @@ definitions:
         type: string
       imageStatus:
         allOf:
-        - $ref: '#/definitions/ImageStatus'
+        - $ref: '#/definitions/model.ImageStatus'
         description: Available, Deprecated, NA
         example: Available
       infraType:
@@ -3062,7 +3342,7 @@ definitions:
         type: string
       osArchitecture:
         allOf:
-        - $ref: '#/definitions/OSArchitecture'
+        - $ref: '#/definitions/model.OSArchitecture'
         description: arm64, x86_64 etc.
         example: x86_64
       osDiskSizeGB:
@@ -3079,7 +3359,7 @@ definitions:
         type: string
       osPlatform:
         allOf:
-        - $ref: '#/definitions/OSPlatform'
+        - $ref: '#/definitions/model.OSPlatform'
         description: Linux/UNIX, Windows, NA
         example: Linux/UNIX
       osType:
@@ -3116,14 +3396,14 @@ definitions:
         example: 3
         type: integer
     type: object
-  SummaryNetworkResources:
+  summary.SummaryNetworkResources:
     properties:
       vnets:
         items:
-          $ref: '#/definitions/SummaryVNetInfo'
+          $ref: '#/definitions/summary.SummaryVNetInfo'
         type: array
     type: object
-  SummarySecurityGroupInfo:
+  summary.SummarySecurityGroupInfo:
     properties:
       cspSecurityGroupId:
         example: sg-065ead8c271abf7a3
@@ -3136,24 +3416,24 @@ definitions:
         type: integer
       rules:
         items:
-          $ref: '#/definitions/SummaryFirewallRule'
+          $ref: '#/definitions/summary.SummaryFirewallRule'
         type: array
       vnetName:
         example: mig-vnet-01
         type: string
     type: object
-  SummarySecurityResources:
+  summary.SummarySecurityResources:
     properties:
       securityGroups:
         items:
-          $ref: '#/definitions/SummarySecurityGroupInfo'
+          $ref: '#/definitions/summary.SummarySecurityGroupInfo'
         type: array
       sshKeys:
         items:
-          $ref: '#/definitions/SummarySshKeyInfo'
+          $ref: '#/definitions/summary.SummarySshKeyInfo'
         type: array
     type: object
-  SummarySpecInfoWithUsage:
+  summary.SummarySpecInfoWithUsage:
     properties:
       acceleratorCount:
         type: integer
@@ -3182,7 +3462,7 @@ definitions:
         type: string
       details:
         items:
-          $ref: '#/definitions/KeyValue'
+          $ref: '#/definitions/model.KeyValue'
         type: array
       diskSizeGB:
         type: number
@@ -3263,7 +3543,7 @@ definitions:
       vCPU:
         type: integer
     type: object
-  SummarySshKeyInfo:
+  summary.SummarySshKeyInfo:
     properties:
       cspSshKeyId:
         example: d3vkftmqjs728ptbetpg
@@ -3281,7 +3561,7 @@ definitions:
         example: cb-user
         type: string
     type: object
-  SummarySubnetInfo:
+  summary.SummarySubnetInfo:
     properties:
       cidrBlock:
         example: 192.168.110.0/24
@@ -3296,7 +3576,7 @@ definitions:
         example: ap-northeast-2a
         type: string
     type: object
-  SummaryVNetInfo:
+  summary.SummaryVNetInfo:
     properties:
       cidrBlock:
         example: 192.168.0.0/16
@@ -3318,10 +3598,10 @@ definitions:
         type: integer
       subnets:
         items:
-          $ref: '#/definitions/SummarySubnetInfo'
+          $ref: '#/definitions/summary.SummarySubnetInfo'
         type: array
     type: object
-  SummaryVmImageInfo:
+  summary.SummaryVmImageInfo:
     properties:
       distribution:
         example: Ubuntu
@@ -3339,15 +3619,15 @@ definitions:
         example: "22.04"
         type: string
     type: object
-  SummaryVmInfo:
+  summary.SummaryVmInfo:
     properties:
       cspVmId:
         example: i-0a1b2c3d4e5f6g7h8
         type: string
       image:
-        $ref: '#/definitions/SummaryVmImageInfo'
+        $ref: '#/definitions/summary.SummaryVmImageInfo'
       misc:
-        $ref: '#/definitions/SummaryVmMiscInfo'
+        $ref: '#/definitions/summary.SummaryVmMiscInfo'
       name:
         example: migrated-server-1
         type: string
@@ -3355,7 +3635,7 @@ definitions:
         example: ap-northeast-2
         type: string
       spec:
-        $ref: '#/definitions/SummaryVmSpecInfo'
+        $ref: '#/definitions/summary.SummaryVmSpecInfo'
       status:
         example: Running
         type: string
@@ -3363,7 +3643,7 @@ definitions:
         example: ap-northeast-2a
         type: string
     type: object
-  SummaryVmMiscInfo:
+  summary.SummaryVmMiscInfo:
     properties:
       connectionName:
         example: aws-ap-northeast-2
@@ -3390,7 +3670,7 @@ definitions:
         example: mig-vnet-01
         type: string
     type: object
-  SummaryVmSpecInfo:
+  summary.SummaryVmSpecInfo:
     properties:
       architecture:
         example: x86_64
@@ -3405,7 +3685,7 @@ definitions:
         example: 4
         type: integer
     type: object
-  TargetInfraOverview:
+  summary.TargetInfraOverview:
     properties:
       installMonAgent:
         example: "no"
@@ -3439,42 +3719,22 @@ definitions:
         example: 3
         type: integer
     type: object
-  TargetInfraSummary:
+  summary.TargetInfraSummary:
     properties:
       computeResources:
-        $ref: '#/definitions/SummaryComputeResources'
+        $ref: '#/definitions/summary.SummaryComputeResources'
       costEstimation:
-        $ref: '#/definitions/SummaryCostEstimation'
+        $ref: '#/definitions/summary.SummaryCostEstimation'
       networkResources:
-        $ref: '#/definitions/SummaryNetworkResources'
+        $ref: '#/definitions/summary.SummaryNetworkResources'
       overview:
-        $ref: '#/definitions/TargetInfraOverview'
+        $ref: '#/definitions/summary.TargetInfraOverview'
       securityResources:
-        $ref: '#/definitions/SummarySecurityResources'
+        $ref: '#/definitions/summary.SummarySecurityResources'
       summaryMetadata:
-        $ref: '#/definitions/TargetSummaryMetadata'
+        $ref: '#/definitions/summary.TargetSummaryMetadata'
     type: object
-  TargetObjectStorageProperty:
-    properties:
-      bucketName:
-        description: Recommended target bucket name with deterministic suffix
-        type: string
-      corsEnabled:
-        description: Whether CORS is configured
-        type: boolean
-      corsRules:
-        description: CORS rules configuration
-        items:
-          $ref: '#/definitions/CORSRule'
-        type: array
-      sourceBucketName:
-        description: Source bucket name for referencing
-        type: string
-      versioningEnabled:
-        description: Whether to enable versioning
-        type: boolean
-    type: object
-  TargetSummaryMetadata:
+  summary.TargetSummaryMetadata:
     properties:
       generatedAt:
         example: "2025-10-31T14:30:00Z"
@@ -3492,245 +3752,229 @@ definitions:
         example: "1.0"
         type: string
     type: object
-  TransferOptions:
+  tbclient.Bucket:
+    properties:
+      creationDate:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      name:
+        example: spider-test-bucket
+        type: string
+    type: object
+  tbclient.Buckets:
+    properties:
+      bucket:
+        items:
+          $ref: '#/definitions/tbclient.Bucket'
+        type: array
+    type: object
+  tbclient.ListAllMyBucketsResult:
+    properties:
+      buckets:
+        $ref: '#/definitions/tbclient.Buckets'
+      owner:
+        $ref: '#/definitions/tbclient.Owner'
+    type: object
+  tbclient.ListBucketResult:
+    properties:
+      isTruncated:
+        example: false
+        type: boolean
+      marker:
+        example: ""
+        type: string
+      maxKeys:
+        example: 1000
+        type: integer
+      name:
+        example: spider-test-bucket
+        type: string
+      prefix:
+        example: ""
+        type: string
+    type: object
+  tbclient.Owner:
+    properties:
+      displayName:
+        example: aws-ap-northeast-2
+        type: string
+      id:
+        example: aws-ap-northeast-2
+        type: string
+    type: object
+  transx.DataMigrationModel:
+    properties:
+      destination:
+        allOf:
+        - $ref: '#/definitions/transx.EndpointDetails'
+        description: Destination endpoint configuration
+      destinationTransferOptions:
+        allOf:
+        - $ref: '#/definitions/transx.TransferOptions'
+        description: Destination-specific transfer options
+      source:
+        allOf:
+        - $ref: '#/definitions/transx.EndpointDetails'
+        description: Source endpoint configuration
+      sourceTransferOptions:
+        allOf:
+        - $ref: '#/definitions/transx.TransferOptions'
+        description: Source-specific transfer options
+    required:
+    - destination
+    - destinationTransferOptions
+    - source
+    - sourceTransferOptions
+    type: object
+  transx.EndpointDetails:
+    properties:
+      backupCmd:
+        description: Command execution
+        type: string
+      dataPath:
+        description: Data location (required)
+        type: string
+      endpoint:
+        description: Endpoint configuration (auto-detects protocol based on provided
+          fields)
+        type: string
+      port:
+        description: 'Port for SSH host/IP (default: 22) or Object Storage API endpoint
+          (default: 1024)'
+        type: integer
+      restoreCmd:
+        description: Restore command string to be executed on this endpoint
+        type: string
+    required:
+    - dataPath
+    type: object
+  transx.FilterOption:
+    properties:
+      exclude:
+        description: Patterns to exclude (e.g., "*.log", "temp/**", ".git/**")
+        items:
+          type: string
+        type: array
+      include:
+        description: Patterns to include (e.g., "*.txt", "data/**")
+        items:
+          type: string
+        type: array
+    type: object
+  transx.ObjectStorageOption:
+    properties:
+      accessKeyId:
+        description: Common authentication (REQUIRED - must be provided by user)
+        type: string
+      client:
+        default: spider
+        description: Client selection
+        type: string
+      expiresIn:
+        default: 3600
+        description: Presigned URL configuration (spider client only)
+        type: integer
+      filter:
+        allOf:
+        - $ref: '#/definitions/transx.FilterOption'
+        description: File filtering options (applied after listing objects, before
+          upload/download)
+      maxRetries:
+        default: 3
+        description: 'Maximum number of retry attempts (default: 3)'
+        type: integer
+      region:
+        default: us-east-1
+        description: 'AWS region (for minio client, default: "us-east-1")'
+        type: string
+      secretAccessKey:
+        description: AWS Secret Access Key (REQUIRED for minio client)
+        type: string
+      timeout:
+        default: 300
+        description: HTTP request configuration (optional)
+        type: integer
+      useSSL:
+        default: false
+        description: 'Use HTTPS (default: true)'
+        type: boolean
+    required:
+    - accessKeyId
+    type: object
+  transx.RsyncOption:
+    properties:
+      archive:
+        default: true
+        description: '-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)'
+        type: boolean
+      compress:
+        default: true
+        description: Rsync-specific options
+        type: boolean
+      connectTimeout:
+        default: 30
+        description: SSH connection timeout in seconds
+        type: integer
+      delete:
+        default: false
+        description: '--delete: Delete extraneous files from dest dirs'
+        type: boolean
+      dryRun:
+        default: false
+        description: Perform a trial run with no changes made
+        type: boolean
+      filter:
+        allOf:
+        - $ref: '#/definitions/transx.FilterOption'
+        description: File filtering options (include/exclude patterns) - use nested
+          structure for better organization
+      insecureSkipHostKeyVerification:
+        default: false
+        description: |-
+          InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.
+          Adds "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" options.
+          Warning: This can be a security risk and should only be used in trusted environments.
+        type: boolean
+      progress:
+        default: false
+        description: Show progress during transfer
+        type: boolean
+      rsyncPath:
+        default: rsync
+        description: Path to the rsync executable (if empty, uses system PATH)
+        type: string
+      sshPrivateKeyPath:
+        description: SSH private key path
+        type: string
+      transferDirContentsOnly:
+        default: false
+        description: |-
+          TransferDirContentsOnly, if true, adds a trailing slash to source paths
+          to transfer only the contents of the directory and not the directory itself.
+        type: boolean
+      username:
+        description: SSH connection & authentication options (integrated)
+        type: string
+      verbose:
+        default: false
+        description: Transfer behavior options
+        type: boolean
+    type: object
+  transx.TransferOptions:
     properties:
       method:
         description: Transfer method specification (required)
         type: string
       objectStorageOptions:
         allOf:
-        - $ref: '#/definitions/ObjectStorageOption'
+        - $ref: '#/definitions/transx.ObjectStorageOption'
         description: Object Storage-specific options (CB-Spider, AWS S3, etc.)
       rsyncOptions:
         allOf:
-        - $ref: '#/definitions/RsyncOption'
+        - $ref: '#/definitions/transx.RsyncOption'
         description: Rsync-specific options
     required:
     - method
-    type: object
-  VNetInfo:
-    properties:
-      associatedObjectList:
-        items:
-          type: string
-        type: array
-      cidrBlock:
-        type: string
-      connectionConfig:
-        $ref: '#/definitions/ConnConfig'
-      connectionName:
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
-        type: string
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      isAutoGenerated:
-        type: boolean
-      keyValueList:
-        items:
-          $ref: '#/definitions/KeyValue'
-        type: array
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      status:
-        type: string
-      subnetInfoList:
-        items:
-          $ref: '#/definitions/SubnetInfo'
-        type: array
-      systemLabel:
-        description: SystemLabel is for describing the Resource in a keyword (any
-          string can be used) for special System purpose
-        example: Managed by CB-Tumblebug
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-    type: object
-  VNetReq:
-    properties:
-      cidrBlock:
-        example: 10.0.0.0/16
-        type: string
-      connectionName:
-        example: aws-ap-northeast-2
-        type: string
-      description:
-        example: vnet00 managed by CB-Tumblebug
-        type: string
-      name:
-        example: vnet00
-        type: string
-      subnetInfoList:
-        items:
-          $ref: '#/definitions/SubnetReq'
-        type: array
-    required:
-    - connectionName
-    - name
-    type: object
-  VmCreationError:
-    properties:
-      error:
-        description: Error is the error message
-        type: string
-      phase:
-        description: Phase indicates when the error occurred
-        type: string
-      timestamp:
-        description: Timestamp when the error occurred
-        type: string
-      vmName:
-        description: VmName is the name of the VM that failed
-        type: string
-    type: object
-  VmInfo:
-    properties:
-      addtionalDetails:
-        items:
-          $ref: '#/definitions/KeyValue'
-        type: array
-      commandStatus:
-        description: CommandStatus stores the status and history of remote commands
-          executed on this VM
-        items:
-          $ref: '#/definitions/CommandStatusInfo'
-        type: array
-      connectionConfig:
-        $ref: '#/definitions/ConnConfig'
-      connectionName:
-        type: string
-      createdTime:
-        description: Created time
-        example: "2022-11-10 23:00:00"
-        type: string
-      cspImageName:
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
-        type: string
-      cspSpecName:
-        type: string
-      cspSshKeyId:
-        type: string
-      cspSubnetId:
-        type: string
-      cspVNetId:
-        type: string
-      dataDiskIds:
-        items:
-          type: string
-        type: array
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      imageId:
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        type: object
-      location:
-        $ref: '#/definitions/Location'
-      monAgentStatus:
-        description: Montoring agent status
-        example: '[installed, notInstalled, failed]'
-        type: string
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      networkAgentStatus:
-        description: NetworkAgent status
-        example: '[notInstalled, installing, installed, failed]'
-        type: string
-      networkInterface:
-        type: string
-      privateDNS:
-        type: string
-      privateIP:
-        type: string
-      publicDNS:
-        type: string
-      publicIP:
-        type: string
-      region:
-        allOf:
-        - $ref: '#/definitions/RegionInfo'
-        description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      rootDiskName:
-        type: string
-      rootDiskSize:
-        type: string
-      rootDiskType:
-        type: string
-      securityGroupIds:
-        items:
-          type: string
-        type: array
-      specId:
-        type: string
-      sshKeyId:
-        type: string
-      sshPort:
-        type: string
-      status:
-        description: Required by CB-Tumblebug
-        type: string
-      subGroupId:
-        description: defined if the VM is in a group
-        type: string
-      subnetId:
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        example: Failed because ...
-        type: string
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vNetId:
-        type: string
-      vmUserName:
-        type: string
-      vmUserPassword:
-        type: string
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
@@ -3769,15 +4013,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Check HTTP version of incoming request
       tags:
       - '[Admin] API Request Management'
@@ -3801,26 +4045,26 @@ paths:
         name: reqBody
         required: true
         schema:
-          $ref: '#/definitions/DataMigrationModel'
+          $ref: '#/definitions/transx.DataMigrationModel'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Migrate data from source to target
       tags:
       - '[Migration] Data (incubating)'
@@ -3860,15 +4104,15 @@ paths:
         "200":
           description: List of object storages
           schema:
-            $ref: '#/definitions/ListAllMyBucketsResult'
+            $ref: '#/definitions/tbclient.ListAllMyBucketsResult'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: List object storages (buckets)
       tags:
       - '[Migration] Managed middleware (preview)'
@@ -3892,7 +4136,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/MigrateObjectStorageRequest'
+          $ref: '#/definitions/controller.MigrateObjectStorageRequest'
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
         in: header
@@ -3906,11 +4150,11 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Migrate object storages to cloud
       tags:
       - '[Migration] Managed middleware (preview)'
@@ -3959,15 +4203,15 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Object storage not found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Delete object storage (bucket)
       tags:
       - '[Migration] Managed middleware (preview)'
@@ -4011,19 +4255,19 @@ paths:
         "200":
           description: Object storage details
           schema:
-            $ref: '#/definitions/ListBucketResult'
+            $ref: '#/definitions/tbclient.ListBucketResult'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Object storage not found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Get object storage (bucket) details
       tags:
       - '[Migration] Managed middleware (preview)'
@@ -4071,15 +4315,15 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Object storage not found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Check object storage (bucket) existence
       tags:
       - '[Migration] Managed middleware (preview)'
@@ -4113,15 +4357,15 @@ paths:
         "200":
           description: The ID list of The migrated multi-cloud infrastructure (MCI)
           schema:
-            $ref: '#/definitions/IdList'
+            $ref: '#/definitions/cloudmodel.IdList'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4144,7 +4388,7 @@ paths:
         name: mciInfo
         required: true
         schema:
-          $ref: '#/definitions/MigrateInfraRequest'
+          $ref: '#/definitions/controller.MigrateInfraRequest'
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
         in: header
@@ -4156,15 +4400,15 @@ paths:
         "200":
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
-            $ref: '#/definitions/MigrateInfraResponse'
+            $ref: '#/definitions/controller.MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -4208,15 +4452,15 @@ paths:
           description: The result of deleting the migrated multi-cloud infrastructure
             (MCI)
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Delete the migrated mult-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4249,15 +4493,15 @@ paths:
         "200":
           description: The migrated multi-cloud infrastructure (MCI) information
           schema:
-            $ref: '#/definitions/MigrateInfraResponse'
+            $ref: '#/definitions/controller.MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -4281,7 +4525,7 @@ paths:
         name: mciInfo
         required: true
         schema:
-          $ref: '#/definitions/MigrateInfraWithDefaultsRequest'
+          $ref: '#/definitions/controller.MigrateInfraWithDefaultsRequest'
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
         in: header
@@ -4293,15 +4537,15 @@ paths:
         "200":
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
-            $ref: '#/definitions/MigrateInfraWithDefaultsResponse'
+            $ref: '#/definitions/controller.MigrateInfraWithDefaultsResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -4330,11 +4574,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/IdList'
+            $ref: '#/definitions/model.IdList'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Delete multiple migrated security groups
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4371,21 +4615,21 @@ paths:
           description: Different return structures by the given option param
           schema:
             allOf:
-            - $ref: '#/definitions/JSONResult'
+            - $ref: '#/definitions/controller.JSONResult'
             - properties:
                 '[DEFAULT]':
-                  $ref: '#/definitions/RestGetAllSecurityGroupResponse'
+                  $ref: '#/definitions/resource.RestGetAllSecurityGroupResponse'
                 '[ID]':
-                  $ref: '#/definitions/IdList'
+                  $ref: '#/definitions/model.IdList'
               type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated security groups
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4413,22 +4657,22 @@ paths:
         name: securityGroupReq
         required: true
         schema:
-          $ref: '#/definitions/SecurityGroupReq'
+          $ref: '#/definitions/model.SecurityGroupReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SecurityGroupInfo'
+            $ref: '#/definitions/model.SecurityGroupInfo'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated security group
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4457,15 +4701,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated security group
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4493,15 +4737,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SecurityGroupInfo'
+            $ref: '#/definitions/model.SecurityGroupInfo'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated security group
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4539,21 +4783,21 @@ paths:
           description: Different return structures by the given option param
           schema:
             allOf:
-            - $ref: '#/definitions/JSONResult'
+            - $ref: '#/definitions/controller.JSONResult'
             - properties:
                 '[DEFAULT]':
-                  $ref: '#/definitions/RestGetAllSshKeyResponse'
+                  $ref: '#/definitions/resource.RestGetAllSshKeyResponse'
                 '[ID]':
-                  $ref: '#/definitions/IdList'
+                  $ref: '#/definitions/model.IdList'
               type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated SSH keys
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4581,22 +4825,22 @@ paths:
         name: sshKeyReq
         required: true
         schema:
-          $ref: '#/definitions/SshKeyReq'
+          $ref: '#/definitions/model.SshKeyReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SshKeyInfo'
+            $ref: '#/definitions/model.SshKeyInfo'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated SSH key
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4625,15 +4869,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated SSH key
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4661,15 +4905,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SshKeyInfo'
+            $ref: '#/definitions/model.SshKeyInfo'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated SSH key
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4693,21 +4937,21 @@ paths:
           description: Different return structures by the given option param
           schema:
             allOf:
-            - $ref: '#/definitions/JSONResult'
+            - $ref: '#/definitions/controller.JSONResult'
             - properties:
                 '[DEFAULT]':
-                  $ref: '#/definitions/RestGetAllVNetResponse'
+                  $ref: '#/definitions/resource.RestGetAllVNetResponse'
                 '[ID]':
-                  $ref: '#/definitions/IdList'
+                  $ref: '#/definitions/model.IdList'
               type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated virtual networks
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4728,22 +4972,22 @@ paths:
         name: vNetReq
         required: true
         schema:
-          $ref: '#/definitions/VNetReq'
+          $ref: '#/definitions/model.VNetReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/VNetInfo'
+            $ref: '#/definitions/model.VNetInfo'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated virtual network
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4780,11 +5024,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated virtual network
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4812,15 +5056,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/VNetInfo'
+            $ref: '#/definitions/model.VNetInfo'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated virtual network
       tags:
       - '[Migration] Resources for VM infrastructure'
@@ -4842,11 +5086,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMessage'
+            $ref: '#/definitions/common.SimpleMessage'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/SimpleMessage'
+            $ref: '#/definitions/common.SimpleMessage'
       summary: Check Beetle is ready
       tags:
       - '[Admin] System management'
@@ -4866,7 +5110,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendInfraRequest'
+          $ref: '#/definitions/controller.RecommendInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -4894,11 +5138,11 @@ paths:
         "200":
           description: Deprecated endpoint notice
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: (Deprecated) Recommend an appropriate container infrastructure for
         cloud migration
       tags:
@@ -4917,7 +5161,7 @@ paths:
         name: UserK8sInfra
         required: true
         schema:
-          $ref: '#/definitions/KubernetesInfoList'
+          $ref: '#/definitions/recommendation.KubernetesInfoList'
       - description: Provider (e.g., aws)
         enum:
         - aws
@@ -4942,15 +5186,15 @@ paths:
         "200":
           description: K8s control plane recommendation (ready for cb-tumblebug API)
           schema:
-            $ref: '#/definitions/K8sClusterDynamicReq'
+            $ref: '#/definitions/model.K8sClusterDynamicReq'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend K8s control plane configuration
       tags:
       - '[Recommendation] K8s Cluster (prototype)'
@@ -4968,7 +5212,7 @@ paths:
         name: UserK8sInfra
         required: true
         schema:
-          $ref: '#/definitions/KubernetesInfoList'
+          $ref: '#/definitions/recommendation.KubernetesInfoList'
       - description: Provider (e.g., aws)
         enum:
         - aws
@@ -4994,15 +5238,15 @@ paths:
           description: K8s worker node group recommendation (ready for cb-tumblebug
             API)
           schema:
-            $ref: '#/definitions/K8sNodeGroupReq'
+            $ref: '#/definitions/model.K8sNodeGroupReq'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend K8s worker node group configuration
       tags:
       - '[Recommendation] K8s Cluster (prototype)'
@@ -5024,7 +5268,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5052,15 +5296,15 @@ paths:
         "200":
           description: The result of recommended infrastructure
           schema:
-            $ref: '#/definitions/RecommendVmInfraResponse'
+            $ref: '#/definitions/controller.RecommendVmInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: '**(To be deprecated)** Recommend an appropriate VM infrastructure
         (i.e., MCI, multi-cloud infrastructure) for cloud migration'
       tags:
@@ -5083,7 +5327,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraWithDefaultsRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5111,15 +5355,15 @@ paths:
         "200":
           description: The result of recommended infrastructure
           schema:
-            $ref: '#/definitions/RecommendVmInfraWithDefaultsResponse'
+            $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
         multi-cloud infrastructure) with defaults for cloud migration
       tags:
@@ -5148,7 +5392,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/RecommendObjectStorageRequest'
+          $ref: '#/definitions/controller.RecommendObjectStorageRequest'
       - default: aws
         description: CSP (e.g., aws, azure, gcp)
         enum:
@@ -5176,15 +5420,15 @@ paths:
         "200":
           description: The result of recommended object storage
           schema:
-            $ref: '#/definitions/RecommendObjectStorageResponse'
+            $ref: '#/definitions/controller.RecommendObjectStorageResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an object storage for cloud migration
       tags:
       - '[Recommendation] Managed middleware (preview)'
@@ -5206,7 +5450,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5234,15 +5478,15 @@ paths:
         "200":
           description: The result of recommended security groups
           schema:
-            $ref: '#/definitions/RecommendSecurityGroupResponse'
+            $ref: '#/definitions/controller.RecommendSecurityGroupResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an appropriate security group for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
@@ -5264,7 +5508,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5292,15 +5536,15 @@ paths:
         "200":
           description: The result of recommended vNet
           schema:
-            $ref: '#/definitions/RecommendVNetResponse'
+            $ref: '#/definitions/controller.RecommendVNetResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an appropriate virtual network for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
@@ -5322,7 +5566,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5350,15 +5594,15 @@ paths:
         "200":
           description: The result of recommended VM OS images
           schema:
-            $ref: '#/definitions/RecommendVmOsImageResponse'
+            $ref: '#/definitions/controller.RecommendVmOsImageResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an appropriate OS image for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
@@ -5381,7 +5625,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5413,15 +5657,15 @@ paths:
         "200":
           description: The result of recommended VM specifications
           schema:
-            $ref: '#/definitions/RecommendVmSpecResponse'
+            $ref: '#/definitions/controller.RecommendVmSpecResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Recommend an appropriate VM specification for cloud migration
       tags:
       - '[Recommendation] Resources for VM infrastructure'
@@ -5454,7 +5698,7 @@ paths:
         name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/RecommendVmInfraRequest'
+          $ref: '#/definitions/controller.RecommendVmInfraRequest'
       - default: aws
         description: Provider (e.g., aws, azure, gcp)
         enum:
@@ -5491,15 +5735,15 @@ paths:
         "200":
           description: List of recommended infrastructure candidates
           schema:
-            $ref: '#/definitions/ApiResponse-array_RecommendedVmInfra'
+            $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/ApiResponse-any'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/ApiResponse-any'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend multiple VM infrastructure candidates for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
@@ -5548,7 +5792,7 @@ paths:
         name: onpremiseInfraModel
         required: true
         schema:
-          $ref: '#/definitions/GenerateMigrationReportRequest'
+          $ref: '#/definitions/controller.GenerateMigrationReportRequest'
       produces:
       - text/markdown
       - text/html
@@ -5568,11 +5812,11 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Generate migration report (with source-target correlation analysis)
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
@@ -5600,11 +5844,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Delete a specific request's details
       tags:
       - '[Admin] API Request Management'
@@ -5637,15 +5881,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/RequestDetails'
+            $ref: '#/definitions/common.RequestDetails'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Get request details
       tags:
       - '[Admin] API Request Management'
@@ -5666,7 +5910,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Delete all requests' details
       tags:
       - '[Admin] API Request Management'
@@ -5729,7 +5973,7 @@ paths:
           schema:
             additionalProperties:
               items:
-                $ref: '#/definitions/RequestDetails'
+                $ref: '#/definitions/common.RequestDetails'
               type: array
             type: object
       summary: Get all requests
@@ -5771,7 +6015,7 @@ paths:
         name: Request
         required: true
         schema:
-          $ref: '#/definitions/GenerateSourceInfraSummaryRequest'
+          $ref: '#/definitions/controller.GenerateSourceInfraSummaryRequest'
       produces:
       - application/json
       - text/markdown
@@ -5790,23 +6034,23 @@ paths:
               type: string
           schema:
             allOf:
-            - $ref: '#/definitions/JSONResult'
+            - $ref: '#/definitions/controller.JSONResult'
             - properties:
                 '[HTML]':
                   type: string
                 '[JSON]':
-                  $ref: '#/definitions/SourceInfraSummary'
+                  $ref: '#/definitions/summary.SourceInfraSummary'
                 '[MARKDOWN]':
                   type: string
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Generate source infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
@@ -5871,27 +6115,27 @@ paths:
               type: string
           schema:
             allOf:
-            - $ref: '#/definitions/JSONResult'
+            - $ref: '#/definitions/controller.JSONResult'
             - properties:
                 '[HTML]':
                   type: string
                 '[JSON]':
-                  $ref: '#/definitions/TargetInfraSummary'
+                  $ref: '#/definitions/summary.TargetInfraSummary'
                 '[MARKDOWN]':
                   type: string
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Response'
+            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response'
       summary: Generate target infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
@@ -5936,11 +6180,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
         "503":
           description: Service Unavailable
           schema:
-            $ref: '#/definitions/SimpleMsg'
+            $ref: '#/definitions/common.SimpleMsg'
       summary: Test tracing to Tumblebug
       tags:
       - '[Admin] API Request Management'

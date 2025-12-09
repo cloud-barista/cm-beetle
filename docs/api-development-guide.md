@@ -24,11 +24,12 @@ The key directories for API development are:
 
 ## 2. Standard API Response Structure
 
-To ensure consistency across all APIs, CM-Beetle uses a standardized generic response structure defined in `pkg/api/rest/model/response.go`.
+To ensure consistency across all APIs, CM-Beetle uses a standardized generic response structure defined in `pkg/api/rest/model/beetle/response.go`.
 
 ### 2.1. ApiResponse[T]
 
-The `ApiResponse[T]` struct is designed to handle both success and error responses uniformly.
+The `ApiResponse[T]` struct is a generic type designed to handle both success and error responses uniformly.
+It is located in `pkg/api/rest/model/beetle/response.go`.
 
 ```go
 type ApiResponse[T any] struct {
@@ -38,22 +39,72 @@ type ApiResponse[T any] struct {
     // Uncomment this field when internal status codes are needed.
     // Code int `json:"code,omitempty"`
 
-    Data    T      `json:"data,omitempty"`    // Payload (Object, List, or Page)
+    Data    *T     `json:"data,omitempty"`    // Payload (Object, List, or Page) - pointer type for proper omitempty
     Message string `json:"message,omitempty"` // Contextual message
     Error   string `json:"error,omitempty"`   // Error details (if failed)
 }
 ```
 
+**Key Design Decisions:**
+
+- **Pointer Type for Data (`*T`)**: The `Data` field uses a pointer type to ensure the `omitempty` JSON tag works correctly. When an error occurs, the `Data` field is `nil` and will be completely omitted from the JSON response, resulting in cleaner error messages without an empty `data` object.
+
+- **Generic Type Parameter (`T`)**: Supports various response types including single objects, lists (`[]T`), and paginated results (`Page[T]`).
+
+**Example Responses:**
+
+Success with data:
+
+```json
+{
+  "success": true,
+  "data": { "id": "u1", "name": "Alice" }
+}
+```
+
+Error without data (note: no `data` field):
+
+```json
+{
+  "success": false,
+  "error": "User not found"
+}
+```
+
 ### 2.2. Helper Functions
 
-Use the provided helper functions in your controllers to generate responses:
+Use the provided helper functions in your controllers to generate responses.
+These functions are located in `pkg/api/rest/model/beetle/response.go`.
 
-| Function                                      | Usage                      | Example                                                                          |
-| :-------------------------------------------- | :------------------------- | :------------------------------------------------------------------------------- |
-| `model.SuccessResponse(data)`                 | Return a single object     | `return c.JSON(http.StatusOK, model.SuccessResponse(user))`                      |
-| `model.SuccessListResponse(items)`            | Return a list of items     | `return c.JSON(http.StatusOK, model.SuccessListResponse(users))`                 |
-| `model.SuccessResponseWithMessage(data, msg)` | Return data with a message | `return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(nil, "Deleted"))` |
-| `model.SimpleErrorResponse(err)`              | Return a simple error      | `return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))`   |
+| Function                                               | Usage                      | Example                                                                                                |
+| :----------------------------------------------------- | :------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `model.SuccessResponse(data)`                          | Return a single object     | `return c.JSON(http.StatusOK, model.SuccessResponse(user))`                                            |
+| `model.SuccessListResponse(items)`                     | Return a list of items     | `return c.JSON(http.StatusOK, model.SuccessListResponse(users))`                                       |
+| `model.SuccessPagedResponse(items, total, page, size)` | Return paginated results   | `return c.JSON(http.StatusOK, model.SuccessPagedResponse(users, 100, 1, 10))`                          |
+| `model.SuccessResponseWithMessage(data, msg)`          | Return data with a message | `return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(nil, "Deleted"))`                       |
+| `model.SimpleErrorResponse(err)`                       | Return a simple error      | `return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))`                         |
+| `model.ErrorResponse(err, msg)`                        | Return detailed error      | `return c.JSON(http.StatusInternalServerError, model.ErrorResponse(err.Error(), "Failed to process"))` |
+
+**Implementation Details:**
+
+All success helper functions internally use pointer types (`&data`) when setting the `Data` field.
+This ensures that:
+
+- Success responses always include a `data` field (never `nil` for successful operations)
+- Error responses completely omit the `data` field (cleaner JSON output)
+
+**Example Usage in Controller:**
+
+```go
+// Success - returns data
+users := []model.User{{ID: "u1", Name: "Alice"}}
+return c.JSON(http.StatusOK, model.SuccessListResponse(users))
+// Output: {"success": true, "data": [{"id": "u1", "name": "Alice"}]}
+
+// Error - no data field
+return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("User not found"))
+// Output: {"success": false, "error": "User not found"}
+```
 
 ## 3. How to Add a New API
 
@@ -85,7 +136,7 @@ package controller
 import (
     "net/http"
     "github.com/labstack/echo/v4"
-    "github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+    model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 )
 
 // GetUsers godoc

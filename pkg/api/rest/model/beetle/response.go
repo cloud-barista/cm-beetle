@@ -38,7 +38,7 @@ type ApiResponse[T any] struct {
 	// Uncomment this field when internal status codes are needed.
 	// Code int `json:"code,omitempty"`
 
-	Data    T      `json:"data,omitempty"`                                     // Contains the actual response data (single object, list, or page)
+	Data    *T     `json:"data,omitempty"`                                     // Contains the actual response data (single object, list, or page)
 	Message string `json:"message,omitempty" example:"Operation successful"`   // Optional message for additional context
 	Error   string `json:"error,omitempty" example:"Error message if failure"` // Error message for failed responses
 }
@@ -64,7 +64,7 @@ type Page[T any] struct {
 func SuccessResponse[T any](data T) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: true,
-		Data:    data,
+		Data:    &data,
 	}
 }
 
@@ -72,7 +72,7 @@ func SuccessResponse[T any](data T) ApiResponse[T] {
 func SuccessResponseWithMessage[T any](data T, message string) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: true,
-		Data:    data,
+		Data:    &data,
 		Message: message,
 	}
 }
@@ -83,7 +83,7 @@ func SuccessResponseWithMessage[T any](data T, message string) ApiResponse[T] {
 func SuccessListResponse[T any](items []T) ApiResponse[[]T] {
 	return ApiResponse[[]T]{
 		Success: true,
-		Data:    items,
+		Data:    &items,
 	}
 }
 
@@ -91,7 +91,7 @@ func SuccessListResponse[T any](items []T) ApiResponse[[]T] {
 func SuccessListResponseWithMessage[T any](items []T, message string) ApiResponse[[]T] {
 	return ApiResponse[[]T]{
 		Success: true,
-		Data:    items,
+		Data:    &items,
 		Message: message,
 	}
 }
@@ -111,7 +111,7 @@ func SuccessPagedResponse[T any](items []T, totalCount int64, page, size int) Ap
 
 	return ApiResponse[Page[T]]{
 		Success: true,
-		Data:    pageData,
+		Data:    &pageData,
 	}
 }
 

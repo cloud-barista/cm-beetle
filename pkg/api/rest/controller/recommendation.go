@@ -27,7 +27,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
