@@ -21,7 +21,7 @@ import (
 	// Import Beetle's existing packages
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"

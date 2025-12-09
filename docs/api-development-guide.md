@@ -39,7 +39,7 @@ type ApiResponse[T any] struct {
     // Uncomment this field when internal status codes are needed.
     // Code int `json:"code,omitempty"`
 
-    Data    *T     `json:"data,omitempty"`    // Payload (Object, List, or Page) - pointer type for proper omitempty
+    Data    T      `json:"data,omitempty"`    // Payload (Object, List, or Page)
     Message string `json:"message,omitempty"` // Contextual message
     Error   string `json:"error,omitempty"`   // Error details (if failed)
 }
@@ -47,9 +47,12 @@ type ApiResponse[T any] struct {
 
 **Key Design Decisions:**
 
-- **Pointer Type for Data (`*T`)**: The `Data` field uses a pointer type to ensure the `omitempty` JSON tag works correctly. When an error occurs, the `Data` field is `nil` and will be completely omitted from the JSON response, resulting in cleaner error messages without an empty `data` object.
-
 - **Generic Type Parameter (`T`)**: Supports various response types including single objects, lists (`[]T`), and paginated results (`Page[T]`).
+
+- **omitempty Behavior**: The `omitempty` tag works differently based on the type:
+  - For slices/maps/pointers: omitted when `nil`
+  - For structs: omitted only when zero value (all fields are zero values)
+  - Error responses may include an empty `data` object for struct types, which is acceptable as clients check `success` first
 
 **Example Responses:**
 
@@ -62,7 +65,7 @@ Success with data:
 }
 ```
 
-Error without data (note: no `data` field):
+Error (may include empty data for struct types):
 
 ```json
 {
@@ -87,11 +90,12 @@ These functions are located in `pkg/api/rest/model/beetle/response.go`.
 
 **Implementation Details:**
 
-All success helper functions internally use pointer types (`&data`) when setting the `Data` field.
+All success helper functions directly assign data to the `Data` field.
 This ensures that:
 
-- Success responses always include a `data` field (never `nil` for successful operations)
-- Error responses completely omit the `data` field (cleaner JSON output)
+- Success responses always include a `data` field
+- For slices and maps, `nil` values are omitted due to `omitempty`
+- For structs, empty objects may appear in error responses, but clients should check `success` first
 
 **Example Usage in Controller:**
 
@@ -101,7 +105,7 @@ users := []model.User{{ID: "u1", Name: "Alice"}}
 return c.JSON(http.StatusOK, model.SuccessListResponse(users))
 // Output: {"success": true, "data": [{"id": "u1", "name": "Alice"}]}
 
-// Error - no data field
+// Error - no data field (for slice/map types)
 return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("User not found"))
 // Output: {"success": false, "error": "User not found"}
 ```
