@@ -1568,8 +1568,9 @@ func getVersionFromDockerCompose(serviceName string) string {
 		return "unknown"
 	}
 
-	// Pattern to match: cloudbaristaorg/serviceName:version
-	pattern := fmt.Sprintf(`cloudbaristaorg/%s:([\d\.]+)`, serviceName)
+	// Pattern to match: image: cloudbaristaorg/serviceName:version (excluding commented lines)
+	// This pattern ensures we don't match lines starting with # (comments)
+	pattern := fmt.Sprintf(`(?m)^\s*image:\s*cloudbaristaorg/%s:([\d\.]+)`, serviceName)
 	re := regexp.MustCompile(pattern)
 	matches := re.FindStringSubmatch(string(content))
 
