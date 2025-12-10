@@ -1,7 +1,69 @@
-# Git
+# Git & VCS
 .git
 .gitignore
 .gitattributes
+
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+log/
+*.history
+
+# Build Artifacts & Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+pkg/src
+pkg/cm-beetle
+pkg/cm-beetle-arm
+pkg/cli/tbctl
+pkg/cli/cli
+cmd/cm-beetle/cm-beetle
+
+# Test Files & Artifacts
+*_test.go
+**/*_test.go
+cmd/test-cli/
+!cmd/cm-beetle/
+
+# Python & Virtual Env
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database & Runtime Data
+*.db
+meta_db/
+db/
+
+# Configuration & Secrets
+*.pem
+*.ppk
+*.key
+*credentials*
+auth-config.json
+conf/*
+!conf/template-*
+
+# Container Volumes & Temp Dirs
+container-volume/
+# Keep commented: cb-tumblebug/
+# Keep commented: cm-model/
 
 # Documentation
 *.md
@@ -10,59 +72,19 @@ docs/
 !docs/api-development-guide.md
 .github/
 
-# IDE and Editor
-.idea/
-.vscode/
-*.swp
-*.swo
+# Deployment & Docker
+deployments/
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# Backup Files
+*_backup
 *~
+*.bak
+*.tmp
 
-# Logs
-*.log
-log/
-*.history
-
-# Test files
-*_test.go
-**/*_test.go
-cmd/test-cli/
-!cmd/cm-beetle/
-
-# Build artifacts (already compiled)
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-
-# Binaries (exclude compiled artifacts, but source code is needed for build)
-pkg/src
-pkg/cm-beetle
-pkg/cm-beetle-arm
-pkg/cli/tbctl
-pkg/cli/cli
-cmd/cm-beetle/cm-beetle
-cmd/test-cli/test-cli
-
-# Database and runtime files
-*.db
-meta_db/
-db/
-
-# Container volumes
-container-volume/
-
-# Temporal directories (used for local development with replace directives)
-# Keep commented: cb-tumblebug/
-# Keep commented: cm-model/
-
-# Config files (use template inside container)
-conf/*
-!conf/template-*
-
-# Ensure required directories are included
+# Docker Build Context (Allowlist)
 !api/
 !scripts/
 !transx/
@@ -70,32 +92,3 @@ conf/*
 !deepdiffgo/
 !pkg/
 !cmd/cm-beetle/
-
-# Python
-.venv/
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Credentials and secrets
-*.pem
-*.ppk
-*.key
-*credentials*
-auth-config.json
-
-# Deployment files
-deployments/
-Dockerfile*
-docker-compose*.yaml
-.dockerignore
-
-# Backup files
-backup_*
-*~
-*.bak
-*.tmp
-
-# OS files
-.DS_Store
-Thumbs.db

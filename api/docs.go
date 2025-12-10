@@ -2318,7 +2318,7 @@ const docTemplate = `{
                     "[Recommendation] Infrastructure"
                 ],
                 "summary": "Recommend multiple VM infrastructure candidates for cloud migration",
-                "operationId": "RecommendVmInfra",
+                "operationId": "RecommendVmInfraCandidates",
                 "parameters": [
                     {
                         "description": "Specify the your infrastructure to be migrated",
@@ -3304,11 +3304,23 @@ const docTemplate = `{
         "cloudmodel.ImageInfo": {
             "type": "object",
             "properties": {
+                "commandHistory": {
+                    "description": "CommandHistory stores the status and history of remote commands executed on this VM",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageSourceCommandHistory"
+                    }
+                },
                 "connectionName": {
                     "type": "string"
                 },
                 "creationDate": {
                     "type": "string"
+                },
+                "cspImageId": {
+                    "description": "CspImageId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "ami-0d399fba46a30a310"
                 },
                 "cspImageName": {
                     "type": "string",
@@ -3411,6 +3423,20 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "sourceCspImageName": {
+                    "description": "SourceCspImageName is the name of the source CSP image from which this image was created",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "sourceVmUid": {
+                    "description": "SourceVmUid is the UID of the source VM from which this image was created",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
                 "systemLabel": {
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
@@ -3418,6 +3444,21 @@ const docTemplate = `{
                 "uid": {
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "cloudmodel.ImageSourceCommandHistory": {
+            "type": "object",
+            "properties": {
+                "commandExecuted": {
+                    "description": "CommandExecuted is the actual SSH command executed on the VM (may be adjusted)",
+                    "type": "string",
+                    "example": "ls -la"
+                },
+                "index": {
+                    "description": "Index is sequential identifier for this command execution (1, 2, 3, ...)",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -5610,7 +5651,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "imageId",
-                "name",
                 "specId"
             ],
             "properties": {
@@ -5651,7 +5691,7 @@ const docTemplate = `{
                     "example": "1"
                 },
                 "name": {
-                    "description": "K8sCluster name if it is not empty.",
+                    "description": "K8sCluster name if it is not empty. Optional when used with namePrefix in multi-cluster creation.",
                     "type": "string",
                     "example": "k8scluster01"
                 },
