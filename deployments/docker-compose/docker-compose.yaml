@@ -9,9 +9,9 @@ services:
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.4.7
     container_name: cm-beetle
-    build:
-      context: ${COMPOSE_PROJECT_ROOT}
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${COMPOSE_PROJECT_ROOT}
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - internal_network
@@ -38,9 +38,9 @@ services:
       # - BEETLE_LOGFILE_MAXBACKUPS=3
       # - BEETLE_LOGFILE_MAXAGE=30
       # - BEETLE_LOGFILE_COMPRESS=false
-      - BEETLE_LOGLEVEL=debug
+      # - BEETLE_LOGLEVEL=debug
       # - BEETLE_LOGWRITER=both
-      - BEETLE_NODE_ENV=development
+      # - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000
       - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       # - BEETLE_TUMBLEBUG_API_USERNAME=default
