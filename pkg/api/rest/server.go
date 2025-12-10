@@ -234,7 +234,7 @@ func RunServer(port string) {
 	gRecommendation.Use(middlewares.TumblebugInitChecker)
 
 	// Recommendation APIs for VM infrastructure
-	gRecommendation.POST("/vmInfra", controller.RecommendVmInfra)
+	gRecommendation.POST("/vmInfra", controller.RecommendVmInfraCandidates)
 	gRecommendation.POST("/mci", controller.RecommendVMInfra) // To be deprecated
 	gRecommendation.POST("/mciWithDefaults", controller.RecommendVMInfraWithDefaults)
 

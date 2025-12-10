@@ -279,9 +279,19 @@ definitions:
     type: object
   cloudmodel.ImageInfo:
     properties:
+      commandHistory:
+        description: CommandHistory stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/cloudmodel.ImageSourceCommandHistory'
+        type: array
       connectionName:
         type: string
       creationDate:
+        type: string
+      cspImageId:
+        description: CspImageId is resource identifier managed by CSP
+        example: ami-0d399fba46a30a310
         type: string
       cspImageName:
         example: csp-06eb41e14121c550a
@@ -353,12 +363,38 @@ definitions:
         items:
           type: string
         type: array
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      sourceCspImageName:
+        description: SourceCspImageName is the name of the source CSP image from which
+          this image was created
+        example: csp-06eb41e14121c550a
+        type: string
+      sourceVmUid:
+        description: SourceVmUid is the UID of the source VM from which this image
+          was created
+        example: wef12awefadf1221edcf
+        type: string
       systemLabel:
         example: Managed by CB-Tumblebug
         type: string
       uid:
         example: wef12awefadf1221edcf
         type: string
+    type: object
+  cloudmodel.ImageSourceCommandHistory:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
     type: object
   cloudmodel.ImageStatus:
     enum:
@@ -2027,7 +2063,8 @@ definitions:
         example: "1"
         type: string
       name:
-        description: K8sCluster name if it is not empty.
+        description: K8sCluster name if it is not empty. Optional when used with namePrefix
+          in multi-cluster creation.
         example: k8scluster01
         type: string
       nodeGroupName:
@@ -2061,7 +2098,6 @@ definitions:
         type: string
     required:
     - imageId
-    - name
     - specId
     type: object
   model.K8sNodeGroupReq:
@@ -5691,7 +5727,7 @@ paths:
 
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
-      operationId: RecommendVmInfra
+      operationId: RecommendVmInfraCandidates
       parameters:
       - description: Specify the your infrastructure to be migrated
         in: body

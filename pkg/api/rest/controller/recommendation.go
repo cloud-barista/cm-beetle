@@ -213,8 +213,8 @@ func RecommendVMInfra(c echo.Context) error {
 	return c.JSON(http.StatusOK, recommendedInfra)
 }
 
-// RecommendVmInfra godoc
-// @ID RecommendVmInfra
+// RecommendVmInfraCandidates godoc
+// @ID RecommendVmInfraCandidates
 // @Summary Recommend multiple VM infrastructure candidates for cloud migration
 // @Description Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
 // @Description
@@ -247,7 +247,7 @@ func RecommendVMInfra(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Bad Request"
 // @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
 // @Router /recommendation/vmInfra [post]
-func RecommendVmInfra(c echo.Context) error {
+func RecommendVmInfraCandidates(c echo.Context) error {
 
 	// [Input]
 	desiredCsp := c.QueryParam("desiredCsp")
