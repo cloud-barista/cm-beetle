@@ -7,7 +7,7 @@ networks:
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.4.7
+    image: cloudbaristaorg/cm-beetle:0.5.0
     container_name: cm-beetle
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}
