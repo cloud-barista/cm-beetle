@@ -49,7 +49,8 @@ type AllowConfig struct {
 	Origins string `mapstructure:"origins"`
 }
 type AuthConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled bool   `mapstructure:"enabled"`
+	Mode    string `mapstructure:"mode"` // basic or jwt
 }
 
 type LkvStoreConfig struct {
@@ -183,6 +184,7 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.self.endpoint", "BEETLE_SELF_ENDPOINT")
 	viper.BindEnv("beetle.api.allow.origins", "BEETLE_API_ALLOW_ORIGINS")
 	viper.BindEnv("beetle.api.auth.enabled", "BEETLE_API_AUTH_ENABLED")
+	viper.BindEnv("beetle.api.auth.mode", "BEETLE_API_AUTH_MODE")
 	viper.BindEnv("beetle.api.username", "BEETLE_API_USERNAME")
 	viper.BindEnv("beetle.api.password", "BEETLE_API_PASSWORD")
 	viper.BindEnv("beetle.lkvstore.path", "BEETLE_LKVSTORE_PATH")

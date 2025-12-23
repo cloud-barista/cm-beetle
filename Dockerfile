@@ -81,9 +81,11 @@ ENV BEETLE_SELF_ENDPOINT=localhost:8056
 
 ## Set API access config
 # API_ALLOW_ORIGINS (ex: https://cloud-barista.org,xxx.xxx.xxx.xxx or * for all)
-# Set ENABLE_AUTH=true currently for basic auth for all routes (i.e., url or path)
+# Set BEETLE_API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
+# Set BEETLE_API_AUTH_MODE=basic or jwt (default: basic)
 ENV BEETLE_API_ALLOW_ORIGINS=* \
     BEETLE_API_AUTH_ENABLED=true \
+    BEETLE_API_AUTH_MODE=basic \
     BEETLE_API_USERNAME=default \
     BEETLE_API_PASSWORD=default
 

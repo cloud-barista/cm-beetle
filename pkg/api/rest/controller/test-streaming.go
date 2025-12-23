@@ -30,6 +30,7 @@ import (
 // @Produce json
 // @Success 200 {object} map[string]any "Multiple JSON objects"
 // @Router /test/streaming [get]
+// @x-order 1
 func TestStreamingResponse(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	c.Response().WriteHeader(http.StatusOK)
