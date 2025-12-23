@@ -32,7 +32,9 @@ type APIChange struct {
 
 type DiffReport struct {
 	Spec1      string      `json:"spec1,omitempty"`
+	Spec1Desc  string      `json:"spec1Desc,omitempty"`
 	Spec2      string      `json:"spec2,omitempty"`
+	Spec2Desc  string      `json:"spec2Desc,omitempty"`
 	APIChanges []APIChange `json:"apiChanges"`
 }
 
