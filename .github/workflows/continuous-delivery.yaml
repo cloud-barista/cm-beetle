@@ -25,6 +25,7 @@ on:
       - ".gitignore"
       - "LICENSE"
       - "CODEOWNERS"
+      - "deepdiffgo/**"
       # - '.all-contributorsrc'
       # - 'assets/**'
       # - 'src/testclient/scripts/**'
