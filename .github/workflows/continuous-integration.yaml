@@ -17,6 +17,7 @@ on:
       - "scripts/**"
       - "src/testclient/scripts/**"
       - "docs/**"
+      - "deepdiffgo/**"
 
 jobs:
   # The job key (i.e., ID) is "build-source-code"
