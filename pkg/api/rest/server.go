@@ -26,6 +26,7 @@ import (
 
 	rest_common "github.com/cloud-barista/cm-beetle/pkg/api/rest/common"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/docs"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -33,6 +34,7 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"net/http"
 	"net/url"
@@ -93,6 +95,7 @@ func RunServer(port string) {
 	APILogSkipPatterns := [][]string{
 		{"/beetle/api"},
 		{"/tumblebug/api"},
+		{"/.well-known/appspecific/com.chrome.devtools.json"},
 		// {"/mci", "option=status"},
 	}
 
@@ -128,30 +131,49 @@ func RunServer(port string) {
 
 	// Conditions to prevent abnormal operation due to typos (e.g., ture, falss, etc.)
 	enableAuth := config.Beetle.API.Auth.Enabled
+	authMode := config.Beetle.API.Auth.Mode
+	log.Debug().Msgf("API Auth Enabled: %v, Mode: %s", enableAuth, authMode)
 
 	apiUser := config.Beetle.API.Username
 	apiPass := config.Beetle.API.Password
+
 	if enableAuth {
-		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
-			// Skip authentication for some routes that do not require authentication
-			Skipper: func(c echo.Context) bool {
-				if c.Path() == "/beetle/readyz" ||
-					c.Path() == "/beetle/httpVersion" ||
-					strings.HasPrefix(c.Path(), "/tumblebug") {
-					// log.Debug().Msgf("Skip authentication for %s", c.Path())
-					return true
-				}
-				return false
-			},
-			Validator: func(username, password string, c echo.Context) (bool, error) {
-				// Be careful to use constant time comparison to prevent timing attacks
-				if subtle.ConstantTimeCompare([]byte(username), []byte(apiUser)) == 1 &&
-					subtle.ConstantTimeCompare([]byte(password), []byte(apiPass)) == 1 {
-					return true, nil
-				}
-				return false, nil
-			},
-		}))
+		switch authMode {
+		case "basic":
+			e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
+				// Skip authentication for some routes that do not require authentication
+				Skipper: func(c echo.Context) bool {
+
+					if strings.HasSuffix(c.Request().URL.Path, "/beetle/readyz") ||
+						strings.HasSuffix(c.Request().URL.Path, "/beetle/httpVersion") ||
+						// strings.HasPrefix(c.Request().URL.Path, "/beetle/docs") ||
+						strings.HasSuffix(c.Request().URL.Path, "/beetle/swagger.json") || // Allow access to swagger.json for tool compatibility
+						strings.HasSuffix(c.Request().URL.Path, "/beetle/swagger.yaml") || // Allow access to swagger.yaml for tool compatibility
+						strings.Contains(c.Request().URL.Path, "/favicon.ico") ||
+						strings.HasPrefix(c.Request().URL.Path, "/.well-known") ||
+						strings.HasPrefix(c.Request().URL.Path, "/beetle/api") ||
+						strings.HasPrefix(c.Request().URL.Path, "/tumblebug") {
+						// log.Debug().Msgf("Skip authentication for %s", c.Path())
+						return true
+					}
+					return false
+				},
+				Validator: func(username, password string, c echo.Context) (bool, error) {
+					// Be careful to use constant time comparison to prevent timing attacks
+					if subtle.ConstantTimeCompare([]byte(username), []byte(apiUser)) == 1 &&
+						subtle.ConstantTimeCompare([]byte(password), []byte(apiPass)) == 1 {
+						return true, nil
+					}
+					log.Debug().Msgf("Invalid Basic Auth credentials for user: %s", username)
+					return false, echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
+				},
+			}))
+		case "jwt":
+			//TBD
+
+		default:
+			log.Fatal().Msgf("AUTH_MODE env variable for API authentication is set to an invalid value: %s. ", authMode)
+		}
 
 		// TODO: Add security validation for default credentials
 		// Call validation function to warn about default credentials in production
@@ -163,9 +185,8 @@ func RunServer(port string) {
 	// TODO: Implement security headers middleware
 	// addSecurityHeaders(e)
 
-	fmt.Println("\n \n ")
-	fmt.Print(banner)
 	fmt.Println("\n ")
+	fmt.Print(banner)
 	fmt.Println("\n ")
 	fmt.Printf(infoColor, website)
 	fmt.Println("\n \n ")
@@ -212,6 +233,36 @@ func RunServer(port string) {
 	gBeetle.GET("/api/", swaggerRedirect)
 	gBeetle.GET("/api/*", echoSwagger.WrapHandler)
 
+	// API Explorer handler (Scalar UI)
+	authDesc := ""
+	if enableAuth {
+		switch authMode {
+		case "basic":
+			authDesc = "Authentication is generally required. Method: <b>Basic Auth</b>."
+		case "jwt":
+			authDesc = "Authentication is generally required. Method: <b>Bearer JWT</b>."
+		default:
+			log.Warn().Msgf("AUTH_MODE env variable for API authentication is set to an invalid value: %s. ", authMode)
+		}
+	}
+
+	// TODO: To be uncommented when replacing Swagger UI with Scalar UI
+	// * Serve API spec files
+	// Compatible with other subsystems that try to access "api/doc.yaml" or "api/doc.json"
+	// gBeetle.File("/api/doc.yaml", filepath.Join(config.Beetle.Root, "api/swagger.yaml"))
+	// gBeetle.File("/api/doc.json", filepath.Join(config.Beetle.Root, "api/swagger.json"))
+	// Compatible with tools that conventionally look for it
+	gBeetle.File("/swagger.json", filepath.Join(config.Beetle.Root, "api/swagger.json"))
+	gBeetle.File("/swagger.yaml", filepath.Join(config.Beetle.Root, "api/swagger.yaml"))
+
+	gBeetle.GET("/api/explorer", docs.ScalarHandler(docs.ScalarConfig{
+		Title:           "CM-Beetle API Explorer",
+		SpecURL:         "/beetle/api/doc.yaml",
+		AuthEnabled:     enableAuth,
+		AuthDescription: authDesc,
+		SidebarWidth:    "500px",
+	}))
+
 	// System management APIs
 	gBeetle.GET("/readyz", rest_common.GetReadyz)
 	gBeetle.GET("/httpVersion", controller.CheckHTTPVersion)
@@ -219,6 +270,7 @@ func RunServer(port string) {
 	// Test utility APIs
 	gBeetle.GET("/test/tracing", controller.TestTracing)
 	gBeetle.GET("/test/streaming", controller.TestStreamingResponse)
+	gBeetle.GET("/test/auth", controller.TestAuth)
 
 	// API Request Management APIs
 	gBeetle.GET("/request/:reqId", controller.RestGetRequest)
@@ -352,13 +404,22 @@ func RunServer(port string) {
 
 	// Start API server
 	selfEndpoint := config.Beetle.Self.Endpoint
-	apidashboard := " http://" + selfEndpoint + "/beetle/api"
+	apiDoc := "http://" + selfEndpoint + "/beetle/api" // To be deprecated
+	apiExplorer := "http://" + selfEndpoint + "/beetle/api/explorer"
+
+	fmt.Print(" API Documentation (Swagger UI): ") // To be deprecated
+	fmt.Printf(noticeColor, apiDoc)                // To be deprecated
+	fmt.Println()                                  // To be deprecated
+	fmt.Print(" API Explorer      (Scalar UI):  ")
+	fmt.Printf(noticeColor, apiExplorer)
+	fmt.Println()
 
 	if enableAuth {
-		fmt.Println(" Access to API dashboard" + " (username: " + apiUser + " / password: " + apiPass + ")")
+		fmt.Println(" Note - Basic Auth Credentials for development:")
+		fmt.Printf("   - Username: %s\n", apiUser)
+		fmt.Printf("   - Password: %s\n", apiPass)
+		fmt.Println()
 	}
-	fmt.Printf(noticeColor, apidashboard)
-	fmt.Println("\n ")
 
 	// A context for graceful shutdown (It is based on the signal package)selfEndpoint := os.Getenv("BEETLE_SELF_ENDPOINT")
 	// NOTE -

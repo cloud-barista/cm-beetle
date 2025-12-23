@@ -140,8 +140,53 @@ func checkReadiness(url string) (bool, error) {
 
 // @securityDefinitions.basic BasicAuth
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter your bearer token in the format **Bearer &lt;token&gt;**
+
+// @Security BasicAuth
+// @Security BearerAuth
+
 // @externalDocs.description ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
 // @externalDocs.url http://localhost:8056/tumblebug/api/index.html
+
+//// Order of tags in Swagger UI
+// @tag.name [Admin] System management
+// @tag.description APIs for system management (health check, metrics, etc.)
+
+// @tag.name [Admin] API Request Management
+// @tag.description APIs for managing API requests (list, cancel, etc.)
+
+// @tag.name [Recommendation] Infrastructure
+// @tag.description APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.)
+
+// @tag.name [Recommendation] K8s Cluster (prototype)
+// @tag.description APIs for recommending optimal Kubernetes clusters (prototype)
+
+// @tag.name [Recommendation] Resources for VM infrastructure
+// @tag.description APIs for recommending resources for VM infrastructure (VNet, Security Group, etc.)
+
+// @tag.name [Migration] Infrastructure
+// @tag.description APIs for migrating on-premise infrastructure to cloud (VMs, VNets, etc.)
+
+// @tag.name [Migration] Resources for VM infrastructure
+// @tag.description APIs for migrating resources for VM infrastructure (VNet, Security Group, etc.)
+
+// @tag.name [Summary/Report] Infrastructure Analysis for Migration
+// @tag.description APIs for summarizing and reporting infrastructure analysis results
+
+// @tag.name [Recommendation] Managed middleware (preview)
+// @tag.description APIs for recommending managed middleware (Object Storage, etc.)
+
+// @tag.name [Migration] Managed middleware (preview)
+// @tag.description APIs for migrating managed middleware (Object Storage, etc.)
+
+// @tag.name [Migration] Data (incubating)
+// @tag.description APIs for migrating data (Rsync, etc.)
+
+// @tag.name [Test] Utilities
+// @tag.description Utility APIs for testing and debugging
 
 func main() {
 

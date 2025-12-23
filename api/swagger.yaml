@@ -1866,6 +1866,10 @@ definitions:
         example: Any text
         type: string
     type: object
+  map_string_string:
+    additionalProperties:
+      type: string
+    type: object
   model.ApiResponse-any:
     properties:
       data:
@@ -1890,6 +1894,25 @@ definitions:
         items:
           $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
         type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-map_string_string:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/map_string_string'
+        description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
         example: Error message if failure
@@ -6175,6 +6198,30 @@ paths:
       summary: Generate target infrastructure summary
       tags:
       - '[Summary/Report] Infrastructure Analysis for Migration'
+  /test/auth:
+    get:
+      consumes:
+      - application/json
+      description: Checks if the request is authenticated and returns the auth type
+      operationId: TestAuth
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authentication successful
+          schema:
+            $ref: '#/definitions/model.ApiResponse-map_string_string'
+        "400":
+          description: Invalid Request
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      security:
+      - BasicAuth: []
+      - BearerAuth: []
+      summary: Test authentication
+      tags:
+      - '[Test] Utilities'
+      x-order: 2
   /test/streaming:
     get:
       consumes:
@@ -6193,6 +6240,7 @@ paths:
       summary: Test streaming response (JSON Lines)
       tags:
       - '[Test] Utilities'
+      x-order: 1
   /test/tracing:
     get:
       consumes:
@@ -6224,7 +6272,44 @@ paths:
       summary: Test tracing to Tumblebug
       tags:
       - '[Admin] API Request Management'
+security:
+- BasicAuth: []
+- BearerAuth: []
 securityDefinitions:
   BasicAuth:
     type: basic
+  BearerAuth:
+    description: Enter your bearer token in the format **Bearer &lt;token&gt;**
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
+tags:
+- description: APIs for system management (health check, metrics, etc.)
+  name: '[Admin] System management'
+- description: APIs for managing API requests (list, cancel, etc.)
+  name: '[Admin] API Request Management'
+- description: APIs for recommending optimal cloud infrastructure (VM specs, OS images,
+    etc.)
+  name: '[Recommendation] Infrastructure'
+- description: APIs for recommending optimal Kubernetes clusters (prototype)
+  name: '[Recommendation] K8s Cluster (prototype)'
+- description: APIs for recommending resources for VM infrastructure (VNet, Security
+    Group, etc.)
+  name: '[Recommendation] Resources for VM infrastructure'
+- description: APIs for migrating on-premise infrastructure to cloud (VMs, VNets,
+    etc.)
+  name: '[Migration] Infrastructure'
+- description: APIs for migrating resources for VM infrastructure (VNet, Security
+    Group, etc.)
+  name: '[Migration] Resources for VM infrastructure'
+- description: APIs for summarizing and reporting infrastructure analysis results
+  name: '[Summary/Report] Infrastructure Analysis for Migration'
+- description: APIs for recommending managed middleware (Object Storage, etc.)
+  name: '[Recommendation] Managed middleware (preview)'
+- description: APIs for migrating managed middleware (Object Storage, etc.)
+  name: '[Migration] Managed middleware (preview)'
+- description: APIs for migrating data (Rsync, etc.)
+  name: '[Migration] Data (incubating)'
+- description: Utility APIs for testing and debugging
+  name: '[Test] Utilities'

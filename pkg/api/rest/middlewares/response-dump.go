@@ -27,7 +27,9 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 	return middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
 		Skipper: func(c echo.Context) bool {
 			// Skip request tracking for API documentation paths
-			if strings.HasPrefix(c.Path(), "/beetle/api") {
+			if strings.HasPrefix(c.Path(), "/beetle/api") ||
+				strings.HasPrefix(c.Path(), "/beetle/docs") ||
+				strings.HasPrefix(c.Path(), "/beetle/swagger.json") {
 				return true
 			}
 			return false
