@@ -124,9 +124,9 @@ func checkReadiness(url string) (bool, error) {
 	return true, nil
 }
 
-// @title CM-Beetle REST API
+// @title CM-Beetle API
 // @version latest
-// @description CM-Beetle REST API
+// @description CM-Beetle recommends optimal target cloud infrastructure and executes migration.
 // // @termsOfService none
 
 // @contact.name API Support

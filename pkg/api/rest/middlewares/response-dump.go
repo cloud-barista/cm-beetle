@@ -93,13 +93,24 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 						break processResponse
 					}
 
-					if message, exists := lastResData["message"]; exists && message != nil {
-						if msgStr, ok := message.(string); ok {
-							details.ErrorResponse = msgStr
-						} else {
-							details.ErrorResponse = "Error response message is not a string"
+					// Prioritize 'error' field from ApiResponse
+					if errVal, exists := lastResData["error"]; exists && errVal != nil {
+						if errStr, ok := errVal.(string); ok {
+							details.ErrorResponse = errStr
 						}
-					} else {
+					}
+
+					// Fallback to 'message' field if 'error' is missing or empty
+					if details.ErrorResponse == "" {
+						if msgVal, exists := lastResData["message"]; exists && msgVal != nil {
+							if msgStr, ok := msgVal.(string); ok {
+								details.ErrorResponse = msgStr
+							}
+						}
+					}
+
+					// Final fallback
+					if details.ErrorResponse == "" {
 						details.ErrorResponse = "No error message found"
 					}
 					break processResponse

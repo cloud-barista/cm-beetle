@@ -4043,11 +4043,12 @@ info:
   contact:
     name: API Support
     url: https://github.com/cloud-barista/cm-beetle/issues/new/choose
-  description: CM-Beetle REST API
+  description: CM-Beetle recommends optimal target cloud infrastructure and executes
+    migration.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: CM-Beetle REST API
+  title: CM-Beetle API
   version: latest
 paths:
   /httpVersion:

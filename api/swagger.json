@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "CM-Beetle REST API",
-        "title": "CM-Beetle REST API",
+        "description": "CM-Beetle recommends optimal target cloud infrastructure and executes migration.",
+        "title": "CM-Beetle API",
         "contact": {
             "name": "API Support",
             "url": "https://github.com/cloud-barista/cm-beetle/issues/new/choose"

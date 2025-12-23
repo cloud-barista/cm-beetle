@@ -58,6 +58,7 @@ type Page[T any] struct {
 // -------------------------------------------------------------------
 
 // SuccessResponse creates a successful API response for a single object or any generic data.
+// T is the type of the response data.
 // Usage:
 //   - Single Object: SuccessResponse(user) -> Data: User
 //   - Raw List:      SuccessResponse(users) -> Data: []User
@@ -69,6 +70,7 @@ func SuccessResponse[T any](data T) ApiResponse[T] {
 }
 
 // SuccessResponseWithMessage creates a successful API response with a custom message.
+// T is the type of the response data.
 func SuccessResponseWithMessage[T any](data T, message string) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: true,
@@ -80,6 +82,7 @@ func SuccessResponseWithMessage[T any](data T, message string) ApiResponse[T] {
 // SuccessListResponse is a convenience wrapper for list responses.
 // It explicitly takes a slice and returns ApiResponse[[]T].
 // This ensures that the Data field is always a JSON array.
+// T is the type of items in the list.
 func SuccessListResponse[T any](items []T) ApiResponse[[]T] {
 	return ApiResponse[[]T]{
 		Success: true,
@@ -88,6 +91,7 @@ func SuccessListResponse[T any](items []T) ApiResponse[[]T] {
 }
 
 // SuccessListResponseWithMessage creates a successful list API response with a custom message.
+// T is the type of items in the list.
 func SuccessListResponseWithMessage[T any](items []T, message string) ApiResponse[[]T] {
 	return ApiResponse[[]T]{
 		Success: true,
@@ -98,6 +102,7 @@ func SuccessListResponseWithMessage[T any](items []T, message string) ApiRespons
 
 // SuccessPagedResponse creates a successful API response with pagination details.
 // It automatically wraps the items and metadata into a Page struct.
+// T is the type of items in the page.
 func SuccessPagedResponse[T any](items []T, totalCount int64, page, size int) ApiResponse[Page[T]] {
 	hasNext := totalCount > int64(page*size)
 
@@ -115,6 +120,15 @@ func SuccessPagedResponse[T any](items []T, totalCount int64, page, size int) Ap
 	}
 }
 
+// SimpleSuccessResponse creates a successful API response with a simple message.
+// T is set to 'any' as there is no data to return.
+func SimpleSuccessResponse(message string) ApiResponse[any] {
+	return ApiResponse[any]{
+		Success: true,
+		Message: message,
+	}
+}
+
 // ErrorResponse creates an error API response with a structured error.
 // T is set to 'any' as there is no data to return.
 func ErrorResponse(errorMessage, message string) ApiResponse[any] {
@@ -126,6 +140,7 @@ func ErrorResponse(errorMessage, message string) ApiResponse[any] {
 }
 
 // SimpleErrorResponse creates an error API response from a simple error message.
+// T is set to 'any' as there is no data to return.
 func SimpleErrorResponse(errorMessage string) ApiResponse[any] {
 	return ApiResponse[any]{
 		Success: false,
