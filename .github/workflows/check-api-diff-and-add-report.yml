@@ -75,7 +75,11 @@ jobs:
           # 3. Execute DeepDiffGo
           # ========================================================
           echo "Running DeepDiffGo..."
-          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" --format markdown --output "$REPORT_FILE"; then
+          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" \
+            --old-desc "$PREV_TAG" \
+            --new-desc "${{ inputs.target_branch }}(${{ steps.get_sha.outputs.short_sha }})" \
+            --format markdown \
+            --output "$REPORT_FILE"; then
             echo "DeepDiffGo completed successfully."
           else
             echo "DeepDiffGo failed execution."

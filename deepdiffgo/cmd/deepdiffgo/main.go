@@ -15,6 +15,8 @@ import (
 func main() {
 	var outputFile string
 	var format string
+	var oldDesc string
+	var newDesc string
 
 	var rootCmd = &cobra.Command{
 		Use:   "deepdiffgo [old_spec] [new_spec]",
@@ -26,7 +28,10 @@ func main() {
   deepdiffgo https://example.com/v1/swagger.yaml new_swagger.yaml
 
   # Output as Markdown to a file
-  deepdiffgo old.yaml new.yaml -f markdown -o report.md`,
+  deepdiffgo old.yaml new.yaml -f markdown -o report.md
+
+  # Add descriptions for each spec file
+  deepdiffgo old.yaml new.yaml --old-desc "v1.0.0" --new-desc "main/abc123"`,
 		Args: cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			oldPath := args[0]
@@ -64,7 +69,9 @@ func main() {
 			}
 
 			diffReport.Spec1 = oldPath
+			diffReport.Spec1Desc = oldDesc
 			diffReport.Spec2 = newPath
+			diffReport.Spec2Desc = newDesc
 
 			var w io.Writer = os.Stdout
 			if outputFile != "" {
@@ -90,6 +97,8 @@ func main() {
 
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output file path (default stdout)")
 	rootCmd.Flags().StringVarP(&format, "format", "f", "text", "Output format: text, markdown, json")
+	rootCmd.Flags().StringVar(&oldDesc, "old-desc", "", "Description for old spec (e.g., tag version, branch/SHA)")
+	rootCmd.Flags().StringVar(&newDesc, "new-desc", "", "Description for new spec (e.g., tag version, branch/SHA)")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

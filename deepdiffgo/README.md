@@ -77,6 +77,29 @@ deepdiffgo old.yaml new.yaml -f markdown -o report.md
 deepdiffgo old.yaml new.yaml -f json -o report.json
 ```
 
+### Adding Descriptions to Specs
+
+You can add descriptions (such as version tags, branch names, or commit SHAs) to each specification file. These descriptions will be displayed in the comparison report next to each file name.
+
+```bash
+# Add descriptions for version tracking
+deepdiffgo old.yaml new.yaml --old-desc "v1.0.0" --new-desc "v1.1.0"
+
+# Add descriptions for branch/commit tracking
+deepdiffgo prev_spec.yaml api/swagger.yaml --old-desc "release/v1.0" --new-desc "main(abc123)"
+
+# With Markdown output
+deepdiffgo old.yaml new.yaml --old-desc "v1.0.0" --new-desc "v1.1.0" -f markdown -o report.md
+```
+
+**Output example:**
+
+```
+Diff between:
+  - Old: prev_spec.yaml [v1.0.0]
+  - New: api/swagger.yaml [main(abc123)]
+```
+
 ### Help
 
 View all available options:

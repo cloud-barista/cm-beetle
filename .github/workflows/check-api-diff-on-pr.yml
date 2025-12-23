@@ -44,6 +44,8 @@ jobs:
           PREV_SPEC_FILE="prev_spec.yaml"
           CURR_SPEC_FILE="${{ env.API_DOC_PATH }}"
           BASE_REF="origin/${{ github.base_ref }}"
+          PR_HEAD_SHA="$(git rev-parse --short ${{ github.event.pull_request.head.sha }})"
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
 
           # ========================================================
           # 2. Extract Previous API Spec (from Base Branch)
@@ -61,12 +63,19 @@ jobs:
             touch "$PREV_SPEC_FILE"
           fi
 
+          # Get base branch SHA
+          BASE_SHA="$(git rev-parse --short $BASE_REF)"
+
           # ========================================================
           # 3. Execute DeepDiffGo (Compare Prev vs Curr)
           # ========================================================
           echo "Running DeepDiffGo..."
 
-          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" --format text --output "$REPORT_FILE"; then
+          if deepdiffgo "$PREV_SPEC_FILE" "$CURR_SPEC_FILE" \
+            --old-desc "${{ github.base_ref }}($BASE_SHA)" \
+            --new-desc "PR#${{ github.event.pull_request.number }}($PR_HEAD_SHA)" \
+            --format text \
+            --output "$REPORT_FILE"; then
             echo "DeepDiffGo completed successfully."
           else
             echo "DeepDiffGo failed execution."

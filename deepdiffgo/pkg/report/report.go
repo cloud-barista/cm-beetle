@@ -17,9 +17,17 @@ func WriteText(w io.Writer, report *diff.DiffReport) {
 
 	fmt.Fprintln(w, "DeepDiffGo Report")
 	if report.Spec1 != "" && report.Spec2 != "" {
-		fmt.Fprintln(w, "Comparing:")
-		fmt.Fprintf(w, "  - Old: %s\n", report.Spec1)
-		fmt.Fprintf(w, "  - New: %s\n", report.Spec2)
+		fmt.Fprintln(w, "Diff between:")
+		oldSpec := report.Spec1
+		if report.Spec1Desc != "" {
+			oldSpec += fmt.Sprintf(" [%s]", report.Spec1Desc)
+		}
+		newSpec := report.Spec2
+		if report.Spec2Desc != "" {
+			newSpec += fmt.Sprintf(" [%s]", report.Spec2Desc)
+		}
+		fmt.Fprintf(w, "  - Old: %s\n", oldSpec)
+		fmt.Fprintf(w, "  - New: %s\n", newSpec)
 	}
 	fmt.Fprintln(w, "=================")
 
@@ -64,9 +72,17 @@ func WriteMarkdown(w io.Writer, report *diff.DiffReport) {
 
 	fmt.Fprintln(w, "## DeepDiffGo Report")
 	if report.Spec1 != "" && report.Spec2 != "" {
-		fmt.Fprintln(w, "**Comparing:**")
-		fmt.Fprintf(w, "- Old: `%s`\n", report.Spec1)
-		fmt.Fprintf(w, "- New: `%s`\n", report.Spec2)
+		fmt.Fprintln(w, "**Diff between:**")
+		oldSpec := report.Spec1
+		if report.Spec1Desc != "" {
+			oldSpec += fmt.Sprintf(" [%s]", report.Spec1Desc)
+		}
+		newSpec := report.Spec2
+		if report.Spec2Desc != "" {
+			newSpec += fmt.Sprintf(" [%s]", report.Spec2Desc)
+		}
+		fmt.Fprintf(w, "- Old: `%s`\n", oldSpec)
+		fmt.Fprintf(w, "- New: `%s`\n", newSpec)
 	}
 	fmt.Fprintln(w, "")
 
