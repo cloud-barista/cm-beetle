@@ -29,10 +29,10 @@ services:
       # - BEETLE_ROOT=/app
       - BEETLE_SELF_ENDPOINT=localhost:8056
       # - BEETLE_API_ALLOW_ORIGINS=*
-      - BEETLE_API_AUTH_ENABLED=true
-      - BEETLE_API_AUTH_MODE=basic
-      - BEETLE_API_USERNAME=default
-      - BEETLE_API_PASSWORD=default
+      # - BEETLE_API_AUTH_ENABLED=true
+      # - BEETLE_API_AUTH_MODE=basic
+      # - BEETLE_API_USERNAME=default
+      # - BEETLE_API_PASSWORD=default
       # - BEETLE_LKVSTORE_PATH=/app/db/beetle.db
       # - BEETLE_LOGFILE_PATH=/app/log/beetle.log
       # - BEETLE_LOGFILE_MAXSIZE=1000
