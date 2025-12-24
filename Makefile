@@ -45,6 +45,9 @@ swag swagger: ## Generate Swagger API documentation
 	@rm ./main.go
 	@echo "Generated Swagger API documentation!"
 
+api-guide: ## Generate API guide using AI (Usage: make api-guide API_PATH=/migration/ns/{nsId}/mci)
+	@./scripts/ask-ai-api-guide.sh "$(API_PATH)"
+
 # build: lint swag ## Build the binary file for amd64
 build: ## Build the binary file for amd64
 	@echo "Building the binary for amd64..."
