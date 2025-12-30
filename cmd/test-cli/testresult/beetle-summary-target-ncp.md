@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2025-12-18 15:08:46
+**Generated At:** 2026-01-05 00:50:16
 
 **Namespace:** mig01
 
@@ -30,7 +30,7 @@
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
 | ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 | s2-g3a | 2 | 8.0 | - | x86_64 | default | $0.0848 | 1 |
-| s4-g3 | 4 | 16.0 | - | x86_64 | default | $0.1747 | 1 |
+| s4-g3a | 4 | 16.0 | - | x86_64 | default | $0.1747 | 1 |
 
 ### VM Images
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | 116164916 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 211.188.63.98<br>**Private IP:** 10.0.1.7<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
-| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 116164923 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 49.50.136.242<br>**Private IP:** 10.0.1.8<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
-| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 116164910 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 49.50.128.187<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
+| migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | 117407347 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 175.45.195.120<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-sg-01<br>**SSH:** mig-sshkey-01 |
+| migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 117407354 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 223.130.150.108<br>**Private IP:** 10.0.1.7<br>**SGs:** mig-sg-03<br>**SSH:** mig-sshkey-01 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 117407359 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-vnet-01<br>**Subnet:** mig-subnet-01<br>**Public IP:** 49.50.138.161<br>**Private IP:** 10.0.1.8<br>**SGs:** mig-sg-02<br>**SSH:** mig-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-vnet-01 |
-| **CSP VNet ID** | 130806 |
+| **CSP VNet ID** | 131527 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| mig-subnet-01 | 279388 | 10.0.1.0/24 | KR-1 |
+| mig-subnet-01 | 281454 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| mig-sshkey-01 | d521ejhiir5gq77gftgg | cb-user |  |
+| mig-sshkey-01 | d5dghri5npi2mb8i9j50 | cb-user |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-01 |
-| **CSP Security Group ID** | 326813 |
+| **CSP Security Group ID** | 329063 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 15 rules |
 
@@ -112,7 +112,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-02 |
-| **CSP Security Group ID** | 326814 |
+| **CSP Security Group ID** | 329064 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -146,7 +146,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | mig-sg-03 |
-| **CSP Security Group ID** | 326815 |
+| **CSP Security Group ID** | 329065 |
 | **VNet** | mig-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -198,6 +198,6 @@
 |---------|------|-----------------|------------------|
 | migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730 | $52.56 |
 | migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3a | $0.0848 | $61.06 |
-| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3 | $0.1747 | $125.78 |
+| migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747 | $125.78 |
 
 

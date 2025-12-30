@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2025-12-18 14:30:13*
+*Report generated: 2026-01-05 00:13:38*
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | t3a.large, t3a.xlarge, t3a.small |
+| 2 | **VM Spec** | 3 | ✅ Selected | t3a.xlarge, t3a.small, t3a.large |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | mig-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in mig-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-054306e1cd7b1eb9f<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0363f6a2a295891f8<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-0d16a0b3ad6562612<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 1 | **VM Name:** migrated-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-0ab3da7e3aa9afdfc<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0cfc4610b6e7ccca3<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-00f35fcf64383e272<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -70,9 +70,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ami-0d7f51b914bb4b808<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251111 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2 | migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** ami-0d7f51b914bb4b808<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251111 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3 | migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** ami-0d7f51b914bb4b808<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251111 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 1 | migrated-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ami-068550d7714642b14<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251122 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** ami-068550d7714642b14<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251122 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** ami-068550d7714642b14<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251122 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-01
 
-**CSP ID:** sg-0aec314073f354f50 | **VNet:** mig-vnet-01 | **Rules:** 14
+**CSP ID:** sg-0be83ad2ba824a3c0 | **VNet:** mig-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-02
 
-**CSP ID:** sg-0f8632a5e25528c68 | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-06fbab4bf66d9695e | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: mig-sg-03
 
-**CSP ID:** sg-04f2d25968b62c54e | **VNet:** mig-vnet-01 | **Rules:** 19
+**CSP ID:** sg-093914fbf522df991 | **VNet:** mig-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-01d324901e0033cbf | 10.0.0.0/21 |
+| 1 | **Name:** mig-vnet-01<br>**ID:** vpc-08ac4cc2e8dc3ece8 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-01511b1163fcfa0dc | 10.0.1.0/24 | mig-vnet-01 |
+| 1 | **Name:** mig-subnet-01<br>**ID:** subnet-0766dd210181d9f91 | 10.0.1.0/24 | mig-vnet-01 |
 
 ### Source Network Information
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | mig-sshkey-01 | d520v3piir5gq77gfsog | d9:fa:de:59:c1:53:f4:a4:db:38:b9:d5:f6:86:1f:bf:9d:11:af:bf | Used by all 3 VMs |
+| 1 | mig-sshkey-01 | d5dg3na5npi2mb8i9id0 | 8a:f6:eb:f9:de:da:48:b5:07:63:45:cc:f4:b3:bc:7d:16:c4:fa:e2 | Used by all 3 VMs |
 
 ---
 

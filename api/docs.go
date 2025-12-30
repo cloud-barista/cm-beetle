@@ -46,21 +46,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "HTTP protocol version (e.g., HTTP/1.1, HTTP/2.0)",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -93,27 +87,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Data migrated successfully",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-string"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during data migration",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -163,21 +151,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of object storages",
+                        "description": "Successfully retrieved object storage list",
                         "schema": {
-                            "$ref": "#/definitions/tbclient.ListAllMyBucketsResult"
+                            "$ref": "#/definitions/model.ApiResponse-tbclient_ListAllMyBucketsResult"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during list operation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -213,19 +201,19 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK - Object storages created successfully"
+                    "201": {
+                        "description": "Created - Object storages created successfully"
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during object storage creation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -282,27 +270,27 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Object storage details",
+                        "description": "Successfully retrieved object storage details",
                         "schema": {
-                            "$ref": "#/definitions/tbclient.ListBucketResult"
+                            "$ref": "#/definitions/model.ApiResponse-tbclient_ListBucketResult"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
                         "description": "Object storage not found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during get operation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -356,25 +344,25 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK - Object storage deleted successfully"
+                    "204": {
+                        "description": "Object storage deleted successfully"
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
                         "description": "Object storage not found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during deletion",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -432,21 +420,21 @@ const docTemplate = `{
                         "description": "OK - Object storage exists"
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
                         "description": "Object storage not found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during existence check",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -501,13 +489,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -551,7 +539,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraResponse"
@@ -560,13 +548,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -620,13 +608,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -683,19 +671,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -741,22 +729,16 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/controller.MigrateInfraWithDefaultsResponse"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     }
                 }
@@ -1511,6 +1493,7 @@ const docTemplate = `{
                             "force"
                         ],
                         "type": "string",
+                        "default": "withsubnets",
                         "description": "Action",
                         "name": "action",
                         "in": "query"
@@ -1983,21 +1966,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended object storage",
+                        "description": "Successfully recommended object storage",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendObjectStorageResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_ObjectStorageInfo"
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2057,21 +2040,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended security groups",
+                        "description": "Successfully recommended security group(s)",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendSecurityGroupResponse"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedSecurityGroupList"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2131,21 +2114,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended vNet",
+                        "description": "Successfully recommended vNet(s)",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVNetResponse"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVNetList"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2205,21 +2188,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended VM OS images",
+                        "description": "Successfully recommended VM OS image(s)",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmOsImageResponse"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmOsImageList"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2285,21 +2268,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of recommended VM specifications",
+                        "description": "Successfully recommended VM spec(s)",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmSpecResponse"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmSpecList"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2371,19 +2354,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of recommended infrastructure candidates",
+                        "description": "Successfully recommended infrastructure candidates",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request parameters",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during recommendation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2475,15 +2458,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error during report generation",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2675,7 +2658,7 @@ const docTemplate = `{
         },
         "/summary/source": {
             "post": {
-                "description": "Generate a comprehensive source infrastructure summary from on-premise data in JSON, Markdown, or HTML format",
+                "description": "Generate a comprehensive source infrastructure summary from on-premise data in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[SourceInfraSummary] with Content-Type: application/json\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-source.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2692,13 +2675,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "json",
                             "md",
-                            "html"
+                            "html",
+                            "json"
                         ],
                         "type": "string",
                         "default": "md",
-                        "description": "Summary format: json, md, or html",
+                        "description": "Summary format: md, html, or json",
                         "name": "format",
                         "in": "query"
                     },
@@ -2731,27 +2714,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Different return types: json format returns SourceInfraSummary object, md format returns markdown string, html format returns HTML string",
+                        "description": "Successfully generated source infrastructure summary (format varies by 'format' parameter)",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.JSONResult"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "[HTML]": {
-                                            "type": "string"
-                                        },
-                                        "[JSON]": {
-                                            "$ref": "#/definitions/summary.SourceInfraSummary"
-                                        },
-                                        "[MARKDOWN]": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/model.ApiResponse-summary_SourceInfraSummary"
                         },
                         "headers": {
                             "Content-Disposition": {
@@ -2765,15 +2730,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during summary generation",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2781,7 +2746,7 @@ const docTemplate = `{
         },
         "/summary/target/ns/{nsId}/mci/{mciId}": {
             "get": {
-                "description": "Generate a comprehensive target infrastructure summary in JSON, Markdown, or HTML format",
+                "description": "Generate a comprehensive target infrastructure summary in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[TargetInfraSummary] with Content-Type: application/json\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2814,13 +2779,13 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "json",
                             "md",
-                            "html"
+                            "html",
+                            "json"
                         ],
                         "type": "string",
                         "default": "md",
-                        "description": "Summary format: json, md, or html",
+                        "description": "Summary format: md, html, or json",
                         "name": "format",
                         "in": "query"
                     },
@@ -2844,27 +2809,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Different return types: json format returns TargetInfraSummary object, md format returns markdown string, html format returns HTML string",
+                        "description": "Successfully generated target infrastructure summary (format varies by 'format' parameter)",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/controller.JSONResult"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "[HTML]": {
-                                            "type": "string"
-                                        },
-                                        "[JSON]": {
-                                            "$ref": "#/definitions/summary.TargetInfraSummary"
-                                        },
-                                        "[MARKDOWN]": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/model.ApiResponse-summary_TargetInfraSummary"
                         },
                         "headers": {
                             "Content-Disposition": {
@@ -2878,21 +2825,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid request parameters",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error during summary generation",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2922,13 +2863,13 @@ const docTemplate = `{
                 "operationId": "TestAuth",
                 "responses": {
                     "200": {
-                        "description": "Authentication successful",
+                        "description": "Successfully authenticated",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-map_string_string"
                         }
                     },
                     "400": {
-                        "description": "Invalid Request",
+                        "description": "Invalid request parameters",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2987,15 +2928,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Tumblebug service is ready",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-string"
                         }
                     },
                     "503": {
-                        "description": "Service Unavailable",
+                        "description": "Tumblebug service unavailable",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -3930,6 +3871,26 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.RecommendedSecurityGroupList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroup"
+                    }
+                }
+            }
+        },
         "cloudmodel.RecommendedVNet": {
             "type": "object",
             "properties": {
@@ -3941,6 +3902,23 @@ const docTemplate = `{
                 },
                 "targetVNet": {
                     "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVNetList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetVNetList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVNet"
+                    }
                 }
             }
         },
@@ -4019,6 +3997,26 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.RecommendedVmOsImageList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmOsImage"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.RecommendedVmSpec": {
             "type": "object",
             "properties": {
@@ -4036,6 +4034,26 @@ const docTemplate = `{
                 },
                 "targetVmSpec": {
                     "$ref": "#/definitions/cloudmodel.SpecInfo"
+                }
+            }
+        },
+        "cloudmodel.RecommendedVmSpecList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedVmSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedVmSpec"
+                    }
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -5146,6 +5164,26 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetObjectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
+                    }
+                }
+            }
+        },
         "controller.RecommendInfraRequest": {
             "type": "object",
             "properties": {
@@ -5180,63 +5218,6 @@ const docTemplate = `{
                     "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/controller.SourceObjectStorageProperty"
-                    }
-                }
-            }
-        },
-        "controller.RecommendObjectStorageResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "targetObjectStorages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
-                    }
-                }
-            }
-        },
-        "controller.RecommendSecurityGroupResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroup"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVNetResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "targetVNetList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVNet"
                     }
                 }
             }
@@ -5318,46 +5299,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.RecommendedVmInfraDynamic"
                     }
-                }
-            }
-        },
-        "controller.RecommendVmOsImageResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmOsImage"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.RecommendVmSpecResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmSpec"
-                    }
-                },
-                "status": {
-                    "type": "string"
                 }
             }
         },
@@ -5447,7 +5388,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model_beetle.Response": {
+        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response": {
             "description": "**(To be deprecated)** This structure is currently in use but will be replaced by the generic ` + "`" + `ApiResponse[T]` + "`" + ` in the future.",
             "type": "object",
             "properties": {
@@ -5529,6 +5470,146 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-cloudmodel_RecommendedSecurityGroupList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedSecurityGroupList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVNetList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVNetList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVmOsImageList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmOsImageList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVmSpecList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmSpecList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.ObjectStorageInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-map_string_string": {
             "type": "object",
             "properties": {
@@ -5537,6 +5618,142 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/map_string_string"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-string": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-summary_SourceInfraSummary": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/summary.SourceInfraSummary"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-summary_TargetInfraSummary": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/summary.TargetInfraSummary"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-tbclient_ListAllMyBucketsResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/tbclient.ListAllMyBucketsResult"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-tbclient_ListBucketResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/tbclient.ListBucketResult"
                         }
                     ]
                 },

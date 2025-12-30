@@ -8,7 +8,6 @@ import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/compat"
-	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
@@ -126,12 +125,6 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	}
 
 	// Call Tumblebug API to search VM OS images
-	apiConfig := tbclient.ApiConfig{
-		RestUrl:  config.Tumblebug.RestUrl,
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-	}
-	tbCli := tbclient.NewClient(apiConfig)
 	nsId := "system" // default
 
 	var filteredImages []tbmodel.ImageInfo
@@ -186,7 +179,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 	log.Debug().Msgf("searchImageReq: %+v", searchImageReq)
 
-	resSearchImage, err := tbCli.SearchVmOsImage(nsId, searchImageReq)
+	resSearchImage, err := tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRes, err
@@ -211,7 +204,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 		log.Debug().Msgf("Retry searchImageReq: %+v", searchImageReq)
 
-		resSearchImage, err = tbCli.SearchVmOsImage(nsId, searchImageReq)
+		resSearchImage, err = tbclient.NewSession().SearchVmOsImage(nsId, searchImageReq)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to retry image search with OS ID only")
 			return emptyRes, err

@@ -15,11 +15,11 @@ limitations under the License.
 package tbclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -31,29 +31,24 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateMci creates a new MCI (Multi-Cloud Image) in the specified namespace
-func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.MciReq) (tbmodel.MciInfo, error) {
+func (s *Session) CreateMci(nsId string, reqBody tbmodel.MciReq) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Creating MCI")
 
 	emptyRet := tbmodel.MciInfo{}
-
-	method := "POST"
-	url := fmt.Sprintf("%s/ns/%s/mci", c.restUrl, nsId)
-
+	url := fmt.Sprintf("/ns/%s/mci", nsId)
 	resBody := tbmodel.MciInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetBody(&reqBody).
+		SetResult(&resBody).
+		Post(url)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create MCI")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msg("Created MCI successfully")
@@ -61,31 +56,30 @@ func (c *TumblebugClient) CreateMci(nsId string, reqBody tbmodel.MciReq) (tbmode
 }
 
 // CreateMciDynamic creates a new MCI (Multi-Cloud Image) with defaults in the specified namespace
-func (c *TumblebugClient) CreateMciDynamic(nsId string, reqBody tbmodel.MciDynamicReq) (tbmodel.MciInfo, error) {
+func (s *Session) CreateMciDynamic(nsId string, reqBody tbmodel.MciDynamicReq) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Creating MCI with defaults")
 
 	emptyRet := tbmodel.MciInfo{}
 
-	c.client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
+	// Increased timeout to 45 minutes for all operations
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+	defer cancel()
 
-	method := "POST"
-	url := fmt.Sprintf("%s/ns/%s/mciDynamic", c.restUrl, nsId)
-
+	url := fmt.Sprintf("/ns/%s/mciDynamic", nsId)
 	resBody := tbmodel.MciInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetContext(ctx).
+		SetBody(&reqBody).
+		SetResult(&resBody).
+		Post(url)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create MCI with defaults")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msg("Created MCI with defaults successfully")
@@ -98,71 +92,60 @@ type TbMciInfoList struct {
 }
 
 // ReadAllMci retrieves all MCIs (Multi-Cloud Images) in the specified namespace
-func (c *TumblebugClient) ReadAllMci(nsId string) (TbMciInfoList, error) {
+func (s *Session) ReadAllMci(nsId string) (TbMciInfoList, error) {
 	log.Debug().Msg("Retrieving all MCIs")
 	var emptyRet = TbMciInfoList{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci", c.restUrl, nsId)
-	reqBody := common.NoBody
+	url := fmt.Sprintf("/ns/%s/mci", nsId)
 	resBody := TbMciInfoList{}
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve all MCIs")
 		return emptyRet, err
 	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+
 	log.Debug().Msgf("Retrieved all MCIs (count: %d) successfully", len(resBody.Mci))
 	return resBody, nil
 }
 
 // ReadMci retrieves information about a specific MCI (Multi-Cloud Image) in the specified namespace
-func (c *TumblebugClient) ReadMci(nsId, mciId string) (tbmodel.MciInfo, error) {
+func (s *Session) ReadMci(nsId, mciId string) (tbmodel.MciInfo, error) {
 	log.Debug().Msg("Retrieving MCI")
 
 	var emptyRet = tbmodel.MciInfo{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci/%s", c.restUrl, nsId, mciId)
-
-	reqBody := common.NoBody
+	url := fmt.Sprintf("/ns/%s/mci/%s", nsId, mciId)
 	resBody := tbmodel.MciInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve MCI")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved MCI (mciId: %s) successfully", resBody.Id)
 	return resBody, nil
 }
 
-func (c *TumblebugClient) ReadMciAccessInfo(nsId, mciId, option, accessInfoOption string) (tbmodel.MciAccessInfo, error) {
+func (s *Session) ReadMciAccessInfo(nsId, mciId, option, accessInfoOption string) (tbmodel.MciAccessInfo, error) {
 	log.Debug().Msg("Retrieving MCI Access Info")
 
 	var emptyRet tbmodel.MciAccessInfo
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci/%s", c.restUrl, nsId, mciId)
+	url := fmt.Sprintf("/ns/%s/mci/%s", nsId, mciId)
 	if option != "" {
 		url += fmt.Sprintf("?option=%s", option)
 		if accessInfoOption != "" {
@@ -170,59 +153,48 @@ func (c *TumblebugClient) ReadMciAccessInfo(nsId, mciId, option, accessInfoOptio
 		}
 	}
 
-	reqBody := common.NoBody
 	resBody := tbmodel.MciAccessInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve MCI Access Info")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved MCI Access Info (mciId: %s) successfully", mciId)
 	return resBody, nil
 }
 
-func (c *TumblebugClient) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
+func (s *Session) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Retrieving MCI IDs")
 
 	emptyRet := tbmodel.IdList{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/mci", c.restUrl, nsId)
+	url := fmt.Sprintf("/ns/%s/mci", nsId)
 
 	option := "id" // Use 'ids' option to retrieve only IDs
 	if option != "" {
 		url += fmt.Sprintf("?option=%s", option)
 	}
 
-	reqBody := common.NoBody
 	resBody := tbmodel.IdList{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve MCI IDs")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved MCI IDs (count: %d) successfully", len(resBody.IdList))
@@ -231,37 +203,34 @@ func (c *TumblebugClient) ReadMciIDs(nsId string) (tbmodel.IdList, error) {
 }
 
 // DeleteMci deletes a specific MCI (Multi-Cloud Image) in the specified namespace
-func (c *TumblebugClient) DeleteMci(nsId, mciId, option string) (tbmodel.IdList, error) {
+func (s *Session) DeleteMci(nsId, mciId, option string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Deleting MCI")
 
-	c.client.SetTimeout(45 * time.Minute) // Increased timeout to 45 minutes for all operations
+	// Increased timeout to 45 minutes for all operations
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+	defer cancel()
 
 	emptyRet := tbmodel.IdList{}
 
-	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s/mci/%s", c.restUrl, nsId, mciId)
+	url := fmt.Sprintf("/ns/%s/mci/%s", nsId, mciId)
 
 	if option != "" {
 		url += fmt.Sprintf("?option=%s", option)
 	}
 
-	reqBody := common.NoBody
 	resBody := tbmodel.IdList{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetContext(ctx).
+		SetResult(&resBody).
+		Delete(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete MCI")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Deleted MCI (mciId: %s) successfully", mciId)
@@ -269,15 +238,14 @@ func (c *TumblebugClient) DeleteMci(nsId, mciId, option string) (tbmodel.IdList,
 }
 
 // MciRecommendSpec finds appropriate VM specs by filtering and prioritzing.
-func (c *TumblebugClient) MciRecommendSpec(planToSearchProperVm string) ([]tbmodel.SpecInfo, error) {
+func (s *Session) MciRecommendSpec(planToSearchProperVm string) ([]tbmodel.SpecInfo, error) {
 	log.Debug().Msg("MCI Recommend Spec")
 
 	var vmSpecInfoList = []tbmodel.SpecInfo{}
 	var emptyRet = []tbmodel.SpecInfo{}
 
 	// Lookup VM specs
-	method := "POST"
-	url := fmt.Sprintf("%s/recommendSpec", c.restUrl)
+	url := fmt.Sprintf("/recommendSpec")
 
 	// Request body
 	reqRecommVm := new(tbmodel.RecommendSpecReq)
@@ -289,20 +257,17 @@ func (c *TumblebugClient) MciRecommendSpec(planToSearchProperVm string) ([]tbmod
 	// log.Trace().Msgf("deployment plan for the VM recommendation: %+v", reqRecommVm)
 
 	// Response body
-	err = common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(*reqRecommVm),
-		reqRecommVm,
-		&vmSpecInfoList,
-		common.VeryShortDuration,
-	)
+	resp, err := s.
+		SetBody(reqRecommVm).
+		SetResult(&vmSpecInfoList).
+		Post(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM specs")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Found VM specs (count: %d) successfully", len(vmSpecInfoList))

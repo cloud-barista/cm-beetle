@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -29,31 +28,25 @@ import (
 // * Other APIs can be added as needed.
 
 // IsReady checks if Tumblebug is ready
-func (c *TumblebugClient) IsReady() (bool, error) {
+func (s *Session) IsReady() (bool, *string, error) {
 	log.Debug().Msg("Checking Tumblebug readiness")
 
-	method := "GET"
-	url := fmt.Sprintf("%s/readyz", c.restUrl)
+	url := "/readyz"
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SimpleMsg{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Tumblebug readiness check failed")
-		return false, err
+		return false, nil, err
+	}
+	if resp.IsError() {
+		return false, nil, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msg("Tumblebug is ready")
-	return true, nil
+	return true, &resBody.Message, nil
 }

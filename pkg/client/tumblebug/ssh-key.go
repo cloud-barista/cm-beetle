@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -29,29 +28,26 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateSshKey creates a new SSH Key in the specified namespace
-func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.SshKeyReq) (tbmodel.SshKeyInfo, error) {
+func (s *Session) CreateSshKey(nsId string, reqBody tbmodel.SshKeyReq) (tbmodel.SshKeyInfo, error) {
 	log.Debug().Msg("Creating SSH Key")
 
 	emptyRet := tbmodel.SshKeyInfo{}
 
-	method := "POST"
-	url := fmt.Sprintf("%s/ns/%s/resources/sshKey", c.restUrl, nsId)
+	url := fmt.Sprintf("/ns/%s/resources/sshKey", nsId)
 
 	resBody := tbmodel.SshKeyInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetBody(&reqBody).
+		SetResult(&resBody).
+		Post(url)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create SSH Key")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msg("Created SSH Key successfully")
@@ -59,62 +55,50 @@ func (c *TumblebugClient) CreateSshKey(nsId string, reqBody tbmodel.SshKeyReq) (
 }
 
 // ReadSshKey retrieves information about a specific SSH Key in the specified namespace
-func (c *TumblebugClient) ReadSshKey(nsId, sshKeyId string) (tbmodel.SshKeyInfo, error) {
+func (s *Session) ReadSshKey(nsId, sshKeyId string) (tbmodel.SshKeyInfo, error) {
 	log.Debug().Msg("Retrieving SSH Key")
 
 	var emptyRet = tbmodel.SshKeyInfo{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/resources/sshKey/%s", c.restUrl, nsId, sshKeyId)
+	url := fmt.Sprintf("/ns/%s/resources/sshKey/%s", nsId, sshKeyId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SshKeyInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve SSH Key")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved SSH Key (sshKeyId: %s) successfully", resBody.Id)
 	return resBody, nil
 }
 
-func (c *TumblebugClient) DeleteSshKey(nsId, sshKeyId string) (tbmodel.SimpleMsg, error) {
+func (s *Session) DeleteSshKey(nsId, sshKeyId string) (tbmodel.SimpleMsg, error) {
 	log.Debug().Msg("Deleting SSH Key")
 
 	emptyRet := tbmodel.SimpleMsg{}
 
-	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s/resources/sshKey/%s", c.restUrl, nsId, sshKeyId)
+	url := fmt.Sprintf("/ns/%s/resources/sshKey/%s", nsId, sshKeyId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SimpleMsg{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Delete(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete SSH Key")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Deleted SSH Key (sshKeyId: %s) successfully", sshKeyId)

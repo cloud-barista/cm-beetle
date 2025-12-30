@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -29,32 +28,29 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateSecurityGroup creates a new Security Group in the specified namespace
-func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.SecurityGroupReq, option string) (tbmodel.SecurityGroupInfo, error) {
+func (s *Session) CreateSecurityGroup(nsId string, reqBody tbmodel.SecurityGroupReq, option string) (tbmodel.SecurityGroupInfo, error) {
 	log.Debug().Msg("Creating Security Group")
 
 	var emptyRet = tbmodel.SecurityGroupInfo{}
 
-	method := "POST"
-	url := fmt.Sprintf("%s/ns/%s/resources/securityGroup", c.restUrl, nsId)
+	url := fmt.Sprintf("/ns/%s/resources/securityGroup", nsId)
 
 	if option != "" {
 		url += fmt.Sprintf("?option=%s", option)
 	}
 
 	var resBody tbmodel.SecurityGroupInfo
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetBody(&reqBody).
+		SetResult(&resBody).
+		Post(url)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create Security Group")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msg("Created Security Group successfully")
@@ -62,32 +58,26 @@ func (c *TumblebugClient) CreateSecurityGroup(nsId string, reqBody tbmodel.Secur
 }
 
 // ReadSecurityGroup retrieves information about a specific Security Group in the specified namespace
-func (c *TumblebugClient) ReadSecurityGroup(nsId, securityGroupId string) (tbmodel.SecurityGroupInfo, error) {
+func (s *Session) ReadSecurityGroup(nsId, securityGroupId string) (tbmodel.SecurityGroupInfo, error) {
 	log.Debug().Msg("Retrieving Security Group")
 
 	var emptyRet = tbmodel.SecurityGroupInfo{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/resources/securityGroup/%s", c.restUrl, nsId, securityGroupId)
+	url := fmt.Sprintf("/ns/%s/resources/securityGroup/%s", nsId, securityGroupId)
 	// /ns/{nsId}/resources/securityGroup/{securityGroupId}
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SecurityGroupInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve Security Group")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved Security Group (securityGroupId: %s) successfully", resBody.Id)
@@ -95,31 +85,25 @@ func (c *TumblebugClient) ReadSecurityGroup(nsId, securityGroupId string) (tbmod
 }
 
 // DeleteSecurityGroup deletes a specific Security Group in the specified namespace
-func (c *TumblebugClient) DeleteSecurityGroup(nsId, securityGroupId string) (tbmodel.SimpleMsg, error) {
+func (s *Session) DeleteSecurityGroup(nsId, securityGroupId string) (tbmodel.SimpleMsg, error) {
 	log.Debug().Msg("Deleting Security Group")
 
 	emptyRet := tbmodel.SimpleMsg{}
 
-	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s/resources/securityGroup/%s", c.restUrl, nsId, securityGroupId)
+	url := fmt.Sprintf("/ns/%s/resources/securityGroup/%s", nsId, securityGroupId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SimpleMsg{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Delete(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete Security Group")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Deleted Security Group (securityGroupId: %s) successfully", securityGroupId)

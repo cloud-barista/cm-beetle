@@ -17,12 +17,13 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
 
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 
-	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 
@@ -50,8 +51,7 @@ type MigrateInfraWithDefaultsResponse struct {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraWithDefaultsRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} MigrateInfraWithDefaultsResponse "Successfully migrated to the multi-cloud infrastructure"
-// @Failure 404 {object} model.Response
+// @Success 201 {object} MigrateInfraWithDefaultsResponse "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mciWithDefaults [post]
 func MigrateInfraWithDefaults(c echo.Context) error {
@@ -95,7 +95,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	}
 
 	res := mciInfo
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
 // TODO: Check and dev the request and response bodies for the following API
@@ -118,7 +118,7 @@ type MigrateInfraResponse struct {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} MigrateInfraResponse "Successfully migrated to the multi-cloud infrastructure"
+// @Success 201 {object} MigrateInfraResponse "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 404 {object} model.Response
 // @Failure 500 {object} model.Response
 // @Router /migration/ns/{nsId}/mci [post]
@@ -163,7 +163,7 @@ func MigrateInfra(c echo.Context) error {
 	}
 
 	res := mciInfo
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
 // ListInfra godoc
@@ -280,6 +280,11 @@ func GetInfra(c echo.Context) error {
 	vmInfraInfo, err := migration.GetVMInfra(nsId, mciId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure")
+
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
+		}
+
 		res := model.Response{
 			Success: false,
 			Text:    err.Error(),
@@ -348,6 +353,11 @@ func DeleteInfra(c echo.Context) error {
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete the migrated multi-cloud infrastructure")
+
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
+		}
+
 		res := model.Response{
 			Success: false,
 			Text:    err.Error(),

@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -41,29 +41,28 @@ import (
 // @Accept  json
 // @Produce  json
 // @Param reqBody body transx.DataMigrationModel true "Request Body"
-// @Success 200 {object} common.SimpleMsg "OK"
-// @Failure 400 {object} common.SimpleMsg "Bad Request"
-// @Failure 404 {object} common.SimpleMsg "Not Found"
-// @Failure 500 {object} common.SimpleMsg "Internal Server Error"
+// @Success 200 {object} model.ApiResponse[string] "Data migrated successfully"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during data migration"
 // @Router /migration/data [post]
 func MigrateData(c echo.Context) error {
 
 	req := new(transx.DataMigrationModel)
 	if err := c.Bind(req); err != nil {
 		log.Error().Err(err).Msg("failed to bind the request")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	err := transx.Validate(*req)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid request")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid data migration configuration"))
 	}
 
 	if !(req.Source.IsRemote() && req.Destination.IsRemote()) {
-		err := fmt.Errorf("%s", "both source and destination should be remote endpoints")
+		err := fmt.Errorf("both source and destination must be remote endpoints")
 		log.Error().Err(err).Msg("invalid request")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
 	log.Info().Msgf("Migrate data from %s (%s) to %s (%s)", req.Source.GetEndpoint(), req.Source.DataPath, req.Destination.GetEndpoint(), req.Destination.DataPath)
@@ -78,10 +77,11 @@ func MigrateData(c echo.Context) error {
 
 	if err != nil {
 		log.Error().Err(err).Dur("elapsedTime", elapsedTime).Msg("failed to migrate data")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: fmt.Sprintf("failed to migrate data (elapsed: %s): %s", elapsedTime.Round(time.Millisecond), err.Error())})
+		errorMsg := fmt.Sprintf("Data migration failed (%s)", elapsedTime.Round(time.Millisecond))
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().Dur("elapsedTime", elapsedTime).Msg("Data migration completed successfully")
-	return c.JSON(http.StatusOK, common.SimpleMsg{Message: fmt.Sprintf("Data migration completed successfully (elapsed: %s)", elapsedTime.Round(time.Millisecond))})
-
+	successMsg := fmt.Sprintf("Data migrated successfully (%s)", elapsedTime.Round(time.Millisecond))
+	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(successMsg))
 }

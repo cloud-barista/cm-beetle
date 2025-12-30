@@ -15,18 +15,16 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	"github.com/cloud-barista/cb-tumblebug/src/core/model"
+	// "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
-	"github.com/cloud-barista/cm-beetle/pkg/logger"
-	"github.com/go-resty/resty/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -42,79 +40,15 @@ import (
 // @Accept  json
 // @Produce  json
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} common.SimpleMsg
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[string] "HTTP protocol version (e.g., HTTP/1.1, HTTP/2.0)"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /httpVersion [get]
 func CheckHTTPVersion(c echo.Context) error {
 	// Access the *http.Request object from the echo.Context
 	req := c.Request()
 
 	// Determine the HTTP protocol version of the request
-	return c.JSON(http.StatusOK, common.SimpleMsg{Message: req.Proto})
-}
-
-// TestTracing godoc
-// @ID TestTracing
-// @Summary Test tracing to Tumblebug
-// @Description Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.
-// @Description
-// @Description [Note]
-// @Description - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.
-// @Description - Use this API to verify that tracing works correctly between Beetle and Tumblebug.
-// @Tags [Admin] API Request Management
-// @Accept  json
-// @Produce  json
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} common.SimpleMsg
-// @Failure 503 {object} common.SimpleMsg
-// @Router /test/tracing [get]
-func TestTracing(c echo.Context) error {
-
-	ctx := c.Request().Context()                    // Get context
-	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace
-
-	// Initialize resty client with basic auth
-	client := resty.New()
-	apiUser := config.Tumblebug.API.Username
-	apiPass := config.Tumblebug.API.Password
-	client.SetBasicAuth(apiUser, apiPass)
-
-	// set tumblebug rest url
-	epTumblebug := config.Tumblebug.RestUrl
-
-	// Search and set a target VM spec
-	method := "GET"
-	url := fmt.Sprintf("%s/readyz", epTumblebug)
-
-	// Headers
-	headers := map[string]string{
-		echo.HeaderXRequestID: ctx.Value(logger.TraceIdKey).(string),
-	}
-
-	// Request body
-	tbReqt := common.NoBody
-
-	// Response body
-	tbResp := model.SimpleMsg{}
-
-	err := common.ExecuteHttpRequest(
-		client,
-		method,
-		url,
-		headers,
-		common.SetUseBody(tbReqt),
-		&tbReqt,
-		&tbResp,
-		common.VeryShortDuration,
-	)
-
-	if err != nil {
-		log.Err(err).Msg("")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, common.SimpleMsg{Message: tbResp.Message})
+	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(req.Proto))
 }
 
 // RestGetRequest godoc

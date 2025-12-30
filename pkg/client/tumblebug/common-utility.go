@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -28,62 +27,50 @@ import (
 // * The Client contains the Tumblebug APIs required for computing infrastructure migration.
 // * Other APIs can be added as needed.
 
-func (c *TumblebugClient) DeleteSharedResources(nsId string) (tbmodel.IdList, error) {
+func (s *Session) DeleteSharedResources(nsId string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Deleting shared resources in namespace")
 
 	emptyRet := tbmodel.IdList{}
 
-	method := "DELETE"
-	url := fmt.Sprintf("%s/ns/%s/sharedResources", c.restUrl, nsId)
+	url := fmt.Sprintf("/ns/%s/sharedResources", nsId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.IdList{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Delete(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete shared resources")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Deleted shared resources in namespace (nsId: %s) successfully", nsId)
 	return resBody, nil
 }
 
-func (c *TumblebugClient) GetConnConfig(connectionConfigName string) (tbmodel.ConnConfig, error) {
+func (s *Session) GetConnConfig(connectionConfigName string) (tbmodel.ConnConfig, error) {
 	log.Debug().Msgf("Getting connection config: %s", connectionConfigName)
 
 	emptyRet := tbmodel.ConnConfig{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/connConfig/%s", c.restUrl, connectionConfigName)
+	url := fmt.Sprintf("/connConfig/%s", connectionConfigName)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.ConnConfig{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get connection config")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Got connection config (name: %s) successfully", connectionConfigName)

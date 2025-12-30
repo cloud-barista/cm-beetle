@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -63,35 +62,24 @@ type LocationConstraint struct {
 }
 
 // ListObjectStorages retrieves the list of all object storages (buckets)
-func (c *TumblebugClient) ListObjectStorages(connName string) (ListAllMyBucketsResult, error) {
+func (s *Session) ListObjectStorages(connName string) (ListAllMyBucketsResult, error) {
 	log.Debug().Msg("Listing object storages")
 
-	emptyRet := ListAllMyBucketsResult{}
-
-	method := "GET"
-	url := fmt.Sprintf("%s/resources/objectStorage", c.restUrl)
-
-	headers := map[string]string{
-		"credential": connName,
-	}
-
-	reqBody := common.NoBody
-	resBody := ListAllMyBucketsResult{}
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		headers,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	var resBody ListAllMyBucketsResult
+	resp, err := s.
+		SetHeader("credential", connName).
+		SetResult(&resBody).
+		Get("/resources/objectStorage")
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to list object storages")
-		return emptyRet, err
+		return ListAllMyBucketsResult{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msg("Failed to list object storages")
+		return ListAllMyBucketsResult{}, err
 	}
 
 	log.Debug().Msgf("Listed %d object storages successfully", len(resBody.Buckets.Bucket))
@@ -99,31 +87,20 @@ func (c *TumblebugClient) ListObjectStorages(connName string) (ListAllMyBucketsR
 }
 
 // CreateObjectStorage creates a new object storage (bucket)
-func (c *TumblebugClient) CreateObjectStorage(objectStorageName, connName string) error {
+func (s *Session) CreateObjectStorage(objectStorageName, connName string) error {
 	log.Debug().Msgf("Creating object storage: %s", objectStorageName)
 
-	method := "PUT"
-	url := fmt.Sprintf("%s/resources/objectStorage/%s", c.restUrl, objectStorageName)
-
-	headers := map[string]string{
-		"credential": connName,
-	}
-
-	reqBody := common.NoBody
-	resBody := common.NoBody
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		headers,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetHeader("credential", connName).
+		Put(fmt.Sprintf("/resources/objectStorage/%s", objectStorageName))
 
 	if err != nil {
+		log.Error().Err(err).Msgf("Failed to create object storage: %s", objectStorageName)
+		return err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to create object storage: %s", objectStorageName)
 		return err
 	}
@@ -133,35 +110,24 @@ func (c *TumblebugClient) CreateObjectStorage(objectStorageName, connName string
 }
 
 // GetObjectStorage retrieves details of an object storage (bucket)
-func (c *TumblebugClient) GetObjectStorage(objectStorageName, connName string) (ListBucketResult, error) {
+func (s *Session) GetObjectStorage(objectStorageName, connName string) (ListBucketResult, error) {
 	log.Debug().Msgf("Retrieving object storage: %s", objectStorageName)
 
-	emptyRet := ListBucketResult{}
-
-	method := "GET"
-	url := fmt.Sprintf("%s/resources/objectStorage/%s", c.restUrl, objectStorageName)
-
-	headers := map[string]string{
-		"credential": connName,
-	}
-
-	reqBody := common.NoBody
-	resBody := ListBucketResult{}
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		headers,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	var resBody ListBucketResult
+	resp, err := s.
+		SetHeader("credential", connName).
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/resources/objectStorage/%s", objectStorageName))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to retrieve object storage: %s", objectStorageName)
-		return emptyRet, err
+		return ListBucketResult{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to retrieve object storage: %s", objectStorageName)
+		return ListBucketResult{}, err
 	}
 
 	log.Debug().Msgf("Retrieved object storage (%s) successfully", objectStorageName)
@@ -169,12 +135,12 @@ func (c *TumblebugClient) GetObjectStorage(objectStorageName, connName string) (
 }
 
 // ExistObjectStorage checks the existence of an object storage (bucket)
-func (c *TumblebugClient) ExistObjectStorage(objectStorageName, connName string) (bool, error) {
+func (s *Session) ExistObjectStorage(objectStorageName, connName string) (bool, error) {
 	log.Debug().Msgf("Checking existence of object storage: %s", objectStorageName)
 
-	url := fmt.Sprintf("%s/resources/objectStorage/%s", c.restUrl, objectStorageName)
+	url := fmt.Sprintf("/resources/objectStorage/%s", objectStorageName)
 
-	resp, err := c.client.R().
+	resp, err := s.
 		SetHeader("credential", connName).
 		Head(url)
 
@@ -190,35 +156,24 @@ func (c *TumblebugClient) ExistObjectStorage(objectStorageName, connName string)
 }
 
 // GetObjectStorageLocation retrieves the location of an object storage (bucket)
-func (c *TumblebugClient) GetObjectStorageLocation(objectStorageName, connName string) (LocationConstraint, error) {
+func (s *Session) GetObjectStorageLocation(objectStorageName, connName string) (LocationConstraint, error) {
 	log.Debug().Msgf("Retrieving location of object storage: %s", objectStorageName)
 
-	emptyRet := LocationConstraint{}
-
-	method := "GET"
-	url := fmt.Sprintf("%s/resources/objectStorage/%s/location", c.restUrl, objectStorageName)
-
-	headers := map[string]string{
-		"credential": connName,
-	}
-
-	reqBody := common.NoBody
-	resBody := LocationConstraint{}
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		headers,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	var resBody LocationConstraint
+	resp, err := s.
+		SetHeader("credential", connName).
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/resources/objectStorage/%s/location", objectStorageName))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to retrieve location of object storage: %s", objectStorageName)
-		return emptyRet, err
+		return LocationConstraint{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to retrieve location of object storage: %s", objectStorageName)
+		return LocationConstraint{}, err
 	}
 
 	log.Debug().Msgf("Retrieved location of object storage (%s) successfully", objectStorageName)
@@ -226,31 +181,20 @@ func (c *TumblebugClient) GetObjectStorageLocation(objectStorageName, connName s
 }
 
 // DeleteObjectStorage deletes an object storage (bucket)
-func (c *TumblebugClient) DeleteObjectStorage(objectStorageName, connName string) error {
+func (s *Session) DeleteObjectStorage(objectStorageName, connName string) error {
 	log.Debug().Msgf("Deleting object storage: %s", objectStorageName)
 
-	method := "DELETE"
-	url := fmt.Sprintf("%s/resources/objectStorage/%s", c.restUrl, objectStorageName)
-
-	headers := map[string]string{
-		"credential": connName,
-	}
-
-	reqBody := common.NoBody
-	resBody := common.NoBody
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		headers,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetHeader("credential", connName).
+		Delete(fmt.Sprintf("/resources/objectStorage/%s", objectStorageName))
 
 	if err != nil {
+		log.Error().Err(err).Msgf("Failed to delete object storage: %s", objectStorageName)
+		return err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to delete object storage: %s", objectStorageName)
 		return err
 	}

@@ -27,7 +27,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
-	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
@@ -77,22 +77,17 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	reqt := &RecommendVmInfraWithDefaultsRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind a request body")
-		res := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, res)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("reqt: %v\n", reqt)
 
 	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
-		err := fmt.Errorf("invalid request: 'desiredCsp' is required")
-		log.Warn().Err(err).Msg("invalid request: 'desiredCsp' is required")
-		resp := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, resp)
+		log.Warn().Msg("desiredCsp is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
-		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
-		log.Warn().Err(err).Msg("invalid request: 'desiredRegion' is required")
-		resp := common.SimpleMsg{Message: err.Error()}
-		return c.JSON(http.StatusBadRequest, resp)
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
 	csp := reqt.DesiredCspAndRegionPair.Csp
@@ -243,9 +238,9 @@ func RecommendVMInfra(c echo.Context) error {
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedVmInfra] "List of recommended infrastructure candidates"
-// @Failure 400 {object} model.ApiResponse[any] "Bad Request"
-// @Failure 500 {object} model.ApiResponse[any] "Internal Server Error"
+// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedVmInfra] "Successfully recommended infrastructure candidates"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/vmInfra [post]
 func RecommendVmInfraCandidates(c echo.Context) error {
 

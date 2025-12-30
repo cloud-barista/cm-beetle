@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -29,31 +28,25 @@ import (
 // * Other APIs can be added as needed.
 
 // ReadVmSpec retrieves information about a specific VM Spec in the specified namespace
-func (c *TumblebugClient) ReadVmSpec(nsId, vmSpecId string) (tbmodel.SpecInfo, error) {
+func (s *Session) ReadVmSpec(nsId, vmSpecId string) (tbmodel.SpecInfo, error) {
 	log.Debug().Msg("Retrieving VM Spec")
 
 	var emptyRet = tbmodel.SpecInfo{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s/resources/spec/%s", c.restUrl, nsId, vmSpecId)
+	url := fmt.Sprintf("/ns/%s/resources/spec/%s", nsId, vmSpecId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.SpecInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve VM Spec")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved VM Spec (vmSpecId: %s) successfully", resBody.Id)

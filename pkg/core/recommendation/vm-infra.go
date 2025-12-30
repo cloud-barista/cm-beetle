@@ -10,7 +10,6 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
-	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/rs/zerolog/log"
 )
 
@@ -90,16 +89,8 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 		return isValid, err
 	}
 
-	apiConfig := tbclient.ApiConfig{
-		RestUrl:  config.Tumblebug.RestUrl,
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-	}
-
-	tbCli := tbclient.NewClient(apiConfig)
-
 	// Check if the region is valid for the specified CSP
-	_, err := tbCli.ReadRegionInfo(cspName, regionName)
+	_, err := tbclient.NewSession().ReadRegionInfo(cspName, regionName)
 	if err != nil {
 		log.Warn().Msgf("failed to read region info for CSP %s and region %s: %v", cspName, regionName, err)
 		return isValid, err

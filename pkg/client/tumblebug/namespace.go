@@ -17,7 +17,6 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -29,31 +28,24 @@ import (
 // * Other APIs can be added as needed.
 
 // CreateNamespace creates a new namespace in Tumblebug
-func (c *TumblebugClient) CreateNamespace(nsReq tbmodel.NsReq) (tbmodel.NsInfo, error) {
+func (s *Session) CreateNamespace(nsReq tbmodel.NsReq) (tbmodel.NsInfo, error) {
 	log.Debug().Msg("Creating new namespace")
 
-	emptyRet := tbmodel.NsInfo{}
-
-	method := "POST"
-	url := fmt.Sprintf("%s/ns", c.restUrl)
-
-	reqBody := nsReq
-	resBody := tbmodel.NsInfo{}
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(reqBody),
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	var resBody tbmodel.NsInfo
+	resp, err := s.
+		SetBody(nsReq).
+		SetResult(&resBody).
+		Post("/ns")
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create namespace")
-		return emptyRet, err
+		return tbmodel.NsInfo{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msg("Failed to create namespace")
+		return tbmodel.NsInfo{}, err
 	}
 
 	log.Debug().Msgf("Namespace (nsId: %s) created successfully", resBody.Id)
@@ -61,31 +53,23 @@ func (c *TumblebugClient) CreateNamespace(nsReq tbmodel.NsReq) (tbmodel.NsInfo, 
 }
 
 // ReadNamespace retrieves information about a specific namespace
-func (c *TumblebugClient) ReadNamespace(nsId string) (tbmodel.NsInfo, error) {
+func (s *Session) ReadNamespace(nsId string) (tbmodel.NsInfo, error) {
 	log.Debug().Msg("Retrieving namespace information")
 
-	var emptyRet = tbmodel.NsInfo{}
-
-	method := "GET"
-	url := fmt.Sprintf("%s/ns/%s", c.restUrl, nsId)
-
-	reqBody := common.NoBody
-	resBody := tbmodel.NsInfo{}
-
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	var resBody tbmodel.NsInfo
+	resp, err := s.
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/ns/%s", nsId))
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve namespace")
-		return emptyRet, err
+		return tbmodel.NsInfo{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msg("Failed to retrieve namespace")
+		return tbmodel.NsInfo{}, err
 	}
 
 	log.Debug().Msgf("Retrieved namespace (nsId: %s) successfully", resBody.Id)
