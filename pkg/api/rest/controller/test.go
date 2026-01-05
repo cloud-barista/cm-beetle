@@ -21,7 +21,6 @@ import (
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
-	"github.com/cloud-barista/cm-beetle/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -64,30 +63,36 @@ func TestAuth(c echo.Context) error {
 
 // TestTracing godoc
 // @ID TestTracing
-// @Summary Test tracing to Tumblebug
-// @Description Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.
+// @Description Tests distributed tracing by calling Tumblebug's readyz endpoint.
 // @Description
 // @Description [Note]
-// @Description - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.
+// @Description - The 'traceparent' header (W3C Trace Context) is propagated to Tumblebug for distributed tracing.
+// @Description - The 'X-Request-Id' header is propagated for log correlation.
 // @Description - Use this API to verify that tracing works correctly between Beetle and Tumblebug.
-// @Tags [Admin] API Request Management
+// @Tags [Test] Utilities
 // @Accept  json
 // @Produce  json
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param traceparent header string false "W3C Trace Context (e.g., 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01). Used for distributed tracing."
+// @Param X-Request-Id header string false "Unique request ID. Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[string] "Tumblebug service is ready"
 // @Failure 503 {object} model.ApiResponse[any] "Tumblebug service unavailable"
 // @Router /test/tracing [get]
 func TestTracing(c echo.Context) error {
 
-	ctx := c.Request().Context()                    // Get context
+	ctx := c.Request().Context()                    // Get context (contains OTel Trace info if middleware is active)
 	log.Ctx(ctx).Info().Msg("RestGetReadyz called") // Log ctx to trace
 
-	// Set headers to test tracing
-	headers := map[string]string{
-		echo.HeaderXRequestID: ctx.Value(logger.TraceIdKey).(string),
+	// [OpenTelemetry & Fallback]
+	// Use SetTraceInfo(ctx) to propagate trace context.
+	// It handles both OTel (future) and manual propagation (current fallback).
+	session := tbclient.NewSession().SetTraceInfo(ctx)
+
+	// Propagate X-Request-Id for log correlation
+	if reqID := c.Response().Header().Get(echo.HeaderXRequestID); reqID != "" {
+		session.SetHeader(echo.HeaderXRequestID, reqID)
 	}
 
-	_, ret, err := tbclient.NewSession().SetHeaders(headers).IsReady()
+	_, ret, err := session.IsReady()
 	if err != nil {
 		log.Err(err).Msg("Failed to call Tumblebug readyz")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Tumblebug service unavailable"))

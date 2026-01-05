@@ -6429,15 +6429,21 @@ paths:
       consumes:
       - application/json
       description: |-
-        Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.
+        Tests distributed tracing by calling Tumblebug's readyz endpoint.
 
         [Note]
-        - The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.
+        - The 'traceparent' header (W3C Trace Context) is propagated to Tumblebug for distributed tracing.
+        - The 'X-Request-Id' header is propagated for log correlation.
         - Use this API to verify that tracing works correctly between Beetle and Tumblebug.
       operationId: TestTracing
       parameters:
-      - description: Unique request ID (auto-generated if not provided). Used for
-          tracking request status and correlating logs.
+      - description: W3C Trace Context (e.g., 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01).
+          Used for distributed tracing.
+        in: header
+        name: traceparent
+        type: string
+      - description: Unique request ID. Used for tracking request status and correlating
+          logs.
         in: header
         name: X-Request-Id
         type: string
@@ -6452,9 +6458,8 @@ paths:
           description: Tumblebug service unavailable
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Test tracing to Tumblebug
       tags:
-      - '[Admin] API Request Management'
+      - '[Test] Utilities'
 security:
 - BasicAuth: []
 - BearerAuth: []

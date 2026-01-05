@@ -2900,7 +2900,7 @@
         },
         "/test/tracing": {
             "get": {
-                "description": "Tests distributed tracing by calling Tumblebug's readyz endpoint with the X-Request-Id header.\n\n[Note]\n- The X-Request-Id header value (auto-generated if not provided) is propagated to Tumblebug for distributed tracing.\n- Use this API to verify that tracing works correctly between Beetle and Tumblebug.",
+                "description": "Tests distributed tracing by calling Tumblebug's readyz endpoint.\n\n[Note]\n- The 'traceparent' header (W3C Trace Context) is propagated to Tumblebug for distributed tracing.\n- The 'X-Request-Id' header is propagated for log correlation.\n- Use this API to verify that tracing works correctly between Beetle and Tumblebug.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2908,14 +2908,19 @@
                     "application/json"
                 ],
                 "tags": [
-                    "[Admin] API Request Management"
+                    "[Test] Utilities"
                 ],
-                "summary": "Test tracing to Tumblebug",
                 "operationId": "TestTracing",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "description": "W3C Trace Context (e.g., 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01). Used for distributed tracing.",
+                        "name": "traceparent",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID. Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
                     }

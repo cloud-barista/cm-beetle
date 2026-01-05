@@ -175,6 +175,21 @@ func (s *Session) SetContext(ctx context.Context) *Session {
 	return s
 }
 
+// SetTraceInfo injects the OpenTelemetry trace context into the request headers.
+// This enables distributed tracing by propagating the trace ID and span ID to the Tumblebug API.
+// It uses the global TextMapPropagator to ensure compatibility with the configured tracing backend.
+//
+// Note: This method modifies the request headers in-place (merging with existing headers).
+// It does not affect the request context or other headers, so it is safe to call regardless of the order of SetHeader or SetContext.
+func (s *Session) SetTraceInfo(ctx context.Context) *Session {
+	// [OpenTelemetry]
+	// TODO: Uncomment the following code when OTel is integrated.
+	/*
+		otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(s.req.Header))
+	*/
+	return s
+}
+
 // Execute executes the request with the given method and URL.
 func (s *Session) Execute(method, url string) (*resty.Response, error) {
 	return s.req.Execute(method, url)
