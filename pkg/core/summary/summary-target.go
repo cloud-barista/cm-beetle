@@ -31,11 +31,8 @@ import (
 func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
 	log.Info().Msgf("Generating infrastructure summary for MCI (nsId: %s, mciId: %s)", nsId, mciId)
 
-	// Initialize Tumblebug client
-	tbCli := tbclient.NewDefaultClient()
-
 	// Step 1: Collect MCI information
-	mciInfo, err := tbCli.ReadMci(nsId, mciId)
+	mciInfo, err := tbclient.NewSession().ReadMci(nsId, mciId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve MCI information")
 		return nil, fmt.Errorf("failed to retrieve MCI information: %w", err)
@@ -52,19 +49,19 @@ func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
 		len(uniqueVNetIds), len(uniqueSshKeyIds), len(uniqueSecurityGroupIds), len(uniqueSpecIds), len(uniqueImageIds))
 
 	// Step 3: Collect network resources
-	networkResources, err := collectNetworkResources(tbCli, nsId, uniqueVNetIds)
+	networkResources, err := collectNetworkResources(nsId, uniqueVNetIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some network resources")
 	}
 
 	// Step 4: Collect security resources
-	securityResources, err := collectSecurityResources(tbCli, nsId, uniqueSshKeyIds, uniqueSecurityGroupIds)
+	securityResources, err := collectSecurityResources(nsId, uniqueSshKeyIds, uniqueSecurityGroupIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some security resources")
 	}
 
 	// Step 5: Collect compute resources
-	computeResources, err := collectComputeResources(tbCli, nsId, &mciInfo, uniqueSpecIds, uniqueImageIds)
+	computeResources, err := collectComputeResources(nsId, &mciInfo, uniqueSpecIds, uniqueImageIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some compute resources")
 	}
@@ -181,12 +178,12 @@ func extractUniqueImageIds(vms []tbmodel.VmInfo) []string {
 }
 
 // collectNetworkResources collects VNet and Subnet information
-func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetIds []string) (SummaryNetworkResources, error) {
+func collectNetworkResources(nsId string, vnetIds []string) (SummaryNetworkResources, error) {
 	var resources SummaryNetworkResources
 	resources.VNets = []SummaryVNetInfo{}
 
 	for _, vnetId := range vnetIds {
-		vnetInfo, err := tbCli.ReadVNet(nsId, vnetId)
+		vnetInfo, err := tbclient.NewSession().ReadVNet(nsId, vnetId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve VNet: %s", vnetId)
 			continue
@@ -220,14 +217,14 @@ func collectNetworkResources(tbCli *tbclient.TumblebugClient, nsId string, vnetI
 }
 
 // collectSecurityResources collects SSH Key and Security Group information
-func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshKeyIds, securityGroupIds []string) (SummarySecurityResources, error) {
+func collectSecurityResources(nsId string, sshKeyIds, securityGroupIds []string) (SummarySecurityResources, error) {
 	var resources SummarySecurityResources
 	resources.SshKeys = []SummarySshKeyInfo{}
 	resources.SecurityGroups = []SummarySecurityGroupInfo{}
 
 	// Collect SSH Keys
 	for _, sshKeyId := range sshKeyIds {
-		sshKeyInfo, err := tbCli.ReadSshKey(nsId, sshKeyId)
+		sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, sshKeyId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve SSH Key: %s", sshKeyId)
 			continue
@@ -252,7 +249,7 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 
 	// Collect Security Groups
 	for _, sgId := range securityGroupIds {
-		sgInfo, err := tbCli.ReadSecurityGroup(nsId, sgId)
+		sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sgId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Security Group: %s", sgId)
 			continue
@@ -290,7 +287,7 @@ func collectSecurityResources(tbCli *tbclient.TumblebugClient, nsId string, sshK
 }
 
 // collectComputeResources collects Spec, Image, and VM information
-func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciInfo *tbmodel.MciInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
+func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
 	var resources SummaryComputeResources
 
 	// Collect specs with usage count
@@ -299,7 +296,7 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 
 	for _, specId := range specIds {
 		// Specs are stored in system namespace
-		specInfo, err := tbCli.ReadVmSpec("system", specId)
+		specInfo, err := tbclient.NewSession().ReadVmSpec("system", specId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Spec: %s", specId)
 			continue
@@ -313,7 +310,7 @@ func collectComputeResources(tbCli *tbclient.TumblebugClient, nsId string, mciIn
 
 	for _, imageId := range imageIds {
 		// Images are stored in system namespace
-		imageInfo, err := tbCli.ReadVmOsImage("system", imageId)
+		imageInfo, err := tbclient.NewSession().ReadVmOsImage("system", imageId)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to retrieve Image: %s", imageId)
 			continue

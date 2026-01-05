@@ -84,6 +84,60 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - Use English for struct field comments, function comments, inline comments, and TODO/FIXME notes.
 - Ensure consistency and accessibility for international contributors.
 
+### API Response Messages
+
+**User-Centric Message Guidelines:**
+
+- Write messages from the API user's perspective, not the developer's.
+- Prioritize **clarity** and **conciseness** while maintaining technical accuracy.
+- Remove unnecessary words and technical jargon, but preserve essential information.
+
+**Best Practices:**
+
+- ✅ **Do:** Use short, action-oriented messages
+  - `"Provider required"` instead of `"invalid request: 'desiredProvider' is required"`
+  - `"Invalid request format"` instead of `"Invalid request body: " + err.Error()`
+  - `"Data migrated successfully (2.5s)"` instead of `"Data migration completed successfully (elapsed: 2.5s)"`
+- ❌ **Don't:** Include redundant prefixes or verbose explanations
+  - Avoid: `"Failed to..."`, `"Error:"`, `"Invalid request:"`
+  - Avoid: Technical error details in user-facing messages
+  - Avoid: Repetitive parameter names in quotes
+
+**Validation Error Patterns:**
+
+```go
+// Required parameter
+"Provider required"          // ✅ Clear and concise
+"desiredProvider is required"  // ❌ Too technical
+
+// Invalid format
+"Invalid request format"     // ✅ Simple
+"Invalid request body: ..."  // ❌ Too verbose
+
+// Missing resources
+"At least one source server required"  // ✅ Actionable
+"Source infrastructure must contain at least one server"  // ❌ Too formal
+```
+
+**Success Message Patterns:**
+
+```go
+// Operation success
+"Recommended 3 object storage(s) for aws ap-northeast-2"  // ✅ Informative
+"Successfully generated 3 recommendations..."  // ❌ Redundant "Successfully"
+
+// Completion with timing
+"Data migrated successfully (2.5s)"  // ✅ Includes timing
+"Data migration completed successfully (elapsed: 2.5s)"  // ❌ Too verbose
+```
+
+**When Using Helper Functions:**
+
+- `model.SimpleErrorResponse(msg)`: Keep `msg` concise yet clear enough to understand the issue
+- `model.SuccessResponseWithMessage(data, msg)`: Focus on what was achieved, not how
+- Always review messages: "Is this clear to someone unfamiliar with the implementation?"
+- **Priority order:** Clarity first, then conciseness
+
 ### Go
 
 - Detailed Go coding standards are managed in `.github/instructions/go.instructions.md`.

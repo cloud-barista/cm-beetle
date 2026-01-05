@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"net/http"
 
-	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/report"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
@@ -47,25 +47,21 @@ type GenerateMigrationReportRequest struct {
 // @Success 200 {string} string "Migration report in markdown or HTML format"
 // @Header 200 {string} Content-Disposition "inline; filename=\"migration-report.md\" or \"migration-report.html\" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
-// @Failure 400 {object} model.Response "Invalid request"
-// @Failure 500 {object} model.Response "Internal server error"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during report generation"
 // @Router /report/migration/ns/{nsId}/mci/{mciId} [post]
 func GenerateMigrationReport(c echo.Context) error {
 	// Extract path parameters
 	nsId := c.Param("nsId")
 	if nsId == "" {
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    "nsId is required",
-		})
+		log.Warn().Msg("nsId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
 	}
 
 	mciId := c.Param("mciId")
 	if mciId == "" {
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    "mciId is required",
-		})
+		log.Warn().Msg("mciId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("MCI ID required"))
 	}
 
 	// Extract query parameters
@@ -74,12 +70,8 @@ func GenerateMigrationReport(c echo.Context) error {
 		format = "md" // default format
 	}
 	if format != "md" && format != "html" {
-		err := fmt.Errorf("invalid request, the format (format: %s) must be 'md' or 'html'", format)
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    err.Error(),
-		})
+		log.Warn().Msgf("Invalid format: %s", format)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'md' or 'html'"))
 	}
 
 	download := c.QueryParam("download")
@@ -87,30 +79,21 @@ func GenerateMigrationReport(c echo.Context) error {
 		download = "false" // default: inline display
 	}
 	if download != "true" && download != "false" {
-		err := fmt.Errorf("invalid request, the download (download: %s) must be 'true' or 'false'", download)
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    err.Error(),
-		})
+		log.Warn().Msgf("Invalid download parameter: %s", download)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Download must be 'true' or 'false'"))
 	}
 
 	// Parse request body
 	var req GenerateMigrationReportRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request body")
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    "Invalid request body: " + err.Error(),
-		})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	// Validate source infrastructure
 	if len(req.OnpremiseInfraModel.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Text:    "Source infrastructure must contain at least one server",
-		})
+		log.Warn().Msg("Source infrastructure must contain at least one server")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source server required"))
 	}
 
 	// Generate migration report
@@ -125,10 +108,7 @@ func GenerateMigrationReport(c echo.Context) error {
 	migrationReport, err := report.GenerateMigrationReport(nsId, mciId, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate migration report")
-		return c.JSON(http.StatusInternalServerError, model.Response{
-			Success: false,
-			Text:    "Failed to generate migration report: " + err.Error(),
-		})
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Report generation failed"))
 	}
 
 	// [Output]

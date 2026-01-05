@@ -17,39 +17,32 @@ package tbclient
 import (
 	"fmt"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 )
 
 // ReadRegionInfo reads region information in a specific provider
-func (c *TumblebugClient) ReadRegionInfo(providerName string, regionName string) (tbmodel.RegionDetail, error) {
+func (s *Session) ReadRegionInfo(providerName string, regionName string) (tbmodel.RegionDetail, error) {
 	log.Debug().Msg("Read Region Info")
 
 	emptyRet := tbmodel.RegionDetail{}
 
-	method := "GET"
-	url := fmt.Sprintf("%s/provider/%s/region/%s", c.restUrl, providerName, regionName)
+	url := fmt.Sprintf("/provider/%s/region/%s", providerName, regionName)
 
 	// Request body
-	tbReqt := common.NoBody
 	tbResp := tbmodel.RegionDetail{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(tbReqt),
-		&tbReqt,
-		&tbResp,
-		common.VeryShortDuration,
-	)
+	resp, err := s.
+		SetResult(&tbResp).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved region (regionId: %s) successfully", tbResp.RegionId)

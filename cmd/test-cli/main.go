@@ -21,7 +21,7 @@ import (
 	// Import Beetle's existing packages
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
-	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
@@ -2548,8 +2548,9 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 	// Step 1: Get MCI Access Info
 	log.Info().Msg("Step 1: Getting MCI access information...")
 
-	tbClient := tbclient.NewDefaultClient()
-	accessInfo, err := tbClient.ReadMciAccessInfo(config.NamespaceID, mciId, "accessinfo", "showSshKey")
+	tbCli := tbclient.NewDefaultClient()
+	// tbSess := tbCli.NewSession() // or tbclient.NewSession()
+	accessInfo, err := tbCli.NewSession().ReadMciAccessInfo(config.NamespaceID, mciId, "accessinfo", "showSshKey")
 	if err != nil {
 		populateErrorInfo(&result, err, 0, "ReadMciAccessInfo", nil)
 		log.Error().Err(err).Msg("Failed to get MCI access info")

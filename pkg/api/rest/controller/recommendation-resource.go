@@ -18,23 +18,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
-
-// type RecommendVNetRequest struct {
-// 	DesiredProvider string   `json:"desiredProvider" example:"aws"`
-// 	DesiredRegion   string   `json:"desiredRegion" example:"ap-northeast-2"`
-// 	CidrBlocks      []string `json:"cidrBlocks" example:""`
-// }
-
-type RecommendVNetResponse struct {
-	cloudmodel.RecommendedVNetList
-}
 
 // RecommendVNet godoc
 // @ID RecommendVNet
@@ -52,9 +42,9 @@ type RecommendVNetResponse struct {
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendVNetResponse "The result of recommended vNet"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVNetList] "Successfully recommended vNet(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/resources/vNet [post]
 func RecommendVNet(c echo.Context) error {
 
@@ -62,7 +52,7 @@ func RecommendVNet(c echo.Context) error {
 	var req RecommendVmInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("req: %v\n", req)
 
@@ -71,30 +61,25 @@ func RecommendVNet(c echo.Context) error {
 
 	// Validate the input
 	if desiredProvider == "" {
-		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if desiredRegion == "" {
-		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
 	// [Process]
 	ret, err := recommendation.RecommendVNet(desiredProvider, desiredRegion, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend vNet")
-		res := common.SimpleMsg{
-			Message: err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("VNet recommendation failed"))
 	}
 
 	// [Output]
-	res := RecommendVNetResponse{}
-	res.RecommendedVNetList.Description = "Recommended vNet information list"
-	res.RecommendedVNetList.Count = len(ret)
+	RecommendVNetList := cloudmodel.RecommendedVNetList{}
+	RecommendVNetList.Description = "Recommended vNet information list"
+	RecommendVNetList.Count = len(ret)
 
 	tempList := []cloudmodel.RecommendedVNet{}
 	for _, vNet := range ret {
@@ -104,30 +89,12 @@ func RecommendVNet(c echo.Context) error {
 			TargetVNet:  vNet,
 		})
 	}
-	res.RecommendedVNetList.TargetVNetList = tempList
+	RecommendVNetList.TargetVNetList = tempList
+
+	successMsg := fmt.Sprintf("Recommended %d vNet(s) for %s %s", len(ret), desiredProvider, desiredRegion)
+	res := model.SuccessResponseWithMessage(RecommendVNetList, successMsg)
 
 	return c.JSON(http.StatusOK, res)
-}
-
-type RecommendSecurityGroupRequest struct {
-	// ! To be replaced with the actual model
-	// FirewallRules []inframodel.FirewallRuleProperty `json:"firewallRules" example:""`
-	FirewallRules []FirewallRuleProperty `json:"firewallRules" example:""`
-}
-
-// To be replaced with the actual model
-type FirewallRuleProperty struct { // note: reference command `sudo ufw status verbose`
-	SrcCIDR   string `json:"srcCIDR,omitempty"`
-	DstCIDR   string `json:"dstCIDR,omitempty"`
-	SrcPorts  string `json:"srcPorts,omitempty"`
-	DstPorts  string `json:"dstPorts,omitempty"`
-	Protocol  string `json:"protocol,omitempty"`  // TCP, UDP, ICMP
-	Direction string `json:"direction,omitempty"` // inbound, outbound
-	Action    string `json:"action,omitempty"`    // allow, deny
-}
-
-type RecommendSecurityGroupResponse struct {
-	cloudmodel.RecommendedSecurityGroupList
 }
 
 // RecommendSecurityGroups godoc
@@ -146,9 +113,9 @@ type RecommendSecurityGroupResponse struct {
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendSecurityGroupResponse "The result of recommended security groups"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedSecurityGroupList] "Successfully recommended security group(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/resources/securityGroups [post]
 func RecommendSecurityGroups(c echo.Context) error {
 
@@ -156,7 +123,7 @@ func RecommendSecurityGroups(c echo.Context) error {
 	var req RecommendVmInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("req: %v\n", req)
 
@@ -165,30 +132,27 @@ func RecommendSecurityGroups(c echo.Context) error {
 
 	// Validate the input
 	if desiredProvider == "" {
-		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if desiredRegion == "" {
-		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
 	// [Process]
 	ret, err := recommendation.RecommendSecurityGroups(desiredProvider, desiredRegion, req.OnpremiseInfraModel.Servers)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend security groups")
-		res := common.SimpleMsg{
-			Message: err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Security group recommendation failed"))
 	}
 
 	// [Output]
 	log.Debug().Msgf("recommendedSecurityGroupsList: %v", ret)
+	successMsg := fmt.Sprintf("Recommended security group(s) for %s %s", desiredProvider, desiredRegion)
+	res := model.SuccessResponseWithMessage(ret, successMsg)
 
-	return c.JSON(http.StatusOK, ret)
+	return c.JSON(http.StatusOK, res)
 }
 
 type RecommendVmSpecResponse struct {
@@ -213,9 +177,9 @@ type RecommendVmSpecResponse struct {
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param targetMachineId query string false "Target Machine ID to focus recommendation on (optional)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendVmSpecResponse "The result of recommended VM specifications"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmSpecList] "Successfully recommended VM spec(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/resources/vmSpecs [post]
 func RecommendVmSpecs(c echo.Context) error {
 
@@ -223,7 +187,7 @@ func RecommendVmSpecs(c echo.Context) error {
 	var req RecommendVmInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("req: %v\n", req)
 
@@ -233,14 +197,12 @@ func RecommendVmSpecs(c echo.Context) error {
 
 	// Validate the input
 	if desiredProvider == "" {
-		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if desiredRegion == "" {
-		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 	// if machineID == "" {
 	// 	err := fmt.Errorf("invalid request: 'machineID' is required")
@@ -262,9 +224,8 @@ func RecommendVmSpecs(c echo.Context) error {
 			}
 		}
 		if !found {
-			err := fmt.Errorf("invalid request: targetMachineId '%s' not found in the request body", targetMachineId)
-			log.Warn().Msg(err.Error())
-			return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+			log.Warn().Msgf("targetMachineId '%s' not found in request body", targetMachineId)
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Machine ID '%s' not found", targetMachineId)))
 		}
 		// Process only the target machine
 		serversToProcess = []onpremmodel.ServerProperty{targetMachine}
@@ -355,39 +316,39 @@ func RecommendVmSpecs(c echo.Context) error {
 	case 0:
 		recommendedVmSpecList.Status = string(recommendation.FullyRecommended)
 		if targetMachineId != "" {
-			recommendedVmSpecList.Description = fmt.Sprintf("Successfully recommended VM specs for target machine '%s'", targetMachineId)
+			recommendedVmSpecList.Description = fmt.Sprintf("Recommended VM spec(s) for machine '%s'", targetMachineId)
 		} else {
-			recommendedVmSpecList.Description = "Successfully recommended VM specs for all servers in the source infrastructure"
+			recommendedVmSpecList.Description = fmt.Sprintf("Recommended VM spec(s) for %d server(s)", len(serversToProcess))
 		}
 	case recommendedVmSpecList.Count:
 		recommendedVmSpecList.Status = string(recommendation.NothingRecommended)
 		if targetMachineId != "" {
-			recommendedVmSpecList.Description = fmt.Sprintf("Unable to recommend VM specs for target machine '%s'", targetMachineId)
+			recommendedVmSpecList.Description = fmt.Sprintf("No VM specs available for machine '%s'", targetMachineId)
 		} else {
-			recommendedVmSpecList.Description = "Unable to recommend any VM specs for the servers in the source infrastructure"
+			recommendedVmSpecList.Description = "No VM specs available for any server"
 		}
 	default:
 		recommendedVmSpecList.Status = string(recommendation.PartiallyRecommended)
+		successCount := recommendedVmSpecList.Count - countFailed
 		if targetMachineId != "" {
 			recommendedVmSpecList.Description = fmt.Sprintf(
-				"Partially recommended VM specs for target machine '%s': successful for %d specs, failed for %d specs",
-				targetMachineId, recommendedVmSpecList.Count-countFailed, countFailed,
+				"Recommended %d of %d VM spec(s) for machine '%s'",
+				successCount, recommendedVmSpecList.Count, targetMachineId,
 			)
 		} else {
 			recommendedVmSpecList.Description = fmt.Sprintf(
-				"Partially recommended VM specs: successful for %d servers, failed for %d servers",
-				recommendedVmSpecList.Count-countFailed, countFailed,
+				"Recommended %d of %d VM spec(s)",
+				successCount, recommendedVmSpecList.Count,
 			)
 		}
 	}
 
 	log.Debug().Msgf("recommendedVmSpecList: %+v", recommendedVmSpecList)
 
-	return c.JSON(http.StatusOK, recommendedVmSpecList)
-}
+	successMsg := fmt.Sprintf("Recommended VM spec(s) for %s %s", desiredProvider, desiredRegion)
+	res := model.SuccessResponseWithMessage(recommendedVmSpecList, successMsg)
 
-type RecommendVmOsImageResponse struct {
-	cloudmodel.RecommendedVmOsImageList
+	return c.JSON(http.StatusOK, res)
 }
 
 // RecommendVmOsImages godoc
@@ -406,16 +367,16 @@ type RecommendVmOsImageResponse struct {
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendVmOsImageResponse "The result of recommended VM OS images"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmOsImageList] "Successfully recommended VM OS image(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/resources/vmOsImages [post]
 func RecommendVmOsImages(c echo.Context) error {
 	// [Input]
 	var req RecommendVmInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("req: %v\n", req)
 
@@ -424,14 +385,12 @@ func RecommendVmOsImages(c echo.Context) error {
 
 	// Validate the input
 	if desiredProvider == "" {
-		err := fmt.Errorf("invalid request: 'desiredProvider' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if desiredRegion == "" {
-		err := fmt.Errorf("invalid request: 'desiredRegion' is required")
-		log.Warn().Msg(err.Error())
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: err.Error()})
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
 	// [Process]
@@ -507,20 +466,26 @@ func RecommendVmOsImages(c echo.Context) error {
 		}
 	}
 	recommendedOsImageList.Count = len(recommendedOsImageList.RecommendedVmOsImageList)
+	successCount := recommendedOsImageList.Count - countFailed
 	switch countFailed {
 	case 0:
 		recommendedOsImageList.Status = string(recommendation.FullyRecommended)
-		recommendedOsImageList.Description = "Successfully recommended VM OS images for the servers in the source computing infra"
+		recommendedOsImageList.Description = fmt.Sprintf("Recommended OS image(s) for %d server(s)", len(req.OnpremiseInfraModel.Servers))
 	case recommendedOsImageList.Count:
 		recommendedOsImageList.Status = string(recommendation.NothingRecommended)
-		recommendedOsImageList.Description = "Unable to recommend any VM OS images for the servers in the source computing infra"
+		recommendedOsImageList.Description = "No OS images available for any server"
 	default:
 		recommendedOsImageList.Status = string(recommendation.PartiallyRecommended)
 		recommendedOsImageList.Description = fmt.Sprintf(
-			"Partially recommended VM OS images: successful for %d servers, failed for %d servers",
-			recommendedOsImageList.Count-countFailed, countFailed,
+			"Recommended %d of %d OS image(s)",
+			successCount, recommendedOsImageList.Count,
 		)
 	}
 
-	return c.JSON(http.StatusOK, recommendedOsImageList)
+	log.Debug().Msgf("recommendedVmOsImageList: %+v", recommendedOsImageList)
+
+	successMsg := fmt.Sprintf("Recommended VM OS image(s) for %s %s", desiredProvider, desiredRegion)
+	res := model.SuccessResponseWithMessage(recommendedOsImageList, successMsg)
+
+	return c.JSON(http.StatusOK, res)
 }

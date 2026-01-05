@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"net/http"
 
-	model "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/beetle"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 	"github.com/labstack/echo/v4"
@@ -28,7 +28,20 @@ import (
 // GenerateTargetInfraSummary godoc
 // @ID GenerateTargetInfraSummary
 // @Summary Generate target infrastructure summary
-// @Description Generate a comprehensive target infrastructure summary in JSON, Markdown, or HTML format
+// @Description Generate a comprehensive target infrastructure summary in multiple formats based on 'format' query parameter:
+// @Description
+// @Description **Response Format by 'format' Parameter:**
+// @Description - `format=md` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8
+// @Description - `format=html`: Returns HTML string with Content-Type: text/html; charset=utf-8
+// @Description - `format=json`: Returns ApiResponse[TargetInfraSummary] with Content-Type: application/json
+// @Description
+// @Description **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
+// @Description
+// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md
+// @Description
+// @Description **Download Behavior:**
+// @Description - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
+// @Description - `download=true`: Content downloaded as file (Content-Disposition: attachment)
 // @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept  json
 // @Produce  json
@@ -36,53 +49,37 @@ import (
 // @Produce  text/html
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciId path string true "Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
-// @Param format query string false "Summary format: json, md, or html" Enums(json,md,html) default(md)
+// @Param format query string false "Summary format: md, html, or json" Enums(md,html,json) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} JSONResult{[MARKDOWN]=string,[HTML]=string,[JSON]=summary.TargetInfraSummary} "Different return types: json format returns TargetInfraSummary object, md format returns markdown string, html format returns HTML string"
+// @Success 200 {object} model.ApiResponse[summary.TargetInfraSummary] "Successfully generated target infrastructure summary (format varies by 'format' parameter)"
 // @Header 200 {string} Content-Disposition "inline; filename=\"target-summary.md\" or \"target-summary.html\" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
-// @Failure 400 {object} model.Response
-// @Failure 404 {object} model.Response
-// @Failure 500 {object} model.Response
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
 // @Router /summary/target/ns/{nsId}/mci/{mciId} [get]
 func GenerateTargetInfraSummary(c echo.Context) error {
 
 	// [Input]
 	nsId := c.Param("nsId")
 	if nsId == "" {
-		err := fmt.Errorf("invalid request, the namespace ID (nsId: %s) is required", nsId)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msg("Namespace ID is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
 	}
 
 	mciId := c.Param("mciId")
 	if mciId == "" {
-		err := fmt.Errorf("invalid request, the multi-cloud infrastructure ID (mciId: %s) is required", mciId)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msg("MCI ID is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("MCI ID required"))
 	}
 
 	format := c.QueryParam("format")
 	if format == "" {
-		format = "json" // default format
+		format = "md" // default format
 	}
 	if format != "json" && format != "md" && format != "html" {
-		err := fmt.Errorf("invalid request, the format (format: %s) must be 'json', 'md', or 'html'", format)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msgf("Invalid format: %s", format)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'json', 'md', or 'html'"))
 	}
 
 	download := c.QueryParam("download")
@@ -90,13 +87,8 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 		download = "false" // default: inline display
 	}
 	if download != "true" && download != "false" {
-		err := fmt.Errorf("invalid request, the download (download: %s) must be 'true' or 'false'", download)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msgf("Invalid download parameter: %s", download)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Download parameter must be 'true' or 'false'"))
 	}
 
 	// [Process]
@@ -106,11 +98,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	infraSummary, err := summary.GenerateInfraSummary(nsId, mciId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate infrastructure summary")
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Summary generation failed"))
 	}
 
 	// [Output]
@@ -161,37 +149,45 @@ type GenerateSourceInfraSummaryRequest struct {
 // GenerateSourceInfraSummary godoc
 // @ID GenerateSourceInfraSummary
 // @Summary Generate source infrastructure summary
-// @Description Generate a comprehensive source infrastructure summary from on-premise data in JSON, Markdown, or HTML format
+// @Description Generate a comprehensive source infrastructure summary from on-premise data in multiple formats based on 'format' query parameter:
+// @Description
+// @Description **Response Format by 'format' Parameter:**
+// @Description - `format=json`: Returns ApiResponse[SourceInfraSummary] with Content-Type: application/json
+// @Description - `format=md` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8
+// @Description - `format=html`: Returns HTML string with Content-Type: text/html; charset=utf-8
+// @Description
+// @Description **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
+// @Description
+// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-source.md
+// @Description
+// @Description **Download Behavior:**
+// @Description - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
+// @Description - `download=true`: Content downloaded as file (Content-Disposition: attachment)
 // @Tags [Summary/Report] Infrastructure Analysis for Migration
 // @Accept  json
 // @Produce  json
 // @Produce  text/markdown
 // @Produce  text/html
-// @Param format query string false "Summary format: json, md, or html" Enums(json,md,html) default(md)
+// @Param format query string false "Summary format: md, html, or json" Enums(md,html,json) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Request body controller.GenerateSourceInfraSummaryRequest true "Source infrastructure data"
-// @Success 200 {object} JSONResult{[MARKDOWN]=string,[HTML]=string,[JSON]=summary.SourceInfraSummary} "Different return types: json format returns SourceInfraSummary object, md format returns markdown string, html format returns HTML string"
+// @Success 200 {object} model.ApiResponse[summary.SourceInfraSummary] "Successfully generated source infrastructure summary (format varies by 'format' parameter)"
 // @Header 200 {string} Content-Disposition "inline; filename=\"source-summary.md\" or \"source-summary.html\" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
-// @Failure 400 {object} model.Response
-// @Failure 500 {object} model.Response
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
 // @Router /summary/source [post]
 func GenerateSourceInfraSummary(c echo.Context) error {
 
 	// [Input]
 	format := c.QueryParam("format")
 	if format == "" {
-		format = "json" // default format
+		format = "md" // default format
 	}
 	if format != "json" && format != "md" && format != "html" {
-		err := fmt.Errorf("invalid request, the format (format: %s) must be 'json', 'md', or 'html'", format)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msgf("Invalid format: %s", format)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Format must be 'json', 'md', or 'html'"))
 	}
 
 	download := c.QueryParam("download")
@@ -199,24 +195,15 @@ func GenerateSourceInfraSummary(c echo.Context) error {
 		download = "false" // default: inline display
 	}
 	if download != "true" && download != "false" {
-		err := fmt.Errorf("invalid request, the download (download: %s) must be 'true' or 'false'", download)
-		log.Warn().Msg(err.Error())
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		log.Warn().Msgf("Invalid download parameter: %s", download)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Download parameter must be 'true' or 'false'"))
 	}
 
 	// Bind request body
 	var req GenerateSourceInfraSummaryRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
-		res := model.Response{
-			Success: false,
-			Text:    fmt.Sprintf("invalid request body: %v", err),
-		}
-		return c.JSON(http.StatusBadRequest, res)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	// [Process]
@@ -232,11 +219,7 @@ func GenerateSourceInfraSummary(c echo.Context) error {
 	sourceSummary, err := summary.GenerateSourceInfraSummary(infraName, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate source infrastructure summary")
-		res := model.Response{
-			Success: false,
-			Text:    err.Error(),
-		}
-		return c.JSON(http.StatusInternalServerError, res)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Summary generation failed"))
 	}
 
 	// [Output]

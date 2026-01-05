@@ -3,10 +3,10 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
-	"github.com/cloud-barista/cm-beetle/pkg/config"
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -15,13 +15,8 @@ func GenerateConnectionName(csp, region string) (string, error) {
 
 	connectionName := fmt.Sprintf("%s-%s", csp, region)
 
-	tbApiConfig := tbclient.ApiConfig{
-		Username: config.Tumblebug.API.Username,
-		Password: config.Tumblebug.API.Password,
-		RestUrl:  config.Tumblebug.RestUrl,
-	}
-	tbCli := tbclient.NewClient(tbApiConfig)
-	_, err := tbCli.GetConnConfig(connectionName)
+	tbSess := tbclient.NewSession()
+	_, err := tbSess.GetConnConfig(connectionName)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get connection config")
 		return "", err
@@ -56,9 +51,9 @@ type MigrateObjectStorageRequest struct {
 // @Produce	json
 // @Param request body MigrateObjectStorageRequest true "Object storage migration request (use RecommendObjectStorage response)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 "OK - Object storages created successfully"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Success 201 "Created - Object storages created successfully"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during object storage creation"
 // @Router /migration/middleware/objectStorage [post]
 func MigrateObjectStorage(c echo.Context) error {
 	// [Input]
@@ -66,33 +61,27 @@ func MigrateObjectStorage(c echo.Context) error {
 	var req MigrateObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid request format: %v", err),
-		})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	// Validate required parameters
 	if req.TargetCloud.Csp == "" || req.TargetCloud.Region == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "targetCloud.csp and targetCloud.region are required",
-		})
+		log.Warn().Msg("CSP and region are required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region required"))
 	}
 
 	// Validate target object storages
 	if len(req.TargetObjectStorages) == 0 {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "At least one target object storage must be provided",
-		})
+		log.Warn().Msg("At least one target object storage must be provided")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one target bucket required"))
 	}
 
 	// Generate and validate connection name
 	connName, err := GenerateConnectionName(req.TargetCloud.Csp, req.TargetCloud.Region)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v",
-				req.TargetCloud.Csp, req.TargetCloud.Region, err),
-		})
+		errorMsg := fmt.Sprintf("Invalid cloud configuration: %s %s", req.TargetCloud.Csp, req.TargetCloud.Region)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -103,8 +92,8 @@ func MigrateObjectStorage(c echo.Context) error {
 		Msg("Starting object storage migration")
 
 	// [Process]
-	// Initialize Tumblebug client
-	tbClient := tbclient.NewDefaultClient()
+	// Initialize Tumblebug session
+	// tbSess := tbclient.NewSession()
 
 	// Create each object storage (bucket)
 	for i, target := range req.TargetObjectStorages {
@@ -116,15 +105,14 @@ func MigrateObjectStorage(c echo.Context) error {
 			Msg("Creating object storage")
 
 		// Create object storage (bucket)
-		err := tbClient.CreateObjectStorage(target.BucketName, connName)
+		err := tbclient.NewSession().CreateObjectStorage(target.BucketName, connName)
 		if err != nil {
 			log.Error().
 				Err(err).
 				Str("bucketName", target.BucketName).
 				Msg("Failed to create object storage")
-			return c.JSON(http.StatusInternalServerError, common.SimpleMsg{
-				Message: fmt.Sprintf("Failed to create object storage '%s': %v", target.BucketName, err),
-			})
+			errorMsg := fmt.Sprintf("Failed to create obejct storage '%s'", target.BucketName)
+			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 		}
 
 		log.Info().
@@ -153,7 +141,7 @@ func MigrateObjectStorage(c echo.Context) error {
 		Int("totalBuckets", len(req.TargetObjectStorages)).
 		Msg("Object storage migration completed successfully")
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusCreated)
 }
 
 // ============================================================================
@@ -172,9 +160,9 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} tbclient.ListAllMyBucketsResult "List of object storages"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Success 200 {object} model.ApiResponse[tbclient.ListAllMyBucketsResult] "Successfully retrieved object storage list"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
 // @Router /migration/middleware/objectStorage [get]
 func ListObjectStorages(c echo.Context) error {
 	// Get csp and region from query params
@@ -183,18 +171,17 @@ func ListObjectStorages(c echo.Context) error {
 
 	// Validate required parameters
 	if csp == "" || region == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "csp and region query parameters are required",
-		})
+		errorMsg := "csp and region query parameters are required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Generate and validate connection name
 	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
-		})
+		errorMsg := fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err)
+		log.Error().Err(err).Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -203,16 +190,15 @@ func ListObjectStorages(c echo.Context) error {
 		Str("connName", connName).
 		Msg("Listing object storages")
 
-	// Initialize Tumblebug client
-	tbClient := tbclient.NewDefaultClient()
+	// Initialize Tumblebug session
+	tbSess := tbclient.NewSession()
 
 	// List object storages
-	result, err := tbClient.ListObjectStorages(connName)
+	result, err := tbSess.ListObjectStorages(connName)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to list object storages")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{
-			Message: fmt.Sprintf("Failed to list object storages: %v", err),
-		})
+		errorMsg := fmt.Sprintf("Failed to list object storages: %v", err)
+		log.Error().Err(err).Msg(errorMsg)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -221,7 +207,7 @@ func ListObjectStorages(c echo.Context) error {
 		Int("bucketCount", len(result.Buckets.Bucket)).
 		Msg("Successfully listed object storages")
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
 
 // GetObjectStorage godoc
@@ -237,18 +223,18 @@ func ListObjectStorages(c echo.Context) error {
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} tbclient.ListBucketResult "Object storage details"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 404 {object} common.SimpleMsg "Object storage not found"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Success 200 {object} model.ApiResponse[tbclient.ListBucketResult] "Successfully retrieved object storage details"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during get operation"
 // @Router /migration/middleware/objectStorage/{objectStorageName} [get]
 func GetObjectStorage(c echo.Context) error {
 	// Get path parameter
 	objectStorageName := c.Param("objectStorageName")
 	if objectStorageName == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "objectStorageName is required",
-		})
+		errorMsg := "objectStorageName is required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Get csp and region from query params
@@ -257,18 +243,17 @@ func GetObjectStorage(c echo.Context) error {
 
 	// Validate required parameters
 	if csp == "" || region == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "csp and region query parameters are required",
-		})
+		errorMsg := "csp and region query parameters are required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Generate and validate connection name
 	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
-		})
+		errorMsg := fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err)
+		log.Error().Err(err).Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -278,18 +263,24 @@ func GetObjectStorage(c echo.Context) error {
 		Str("objectStorageName", objectStorageName).
 		Msg("Getting object storage details")
 
-	// Initialize Tumblebug client
-	tbClient := tbclient.NewDefaultClient()
+	// Initialize Tumblebug session
+	tbSess := tbclient.NewSession()
 
 	// Get object storage details
-	result, err := tbClient.GetObjectStorage(objectStorageName, connName)
+	result, err := tbSess.GetObjectStorage(objectStorageName, connName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).
 			Msg("Failed to get object storage")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{
-			Message: fmt.Sprintf("Failed to get object storage '%s': %v", objectStorageName, err),
-		})
+
+		// Check if error is due to not found
+		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+			errorMsg := fmt.Sprintf("Object storage '%s' not found", objectStorageName)
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(errorMsg))
+		}
+
+		errorMsg := fmt.Sprintf("Failed to get object storage '%s': %v", objectStorageName, err)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -298,7 +289,7 @@ func GetObjectStorage(c echo.Context) error {
 		Str("objectStorageName", objectStorageName).
 		Msg("Successfully retrieved object storage details")
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
 
 // ExistObjectStorage godoc
@@ -317,17 +308,17 @@ func GetObjectStorage(c echo.Context) error {
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 "OK - Object storage exists"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 404 {object} common.SimpleMsg "Object storage not found"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during existence check"
 // @Router /migration/middleware/objectStorage/{objectStorageName} [head]
 func ExistObjectStorage(c echo.Context) error {
 	// Get path parameter
 	objectStorageName := c.Param("objectStorageName")
 	if objectStorageName == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "objectStorageName is required",
-		})
+		errorMsg := "objectStorageName is required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Get csp and region from query params
@@ -336,18 +327,17 @@ func ExistObjectStorage(c echo.Context) error {
 
 	// Validate required parameters
 	if csp == "" || region == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "csp and region query parameters are required",
-		})
+		errorMsg := "csp and region query parameters are required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Generate and validate connection name
 	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
-		})
+		errorMsg := fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err)
+		log.Error().Err(err).Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -357,18 +347,24 @@ func ExistObjectStorage(c echo.Context) error {
 		Str("objectStorageName", objectStorageName).
 		Msg("Checking object storage existence")
 
-	// Initialize Tumblebug client
-	tbClient := tbclient.NewDefaultClient()
+	// Initialize Tumblebug session
+	tbSess := tbclient.NewSession()
 
 	// Check object storage existence
-	exists, err := tbClient.ExistObjectStorage(objectStorageName, connName)
+	exists, err := tbSess.ExistObjectStorage(objectStorageName, connName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).
 			Msg("Failed to check object storage existence")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{
-			Message: fmt.Sprintf("Failed to check object storage '%s' existence: %v", objectStorageName, err),
-		})
+
+		// Check if error is due to not found
+		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+			msg := fmt.Sprintf("Object storage '%s' not found", objectStorageName)
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
+		}
+
+		errorMsg := fmt.Sprintf("Failed to check object storage '%s' existence: %v", objectStorageName, err)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -378,13 +374,13 @@ func ExistObjectStorage(c echo.Context) error {
 		Bool("exists", exists).
 		Msg("Successfully checked object storage existence")
 
-	if exists {
-		return c.NoContent(http.StatusOK)
+	if !exists {
+		msg := fmt.Sprintf("Object storage '%s' not found", objectStorageName)
+		log.Info().Msg(msg)
+		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
 	}
 
-	return c.JSON(http.StatusNotFound, common.SimpleMsg{
-		Message: fmt.Sprintf("Object storage '%s' not found", objectStorageName),
-	})
+	return c.NoContent(http.StatusOK)
 }
 
 // DeleteObjectStorage godoc
@@ -402,18 +398,18 @@ func ExistObjectStorage(c echo.Context) error {
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 "OK - Object storage deleted successfully"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 404 {object} common.SimpleMsg "Object storage not found"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Success 204 "Object storage deleted successfully"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during deletion"
 // @Router /migration/middleware/objectStorage/{objectStorageName} [delete]
 func DeleteObjectStorage(c echo.Context) error {
 	// Get path parameter
 	objectStorageName := c.Param("objectStorageName")
 	if objectStorageName == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "objectStorageName is required",
-		})
+		errorMsg := "objectStorageName is required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Get csp and region from query params
@@ -422,18 +418,17 @@ func DeleteObjectStorage(c echo.Context) error {
 
 	// Validate required parameters
 	if csp == "" || region == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "csp and region query parameters are required",
-		})
+		errorMsg := "csp and region query parameters are required"
+		log.Warn().Msg(errorMsg)
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	// Generate and validate connection name
 	connName, err := GenerateConnectionName(csp, region)
 	if err != nil {
+		errorMsg := fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err)
 		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid connection configuration for %s-%s: %v", csp, region, err),
-		})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -443,18 +438,24 @@ func DeleteObjectStorage(c echo.Context) error {
 		Str("objectStorageName", objectStorageName).
 		Msg("Deleting object storage")
 
-	// Initialize Tumblebug client
-	tbClient := tbclient.NewDefaultClient()
+	// Initialize Tumblebug session
+	tbSess := tbclient.NewSession()
 
 	// Delete object storage
-	err = tbClient.DeleteObjectStorage(objectStorageName, connName)
+	err = tbSess.DeleteObjectStorage(objectStorageName, connName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).
 			Msg("Failed to delete object storage")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{
-			Message: fmt.Sprintf("Failed to delete object storage '%s': %v", objectStorageName, err),
-		})
+
+		// Check if error is due to not found
+		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+			msg := fmt.Sprintf("Object storage '%s' not found", objectStorageName)
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
+		}
+
+		errorMsg := fmt.Sprintf("Failed to delete object storage '%s': %v", objectStorageName, err)
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 
 	log.Info().
@@ -463,5 +464,5 @@ func DeleteObjectStorage(c echo.Context) error {
 		Str("objectStorageName", objectStorageName).
 		Msg("Successfully deleted object storage")
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }

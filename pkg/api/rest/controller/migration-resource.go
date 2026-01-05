@@ -65,6 +65,9 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 			URL:     tbURL,
 			Rewrite: rewriteRules,
 			ModifyResponse: func(res *http.Response) error {
+				// [Policy] Keep original status code from Tumblebug
+				// We respect the status code returned by Tumblebug (e.g., 404 for Resource Not Found).
+
 				resBytes, err := io.ReadAll(res.Body)
 				if err != nil {
 					return err
@@ -167,7 +170,7 @@ func CreateVNet(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
-// @Param action query string false "Action" Enums(withsubnets,refine,force)
+// @Param action query string false "Action" Enums(withsubnets,refine,force) default(withsubnets)
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/vNet/{vNetId} [delete]

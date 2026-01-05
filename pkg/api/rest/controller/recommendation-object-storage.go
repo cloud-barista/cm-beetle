@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -62,9 +62,9 @@ type SourceObjectStorageProperty struct {
 
 // RecommendObjectStorageResponse represents object storage recommendation response
 
-type RecommendObjectStorageResponse struct {
-	ObjectStorageInfo
-}
+// type RecommendObjectStorageResponse struct {
+// 	ObjectStorageInfo
+// }
 
 type ObjectStorageInfo struct {
 	Status               string                        `json:"status"`
@@ -104,9 +104,9 @@ type TargetObjectStorageProperty struct {
 // @Param desiredCsp query string false "CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendObjectStorageResponse "The result of recommended object storage"
-// @Failure 400 {object} common.SimpleMsg "Invalid request"
-// @Failure 500 {object} common.SimpleMsg "Internal server error"
+// @Success 200 {object} model.ApiResponse[ObjectStorageInfo] "Successfully recommended object storage"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
 // @Router /recommendation/middleware/objectStorage [post]
 func RecommendObjectStorage(c echo.Context) error {
 	// [Input]
@@ -114,9 +114,7 @@ func RecommendObjectStorage(c echo.Context) error {
 	var req RecommendObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: fmt.Sprintf("Invalid request format: %v", err),
-		})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	// Get csp and region from query params (higher priority)
@@ -133,16 +131,14 @@ func RecommendObjectStorage(c echo.Context) error {
 
 	// Validate required parameters
 	if desiredCsp == "" || desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "desiredCsp and desiredRegion are required (via query params or request body)",
-		})
+		log.Warn().Msg("desiredCsp and desiredRegion are required (via query params or request body)")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region required"))
 	}
 
 	// Validate source object storages
 	if len(req.SourceObjectStorages) == 0 {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{
-			Message: "At least one source object storage must be provided",
-		})
+		log.Warn().Msg("At least one source object storage must be provided")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source bucket required"))
 	}
 
 	log.Info().
@@ -180,16 +176,14 @@ func RecommendObjectStorage(c echo.Context) error {
 	}
 
 	// Build response
-	response := RecommendObjectStorageResponse{
-		ObjectStorageInfo: ObjectStorageInfo{
-			Status:      "success",
-			Description: fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
-			TargetCloud: cloudmodel.CloudProperty{
-				Csp:    desiredCsp,
-				Region: desiredRegion,
-			},
-			TargetObjectStorages: targetObjectStorages,
+	objectStorageInfo := ObjectStorageInfo{
+		Status:      "success",
+		Description: fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
+		TargetCloud: cloudmodel.CloudProperty{
+			Csp:    desiredCsp,
+			Region: desiredRegion,
 		},
+		TargetObjectStorages: targetObjectStorages,
 	}
 
 	log.Info().
@@ -198,7 +192,12 @@ func RecommendObjectStorage(c echo.Context) error {
 		Int("targetBuckets", len(targetObjectStorages)).
 		Msg("Object storage recommendation completed successfully")
 
-	return c.JSON(http.StatusOK, response)
+	// [Output]
+	successMsg := fmt.Sprintf("Recommended %d object storage(s) for %s %s",
+		len(targetObjectStorages), desiredCsp, desiredRegion)
+	res := model.SuccessResponseWithMessage(objectStorageInfo, successMsg)
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // createShortSuffix generates a deterministic 8-character suffix from bucket name

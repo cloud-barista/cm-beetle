@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -30,33 +29,27 @@ import (
 // * Other APIs can be added as needed.
 
 // ReadVmOsImage retrieves information about a specific VM OS Image in the specified namespace
-func (c *TumblebugClient) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.ImageInfo, error) {
+func (s *Session) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.ImageInfo, error) {
 	log.Debug().Msg("Retrieving VM OS Image")
 
 	var emptyRet = tbmodel.ImageInfo{}
 
-	method := "GET"
 	// URL encode the vmOsImageId to handle special characters like '+'
 	encodedVmOsImageId := url.QueryEscape(vmOsImageId)
-	url := fmt.Sprintf("%s/ns/%s/resources/image/%s", c.restUrl, nsId, encodedVmOsImageId)
+	url := fmt.Sprintf("/ns/%s/resources/image/%s", nsId, encodedVmOsImageId)
 
-	reqBody := common.NoBody
 	resBody := tbmodel.ImageInfo{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		false,
-		&reqBody,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve VM OS Image")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved VM OS Image (vmOsImageId: %s) successfully", resBody.Id)
@@ -64,31 +57,27 @@ func (c *TumblebugClient) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.Image
 }
 
 // SearchVmOsImage searches VM OS images
-func (c *TumblebugClient) SearchVmOsImage(nsId string, searchImageReq tbmodel.SearchImageRequest) (tbmodel.SearchImageResponse, error) {
+func (s *Session) SearchVmOsImage(nsId string, searchImageReq tbmodel.SearchImageRequest) (tbmodel.SearchImageResponse, error) {
 	log.Debug().Msg("Search VM OS images")
 
 	var emptyRet = tbmodel.SearchImageResponse{}
 
-	method := "POST"
-	url := fmt.Sprintf("%s/ns/%s/resources/searchImage", c.restUrl, nsId)
+	url := fmt.Sprintf("/ns/%s/resources/searchImage", nsId)
 
 	// reqBody := common.NoBody
 	resBody := tbmodel.SearchImageResponse{}
 
-	err := common.ExecuteHttpRequest(
-		c.client,
-		method,
-		url,
-		nil,
-		common.SetUseBody(searchImageReq),
-		&searchImageReq,
-		&resBody,
-		common.ShortDuration,
-	)
+	resp, err := s.
+		SetBody(searchImageReq).
+		SetResult(&resBody).
+		Post(url)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to search VM OS Images")
 		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
 	log.Debug().Msgf("Retrieved VM OS Images (count: %d) successfully", resBody.ImageCount)

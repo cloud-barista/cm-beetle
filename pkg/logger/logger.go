@@ -16,8 +16,8 @@ import (
 type contextKey string
 
 const (
-	TraceIdKey contextKey = "traceId"
-	SpanIdKey  contextKey = "spanId"
+	TraceIdKey contextKey = "trace_id"
+	SpanIdKey  contextKey = "span_id"
 )
 
 // Define TracingHook struct

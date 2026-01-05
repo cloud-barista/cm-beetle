@@ -8,7 +8,6 @@ import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/compat"
-	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
@@ -183,16 +182,9 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		)
 		log.Debug().Msgf("Deployment plan for machine %s: %s", server.MachineId, planToSearchProperVm)
 
-		// Initialize Tumblebug API client
-		tbCli := tbclient.NewClient(tbclient.ApiConfig{
-			RestUrl:  config.Tumblebug.RestUrl,
-			Username: config.Tumblebug.API.Username,
-			Password: config.Tumblebug.API.Password,
-		})
-
 		// Call Tumblebug API to get recommended VM specs
 		var err error
-		vmSpecInfoList, err = tbCli.MciRecommendSpec(planToSearchProperVm)
+		vmSpecInfoList, err = tbclient.NewSession().MciRecommendSpec(planToSearchProperVm)
 		if err != nil {
 			log.Error().Err(err).
 				Str("machineId", server.MachineId).

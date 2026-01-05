@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: v0.4.7+ (f13f82f)
+- CM-Beetle: v0.5.0+ (49dfd16)
 - cm-model: v0.0.15
 - CB-Tumblebug: v0.12.1
 - CB-Spider: v0.12.0
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: December 19, 2025
-- Test Time: 00:00:58 KST
-- Test Execution: 2025-12-19 00:00:58 KST
+- Test Date: January 5, 2026
+- Test Time: 09:41:42 KST
+- Test Execution: 2026-01-05 09:41:42 KST
 
 ### Scenario
 
@@ -39,19 +39,19 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 764ms | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 7m3.474s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 338ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 84ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 338ms | Pass |
+| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 742ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 8m29.375s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 908ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 92ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 879ms | Pass |
 | 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m6.241s | Pass |
+| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 2m33.509s | Pass |
 
 **Overall Result**: 7/7 tests passed ✅
 
-**Total Duration**: 10m32.662010053s
+**Total Duration**: 12m36.47859034s
 
-*Test executed on December 19, 2025 at 00:00:58 KST (2025-12-19 00:00:58 KST) using CM-Beetle automated test CLI*
+*Test executed on January 5, 2026 at 09:41:42 KST (2026-01-05 09:41:42 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -1980,7 +1980,7 @@
             },
             "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s4-g3",
+            "specId": "ncp+kr+s4-g3a",
             "imageId": "23214590",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
@@ -2044,7 +2044,7 @@
       "targetVmSpecList": [
         {
           "id": "ncp+kr+ci2-g3",
-          "uid": "d520j8hiir5gq777mna0",
+          "uid": "d4sgb4a5npi2mb9tbabg",
           "cspSpecName": "ci2-g3",
           "name": "ncp+kr+ci2-g3",
           "namespace": "system",
@@ -2132,10 +2132,10 @@
           ]
         },
         {
-          "id": "ncp+kr+s4-g3",
-          "uid": "d520j8hiir5gq777mmpg",
-          "cspSpecName": "s4-g3",
-          "name": "ncp+kr+s4-g3",
+          "id": "ncp+kr+s4-g3a",
+          "uid": "d4sgb4a5npi2mb9tba6g",
+          "cspSpecName": "s4-g3a",
+          "name": "ncp+kr+s4-g3a",
           "namespace": "system",
           "connectionName": "ncp-kr",
           "providerName": "ncp",
@@ -2164,7 +2164,7 @@
           "details": [
             {
               "key": "ServerSpecCode",
-              "value": "s4-g3"
+              "value": "s4-g3a"
             },
             {
               "key": "GenerationCode",
@@ -2208,7 +2208,7 @@
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C004.M016.G003"
+              "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
             },
             {
               "key": "ServerSpecDescription",
@@ -2216,13 +2216,13 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
             }
           ]
         },
         {
           "id": "ncp+kr+s2-g3a",
-          "uid": "d520j8hiir5gq777mn80",
+          "uid": "d4sgb4a5npi2mb9tbahg",
           "cspSpecName": "s2-g3a",
           "name": "ncp+kr+s2-g3a",
           "namespace": "system",
@@ -2320,13 +2320,13 @@
             "kr"
           ],
           "id": "23214590",
-          "uid": "d520jj9iir5gq778d9q0",
+          "uid": "d4sgb625npi2mb9tbh70",
           "name": "23214590",
           "sourceVmUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2025.12.18 14:03:57 Thu",
+          "fetchedTime": "2025.12.10 05:31:04 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -2751,7 +2751,7 @@
             },
             "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=25.0% Image=75.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s2-g3",
+            "specId": "ncp+kr+s2-g3a",
             "imageId": "23214590",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
@@ -2770,7 +2770,7 @@
             },
             "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s4-g3a",
+            "specId": "ncp+kr+s4-g3",
             "imageId": "23214590",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
@@ -2834,7 +2834,7 @@
       "targetVmSpecList": [
         {
           "id": "ncp+kr+ci2-g3",
-          "uid": "d520j8hiir5gq777mna0",
+          "uid": "d4sgb4a5npi2mb9tbabg",
           "cspSpecName": "ci2-g3",
           "name": "ncp+kr+ci2-g3",
           "namespace": "system",
@@ -2922,10 +2922,10 @@
           ]
         },
         {
-          "id": "ncp+kr+s4-g3",
-          "uid": "d520j8hiir5gq777mmpg",
-          "cspSpecName": "s4-g3",
-          "name": "ncp+kr+s4-g3",
+          "id": "ncp+kr+s4-g3a",
+          "uid": "d4sgb4a5npi2mb9tba6g",
+          "cspSpecName": "s4-g3a",
+          "name": "ncp+kr+s4-g3a",
           "namespace": "system",
           "connectionName": "ncp-kr",
           "providerName": "ncp",
@@ -2954,7 +2954,7 @@
           "details": [
             {
               "key": "ServerSpecCode",
-              "value": "s4-g3"
+              "value": "s4-g3a"
             },
             {
               "key": "GenerationCode",
@@ -2998,7 +2998,7 @@
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C004.M016.G003"
+              "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
             },
             {
               "key": "ServerSpecDescription",
@@ -3006,13 +3006,13 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
             }
           ]
         },
         {
           "id": "ncp+kr+s2-g3a",
-          "uid": "d520j8hiir5gq777mn80",
+          "uid": "d4sgb4a5npi2mb9tbahg",
           "cspSpecName": "s2-g3a",
           "name": "ncp+kr+s2-g3a",
           "namespace": "system",
@@ -3100,8 +3100,97 @@
           ]
         },
         {
+          "id": "ncp+kr+s4-g3",
+          "uid": "d4sgb4a5npi2mb9tbal0",
+          "cspSpecName": "s4-g3",
+          "name": "ncp+kr+s4-g3",
+          "namespace": "system",
+          "connectionName": "ncp-kr",
+          "providerName": "ncp",
+          "regionName": "kr",
+          "regionLatitude": 37.4754,
+          "regionLongitude": 126.8831,
+          "infraType": "vm",
+          "architecture": "x86_64",
+          "vCPU": 4,
+          "memoryGiB": 16,
+          "diskSizeGB": -1,
+          "costPerHour": 0.1747,
+          "evaluationScore01": -1,
+          "evaluationScore02": -1,
+          "evaluationScore03": -1,
+          "evaluationScore04": -1,
+          "evaluationScore05": -1,
+          "evaluationScore06": -1,
+          "evaluationScore07": -1,
+          "evaluationScore08": -1,
+          "evaluationScore09": -1,
+          "evaluationScore10": -1,
+          "rootDiskType": "default",
+          "rootDiskSize": "-1",
+          "systemLabel": "from-assets",
+          "details": [
+            {
+              "key": "ServerSpecCode",
+              "value": "s4-g3"
+            },
+            {
+              "key": "GenerationCode",
+              "value": "G3"
+            },
+            {
+              "key": "CpuCount",
+              "value": "4"
+            },
+            {
+              "key": "MemorySize",
+              "value": "17179869184"
+            },
+            {
+              "key": "HypervisorType",
+              "value": "{code:KVM,codeName:KVM}"
+            },
+            {
+              "key": "CpuArchitectureType",
+              "value": "{code:X86_64,codeName:x86 64bit}"
+            },
+            {
+              "key": "BlockStorageMaxCount",
+              "value": "20"
+            },
+            {
+              "key": "BlockStorageMaxIops",
+              "value": "7875"
+            },
+            {
+              "key": "BlockStorageMaxThroughput",
+              "value": "150994944"
+            },
+            {
+              "key": "NetworkPerformance",
+              "value": "1000000000"
+            },
+            {
+              "key": "NetworkInterfaceMaxCount",
+              "value": "3"
+            },
+            {
+              "key": "ServerProductCode",
+              "value": "SVR.VSVR.STAND.C004.M016.G003"
+            },
+            {
+              "key": "ServerSpecDescription",
+              "value": "vCPU 4EA, Memory 16GB"
+            },
+            {
+              "key": "CorrespondingImageIds",
+              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+            }
+          ]
+        },
+        {
           "id": "ncp+kr+s2-g3",
-          "uid": "d520j8hiir5gq777mn50",
+          "uid": "d4sgb4a5npi2mb9tbb1g",
           "cspSpecName": "s2-g3",
           "name": "ncp+kr+s2-g3",
           "namespace": "system",
@@ -3187,95 +3276,6 @@
               "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
             }
           ]
-        },
-        {
-          "id": "ncp+kr+s4-g3a",
-          "uid": "d520j8hiir5gq777mn30",
-          "cspSpecName": "s4-g3a",
-          "name": "ncp+kr+s4-g3a",
-          "namespace": "system",
-          "connectionName": "ncp-kr",
-          "providerName": "ncp",
-          "regionName": "kr",
-          "regionLatitude": 37.4754,
-          "regionLongitude": 126.8831,
-          "infraType": "vm",
-          "architecture": "x86_64",
-          "vCPU": 4,
-          "memoryGiB": 16,
-          "diskSizeGB": -1,
-          "costPerHour": 0.1747,
-          "evaluationScore01": -1,
-          "evaluationScore02": -1,
-          "evaluationScore03": -1,
-          "evaluationScore04": -1,
-          "evaluationScore05": -1,
-          "evaluationScore06": -1,
-          "evaluationScore07": -1,
-          "evaluationScore08": -1,
-          "evaluationScore09": -1,
-          "evaluationScore10": -1,
-          "rootDiskType": "default",
-          "rootDiskSize": "-1",
-          "systemLabel": "from-assets",
-          "details": [
-            {
-              "key": "ServerSpecCode",
-              "value": "s4-g3a"
-            },
-            {
-              "key": "GenerationCode",
-              "value": "G3"
-            },
-            {
-              "key": "CpuCount",
-              "value": "4"
-            },
-            {
-              "key": "MemorySize",
-              "value": "17179869184"
-            },
-            {
-              "key": "HypervisorType",
-              "value": "{code:KVM,codeName:KVM}"
-            },
-            {
-              "key": "CpuArchitectureType",
-              "value": "{code:X86_64,codeName:x86 64bit}"
-            },
-            {
-              "key": "BlockStorageMaxCount",
-              "value": "20"
-            },
-            {
-              "key": "BlockStorageMaxIops",
-              "value": "7875"
-            },
-            {
-              "key": "BlockStorageMaxThroughput",
-              "value": "150994944"
-            },
-            {
-              "key": "NetworkPerformance",
-              "value": "1000000000"
-            },
-            {
-              "key": "NetworkInterfaceMaxCount",
-              "value": "3"
-            },
-            {
-              "key": "ServerProductCode",
-              "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
-            },
-            {
-              "key": "ServerSpecDescription",
-              "value": "vCPU 4EA, Memory 16GB"
-            },
-            {
-              "key": "CorrespondingImageIds",
-              "value": "107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
-            }
-          ]
         }
       ],
       "targetVmOsImageList": [
@@ -3288,13 +3288,13 @@
             "kr"
           ],
           "id": "23214590",
-          "uid": "d520jj9iir5gq778d9q0",
+          "uid": "d4sgb625npi2mb9tbh70",
           "name": "23214590",
           "sourceVmUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2025.12.18 14:03:57 Thu",
+          "fetchedTime": "2025.12.10 05:31:04 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -3726,7 +3726,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d521fe9iir5gq77gftig",
+  "uid": "d5dgiti5npi2mb8i9j70",
   "name": "mmci01",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -3753,7 +3753,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d521fe9iir5gq77gftig"
+    "sys.uid": "d5dgiti5npi2mb8i9j70"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3761,12 +3761,12 @@
   "vm": [
     {
       "resourceType": "vm",
-      "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d521fe9iir5gq77gftjg",
-      "cspResourceName": "d521fe9iir5gq77gftjg",
-      "cspResourceId": "116164916",
-      "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "uid": "d5dgiti5npi2mb8i9j90",
+      "cspResourceName": "d5dgiti5npi2mb8i9j90",
+      "cspResourceId": "117407359",
+      "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -3778,19 +3778,19 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:07:48",
+      "createdTime": "2026-01-05 00:49:11",
       "label": {
-        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
+        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
       },
-      "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
+      "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "211.188.63.98",
+      "publicIP": "49.50.138.161",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "10.0.1.7",
+      "privateIP": "10.0.1.8",
       "privateDNS": "",
       "rootDiskType": "HDD",
       "rootDiskSize": "50",
@@ -3824,21 +3824,21 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncp+kr+ci2-g3",
-      "cspSpecName": "ci2-g3",
+      "specId": "ncp+kr+s4-g3a",
+      "cspSpecName": "s4-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
-        "mig-sg-01"
+        "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -3846,30 +3846,29 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:11Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:33Z",
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164916"
+          "value": "117407359"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftjg"
+          "value": "d5dgiti5npi2mb8i9j90"
         },
         {
           "key": "CpuCount",
-          "value": "2"
+          "value": "4"
         },
         {
           "key": "MemorySize",
-          "value": "4294967296"
+          "value": "17179869184"
         },
         {
           "key": "PlatformType",
@@ -3877,7 +3876,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -3893,11 +3892,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:28+0900"
+          "value": "2026-01-05T09:44:50+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:58+0900"
+          "value": "2026-01-05T09:47:13+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -3905,7 +3904,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.CPU.C002.M004.G003"
+          "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -3921,23 +3920,23 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132644"
+          "value": "5149481"
         },
         {
           "key": "InitScriptNo",
-          "value": "154592"
+          "value": "156435"
         },
         {
           "key": "ServerInstanceType",
-          "value": "{code:CPU,codeName:CPU-Intensive}"
+          "value": "{code:STAND,codeName:Standard}"
         },
         {
           "key": "BaseBlockStorageDiskType",
@@ -3957,16 +3956,16 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "ci2-g3"
+          "value": "s4-g3a"
         }
       ]
     },
     {
       "resourceType": "vm",
       "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d521fe9iir5gq77gftlg",
-      "cspResourceName": "d521fe9iir5gq77gftlg",
-      "cspResourceId": "116164923",
+      "uid": "d5dgiti5npi2mb8i9ja0",
+      "cspResourceName": "d5dgiti5npi2mb8i9ja0",
+      "cspResourceId": "117407354",
       "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -3980,7 +3979,7 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:07:48",
+      "createdTime": "2026-01-05 00:49:28",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
       },
@@ -3989,10 +3988,10 @@
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.136.242",
+      "publicIP": "223.130.150.108",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "10.0.1.8",
+      "privateIP": "10.0.1.7",
       "privateDNS": "",
       "rootDiskType": "HDD",
       "rootDiskSize": "50",
@@ -4031,16 +4030,16 @@
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -4048,22 +4047,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:11Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:34Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164923"
+          "value": "117407354"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftlg"
+          "value": "d5dgiti5npi2mb8i9ja0"
         },
         {
           "key": "CpuCount",
@@ -4079,7 +4078,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4095,11 +4094,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:29+0900"
+          "value": "2026-01-05T09:44:48+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:57+0900"
+          "value": "2026-01-05T09:47:27+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4123,19 +4122,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132645"
+          "value": "5149480"
         },
         {
           "key": "InitScriptNo",
-          "value": "154593"
+          "value": "156434"
         },
         {
           "key": "ServerInstanceType",
@@ -4165,12 +4164,12 @@
     },
     {
       "resourceType": "vm",
-      "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d521fe9iir5gq77gftkg",
-      "cspResourceName": "d521fe9iir5gq77gftkg",
-      "cspResourceId": "116164910",
-      "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "d5dgiti5npi2mb8i9j80",
+      "cspResourceName": "d5dgiti5npi2mb8i9j80",
+      "cspResourceId": "117407347",
+      "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -4182,16 +4181,16 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:08:04",
+      "createdTime": "2026-01-05 00:49:11",
       "label": {
-        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
       },
-      "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
+      "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.128.187",
+      "publicIP": "175.45.195.120",
       "sshPort": "22",
       "publicDNS": "",
       "privateIP": "10.0.1.6",
@@ -4228,21 +4227,21 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncp+kr+s4-g3",
-      "cspSpecName": "s4-g3",
+      "specId": "ncp+kr+ci2-g3",
+      "cspSpecName": "ci2-g3",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
-        "mig-sg-02"
+        "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -4250,30 +4249,30 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:12Z",
-          "elapsedTime": 3,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:34Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164910"
+          "value": "117407347"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftkg"
+          "value": "d5dgiti5npi2mb8i9j80"
         },
         {
           "key": "CpuCount",
-          "value": "4"
+          "value": "2"
         },
         {
           "key": "MemorySize",
-          "value": "17179869184"
+          "value": "4294967296"
         },
         {
           "key": "PlatformType",
@@ -4281,7 +4280,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4297,11 +4296,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:27+0900"
+          "value": "2026-01-05T09:44:48+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:56+0900"
+          "value": "2026-01-05T09:47:16+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4309,7 +4308,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C004.M016.G003"
+          "value": "SVR.VSVR.CPU.C002.M004.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -4325,23 +4324,23 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132643"
+          "value": "5149479"
         },
         {
           "key": "InitScriptNo",
-          "value": "154591"
+          "value": "156433"
         },
         {
           "key": "ServerInstanceType",
-          "value": "{code:STAND,codeName:Standard}"
+          "value": "{code:CPU,codeName:CPU-Intensive}"
         },
         {
           "key": "BaseBlockStorageDiskType",
@@ -4361,7 +4360,7 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "s4-g3"
+          "value": "ci2-g3"
         }
       ]
     }
@@ -4377,13 +4376,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "211.188.63.98",
+        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "vmIp": "49.50.138.161",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4393,12 +4392,12 @@
       {
         "mciId": "mmci01",
         "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "49.50.136.242",
+        "vmIp": "223.130.150.108",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4407,13 +4406,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "49.50.128.187",
+        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "vmIp": "175.45.195.120",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4449,7 +4448,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d521fe9iir5gq77gftig",
+      "uid": "d5dgiti5npi2mb8i9j70",
       "name": "mmci01",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -4476,7 +4475,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "mmci01",
         "sys.namespace": "mig01",
-        "sys.uid": "d521fe9iir5gq77gftig"
+        "sys.uid": "d5dgiti5npi2mb8i9j70"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -4485,9 +4484,9 @@
         {
           "resourceType": "vm",
           "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "d521fe9iir5gq77gftjg",
-          "cspResourceName": "d521fe9iir5gq77gftjg",
-          "cspResourceId": "116164916",
+          "uid": "d5dgiti5npi2mb8i9j80",
+          "cspResourceName": "d5dgiti5npi2mb8i9j80",
+          "cspResourceId": "117407347",
           "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
           "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
@@ -4501,13 +4500,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2025-12-18 15:07:48",
+          "createdTime": "2026-01-05 00:49:11",
           "label": {
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2025-12-18 15:07:48",
-            "sys.cspResourceId": "116164916",
-            "sys.cspResourceName": "d521fe9iir5gq77gftjg",
+            "sys.createdTime": "2026-01-05 00:49:11",
+            "sys.cspResourceId": "117407347",
+            "sys.cspResourceName": "d5dgiti5npi2mb8i9j80",
             "sys.id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
@@ -4515,17 +4514,17 @@
             "sys.name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.namespace": "mig01",
             "sys.subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.uid": "d521fe9iir5gq77gftjg"
+            "sys.uid": "d5dgiti5npi2mb8i9j80"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
           "region": {
             "Region": "KR",
             "Zone": "KR-1"
           },
-          "publicIP": "211.188.63.98",
+          "publicIP": "175.45.195.120",
           "sshPort": "22",
           "publicDNS": "",
-          "privateIP": "10.0.1.7",
+          "privateIP": "10.0.1.6",
           "privateDNS": "",
           "rootDiskType": "HDD",
           "rootDiskSize": "50",
@@ -4564,16 +4563,16 @@
           "imageId": "23214590",
           "cspImageName": "23214590",
           "vNetId": "mig-vnet-01",
-          "cspVNetId": "130806",
+          "cspVNetId": "131527",
           "subnetId": "mig-subnet-01",
-          "cspSubnetId": "279388",
+          "cspSubnetId": "281454",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "mig-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d521ejhiir5gq77gftgg",
+          "cspSshKeyId": "d5dghri5npi2mb8i9j50",
           "vmUserName": "cb-user",
           "commandStatus": [
             {
@@ -4581,22 +4580,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2025-12-18T15:08:09Z",
-              "completedTime": "2025-12-18T15:08:11Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-01-05T00:49:33Z",
+              "completedTime": "2026-01-05T00:49:34Z",
+              "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "116164916"
+              "value": "117407347"
             },
             {
               "key": "ServerName",
-              "value": "d521fe9iir5gq77gftjg"
+              "value": "d5dgiti5npi2mb8i9j80"
             },
             {
               "key": "CpuCount",
@@ -4612,7 +4611,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "d521ejhiir5gq77gftgg"
+              "value": "d5dghri5npi2mb8i9j50"
             },
             {
               "key": "ServerInstanceStatus",
@@ -4628,11 +4627,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2025-12-19T00:03:28+0900"
+              "value": "2026-01-05T09:44:48+0900"
             },
             {
               "key": "Uptime",
-              "value": "2025-12-19T00:05:58+0900"
+              "value": "2026-01-05T09:47:16+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -4656,19 +4655,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "130806"
+              "value": "131527"
             },
             {
               "key": "SubnetNo",
-              "value": "279388"
+              "value": "281454"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5132644"
+              "value": "5149479"
             },
             {
               "key": "InitScriptNo",
-              "value": "154592"
+              "value": "156433"
             },
             {
               "key": "ServerInstanceType",
@@ -4699,9 +4698,9 @@
         {
           "resourceType": "vm",
           "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "d521fe9iir5gq77gftlg",
-          "cspResourceName": "d521fe9iir5gq77gftlg",
-          "cspResourceId": "116164923",
+          "uid": "d5dgiti5npi2mb8i9ja0",
+          "cspResourceName": "d5dgiti5npi2mb8i9ja0",
+          "cspResourceId": "117407354",
           "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
           "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
@@ -4715,13 +4714,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2025-12-18 15:07:48",
+          "createdTime": "2026-01-05 00:49:28",
           "label": {
             "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2025-12-18 15:07:48",
-            "sys.cspResourceId": "116164923",
-            "sys.cspResourceName": "d521fe9iir5gq77gftlg",
+            "sys.createdTime": "2026-01-05 00:49:28",
+            "sys.cspResourceId": "117407354",
+            "sys.cspResourceName": "d5dgiti5npi2mb8i9ja0",
             "sys.id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
@@ -4729,17 +4728,17 @@
             "sys.name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.namespace": "mig01",
             "sys.subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "sys.uid": "d521fe9iir5gq77gftlg"
+            "sys.uid": "d5dgiti5npi2mb8i9ja0"
           },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
           "region": {
             "Region": "KR",
             "Zone": "KR-1"
           },
-          "publicIP": "49.50.136.242",
+          "publicIP": "223.130.150.108",
           "sshPort": "22",
           "publicDNS": "",
-          "privateIP": "10.0.1.8",
+          "privateIP": "10.0.1.7",
           "privateDNS": "",
           "rootDiskType": "HDD",
           "rootDiskSize": "50",
@@ -4778,16 +4777,16 @@
           "imageId": "23214590",
           "cspImageName": "23214590",
           "vNetId": "mig-vnet-01",
-          "cspVNetId": "130806",
+          "cspVNetId": "131527",
           "subnetId": "mig-subnet-01",
-          "cspSubnetId": "279388",
+          "cspSubnetId": "281454",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "mig-sg-03"
           ],
           "dataDiskIds": null,
           "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d521ejhiir5gq77gftgg",
+          "cspSshKeyId": "d5dghri5npi2mb8i9j50",
           "vmUserName": "cb-user",
           "commandStatus": [
             {
@@ -4795,22 +4794,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2025-12-18T15:08:09Z",
-              "completedTime": "2025-12-18T15:08:11Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-01-05T00:49:33Z",
+              "completedTime": "2026-01-05T00:49:34Z",
+              "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "116164923"
+              "value": "117407354"
             },
             {
               "key": "ServerName",
-              "value": "d521fe9iir5gq77gftlg"
+              "value": "d5dgiti5npi2mb8i9ja0"
             },
             {
               "key": "CpuCount",
@@ -4826,7 +4825,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "d521ejhiir5gq77gftgg"
+              "value": "d5dghri5npi2mb8i9j50"
             },
             {
               "key": "ServerInstanceStatus",
@@ -4842,11 +4841,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2025-12-19T00:03:29+0900"
+              "value": "2026-01-05T09:44:48+0900"
             },
             {
               "key": "Uptime",
-              "value": "2025-12-19T00:05:57+0900"
+              "value": "2026-01-05T09:47:27+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -4870,19 +4869,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "130806"
+              "value": "131527"
             },
             {
               "key": "SubnetNo",
-              "value": "279388"
+              "value": "281454"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5132645"
+              "value": "5149480"
             },
             {
               "key": "InitScriptNo",
-              "value": "154593"
+              "value": "156434"
             },
             {
               "key": "ServerInstanceType",
@@ -4913,9 +4912,9 @@
         {
           "resourceType": "vm",
           "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "d521fe9iir5gq77gftkg",
-          "cspResourceName": "d521fe9iir5gq77gftkg",
-          "cspResourceId": "116164910",
+          "uid": "d5dgiti5npi2mb8i9j90",
+          "cspResourceName": "d5dgiti5npi2mb8i9j90",
+          "cspResourceId": "117407359",
           "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
           "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
@@ -4929,13 +4928,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2025-12-18 15:08:04",
+          "createdTime": "2026-01-05 00:49:11",
           "label": {
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2025-12-18 15:08:04",
-            "sys.cspResourceId": "116164910",
-            "sys.cspResourceName": "d521fe9iir5gq77gftkg",
+            "sys.createdTime": "2026-01-05 00:49:11",
+            "sys.cspResourceId": "117407359",
+            "sys.cspResourceName": "d5dgiti5npi2mb8i9j90",
             "sys.id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
@@ -4943,17 +4942,17 @@
             "sys.name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.namespace": "mig01",
             "sys.subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-            "sys.uid": "d521fe9iir5gq77gftkg"
+            "sys.uid": "d5dgiti5npi2mb8i9j90"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
           "region": {
             "Region": "KR",
             "Zone": "KR-1"
           },
-          "publicIP": "49.50.128.187",
+          "publicIP": "49.50.138.161",
           "sshPort": "22",
           "publicDNS": "",
-          "privateIP": "10.0.1.6",
+          "privateIP": "10.0.1.8",
           "privateDNS": "",
           "rootDiskType": "HDD",
           "rootDiskSize": "50",
@@ -4987,21 +4986,21 @@
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "ncp+kr+s4-g3",
-          "cspSpecName": "s4-g3",
+          "specId": "ncp+kr+s4-g3a",
+          "cspSpecName": "s4-g3a",
           "imageId": "23214590",
           "cspImageName": "23214590",
           "vNetId": "mig-vnet-01",
-          "cspVNetId": "130806",
+          "cspVNetId": "131527",
           "subnetId": "mig-subnet-01",
-          "cspSubnetId": "279388",
+          "cspSubnetId": "281454",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "mig-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d521ejhiir5gq77gftgg",
+          "cspSshKeyId": "d5dghri5npi2mb8i9j50",
           "vmUserName": "cb-user",
           "commandStatus": [
             {
@@ -5009,22 +5008,21 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2025-12-18T15:08:09Z",
-              "completedTime": "2025-12-18T15:08:12Z",
-              "elapsedTime": 3,
+              "startedTime": "2026-01-05T00:49:33Z",
+              "completedTime": "2026-01-05T00:49:33Z",
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "116164910"
+              "value": "117407359"
             },
             {
               "key": "ServerName",
-              "value": "d521fe9iir5gq77gftkg"
+              "value": "d5dgiti5npi2mb8i9j90"
             },
             {
               "key": "CpuCount",
@@ -5040,7 +5038,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "d521ejhiir5gq77gftgg"
+              "value": "d5dghri5npi2mb8i9j50"
             },
             {
               "key": "ServerInstanceStatus",
@@ -5056,11 +5054,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2025-12-19T00:03:27+0900"
+              "value": "2026-01-05T09:44:50+0900"
             },
             {
               "key": "Uptime",
-              "value": "2025-12-19T00:05:56+0900"
+              "value": "2026-01-05T09:47:13+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -5068,7 +5066,7 @@
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C004.M016.G003"
+              "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
             },
             {
               "key": "IsProtectServerTermination",
@@ -5084,19 +5082,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "130806"
+              "value": "131527"
             },
             {
               "key": "SubnetNo",
-              "value": "279388"
+              "value": "281454"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5132643"
+              "value": "5149481"
             },
             {
               "key": "InitScriptNo",
-              "value": "154591"
+              "value": "156435"
             },
             {
               "key": "ServerInstanceType",
@@ -5120,7 +5118,7 @@
             },
             {
               "key": "ServerSpecCode",
-              "value": "s4-g3"
+              "value": "s4-g3a"
             }
           ]
         }
@@ -5136,13 +5134,13 @@
         "results": [
           {
             "mciId": "mmci01",
-            "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "vmIp": "211.188.63.98",
+            "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "vmIp": "49.50.138.161",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5152,12 +5150,12 @@
           {
             "mciId": "mmci01",
             "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "vmIp": "49.50.136.242",
+            "vmIp": "223.130.150.108",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5166,13 +5164,13 @@
           },
           {
             "mciId": "mmci01",
-            "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "vmIp": "49.50.128.187",
+            "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "vmIp": "175.45.195.120",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5235,7 +5233,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d521fe9iir5gq77gftig",
+  "uid": "d5dgiti5npi2mb8i9j70",
   "name": "mmci01",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -5262,7 +5260,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d521fe9iir5gq77gftig"
+    "sys.uid": "d5dgiti5npi2mb8i9j70"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -5271,9 +5269,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d521fe9iir5gq77gftjg",
-      "cspResourceName": "d521fe9iir5gq77gftjg",
-      "cspResourceId": "116164916",
+      "uid": "d5dgiti5npi2mb8i9j80",
+      "cspResourceName": "d5dgiti5npi2mb8i9j80",
+      "cspResourceId": "117407347",
       "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
       "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -5287,13 +5285,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:07:48",
+      "createdTime": "2026-01-05 00:49:11",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2025-12-18 15:07:48",
-        "sys.cspResourceId": "116164916",
-        "sys.cspResourceName": "d521fe9iir5gq77gftjg",
+        "sys.createdTime": "2026-01-05 00:49:11",
+        "sys.cspResourceId": "117407347",
+        "sys.cspResourceName": "d5dgiti5npi2mb8i9j80",
         "sys.id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -5301,17 +5299,17 @@
         "sys.name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.uid": "d521fe9iir5gq77gftjg"
+        "sys.uid": "d5dgiti5npi2mb8i9j80"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "211.188.63.98",
+      "publicIP": "175.45.195.120",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "10.0.1.7",
+      "privateIP": "10.0.1.6",
       "privateDNS": "",
       "rootDiskType": "HDD",
       "rootDiskSize": "50",
@@ -5350,16 +5348,16 @@
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -5367,22 +5365,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:11Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:34Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164916"
+          "value": "117407347"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftjg"
+          "value": "d5dgiti5npi2mb8i9j80"
         },
         {
           "key": "CpuCount",
@@ -5398,7 +5396,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -5414,11 +5412,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:28+0900"
+          "value": "2026-01-05T09:44:48+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:58+0900"
+          "value": "2026-01-05T09:47:16+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -5442,19 +5440,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132644"
+          "value": "5149479"
         },
         {
           "key": "InitScriptNo",
-          "value": "154592"
+          "value": "156433"
         },
         {
           "key": "ServerInstanceType",
@@ -5485,9 +5483,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d521fe9iir5gq77gftlg",
-      "cspResourceName": "d521fe9iir5gq77gftlg",
-      "cspResourceId": "116164923",
+      "uid": "d5dgiti5npi2mb8i9ja0",
+      "cspResourceName": "d5dgiti5npi2mb8i9ja0",
+      "cspResourceId": "117407354",
       "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -5501,13 +5499,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:07:48",
+      "createdTime": "2026-01-05 00:49:28",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2025-12-18 15:07:48",
-        "sys.cspResourceId": "116164923",
-        "sys.cspResourceName": "d521fe9iir5gq77gftlg",
+        "sys.createdTime": "2026-01-05 00:49:28",
+        "sys.cspResourceId": "117407354",
+        "sys.cspResourceName": "d5dgiti5npi2mb8i9ja0",
         "sys.id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -5515,17 +5513,17 @@
         "sys.name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.uid": "d521fe9iir5gq77gftlg"
+        "sys.uid": "d5dgiti5npi2mb8i9ja0"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.136.242",
+      "publicIP": "223.130.150.108",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "10.0.1.8",
+      "privateIP": "10.0.1.7",
       "privateDNS": "",
       "rootDiskType": "HDD",
       "rootDiskSize": "50",
@@ -5564,16 +5562,16 @@
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -5581,22 +5579,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:11Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:34Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164923"
+          "value": "117407354"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftlg"
+          "value": "d5dgiti5npi2mb8i9ja0"
         },
         {
           "key": "CpuCount",
@@ -5612,7 +5610,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -5628,11 +5626,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:29+0900"
+          "value": "2026-01-05T09:44:48+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:57+0900"
+          "value": "2026-01-05T09:47:27+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -5656,19 +5654,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132645"
+          "value": "5149480"
         },
         {
           "key": "InitScriptNo",
-          "value": "154593"
+          "value": "156434"
         },
         {
           "key": "ServerInstanceType",
@@ -5699,9 +5697,9 @@
     {
       "resourceType": "vm",
       "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d521fe9iir5gq77gftkg",
-      "cspResourceName": "d521fe9iir5gq77gftkg",
-      "cspResourceId": "116164910",
+      "uid": "d5dgiti5npi2mb8i9j90",
+      "cspResourceName": "d5dgiti5npi2mb8i9j90",
+      "cspResourceId": "117407359",
       "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
       "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
@@ -5715,13 +5713,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2025-12-18 15:08:04",
+      "createdTime": "2026-01-05 00:49:11",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2025-12-18 15:08:04",
-        "sys.cspResourceId": "116164910",
-        "sys.cspResourceName": "d521fe9iir5gq77gftkg",
+        "sys.createdTime": "2026-01-05 00:49:11",
+        "sys.cspResourceId": "117407359",
+        "sys.cspResourceName": "d5dgiti5npi2mb8i9j90",
         "sys.id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
@@ -5729,17 +5727,17 @@
         "sys.name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.namespace": "mig01",
         "sys.subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-        "sys.uid": "d521fe9iir5gq77gftkg"
+        "sys.uid": "d5dgiti5npi2mb8i9j90"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
       "region": {
         "Region": "KR",
         "Zone": "KR-1"
       },
-      "publicIP": "49.50.128.187",
+      "publicIP": "49.50.138.161",
       "sshPort": "22",
       "publicDNS": "",
-      "privateIP": "10.0.1.6",
+      "privateIP": "10.0.1.8",
       "privateDNS": "",
       "rootDiskType": "HDD",
       "rootDiskSize": "50",
@@ -5773,21 +5771,21 @@
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncp+kr+s4-g3",
-      "cspSpecName": "s4-g3",
+      "specId": "ncp+kr+s4-g3a",
+      "cspSpecName": "s4-g3a",
       "imageId": "23214590",
       "cspImageName": "23214590",
       "vNetId": "mig-vnet-01",
-      "cspVNetId": "130806",
+      "cspVNetId": "131527",
       "subnetId": "mig-subnet-01",
-      "cspSubnetId": "279388",
+      "cspSubnetId": "281454",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d521ejhiir5gq77gftgg",
+      "cspSshKeyId": "d5dghri5npi2mb8i9j50",
       "vmUserName": "cb-user",
       "commandStatus": [
         {
@@ -5795,22 +5793,21 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2025-12-18T15:08:09Z",
-          "completedTime": "2025-12-18T15:08:12Z",
-          "elapsedTime": 3,
+          "startedTime": "2026-01-05T00:49:33Z",
+          "completedTime": "2026-01-05T00:49:33Z",
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "116164910"
+          "value": "117407359"
         },
         {
           "key": "ServerName",
-          "value": "d521fe9iir5gq77gftkg"
+          "value": "d5dgiti5npi2mb8i9j90"
         },
         {
           "key": "CpuCount",
@@ -5826,7 +5823,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "d521ejhiir5gq77gftgg"
+          "value": "d5dghri5npi2mb8i9j50"
         },
         {
           "key": "ServerInstanceStatus",
@@ -5842,11 +5839,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2025-12-19T00:03:27+0900"
+          "value": "2026-01-05T09:44:50+0900"
         },
         {
           "key": "Uptime",
-          "value": "2025-12-19T00:05:56+0900"
+          "value": "2026-01-05T09:47:13+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -5854,7 +5851,7 @@
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C004.M016.G003"
+          "value": "SVR.VSVR.AMD.STAND.C004.M016.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -5870,19 +5867,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "130806"
+          "value": "131527"
         },
         {
           "key": "SubnetNo",
-          "value": "279388"
+          "value": "281454"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5132643"
+          "value": "5149481"
         },
         {
           "key": "InitScriptNo",
-          "value": "154591"
+          "value": "156435"
         },
         {
           "key": "ServerInstanceType",
@@ -5906,7 +5903,7 @@
         },
         {
           "key": "ServerSpecCode",
-          "value": "s4-g3"
+          "value": "s4-g3a"
         }
       ]
     }
@@ -5922,13 +5919,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "211.188.63.98",
+        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "vmIp": "49.50.138.161",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -5938,12 +5935,12 @@
       {
         "mciId": "mmci01",
         "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "49.50.136.242",
+        "vmIp": "223.130.150.108",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -5952,13 +5949,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "49.50.128.187",
+        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "vmIp": "175.45.195.120",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6014,8 +6011,8 @@
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d521fe9iir5gq77gftjg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "211.188.63.98",
+      "output": "Linux d5dgiti5npi2mb8i9j80 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "175.45.195.120",
       "sshTest": "successful",
       "status": "success",
       "subGroup": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
@@ -6026,8 +6023,8 @@
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d521fe9iir5gq77gftlg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "49.50.136.242",
+      "output": "Linux d5dgiti5npi2mb8i9ja0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "223.130.150.108",
       "sshTest": "successful",
       "status": "success",
       "subGroup": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
@@ -6038,8 +6035,8 @@
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d521fe9iir5gq77gftkg 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "49.50.128.187",
+      "output": "Linux d5dgiti5npi2mb8i9j90 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "49.50.138.161",
       "sshTest": "successful",
       "status": "success",
       "subGroup": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
