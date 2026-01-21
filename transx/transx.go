@@ -16,12 +16,12 @@ func Transfer(dmm DataMigrationModel) error {
 	isRelayMode := dmm.IsRelayMode()
 
 	// Handle different transfer scenarios
-	if !isRelayMode {
-		// Direct mode: at least one endpoint is local
-		return performDirectTransfer(dmm)
-	} else {
+	if isRelayMode {
 		// Relay mode: both endpoints are remote
 		return performRelayTransfer(dmm)
+	} else {
+		// Direct mode: at least one endpoint is local
+		return performDirectTransfer(dmm)
 	}
 }
 

@@ -2,6 +2,7 @@ package transx
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"html"
@@ -18,42 +19,125 @@ import (
 
 // PresignedUrlInfo represents a presigned URL result from Object Storage API
 type PresignedUrlInfo struct {
-	PresignedURL string `xml:"PresignedURL"`
-	Expires      int    `xml:"Expires"`
-	Method       string `xml:"Method"`
+	Expires      int64  `xml:"Expires" json:"Expires" example:"1693824000"`
+	Method       string `xml:"Method" json:"Method" example:"GET"`
+	PreSignedURL string `xml:"PresignedURL" json:"PreSignedURL" example:"https://example.com/presigned-url"`
 }
 
 // BucketInfo represents bucket listing information
 type BucketInfo struct {
-	Name        string       `xml:"Name"`
-	Prefix      string       `xml:"Prefix"`
-	Marker      string       `xml:"Marker"`
-	MaxKeys     int          `xml:"MaxKeys"`
-	IsTruncated bool         `xml:"IsTruncated"`
-	Contents    []ObjectInfo `xml:"Contents"`
+	Name         string       `xml:"Name" json:"Name" example:"spider-test-bucket"`
+	Prefix       string       `xml:"Prefix" json:"Prefix" example:""`
+	Marker       string       `xml:"Marker" json:"Marker" example:""`
+	MaxKeys      int          `xml:"MaxKeys" json:"MaxKeys" example:"1000"`
+	IsTruncated  bool         `xml:"IsTruncated" json:"IsTruncated" example:"false"`
+	CreationDate string       `xml:"CreationDate" json:"CreationDate" example:"2025-09-04T04:18:06Z"`
+	Contents     []ObjectInfo `xml:"Contents" json:"Contents"`
 }
 
 // ObjectInfo represents an object in the bucket
 type ObjectInfo struct {
-	Key          string `xml:"Key"`
-	LastModified string `xml:"LastModified"`
-	ETag         string `xml:"ETag"`
-	Size         int64  `xml:"Size"`
-	StorageClass string `xml:"StorageClass"`
+	Key          string `xml:"Key" json:"Key" example:"test-object.txt"`
+	LastModified string `xml:"LastModified" json:"LastModified" example:"2025-09-04T04:18:06Z"`
+	ETag         string `xml:"ETag" json:"ETag" example:"9b2cf535f27731c974343645a3985328"`
+	Size         int64  `xml:"Size" json:"Size" example:"1024"`
+	StorageClass string `xml:"StorageClass" json:"StorageClass" example:"STANDARD"`
+}
+
+// TbPresignedUrlInfo represents a presigned URL result from Tumblebug API
+type TbPresignedUrlInfo struct {
+	Expires      int64  `json:"expires" example:"1693824000"`
+	Method       string `json:"method" example:"GET"`
+	PreSignedURL string `json:"presignedURL" example:"https://example.com/presigned-url"`
+}
+
+// TbObjectInfo represents an object in Tumblebug bucket listing
+type TbObjectInfo struct {
+	Key          string `json:"key" example:"test-object.txt"`
+	LastModified string `json:"lastModified" example:"2025-09-04T04:18:06Z"`
+	ETag         string `json:"eTag" example:"9b2cf535f27731c974343645a3985328"`
+	Size         int64  `json:"size" example:"1024"`
+	StorageClass string `json:"storageClass" example:"STANDARD"`
+}
+
+// TbBucketInfo represents bucket listing information from Tumblebug API
+type TbBucketInfo struct {
+	// ResourceType is the type of this resource
+	ResourceType string `json:"resourceType" example:"ObjectStorage"`
+
+	// Id is unique identifier for the object
+	Id string `json:"id" example:"globally-unique-bucket-name-12345"`
+	// Uid is universally unique identifier for the object, used for labelSelector
+	Uid string `json:"uid,omitempty" example:"wef12awefadf1221edcf"`
+
+	// CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.
+	CspResourceName string `json:"cspResourceName,omitempty" example:""`
+	// CspResourceId is resource identifier managed by CSP
+	CspResourceId string `json:"cspResourceId,omitempty" example:""`
+
+	// Variables for management of Object Storage resource in CB-Tumblebug
+	ConnectionName   string     `json:"connectionName"`
+	ConnectionConfig ConnConfig `json:"connectionConfig"`
+	Description      string     `json:"description" example:"this object storage is managed by CB-Tumblebug"`
+	Status           string     `json:"status"`
+
+	// Name is human-readable string to represent the object
+	Name         string         `json:"name" example:"globally-unique-bucket-name-12345"`
+	Prefix       string         `json:"prefix,omitempty" example:""`
+	Marker       string         `json:"marker,omitempty" example:""`
+	MaxKeys      int            `json:"maxKeys,omitempty" example:"1000"`
+	IsTruncated  bool           `json:"isTruncated,omitempty" example:"false"`
+	CreationDate string         `json:"creationDate,omitempty" example:"2025-09-04T04:18:06Z"`
+	Contents     []TbObjectInfo `json:"contents,omitempty"`
+}
+
+// ConnConfig is struct for containing modified CB-Spider struct for connection config
+type ConnConfig struct {
+	ConfigName           string         `json:"configName"`
+	ProviderName         string         `json:"providerName"`
+	DriverName           string         `json:"driverName"`
+	CredentialName       string         `json:"credentialName"`
+	CredentialHolder     string         `json:"credentialHolder"`
+	RegionZoneInfoName   string         `json:"regionZoneInfoName"`
+	RegionZoneInfo       RegionZoneInfo `json:"regionZoneInfo" gorm:"type:text;serializer:json"`
+	RegionDetail         RegionDetail   `json:"regionDetail" gorm:"type:text;serializer:json"`
+	RegionRepresentative bool           `json:"regionRepresentative"`
+	Verified             bool           `json:"verified"`
+}
+
+// RegionZoneInfo is struct for containing region struct
+type RegionZoneInfo struct {
+	AssignedRegion string `json:"assignedRegion"`
+	AssignedZone   string `json:"assignedZone"`
+}
+
+// RegionDetail is structure for region information
+type RegionDetail struct {
+	RegionId           string   `mapstructure:"id" json:"regionId"`
+	RegionName         string   `mapstructure:"regionName" json:"regionName"`
+	Description        string   `mapstructure:"description" json:"description"`
+	Location           Location `mapstructure:"location" json:"location"`
+	Zones              []string `mapstructure:"zone" json:"zones"`
+	RepresentativeZone *string  `mapstructure:"representativeZone" json:"representativeZone,omitempty"`
+}
+
+// Location is structure for location information
+type Location struct {
+	Display   string  `mapstructure:"display" json:"display"`
+	Latitude  float64 `mapstructure:"latitude" json:"latitude"`
+	Longitude float64 `mapstructure:"longitude" json:"longitude"`
 }
 
 // uploadFileToObjectStorage uploads a single file to Object Storage using presigned URL or SDK
 func uploadFileToObjectStorage(localFilePath, objectPath string, destEndpoint EndpointDetails, transferOptions *TransferOptions) error {
 	// Check if minio client is enabled
 	if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Client == ObjectStorageClientMinio {
-		return uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath, destEndpoint, transferOptions)
+		return uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath, destEndpoint, transferOptions.ObjectStorageOptions)
 	}
 
-	// Use presigned URL API (spider client - original implementation)
-	// Generate presigned URL for upload
-	apiEndpoint := destEndpoint.GetEndpoint()
-
-	presignedURL, err := generatePresignedURL(apiEndpoint, "upload", objectPath, transferOptions.ObjectStorageOptions)
+	// Use a presigned URL API generated from Spider or Tumblebug
+	// Generate a presigned URL for upload
+	presignedURL, err := generatePresignedURL(destEndpoint, "upload", objectPath, transferOptions.ObjectStorageOptions)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned upload URL: %w", err)
 	}
@@ -64,7 +148,6 @@ func uploadFileToObjectStorage(localFilePath, objectPath string, destEndpoint En
 		options = &ObjectStorageOption{
 			Timeout:    300,
 			MaxRetries: 3,
-			UseSSL:     false,
 		}
 	}
 
@@ -125,14 +208,12 @@ func uploadFileToObjectStorage(localFilePath, objectPath string, destEndpoint En
 func downloadFileFromObjectStorage(localFilePath, objectPath string, sourceEndpoint EndpointDetails, transferOptions *TransferOptions) error {
 	// Check if minio client is enabled
 	if transferOptions.ObjectStorageOptions != nil && transferOptions.ObjectStorageOptions.Client == ObjectStorageClientMinio {
-		return downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath, sourceEndpoint, transferOptions)
+		return downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath, sourceEndpoint, transferOptions.ObjectStorageOptions)
 	}
 
-	// Use presigned URL API (spider client - original implementation)
-	// Generate presigned URL for download
-	apiEndpoint := sourceEndpoint.GetEndpoint()
-
-	presignedURL, err := generatePresignedURL(apiEndpoint, "download", objectPath, transferOptions.ObjectStorageOptions)
+	// Use a presigned URL API generated from Spider or Tumblebug
+	// Generate a presigned URL for download
+	presignedURL, err := generatePresignedURL(sourceEndpoint, "download", objectPath, transferOptions.ObjectStorageOptions)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned download URL: %w", err)
 	}
@@ -143,7 +224,6 @@ func downloadFileFromObjectStorage(localFilePath, objectPath string, sourceEndpo
 		options = &ObjectStorageOption{
 			Timeout:    300,
 			MaxRetries: 3,
-			UseSSL:     false,
 		}
 	}
 
@@ -203,58 +283,81 @@ func downloadFileFromObjectStorage(localFilePath, objectPath string, sourceEndpo
 }
 
 // generatePresignedURL generates a presigned URL for Object Storage operations
-func generatePresignedURL(apiEndpoint, operation, objectPath string, options *ObjectStorageOption) (string, error) {
+// Routes to client-specific implementations based on the configured client type
+func generatePresignedURL(endpoint EndpointDetails, operation, objectPath string, options *ObjectStorageOption) (string, error) {
 	if options == nil {
 		return "", fmt.Errorf("ObjectStorageOption is required")
 	}
 
-	// Build presigned URL request URL for Object Storage API
+	switch options.Client {
+	case ObjectStorageClientSpider:
+		return generatePresignedURLForSpider(endpoint, operation, objectPath, options)
+
+	case ObjectStorageClientTumblebug:
+		return generatePresignedURLForTumblebug(endpoint, operation, objectPath, options)
+
+	default:
+		return "", fmt.Errorf("unsupported client type for presigned URL: %s", options.Client)
+	}
+}
+
+// generatePresignedURLForSpider generates a presigned URL using CB-Spider API.
+// Spider supports both XML and JSON responses.
+// API format: GET /spider/s3/presigned/{operation}/{bucket-name}/{object-key}?ConnectionName={conn}&expires={seconds}
+func generatePresignedURLForSpider(endpoint EndpointDetails, operation, objectPath string, options *ObjectStorageOption) (string, error) {
+	config := options.SpiderConfig
+	if config == nil {
+		return "", fmt.Errorf("SpiderConfig required")
+	}
+
+	// Get API endpoint
+	apiEndpoint := endpoint.GetEndpoint()
+
+	// Build presigned URL request URL for Spider API
 	// Format: GET /spider/s3/presigned/{operation}/{bucket-name}/{object-key}?ConnectionName={conn}&expires={seconds}
+	// Object path: bucket-name/object-key
 	presignedAPIURL := fmt.Sprintf("%s/presigned/%s/%s", apiEndpoint, operation, objectPath)
 
 	// Add query parameters
-	params := fmt.Sprintf("ConnectionName=%s", options.AccessKeyId)
-	if options.ExpiresIn > 0 {
-		params += fmt.Sprintf("&expires=%d", options.ExpiresIn)
-	} else {
-		params += "&expires=3600" // Default 1 hour
+	params := fmt.Sprintf("ConnectionName=%s", config.ConnectionName)
+	expires := config.Expires
+	if expires <= 0 {
+		expires = 3600 // Default 1 hour
 	}
+	params += fmt.Sprintf("&expires=%d", expires)
 
 	presignedAPIURL += "?" + params
 
-	// Make HTTP GET request to Object Storage API to get the actual presigned URL
+	// Create HTTP client
 	client := &http.Client{
 		Timeout: time.Duration(options.Timeout) * time.Second,
 	}
 	if options.Timeout == 0 {
-		client.Timeout = 300 * time.Second // 5 minutes default
+		client.Timeout = 300 * time.Second
 	}
 
+	// Make GET request
 	resp, err := client.Get(presignedAPIURL)
 	if err != nil {
-		return "", fmt.Errorf("failed to request presigned URL from Object Storage API: %w", err)
+		return "", fmt.Errorf("Spider request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("object Storage API returned status %d: %s", resp.StatusCode, string(bodyBytes))
+		return "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Parse XML response to extract presigned URL
+	// Read response body
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("response read failed: %w", err)
 	}
 
-	// Fix XML parsing issue: CB-Spider returns unescaped & characters in URLs
-	// Replace unescaped & with &amp; for proper XML parsing
+	// Sanitize XML: CB-Spider may return unescaped & characters
+	// Replace all & with &amp; first, then fix double-escaping
 	bodyString := string(bodyBytes)
-
-	// This handles CB-Spider's improper XML encoding of query parameters in presigned URLs
-	// Simple approach: replace all & with &amp; first, then fix double-escaping
 	bodyString = strings.ReplaceAll(bodyString, "&", "&amp;")
-	// Fix double-escaping of common XML entities
 	bodyString = strings.ReplaceAll(bodyString, "&amp;amp;", "&amp;")
 	bodyString = strings.ReplaceAll(bodyString, "&amp;lt;", "&lt;")
 	bodyString = strings.ReplaceAll(bodyString, "&amp;gt;", "&gt;")
@@ -263,148 +366,365 @@ func generatePresignedURL(apiEndpoint, operation, objectPath string, options *Ob
 
 	fixedBodyBytes := []byte(bodyString)
 
-	// Parse XML response using struct
+	// Parse XML response
 	var presignedInfo PresignedUrlInfo
 	if err := xml.Unmarshal(fixedBodyBytes, &presignedInfo); err != nil {
-		return "", fmt.Errorf("failed to parse presigned URL XML response: %w", err)
+		return "", fmt.Errorf("XML parsing failed: %w", err)
 	}
 
-	if presignedInfo.PresignedURL == "" {
-		return "", fmt.Errorf("empty presigned URL in response")
+	if presignedInfo.PreSignedURL == "" {
+		return "", fmt.Errorf("empty presigned URL")
 	}
 
-	// Decode HTML entities (e.g., &amp; -> &) that may be present in XML
-	decodedURL := html.UnescapeString(presignedInfo.PresignedURL)
+	// Decode HTML entities
+	decodedURL := html.UnescapeString(presignedInfo.PreSignedURL)
 
 	return decodedURL, nil
 }
 
-// checkBucketExists checks if the bucket exists using HEAD request or SDK
-func checkBucketExists(endpoint EndpointDetails, options *ObjectStorageOption) error {
-	// Check if minio client is enabled
-	if options != nil && options.Client == ObjectStorageClientMinio {
-		return checkBucketExistsWithMinioSDK(endpoint, options)
+// generatePresignedURLForTumblebug generates a presigned URL using CB-Tumblebug API.
+// Tumblebug only supports JSON responses.
+// API format: GET /tumblebug/ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}?operation={upload/download}&expires={seconds}
+func generatePresignedURLForTumblebug(endpoint EndpointDetails, operation, objectPath string, options *ObjectStorageOption) (string, error) {
+	config := options.TumblebugConfig
+	if config == nil {
+		return "", fmt.Errorf("TumblebugConfig required")
 	}
 
-	// Use presigned URL API (spider client - original implementation)
-	if options == nil {
-		return fmt.Errorf("ObjectStorageOption is required")
-	}
+	// Get API endpoint
+	apiEndpoint := endpoint.GetEndpoint()
+	nsId := config.NsId
+	osId := config.OsId
+	// Note: Tumblebug manages osId (ObjectStorage ID) and assigns a uid (bucket name)
 
-	if options.AccessKeyId == "" {
-		return fmt.Errorf("accessKeyId is required for bucket check")
-	}
+	// Extract object key from path
+	parts := strings.Split(objectPath, "/")
+	objectKey := strings.Join(parts[1:], "/")
 
-	bucket, _, err := endpoint.GetBucketAndObjectKey()
-	if err != nil {
-		return fmt.Errorf("failed to parse bucket name: %w", err)
-	}
+	// Build presigned URL request URL for Tumblebug API
+	// Format: GET /tumblebug/ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}?operation={upload/download}&expires={seconds}
+	presignedAPIURL := fmt.Sprintf("%s/ns/%s/resources/objectStorage/%s/object/%s?operation=%s", apiEndpoint, nsId, osId, objectKey, operation)
 
-	apiBase := endpoint.GetEndpoint()
-	if apiBase == "" {
-		return fmt.Errorf("object Storage API endpoint is required")
+	// Add query parameters
+	expires := config.Expires
+	if expires <= 0 {
+		expires = 3600 // Default 1 hour
 	}
+	params := fmt.Sprintf("expires=%d", expires)
 
-	// Build bucket check URL
-	// Format: HEAD /spider/s3/{bucket-name}?ConnectionName={conn}
-	bucketCheckURL := fmt.Sprintf("%s/%s?ConnectionName=%s", apiBase, bucket, options.AccessKeyId)
-
-	// Create HTTP client
-	client := &http.Client{
-		Timeout: time.Duration(options.Timeout) * time.Second,
-	}
-	if options.Timeout == 0 {
-		client.Timeout = 300 * time.Second // 5 minutes default
-	}
-
-	// Make HEAD request to check bucket existence
-	req, err := http.NewRequest("HEAD", bucketCheckURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create bucket check request: %w", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to check bucket existence: %w", err)
-	}
-	defer resp.Body.Close()
-
-	switch resp.StatusCode {
-	case 200:
-		return nil // Bucket exists
-	case 404:
-		return fmt.Errorf("bucket '%s' does not exist", bucket)
-	default:
-		return fmt.Errorf("bucket check failed with status %d", resp.StatusCode)
-	}
-}
-
-// listBucketObjects lists objects in a bucket with optional prefix filtering using presigned URL API or SDK
-func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectStorageOption) ([]ObjectInfo, error) {
-	// Check if minio client is enabled
-	if options != nil && options.Client == ObjectStorageClientMinio {
-		return listBucketObjectsWithMinioSDK(endpoint, prefix, options)
-	}
-
-	// Use presigned URL API (spider client - original implementation)
-	if options == nil {
-		return nil, fmt.Errorf("ObjectStorageOption is required")
-	}
-
-	if options.AccessKeyId == "" {
-		return nil, fmt.Errorf("accessKeyId is required for listing objects")
-	}
-
-	bucket, _, err := endpoint.GetBucketAndObjectKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse bucket name: %w", err)
-	}
-
-	apiBase := endpoint.GetEndpoint()
-	if apiBase == "" {
-		return nil, fmt.Errorf("object Storage API endpoint is required")
-	}
-
-	// Build bucket listing URL
-	// Format: GET /spider/s3/{bucket-name}?ConnectionName={conn}&prefix={prefix}
-	listURL := fmt.Sprintf("%s/%s?ConnectionName=%s", apiBase, bucket, options.AccessKeyId)
-	if prefix != "" {
-		listURL += "&prefix=" + prefix
-	}
+	presignedAPIURL += "&" + params
 
 	// Create HTTP client
 	client := &http.Client{
 		Timeout: time.Duration(options.Timeout) * time.Second,
 	}
 	if options.Timeout == 0 {
-		client.Timeout = 300 * time.Second // 5 minutes default
+		client.Timeout = 300 * time.Second
 	}
 
-	// Make GET request to list objects
-	resp, err := client.Get(listURL)
+	// Make GET request
+	resp, err := client.Get(presignedAPIURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list bucket objects: %w", err)
+		return "", fmt.Errorf("Tumblebug request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("bucket listing failed with status %d: %s", resp.StatusCode, string(bodyBytes))
+		return "", fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Parse XML response using struct
+	// Read response body
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("response read failed: %w", err)
 	}
 
-	// Parse XML response using struct
+	// Parse JSON response (Tumblebug uses JSON only)
+	var presignedInfo TbPresignedUrlInfo
+	if err := json.Unmarshal(bodyBytes, &presignedInfo); err != nil {
+		return "", fmt.Errorf("JSON parsing failed: %w", err)
+	}
+
+	if presignedInfo.PreSignedURL == "" {
+		return "", fmt.Errorf("empty presigned URL")
+	}
+
+	return presignedInfo.PreSignedURL, nil
+}
+
+// checkBucketExists checks if the bucket exists using HEAD request or SDK
+// Routes to client-specific implementations based on the configured client type
+func checkBucketExists(endpoint EndpointDetails, options *ObjectStorageOption) error {
+	if options == nil {
+		return fmt.Errorf("ObjectStorageOption is required")
+	}
+
+	switch options.Client {
+	case ObjectStorageClientMinio:
+		return checkBucketExistsWithMinioSDK(endpoint, options)
+
+	case ObjectStorageClientSpider:
+		return checkBucketExistsForSpider(endpoint, options)
+
+	case ObjectStorageClientTumblebug:
+		return checkBucketExistsForTumblebug(endpoint, options)
+
+	default:
+		return fmt.Errorf("unsupported client type for bucket check: %s", options.Client)
+	}
+}
+
+// checkBucketExistsForSpider checks if a bucket exists using CB-Spider API.
+// API format: HEAD /spider/s3/{bucket-name}?ConnectionName={conn}
+func checkBucketExistsForSpider(endpoint EndpointDetails, options *ObjectStorageOption) error {
+	config := options.SpiderConfig
+	if config == nil {
+		return fmt.Errorf("SpiderConfig required")
+	}
+
+	bucket, _, err := endpoint.GetBucketAndObjectKey()
+	if err != nil {
+		return fmt.Errorf("bucket name parsing failed: %w", err)
+	}
+
+	apiEndpoint := endpoint.GetEndpoint()
+	if apiEndpoint == "" {
+		return fmt.Errorf("Spider API endpoint required")
+	}
+
+	// Build bucket check URL
+	// Format: HEAD /spider/s3/{bucket-name}?ConnectionName={conn}
+	bucketCheckURL := fmt.Sprintf("%s/%s?ConnectionName=%s", apiEndpoint, bucket, config.ConnectionName)
+
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: time.Duration(options.Timeout) * time.Second,
+	}
+	if options.Timeout == 0 {
+		client.Timeout = 300 * time.Second
+	}
+
+	// Make HEAD request
+	req, err := http.NewRequest("HEAD", bucketCheckURL, nil)
+	if err != nil {
+		return fmt.Errorf("HTTP request creation failed: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Spider request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case 200:
+		return nil
+	case 404:
+		return fmt.Errorf("bucket '%s' not found", bucket)
+	default:
+		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	}
+}
+
+// checkBucketExistsForTumblebug checks if an object storage (bucket) exists using CB-Tumblebug API.
+// API format: HEAD /tumblebug/ns/{nsId}/resources/objectStorage/{osId}
+func checkBucketExistsForTumblebug(endpoint EndpointDetails, options *ObjectStorageOption) error {
+	config := options.TumblebugConfig
+	if config == nil {
+		return fmt.Errorf("TumblebugConfig required")
+	}
+
+	apiEndpoint := endpoint.GetEndpoint()
+	if apiEndpoint == "" {
+		return fmt.Errorf("Tumblebug API endpoint required")
+	}
+
+	nsId := config.NsId
+	osId := config.OsId
+	// Note: Tumblebug manages osId (ObjectStorage ID) and assigns a uid (bucket name)
+
+	// Build request URL
+	bucketCheckURL := fmt.Sprintf("%s/ns/%s/resources/objectStorage/%s", apiEndpoint, nsId, osId)
+
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: time.Duration(options.Timeout) * time.Second,
+	}
+	if options.Timeout == 0 {
+		client.Timeout = 300 * time.Second
+	}
+
+	// Make HEAD request
+	req, err := http.NewRequest("HEAD", bucketCheckURL, nil)
+	if err != nil {
+		return fmt.Errorf("HTTP request creation failed: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Tumblebug request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case 200:
+		return nil
+	case 404:
+		return fmt.Errorf("object storage '%s' not found (namespace: %s)", osId, nsId)
+	default:
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+}
+
+// listBucketObjects lists objects in a bucket with optional prefix filtering
+// Routes to client-specific implementations based on the configured client type
+func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectStorageOption) ([]ObjectInfo, error) {
+	if options == nil {
+		return nil, fmt.Errorf("ObjectStorageOption is required")
+	}
+
+	switch options.Client {
+	case ObjectStorageClientMinio:
+		return listBucketObjectsWithMinioSDK(endpoint, prefix, options)
+
+	case ObjectStorageClientSpider:
+		return listBucketObjectsForSpider(endpoint, options)
+
+	case ObjectStorageClientTumblebug:
+		return listBucketObjectsForTumblebug(endpoint, options)
+
+	default:
+		return nil, fmt.Errorf("unsupported client type for listing objects: %s", options.Client)
+	}
+}
+
+// listBucketObjectsForSpider lists objects in a bucket using CB-Spider API.
+// Spider supports XML responses for bucket listings.
+// API format: GET /spider/s3/{bucket-name}?ConnectionName={conn}
+func listBucketObjectsForSpider(endpoint EndpointDetails, options *ObjectStorageOption) ([]ObjectInfo, error) {
+	config := options.SpiderConfig
+	if config == nil {
+		return nil, fmt.Errorf("SpiderConfig required")
+	}
+
+	bucket, _, err := endpoint.GetBucketAndObjectKey()
+	if err != nil {
+		return nil, fmt.Errorf("bucket name parsing failed: %w", err)
+	}
+
+	apiEndpoint := endpoint.GetEndpoint()
+	if apiEndpoint == "" {
+		return nil, fmt.Errorf("Spider API endpoint required")
+	}
+
+	// Build bucket listing URL
+	// Format: GET /spider/s3/{bucket-name}?ConnectionName={conn}
+	listURL := fmt.Sprintf("%s/%s?ConnectionName=%s", apiEndpoint, bucket, config.ConnectionName)
+
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: time.Duration(options.Timeout) * time.Second,
+	}
+	if options.Timeout == 0 {
+		client.Timeout = 300 * time.Second
+	}
+
+	// Make GET request
+	resp, err := client.Get(listURL)
+	if err != nil {
+		return nil, fmt.Errorf("Spider request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Read response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("response read failed: %w", err)
+	}
+
+	// Parse XML response
 	var bucketInfo BucketInfo
 	if err := xml.Unmarshal(bodyBytes, &bucketInfo); err != nil {
-		return nil, fmt.Errorf("failed to parse bucket listing XML response: %w", err)
+		return nil, fmt.Errorf("XML parsing failed: %w", err)
 	}
 
 	return bucketInfo.Contents, nil
+}
+
+// listBucketObjectsForTumblebug lists objects in a bucket using CB-Tumblebug API.
+// Tumblebug only supports JSON responses.
+// API format: GET /tumblebug/ns/{nsId}/resources/objectStorage/{osId}/object
+func listBucketObjectsForTumblebug(endpoint EndpointDetails, options *ObjectStorageOption) ([]ObjectInfo, error) {
+	config := options.TumblebugConfig
+	if config == nil {
+		return nil, fmt.Errorf("TumblebugConfig required")
+	}
+
+	apiEndpoint := endpoint.GetEndpoint()
+	if apiEndpoint == "" {
+		return nil, fmt.Errorf("Tumblebug API endpoint required")
+	}
+
+	nsId := config.NsId
+	osId := config.OsId
+	// Note: Tumblebug manages osId (ObjectStorage ID) and assigns a uid (bucket name)
+
+	// Build bucket listing URL
+	// Format: GET /tumblebug/ns/{nsId}/resources/objectStorage/{osId}/object
+	listURL := fmt.Sprintf("%s/ns/%s/resources/objectStorage/%s/object", apiEndpoint, nsId, osId)
+
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: time.Duration(options.Timeout) * time.Second,
+	}
+	if options.Timeout == 0 {
+		client.Timeout = 300 * time.Second
+	}
+
+	// Make GET request
+	resp, err := client.Get(listURL)
+	if err != nil {
+		return nil, fmt.Errorf("Tumblebug request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status %d: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	// Read response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("response read failed: %w", err)
+	}
+
+	// Parse JSON response
+	var tbBucketInfo TbBucketInfo
+	if err := json.Unmarshal(bodyBytes, &tbBucketInfo); err != nil {
+		return nil, fmt.Errorf("JSON parsing failed: %w", err)
+	}
+
+	// Convert Tumblebug format to common format
+	var objects []ObjectInfo
+	for _, tbObj := range tbBucketInfo.Contents {
+		objects = append(objects, ObjectInfo{
+			Key:          tbObj.Key,
+			LastModified: tbObj.LastModified,
+			ETag:         tbObj.ETag,
+			Size:         tbObj.Size,
+			StorageClass: tbObj.StorageClass,
+		})
+	}
+
+	return objects, nil
 }
 
 // parseObjectListXML parses the XML response from bucket listing
@@ -415,16 +735,13 @@ func listBucketObjects(endpoint EndpointDetails, prefix string, options *ObjectS
 
 // createMinioClient creates a MinIO client for S3-compatible storage
 func createMinioClient(endpoint string, options *ObjectStorageOption) (*minio.Client, error) {
-	if options == nil {
-		return nil, fmt.Errorf("ObjectStorageOption is required")
+	config := options.MinIOConfig
+	if config == nil {
+		return nil, fmt.Errorf("MinIOConfig is required")
 	}
 
-	if options.Client != ObjectStorageClientMinio {
-		return nil, fmt.Errorf("minio client is not enabled")
-	}
-
-	if options.SecretAccessKey == "" {
-		return nil, fmt.Errorf("secretAccessKey is required for MinIO SDK mode")
+	if config.AccessKeyId == "" || config.SecretAccessKey == "" {
+		return nil, fmt.Errorf("MinIO AccessKeyId and SecretAccessKey are required")
 	}
 
 	// Remove protocol prefix if present (MinIO SDK doesn't expect it)
@@ -432,13 +749,13 @@ func createMinioClient(endpoint string, options *ObjectStorageOption) (*minio.Cl
 	endpoint = strings.TrimPrefix(endpoint, "https://")
 
 	// Default to SSL if not specified
-	useSSL := options.UseSSL
+	useSSL := config.UseSSL
 
 	// Initialize MinIO client
 	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(options.AccessKeyId, options.SecretAccessKey, ""),
+		Creds:  credentials.NewStaticV4(config.AccessKeyId, config.SecretAccessKey, ""),
 		Secure: useSSL,
-		Region: options.Region,
+		Region: config.Region,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create MinIO client: %w", err)
@@ -448,10 +765,10 @@ func createMinioClient(endpoint string, options *ObjectStorageOption) (*minio.Cl
 }
 
 // uploadFileToObjectStorageWithMinioSDK uploads a file using MinIO SDK
-func uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath string, destEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	options := transferOptions.ObjectStorageOptions
-	if options == nil {
-		return fmt.Errorf("ObjectStorageOption is required")
+func uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath string, destEndpoint EndpointDetails, options *ObjectStorageOption) error {
+	config := options.MinIOConfig
+	if config == nil {
+		return fmt.Errorf("MinIOConfig is required")
 	}
 
 	// Create MinIO client
@@ -505,10 +822,10 @@ func uploadFileToObjectStorageWithMinioSDK(localFilePath, objectPath string, des
 }
 
 // downloadFileFromObjectStorageWithMinioSDK downloads a file using MinIO SDK
-func downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath string, sourceEndpoint EndpointDetails, transferOptions *TransferOptions) error {
-	options := transferOptions.ObjectStorageOptions
-	if options == nil {
-		return fmt.Errorf("ObjectStorageOption is required")
+func downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath string, sourceEndpoint EndpointDetails, options *ObjectStorageOption) error {
+	config := options.MinIOConfig
+	if config == nil {
+		return fmt.Errorf("MinIOConfig is required")
 	}
 
 	// Create MinIO client
@@ -566,8 +883,9 @@ func downloadFileFromObjectStorageWithMinioSDK(localFilePath, objectPath string,
 
 // checkBucketExistsWithMinioSDK checks if a bucket exists using MinIO SDK
 func checkBucketExistsWithMinioSDK(endpoint EndpointDetails, options *ObjectStorageOption) error {
-	if options == nil {
-		return fmt.Errorf("ObjectStorageTransferOption is required")
+	config := options.MinIOConfig
+	if config == nil {
+		return fmt.Errorf("MinIOConfig is required")
 	}
 
 	// Create MinIO client
@@ -606,8 +924,9 @@ func checkBucketExistsWithMinioSDK(endpoint EndpointDetails, options *ObjectStor
 
 // listBucketObjectsWithMinioSDK lists objects in a bucket using MinIO SDK
 func listBucketObjectsWithMinioSDK(endpoint EndpointDetails, prefix string, options *ObjectStorageOption) ([]ObjectInfo, error) {
-	if options == nil {
-		return nil, fmt.Errorf("ObjectStorageTransferOption is required")
+	config := options.MinIOConfig
+	if config == nil {
+		return nil, fmt.Errorf("MinIOConfig is required")
 	}
 
 	// Create MinIO client

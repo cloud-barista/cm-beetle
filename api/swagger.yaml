@@ -4109,19 +4109,39 @@ definitions:
           type: string
         type: array
     type: object
-  transx.ObjectStorageOption:
+  transx.MinIOConfig:
     properties:
       accessKeyId:
-        description: Common authentication (REQUIRED - must be provided by user)
+        description: AWS Access Key ID
         type: string
+      endpoint:
+        description: S3-compatible storage endpoint (e.g., "s3.amazonaws.com", "play.min.io:9000")
+        type: string
+      region:
+        default: us-east-1
+        description: 'AWS region (default: "us-east-1")'
+        type: string
+      secretAccessKey:
+        description: AWS Secret Access Key
+        type: string
+      useSSL:
+        default: true
+        description: 'Use HTTPS for connections (default: true)'
+        type: boolean
+    required:
+    - accessKeyId
+    - endpoint
+    - secretAccessKey
+    type: object
+  transx.ObjectStorageOption:
+    properties:
       client:
-        default: spider
-        description: Client selection
+        description: Client selection (required)
+        enum:
+        - spider
+        - minio
+        - tumblebug
         type: string
-      expiresIn:
-        default: 3600
-        description: Presigned URL configuration (spider client only)
-        type: integer
       filter:
         allOf:
         - $ref: '#/definitions/transx.FilterOption'
@@ -4131,23 +4151,25 @@ definitions:
         default: 3
         description: 'Maximum number of retry attempts (default: 3)'
         type: integer
-      region:
-        default: us-east-1
-        description: 'AWS region (for minio client, default: "us-east-1")'
-        type: string
-      secretAccessKey:
-        description: AWS Secret Access Key (REQUIRED for minio client)
-        type: string
+      minioConfig:
+        allOf:
+        - $ref: '#/definitions/transx.MinIOConfig'
+        description: Client-specific configurations (provide only one based on Client
+          field)
+      spiderConfig:
+        allOf:
+        - $ref: '#/definitions/transx.SpiderConfig'
+        description: CB-Spider client configuration (for Client="spider")
       timeout:
         default: 300
-        description: HTTP request configuration (optional)
+        description: Common HTTP request configuration (optional)
         type: integer
-      useSSL:
-        default: false
-        description: 'Use HTTPS (default: true)'
-        type: boolean
+      tumblebugConfig:
+        allOf:
+        - $ref: '#/definitions/transx.TumblebugConfig'
+        description: CB-Tumblebug client configuration (for Client="tumblebug")
     required:
-    - accessKeyId
+    - client
     type: object
   transx.RsyncOption:
     properties:
@@ -4208,6 +4230,22 @@ definitions:
         description: Transfer behavior options
         type: boolean
     type: object
+  transx.SpiderConfig:
+    properties:
+      connectionName:
+        description: CB-Spider connection name (e.g., "aws-config01", "aws-ap-northeast-2")
+        type: string
+      endpoint:
+        description: CB-Spider API endpoint (e.g., "http://localhost:1024/spider/s3")
+        type: string
+      expires:
+        default: 3600
+        description: 'Presigned URL expiration time in seconds (default: 3600)'
+        type: integer
+    required:
+    - connectionName
+    - endpoint
+    type: object
   transx.TransferOptions:
     properties:
       method:
@@ -4223,6 +4261,26 @@ definitions:
         description: Rsync-specific options
     required:
     - method
+    type: object
+  transx.TumblebugConfig:
+    properties:
+      endpoint:
+        description: CB-Tumblebug API endpoint (e.g., "http://localhost:1323/tumblebug/objectstorage")
+        type: string
+      expires:
+        default: 3600
+        description: 'Presigned URL expiration time in seconds (default: 3600)'
+        type: integer
+      nsId:
+        description: Namespace ID for multi-tenancy support
+        type: string
+      osId:
+        description: Object Storage ID configured in Tumblebug
+        type: string
+    required:
+    - endpoint
+    - nsId
+    - osId
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)

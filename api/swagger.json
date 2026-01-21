@@ -8539,25 +8539,52 @@
                 }
             }
         },
-        "transx.ObjectStorageOption": {
+        "transx.MinIOConfig": {
             "type": "object",
             "required": [
-                "accessKeyId"
+                "accessKeyId",
+                "endpoint",
+                "secretAccessKey"
             ],
             "properties": {
                 "accessKeyId": {
-                    "description": "Common authentication (REQUIRED - must be provided by user)",
+                    "description": "AWS Access Key ID",
                     "type": "string"
                 },
-                "client": {
-                    "description": "Client selection",
-                    "type": "string",
-                    "default": "spider"
+                "endpoint": {
+                    "description": "S3-compatible storage endpoint (e.g., \"s3.amazonaws.com\", \"play.min.io:9000\")",
+                    "type": "string"
                 },
-                "expiresIn": {
-                    "description": "Presigned URL configuration (spider client only)",
-                    "type": "integer",
-                    "default": 3600
+                "region": {
+                    "description": "AWS region (default: \"us-east-1\")",
+                    "type": "string",
+                    "default": "us-east-1"
+                },
+                "secretAccessKey": {
+                    "description": "AWS Secret Access Key",
+                    "type": "string"
+                },
+                "useSSL": {
+                    "description": "Use HTTPS for connections (default: true)",
+                    "type": "boolean",
+                    "default": true
+                }
+            }
+        },
+        "transx.ObjectStorageOption": {
+            "type": "object",
+            "required": [
+                "client"
+            ],
+            "properties": {
+                "client": {
+                    "description": "Client selection (required)",
+                    "type": "string",
+                    "enum": [
+                        "spider",
+                        "minio",
+                        "tumblebug"
+                    ]
                 },
                 "filter": {
                     "description": "File filtering options (applied after listing objects, before upload/download)",
@@ -8572,24 +8599,34 @@
                     "type": "integer",
                     "default": 3
                 },
-                "region": {
-                    "description": "AWS region (for minio client, default: \"us-east-1\")",
-                    "type": "string",
-                    "default": "us-east-1"
+                "minioConfig": {
+                    "description": "Client-specific configurations (provide only one based on Client field)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.MinIOConfig"
+                        }
+                    ]
                 },
-                "secretAccessKey": {
-                    "description": "AWS Secret Access Key (REQUIRED for minio client)",
-                    "type": "string"
+                "spiderConfig": {
+                    "description": "CB-Spider client configuration (for Client=\"spider\")",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.SpiderConfig"
+                        }
+                    ]
                 },
                 "timeout": {
-                    "description": "HTTP request configuration (optional)",
+                    "description": "Common HTTP request configuration (optional)",
                     "type": "integer",
                     "default": 300
                 },
-                "useSSL": {
-                    "description": "Use HTTPS (default: true)",
-                    "type": "boolean",
-                    "default": false
+                "tumblebugConfig": {
+                    "description": "CB-Tumblebug client configuration (for Client=\"tumblebug\")",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.TumblebugConfig"
+                        }
+                    ]
                 }
             }
         },
@@ -8664,6 +8701,28 @@
                 }
             }
         },
+        "transx.SpiderConfig": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "endpoint"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "CB-Spider connection name (e.g., \"aws-config01\", \"aws-ap-northeast-2\")",
+                    "type": "string"
+                },
+                "endpoint": {
+                    "description": "CB-Spider API endpoint (e.g., \"http://localhost:1024/spider/s3\")",
+                    "type": "string"
+                },
+                "expires": {
+                    "description": "Presigned URL expiration time in seconds (default: 3600)",
+                    "type": "integer",
+                    "default": 3600
+                }
+            }
+        },
         "transx.TransferOptions": {
             "type": "object",
             "required": [
@@ -8689,6 +8748,33 @@
                             "$ref": "#/definitions/transx.RsyncOption"
                         }
                     ]
+                }
+            }
+        },
+        "transx.TumblebugConfig": {
+            "type": "object",
+            "required": [
+                "endpoint",
+                "nsId",
+                "osId"
+            ],
+            "properties": {
+                "endpoint": {
+                    "description": "CB-Tumblebug API endpoint (e.g., \"http://localhost:1323/tumblebug/objectstorage\")",
+                    "type": "string"
+                },
+                "expires": {
+                    "description": "Presigned URL expiration time in seconds (default: 3600)",
+                    "type": "integer",
+                    "default": 3600
+                },
+                "nsId": {
+                    "description": "Namespace ID for multi-tenancy support",
+                    "type": "string"
+                },
+                "osId": {
+                    "description": "Object Storage ID configured in Tumblebug",
+                    "type": "string"
                 }
             }
         }

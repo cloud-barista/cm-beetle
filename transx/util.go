@@ -173,10 +173,40 @@ func (e *EndpointDetails) GetBucketAndObjectKey() (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
-// IsObjectStorageEndpoint checks if this endpoint is for Object Storage
-func (e *EndpointDetails) IsObjectStorageEndpoint() bool {
-	return strings.Contains(e.Endpoint, "/spider/s3")
-}
+// // IsObjectStorageEndpoint checks if this endpoint is for Object Storage
+// // Detects Spider, Tumblebug, and MinIO/S3-compatible endpoints
+// func (e *EndpointDetails) IsObjectStorageEndpoint() bool {
+// 	endpoint := strings.ToLower(e.Endpoint)
+
+// 	// Spider: /spider/s3
+// 	if strings.Contains(endpoint, "/spider/s3") {
+// 		return true
+// 	}
+
+// 	// Tumblebug: /tumblebug/ns/{nsId}/resources/objectStorage
+// 	if strings.Contains(endpoint, "/tumblebug") && strings.Contains(endpoint, "objectstorage") {
+// 		return true
+// 	}
+
+// 	// MinIO/S3-compatible: Common S3 endpoints
+// 	// Note: This is a heuristic check for common S3 endpoints
+// 	// For definitive client type detection, use TransferOptions.ObjectStorageOptions.Client
+// 	s3Patterns := []string{
+// 		"s3.amazonaws.com",
+// 		"s3-",                    // AWS regional endpoints (e.g., s3-us-west-2.amazonaws.com)
+// 		".min.io",                // MinIO endpoints
+// 		"storage.googleapis.com", // Google Cloud Storage
+// 		"blob.core.windows.net",  // Azure Blob Storage
+// 	}
+
+// 	for _, pattern := range s3Patterns {
+// 		if strings.Contains(endpoint, pattern) {
+// 			return true
+// 		}
+// 	}
+
+// 	return false
+// }
 
 // IsRemote determines if the EndpointDetails represent a remote endpoint.
 // Returns true if the endpoint has a non-empty host/endpoint configured.
