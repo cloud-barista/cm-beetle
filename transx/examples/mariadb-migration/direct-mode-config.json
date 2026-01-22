@@ -1,20 +1,24 @@
 {
   "source": {
-    "dataPath": "/home/ubuntu/mariadb_source_backup/testdb_backup.sql",
-    "backupCmd": "docker exec mariadb_source bash -c \"mariadb-dump -uroot -psource_password --ssl=0 --single-transaction --routines --triggers testdb > /backup/testdb_backup.sql\""
-  },
-  "destinationTransferOptions": {
-    "method": "rsync",
-    "rsyncOptions": {
-      "username": "ubuntu",
-      "sshPrivateKeyPath": "/home/ubuntu/.ssh/id_rsa",
-      "connectTimeout": 10,
-      "insecureSkipHostKeyVerification": true
-    }
+    "storageType": "filesystem",
+    "path": "/backup",
+    "filesystem": {
+      "accessType": "ssh",
+      "ssh": {
+        "host": "localhost",
+        "port": 2222,
+        "username": "root",
+        "privateKeyPath": "./ssh_keys/id_rsa"
+      }
+    },
+    "preCmd": "mariadb-dump -uroot -psource_password --ssl=0 --single-transaction --routines --triggers testdb > /backup/testdb_backup.sql"
   },
   "destination": {
-    "endpoint": "localhost",
-    "dataPath": "/home/ubuntu/mariadb_target_backup/testdb_backup.sql",
-    "restoreCmd": "docker exec mariadb_target bash -c \"mariadb -uroot -ptarget_password --ssl=0 testdb < /backup/testdb_backup.sql\""
-  }
+    "storageType": "filesystem",
+    "path": "/home/ubuntu/mariadb_backup",
+    "filesystem": {
+      "accessType": "local"
+    }
+  },
+  "strategy": "auto"
 }

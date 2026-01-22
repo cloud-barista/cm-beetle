@@ -4050,56 +4050,89 @@ definitions:
         example: aws-ap-northeast-2
         type: string
     type: object
+  transx.DataLocation:
+    properties:
+      filesystem:
+        allOf:
+        - $ref: '#/definitions/transx.FilesystemAccess'
+        description: Access configuration (one of the following based on StorageType)
+      filter:
+        allOf:
+        - $ref: '#/definitions/transx.FilterOption'
+        description: Filter defines file filtering options
+      objectStorage:
+        allOf:
+        - $ref: '#/definitions/transx.ObjectStorageAccess'
+        description: For storageType="objectstorage"
+      path:
+        description: |-
+          Path to the data
+          For Filesystem: File path (e.g., "/data", "/home/user/data")
+          For ObjectStorage: Bucket/Key (e.g., "my-bucket/my-key")
+        type: string
+      postCmd:
+        description: Command to run after transfer (destination only)
+        type: string
+      preCmd:
+        description: Hooks for pre/post processing
+        type: string
+      storageType:
+        description: |-
+          StorageType: What kind of storage
+          "filesystem": Local or remote filesystem
+          "objectstorage": S3-compatible object storage
+        enum:
+        - filesystem
+        - objectstorage
+        type: string
+    required:
+    - path
+    - storageType
+    type: object
   transx.DataMigrationModel:
     properties:
       destination:
-        allOf:
-        - $ref: '#/definitions/transx.EndpointDetails'
-        description: Destination endpoint configuration
-      destinationTransferOptions:
-        allOf:
-        - $ref: '#/definitions/transx.TransferOptions'
-        description: Destination-specific transfer options
+        $ref: '#/definitions/transx.DataLocation'
       source:
-        allOf:
-        - $ref: '#/definitions/transx.EndpointDetails'
-        description: Source endpoint configuration
-      sourceTransferOptions:
-        allOf:
-        - $ref: '#/definitions/transx.TransferOptions'
-        description: Source-specific transfer options
+        $ref: '#/definitions/transx.DataLocation'
+      strategy:
+        default: auto
+        description: |-
+          Strategy determines how the transfer is orchestrated.
+          "auto": Automatically select best method.
+          "direct": Force direct transfer (e.g., SSH agent forwarding).
+          "relay": Force relay via local machine.
+        enum:
+        - auto
+        - direct
+        - relay
+        type: string
     required:
     - destination
-    - destinationTransferOptions
     - source
-    - sourceTransferOptions
     type: object
-  transx.EndpointDetails:
+  transx.FilesystemAccess:
     properties:
-      backupCmd:
-        description: Command execution
+      accessType:
+        description: |-
+          AccessType: How to access the filesystem
+          "local": Local filesystem (no network)
+          "ssh": Remote filesystem via SSH
+        enum:
+        - local
+        - ssh
         type: string
-      dataPath:
-        description: Data location (required)
-        type: string
-      endpoint:
-        description: Endpoint configuration (auto-detects protocol based on provided
-          fields)
-        type: string
-      port:
-        description: 'Port for SSH host/IP (default: 22) or Object Storage API endpoint
-          (default: 1024)'
-        type: integer
-      restoreCmd:
-        description: Restore command string to be executed on this endpoint
-        type: string
+      ssh:
+        allOf:
+        - $ref: '#/definitions/transx.SSHConfig'
+        description: SSH configuration (required when accessType="ssh")
     required:
-    - dataPath
+    - accessType
     type: object
   transx.FilterOption:
     properties:
       exclude:
-        description: Patterns to exclude (e.g., "*.log", "temp/**", ".git/**")
+        description: Patterns to exclude (e.g., "*.log", "temp/**")
         items:
           type: string
         type: array
@@ -4109,173 +4142,121 @@ definitions:
           type: string
         type: array
     type: object
-  transx.MinIOConfig:
+  transx.ObjectStorageAccess:
+    properties:
+      accessType:
+        description: |-
+          AccessType: How to access object storage
+          "minio": Direct S3 SDK access using minio-go
+          "spider": Via CB-Spider Object Storage API
+          "tumblebug": Via CB-Tumblebug Object Storage API
+        enum:
+        - minio
+        - spider
+        - tumblebug
+        type: string
+      minio:
+        allOf:
+        - $ref: '#/definitions/transx.S3MinioConfig'
+        description: Provider-specific configurations (one required based on accessType)
+      spider:
+        allOf:
+        - $ref: '#/definitions/transx.SpiderConfig'
+        description: For accessType="spider"
+      tumblebug:
+        allOf:
+        - $ref: '#/definitions/transx.TumblebugConfig'
+        description: For accessType="tumblebug"
+    required:
+    - accessType
+    type: object
+  transx.S3MinioConfig:
     properties:
       accessKeyId:
-        description: AWS Access Key ID
         type: string
       endpoint:
-        description: S3-compatible storage endpoint (e.g., "s3.amazonaws.com", "play.min.io:9000")
         type: string
       region:
         default: us-east-1
-        description: 'AWS region (default: "us-east-1")'
         type: string
       secretAccessKey:
-        description: AWS Secret Access Key
         type: string
       useSSL:
         default: true
-        description: 'Use HTTPS for connections (default: true)'
         type: boolean
     required:
     - accessKeyId
     - endpoint
     - secretAccessKey
     type: object
-  transx.ObjectStorageOption:
-    properties:
-      client:
-        description: Client selection (required)
-        enum:
-        - spider
-        - minio
-        - tumblebug
-        type: string
-      filter:
-        allOf:
-        - $ref: '#/definitions/transx.FilterOption'
-        description: File filtering options (applied after listing objects, before
-          upload/download)
-      maxRetries:
-        default: 3
-        description: 'Maximum number of retry attempts (default: 3)'
-        type: integer
-      minioConfig:
-        allOf:
-        - $ref: '#/definitions/transx.MinIOConfig'
-        description: Client-specific configurations (provide only one based on Client
-          field)
-      spiderConfig:
-        allOf:
-        - $ref: '#/definitions/transx.SpiderConfig'
-        description: CB-Spider client configuration (for Client="spider")
-      timeout:
-        default: 300
-        description: Common HTTP request configuration (optional)
-        type: integer
-      tumblebugConfig:
-        allOf:
-        - $ref: '#/definitions/transx.TumblebugConfig'
-        description: CB-Tumblebug client configuration (for Client="tumblebug")
-    required:
-    - client
-    type: object
-  transx.RsyncOption:
+  transx.SSHConfig:
     properties:
       archive:
         default: true
-        description: '-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)'
+        description: Rsync options
         type: boolean
       compress:
         default: true
-        description: Rsync-specific options
         type: boolean
       connectTimeout:
         default: 30
-        description: SSH connection timeout in seconds
         type: integer
       delete:
-        default: false
-        description: '--delete: Delete extraneous files from dest dirs'
         type: boolean
       dryRun:
-        default: false
-        description: Perform a trial run with no changes made
         type: boolean
-      filter:
-        allOf:
-        - $ref: '#/definitions/transx.FilterOption'
-        description: File filtering options (include/exclude patterns) - use nested
-          structure for better organization
-      insecureSkipHostKeyVerification:
-        default: false
-        description: |-
-          InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.
-          Adds "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" options.
-          Warning: This can be a security risk and should only be used in trusted environments.
-        type: boolean
-      progress:
-        default: false
-        description: Show progress during transfer
-        type: boolean
-      rsyncPath:
-        default: rsync
-        description: Path to the rsync executable (if empty, uses system PATH)
+      host:
+        description: Connection details
         type: string
-      sshPrivateKeyPath:
-        description: SSH private key path
-        type: string
-      transferDirContentsOnly:
-        default: false
+      port:
+        default: 22
+        type: integer
+      privateKey:
         description: |-
-          TransferDirContentsOnly, if true, adds a trailing slash to source paths
-          to transfer only the contents of the directory and not the directory itself.
+          Authentication (priority: PrivateKey > PrivateKeyPath > Agent > none)
+          At least one authentication method should be available.
+
+          PrivateKey: PEM-encoded private key content (preferred for injected secrets).
+          In JSON, use single line with \n for newlines:
+            "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
+        type: string
+      privateKeyPath:
+        description: Path to private key file (legacy, prefer PrivateKey)
+        type: string
+      useAgent:
+        description: Use SSH agent for authentication (supports agent forwarding)
         type: boolean
       username:
-        description: SSH connection & authentication options (integrated)
         type: string
       verbose:
-        default: false
-        description: Transfer behavior options
         type: boolean
+    required:
+    - host
+    - username
     type: object
   transx.SpiderConfig:
     properties:
       connectionName:
-        description: CB-Spider connection name (e.g., "aws-config01", "aws-ap-northeast-2")
         type: string
       endpoint:
-        description: CB-Spider API endpoint (e.g., "http://localhost:1024/spider/s3")
         type: string
       expires:
         default: 3600
-        description: 'Presigned URL expiration time in seconds (default: 3600)'
         type: integer
     required:
     - connectionName
     - endpoint
     type: object
-  transx.TransferOptions:
-    properties:
-      method:
-        description: Transfer method specification (required)
-        type: string
-      objectStorageOptions:
-        allOf:
-        - $ref: '#/definitions/transx.ObjectStorageOption'
-        description: Object Storage-specific options (CB-Spider, AWS S3, etc.)
-      rsyncOptions:
-        allOf:
-        - $ref: '#/definitions/transx.RsyncOption'
-        description: Rsync-specific options
-    required:
-    - method
-    type: object
   transx.TumblebugConfig:
     properties:
       endpoint:
-        description: CB-Tumblebug API endpoint (e.g., "http://localhost:1323/tumblebug/objectstorage")
         type: string
       expires:
         default: 3600
-        description: 'Presigned URL expiration time in seconds (default: 3600)'
         type: integer
       nsId:
-        description: Namespace ID for multi-tenancy support
         type: string
       osId:
-        description: Object Storage ID configured in Tumblebug
         type: string
     required:
     - endpoint
@@ -4336,8 +4317,10 @@ paths:
         Migrate data from source to target
 
         [Note]
-        * Only relay mode is supported for now (both source and destination should be remote endpoints).
-        * Supported methods: rsync, object storage
+        * Both source and destination must be remote endpoints (SSH or object storage).
+        * Local filesystem access is not allowed for security reasons.
+        * Strategy options: auto (default), direct, relay.
+        * For SSH endpoints, supports PrivateKey content or PrivateKeyPath.
 
         [Note]
         * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md

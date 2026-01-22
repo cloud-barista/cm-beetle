@@ -19,7 +19,7 @@
     "filesystem": {
       "accessType": "ssh",
       "ssh": {
-        "host": "localhost",
+        "host": "HOST_IP_PLACEHOLDER",
         "port": 2223,
         "username": "root",
         "privateKeyPath": "./ssh_keys/id_rsa"
@@ -27,5 +27,5 @@
     },
     "postCmd": "mariadb -uroot -ptarget_password --ssl=0 testdb < /backup/testdb_backup.sql"
   },
-  "strategy": "relay"
+  "strategy": "auto"
 }
