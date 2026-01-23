@@ -56,7 +56,7 @@
         },
         "/migration/data": {
             "post": {
-                "description": "Migrate data from source to target\n\n[Note]\n* Only relay mode is supported for now (both source and destination should be remote endpoints).\n* Supported methods: rsync, object storage\n\n[Note]\n* Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "Migrate data from source to target\n\n[Note]\n* Both source and destination must be remote endpoints (SSH or object storage).\n* Local filesystem access is not allowed for security reasons.\n* Strategy options: auto (default), direct, relay.\n* For SSH endpoints, supports PrivateKey content or PrivateKeyPath.\n\n[Note]\n* Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -3140,6 +3140,11 @@
                 "vmUserPassword": {
                     "type": "string",
                     "example": ""
+                },
+                "zone": {
+                    "description": "Zone is an optional field to specify the availability zone for VM placement.\nIf specified, subnet will be created in this zone for resources like GPU VMs\nthat may only be available in specific zones. If empty, auto-selection applies.",
+                    "type": "string",
+                    "example": "ap-northeast-2a"
                 }
             }
         },
@@ -4071,6 +4076,9 @@
                 "regionName": {
                     "type": "string"
                 },
+                "representativeZone": {
+                    "type": "string"
+                },
                 "zones": {
                     "type": "array",
                     "items": {
@@ -4083,10 +4091,12 @@
             "type": "object",
             "properties": {
                 "region": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "us-east-1"
                 },
                 "zone": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "us-east-1a"
                 }
             }
         },
@@ -4315,6 +4325,30 @@
                 },
                 "vmIp": {
                     "type": "string"
+                }
+            }
+        },
+        "cloudmodel.SshHostKeyInfo": {
+            "type": "object",
+            "properties": {
+                "fingerprint": {
+                    "description": "Fingerprint is the SHA256 fingerprint of the SSH host key",
+                    "type": "string",
+                    "example": "SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                },
+                "firstUsedAt": {
+                    "description": "FirstUsedAt is the timestamp when the host key was first stored (TOFU moment)",
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "hostKey": {
+                    "description": "HostKey is the SSH host public key (base64 encoded)",
+                    "type": "string"
+                },
+                "keyType": {
+                    "description": "KeyType is the type of the SSH host key (e.g., ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256)",
+                    "type": "string",
+                    "example": "ssh-ed25519"
                 }
             }
         },
@@ -4617,6 +4651,14 @@
                 },
                 "specId": {
                     "type": "string"
+                },
+                "sshHostKeyInfo": {
+                    "description": "SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.SshHostKeyInfo"
+                        }
+                    ]
                 },
                 "sshKeyId": {
                     "type": "string"
@@ -6156,6 +6198,9 @@
                     "type": "string"
                 },
                 "regionName": {
+                    "type": "string"
+                },
+                "representativeZone": {
                     "type": "string"
                 },
                 "zones": {
@@ -8449,74 +8494,148 @@
                 }
             }
         },
-        "transx.DataMigrationModel": {
+        "transx.AuthConfig": {
             "type": "object",
             "required": [
-                "destination",
-                "destinationTransferOptions",
-                "source",
-                "sourceTransferOptions"
+                "authType"
             ],
             "properties": {
-                "destination": {
-                    "description": "Destination endpoint configuration",
+                "authType": {
+                    "description": "\"basic\", \"jwt\" (\"apikey\", \"oauth\" not tested yet)",
+                    "type": "string"
+                },
+                "basic": {
+                    "description": "For authType=\"basic\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/transx.EndpointDetails"
+                            "$ref": "#/definitions/transx.BasicAuthConfig"
                         }
                     ]
                 },
-                "destinationTransferOptions": {
-                    "description": "Destination-specific transfer options",
+                "jwt": {
+                    "description": "For authType=\"jwt\"",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/transx.TransferOptions"
-                        }
-                    ]
-                },
-                "source": {
-                    "description": "Source endpoint configuration",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/transx.EndpointDetails"
-                        }
-                    ]
-                },
-                "sourceTransferOptions": {
-                    "description": "Source-specific transfer options",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/transx.TransferOptions"
+                            "$ref": "#/definitions/transx.JWTAuthConfig"
                         }
                     ]
                 }
             }
         },
-        "transx.EndpointDetails": {
+        "transx.BasicAuthConfig": {
             "type": "object",
             "required": [
-                "dataPath"
+                "password",
+                "username"
             ],
             "properties": {
-                "backupCmd": {
-                    "description": "Command execution",
+                "password": {
                     "type": "string"
                 },
-                "dataPath": {
-                    "description": "Data location (required)",
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "transx.DataLocation": {
+            "type": "object",
+            "required": [
+                "path",
+                "storageType"
+            ],
+            "properties": {
+                "filesystem": {
+                    "description": "Access configuration (one of the following based on StorageType)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.FilesystemAccess"
+                        }
+                    ]
+                },
+                "filter": {
+                    "description": "Filter defines file filtering options",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.FilterOption"
+                        }
+                    ]
+                },
+                "objectStorage": {
+                    "description": "For storageType=\"objectstorage\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.ObjectStorageAccess"
+                        }
+                    ]
+                },
+                "path": {
+                    "description": "Path to the data\nFor Filesystem: File path (e.g., \"/data\", \"/home/user/data\")\nFor ObjectStorage: Bucket/Key (e.g., \"my-bucket/my-key\")",
                     "type": "string"
                 },
-                "endpoint": {
-                    "description": "Endpoint configuration (auto-detects protocol based on provided fields)",
+                "postCmd": {
+                    "description": "Command to run after transfer (destination only)",
                     "type": "string"
                 },
-                "port": {
-                    "description": "Port for SSH host/IP (default: 22) or Object Storage API endpoint (default: 1024)",
-                    "type": "integer"
-                },
-                "restoreCmd": {
-                    "description": "Restore command string to be executed on this endpoint",
+                "preCmd": {
+                    "description": "Hooks for pre/post processing",
                     "type": "string"
+                },
+                "storageType": {
+                    "description": "StorageType: What kind of storage\n\"filesystem\": Local or remote filesystem\n\"objectstorage\": S3-compatible object storage",
+                    "type": "string",
+                    "enum": [
+                        "filesystem",
+                        "objectstorage"
+                    ]
+                }
+            }
+        },
+        "transx.DataMigrationModel": {
+            "type": "object",
+            "required": [
+                "destination",
+                "source"
+            ],
+            "properties": {
+                "destination": {
+                    "$ref": "#/definitions/transx.DataLocation"
+                },
+                "source": {
+                    "$ref": "#/definitions/transx.DataLocation"
+                },
+                "strategy": {
+                    "description": "Strategy determines how the transfer is orchestrated.\n\"auto\": Automatically select best method.\n\"direct\": Force direct transfer (e.g., SSH agent forwarding).\n\"relay\": Force relay via local machine.",
+                    "type": "string",
+                    "default": "auto",
+                    "enum": [
+                        "auto",
+                        "direct",
+                        "relay"
+                    ]
+                }
+            }
+        },
+        "transx.FilesystemAccess": {
+            "type": "object",
+            "required": [
+                "accessType"
+            ],
+            "properties": {
+                "accessType": {
+                    "description": "AccessType: How to access the filesystem\n\"local\": Local filesystem (no network)\n\"ssh\": Remote filesystem via SSH",
+                    "type": "string",
+                    "enum": [
+                        "local",
+                        "ssh"
+                    ]
+                },
+                "ssh": {
+                    "description": "SSH configuration (required when accessType=\"ssh\")",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.SSHConfig"
+                        }
+                    ]
                 }
             }
         },
@@ -8524,7 +8643,7 @@
             "type": "object",
             "properties": {
                 "exclude": {
-                    "description": "Patterns to exclude (e.g., \"*.log\", \"temp/**\", \".git/**\")",
+                    "description": "Patterns to exclude (e.g., \"*.log\", \"temp/**\")",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -8539,156 +8658,201 @@
                 }
             }
         },
-        "transx.ObjectStorageOption": {
+        "transx.JWTAuthConfig": {
             "type": "object",
             "required": [
-                "accessKeyId"
+                "token"
             ],
             "properties": {
-                "accessKeyId": {
-                    "description": "Common authentication (REQUIRED - must be provided by user)",
+                "token": {
                     "type": "string"
-                },
-                "client": {
-                    "description": "Client selection",
+                }
+            }
+        },
+        "transx.ObjectStorageAccess": {
+            "type": "object",
+            "required": [
+                "accessType"
+            ],
+            "properties": {
+                "accessType": {
+                    "description": "AccessType: How to access object storage\n\"minio\": Direct S3 SDK access using minio-go\n\"spider\": Via CB-Spider Object Storage API\n\"tumblebug\": Via CB-Tumblebug Object Storage API",
                     "type": "string",
-                    "default": "spider"
+                    "enum": [
+                        "minio",
+                        "spider",
+                        "tumblebug"
+                    ]
                 },
-                "expiresIn": {
-                    "description": "Presigned URL configuration (spider client only)",
-                    "type": "integer",
-                    "default": 3600
-                },
-                "filter": {
-                    "description": "File filtering options (applied after listing objects, before upload/download)",
+                "minio": {
+                    "description": "Provider-specific configurations (one required based on accessType)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/transx.FilterOption"
+                            "$ref": "#/definitions/transx.S3MinioConfig"
                         }
                     ]
                 },
-                "maxRetries": {
-                    "description": "Maximum number of retry attempts (default: 3)",
-                    "type": "integer",
-                    "default": 3
+                "spider": {
+                    "description": "For accessType=\"spider\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.SpiderConfig"
+                        }
+                    ]
+                },
+                "tumblebug": {
+                    "description": "For accessType=\"tumblebug\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.TumblebugConfig"
+                        }
+                    ]
+                }
+            }
+        },
+        "transx.S3MinioConfig": {
+            "type": "object",
+            "required": [
+                "accessKeyId",
+                "endpoint",
+                "secretAccessKey"
+            ],
+            "properties": {
+                "accessKeyId": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
                 },
                 "region": {
-                    "description": "AWS region (for minio client, default: \"us-east-1\")",
                     "type": "string",
                     "default": "us-east-1"
                 },
                 "secretAccessKey": {
-                    "description": "AWS Secret Access Key (REQUIRED for minio client)",
                     "type": "string"
                 },
-                "timeout": {
-                    "description": "HTTP request configuration (optional)",
-                    "type": "integer",
-                    "default": 300
-                },
                 "useSSL": {
-                    "description": "Use HTTPS (default: true)",
                     "type": "boolean",
-                    "default": false
+                    "default": true
                 }
             }
         },
-        "transx.RsyncOption": {
+        "transx.SSHConfig": {
             "type": "object",
+            "required": [
+                "host",
+                "username"
+            ],
             "properties": {
                 "archive": {
-                    "description": "-a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)",
+                    "description": "Rsync options",
                     "type": "boolean",
                     "default": true
                 },
                 "compress": {
-                    "description": "Rsync-specific options",
                     "type": "boolean",
                     "default": true
                 },
                 "connectTimeout": {
-                    "description": "SSH connection timeout in seconds",
                     "type": "integer",
                     "default": 30
                 },
                 "delete": {
-                    "description": "--delete: Delete extraneous files from dest dirs",
-                    "type": "boolean",
-                    "default": false
+                    "type": "boolean"
                 },
                 "dryRun": {
-                    "description": "Perform a trial run with no changes made",
-                    "type": "boolean",
-                    "default": false
+                    "type": "boolean"
                 },
-                "filter": {
-                    "description": "File filtering options (include/exclude patterns) - use nested structure for better organization",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/transx.FilterOption"
-                        }
-                    ]
-                },
-                "insecureSkipHostKeyVerification": {
-                    "description": "InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.\nAdds \"-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null\" options.\nWarning: This can be a security risk and should only be used in trusted environments.",
-                    "type": "boolean",
-                    "default": false
-                },
-                "progress": {
-                    "description": "Show progress during transfer",
-                    "type": "boolean",
-                    "default": false
-                },
-                "rsyncPath": {
-                    "description": "Path to the rsync executable (if empty, uses system PATH)",
-                    "type": "string",
-                    "default": "rsync"
-                },
-                "sshPrivateKeyPath": {
-                    "description": "SSH private key path",
+                "host": {
+                    "description": "Connection details",
                     "type": "string"
                 },
-                "transferDirContentsOnly": {
-                    "description": "TransferDirContentsOnly, if true, adds a trailing slash to source paths\nto transfer only the contents of the directory and not the directory itself.",
-                    "type": "boolean",
-                    "default": false
+                "port": {
+                    "type": "integer",
+                    "default": 22
+                },
+                "privateKey": {
+                    "description": "Authentication (priority: PrivateKey \u003e PrivateKeyPath \u003e Agent \u003e none)\nAt least one authentication method should be available.\n\nPrivateKey: PEM-encoded private key content (preferred for injected secrets).\nIn JSON, use single line with \\n for newlines:\n  \"privateKey\": \"-----BEGIN RSA PRIVATE KEY-----\\nMIIE...\\n-----END RSA PRIVATE KEY-----\"",
+                    "type": "string"
+                },
+                "privateKeyPath": {
+                    "description": "Path to private key file (legacy, prefer PrivateKey)",
+                    "type": "string"
+                },
+                "useAgent": {
+                    "description": "Use SSH agent for authentication (supports agent forwarding)",
+                    "type": "boolean"
                 },
                 "username": {
-                    "description": "SSH connection \u0026 authentication options (integrated)",
                     "type": "string"
                 },
                 "verbose": {
-                    "description": "Transfer behavior options",
-                    "type": "boolean",
-                    "default": false
+                    "type": "boolean"
                 }
             }
         },
-        "transx.TransferOptions": {
+        "transx.SpiderConfig": {
             "type": "object",
             "required": [
-                "method"
+                "connectionName",
+                "endpoint"
             ],
             "properties": {
-                "method": {
-                    "description": "Transfer method specification (required)",
+                "auth": {
+                    "description": "Optional authentication configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.AuthConfig"
+                        }
+                    ]
+                },
+                "connectionName": {
+                    "description": "CB-Spider connection name (e.g., \"aws-connection\")",
                     "type": "string"
                 },
-                "objectStorageOptions": {
-                    "description": "Object Storage-specific options (CB-Spider, AWS S3, etc.)",
+                "endpoint": {
+                    "description": "CB-Spider API base URL (e.g., \"http://localhost:1024/spider\")",
+                    "type": "string"
+                },
+                "expires": {
+                    "description": "Presigned URL expiration in seconds",
+                    "type": "integer",
+                    "default": 3600
+                }
+            }
+        },
+        "transx.TumblebugConfig": {
+            "type": "object",
+            "required": [
+                "endpoint",
+                "nsId",
+                "osId"
+            ],
+            "properties": {
+                "auth": {
+                    "description": "Optional authentication configuration",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/transx.ObjectStorageOption"
+                            "$ref": "#/definitions/transx.AuthConfig"
                         }
                     ]
                 },
-                "rsyncOptions": {
-                    "description": "Rsync-specific options",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/transx.RsyncOption"
-                        }
-                    ]
+                "endpoint": {
+                    "description": "CB-Tumblebug API base URL (e.g., \"http://localhost:1323/tumblebug\")",
+                    "type": "string"
+                },
+                "expires": {
+                    "description": "Presigned URL expiration in seconds",
+                    "type": "integer",
+                    "default": 3600
+                },
+                "nsId": {
+                    "description": "Namespace ID for multi-tenancy",
+                    "type": "string"
+                },
+                "osId": {
+                    "description": "Object Storage ID",
+                    "type": "string"
                 }
             }
         }

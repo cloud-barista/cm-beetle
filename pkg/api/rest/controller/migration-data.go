@@ -31,8 +31,10 @@ import (
 // @Description Migrate data from source to target
 // @Description
 // @Description [Note]
-// @Description * Only relay mode is supported for now (both source and destination should be remote endpoints).
-// @Description * Supported methods: rsync, object storage
+// @Description * Both source and destination must be remote endpoints (SSH or object storage).
+// @Description * Local filesystem access is not allowed for security reasons.
+// @Description * Strategy options: auto (default), direct, relay.
+// @Description * For SSH endpoints, supports PrivateKey content or PrivateKeyPath.
 // @Description
 // @Description [Note]
 // @Description * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
@@ -56,20 +58,32 @@ func MigrateData(c echo.Context) error {
 	err := transx.Validate(*req)
 	if err != nil {
 		log.Error().Err(err).Msg("invalid request")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid data migration configuration"))
-	}
-
-	if !(req.Source.IsRemote() && req.Destination.IsRemote()) {
-		err := fmt.Errorf("both source and destination must be remote endpoints")
-		log.Error().Err(err).Msg("invalid request")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
-	log.Info().Msgf("Migrate data from %s (%s) to %s (%s)", req.Source.GetEndpoint(), req.Source.DataPath, req.Destination.GetEndpoint(), req.Destination.DataPath)
+	// Security check: Prevent access to local filesystem
+	// API users must not access the server's local filesystem
+	if req.Source.IsLocal() {
+		log.Warn().Msg("rejected: source uses local filesystem")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Local filesystem access not allowed for source; use SSH or object storage"))
+	}
+	if req.Destination.IsLocal() {
+		log.Warn().Msg("rejected: destination uses local filesystem")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Local filesystem access not allowed for destination; use SSH or object storage"))
+	}
+
+	log.Info().
+		Str("sourceType", req.Source.StorageType).
+		Str("sourcePath", req.Source.Path).
+		Str("destType", req.Destination.StorageType).
+		Str("destPath", req.Destination.Path).
+		Str("strategy", req.Strategy).
+		Msg("Starting data migration")
 
 	// Start time measurement
 	startTime := time.Now()
 
+	// Execute migration
 	err = transx.Transfer(*req)
 
 	// Calculate elapsed time
@@ -77,7 +91,7 @@ func MigrateData(c echo.Context) error {
 
 	if err != nil {
 		log.Error().Err(err).Dur("elapsedTime", elapsedTime).Msg("failed to migrate data")
-		errorMsg := fmt.Sprintf("Data migration failed (%s)", elapsedTime.Round(time.Millisecond))
+		errorMsg := fmt.Sprintf("Data migration failed: %v (%s)", err, elapsedTime.Round(time.Millisecond))
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
 	}
 

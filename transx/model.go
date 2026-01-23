@@ -5,184 +5,418 @@ import (
 	"strings"
 )
 
-// Transfer method constants
+// ============================================================================
+// Storage Types: What kind of storage is being used
+// ============================================================================
+
 const (
-	TransferMethodRsync         = "rsync"
-	TransferMethodObjectStorage = "object-storage"
+	// StorageTypeFilesystem represents local or remote filesystem storage.
+	StorageTypeFilesystem = "filesystem"
+
+	// StorageTypeObjectStorage represents S3-compatible object storage.
+	StorageTypeObjectStorage = "objectstorage"
 )
 
-// Object Storage client constants
+// ============================================================================
+// Access Types: How to access the storage
+// ============================================================================
+
+// Filesystem access types
 const (
-	ObjectStorageClientSpider = "spider" // CB-Spider presigned URL API (default)
-	ObjectStorageClientMinio  = "minio"  // MinIO SDK for direct S3-compatible access
+	// AccessTypeLocal represents local filesystem access (no network).
+	AccessTypeLocal = "local"
+
+	// AccessTypeSSH represents remote filesystem access via SSH/rsync.
+	AccessTypeSSH = "ssh"
 )
 
-// FilterOption defines file filtering options for both rsync and Object Storage transfers.
-// Supports glob patterns with rsync-like filtering behavior:
-// 1. If include patterns are specified, only matching files are included
-// 2. Exclude patterns are applied after include patterns (exclude takes priority)
-// 3. Supports ** for recursive directory matching
+// Object Storage access types
+const (
+	// AccessTypeMinio represents direct S3 SDK access using minio-go.
+	AccessTypeMinio = "minio"
+
+	// AccessTypeSpider represents access via CB-Spider Object Storage API.
+	AccessTypeSpider = "spider"
+
+	// AccessTypeTumblebug represents access via CB-Tumblebug Object Storage API.
+	AccessTypeTumblebug = "tumblebug"
+)
+
+// ============================================================================
+// Transfer Strategies
+// ============================================================================
+
+const (
+	// StrategyAuto automatically selects the best transfer method.
+	StrategyAuto = "auto"
+
+	// StrategyDirect forces direct transfer (e.g., SSH agent forwarding).
+	StrategyDirect = "direct"
+
+	// StrategyRelay forces relay via local machine.
+	StrategyRelay = "relay"
+)
+
+// ============================================================================
+// Pipeline and Step Names (for consistent naming)
+// ============================================================================
+
+const (
+	PipelineFilesystemTransfer    = "filesystem-transfer"
+	PipelineObjectStorageTransfer = "objectstorage-transfer"
+	PipelineCrossStorageTransfer  = "cross-storage-transfer"
+
+	StepRsyncTransfer   = "rsync-transfer"
+	StepDownloadFromS3  = "download-from-s3"
+	StepUploadToS3      = "upload-to-s3"
+	StepRsyncFromServer = "rsync-from-server"
+	StepRsyncToServer   = "rsync-to-server"
+)
+
+// ============================================================================
+// Staging Configuration
+// ============================================================================
+
+const (
+	// DefaultStagingPath is the default local staging directory for relay transfers.
+	DefaultStagingPath = "/tmp/transx-staging"
+)
+
+// ============================================================================
+// Filter Options
+// ============================================================================
+
+// FilterOption defines file filtering options for transfers.
 type FilterOption struct {
 	Include []string `json:"include,omitempty"` // Patterns to include (e.g., "*.txt", "data/**")
-	Exclude []string `json:"exclude,omitempty"` // Patterns to exclude (e.g., "*.log", "temp/**", ".git/**")
+	Exclude []string `json:"exclude,omitempty"` // Patterns to exclude (e.g., "*.log", "temp/**")
 }
 
-// DataMigrationModel defines a single data migration task supporting multiple protocols.
+// ============================================================================
+// Data Migration Model
+// ============================================================================
+
+// DataMigrationModel defines a single data migration task.
 type DataMigrationModel struct {
-	Source                     EndpointDetails  `json:"source" validate:"required"`                     // Source endpoint configuration
-	SourceTransferOptions      *TransferOptions `json:"sourceTransferOptions" validate:"required"`      // Source-specific transfer options
-	Destination                EndpointDetails  `json:"destination" validate:"required"`                // Destination endpoint configuration
-	DestinationTransferOptions *TransferOptions `json:"destinationTransferOptions" validate:"required"` // Destination-specific transfer options
+	Source      DataLocation `json:"source" validate:"required"`
+	Destination DataLocation `json:"destination" validate:"required"`
+
+	// Strategy determines how the transfer is orchestrated.
+	// "auto": Automatically select best method.
+	// "direct": Force direct transfer (e.g., SSH agent forwarding).
+	// "relay": Force relay via local machine.
+	Strategy string `json:"strategy,omitempty" default:"auto" validate:"omitempty,oneof=auto direct relay"`
 }
 
-// EndpointDetails defines the source/destination endpoint for data transfer and backup/restore operations.
-// Simple unified structure supporting SSH-based rsync, Object Storage API endpoints, and local filesystem transfers.
-type EndpointDetails struct {
-	// Endpoint configuration (auto-detects protocol based on provided fields)
-	Endpoint string `json:"endpoint,omitempty"` // SSH host/IP or Object Storage API endpoint (e.g., "server.com", "http://localhost:1024/spider/s3")
-	Port     int    `json:"port,omitempty"`     // Port for SSH host/IP (default: 22) or Object Storage API endpoint (default: 1024)
+// ============================================================================
+// Data Location (Unified Structure)
+// ============================================================================
 
-	// Data location (required)
-	DataPath string `json:"dataPath" validate:"required"` // Local path, remote path, or Object Storage bucket path (e.g., "/data", "bucket/object-key")
+// DataLocation defines any data location with separated storage type and access method.
+type DataLocation struct {
+	// StorageType: What kind of storage
+	// "filesystem": Local or remote filesystem
+	// "objectstorage": S3-compatible object storage
+	StorageType string `json:"storageType" validate:"required,oneof=filesystem objectstorage"`
 
-	// Command execution
-	BackupCmd  string `json:"backupCmd,omitempty"`  // Backup command string to be executed on this endpoint
-	RestoreCmd string `json:"restoreCmd,omitempty"` // Restore command string to be executed on this endpoint
+	// Path to the data
+	// For Filesystem: File path (e.g., "/data", "/home/user/data")
+	// For ObjectStorage: Bucket/Key (e.g., "my-bucket/my-key")
+	Path string `json:"path" validate:"required"`
+
+	// Access configuration (one of the following based on StorageType)
+	Filesystem    *FilesystemAccess    `json:"filesystem,omitempty"`    // For storageType="filesystem"
+	ObjectStorage *ObjectStorageAccess `json:"objectStorage,omitempty"` // For storageType="objectstorage"
+
+	// Filter defines file filtering options
+	Filter *FilterOption `json:"filter,omitempty"`
+
+	// Hooks for pre/post processing
+	PreCmd  string `json:"preCmd,omitempty"`  // Command to run before transfer (source only)
+	PostCmd string `json:"postCmd,omitempty"` // Command to run after transfer (destination only)
 }
 
-// TransferOptions defines options for various data transfer methods.
-type TransferOptions struct {
-	// Transfer method specification (required)
-	Method string `json:"method" validate:"required"` // Transfer method: "rsync", "object-storage"
+// ============================================================================
+// Filesystem Access Configuration
+// ============================================================================
 
-	// Rsync-specific options
-	RsyncOptions *RsyncOption `json:"rsyncOptions,omitempty"`
+// FilesystemAccess defines how to access filesystem storage.
+type FilesystemAccess struct {
+	// AccessType: How to access the filesystem
+	// "local": Local filesystem (no network)
+	// "ssh": Remote filesystem via SSH
+	AccessType string `json:"accessType" validate:"required,oneof=local ssh"`
 
-	// Object Storage-specific options (CB-Spider, AWS S3, etc.)
-	ObjectStorageOptions *ObjectStorageOption `json:"objectStorageOptions,omitempty"`
+	// SSH configuration (required when accessType="ssh")
+	SSH *SSHConfig `json:"ssh,omitempty"`
 }
 
-// RsyncOption defines rsync-specific transfer options and SSH connection options.
-type RsyncOption struct {
-	// SSH connection & authentication options (integrated)
-	Username          string `json:"username,omitempty"`          // SSH username
-	SSHPrivateKeyPath string `json:"sshPrivateKeyPath,omitempty"` // SSH private key path
+// SSHConfig defines SSH connection details and rsync options.
+type SSHConfig struct {
+	// Connection details
+	Host           string `json:"host" validate:"required"`
+	Port           int    `json:"port,omitempty" default:"22"`
+	Username       string `json:"username" validate:"required"`
+	ConnectTimeout int    `json:"connectTimeout,omitempty" default:"30"`
 
-	// InsecureSkipHostKeyVerification, if true, relaxes host key checking for SSH connections.
-	// Adds "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" options.
-	// Warning: This can be a security risk and should only be used in trusted environments.
-	InsecureSkipHostKeyVerification bool `json:"insecureSkipHostKeyVerification,omitempty" default:"false"`
-	ConnectTimeout                  int  `json:"connectTimeout,omitempty" default:"30"` // SSH connection timeout in seconds
+	// Authentication (priority: PrivateKey > PrivateKeyPath > Agent > none)
+	// At least one authentication method should be available.
+	//
+	// PrivateKey: PEM-encoded private key content (preferred for injected secrets).
+	// In JSON, use single line with \n for newlines:
+	//   "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
+	PrivateKey     string `json:"privateKey,omitempty"`
+	PrivateKeyPath string `json:"privateKeyPath,omitempty"` // Path to private key file (legacy, prefer PrivateKey)
+	UseAgent       bool   `json:"useAgent,omitempty"`       // Use SSH agent for authentication (supports agent forwarding)
 
-	// Transfer behavior options
-	Verbose  bool `json:"verbose,omitempty" default:"false"`  // Enable verbose logging
-	DryRun   bool `json:"dryRun,omitempty" default:"false"`   // Perform a trial run with no changes made
-	Progress bool `json:"progress,omitempty" default:"false"` // Show progress during transfer
-
-	// Rsync-specific options
-	Compress  bool          `json:"compress,omitempty" default:"true"`   // -z, --compress: Compress file data during the transfer
-	Archive   bool          `json:"archive,omitempty" default:"true"`    // -a, --archive: Archive mode; equals -rlptgoD (no -H,-A,-X)
-	Delete    bool          `json:"delete,omitempty" default:"false"`    // --delete: Delete extraneous files from dest dirs
-	RsyncPath string        `json:"rsyncPath,omitempty" default:"rsync"` // Path to the rsync executable (if empty, uses system PATH)
-	Filter    *FilterOption `json:"filter,omitempty"`                    // File filtering options (include/exclude patterns) - use nested structure for better organization
-
-	// TransferDirContentsOnly, if true, adds a trailing slash to source paths
-	// to transfer only the contents of the directory and not the directory itself.
-	TransferDirContentsOnly bool `json:"transferDirContentsOnly,omitempty" default:"false"`
+	// Rsync options
+	Archive  bool `json:"archive,omitempty" default:"true"`
+	Compress bool `json:"compress,omitempty" default:"true"`
+	Delete   bool `json:"delete,omitempty"`
+	Verbose  bool `json:"verbose,omitempty"`
+	DryRun   bool `json:"dryRun,omitempty"`
 }
 
-// ObjectStorageOption defines Object Storage transfer options.
-// Supports two clients:
-// 1. Spider client (Client = "spider" or empty, default for backward compatibility)
-//   - Endpoint: CB-Spider API endpoint (e.g., "http://localhost:1024/spider/s3")
-//   - AccessKeyId: CB-Spider connection name (e.g., "aws-config01")
-//   - Uses presigned URLs from CB-Spider for upload/download
-//
-// 2. MinIO client (Client = "minio")
-//   - Endpoint: S3-compatible storage endpoint (e.g., "s3.amazonaws.com", "play.min.io:9000")
-//   - AccessKeyId: AWS Access Key ID
-//   - SecretAccessKey: AWS Secret Access Key (required for minio client)
-//   - Region: AWS region (optional, default: "us-east-1")
-//   - UseSSL: Use HTTPS for connections (default: true)
-type ObjectStorageOption struct {
-	// Client selection
-	Client string `json:"client,omitempty" default:"spider"` // Object storage client: "spider" (default) or "minio"
+// ============================================================================
+// Object Storage Access Configuration
+// ============================================================================
 
-	// Common authentication (REQUIRED - must be provided by user)
-	AccessKeyId     string `json:"accessKeyId" validate:"required"`      // AWS Access Key ID or CB-Spider connection name (REQUIRED)
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`            // AWS Secret Access Key (REQUIRED for minio client)
-	Region          string `json:"region,omitempty" default:"us-east-1"` // AWS region (for minio client, default: "us-east-1")
-	UseSSL          bool   `json:"useSSL,omitempty" default:"false"`     // Use HTTPS (default: true)
+// ObjectStorageAccess defines how to access object storage.
+type ObjectStorageAccess struct {
+	// AccessType: How to access object storage
+	// "minio": Direct S3 SDK access using minio-go
+	// "spider": Via CB-Spider Object Storage API
+	// "tumblebug": Via CB-Tumblebug Object Storage API
+	AccessType string `json:"accessType" validate:"required,oneof=minio spider tumblebug"`
 
-	// Presigned URL configuration (spider client only)
-	ExpiresIn int `json:"expiresIn,omitempty" default:"3600"` // Presigned URL expiration time in seconds (default: 3600)
-
-	// HTTP request configuration (optional)
-	Timeout    int `json:"timeout,omitempty" default:"300"`  // HTTP request timeout in seconds (default: 300)
-	MaxRetries int `json:"maxRetries,omitempty" default:"3"` // Maximum number of retry attempts (default: 3)
-
-	// File filtering options (applied after listing objects, before upload/download)
-	Filter *FilterOption `json:"filter,omitempty"` // File filtering options (include/exclude patterns) - use nested structure for better organization
+	// Provider-specific configurations (one required based on accessType)
+	Minio     *S3MinioConfig   `json:"minio,omitempty"`     // For accessType="minio"
+	Spider    *SpiderConfig    `json:"spider,omitempty"`    // For accessType="spider"
+	Tumblebug *TumblebugConfig `json:"tumblebug,omitempty"` // For accessType="tumblebug"
 }
 
-// Validate checks if the fields of DataMigrationModel satisfy basic requirements for transfer tasks.
+// S3MinioConfig defines S3 SDK configuration using minio-go.
+type S3MinioConfig struct {
+	Endpoint        string `json:"endpoint" validate:"required"`
+	AccessKeyId     string `json:"accessKeyId" validate:"required"`
+	SecretAccessKey string `json:"secretAccessKey" validate:"required"`
+	Region          string `json:"region,omitempty" default:"us-east-1"`
+	UseSSL          bool   `json:"useSSL,omitempty" default:"true"`
+}
+
+// SpiderConfig defines CB-Spider Object Storage API configuration.
+// Endpoint should include /spider prefix (e.g., "http://localhost:1024/spider").
+type SpiderConfig struct {
+	Endpoint       string      `json:"endpoint" validate:"required"`       // CB-Spider API base URL (e.g., "http://localhost:1024/spider")
+	ConnectionName string      `json:"connectionName" validate:"required"` // CB-Spider connection name (e.g., "aws-connection")
+	Expires        int         `json:"expires,omitempty" default:"3600"`   // Presigned URL expiration in seconds
+	Auth           *AuthConfig `json:"auth,omitempty"`                     // Optional authentication configuration
+}
+
+// TumblebugConfig defines CB-Tumblebug Object Storage API configuration.
+// Endpoint should include /tumblebug prefix (e.g., "http://localhost:1323/tumblebug").
+type TumblebugConfig struct {
+	Endpoint string      `json:"endpoint" validate:"required"`     // CB-Tumblebug API base URL (e.g., "http://localhost:1323/tumblebug")
+	NsId     string      `json:"nsId" validate:"required"`         // Namespace ID for multi-tenancy
+	OsId     string      `json:"osId" validate:"required"`         // Object Storage ID
+	Expires  int         `json:"expires,omitempty" default:"3600"` // Presigned URL expiration in seconds
+	Auth     *AuthConfig `json:"auth,omitempty"`                   // Optional authentication configuration
+}
+
+// ============================================================================
+// Authentication Configuration
+// ============================================================================
+
+// Auth types
+const (
+	// AuthTypeBasic represents HTTP Basic Authentication.
+	AuthTypeBasic = "basic"
+
+	// AuthTypeJWT represents JWT (JSON Web Token) Authentication.
+	AuthTypeJWT = "jwt"
+
+	// AuthTypeAPIKey represents API Key Authentication.
+	// AuthTypeAPIKey = "apikey" // TODO: Not tested yet
+
+	// AuthTypeOAuth represents OAuth 2.0 Authentication.
+	// AuthTypeOAuth = "oauth" // TODO: Not tested yet
+)
+
+// AuthConfig defines authentication configuration.
+// Use authType to specify the authentication method.
+type AuthConfig struct {
+	AuthType string           `json:"authType" validate:"required"` // "basic", "jwt" ("apikey", "oauth" not tested yet)
+	Basic    *BasicAuthConfig `json:"basic,omitempty"`              // For authType="basic"
+	JWT      *JWTAuthConfig   `json:"jwt,omitempty"`                // For authType="jwt"
+	// APIKey   *APIKeyConfig    `json:"apiKey,omitempty"`             // For authType="apikey" (TODO: Not tested yet)
+	// OAuth    *OAuthConfig     `json:"oauth,omitempty"`              // For authType="oauth" (TODO: Not tested yet)
+}
+
+// BasicAuthConfig defines HTTP Basic Authentication credentials.
+type BasicAuthConfig struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+// JWTAuthConfig defines JWT authentication configuration.
+type JWTAuthConfig struct {
+	Token string `json:"token" validate:"required"`
+}
+
+// APIKeyConfig defines API Key authentication configuration.
+// TODO: Not tested yet
+// type APIKeyConfig struct {
+// 	Key        string `json:"key" validate:"required"`
+// 	HeaderName string `json:"headerName,omitempty" default:"X-API-Key"` // Header name for API key
+// }
+
+// OAuthConfig defines OAuth 2.0 authentication configuration.
+// TODO: Not tested yet
+// type OAuthConfig struct {
+// 	AccessToken string `json:"accessToken" validate:"required"`
+// 	TokenType   string `json:"tokenType,omitempty" default:"Bearer"` // e.g., "Bearer"
+// }
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+// Validate checks if DataMigrationModel satisfies requirements.
 func Validate(dmm DataMigrationModel) error {
-	sourceRsyncPath := dmm.Source.GetRsyncPath(nil)    // Basic validation without specific options
-	destRsyncPath := dmm.Destination.GetRsyncPath(nil) // Basic validation without specific options
-
-	if strings.TrimSpace(sourceRsyncPath) == "" || strings.TrimSpace(dmm.Source.DataPath) == "" {
-		return fmt.Errorf("source path must be provided for transfer task")
+	if err := validateLocation(dmm.Source, "source"); err != nil {
+		return err
 	}
-	if strings.TrimSpace(destRsyncPath) == "" || strings.TrimSpace(dmm.Destination.DataPath) == "" {
-		return fmt.Errorf("destination path must be provided for transfer task")
+	if err := validateLocation(dmm.Destination, "destination"); err != nil {
+		return err
 	}
-
-	// Validate SSH port for source if it's a remote endpoint
-	if dmm.Source.IsRemote() {
-		sourcePort := dmm.Source.GetPort()
-		if sourcePort != 0 && (sourcePort < 1 || sourcePort > 65535) {
-			return fmt.Errorf("source SSH port %d is out of valid range (1-65535)", sourcePort)
-		}
-		if strings.TrimSpace(dmm.Source.GetEndpoint()) == "" {
-			return fmt.Errorf("source HostIP must be provided for remote transfer task")
-		}
-	}
-	// Validate SSH port for destination if it's a remote endpoint
-	if dmm.Destination.IsRemote() {
-		destPort := dmm.Destination.GetPort()
-		if destPort != 0 && (destPort < 1 || destPort > 65535) {
-			return fmt.Errorf("destination SSH port %d is out of valid range (1-65535)", destPort)
-		}
-		if strings.TrimSpace(dmm.Destination.GetEndpoint()) == "" {
-			return fmt.Errorf("destination HostIP must be provided for remote transfer task")
-		}
-	}
-
-	// Validate Object Storage configuration
-	if dmm.SourceTransferOptions != nil &&
-		dmm.SourceTransferOptions.Method == TransferMethodObjectStorage &&
-		dmm.SourceTransferOptions.ObjectStorageOptions != nil {
-		if err := validateObjectStorageOptions(dmm.SourceTransferOptions.ObjectStorageOptions, "source"); err != nil {
-			return err
-		}
-	}
-
-	if dmm.DestinationTransferOptions != nil &&
-		dmm.DestinationTransferOptions.Method == TransferMethodObjectStorage &&
-		dmm.DestinationTransferOptions.ObjectStorageOptions != nil {
-		if err := validateObjectStorageOptions(dmm.DestinationTransferOptions.ObjectStorageOptions, "destination"); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-// validateObjectStorageOptions validates Object Storage transfer options
-func validateObjectStorageOptions(options *ObjectStorageOption, context string) error {
-	if strings.TrimSpace(options.AccessKeyId) == "" {
-		return fmt.Errorf("%s Object Storage AccessKeyId must be provided (e.g., \"aws-config01\", \"conn-kimy-aws\")", context)
+func validateLocation(loc DataLocation, context string) error {
+	if strings.TrimSpace(loc.Path) == "" {
+		return fmt.Errorf("%s: path is required", context)
 	}
 
-	return nil
+	switch loc.StorageType {
+	case StorageTypeFilesystem:
+		return validateFilesystemAccess(loc.Filesystem, context)
+
+	case StorageTypeObjectStorage:
+		return validateObjectStorageAccess(loc.ObjectStorage, context)
+
+	default:
+		return fmt.Errorf("%s: unsupported storage type: %s", context, loc.StorageType)
+	}
+}
+
+func validateFilesystemAccess(fs *FilesystemAccess, context string) error {
+	if fs == nil {
+		return fmt.Errorf("%s: filesystem access config required", context)
+	}
+
+	switch fs.AccessType {
+	case AccessTypeLocal:
+		// No additional config needed
+		return nil
+
+	case AccessTypeSSH:
+		if fs.SSH == nil {
+			return fmt.Errorf("%s: SSH config required for ssh access", context)
+		}
+		if strings.TrimSpace(fs.SSH.Host) == "" {
+			return fmt.Errorf("%s: SSH host is required", context)
+		}
+		if strings.TrimSpace(fs.SSH.Username) == "" {
+			return fmt.Errorf("%s: SSH username is required", context)
+		}
+		if fs.SSH.Port < 0 || fs.SSH.Port > 65535 {
+			return fmt.Errorf("%s: SSH port out of range", context)
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("%s: unsupported filesystem access type: %s", context, fs.AccessType)
+	}
+}
+
+func validateObjectStorageAccess(os *ObjectStorageAccess, context string) error {
+	if os == nil {
+		return fmt.Errorf("%s: object storage access config required", context)
+	}
+
+	switch os.AccessType {
+	case AccessTypeMinio:
+		if os.Minio == nil {
+			return fmt.Errorf("%s: minio S3 config required", context)
+		}
+		if strings.TrimSpace(os.Minio.Endpoint) == "" {
+			return fmt.Errorf("%s: S3 endpoint is required", context)
+		}
+		if strings.TrimSpace(os.Minio.AccessKeyId) == "" || strings.TrimSpace(os.Minio.SecretAccessKey) == "" {
+			return fmt.Errorf("%s: S3 credentials are required", context)
+		}
+		return nil
+
+	case AccessTypeSpider:
+		if os.Spider == nil {
+			return fmt.Errorf("%s: Spider config required", context)
+		}
+		if strings.TrimSpace(os.Spider.Endpoint) == "" {
+			return fmt.Errorf("%s: Spider endpoint is required", context)
+		}
+		if strings.TrimSpace(os.Spider.ConnectionName) == "" {
+			return fmt.Errorf("%s: Spider connection name is required", context)
+		}
+		return nil
+
+	case AccessTypeTumblebug:
+		if os.Tumblebug == nil {
+			return fmt.Errorf("%s: Tumblebug config required", context)
+		}
+		if strings.TrimSpace(os.Tumblebug.Endpoint) == "" {
+			return fmt.Errorf("%s: Tumblebug endpoint is required", context)
+		}
+		if strings.TrimSpace(os.Tumblebug.NsId) == "" {
+			return fmt.Errorf("%s: Tumblebug namespace ID is required", context)
+		}
+		if strings.TrimSpace(os.Tumblebug.OsId) == "" {
+			return fmt.Errorf("%s: Tumblebug object storage ID is required", context)
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("%s: unsupported object storage access type: %s", context, os.AccessType)
+	}
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+// IsFilesystem returns true if the location uses filesystem storage.
+func (loc DataLocation) IsFilesystem() bool {
+	return loc.StorageType == StorageTypeFilesystem
+}
+
+// IsObjectStorage returns true if the location uses object storage.
+func (loc DataLocation) IsObjectStorage() bool {
+	return loc.StorageType == StorageTypeObjectStorage
+}
+
+// IsLocal returns true if the location is local filesystem.
+func (loc DataLocation) IsLocal() bool {
+	return loc.IsFilesystem() && loc.Filesystem != nil && loc.Filesystem.AccessType == AccessTypeLocal
+}
+
+// IsRemote returns true if the location requires network access.
+func (loc DataLocation) IsRemote() bool {
+	if loc.IsObjectStorage() {
+		return true
+	}
+	return loc.IsFilesystem() && loc.Filesystem != nil && loc.Filesystem.AccessType == AccessTypeSSH
+}
+
+// NeedsLocalStaging returns true if this location needs local staging for relay.
+func (loc DataLocation) NeedsLocalStaging() bool {
+	return loc.IsRemote()
 }

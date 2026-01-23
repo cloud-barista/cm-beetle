@@ -20,7 +20,7 @@ func main() {
 	var restoreOnly bool
 
 	// Setting up command-line flags
-	flag.StringVar(&configFile, "config", "direct-mode-config.json", "Migration configuration JSON file path")
+	flag.StringVar(&configFile, "config", "config-minio-upload.json", "Migration configuration JSON file path")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.BoolVar(&backupOnly, "backup", false, "Run only the backup step")
 	flag.BoolVar(&transferOnly, "transfer", false, "Run only the transfer step")
@@ -39,9 +39,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("❌ Error loading migration configuration: %v", err)
 	}
-
-	// Update verbose setting in task options
-	updateVerboseSetting(&task, verbose)
 
 	// Execute migration steps
 	if err := executeMigrationSteps(task, backupOnly, transferOnly, restoreOnly, verbose); err != nil {
@@ -69,12 +66,6 @@ func loadMigrationConfig(configFile string) (transx.DataMigrationModel, error) {
 	}
 
 	return task, nil
-}
-
-func updateVerboseSetting(task *transx.DataMigrationModel, verbose bool) {
-	// Verbose setting is now handled internally by the transx package
-	// No need to set it manually here
-	_ = verbose
 }
 
 func executeMigrationSteps(task transx.DataMigrationModel, backupOnly, transferOnly, restoreOnly, verbose bool) error {
@@ -105,8 +96,8 @@ func executeMigrationSteps(task transx.DataMigrationModel, backupOnly, transferO
 
 	// Execute individual steps based on user selection
 	if runBackup {
-		// Only run backup if BackupCmd is defined
-		if strings.TrimSpace(task.Source.BackupCmd) != "" {
+		// Only run backup if PreCmd is defined
+		if strings.TrimSpace(task.Source.PreCmd) != "" {
 			if verbose {
 				fmt.Println("📦 Starting backup step...")
 			}
@@ -117,7 +108,7 @@ func executeMigrationSteps(task transx.DataMigrationModel, backupOnly, transferO
 				fmt.Println("✅ Backup completed successfully")
 			}
 		} else if verbose {
-			fmt.Println("⏭️ Skipping backup step (no backup command defined)")
+			fmt.Println("⏭️ Skipping backup step (no pre-command defined)")
 		}
 	}
 
@@ -134,8 +125,8 @@ func executeMigrationSteps(task transx.DataMigrationModel, backupOnly, transferO
 	}
 
 	if runRestore {
-		// Only run restore if RestoreCmd is defined
-		if strings.TrimSpace(task.Destination.RestoreCmd) != "" {
+		// Only run restore if PostCmd is defined
+		if strings.TrimSpace(task.Destination.PostCmd) != "" {
 			if verbose {
 				fmt.Println("🔧 Starting restore step...")
 			}
@@ -146,20 +137,7 @@ func executeMigrationSteps(task transx.DataMigrationModel, backupOnly, transferO
 				fmt.Println("✅ Restore completed successfully")
 			}
 		} else if verbose {
-			fmt.Println("⏭️ Skipping restore step (no restore command defined)")
-		}
-	}
-
-	// If no individual steps selected, run complete migration
-	if !backupOnly && !transferOnly && !restoreOnly {
-		if verbose {
-			fmt.Println("🚀 Starting complete migration...")
-		}
-		if err := transx.MigrateData(task); err != nil {
-			return fmt.Errorf("migration failed: %w", err)
-		}
-		if verbose {
-			fmt.Println("✅ Complete migration finished successfully")
+			fmt.Println("⏭️ Skipping restore step (no post-command defined)")
 		}
 	}
 

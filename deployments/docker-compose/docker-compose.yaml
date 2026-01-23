@@ -55,8 +55,8 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    # image: cloudbaristaorg/cb-tumblebug:0.11.19
-    image: cloudbaristaorg/cb-tumblebug:0.12.1
+    # image: cloudbaristaorg/cb-tumblebug:0.12.1
+    image: cloudbaristaorg/cb-tumblebug:0.12.2
     container_name: cb-tumblebug
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
@@ -194,8 +194,8 @@ services:
 
   # CB-Spider
   cb-spider:
-    # image: cloudbaristaorg/cb-spider:0.11.16
-    image: cloudbaristaorg/cb-spider:0.12.0
+    # image: cloudbaristaorg/cb-spider:0.12.0
+    image: cloudbaristaorg/cb-spider:0.12.5
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -214,8 +214,8 @@ services:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
-      # - API_USERNAME=
-      # - API_PASSWORD=
+      - API_USERNAME=default
+      - API_PASSWORD=$$2a$$10$$4PKzCuJ6fPYsbCF.HR//ieLjaCzBAdwORchx62F2JRXQsuR3d9T0q
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
@@ -229,8 +229,7 @@ services:
 
   # cb-mapui
   cb-mapui:
-    # image: cloudbaristaorg/cb-mapui:0.11.19
-    image: cloudbaristaorg/cb-mapui:0.12.1
+    image: cloudbaristaorg/cb-mapui:0.12.6
     container_name: cb-mapui
     # build:
     #   context: ${COMPOSE_PROJECT_ROOT}/../cb-mapui

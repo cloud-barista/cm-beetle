@@ -1,4 +1,3 @@
-// filepath: /home/ubuntu/dev/yunkon-kim/transx/examples/mariadb-migration/main.go
 package main
 
 import (
@@ -60,65 +59,38 @@ func main() {
 		log.Fatalf("Invalid migration configuration: %v", err)
 	}
 
-	// Detect and validate migration scenario
-	isRelayMode := dmm.IsRelayMode()
+	// Display transfer scenario
+	srcStorage := dmm.Source.StorageType
+	dstStorage := dmm.Destination.StorageType
+	strategy := dmm.Strategy
+	if strategy == "" {
+		strategy = "auto"
+	}
 
-	if isRelayMode {
-		fmt.Println("Relay mode detected: Source and destination are both remote.")
-		fmt.Println("This machine will act as an intermediary relay for the data transfer.")
+	fmt.Printf("Transfer: %s -> %s (strategy: %s)\n", srcStorage, dstStorage, strategy)
+	fmt.Printf("Source path: %s\n", dmm.Source.Path)
+	fmt.Printf("Destination path: %s\n", dmm.Destination.Path)
 
-		// Get usernames from transfer options
-		var sourceUsername, destUsername string
-		if dmm.SourceTransferOptions != nil && dmm.SourceTransferOptions.RsyncOptions != nil {
-			sourceUsername = dmm.SourceTransferOptions.RsyncOptions.Username
-		}
-		if dmm.DestinationTransferOptions != nil && dmm.DestinationTransferOptions.RsyncOptions != nil {
-			destUsername = dmm.DestinationTransferOptions.RsyncOptions.Username
-		}
-
-		fmt.Printf("Source: %s@%s:%s\n", sourceUsername, dmm.Source.GetEndpoint(), dmm.Source.DataPath)
-		fmt.Printf("Destination: %s@%s:%s\n", destUsername, dmm.Destination.GetEndpoint(), dmm.Destination.DataPath)
-	} else {
-		fmt.Println("Direct mode detected.")
-
-		// Check if it's entirely local or involves remote endpoints
-		if dmm.Source.GetEndpoint() == "" && dmm.Destination.GetEndpoint() == "" {
-			fmt.Println("Local-to-local migration (both source and destination are on this machine).")
-		} else if dmm.Source.GetEndpoint() == "" && dmm.Destination.GetEndpoint() != "" {
-			fmt.Println("Local-to-remote migration (source is on this machine).")
-		} else if dmm.Source.GetEndpoint() != "" && dmm.Destination.GetEndpoint() == "" {
-			fmt.Println("Remote-to-local migration (destination is on this machine).")
-		}
+	// Display SSH connection info if applicable
+	if dmm.Source.Filesystem != nil && dmm.Source.Filesystem.AccessType == transx.AccessTypeSSH && dmm.Source.Filesystem.SSH != nil {
+		ssh := dmm.Source.Filesystem.SSH
+		fmt.Printf("Source SSH: %s@%s:%d\n", ssh.Username, ssh.Host, ssh.Port)
+	}
+	if dmm.Destination.Filesystem != nil && dmm.Destination.Filesystem.AccessType == transx.AccessTypeSSH && dmm.Destination.Filesystem.SSH != nil {
+		ssh := dmm.Destination.Filesystem.SSH
+		fmt.Printf("Destination SSH: %s@%s:%d\n", ssh.Username, ssh.Host, ssh.Port)
 	}
 
 	// Expand tilde (~) in SSH private key paths
-	if dmm.SourceTransferOptions != nil && dmm.SourceTransferOptions.RsyncOptions != nil {
-		if strings.HasPrefix(dmm.SourceTransferOptions.RsyncOptions.SSHPrivateKeyPath, "~/") {
-			homeDir, _ := os.UserHomeDir()
-			dmm.SourceTransferOptions.RsyncOptions.SSHPrivateKeyPath = filepath.Join(homeDir, dmm.SourceTransferOptions.RsyncOptions.SSHPrivateKeyPath[2:])
-		}
-	}
-	if dmm.DestinationTransferOptions != nil && dmm.DestinationTransferOptions.RsyncOptions != nil {
-		if strings.HasPrefix(dmm.DestinationTransferOptions.RsyncOptions.SSHPrivateKeyPath, "~/") {
-			homeDir, _ := os.UserHomeDir()
-			dmm.DestinationTransferOptions.RsyncOptions.SSHPrivateKeyPath = filepath.Join(homeDir, dmm.DestinationTransferOptions.RsyncOptions.SSHPrivateKeyPath[2:])
-		}
-	}
+	expandSSHKeyPath(&dmm)
 
 	// Display commands (in verbose mode)
 	if verbose {
-		if dmm.Source.BackupCmd != "" {
-			fmt.Printf("Backup command: %s\n", dmm.Source.BackupCmd)
+		if dmm.Source.PreCmd != "" {
+			fmt.Printf("Pre-command: %s\n", dmm.Source.PreCmd)
 		}
-		if dmm.Destination.RestoreCmd != "" {
-			fmt.Printf("Restore command: %s\n", dmm.Destination.RestoreCmd)
-		}
-
-		// Display additional information for relay migration
-		if dmm.IsRelayMode() {
-			fmt.Println("Relay transfer: Data will flow through this machine as an intermediary")
-			fmt.Printf("Source path: %s\n", dmm.Source.DataPath)
-			fmt.Printf("Destination path: %s\n", dmm.Destination.DataPath)
+		if dmm.Destination.PostCmd != "" {
+			fmt.Printf("Post-command: %s\n", dmm.Destination.PostCmd)
 		}
 	}
 
@@ -152,17 +124,53 @@ func main() {
 	totalTime := time.Since(startTime)
 	fmt.Println("\n=== Migration Summary ===")
 
-	// Get usernames from transfer options for summary
-	var sourceUsername, destUsername string
-	if dmm.SourceTransferOptions != nil && dmm.SourceTransferOptions.RsyncOptions != nil {
-		sourceUsername = dmm.SourceTransferOptions.RsyncOptions.Username
+	// Build source/destination display strings
+	srcDisplay := dmm.Source.Path
+	destDisplay := dmm.Destination.Path
+
+	if dmm.Source.Filesystem != nil && dmm.Source.Filesystem.SSH != nil {
+		ssh := dmm.Source.Filesystem.SSH
+		srcDisplay = fmt.Sprintf("%s@%s:%s", ssh.Username, ssh.Host, dmm.Source.Path)
 	}
-	if dmm.DestinationTransferOptions != nil && dmm.DestinationTransferOptions.RsyncOptions != nil {
-		destUsername = dmm.DestinationTransferOptions.RsyncOptions.Username
+	if dmm.Destination.Filesystem != nil && dmm.Destination.Filesystem.SSH != nil {
+		ssh := dmm.Destination.Filesystem.SSH
+		destDisplay = fmt.Sprintf("%s@%s:%s", ssh.Username, ssh.Host, dmm.Destination.Path)
 	}
 
-	fmt.Printf("Source: %s@%s:%s\n", sourceUsername, dmm.Source.GetEndpoint(), dmm.Source.DataPath)
-	fmt.Printf("Destination: %s@%s:%s\n", destUsername, dmm.Destination.GetEndpoint(), dmm.Destination.DataPath)
+	fmt.Printf("Source: %s\n", srcDisplay)
+	fmt.Printf("Destination: %s\n", destDisplay)
 	fmt.Printf("Total migration time: %s\n", totalTime)
-	fmt.Println("MariaDB migration completed successfully!")
+}
+
+// expandSSHKeyPath expands tilde (~) and relative paths (./) in SSH private key paths
+func expandSSHKeyPath(dmm *transx.DataMigrationModel) {
+	expandPath := func(path string) string {
+		if path == "" {
+			return path
+		}
+		// Expand ~ to home directory
+		if strings.HasPrefix(path, "~/") {
+			homeDir, _ := os.UserHomeDir()
+			return filepath.Join(homeDir, path[2:])
+		}
+		// Convert relative path to absolute path
+		if strings.HasPrefix(path, "./") || !filepath.IsAbs(path) {
+			workingDir, err := os.Getwd()
+			if err == nil {
+				return filepath.Join(workingDir, path)
+			}
+		}
+		return path
+	}
+
+	if dmm.Source.Filesystem != nil && dmm.Source.Filesystem.SSH != nil {
+		dmm.Source.Filesystem.SSH.PrivateKeyPath = expandPath(dmm.Source.Filesystem.SSH.PrivateKeyPath)
+	}
+	if dmm.Destination.Filesystem != nil && dmm.Destination.Filesystem.SSH != nil {
+		// Don't expand paths that are absolute (e.g., /root/.ssh/id_rsa in container)
+		path := dmm.Destination.Filesystem.SSH.PrivateKeyPath
+		if !filepath.IsAbs(path) {
+			dmm.Destination.Filesystem.SSH.PrivateKeyPath = expandPath(path)
+		}
+	}
 }

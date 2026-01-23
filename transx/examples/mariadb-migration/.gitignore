@@ -1,0 +1,8 @@
+# SSH keys generated for testing (should not be committed)
+ssh_keys/
+
+# Binary
+mariadb-migration
+
+# Backup files
+*.bak

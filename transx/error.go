@@ -2,7 +2,29 @@ package transx
 
 import "fmt"
 
-// Custom Error Types for Error-Only Approach
+// ============================================================================
+// Stage and Operation Constants
+// ============================================================================
+
+// Migration stages
+const (
+	StageBackup   = "backup"
+	StageTransfer = "transfer"
+	StageRestore  = "restore"
+)
+
+// Operation types
+const (
+	OperationBackup  = "backup"
+	OperationRestore = "restore"
+	OperationTransfer = "transfer"
+	OperationPreCmd  = "pre-command"
+	OperationPostCmd = "post-command"
+)
+
+// ============================================================================
+// Custom Error Types
+// ============================================================================
 
 // MigrationError represents an error during the migration process
 type MigrationError struct {
@@ -56,6 +78,16 @@ func (e *OperationError) Unwrap() error {
 // GetOutput returns the command output for debugging (applicable to backup/restore operations)
 func (e *OperationError) GetOutput() string {
 	return e.Output
+}
+
+// UnsupportedTransferError indicates that no executor is available for the given transfer combination.
+type UnsupportedTransferError struct {
+	SourceMethod      string
+	DestinationMethod string
+}
+
+func (e *UnsupportedTransferError) Error() string {
+	return fmt.Sprintf("unsupported transfer: %s -> %s (no registered executor)", e.SourceMethod, e.DestinationMethod)
 }
 
 // GetMethod returns the transfer method (applicable to transfer operations)

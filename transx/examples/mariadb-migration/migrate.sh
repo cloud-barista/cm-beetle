@@ -15,13 +15,14 @@ MODE="direct"
 
 # Function to display usage
 function show_usage {
-  echo -e "${BLUE}Simple MariaDB Migration Tool${NC}"
+  echo -e "${BLUE}MariaDB Migration Tool${NC}"
   echo -e "${YELLOW}Usage:${NC}"
-  echo -e "  $0 [direct|relay] [flags]"
+  echo -e "  $0 [direct|relay|agent-fwd] [flags]"
   echo -e ""
   echo -e "${YELLOW}Modes:${NC}"
-  echo -e "  direct    - Direct mode migration (default)"
-  echo -e "  relay     - Relay mode migration (source → relay node → destination)"
+  echo -e "  direct     - Pull mode: SSH source → Local host (backup only)"
+  echo -e "  relay      - Relay mode: SSH source → Local → SSH destination"
+  echo -e "  agent-fwd  - Agent Forward: SSH source → SSH destination (direct)"
   echo -e ""
   echo -e "${YELLOW}Flags:${NC}"
   echo -e "  --backup     Run only the backup step"
@@ -30,8 +31,9 @@ function show_usage {
   echo -e "  --verbose    Enable verbose logging"
   echo -e ""
   echo -e "${YELLOW}Examples:${NC}"
-  echo -e "  $0 direct --verbose      Run direct mode migration with verbose logging"
-  echo -e "  $0 relay --backup        Run only the backup step in relay mode"
+  echo -e "  $0 direct --verbose       Pull backup from source to local"
+  echo -e "  $0 relay --verbose        Full migration via local relay"
+  echo -e "  $0 agent-fwd --verbose    Direct transfer between containers"
   echo -e ""
 }
 
@@ -49,6 +51,13 @@ function check_prerequisites {
     fi
     echo -e "${GREEN}✓ Binary built successfully${NC}"
   fi
+  
+  # Check if SSH keys exist
+  if [ ! -f "./ssh_keys/id_rsa" ]; then
+    echo -e "${RED}SSH keys not found. Run ./setup_environment.sh all first.${NC}"
+    exit 1
+  fi
+  echo -e "${GREEN}✓ SSH keys found${NC}"
   
   # Check if config file exists
   if [ ! -f "$CONFIG" ]; then
@@ -106,36 +115,59 @@ if [ $# -eq 0 ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 fi
 
 # Parse mode argument
-if [ "$1" == "direct" ] || [ "$1" == "relay" ]; then
+if [ "$1" == "direct" ] || [ "$1" == "relay" ] || [ "$1" == "agent-fwd" ]; then
   MODE="$1"
   shift
 fi
 
 # Set configuration file based on mode
-if [ "$MODE" == "relay" ]; then
-  CONFIG="relay-mode-config.json"
-else
-  CONFIG="direct-mode-config.json"
-fi
+case "$MODE" in
+  "relay")
+    CONFIG="relay-mode-config.json"
+    ;;
+  "agent-fwd")
+    CONFIG="agent-fwd-mode-config.json"
+    ;;
+  *)
+    CONFIG="direct-mode-config.json"
+    ;;
+esac
 
 # Check prerequisites
 check_prerequisites
+
+# For agent-fwd mode, create temporary config with actual host IP
+ACTUAL_CONFIG="$CONFIG"
+TEMP_CONFIG=""
+if [ "$MODE" == "agent-fwd" ]; then
+  HOST_IP=$(hostname -I | awk '{print $1}')
+  echo -e "${YELLOW}Agent-Forward mode: Host IP = ${HOST_IP}${NC}"
+  TEMP_CONFIG=$(mktemp)
+  sed "s/HOST_IP_PLACEHOLDER/${HOST_IP}/g" "$CONFIG" > "$TEMP_CONFIG"
+  ACTUAL_CONFIG="$TEMP_CONFIG"
+fi
 
 # Show pre-migration status
 show_pre_migration_status
 
 # Construct command to run
-CMD_ARGS="--config=$CONFIG $@"
+CMD_ARGS="--config=$ACTUAL_CONFIG $@"
 
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${BLUE}Running MariaDB Migration (${MODE} mode)${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
-echo -e "${GREEN}Executing: ./mariadb-migration $CMD_ARGS${NC}"
+echo -e "${GREEN}Executing: ./mariadb-migration --config=$CONFIG $@${NC}"
 ./mariadb-migration $CMD_ARGS
+RESULT=$?
+
+# Clean up temp config if created
+if [ -n "$TEMP_CONFIG" ] && [ -f "$TEMP_CONFIG" ]; then
+  rm -f "$TEMP_CONFIG"
+fi
 
 # Check result and show post-migration status
-if [ $? -eq 0 ]; then
+if [ $RESULT -eq 0 ]; then
   echo -e "${GREEN}Migration completed successfully!${NC}"
   show_post_migration_status
 else
