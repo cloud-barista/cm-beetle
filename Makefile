@@ -9,7 +9,7 @@ GO := $(GOPROXY_OPTION) go
 GOPATH := $(shell go env GOPATH)
 SWAG := ~/go/bin/swag
 
-.PHONY: all dependency lint update swag swagger build arm prod run stop clean help
+.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help
 
 all: swag build ## Default target: build the project
 
@@ -17,6 +17,18 @@ dependency: ## Get dependencies
 	@echo "Checking dependencies..."
 	@$(GO) mod tidy
 	@echo "Checked!"
+
+tidy: ## Run go mod tidy for all modules (root, transx, analyzer, deepdiffgo)
+	@echo "Running go mod tidy for all modules..."
+	@echo "  - Root module..."
+	@$(GO) mod tidy
+	@echo "  - transx module..."
+	@cd transx && $(GO) mod tidy
+	@echo "  - analyzer module..."
+	@cd analyzer && $(GO) mod tidy
+	@echo "  - deepdiffgo module..."
+	@cd deepdiffgo && $(GO) mod tidy
+	@echo "All modules tidied!"
 
 lint: dependency ## Lint the files
 	@echo "Running linter..."

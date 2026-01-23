@@ -7,18 +7,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/cloud-barista/cm-beetle/transx/s3"
 )
 
 // S3Executor implements Executor for S3 object storage transfers.
 // Uses presigned URLs for authentication-free upload/download.
 type S3Executor struct {
-	Provider s3.Provider // S3 provider for generating presigned URLs
+	Provider S3Provider // S3 provider for generating presigned URLs
 }
 
 // NewS3Executor creates a new S3Executor with the given provider.
-func NewS3Executor(provider s3.Provider) *S3Executor {
+func NewS3Executor(provider S3Provider) *S3Executor {
 	return &S3Executor{
 		Provider: provider,
 	}
@@ -46,11 +44,14 @@ func (e *S3Executor) Execute(source, destination DataLocation) error {
 }
 
 // upload transfers local files to S3.
-func (e *S3Executor) upload(localPath, s3Prefix string, filter *FilterOption) error {
+func (e *S3Executor) upload(localPath, s3Path string, filter *FilterOption) error {
 	files, err := e.listLocalFiles(localPath, filter)
 	if err != nil {
 		return fmt.Errorf("failed to list local files: %w", err)
 	}
+
+	// Parse bucket and key from s3Path (e.g., "bucket-name/prefix/")
+	_, keyPrefix := ParseBucketAndKey(s3Path)
 
 	basePath := localPath
 	if !isDirectory(localPath) {
@@ -63,7 +64,8 @@ func (e *S3Executor) upload(localPath, s3Prefix string, filter *FilterOption) er
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
-		s3Key := filepath.Join(s3Prefix, relPath)
+		// Use only the key prefix, not the full path including bucket name
+		s3Key := filepath.Join(keyPrefix, relPath)
 		s3Key = strings.ReplaceAll(s3Key, "\\", "/") // Normalize to forward slashes
 
 		if err := e.uploadFile(file, s3Key); err != nil {
@@ -75,8 +77,11 @@ func (e *S3Executor) upload(localPath, s3Prefix string, filter *FilterOption) er
 }
 
 // download transfers S3 objects to local filesystem.
-func (e *S3Executor) download(s3Prefix, localPath string, filter *FilterOption) error {
-	objects, err := e.Provider.ListObjects(s3Prefix)
+func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) error {
+	// Parse bucket and key from s3Path (e.g., "bucket-name/prefix/")
+	_, keyPrefix := ParseBucketAndKey(s3Path)
+
+	objects, err := e.Provider.ListObjects(keyPrefix)
 	if err != nil {
 		return fmt.Errorf("failed to list S3 objects: %w", err)
 	}
@@ -86,7 +91,7 @@ func (e *S3Executor) download(s3Prefix, localPath string, filter *FilterOption) 
 			continue
 		}
 
-		relPath := strings.TrimPrefix(obj.Key, s3Prefix)
+		relPath := strings.TrimPrefix(obj.Key, keyPrefix)
 		relPath = strings.TrimPrefix(relPath, "/")
 		localFile := filepath.Join(localPath, relPath)
 

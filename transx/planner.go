@@ -2,8 +2,6 @@ package transx
 
 import (
 	"fmt"
-
-	"github.com/cloud-barista/cm-beetle/transx/s3"
 )
 
 // ============================================================================
@@ -326,12 +324,12 @@ func createLocalStagingLocation() DataLocation {
 }
 
 // NewS3Provider creates an S3 provider from DataLocation.
-func NewS3Provider(loc DataLocation) (s3.Provider, error) {
+func NewS3Provider(loc DataLocation) (S3Provider, error) {
 	if !loc.IsObjectStorage() || loc.ObjectStorage == nil {
 		return nil, fmt.Errorf("location is not object storage")
 	}
 
-	bucket, _ := s3.ParseBucketAndKey(loc.Path)
+	bucket, _ := ParseBucketAndKey(loc.Path)
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket name is required in path")
 	}
@@ -343,37 +341,26 @@ func NewS3Provider(loc DataLocation) (s3.Provider, error) {
 		if osAccess.Minio == nil {
 			return nil, fmt.Errorf("minio S3 config is required")
 		}
-		cfg := &s3.MinioConfig{
+		cfg := &MinioConfig{
 			Endpoint:        osAccess.Minio.Endpoint,
 			AccessKeyId:     osAccess.Minio.AccessKeyId,
 			SecretAccessKey: osAccess.Minio.SecretAccessKey,
 			Region:          osAccess.Minio.Region,
 			UseSSL:          osAccess.Minio.UseSSL,
 		}
-		return s3.NewMinioProvider(cfg, bucket)
+		return NewMinioProvider(cfg, bucket)
 
 	case AccessTypeSpider:
 		if osAccess.Spider == nil {
 			return nil, fmt.Errorf("Spider config is required")
 		}
-		cfg := &s3.SpiderConfig{
-			Endpoint:       osAccess.Spider.Endpoint,
-			ConnectionName: osAccess.Spider.ConnectionName,
-			Expires:        osAccess.Spider.Expires,
-		}
-		return s3.NewSpiderProvider(cfg, bucket)
+		return NewSpiderProvider(osAccess.Spider, bucket)
 
 	case AccessTypeTumblebug:
 		if osAccess.Tumblebug == nil {
 			return nil, fmt.Errorf("Tumblebug config is required")
 		}
-		cfg := &s3.TumblebugConfig{
-			Endpoint: osAccess.Tumblebug.Endpoint,
-			NsId:     osAccess.Tumblebug.NsId,
-			OsId:     osAccess.Tumblebug.OsId,
-			Expires:  osAccess.Tumblebug.Expires,
-		}
-		return s3.NewTumblebugProvider(cfg)
+		return NewTumblebugProvider(osAccess.Tumblebug)
 
 	default:
 		return nil, fmt.Errorf("unsupported object storage access type: %s", osAccess.AccessType)

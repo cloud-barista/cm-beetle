@@ -20,7 +20,7 @@ func main() {
 	var restoreOnly bool
 
 	// Setting up command-line flags
-	flag.StringVar(&configFile, "config", "direct-mode-config.json", "Migration configuration JSON file path")
+	flag.StringVar(&configFile, "config", "config-minio-upload.json", "Migration configuration JSON file path")
 	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.BoolVar(&backupOnly, "backup", false, "Run only the backup step")
 	flag.BoolVar(&transferOnly, "transfer", false, "Run only the transfer step")

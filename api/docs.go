@@ -3146,6 +3146,11 @@ const docTemplate = `{
                 "vmUserPassword": {
                     "type": "string",
                     "example": ""
+                },
+                "zone": {
+                    "description": "Zone is an optional field to specify the availability zone for VM placement.\nIf specified, subnet will be created in this zone for resources like GPU VMs\nthat may only be available in specific zones. If empty, auto-selection applies.",
+                    "type": "string",
+                    "example": "ap-northeast-2a"
                 }
             }
         },
@@ -4077,6 +4082,9 @@ const docTemplate = `{
                 "regionName": {
                     "type": "string"
                 },
+                "representativeZone": {
+                    "type": "string"
+                },
                 "zones": {
                     "type": "array",
                     "items": {
@@ -4089,10 +4097,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "region": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "us-east-1"
                 },
                 "zone": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "us-east-1a"
                 }
             }
         },
@@ -4321,6 +4331,30 @@ const docTemplate = `{
                 },
                 "vmIp": {
                     "type": "string"
+                }
+            }
+        },
+        "cloudmodel.SshHostKeyInfo": {
+            "type": "object",
+            "properties": {
+                "fingerprint": {
+                    "description": "Fingerprint is the SHA256 fingerprint of the SSH host key",
+                    "type": "string",
+                    "example": "SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                },
+                "firstUsedAt": {
+                    "description": "FirstUsedAt is the timestamp when the host key was first stored (TOFU moment)",
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "hostKey": {
+                    "description": "HostKey is the SSH host public key (base64 encoded)",
+                    "type": "string"
+                },
+                "keyType": {
+                    "description": "KeyType is the type of the SSH host key (e.g., ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256)",
+                    "type": "string",
+                    "example": "ssh-ed25519"
                 }
             }
         },
@@ -4623,6 +4657,14 @@ const docTemplate = `{
                 },
                 "specId": {
                     "type": "string"
+                },
+                "sshHostKeyInfo": {
+                    "description": "SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.SshHostKeyInfo"
+                        }
+                    ]
                 },
                 "sshKeyId": {
                     "type": "string"
@@ -6162,6 +6204,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "regionName": {
+                    "type": "string"
+                },
+                "representativeZone": {
                     "type": "string"
                 },
                 "zones": {
@@ -8455,6 +8500,49 @@ const docTemplate = `{
                 }
             }
         },
+        "transx.AuthConfig": {
+            "type": "object",
+            "required": [
+                "authType"
+            ],
+            "properties": {
+                "authType": {
+                    "description": "\"basic\", \"jwt\" (\"apikey\", \"oauth\" not tested yet)",
+                    "type": "string"
+                },
+                "basic": {
+                    "description": "For authType=\"basic\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.BasicAuthConfig"
+                        }
+                    ]
+                },
+                "jwt": {
+                    "description": "For authType=\"jwt\"",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.JWTAuthConfig"
+                        }
+                    ]
+                }
+            }
+        },
+        "transx.BasicAuthConfig": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "transx.DataLocation": {
             "type": "object",
             "required": [
@@ -8573,6 +8661,17 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "transx.JWTAuthConfig": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
                 }
             }
         },
@@ -8705,13 +8804,24 @@ const docTemplate = `{
                 "endpoint"
             ],
             "properties": {
+                "auth": {
+                    "description": "Optional authentication configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.AuthConfig"
+                        }
+                    ]
+                },
                 "connectionName": {
+                    "description": "CB-Spider connection name (e.g., \"aws-connection\")",
                     "type": "string"
                 },
                 "endpoint": {
+                    "description": "CB-Spider API base URL (e.g., \"http://localhost:1024/spider\")",
                     "type": "string"
                 },
                 "expires": {
+                    "description": "Presigned URL expiration in seconds",
                     "type": "integer",
                     "default": 3600
                 }
@@ -8725,17 +8835,29 @@ const docTemplate = `{
                 "osId"
             ],
             "properties": {
+                "auth": {
+                    "description": "Optional authentication configuration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/transx.AuthConfig"
+                        }
+                    ]
+                },
                 "endpoint": {
+                    "description": "CB-Tumblebug API base URL (e.g., \"http://localhost:1323/tumblebug\")",
                     "type": "string"
                 },
                 "expires": {
+                    "description": "Presigned URL expiration in seconds",
                     "type": "integer",
                     "default": 3600
                 },
                 "nsId": {
+                    "description": "Namespace ID for multi-tenancy",
                     "type": "string"
                 },
                 "osId": {
+                    "description": "Object Storage ID",
                     "type": "string"
                 }
             }

@@ -1,4 +1,4 @@
-package s3
+package transx
 
 import (
 	"encoding/json"
@@ -18,9 +18,16 @@ type SpiderProvider struct {
 	connectionName string
 	expires        int
 	bucket         string
+	username       string
+	password       string
+	jwtToken       string
+	// apiKey         string // TODO: Not tested yet
+	// apiKeyHeader   string // TODO: Not tested yet
+	// oauthToken     string // TODO: Not tested yet
+	// oauthType      string // TODO: Not tested yet
 }
 
-// NewSpiderProvider creates a new SpiderProvider from SpiderConfig.
+// NewSpiderProvider creates a new SpiderProvider.
 func NewSpiderProvider(config *SpiderConfig, bucket string) (*SpiderProvider, error) {
 	if config == nil {
 		return nil, fmt.Errorf("spider config is required")
@@ -37,12 +44,28 @@ func NewSpiderProvider(config *SpiderConfig, bucket string) (*SpiderProvider, er
 		expires = 3600 // Default 1 hour
 	}
 
-	return &SpiderProvider{
+	// Extract auth credentials from config
+	var username, password, jwtToken string
+	if config.Auth != nil {
+		if config.Auth.AuthType == AuthTypeBasic && config.Auth.Basic != nil {
+			username = config.Auth.Basic.Username
+			password = config.Auth.Basic.Password
+		} else if config.Auth.AuthType == AuthTypeJWT && config.Auth.JWT != nil {
+			jwtToken = config.Auth.JWT.Token
+		}
+	}
+
+	p := &SpiderProvider{
 		endpoint:       strings.TrimSuffix(config.Endpoint, "/"),
 		connectionName: config.ConnectionName,
 		expires:        expires,
 		bucket:         bucket,
-	}, nil
+		username:       username,
+		password:       password,
+		jwtToken:       jwtToken,
+	}
+
+	return p, nil
 }
 
 // GeneratePresignedURL generates a presigned URL via CB-Spider S3 API.
@@ -58,11 +81,11 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error
 	switch action {
 	case "upload":
 		// GET /s3/presigned/upload/{BucketName}/{ObjectKey}
-		apiURL = fmt.Sprintf("%s/spider/s3/presigned/upload/%s/%s?ConnectionName=%s&expires=%d",
+		apiURL = fmt.Sprintf("%s/s3/presigned/upload/%s/%s?ConnectionName=%s&expires=%d",
 			p.endpoint, p.bucket, encodedKey, url.QueryEscape(p.connectionName), p.expires)
 	case "download":
 		// GET /s3/presigned/download/{BucketName}/{ObjectKey}
-		apiURL = fmt.Sprintf("%s/spider/s3/presigned/download/%s/%s?ConnectionName=%s&expires=%d",
+		apiURL = fmt.Sprintf("%s/s3/presigned/download/%s/%s?ConnectionName=%s&expires=%d",
 			p.endpoint, p.bucket, encodedKey, url.QueryEscape(p.connectionName), p.expires)
 	default:
 		return "", fmt.Errorf("unsupported action: %s (use 'upload' or 'download')", action)
@@ -71,6 +94,14 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Accept", "application/xml")
+
+	// Apply authentication
+	if p.username != "" && p.password != "" {
+		req.SetBasicAuth(p.username, p.password)
+	} else if p.jwtToken != "" {
+		req.Header.Set("Authorization", "Bearer "+p.jwtToken)
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -102,7 +133,7 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error
 // Uses GET /s3/{BucketName}?ConnectionName=xxx to list objects in bucket.
 func (p *SpiderProvider) ListObjects(prefix string) ([]ObjectInfo, error) {
 	// GET /s3/{BucketName}?ConnectionName=xxx&prefix=xxx
-	apiURL := fmt.Sprintf("%s/spider/s3/%s?ConnectionName=%s",
+	apiURL := fmt.Sprintf("%s/s3/%s?ConnectionName=%s",
 		p.endpoint, p.bucket, url.QueryEscape(p.connectionName))
 
 	if prefix != "" {
@@ -112,6 +143,13 @@ func (p *SpiderProvider) ListObjects(prefix string) ([]ObjectInfo, error) {
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Apply authentication
+	if p.username != "" && p.password != "" {
+		req.SetBasicAuth(p.username, p.password)
+	} else if p.jwtToken != "" {
+		req.Header.Set("Authorization", "Bearer "+p.jwtToken)
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -180,11 +218,11 @@ func parseSpiderListResponse(body []byte) ([]ObjectInfo, error) {
 
 // spiderPresignedURLResponse represents CB-Spider presigned URL response.
 // Based on spider.S3PresignedURLXML definition.
+// XMLName is omitted to handle responses with or without namespace declarations
 type spiderPresignedURLResponse struct {
-	XMLName      xml.Name `xml:"PresignedURL" json:"-"`
-	PresignedURL string   `xml:"PresignedURL" json:"PresignedURL"`
-	Method       string   `xml:"Method" json:"Method"`
-	Expires      int      `xml:"Expires" json:"Expires"`
+	PresignedURL string `xml:"PresignedURL" json:"PresignedURL"`
+	Method       string `xml:"Method" json:"Method"`
+	Expires      int    `xml:"Expires" json:"Expires"`
 }
 
 // extractPresignedURL extracts the presigned URL from Spider API response.
@@ -216,7 +254,15 @@ func extractPresignedURL(response string) string {
 	if strings.HasPrefix(response, "<") {
 		var xmlResp spiderPresignedURLResponse
 		if err := xml.Unmarshal([]byte(response), &xmlResp); err == nil && xmlResp.PresignedURL != "" {
-			return xmlResp.PresignedURL
+			return strings.TrimSpace(xmlResp.PresignedURL)
+		}
+
+		// Fallback: direct tag extraction (handles namespace issues)
+		if idx := strings.Index(response, "<PresignedURL>"); idx != -1 {
+			start := idx + len("<PresignedURL>")
+			if end := strings.Index(response[start:], "</PresignedURL>"); end != -1 {
+				return strings.TrimSpace(response[start : start+end])
+			}
 		}
 	}
 

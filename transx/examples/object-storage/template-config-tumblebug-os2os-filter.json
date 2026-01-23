@@ -1,0 +1,47 @@
+{
+  "source": {
+    "storageType": "objectstorage",
+    "path": "SOURCE_BUCKET_NAME/backup/",
+    "objectStorage": {
+      "accessType": "tumblebug",
+      "tumblebug": {
+        "endpoint": "http://localhost:1323/tumblebug",
+        "nsId": "YOUR_NAMESPACE_ID",
+        "osId": "YOUR_SOURCE_OS_ID",
+        "expires": 3600,
+        "auth": {
+          "authType": "basic",
+          "basic": {
+            "username": "YOUR_USERNAME",
+            "password": "YOUR_PASSWORD"
+          }
+        }
+      }
+    },
+    "filter": {
+      "include": ["<INCLUDE_PATTERN_1>", "<INCLUDE_PATTERN_2>"],
+      "exclude": ["<EXCLUDE_PATTERN_1>", "<EXCLUDE_PATTERN_2>"]
+    }
+  },
+  "destination": {
+    "storageType": "objectstorage",
+    "path": "DEST_BUCKET_NAME/",
+    "objectStorage": {
+      "accessType": "tumblebug",
+      "tumblebug": {
+        "endpoint": "http://localhost:1323/tumblebug",
+        "nsId": "YOUR_NAMESPACE_ID",
+        "osId": "YOUR_DEST_OS_ID",
+        "expires": 3600,
+        "auth": {
+          "authType": "basic",
+          "basic": {
+            "username": "YOUR_USERNAME",
+            "password": "YOUR_PASSWORD"
+          }
+        }
+      }
+    }
+  },
+  "strategy": "auto"
+}

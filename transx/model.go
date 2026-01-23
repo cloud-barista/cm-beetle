@@ -205,19 +205,77 @@ type S3MinioConfig struct {
 }
 
 // SpiderConfig defines CB-Spider Object Storage API configuration.
+// Endpoint should include /spider prefix (e.g., "http://localhost:1024/spider").
 type SpiderConfig struct {
-	Endpoint       string `json:"endpoint" validate:"required"`
-	ConnectionName string `json:"connectionName" validate:"required"`
-	Expires        int    `json:"expires,omitempty" default:"3600"`
+	Endpoint       string      `json:"endpoint" validate:"required"`       // CB-Spider API base URL (e.g., "http://localhost:1024/spider")
+	ConnectionName string      `json:"connectionName" validate:"required"` // CB-Spider connection name (e.g., "aws-connection")
+	Expires        int         `json:"expires,omitempty" default:"3600"`   // Presigned URL expiration in seconds
+	Auth           *AuthConfig `json:"auth,omitempty"`                     // Optional authentication configuration
 }
 
 // TumblebugConfig defines CB-Tumblebug Object Storage API configuration.
+// Endpoint should include /tumblebug prefix (e.g., "http://localhost:1323/tumblebug").
 type TumblebugConfig struct {
-	Endpoint string `json:"endpoint" validate:"required"`
-	NsId     string `json:"nsId" validate:"required"`
-	OsId     string `json:"osId" validate:"required"`
-	Expires  int    `json:"expires,omitempty" default:"3600"`
+	Endpoint string      `json:"endpoint" validate:"required"`     // CB-Tumblebug API base URL (e.g., "http://localhost:1323/tumblebug")
+	NsId     string      `json:"nsId" validate:"required"`         // Namespace ID for multi-tenancy
+	OsId     string      `json:"osId" validate:"required"`         // Object Storage ID
+	Expires  int         `json:"expires,omitempty" default:"3600"` // Presigned URL expiration in seconds
+	Auth     *AuthConfig `json:"auth,omitempty"`                   // Optional authentication configuration
 }
+
+// ============================================================================
+// Authentication Configuration
+// ============================================================================
+
+// Auth types
+const (
+	// AuthTypeBasic represents HTTP Basic Authentication.
+	AuthTypeBasic = "basic"
+
+	// AuthTypeJWT represents JWT (JSON Web Token) Authentication.
+	AuthTypeJWT = "jwt"
+
+	// AuthTypeAPIKey represents API Key Authentication.
+	// AuthTypeAPIKey = "apikey" // TODO: Not tested yet
+
+	// AuthTypeOAuth represents OAuth 2.0 Authentication.
+	// AuthTypeOAuth = "oauth" // TODO: Not tested yet
+)
+
+// AuthConfig defines authentication configuration.
+// Use authType to specify the authentication method.
+type AuthConfig struct {
+	AuthType string           `json:"authType" validate:"required"` // "basic", "jwt" ("apikey", "oauth" not tested yet)
+	Basic    *BasicAuthConfig `json:"basic,omitempty"`              // For authType="basic"
+	JWT      *JWTAuthConfig   `json:"jwt,omitempty"`                // For authType="jwt"
+	// APIKey   *APIKeyConfig    `json:"apiKey,omitempty"`             // For authType="apikey" (TODO: Not tested yet)
+	// OAuth    *OAuthConfig     `json:"oauth,omitempty"`              // For authType="oauth" (TODO: Not tested yet)
+}
+
+// BasicAuthConfig defines HTTP Basic Authentication credentials.
+type BasicAuthConfig struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+// JWTAuthConfig defines JWT authentication configuration.
+type JWTAuthConfig struct {
+	Token string `json:"token" validate:"required"`
+}
+
+// APIKeyConfig defines API Key authentication configuration.
+// TODO: Not tested yet
+// type APIKeyConfig struct {
+// 	Key        string `json:"key" validate:"required"`
+// 	HeaderName string `json:"headerName,omitempty" default:"X-API-Key"` // Header name for API key
+// }
+
+// OAuthConfig defines OAuth 2.0 authentication configuration.
+// TODO: Not tested yet
+// type OAuthConfig struct {
+// 	AccessToken string `json:"accessToken" validate:"required"`
+// 	TokenType   string `json:"tokenType,omitempty" default:"Bearer"` // e.g., "Bearer"
+// }
 
 // ============================================================================
 // Validation

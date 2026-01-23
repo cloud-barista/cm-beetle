@@ -1,12 +1,5 @@
 {
   "source": {
-    "storageType": "filesystem",
-    "path": "/tmp/transx-test-data/",
-    "filesystem": {
-      "accessType": "local"
-    }
-  },
-  "destination": {
     "storageType": "objectstorage",
     "path": "YOUR_BUCKET_NAME/backup/",
     "objectStorage": {
@@ -18,6 +11,17 @@
         "region": "YOUR_REGION",
         "useSSL": true
       }
+    },
+    "filter": {
+      "include": ["*.csv", "*.json", "*.md"],
+      "exclude": ["*.tmp", "*.log"]
+    }
+  },
+  "destination": {
+    "storageType": "filesystem",
+    "path": "/tmp/transx-download/",
+    "filesystem": {
+      "accessType": "local"
     }
   },
   "strategy": "auto"

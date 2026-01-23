@@ -160,6 +160,13 @@ definitions:
       vmUserPassword:
         example: ""
         type: string
+      zone:
+        description: |-
+          Zone is an optional field to specify the availability zone for VM placement.
+          If specified, subnet will be created in this zone for resources like GPU VMs
+          that may only be available in specific zones. If empty, auto-selection applies.
+        example: ap-northeast-2a
+        type: string
     required:
     - imageId
     - specId
@@ -882,6 +889,8 @@ definitions:
         type: string
       regionName:
         type: string
+      representativeZone:
+        type: string
       zones:
         items:
           type: string
@@ -890,8 +899,10 @@ definitions:
   cloudmodel.RegionInfo:
     properties:
       region:
+        example: us-east-1
         type: string
       zone:
+        example: us-east-1a
         type: string
     type: object
   cloudmodel.RegionZoneInfo:
@@ -1051,6 +1062,26 @@ definitions:
       vmId:
         type: string
       vmIp:
+        type: string
+    type: object
+  cloudmodel.SshHostKeyInfo:
+    properties:
+      fingerprint:
+        description: Fingerprint is the SHA256 fingerprint of the SSH host key
+        example: SHA256:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        type: string
+      firstUsedAt:
+        description: FirstUsedAt is the timestamp when the host key was first stored
+          (TOFU moment)
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      hostKey:
+        description: HostKey is the SSH host public key (base64 encoded)
+        type: string
+      keyType:
+        description: KeyType is the type of the SSH host key (e.g., ssh-rsa, ssh-ed25519,
+          ecdsa-sha2-nistp256)
+        example: ssh-ed25519
         type: string
     type: object
   cloudmodel.SshKeyReq:
@@ -1268,6 +1299,11 @@ definitions:
         type: array
       specId:
         type: string
+      sshHostKeyInfo:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.SshHostKeyInfo'
+        description: SshHostKeyInfo contains SSH host key information for TOFU (Trust
+          On First Use) verification
       sshKeyId:
         type: string
       sshPort:
@@ -2418,6 +2454,8 @@ definitions:
       regionId:
         type: string
       regionName:
+        type: string
+      representativeZone:
         type: string
       zones:
         items:
@@ -4050,6 +4088,32 @@ definitions:
         example: aws-ap-northeast-2
         type: string
     type: object
+  transx.AuthConfig:
+    properties:
+      authType:
+        description: '"basic", "jwt" ("apikey", "oauth" not tested yet)'
+        type: string
+      basic:
+        allOf:
+        - $ref: '#/definitions/transx.BasicAuthConfig'
+        description: For authType="basic"
+      jwt:
+        allOf:
+        - $ref: '#/definitions/transx.JWTAuthConfig'
+        description: For authType="jwt"
+    required:
+    - authType
+    type: object
+  transx.BasicAuthConfig:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
   transx.DataLocation:
     properties:
       filesystem:
@@ -4141,6 +4205,13 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  transx.JWTAuthConfig:
+    properties:
+      token:
+        type: string
+    required:
+    - token
     type: object
   transx.ObjectStorageAccess:
     properties:
@@ -4236,12 +4307,19 @@ definitions:
     type: object
   transx.SpiderConfig:
     properties:
+      auth:
+        allOf:
+        - $ref: '#/definitions/transx.AuthConfig'
+        description: Optional authentication configuration
       connectionName:
+        description: CB-Spider connection name (e.g., "aws-connection")
         type: string
       endpoint:
+        description: CB-Spider API base URL (e.g., "http://localhost:1024/spider")
         type: string
       expires:
         default: 3600
+        description: Presigned URL expiration in seconds
         type: integer
     required:
     - connectionName
@@ -4249,14 +4327,22 @@ definitions:
     type: object
   transx.TumblebugConfig:
     properties:
+      auth:
+        allOf:
+        - $ref: '#/definitions/transx.AuthConfig'
+        description: Optional authentication configuration
       endpoint:
+        description: CB-Tumblebug API base URL (e.g., "http://localhost:1323/tumblebug")
         type: string
       expires:
         default: 3600
+        description: Presigned URL expiration in seconds
         type: integer
       nsId:
+        description: Namespace ID for multi-tenancy
         type: string
       osId:
+        description: Object Storage ID
         type: string
     required:
     - endpoint
