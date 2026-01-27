@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/labstack/echo/v4"
@@ -105,7 +106,12 @@ func MigrateObjectStorage(c echo.Context) error {
 			Msg("Creating object storage")
 
 		// Create object storage (bucket)
-		err := tbclient.NewSession().CreateObjectStorage(target.BucketName, connName)
+		req := tbmodel.ObjectStorageCreateRequest{
+			BucketName:     target.BucketName,
+			ConnectionName: connName,
+			Description:    "Created by CM-Beetle",
+		}
+		_, err := tbclient.NewSession().CreateObjectStorage("default", req)
 		if err != nil {
 			log.Error().
 				Err(err).
@@ -160,7 +166,7 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbclient.ListAllMyBucketsResult] "Successfully retrieved object storage list"
+// @Success 200 {object} model.ApiResponse[tbclient.ObjectStorageListResponse] "Successfully retrieved object storage list"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
 // @Router /migration/middleware/objectStorage [get]
@@ -193,8 +199,8 @@ func ListObjectStorages(c echo.Context) error {
 	// Initialize Tumblebug session
 	tbSess := tbclient.NewSession()
 
-	// List object storages
-	result, err := tbSess.ListObjectStorages(connName)
+	// List object storages (using default namespace)
+	result, err := tbSess.ListObjectStorages("default", "", "", "")
 	if err != nil {
 		errorMsg := fmt.Sprintf("Failed to list object storages: %v", err)
 		log.Error().Err(err).Msg(errorMsg)
@@ -204,7 +210,7 @@ func ListObjectStorages(c echo.Context) error {
 	log.Info().
 		Str("csp", csp).
 		Str("region", region).
-		Int("bucketCount", len(result.Buckets.Bucket)).
+		Int("bucketCount", len(result.ObjectStorage)).
 		Msg("Successfully listed object storages")
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
@@ -223,7 +229,7 @@ func ListObjectStorages(c echo.Context) error {
 // @Param csp query string true "Cloud service provider" Enums(aws,alibaba) default(aws)
 // @Param region query string true "Cloud region" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbclient.ListBucketResult] "Successfully retrieved object storage details"
+// @Success 200 {object} model.ApiResponse[tbmodel.ObjectStorageInfo] "Successfully retrieved object storage details"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during get operation"
@@ -266,8 +272,8 @@ func GetObjectStorage(c echo.Context) error {
 	// Initialize Tumblebug session
 	tbSess := tbclient.NewSession()
 
-	// Get object storage details
-	result, err := tbSess.GetObjectStorage(objectStorageName, connName)
+	// Get object storage details (using default namespace)
+	result, err := tbSess.GetObjectStorage("default", objectStorageName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).
@@ -350,8 +356,8 @@ func ExistObjectStorage(c echo.Context) error {
 	// Initialize Tumblebug session
 	tbSess := tbclient.NewSession()
 
-	// Check object storage existence
-	exists, err := tbSess.ExistObjectStorage(objectStorageName, connName)
+	// Check object storage existence (using default namespace)
+	exists, err := tbSess.ExistObjectStorage("default", objectStorageName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).
@@ -441,8 +447,8 @@ func DeleteObjectStorage(c echo.Context) error {
 	// Initialize Tumblebug session
 	tbSess := tbclient.NewSession()
 
-	// Delete object storage
-	err = tbSess.DeleteObjectStorage(objectStorageName, connName)
+	// Delete object storage (using default namespace)
+	err = tbSess.DeleteObjectStorage("default", objectStorageName)
 	if err != nil {
 		log.Error().Err(err).
 			Str("objectStorageName", objectStorageName).

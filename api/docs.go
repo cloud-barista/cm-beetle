@@ -153,7 +153,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved object storage list",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-tbclient_ListAllMyBucketsResult"
+                            "$ref": "#/definitions/model.ApiResponse-tbclient_ObjectStorageListResponse"
                         }
                     },
                     "400": {
@@ -272,7 +272,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved object storage details",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-tbclient_ListBucketResult"
+                            "$ref": "#/definitions/model.ApiResponse-model_ObjectStorageInfo"
                         }
                     },
                     "400": {
@@ -5685,6 +5685,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-model_ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ObjectStorageInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-string": {
             "type": "object",
             "properties": {
@@ -5765,42 +5793,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-tbclient_ListAllMyBucketsResult": {
+        "model.ApiResponse-tbclient_ObjectStorageListResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/tbclient.ListAllMyBucketsResult"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-tbclient_ListBucketResult": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/tbclient.ListBucketResult"
+                            "$ref": "#/definitions/tbclient.ObjectStorageListResponse"
                         }
                     ]
                 },
@@ -6190,6 +6190,106 @@ const docTemplate = `{
                 "Windows",
                 "PlatformNA"
             ]
+        },
+        "model.Object": {
+            "type": "object",
+            "properties": {
+                "eTag": {
+                    "type": "string",
+                    "example": "9b2cf535f27731c974343645a3985328"
+                },
+                "key": {
+                    "type": "string",
+                    "example": "test-object.txt"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "example": "2025-09-04T04:18:06Z"
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 1024
+                },
+                "storageClass": {
+                    "type": "string",
+                    "example": "STANDARD"
+                }
+            }
+        },
+        "model.ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "connectionConfig": {
+                    "$ref": "#/definitions/model.ConnConfig"
+                },
+                "connectionName": {
+                    "description": "Variables for management of Object Storage resource in CB-Tumblebug",
+                    "type": "string"
+                },
+                "contents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Object"
+                    }
+                },
+                "creationDate": {
+                    "type": "string",
+                    "example": "2025-09-04T04:18:06Z"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": ""
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": ""
+                },
+                "description": {
+                    "type": "string",
+                    "example": "this object storage is managed by CB-Tumblebug"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "globally-unique-bucket-name-12345"
+                },
+                "isTruncated": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "marker": {
+                    "type": "string",
+                    "example": ""
+                },
+                "maxKeys": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "globally-unique-bucket-name-12345"
+                },
+                "prefix": {
+                    "type": "string",
+                    "example": ""
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of this resource",
+                    "type": "string",
+                    "example": "ObjectStorage"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
         },
         "model.RegionDetail": {
             "type": "object",
@@ -8427,76 +8527,14 @@ const docTemplate = `{
                 }
             }
         },
-        "tbclient.Bucket": {
+        "tbclient.ObjectStorageListResponse": {
             "type": "object",
             "properties": {
-                "creationDate": {
-                    "type": "string",
-                    "example": "2025-09-04T04:18:06Z"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "spider-test-bucket"
-                }
-            }
-        },
-        "tbclient.Buckets": {
-            "type": "object",
-            "properties": {
-                "bucket": {
+                "objectStorage": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/tbclient.Bucket"
+                        "$ref": "#/definitions/model.ObjectStorageInfo"
                     }
-                }
-            }
-        },
-        "tbclient.ListAllMyBucketsResult": {
-            "type": "object",
-            "properties": {
-                "buckets": {
-                    "$ref": "#/definitions/tbclient.Buckets"
-                },
-                "owner": {
-                    "$ref": "#/definitions/tbclient.Owner"
-                }
-            }
-        },
-        "tbclient.ListBucketResult": {
-            "type": "object",
-            "properties": {
-                "isTruncated": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "marker": {
-                    "type": "string",
-                    "example": ""
-                },
-                "maxKeys": {
-                    "type": "integer",
-                    "example": 1000
-                },
-                "name": {
-                    "type": "string",
-                    "example": "spider-test-bucket"
-                },
-                "prefix": {
-                    "type": "string",
-                    "example": ""
-                }
-            }
-        },
-        "tbclient.Owner": {
-            "type": "object",
-            "properties": {
-                "displayName": {
-                    "type": "string",
-                    "example": "aws-ap-northeast-2"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "aws-ap-northeast-2"
                 }
             }
         },

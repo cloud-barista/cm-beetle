@@ -2057,6 +2057,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-model_ObjectStorageInfo:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/model.ObjectStorageInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-string:
     properties:
       data:
@@ -2113,30 +2132,11 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-tbclient_ListAllMyBucketsResult:
+  model.ApiResponse-tbclient_ObjectStorageListResponse:
     properties:
       data:
         allOf:
-        - $ref: '#/definitions/tbclient.ListAllMyBucketsResult'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-tbclient_ListBucketResult:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/tbclient.ListBucketResult'
+        - $ref: '#/definitions/tbclient.ObjectStorageListResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2445,6 +2445,82 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
+  model.Object:
+    properties:
+      eTag:
+        example: 9b2cf535f27731c974343645a3985328
+        type: string
+      key:
+        example: test-object.txt
+        type: string
+      lastModified:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      size:
+        example: 1024
+        type: integer
+      storageClass:
+        example: STANDARD
+        type: string
+    type: object
+  model.ObjectStorageInfo:
+    properties:
+      connectionConfig:
+        $ref: '#/definitions/model.ConnConfig'
+      connectionName:
+        description: Variables for management of Object Storage resource in CB-Tumblebug
+        type: string
+      contents:
+        items:
+          $ref: '#/definitions/model.Object'
+        type: array
+      creationDate:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: ""
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: ""
+        type: string
+      description:
+        example: this object storage is managed by CB-Tumblebug
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: globally-unique-bucket-name-12345
+        type: string
+      isTruncated:
+        example: false
+        type: boolean
+      marker:
+        example: ""
+        type: string
+      maxKeys:
+        example: 1000
+        type: integer
+      name:
+        description: Name is human-readable string to represent the object
+        example: globally-unique-bucket-name-12345
+        type: string
+      prefix:
+        example: ""
+        type: string
+      resourceType:
+        description: ResourceType is the type of this resource
+        example: ObjectStorage
+        type: string
+      status:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
   model.RegionDetail:
     properties:
       description:
@@ -4038,55 +4114,12 @@ definitions:
         example: "1.0"
         type: string
     type: object
-  tbclient.Bucket:
+  tbclient.ObjectStorageListResponse:
     properties:
-      creationDate:
-        example: "2025-09-04T04:18:06Z"
-        type: string
-      name:
-        example: spider-test-bucket
-        type: string
-    type: object
-  tbclient.Buckets:
-    properties:
-      bucket:
+      objectStorage:
         items:
-          $ref: '#/definitions/tbclient.Bucket'
+          $ref: '#/definitions/model.ObjectStorageInfo'
         type: array
-    type: object
-  tbclient.ListAllMyBucketsResult:
-    properties:
-      buckets:
-        $ref: '#/definitions/tbclient.Buckets'
-      owner:
-        $ref: '#/definitions/tbclient.Owner'
-    type: object
-  tbclient.ListBucketResult:
-    properties:
-      isTruncated:
-        example: false
-        type: boolean
-      marker:
-        example: ""
-        type: string
-      maxKeys:
-        example: 1000
-        type: integer
-      name:
-        example: spider-test-bucket
-        type: string
-      prefix:
-        example: ""
-        type: string
-    type: object
-  tbclient.Owner:
-    properties:
-      displayName:
-        example: aws-ap-northeast-2
-        type: string
-      id:
-        example: aws-ap-northeast-2
-        type: string
     type: object
   transx.AuthConfig:
     properties:
@@ -4472,7 +4505,7 @@ paths:
         "200":
           description: Successfully retrieved object storage list
           schema:
-            $ref: '#/definitions/model.ApiResponse-tbclient_ListAllMyBucketsResult'
+            $ref: '#/definitions/model.ApiResponse-tbclient_ObjectStorageListResponse'
         "400":
           description: Invalid request parameters
           schema:
@@ -4623,7 +4656,7 @@ paths:
         "200":
           description: Successfully retrieved object storage details
           schema:
-            $ref: '#/definitions/model.ApiResponse-tbclient_ListBucketResult'
+            $ref: '#/definitions/model.ApiResponse-model_ObjectStorageInfo'
         "400":
           description: Invalid request parameters
           schema:
