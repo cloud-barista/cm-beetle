@@ -175,6 +175,18 @@ func (s *Session) SetContext(ctx context.Context) *Session {
 	return s
 }
 
+// SetQueryParam sets a single query parameter.
+func (s *Session) SetQueryParam(key, value string) *Session {
+	s.req.SetQueryParam(key, value)
+	return s
+}
+
+// SetQueryParams sets multiple query parameters.
+func (s *Session) SetQueryParams(params map[string]string) *Session {
+	s.req.SetQueryParams(params)
+	return s
+}
+
 // SetTraceInfo injects the OpenTelemetry trace context into the request headers.
 // This enables distributed tracing by propagating the trace ID and span ID to the Tumblebug API.
 // It uses the global TextMapPropagator to ensure compatibility with the configured tracing backend.
