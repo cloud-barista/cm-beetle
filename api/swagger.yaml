@@ -4469,29 +4469,17 @@ paths:
       summary: Migrate data from source to target
       tags:
       - '[Migration] Data (incubating)'
-  /migration/middleware/objectStorage:
+  /migration/middleware/ns/{nsId}/objectStorage:
     get:
       consumes:
       - application/json
-      description: |-
-        Get the list of all object storages (buckets) in the specified cloud service provider and region
-
-        [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
+      description: Get the list of all object storages (buckets) in the namespace
       operationId: ListObjectStorages
       parameters:
-      - default: aws
-        description: Cloud service provider
-        enum:
-        - aws
-        - alibaba
-        in: query
-        name: csp
-        required: true
-        type: string
-      - default: ap-northeast-2
-        description: Cloud region
-        in: query
-        name: region
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
         required: true
         type: string
       - description: Unique request ID (auto-generated if not provided). Used for
@@ -4523,14 +4511,21 @@ paths:
       description: |
         Migrate object storages to cloud based on recommendation results
 
-        [Note] This API creates object storages (buckets) in the target cloud.
-        - Input should be the output from RecommendObjectStorage API
-        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
-
         [Note]
-        * Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
+        - This API creates object storages (buckets) in the target cloud within the specified namespace
+        - Input should be the output from RecommendObjectStorage API
+        - Connection name is automatically generated from CSP and region in the request body
+
+        [Examples]
+        * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
       operationId: MigrateObjectStorage
       parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
       - description: Object storage migration request (use RecommendObjectStorage
           response)
         in: body
@@ -4559,7 +4554,7 @@ paths:
       summary: Migrate object storages to cloud
       tags:
       - '[Migration] Managed middleware (preview)'
-  /migration/middleware/objectStorage/{objectStorageName}:
+  /migration/middleware/ns/{nsId}/objectStorage/{osId}:
     delete:
       consumes:
       - application/json
@@ -4567,28 +4562,18 @@ paths:
         Delete a specific object storage (bucket)
 
         [Note]
-        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
         - The bucket must be empty before deletion
       operationId: DeleteObjectStorage
       parameters:
-      - description: Object Storage Name (bucket name)
+      - default: mig01
+        description: Namespace ID
         in: path
-        name: objectStorageName
+        name: nsId
         required: true
         type: string
-      - default: aws
-        description: Cloud service provider
-        enum:
-        - aws
-        - alibaba
-        in: query
-        name: csp
-        required: true
-        type: string
-      - default: ap-northeast-2
-        description: Cloud region
-        in: query
-        name: region
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
         required: true
         type: string
       - description: Unique request ID (auto-generated if not provided). Used for
@@ -4619,30 +4604,18 @@ paths:
     get:
       consumes:
       - application/json
-      description: |-
-        Get details of a specific object storage (bucket)
-
-        [Note] Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
+      description: Get details of a specific object storage (bucket)
       operationId: GetObjectStorage
       parameters:
-      - description: Object Storage Name (bucket name)
+      - default: mig01
+        description: Namespace ID
         in: path
-        name: objectStorageName
+        name: nsId
         required: true
         type: string
-      - default: aws
-        description: Cloud service provider
-        enum:
-        - aws
-        - alibaba
-        in: query
-        name: csp
-        required: true
-        type: string
-      - default: ap-northeast-2
-        description: Cloud region
-        in: query
-        name: region
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
         required: true
         type: string
       - description: Unique request ID (auto-generated if not provided). Used for
@@ -4679,28 +4652,18 @@ paths:
         Check if a specific object storage (bucket) exists
 
         [Note]
-        - Connection name format: `{csp}-{region}` (e.g., aws-ap-northeast-2)
         - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
       operationId: ExistObjectStorage
       parameters:
-      - description: Object Storage Name (bucket name)
+      - default: mig01
+        description: Namespace ID
         in: path
-        name: objectStorageName
+        name: nsId
         required: true
         type: string
-      - default: aws
-        description: Cloud service provider
-        enum:
-        - aws
-        - alibaba
-        in: query
-        name: csp
-        required: true
-        type: string
-      - default: ap-northeast-2
-        description: Cloud region
-        in: query
-        name: region
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
         required: true
         type: string
       - description: Unique request ID (auto-generated if not provided). Used for

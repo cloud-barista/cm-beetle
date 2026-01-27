@@ -373,11 +373,11 @@ func RunServer(port string) {
 	gMigrationMiddleware := gMigration.Group("/middleware")
 
 	// Migration APIs for object storage
-	gMigrationMiddleware.POST("/objectStorage", controller.MigrateObjectStorage)
-	gMigrationMiddleware.GET("/objectStorage", controller.ListObjectStorages)
-	gMigrationMiddleware.GET("/objectStorage/:objectStorageName", controller.GetObjectStorage)
-	gMigrationMiddleware.HEAD("/objectStorage/:objectStorageName", controller.ExistObjectStorage)
-	gMigrationMiddleware.DELETE("/objectStorage/:objectStorageName", controller.DeleteObjectStorage)
+	gMigrationMiddleware.POST("/ns/:nsId/objectStorage", controller.MigrateObjectStorage)
+	gMigrationMiddleware.GET("/ns/:nsId/objectStorage", controller.ListObjectStorages)
+	gMigrationMiddleware.GET("/ns/:nsId/objectStorage/:osId", controller.GetObjectStorage)
+	gMigrationMiddleware.HEAD("/ns/:nsId/objectStorage/:osId", controller.ExistObjectStorage)
+	gMigrationMiddleware.DELETE("/ns/:nsId/objectStorage/:osId", controller.DeleteObjectStorage)
 
 	/*
 	 * API group for migration reports

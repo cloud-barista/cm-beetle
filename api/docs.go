@@ -107,9 +107,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/middleware/objectStorage": {
+        "/migration/middleware/ns/{nsId}/objectStorage": {
             "get": {
-                "description": "Get the list of all object storages (buckets) in the specified cloud service provider and region\n\n[Note] Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
+                "description": "Get the list of all object storages (buckets) in the namespace",
                 "consumes": [
                     "application/json"
                 ],
@@ -123,23 +123,11 @@ const docTemplate = `{
                 "operationId": "ListObjectStorages",
                 "parameters": [
                     {
-                        "enum": [
-                            "aws",
-                            "alibaba"
-                        ],
                         "type": "string",
-                        "default": "aws",
-                        "description": "Cloud service provider",
-                        "name": "csp",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Cloud region",
-                        "name": "region",
-                        "in": "query",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -171,7 +159,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note] This API creates object storages (buckets) in the target cloud.\n- Input should be the output from RecommendObjectStorage API\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n\n[Note]\n* Examples(test result): https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -184,6 +172,14 @@ const docTemplate = `{
                 "summary": "Migrate object storages to cloud",
                 "operationId": "MigrateObjectStorage",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Object storage migration request (use RecommendObjectStorage response)",
                         "name": "request",
@@ -219,9 +215,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/middleware/objectStorage/{objectStorageName}": {
+        "/migration/middleware/ns/{nsId}/objectStorage/{osId}": {
             "get": {
-                "description": "Get details of a specific object storage (bucket)\n\n[Note] Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)",
+                "description": "Get details of a specific object storage (bucket)",
                 "consumes": [
                     "application/json"
                 ],
@@ -236,29 +232,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Object Storage Name (bucket name)",
-                        "name": "objectStorageName",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "enum": [
-                            "aws",
-                            "alibaba"
-                        ],
                         "type": "string",
-                        "default": "aws",
-                        "description": "Cloud service provider",
-                        "name": "csp",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Cloud region",
-                        "name": "region",
-                        "in": "query",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -296,7 +280,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- The bucket must be empty before deletion",
+                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- The bucket must be empty before deletion",
                 "consumes": [
                     "application/json"
                 ],
@@ -311,29 +295,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Object Storage Name (bucket name)",
-                        "name": "objectStorageName",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "enum": [
-                            "aws",
-                            "alibaba"
-                        ],
                         "type": "string",
-                        "default": "aws",
-                        "description": "Cloud service provider",
-                        "name": "csp",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Cloud region",
-                        "name": "region",
-                        "in": "query",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -368,7 +340,7 @@ const docTemplate = `{
                 }
             },
             "head": {
-                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Connection name format: ` + "`" + `{csp}-{region}` + "`" + ` (e.g., aws-ap-northeast-2)\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
+                "description": "Check if a specific object storage (bucket) exists\n\n[Note]\n- Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist",
                 "consumes": [
                     "application/json"
                 ],
@@ -383,29 +355,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Object Storage Name (bucket name)",
-                        "name": "objectStorageName",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "enum": [
-                            "aws",
-                            "alibaba"
-                        ],
                         "type": "string",
-                        "default": "aws",
-                        "description": "Cloud service provider",
-                        "name": "csp",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Cloud region",
-                        "name": "region",
-                        "in": "query",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
                         "required": true
                     },
                     {
