@@ -139,6 +139,21 @@ The following fields are automatically encrypted when using `EncryptModel`:
 | `*.objectStorage.tumblebug.auth.basic.password` | Tumblebug Basic auth password |
 | `*.objectStorage.tumblebug.auth.jwt.token`      | Tumblebug JWT token           |
 
+### Encryption Algorithm
+
+transx uses **hybrid encryption** combining asymmetric and symmetric cryptography:
+
+| Component       | Algorithm            | Purpose                           |
+| --------------- | -------------------- | --------------------------------- |
+| Key Exchange    | RSA-2048-OAEP-SHA256 | Securely transmit AES key         |
+| Data Encryption | AES-256-GCM          | Fast encryption for any data size |
+
+**Why Hybrid?**
+
+- RSA alone can only encrypt ~245 bytes (2048-bit key limit)
+- AES-GCM handles unlimited data size efficiently
+- Each field gets a unique AES key (no key reuse)
+
 ### Encryption Workflow
 
 ```
@@ -149,25 +164,52 @@ The following fields are automatically encrypted when using `EncryptModel`:
 │   CLIENT                                SERVER                          │
 │   ──────                                ──────                          │
 │                                                                         │
-│   ① Request Key ─────────────────────► Generate KeyPair                │
-│                                         Store in KeyStore               │
+│   ① Request Key ─────────────────────► Generate RSA KeyPair            │
+│                                         Store PrivateKey in KeyStore    │
 │              ◄───────────────────────── Return PublicKeyBundle          │
+│                                         (publicKey, keyId, expiresAt)   │
 │                                                                         │
 │   ② EncryptModel()                                                      │
-│      - Parse PublicKey                                                  │
-│      - Encrypt sensitive fields                                         │
+│      For each sensitive field:                                          │
+│      - Generate random AES-256 key (32 bytes)                           │
+│      - Generate random nonce (12 bytes)                                 │
+│      - Encrypt data with AES-256-GCM → ciphertext                       │
+│      - Encrypt AES key with RSA-OAEP → encryptedKey                     │
+│      - Package as Base64(JSON{ek, n, ct})                               │
 │                                                                         │
 │   ③ Send encrypted model ────────────► Receive                         │
 │                                                                         │
-│                                         ④ DecryptModelWithStore()       │
-│                                            - Lookup KeyPair by keyId    │
-│                                            - Decrypt fields             │
+│                                         ④ DecryptModel()                │
+│                                            - Lookup PrivateKey by keyId │
+│                                            - For each encrypted field:  │
+│                                              - Decode Base64 payload    │
+│                                              - Decrypt AES key with RSA │
+│                                              - Decrypt data with AES    │
 │                                            - Auto-delete key (one-time) │
 │                                                                         │
 │                                         ⑤ Execute migration             │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Encrypted Field Payload Structure
+
+Each encrypted field is stored as a Base64-encoded JSON payload:
+
+```json
+{
+  "v": 1, // Schema version for future compatibility
+  "ek": "...", // AES key encrypted with RSA-OAEP (Base64)
+  "n": "...", // AES-GCM nonce, 12 bytes (Base64)
+  "ct": "..." // Ciphertext encrypted with AES-GCM (Base64)
+}
+```
+
+**Key Points:**
+
+- Each sensitive field has its own unique AES key (generated per-field)
+- RSA public key is shared once; AES keys are embedded in each field's payload
+- Server only stores RSA private key; AES keys travel with the encrypted data
 
 ### Usage: Plaintext Transmission (No Encryption)
 
@@ -348,7 +390,7 @@ func handleSecureMigration(w http.ResponseWriter, r *http.Request) {
     }
 
     // Decrypt the model (key is auto-deleted after decryption - one-time use)
-    decryptedModel, err := transx.DecryptModelWithStore(model, keyStore)
+    decryptedModel, err := transx.DecryptModel(model)
     if err != nil {
         switch err {
         case transx.ErrKeyNotFound:
