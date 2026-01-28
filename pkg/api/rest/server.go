@@ -364,8 +364,15 @@ func RunServer(port string) {
 	gMigration.GET("/ns/:nsId/resources/sshKey/:sshKeyId", controller.GetMigratedSSHKey)
 	gMigration.DELETE("/ns/:nsId/resources/sshKey/:sshKeyId", controller.DeleteMigratedSSHKey)
 
-	// APIs for data migration (Experimental)
+	// APIs for data migration
+	// - GET /data/encryptionKey: Get one-time public key for encrypting sensitive fields
+	// - POST /data: Migrate data (supports plaintext or encrypted requests)
+	// - POST /data/test/encrypt: [TEST] Encrypt model server-side (for testing only)
+	// - POST /data/test/decrypt: [TEST] Test decryption without executing migration
+	gMigration.GET("/data/encryptionKey", controller.GetDataMigrationEncryptionKey)
 	gMigration.POST("/data", controller.MigrateData)
+	gMigration.POST("/data/test/encrypt", controller.TestEncryptData)
+	gMigration.POST("/data/test/decrypt", controller.TestDecryptData)
 
 	/*
 	 * API group for managed middleware migration

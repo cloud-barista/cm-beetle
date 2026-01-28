@@ -34,6 +34,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
 	restServer "github.com/cloud-barista/cm-beetle/pkg/api/rest"
+	"github.com/cloud-barista/cm-beetle/transx"
 )
 
 // NoOpLogger is an implementation of resty.Logger that discards all logs.
@@ -191,6 +192,11 @@ func checkReadiness(url string) (bool, error) {
 func main() {
 
 	log.Info().Msg("preparing to run CM-Beetle server...")
+
+	// Initialize encryption key store for data migration
+	// Keys are one-time use and automatically deleted after decryption
+	transx.InitKeyStore(30*time.Minute, 10*time.Minute)
+	log.Info().Msg("Initialized data migration encryption key store")
 
 	// Load the state from the file back into the key-value store
 	if err := lkvstore.LoadLkvStore(); err != nil {

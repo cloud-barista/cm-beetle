@@ -139,9 +139,9 @@ func TestEncryptDecryptModel(t *testing.T) {
 	}
 
 	// Decrypt
-	decModel, err := DecryptModel(encModel, kp)
+	decModel, err := DecryptModelWith(encModel, kp)
 	if err != nil {
-		t.Fatalf("DecryptModel failed: %v", err)
+		t.Fatalf("DecryptModelWith failed: %v", err)
 	}
 
 	// Verify decrypted values match original
@@ -156,7 +156,7 @@ func TestEncryptDecryptModel(t *testing.T) {
 	}
 }
 
-func TestDecryptModelWithStore(t *testing.T) {
+func TestDecryptModelWith(t *testing.T) {
 	store := NewKeyStore()
 
 	// Generate key in store
@@ -193,21 +193,15 @@ func TestDecryptModelWithStore(t *testing.T) {
 		t.Fatalf("EncryptModel failed: %v", err)
 	}
 
-	// Decrypt with store (should auto-delete key)
-	decModel, err := DecryptModelWithStore(encModel, store)
+	// Decrypt with keypair
+	decModel, err := DecryptModelWith(encModel, kp)
 	if err != nil {
-		t.Fatalf("DecryptModelWithStore failed: %v", err)
+		t.Fatalf("DecryptModelWith failed: %v", err)
 	}
 
 	// Verify decryption
 	if decModel.Source.Filesystem.SSH.PrivateKey != model.Source.Filesystem.SSH.PrivateKey {
 		t.Error("Decrypted value mismatch")
-	}
-
-	// Verify key is deleted (one-time use)
-	_, ok := store.Get(kp.ID)
-	if ok {
-		t.Error("Key should be deleted after decryption (one-time use)")
 	}
 }
 
@@ -251,7 +245,7 @@ func TestExpiredKey(t *testing.T) {
 
 	encModel, _ := EncryptModel(model, kp.PublicKey, kp.ID)
 
-	_, err = DecryptModel(encModel, kp)
+	_, err = DecryptModelWith(encModel, kp)
 	if err != ErrKeyExpired {
 		t.Errorf("Expected ErrKeyExpired, got: %v", err)
 	}
@@ -301,19 +295,10 @@ func TestNonEncryptedModelPassthrough(t *testing.T) {
 		},
 	}
 
-	// DecryptModel should pass through non-encrypted model
-	result, err := DecryptModel(model, kp)
+	// DecryptModelWith should pass through non-encrypted model
+	result, err := DecryptModelWith(model, kp)
 	if err != nil {
-		t.Fatalf("DecryptModel should not fail for non-encrypted model: %v", err)
-	}
-	if result.Source.Path != model.Source.Path {
-		t.Error("Non-encrypted model should pass through unchanged")
-	}
-
-	// DecryptModelWithStore should also pass through
-	result, err = DecryptModelWithStore(model, store)
-	if err != nil {
-		t.Fatalf("DecryptModelWithStore should not fail for non-encrypted model: %v", err)
+		t.Fatalf("DecryptModelWith should not fail for non-encrypted model: %v", err)
 	}
 	if result.Source.Path != model.Source.Path {
 		t.Error("Non-encrypted model should pass through unchanged")
@@ -358,9 +343,9 @@ func TestLongTextEncryption(t *testing.T) {
 		t.Fatalf("EncryptModel failed: %v", err)
 	}
 
-	decModel, err := DecryptModel(encModel, kp)
+	decModel, err := DecryptModelWith(encModel, kp)
 	if err != nil {
-		t.Fatalf("DecryptModel failed: %v", err)
+		t.Fatalf("DecryptModelWith failed: %v", err)
 	}
 
 	if decModel.Source.Filesystem.SSH.PrivateKey != longKey {

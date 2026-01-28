@@ -2,9 +2,55 @@ package transx
 
 import (
 	"crypto/rsa"
+	"sync"
+	"time"
 
 	"github.com/cloud-barista/cm-beetle/transx/fieldsec"
 )
+
+// ============================================================================
+// Singleton KeyStore Management
+// ============================================================================
+
+var (
+	keyStore     *KeyStore
+	keyStoreOnce sync.Once
+	keyExpiry    time.Duration
+)
+
+// InitKeyStore initializes the singleton KeyStore and starts the cleanup routine.
+// This should be called once from main() during server startup.
+// Thread-safe: uses sync.Once to ensure single initialization.
+//
+// Parameters:
+//   - keyExpiryDuration: duration after which generated keys expire (e.g., 30*time.Minute)
+//   - cleanupInterval: interval for background cleanup of expired keys (e.g., 10*time.Minute)
+func InitKeyStore(keyExpiryDuration, cleanupInterval time.Duration) {
+	keyStoreOnce.Do(func() {
+		keyStore = NewKeyStore()
+		keyExpiry = keyExpiryDuration
+		stopCleanup := make(chan struct{})
+		keyStore.StartCleanupRoutine(cleanupInterval, stopCleanup)
+	})
+}
+
+// GetKeyStore returns the singleton KeyStore instance.
+// Panics if InitKeyStore() was not called.
+func GetKeyStore() *KeyStore {
+	if keyStore == nil {
+		panic("transx: KeyStore not initialized. Call InitKeyStore() first.")
+	}
+	return keyStore
+}
+
+// GetKeyExpiry returns the configured key expiry duration.
+// Panics if InitKeyStore() was not called.
+func GetKeyExpiry() time.Duration {
+	if keyStore == nil {
+		panic("transx: KeyStore not initialized. Call InitKeyStore() first.")
+	}
+	return keyExpiry
+}
 
 // ============================================================================
 // Sensitive Fields for DataMigrationModel
@@ -95,15 +141,16 @@ func EncryptModel(model DataMigrationModel, publicKey *rsa.PublicKey, keyID stri
 	return result.(DataMigrationModel), nil
 }
 
-// DecryptModel decrypts all sensitive fields in DataMigrationModel.
+// DecryptModelWith decrypts all sensitive fields in DataMigrationModel using the provided key pair.
 // If the model is not encrypted (EncryptionKeyID is empty), returns as-is.
+// Use this for testing or when managing keys externally.
 //
 // Parameters:
 //   - model: the DataMigrationModel to decrypt
 //   - keyPair: the key pair containing the private key
 //
 // Returns a new DataMigrationModel with decrypted fields and EncryptionKeyID cleared.
-func DecryptModel(model DataMigrationModel, keyPair *KeyPair) (DataMigrationModel, error) {
+func DecryptModelWith(model DataMigrationModel, keyPair *KeyPair) (DataMigrationModel, error) {
 	if !model.IsEncrypted() {
 		return model, nil
 	}
@@ -122,15 +169,15 @@ func DecryptModel(model DataMigrationModel, keyPair *KeyPair) (DataMigrationMode
 	return result.(DataMigrationModel), nil
 }
 
-// DecryptModelWithStore looks up the key from store and decrypts the model.
+// DecryptModel decrypts all sensitive fields in DataMigrationModel using the singleton KeyStore.
 // After successful decryption, the key is automatically deleted (one-time use).
+// Panics if InitKeyStore() was not called.
 //
 // Parameters:
 //   - model: the DataMigrationModel to decrypt
-//   - store: the key store containing the private key
 //
 // Returns a new DataMigrationModel with decrypted fields and EncryptionKeyID cleared.
-func DecryptModelWithStore(model DataMigrationModel, store *KeyStore) (DataMigrationModel, error) {
+func DecryptModel(model DataMigrationModel) (DataMigrationModel, error) {
 	if !model.IsEncrypted() {
 		return model, nil
 	}
@@ -138,7 +185,7 @@ func DecryptModelWithStore(model DataMigrationModel, store *KeyStore) (DataMigra
 	result, err := fieldsec.DecryptWithStore(
 		model,
 		sensitiveFields,
-		store,
+		GetKeyStore(),
 		model.EncryptionKeyID,
 		keyIDField,
 	)
