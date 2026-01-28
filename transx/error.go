@@ -1,6 +1,31 @@
 package transx
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/cloud-barista/cm-beetle/transx/fieldsec"
+)
+
+// ============================================================================
+// Encryption Errors (re-exported from fieldsec)
+// ============================================================================
+
+var (
+	// ErrKeyNotFound is returned when the requested key is not in the store.
+	ErrKeyNotFound = fieldsec.ErrKeyNotFound
+
+	// ErrKeyExpired is returned when the key has expired.
+	ErrKeyExpired = fieldsec.ErrKeyExpired
+
+	// ErrKeyMismatch is returned when the key ID doesn't match.
+	ErrKeyMismatch = fieldsec.ErrKeyMismatch
+
+	// ErrDecryptionFailed is returned when decryption fails.
+	ErrDecryptionFailed = fieldsec.ErrDecryptionFailed
+
+	// ErrInvalidPublicKey is returned when public key parsing fails.
+	ErrInvalidPublicKey = fieldsec.ErrInvalidPublicKey
+)
 
 // ============================================================================
 // Stage and Operation Constants
@@ -15,11 +40,11 @@ const (
 
 // Operation types
 const (
-	OperationBackup  = "backup"
-	OperationRestore = "restore"
+	OperationBackup   = "backup"
+	OperationRestore  = "restore"
 	OperationTransfer = "transfer"
-	OperationPreCmd  = "pre-command"
-	OperationPostCmd = "post-command"
+	OperationPreCmd   = "pre-command"
+	OperationPostCmd  = "post-command"
 )
 
 // ============================================================================
