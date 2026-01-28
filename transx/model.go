@@ -106,6 +106,16 @@ type DataMigrationModel struct {
 	// "direct": Force direct transfer (e.g., SSH agent forwarding).
 	// "relay": Force relay via local machine.
 	Strategy string `json:"strategy,omitempty" default:"auto" validate:"omitempty,oneof=auto direct relay"`
+
+	// EncryptionKeyID indicates that sensitive fields are encrypted.
+	// Empty string means plaintext, non-empty means encrypted with the specified key.
+	// The key is one-time use and will be deleted after decryption.
+	EncryptionKeyID string `json:"encryptionKeyId,omitempty"`
+}
+
+// IsEncrypted returns true if the model has encrypted sensitive fields.
+func (m DataMigrationModel) IsEncrypted() bool {
+	return m.EncryptionKeyID != ""
 }
 
 // ============================================================================

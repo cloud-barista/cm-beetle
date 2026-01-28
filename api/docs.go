@@ -8604,6 +8604,10 @@ const docTemplate = `{
                 "destination": {
                     "$ref": "#/definitions/transx.DataLocation"
                 },
+                "encryptionKeyId": {
+                    "description": "EncryptionKeyID indicates that sensitive fields are encrypted.\nEmpty string means plaintext, non-empty means encrypted with the specified key.\nThe key is one-time use and will be deleted after decryption.",
+                    "type": "string"
+                },
                 "source": {
                     "$ref": "#/definitions/transx.DataLocation"
                 },
