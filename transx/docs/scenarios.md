@@ -7,20 +7,20 @@ This document describes various data migration scenarios supported by the transx
 **transx** is a Go-based data migration library that supports multiple transfer methods for moving data between systems. The library provides:
 
 - **Multi-Protocol Transfer**: Supports `rsync` (SSH-based) and `object-storage-api` (minio, CB-Spider, CB-Tumblebug) methods
-- **Flexible Migration Modes**: Direct transfers and relay node scenarios
+- **Flexible Migration Modes**: Direct transfers (including Agent Forwarding) and relay transfers (via transx host) scenarios
 - **Optional Pre/Post Processing**: Backup and restore commands as hooks
-- **Data Integrity**: Built-in validation and verification
 
 ## Terminology
 
-| Term                | Description                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------------- |
-| **transx Host**     | The machine where transx runs. It orchestrates all transfers and may serve as a staging area.            |
-| **Server**          | A remote machine accessed via SSH (e.g., Server A, Server B).                                            |
-| **Object Storage**  | Cloud storage accessed via minio SDK (S3-compatible), CB-Spider API, or CB-Tumblebug API.                |
-| **Staging**         | Temporary storage on the transx Host (`/tmp/transx-staging`), used when direct transfer is not possible. |
-| **Direct Transfer** | Data flows directly between source and destination (transx Host only sends commands).                    |
-| **Staged Transfer** | Data passes through transx Host's staging area before reaching the destination.                          |
+| Term                   | Description                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **transx Host**        | The machine where **transx** runs. It **orchestrates** all transfers and may serve as a **staging area**.                |
+| **Server**             | A remote machine accessed via **SSH** (e.g., Server A, Server B).                                                        |
+| **Object Storage**     | Object Storage (like S3) accessed via **minio SDK** (S3-compatible), **CB-Spider API**, or **CB-Tumblebug API**.         |
+| **Object Storage API** | **CB-Spider** and **CB-Tumblebug** APIs that generate **pre-signed URLs** for secure **HTTPS** access to Object Storage. |
+| **Staging**            | Temporary storage on the transx Host (`/tmp/transx-staging`), used when **direct transfer** is not possible.             |
+| **Direct Transfer**    | Data flows **directly** between source and destination (transx Host only sends commands).                                |
+| **Staged Transfer**    | Data passes through transx Host's **staging area** before reaching the destination.                                      |
 
 ## Table of Contents
 
@@ -279,7 +279,7 @@ Object Storage transfers use minio-go (S3-compatible), CB-Spider API, or CB-Tumb
 
 Upload local files to object storage using minio-go (S3-compatible SDK).
 
-**Use Case**: Backup local data to cloud storage.
+**Use Case**: Backup local data to Object Storage.
 
 ```json
 {
@@ -377,9 +377,11 @@ Download files from object storage to local filesystem using CB-Spider API.
 └───────────────────────────────────────────────────────────────┘
 ```
 
+**Transfer Details**: CB-Spider API generates temporary pre-signed URLs for secure HTTPS object storage access.
+
 ### 2.3 Object Storage → Object Storage (Cross-Cloud)
 
-Transfer data between two different object storage systems (e.g., AWS S3 → GCP Cloud Storage).
+Transfer data between two different object storage systems (e.g., AWS S3 → GCP Object Storage).
 
 **Use Case**: Migrate data between cloud providers.
 
@@ -445,7 +447,7 @@ Cross-storage transfers move data between filesystem and object storage, automat
 
 Transfer files from a remote server to object storage.
 
-**Use Case**: Archive server data to cloud storage for long-term retention.
+**Use Case**: Archive server data to Object Storage for long-term retention.
 
 ```json
 {
@@ -500,6 +502,8 @@ Transfer files from a remote server to object storage.
 │                                                                       │
 └───────────────────────────────────────────────────────────────────────┘
 ```
+
+**Transfer Details**: CB-Tumblebug API generates temporary pre-signed URLs for secure HTTPS object storage access.
 
 ### 3.2 Object Storage → Remote Filesystem
 
@@ -557,6 +561,8 @@ Transfer files from object storage to a remote server.
 │                                                                       │
 └───────────────────────────────────────────────────────────────────────┘
 ```
+
+**Transfer Details**: When using minio SDK with cloud providers, access is via native S3-compatible APIs. CB-Spider and CB-Tumblebug APIs generate temporary pre-signed URLs for secure HTTPS access.
 
 ---
 
