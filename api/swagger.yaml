@@ -2057,6 +2057,25 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-model_AsyncJobResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/model.AsyncJobResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-model_ObjectStorageInfo:
     properties:
       data:
@@ -2188,6 +2207,24 @@ definitions:
         description: Indicates whether the API call was successful
         example: true
         type: boolean
+    type: object
+  model.AsyncJobResponse:
+    properties:
+      reqId:
+        description: |-
+          ReqID is the unique identifier for tracking the request status.
+          This is the same as the X-Request-Id header value.
+        example: "1706500000000000000"
+        type: string
+      status:
+        description: Status is the current status of the request (Handling, Success,
+          Error).
+        example: Handling
+        type: string
+      statusUrl:
+        description: StatusURL is the relative URL to check the request status.
+        example: /beetle/request/1706500000000000000
+        type: string
     type: object
   model.BastionNode:
     properties:
@@ -4501,7 +4538,12 @@ paths:
       consumes:
       - application/json
       description: |
-        Migrate data from source to target. Supports both plaintext and encrypted requests.
+        **Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.
+
+        [How to Use]
+        1. Call this API → Receive 202 Accepted with reqId
+        2. Poll GET /request/{reqId} to check status
+        3. Status flow: Handling → Success / Error
 
         [Endpoint Requirements]
         * Both source and destination must be remote endpoints (SSH or object storage)
@@ -4520,8 +4562,8 @@ paths:
         * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
       operationId: MigrateData
       parameters:
-      - description: Unique request ID (auto-generated if not provided). Used for
-          tracking request status and correlating logs.
+      - description: Unique request ID (auto-generated if not provided). Used as reqId
+          for tracking migration status.
         in: header
         name: X-Request-Id
         type: string
@@ -4535,19 +4577,15 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Data migrated successfully
+        "202":
+          description: Migration started - use GET /request/{reqId} to check status
           schema:
-            $ref: '#/definitions/model.ApiResponse-string'
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters or decryption failed
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-        "500":
-          description: Internal server error during data migration
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-      summary: Migrate data from source to target
+      summary: '[Async] Migrate data from source to target'
       tags:
       - '[Migration] Data (incubating)'
   /migration/data/encryptionKey:

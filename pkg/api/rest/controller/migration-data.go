@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -83,8 +84,13 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 
 // MigrateData godoc
 // @ID MigrateData
-// @Summary Migrate data from source to target
-// @Description Migrate data from source to target. Supports both plaintext and encrypted requests.
+// @Summary [Async] Migrate data from source to target
+// @Description **Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.
+// @Description
+// @Description [How to Use]
+// @Description 1. Call this API → Receive 202 Accepted with reqId
+// @Description 2. Poll GET /request/{reqId} to check status
+// @Description 3. Status flow: Handling → Success / Error
 // @Description
 // @Description [Endpoint Requirements]
 // @Description * Both source and destination must be remote endpoints (SSH or object storage)
@@ -105,11 +111,10 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Tags [Migration] Data (incubating)
 // @Accept  json
 // @Produce  json
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used as reqId for tracking migration status."
 // @Param reqBody body transx.DataMigrationModel true "Data migration request (supports plaintext or encrypted with encryptionKeyId)"
-// @Success 200 {object} model.ApiResponse[string] "Data migrated successfully"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or decryption failed"
-// @Failure 500 {object} model.ApiResponse[any] "Internal server error during data migration"
 // @Router /migration/data [post]
 func MigrateData(c echo.Context) error {
 
@@ -168,24 +173,60 @@ func MigrateData(c echo.Context) error {
 		Str("strategy", req.Strategy).
 		Msg("Starting data migration")
 
-	// Start time measurement
+	// Get the request ID from header for async tracking
+	reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+
+	// Execute migration asynchronously
+	go executeMigrationAsync(reqID, *req)
+
+	// Return immediately with 202 Accepted
+	log.Info().Str("reqId", reqID).Msg("Data migration started asynchronously")
+	return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+		model.AsyncJobResponse{
+			ReqID:     reqID,
+			Status:    common.RequestStatusHandling,
+			StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+		},
+		"Migration started. Use GET /request/{reqId} to check status.",
+	))
+}
+
+// executeMigrationAsync performs the data migration in background and updates request status.
+func executeMigrationAsync(reqID string, req transx.DataMigrationModel) {
 	startTime := time.Now()
 
 	// Execute migration
-	err = transx.Transfer(*req)
+	err := transx.Transfer(req)
 
 	// Calculate elapsed time
 	elapsedTime := time.Since(startTime)
 
-	if err != nil {
-		log.Error().Err(err).Dur("elapsedTime", elapsedTime).Msg("failed to migrate data")
-		errorMsg := fmt.Sprintf("Data migration failed: %v (%s)", err, elapsedTime.Round(time.Millisecond))
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
+	// Get current request details
+	details, ok := common.GetRequest(reqID)
+	if !ok {
+		log.Error().Str("reqId", reqID).Msg("Failed to get request details for status update")
+		return
 	}
 
-	log.Info().Dur("elapsedTime", elapsedTime).Msg("Data migration completed successfully")
-	successMsg := fmt.Sprintf("Data migrated successfully (%s)", elapsedTime.Round(time.Millisecond))
-	return c.JSON(http.StatusOK, model.SimpleSuccessResponse(successMsg))
+	// Update status based on result
+	details.EndTime = time.Now()
+	if err != nil {
+		log.Error().Err(err).Str("reqId", reqID).Dur("elapsedTime", elapsedTime).Msg("Data migration failed")
+		details.Status = common.RequestStatusError
+		details.ErrorResponse = fmt.Sprintf("Data migration failed: %v (%s)", err, elapsedTime.Round(time.Millisecond))
+	} else {
+		log.Info().Str("reqId", reqID).Dur("elapsedTime", elapsedTime).Msg("Data migration completed successfully")
+		details.Status = common.RequestStatusSuccess
+		details.ResponseData = map[string]any{
+			"message":     fmt.Sprintf("Data migrated successfully (%s)", elapsedTime.Round(time.Millisecond)),
+			"elapsedTime": elapsedTime.Round(time.Millisecond).String(),
+		}
+	}
+
+	// Save updated status
+	if err := common.SetRequest(reqID, details); err != nil {
+		log.Error().Err(err).Str("reqId", reqID).Msg("Failed to update request status")
+	}
 }
 
 // ============================================================================

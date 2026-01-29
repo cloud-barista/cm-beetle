@@ -62,7 +62,7 @@ const docTemplate = `{
         },
         "/migration/data": {
             "post": {
-                "description": "Migrate data from source to target. Supports both plaintext and encrypted requests.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "**Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.\n\n[How to Use]\n1. Call this API → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -72,12 +72,12 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Data (incubating)"
                 ],
-                "summary": "Migrate data from source to target",
+                "summary": "[Async] Migrate data from source to target",
                 "operationId": "MigrateData",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "description": "Unique request ID (auto-generated if not provided). Used as reqId for tracking migration status.",
                         "name": "X-Request-Id",
                         "in": "header"
                     },
@@ -92,20 +92,14 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Data migrated successfully",
+                    "202": {
+                        "description": "Migration started - use GET /request/{reqId} to check status",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-string"
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request parameters or decryption failed",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error during data migration",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -5789,6 +5783,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-model_AsyncJobResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.AsyncJobResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-model_ObjectStorageInfo": {
             "type": "object",
             "properties": {
@@ -5978,6 +6000,26 @@ const docTemplate = `{
                     "description": "Indicates whether the API call was successful",
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "model.AsyncJobResponse": {
+            "type": "object",
+            "properties": {
+                "reqId": {
+                    "description": "ReqID is the unique identifier for tracking the request status.\nThis is the same as the X-Request-Id header value.",
+                    "type": "string",
+                    "example": "1706500000000000000"
+                },
+                "status": {
+                    "description": "Status is the current status of the request (Handling, Success, Error).",
+                    "type": "string",
+                    "example": "Handling"
+                },
+                "statusUrl": {
+                    "description": "StatusURL is the relative URL to check the request status.",
+                    "type": "string",
+                    "example": "/beetle/request/1706500000000000000"
                 }
             }
         },
