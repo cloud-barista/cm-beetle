@@ -3,6 +3,7 @@ package middlewares
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
 	"strings"
 	"time"
 
@@ -41,9 +42,16 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 			reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 			// log.Debug().Msgf("(BodyDump middleware) Request ID: %s", reqID)
 
+			// Skip status update for async requests (202 Accepted)
+			// The background goroutine will update the status when the job completes.
+			if c.Response().Status == http.StatusAccepted {
+				// log.Debug().Msg("Skipping BodyDump for async request (202 Accepted)")
+				return
+			}
+
 			// Get the content type
 			contentType := c.Response().Header().Get(echo.HeaderContentType)
-			//log.Trace().Msgf("contentType: %s", contentType)
+			// log.Trace().Msgf("contentType: %s", contentType)
 
 			// log.Debug().Msgf("Request body: %s", string(reqBody))
 			// log.Debug().Msgf("Response body: %s", string(resBody))
@@ -54,7 +62,7 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 				log.Error().Msg("Request ID not found")
 				return
 			}
-			//log.Trace().Msg("OK, common.GetRequest(reqID)")
+			// log.Trace().Msg("OK, common.GetRequest(reqID)")
 			details.EndTime = time.Now()
 
 			details.Status = common.RequestStatusSuccess
