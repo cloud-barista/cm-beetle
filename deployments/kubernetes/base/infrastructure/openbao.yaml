@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+  namespace: cloud-barista
+spec:
+  ports:
+    - port: 8200
+  selector:
+    app: openbao
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  namespace: cloud-barista
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      containers:
+        - name: openbao
+          image: openbao/openbao:2.5.1
+          args: ["server", "-config=/etc/bao/config.hcl"]
+          ports:
+            - containerPort: 8200
+          volumeMounts:
+            - name: openbao-config
+              mountPath: /etc/bao/config.hcl
+              subPath: config.hcl
+            - name: openbao-data
+              mountPath: /bao/data
+      volumes:
+        - name: openbao-config
+          configMap:
+            name: openbao-config
+        - name: openbao-data
+          persistentVolumeClaim:
+            claimName: openbao-data-pvc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-config
+  namespace: cloud-barista
+data:
+  config.hcl: |
+    ui = true
+    storage "file" {
+      path = "/bao/data"
+    }
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+    disable_mlock = true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openbao-data-pvc
+  namespace: cloud-barista
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

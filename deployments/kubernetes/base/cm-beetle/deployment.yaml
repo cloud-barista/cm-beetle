@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cm-beetle
+  namespace: cloud-barista
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cm-beetle
+  template:
+    metadata:
+      labels:
+        app: cm-beetle
+    spec:
+      containers:
+        - name: cm-beetle
+          image: cloudbaristaorg/cm-beetle:0.5.0
+          ports:
+            - containerPort: 8056
+          envFrom:
+            - configMapRef:
+                name: cm-beetle-config
+            - secretRef:
+                name: cm-beetle-secrets
+          volumeMounts:
+            - name: beetle-data
+              mountPath: /app/db
+            - name: beetle-log
+              mountPath: /app/log
+      volumes:
+        - name: beetle-data
+          persistentVolumeClaim:
+            claimName: cm-beetle-db-pvc
+        - name: beetle-log
+          persistentVolumeClaim:
+            claimName: cm-beetle-log-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cm-beetle
+  namespace: cloud-barista
+spec:
+  ports:
+    - port: 8056
+      targetPort: 8056
+  selector:
+    app: cm-beetle

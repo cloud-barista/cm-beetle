@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-beetle-config
+  namespace: cloud-barista
+data:
+  BEETLE_SELF_ENDPOINT: "cm-beetle:8056"
+  BEETLE_TUMBLEBUG_ENDPOINT: "http://cb-tumblebug:1323"
+  BEETLE_LOGLEVEL: "debug"
+  BEETLE_NODE_ENV: "development"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cm-beetle-secrets
+  namespace: cloud-barista
+type: Opaque
+stringData:
+  BEETLE_API_USERNAME: "default"
+  BEETLE_API_PASSWORD: "default"

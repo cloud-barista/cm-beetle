@@ -114,17 +114,85 @@ test-cli-help: ## Show test CLI help
 	@echo "Test CLI Help:"
 	@cd cmd/test-cli && ./test-cli -h || true
 
-compose: ## Build and up services by docker compose
-	@echo "Building and starting services by docker compose..."
-	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
+prepare-volumes: ## Create bind-mount directories with correct ownership
+	@echo "Preparing container-volume directories in deployments/docker-compose/data/..."
+	@mkdir -p \
+		deployments/docker-compose/data/cb-tumblebug-container/meta_db \
+		deployments/docker-compose/data/cb-tumblebug-container/log \
+		deployments/docker-compose/data/cb-spider-container/meta_db \
+		deployments/docker-compose/data/cb-spider-container/log \
+		deployments/docker-compose/data/etcd/data \
+		deployments/docker-compose/data/openbao-data \
+		deployments/docker-compose/data/mc-terrarium-container/.terrarium \
+		deployments/docker-compose/data/cm-beetle-container/db \
+		deployments/docker-compose/data/cm-beetle-container/log \
+		2>/dev/null || \
+	sudo mkdir -p \
+		deployments/docker-compose/data/cb-tumblebug-container/meta_db \
+		deployments/docker-compose/data/cb-tumblebug-container/log \
+		deployments/docker-compose/data/cb-spider-container/meta_db \
+		deployments/docker-compose/data/cb-spider-container/log \
+		deployments/docker-compose/data/etcd/data \
+		deployments/docker-compose/data/openbao-data \
+		deployments/docker-compose/data/mc-terrarium-container/.terrarium \
+		deployments/docker-compose/data/cm-beetle-container/db \
+		deployments/docker-compose/data/cm-beetle-container/log
+	@# Fix ownership for mc-terrarium volume (container runs as appuser, uid 1000)
+	@if [ "$$(stat -c '%u' deployments/docker-compose/data/mc-terrarium-container/.terrarium 2>/dev/null)" != "$$(id -u)" ]; then \
+		echo "Fixing ownership of mc-terrarium volume..."; \
+		sudo chown -R $$(id -u):$$(id -g) deployments/docker-compose/data/mc-terrarium-container/.terrarium; \
+	fi
+	@echo "Prepared!"
 
-compose-up: ## Up services by docker compose
-	@echo "Starting services by docker compose..."
-	@cd deployments/docker-compose && docker compose up
+up: compose # Build and up services by docker compose
+
+down: compose-down # Down services by docker compose
+
+# ===== Deployment & Lifecycle Commands =====
+init-openbao: ## Initialize OpenBao (one-time setup: generate unseal key + root token)
+	@echo "Initializing OpenBao..."
+	@chmod +x ./deployments/docker-compose/openbao/init-openbao.sh 2>/dev/null || true
+	@./deployments/docker-compose/openbao/init-openbao.sh
+
+unseal: ## Unseal OpenBao (needed after every container restart)
+	@echo "Trying to unseal OpenBao (if not already unsealed)..."
+	@chmod +x ./deployments/docker-compose/openbao/unseal-openbao.sh 2>/dev/null || true
+	@./deployments/docker-compose/openbao/unseal-openbao.sh || true
+
+logs: ## Follow Docker Compose logs (docker compose logs -f)
+	@cd deployments/docker-compose && docker compose logs -f
+
+status: ## Show status of Docker Compose services (docker compose ps)
+	@cd deployments/docker-compose && docker compose ps --format "table {{.Name}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+ps: status ## Alias for status
+
+compose: prepare-volumes ## Build and up services by docker compose
+	@echo "Starting OpenBao..."
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up -d openbao
+	@if [ ! -f deployments/docker-compose/.env ] || ! grep -q '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
+		echo "VAULT_TOKEN not found — running first-time OpenBao initialization..."; \
+		bash deployments/docker-compose/openbao/init-openbao.sh; \
+	fi
+	@$(MAKE) unseal
+	@echo "Building and starting all services by docker compose..."
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up -d --build
 
 compose-down: ## Down services by docker compose
 	@echo "Removing services by docker compose..."
 	@cd deployments/docker-compose && docker compose down	
+
+clean-db: compose-down ## Clean all database metadata and persistent data (excluding OpenBao)
+	@echo "Running cleanDB script..."
+	@chmod +x ./deployments/docker-compose/scripts/cleanDB.sh 2>/dev/null || true
+	@./deployments/docker-compose/scripts/cleanDB.sh
+
+clean-all: compose-down clean-db ## Full reset including OpenBao (requires re-init)
+	@echo "Cleaning OpenBao configuration and secrets..."
+	@sudo rm -rf deployments/docker-compose/secrets/
+	@sudo rm -rf deployments/docker-compose/data/openbao-data/
+	@sed -i 's/^VAULT_TOKEN=.*/VAULT_TOKEN=/' deployments/docker-compose/.env 2>/dev/null || true
+	@echo "Cleaned! Run 'make up' to re-initialize."
 
 apidiff: ## Compare Swagger API differences (Usage: make apidiff <old_ver> [new_ver] [OPTS="..."])
 	@OLD_VER=$(word 2,$(MAKECMDGOALS)); \

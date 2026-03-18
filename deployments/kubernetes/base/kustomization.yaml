@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - infrastructure/postgres.yaml
+  - infrastructure/etcd.yaml
+  - infrastructure/openbao.yaml
+  - cb-spider/deployment.yaml
+  - cb-tumblebug/deployment.yaml
+  - mc-terrarium/deployment.yaml
+  - cb-mapui/deployment.yaml
+  - cm-beetle/config.yaml
+  - cm-beetle/pvc.yaml
+  - cm-beetle/deployment.yaml
