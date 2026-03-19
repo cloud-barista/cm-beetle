@@ -148,16 +148,55 @@ up: compose # Build and up services by docker compose
 
 down: compose-down # Down services by docker compose
 
-# ===== Deployment & Lifecycle Commands =====
+# ===== Initialization =====
+SHELL := /bin/bash
+
+init: ## Run initialization sequence (credential registration for OpenBao and Tumblebug)
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "CM-Beetle (with CB-Tumblebug) Initialization"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@IS_TMP_KEY=0; \
+	cleanup_tmp_key() { \
+		if [ "$$IS_TMP_KEY" = "1" ] && [ -f ~/.cloud-barista/.tmp_enc_key ]; then \
+			rm -f ~/.cloud-barista/.tmp_enc_key; \
+		fi; \
+	}; \
+	trap cleanup_tmp_key EXIT INT TERM HUP; \
+	if [ ! -f ~/.cloud-barista/.tmp_enc_key ]; then \
+		echo "Notice: A temporary key file will be created for initialization."; \
+		echo "        It will be removed automatically after initialization."; \
+		printf "Enter the password for credentials.yaml.enc: "; \
+		read -s PASS; \
+		echo ""; \
+		printf "%s" "$$PASS" > ~/.cloud-barista/.tmp_enc_key; \
+		chmod 600 ~/.cloud-barista/.tmp_enc_key; \
+		IS_TMP_KEY=1; \
+	fi; \
+	( \
+		echo "1. Registering credentials to OpenBao..."; \
+		chmod +x ./deployments/docker-compose/openbao/openbao-register-creds.sh 2>/dev/null || true; \
+		./deployments/docker-compose/openbao/openbao-register-creds.sh -y && \
+		echo "" && \
+		echo "2. Registering credentials to Tumblebug..." && \
+		chmod +x ./deployments/docker-compose/cb-tumblebug/init/init.sh 2>/dev/null || true; \
+		./deployments/docker-compose/cb-tumblebug/init/init.sh; \
+	); \
+	EXIT_CODE=$$?; \
+	if [ "$$EXIT_CODE" -ne 0 ]; then \
+		echo "Initialization failed."; \
+	fi; \
+	exit $$EXIT_CODE
+	@echo "Initialization complete!"
+
 init-openbao: ## Initialize OpenBao (one-time setup: generate unseal key + root token)
 	@echo "Initializing OpenBao..."
-	@chmod +x ./deployments/docker-compose/openbao/init-openbao.sh 2>/dev/null || true
-	@./deployments/docker-compose/openbao/init-openbao.sh
+	@chmod +x ./deployments/docker-compose/openbao/openbao-init.sh 2>/dev/null || true
+	@./deployments/docker-compose/openbao/openbao-init.sh
 
 unseal: ## Unseal OpenBao (needed after every container restart)
 	@echo "Trying to unseal OpenBao (if not already unsealed)..."
-	@chmod +x ./deployments/docker-compose/openbao/unseal-openbao.sh 2>/dev/null || true
-	@./deployments/docker-compose/openbao/unseal-openbao.sh || true
+	@chmod +x ./deployments/docker-compose/openbao/openbao-unseal.sh 2>/dev/null || true
+	@./deployments/docker-compose/openbao/openbao-unseal.sh || true
 
 logs: ## Follow Docker Compose logs (docker compose logs -f)
 	@cd deployments/docker-compose && docker compose logs -f
@@ -169,14 +208,14 @@ ps: status ## Alias for status
 
 compose: prepare-volumes ## Build and up services by docker compose
 	@echo "Starting OpenBao..."
-	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up -d openbao
+	@cd deployments/docker-compose && docker compose up -d openbao
 	@if [ ! -f deployments/docker-compose/.env ] || ! grep -q '^VAULT_TOKEN=.+' deployments/docker-compose/.env 2>/dev/null; then \
 		echo "VAULT_TOKEN not found — running first-time OpenBao initialization..."; \
-		bash deployments/docker-compose/openbao/init-openbao.sh; \
+		bash deployments/docker-compose/openbao/openbao-init.sh; \
 	fi
 	@$(MAKE) unseal
 	@echo "Building and starting all services by docker compose..."
-	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up -d --build
+	@cd deployments/docker-compose && DOCKER_BUILDKIT=1 docker compose up --build
 
 compose-down: ## Down services by docker compose
 	@echo "Removing services by docker compose..."
@@ -189,8 +228,8 @@ clean-db: compose-down ## Clean all database metadata and persistent data (exclu
 
 clean-all: compose-down clean-db ## Full reset including OpenBao (requires re-init)
 	@echo "Cleaning OpenBao configuration and secrets..."
-	@sudo rm -rf deployments/docker-compose/secrets/
 	@sudo rm -rf deployments/docker-compose/data/openbao-data/
+	@find deployments/docker-compose/openbao/secrets -type f ! -name ".gitkeep" -delete
 	@sed -i 's/^VAULT_TOKEN=.*/VAULT_TOKEN=/' deployments/docker-compose/.env 2>/dev/null || true
 	@echo "Cleaned! Run 'make up' to re-initialize."
 

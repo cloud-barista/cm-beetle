@@ -67,9 +67,12 @@ cm-model/
 
 # Deployment & Docker
 .env
-!deployments/docker-compose/*/
-deployments/docker-compose/data/
-deployments/docker-compose/secrets/
+deployments/docker-compose/data
+
+**/secrets/*
+!**/secrets/.gitkeep
+!**/secrets/README.md
+
 
 # Backup Files
 *_backup
