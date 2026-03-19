@@ -10,7 +10,7 @@ services:
     image: cloudbaristaorg/cm-beetle:0.5.0
     container_name: cm-beetle
     build:
-      context: ${COMPOSE_PROJECT_ROOT}
+      context: ${PROJECT_ROOT}
       dockerfile: Dockerfile
     platform: linux/amd64
     networks:
@@ -23,16 +23,16 @@ services:
     depends_on:
       - cb-tumblebug
     volumes:
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cm-beetle-container/log/:/app/log/
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cm-beetle-container/db/:/app/db/
+      - ./data/cm-beetle-container/log/:/app/log/
+      - ./data/cm-beetle-container/db/:/app/db/
     environment:
       # - BEETLE_ROOT=/app
       - BEETLE_SELF_ENDPOINT=localhost:8056
       # - BEETLE_API_ALLOW_ORIGINS=*
       # - BEETLE_API_AUTH_ENABLED=true
       # - BEETLE_API_AUTH_MODE=basic
-      # - BEETLE_API_USERNAME=default
-      # - BEETLE_API_PASSWORD=default
+      - BEETLE_API_USERNAME=${BEETLE_API_USERNAME:?Please set BEETLE_API_USERNAME}
+      - BEETLE_API_PASSWORD=${BEETLE_API_PASSWORD:?Please set BEETLE_API_PASSWORD}
       # - BEETLE_LKVSTORE_PATH=/app/db/beetle.db
       # - BEETLE_LOGFILE_PATH=/app/log/beetle.log
       # - BEETLE_LOGFILE_MAXSIZE=1000
@@ -55,11 +55,11 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    # image: cloudbaristaorg/cb-tumblebug:0.12.1
-    image: cloudbaristaorg/cb-tumblebug:0.12.2
+    image: cloudbaristaorg/cb-tumblebug:edge
+    # image: cloudbaristaorg/cb-tumblebug:0.12.2
     container_name: cb-tumblebug
     # build:
-    #   context: ${COMPOSE_PROJECT_ROOT}/../cb-tumblebug
+    #   context: ${PROJECT_ROOT}/../cb-tumblebug
     #   dockerfile: Dockerfile
     networks:
       - internal_network
@@ -74,10 +74,13 @@ services:
         condition: service_started
       cb-tumblebug-postgres:
         condition: service_healthy
+      mc-terrarium:
+        condition: service_healthy
     volumes:
       - ./cb-tumblebug/conf/:/app/conf/
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/log/:/app/log/
+      - ./cb-tumblebug/assets/:/app/assets/
+      - ./data/cb-tumblebug-container/meta_db/:/app/meta_db/
+      - ./data/cb-tumblebug-container/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
       # # Enable TB_SELF_ENDPOINT to specify an endpoint for CB-TB API (default: localhost:1323)
@@ -94,13 +97,13 @@ services:
       - TB_POSTGRES_DATABASE=tumblebug
       - TB_POSTGRES_USER=tumblebug
       - TB_POSTGRES_PASSWORD=tumblebug
-      # - TB_TERRARIUM_API_USERNAME=default
-      # - TB_TERRARIUM_API_PASSWORD=default
+      - TB_TERRARIUM_API_USERNAME=${TERRARIUM_API_USERNAME:?Please set TERRARIUM_API_USERNAME}
+      - TB_TERRARIUM_API_PASSWORD=${TERRARIUM_API_PASSWORD:?Please set TERRARIUM_API_PASSWORD}
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
       # - TB_AUTH_MODE=jwt
-      # - TB_API_USERNAME=default
-      # - TB_API_PASSWORD=$$2a$$10$$4PKzCuJ6fPYsbCF.HR//ieLjaCzBAdwORchx62F2JRXQsuR3d9T0q
+      - TB_API_USERNAME=${TB_API_USERNAME:?Please set TB_API_USERNAME}
+      - TB_API_PASSWORD=${TB_API_PASSWORD:?Please set TB_API_PASSWORD}
       # - TB_AUTOCONTROL_DURATION_MS=10000
       # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
       # - TB_DEFAULT_NAMESPACE=default
@@ -130,7 +133,7 @@ services:
       - 2379:2379
       - 2380:2380
     volumes:
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/etcd/data:/etcd-data
+      - ./data/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
       - --name
@@ -180,7 +183,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
+      - ./data/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=tumblebug
       - POSTGRES_PASSWORD=tumblebug
@@ -195,31 +198,33 @@ services:
   # CB-Spider
   cb-spider:
     # image: cloudbaristaorg/cb-spider:0.12.0
-    image: cloudbaristaorg/cb-spider:0.12.5
+    image: cloudbaristaorg/cb-spider:0.12.8
     container_name: cb-spider
     # build:
-    #   context: ../cb-spider
+    #   context: ${PROJECT_ROOT}/../cb-spider
     #   dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
-    # expose:
-    #   - 1024
-    ports:
-      - 1024:1024
+    # Uncomment the following lines to expose the CB-Spider AdminWeb for remote access
+    # ports:
+    #   - 1024:1024
     volumes:
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
-      - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      - ./data/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - ./data/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      # Note: cb-spider 0.12.8+ Docker image excludes cloud-driver-libs/ (static mode optimization).
+      # This directory is maintained in assets/spider/ and must be updated when upgrading cb-spider.
+      - ./cb-tumblebug/assets/spider/:/root/go/src/github.com/cloud-barista/cb-spider/cloud-driver-libs/
     environment:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
-      - API_USERNAME=default
-      - API_PASSWORD=$$2a$$10$$4PKzCuJ6fPYsbCF.HR//ieLjaCzBAdwORchx62F2JRXQsuR3d9T0q
+      - SPIDER_USERNAME=${SPIDER_USERNAME:?Please set SPIDER_USERNAME}
+      - SPIDER_PASSWORD=${SPIDER_PASSWORD:?Please set SPIDER_PASSWORD}
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
-      - ADMINWEB=ON
+      - ADMINWEB=OFF
     healthcheck: # for CB-Spider
       test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
       interval: 1m
@@ -227,12 +232,12 @@ services:
       retries: 3
       start_period: 10s
 
-  # cb-mapui
+  # CB-MapUI
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.6
+    image: cloudbaristaorg/cb-mapui:0.12.15
     container_name: cb-mapui
     # build:
-    #   context: ${COMPOSE_PROJECT_ROOT}/../cb-mapui
+    #   context: ${PROJECT_ROOT}/../cb-mapui
     #   dockerfile: Dockerfile
     networks:
       - internal_network
@@ -269,55 +274,103 @@ services:
   #     - PYTHONUNBUFFERED=1
   #     - MCP_SERVER_HOST=0.0.0.0
   #     - MCP_SERVER_PORT=8000
-  #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
+  #       # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
   #     - MCP_LOG_LEVEL=INFO
 
-  # # mc-terrarium (PoC): resource extentions such as VPN for CB-Tumblebug by using OpenTofu
-  # mc-terrarium:
-  #   image: cloudbaristaorg/mc-terrarium:0.0.22
-  #   container_name: mc-terrarium
-  #   # build:
-  #   #   context: .
-  #   #   dockerfile: Dockerfile
-  #   networks:
-  #     - external_network
-  #   ports:
-  #     - target: 8055
-  #       published: 8055
-  #       protocol: tcp
-  #   env_file:
-  #     - ${HOME}/.cloud-barista/secrets/credentials             # AWS credential
-  #     - ${HOME}/.cloud-barista/secrets/credential-azure.env    # Azure credential
-  #     - ${HOME}/.cloud-barista/secrets/credential-alibaba.env  # Alibaba credential
-  #     - ${HOME}/.cloud-barista/secrets/credential-tencent.env  # Tencent credential
-  #     - ${HOME}/.cloud-barista/secrets/credential-ibm.env      # IBM credential
-  #     - ${HOME}/.cloud-barista/secrets/credential-ncp.env      # NCP credential
-  #   volumes:
-  #     - ${HOME}/.cloud-barista/secrets/credential-gcp.json:/app/secrets/credential-gcp.json:ro # GCP credential
-  #     - ${COMPOSE_PROJECT_ROOT}/container-volume/mc-terrarium-container/.terrarium:/app/.terrarium
-  #     - /etc/ssl/certs:/etc/ssl/certs:ro
-  #   environment:
-  #     - TERRARIUM_ROOT=/app
-  #     # - TERRARIUM_SELF_ENDPOINT=localhost:8055
-  #     # - TERRARIUM_API_ALLOW_ORIGINS=*
-  #     # - TERRARIUM_API_AUTH_ENABLED=true
-  #     # - TERRARIUM_API_USERNAME=default
-  #     # - TERRARIUM_API_PASSWORD=$$2a$$10$$cKUlDfR8k4VUubhhRwCV9.sFvKV3KEc9RJ.H8R/thIeVOrhQ.nuuW
-  #     # - TERRARIUM_LOGFILE_PATH=/app/log/terrarium.log
-  #     # - TERRARIUM_LOGFILE_MAXSIZE=1000
-  #     # - TERRARIUM_LOGFILE_MAXBACKUPS=3
-  #     # - TERRARIUM_LOGFILE_MAXAGE=30
-  #     # - TERRARIUM_LOGFILE_COMPRESS=false
-  #     - TERRARIUM_LOGLEVEL=info
-  #     # - TERRARIUM_LOGWRITER=both
-  #     # - TERRARIUM_NODE_ENV=production
-  #     # - TERRARIUM_AUTOCONTROL_DURATION_MS=10000
-  #   healthcheck: # for MC-Terrarirum
-  #     test: ["CMD", "curl", "-f", "http://localhost:8055/terrarium/readyz"]
-  #     interval: 5m
-  #     timeout: 5s
-  #     retries: 3
-  #     start_period: 10s
+  # ── MC-Terrarium ──────────────────────────────────────────────────────────
+  # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
+  # CSP credentials are managed by OpenBao (no more env_file injection).
+  mc-terrarium:
+    image: cloudbaristaorg/mc-terrarium:0.1.2
+    container_name: mc-terrarium
+    # build:
+    #   context: ${PROJECT_ROOT}/../mc-terrarium
+    #   dockerfile: Dockerfile
+    networks:
+      - internal_network # Inter-service communication (OpenBao access)
+      - external_network # CSP API calls (requires internet access)
+    ports:
+      - target: 8055
+        published: 8055
+        protocol: tcp
+    # [Legacy] CSP credentials via env_file — replaced by OpenBao centralized credential management.
+    # env_file:
+    #   - ${HOME}/.cloud-barista/secrets/credentials             # AWS credential
+    #   - ${HOME}/.cloud-barista/secrets/credential-azure.env    # Azure credential
+    #   - ${HOME}//.cloud-barista/secrets/credential-alibaba.env  # Alibaba credential
+    #   - ${HOME}/.cloud-barista/secrets/credential-tencent.env  # Tencent credential
+    #   - ${HOME}/.cloud-barista/secrets/credential-ibm.env      # IBM credential
+    #   - ${HOME}/.cloud-barista/secrets/credential-ncp.env      # NCP credential
+    volumes:
+      # [Legacy] GCP credential file mount — replaced by OpenBao.
+      # - ${HOME}/.cloud-barista/secrets/credential-gcp.json:/app/secrets/credential-gcp.json:ro
+      - ./data/mc-terrarium-container/.terrarium:/app/.terrarium
+      - /etc/ssl/certs:/etc/ssl/certs:ro
+    environment:
+      - TERRARIUM_ROOT=/app
+      # - TERRARIUM_SELF_ENDPOINT=localhost:8055
+      # - TERRARIUM_API_ALLOW_ORIGINS=*
+      # - TERRARIUM_API_AUTH_ENABLED=true
+      - TERRARIUM_API_USERNAME=${TERRARIUM_API_USERNAME:?Please set TERRARIUM_API_USERNAME}
+      - TERRARIUM_API_PASSWORD=${TERRARIUM_API_PASSWORD:?Please set TERRARIUM_API_PASSWORD}
+      # - TERRARIUM_LOGFILE_PATH=/app/log/terrarium.log
+      # - TERRARIUM_LOGFILE_MAXSIZE=1000
+      # - TERRARIUM_LOGFILE_MAXBACKUPS=3
+      # - TERRARIUM_LOGFILE_MAXAGE=30
+      # - TERRARIUM_LOGFILE_COMPRESS=false
+      - TERRARIUM_LOGLEVEL=info
+      # - TERRARIUM_LOGWRITER=both
+      # - TERRARIUM_NODE_ENV=production
+      #
+      # Note: OpenBao does not have its own OpenTofu/Terraform provider yet.
+      # The only available option is the hashicorp/vault provider, which
+      # exclusively reads VAULT_ADDR and VAULT_TOKEN from env vars.
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+    healthcheck: # for MC-Terrarirum
+      test: ["CMD", "curl", "-f", "http://localhost:8055/terrarium/readyz"]
+      interval: 10m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      openbao:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── OpenBao (secrets management) ──────────────────────────────────────────
+  # OpenBao securely stores and provides CSP credentials via API.
+  openbao:
+    image: openbao/openbao:2.5.1
+    container_name: openbao
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - internal_network # Inter-service communication (terrarium connects here)
+      - external_network # Host port exposure (for CLI/API access from host)
+    ports:
+      - target: 8200
+        published: 8200
+        protocol: tcp
+    # ── Persistent mode (active) ─────────────────────────────────────
+    environment:
+      - BAO_ADDR=http://0.0.0.0:8200 # BAO_ADDR is for binding listener inside container
+      - SKIP_SETCAP=true
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        chown -R openbao:openbao /openbao/data || { echo "ERROR: chown failed on /openbao/data"; exit 1; }
+        exec docker-entrypoint.sh server -config=/openbao/config/openbao-config.hcl
+    volumes:
+      - ./data/openbao-data:/openbao/data
+      - ./openbao/openbao-config.hcl:/openbao/config/openbao-config.hcl:ro
+    healthcheck:
+      test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
 
   # # CB-Tumblebug Metabase Dashboard for PostgreSQL
   # # Enable this service to manage the PostgreSQL database of CB-Tumblebug.
@@ -357,7 +410,7 @@ services:
   #     - MB_ASYNC_QUERY_THREAD_POOL_SIZE=50
   #     - MB_QUERY_CACHING_ENABLED=true
   #   volumes:
-  #     - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/metabase-data:/metabase-data
+  #     - ./data/cb-tumblebug-container/meta_db/metabase-data:/metabase-data
   #   depends_on:
   #     cb-tumblebug-postgres:
   #       condition: service_healthy
@@ -376,8 +429,8 @@ services:
   #     cb-tumblebug-metabase:
   #       condition: service_started
   #   volumes:
-  #     - ${COMPOSE_PROJECT_ROOT}/cb-tumblebug/init/initMetabase.sh:/scripts/initMetabase.sh:ro
-  #     - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/metabase-init-marker:/marker
+  #     - ./cb-tumblebug/init/initMetabase.sh:/scripts/initMetabase.sh:ro
+  #     - ./data/cb-tumblebug-container/meta_db/metabase-init-marker:/marker
   #   environment:
   #     - METABASE_URL=http://cb-tumblebug-metabase:3000
   #     - POSTGRES_HOST=cb-tumblebug-postgres
@@ -419,7 +472,7 @@ services:
   #   ports:
   #     - 5050:80
   #   volumes:
-  #     - ${COMPOSE_PROJECT_ROOT}/container-volume/cb-tumblebug-container/meta_db/pgadmin:/var/lib/pgadmin
+  #     - ./data/cb-tumblebug-container/meta_db/pgadmin:/var/lib/pgadmin
   #   environment:
   #     - PGADMIN_DEFAULT_EMAIL=admin1@your.org
   #     - PGADMIN_DEFAULT_PASSWORD=tumblebug

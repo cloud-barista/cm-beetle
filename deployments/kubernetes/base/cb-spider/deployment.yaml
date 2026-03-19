@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cb-spider
+  namespace: cloud-barista
+spec:
+  ports:
+    - port: 1024
+  selector:
+    app: cb-spider
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cb-spider
+  namespace: cloud-barista
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cb-spider
+  template:
+    metadata:
+      labels:
+        app: cb-spider
+    spec:
+      containers:
+        - name: cb-spider
+          image: cloudbaristaorg/cb-spider:0.9.3
+          ports:
+            - containerPort: 1024
+          env:
+            - name: SPIDER_USERNAME
+              value: "default"
+            - name: SPIDER_PASSWORD
+              value: "default"
+          volumeMounts:
+            - name: spider-data
+              mountPath: /app/meta_db
+            - name: spider-log
+              mountPath: /app/log
+      volumes:
+        - name: spider-data
+          persistentVolumeClaim:
+            claimName: cb-spider-data-pvc
+        - name: spider-log
+          persistentVolumeClaim:
+            claimName: cb-spider-log-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cb-spider-data-pvc
+  namespace: cloud-barista
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cb-spider-log-pvc
+  namespace: cloud-barista
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
