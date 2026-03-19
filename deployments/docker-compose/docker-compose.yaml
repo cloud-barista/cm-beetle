@@ -5,21 +5,6 @@ networks:
     driver: bridge
 
 services:
-  reverse-proxy:
-    image: "traefik:v3.6"
-    # "docker compose pull reverse-proxy" to get the latest Traefik image minor version update
-    container_name: "traefik"
-    ports:
-      - 80:80
-      - 443:443
-      - 8080:8080
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml
-      - ${HOME}/.cloud-barista/certs/:/certs/
-    networks:
-      - external_network
-      - internal_network
   # cm-beetle
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.5.0
@@ -216,15 +201,14 @@ services:
     image: cloudbaristaorg/cb-spider:0.12.8
     container_name: cb-spider
     # build:
-    #   context: ../cb-spider
+    #   context: ${PROJECT_ROOT}/../cb-spider
     #   dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
-    # expose:
-    #   - 1024
-    ports:
-      - 1024:1024
+    # Uncomment the following lines to expose the CB-Spider AdminWeb for remote access
+    # ports:
+    #   - 1024:1024
     volumes:
       - ./data/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./data/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
@@ -252,19 +236,6 @@ services:
   cb-mapui:
     image: cloudbaristaorg/cb-mapui:0.12.15
     container_name: cb-mapui
-    labels:
-      # Explicitly tell Traefik to expose this container
-      - traefik.enable=true
-      # Define the rule for routing requests to this service
-      - traefik.http.routers.cb-mapui.rule=Host(`cb-mapui.localhost`)
-      # Allow request only from the predefined entry point named "websecure"
-      - traefik.http.routers.cb-mapui.entrypoints=websecure
-      # Enable HTTPS
-      - traefik.http.routers.cb-mapui.tls=true
-      # Requests to the service are forwarded via HTTP
-      - traefik.http.services.cb-mapui.loadbalancer.server.scheme=http
-      # The port the service listens on
-      - traefik.http.services.cb-mapui.loadbalancer.server.port=1324
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
     #   dockerfile: Dockerfile
@@ -313,7 +284,7 @@ services:
     image: cloudbaristaorg/mc-terrarium:0.1.2
     container_name: mc-terrarium
     # build:
-    #   context: .
+    #   context: ${PROJECT_ROOT}/../mc-terrarium
     #   dockerfile: Dockerfile
     networks:
       - internal_network # Inter-service communication (OpenBao access)
