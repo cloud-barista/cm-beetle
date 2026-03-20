@@ -23,9 +23,10 @@ go 1.25.0
 // replace github.com/cloud-barista/cm-model => ../cm-model
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.12.2
+	//github.com/cloud-barista/cb-tumblebug v0.12.2
+	github.com/cloud-barista/cb-tumblebug v0.12.3-0.20260319011454-2a0ed610ca4b
 	github.com/cloud-barista/cm-beetle/transx v0.0.0-20251124111900-c89c3b457dd5
-	github.com/cloud-barista/cm-model v0.0.16
+	github.com/cloud-barista/cm-model v0.0.18
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1
@@ -44,7 +45,7 @@ require (
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/cloud-barista/mc-terrarium v0.0.22 // indirect
+	github.com/cloud-barista/mc-terrarium v0.1.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

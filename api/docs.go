@@ -3067,14 +3067,18 @@ const docTemplate = `{
                 "Handling",
                 "Completed",
                 "Failed",
-                "Timeout"
+                "Timeout",
+                "Cancelled",
+                "Interrupted"
             ],
             "x-enum-varnames": [
                 "CommandStatusQueued",
                 "CommandStatusHandling",
                 "CommandStatusCompleted",
                 "CommandStatusFailed",
-                "CommandStatusTimeout"
+                "CommandStatusTimeout",
+                "CommandStatusCancelled",
+                "CommandStatusInterrupted"
             ]
         },
         "cloudmodel.CommandStatusInfo": {
@@ -3096,9 +3100,9 @@ const docTemplate = `{
                     "example": "2024-01-15 10:30:05"
                 },
                 "elapsedTime": {
-                    "description": "ElapsedTime is the duration of command execution in milliseconds",
+                    "description": "ElapsedTime is the duration of command execution in seconds",
                     "type": "integer",
-                    "example": 5000
+                    "example": 120
                 },
                 "errorMessage": {
                     "description": "ErrorMessage contains error details if the execution failed",
@@ -3219,10 +3223,9 @@ const docTemplate = `{
                     "example": "g1"
                 },
                 "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "50"
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 50
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
@@ -3236,10 +3239,9 @@ const docTemplate = `{
                     "example": "aws+ap-northeast-2+t3.nano"
                 },
                 "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "default": "1",
-                    "example": "3"
+                    "description": "SubGroupSize is the number of VMs to create in this SubGroup. If \u003e 0, subGroup will be generated. Default is 1.",
+                    "type": "integer",
+                    "example": 3
                 },
                 "vmUserPassword": {
                     "type": "string",
@@ -3302,8 +3304,8 @@ const docTemplate = `{
                 },
                 "rootDiskSize": {
                     "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "default, 30, 42, ..."
+                    "type": "integer",
+                    "example": 50
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
@@ -3324,8 +3326,8 @@ const docTemplate = `{
                 },
                 "subGroupSize": {
                     "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "string",
-                    "example": "3"
+                    "type": "integer",
+                    "example": 3
                 },
                 "subnetId": {
                     "type": "string"
@@ -3566,6 +3568,35 @@ const docTemplate = `{
                 "ImageNA"
             ]
         },
+        "cloudmodel.ImageSummary": {
+            "type": "object",
+            "properties": {
+                "cspImageName": {
+                    "type": "string",
+                    "example": "ami-0123456789abcdef0"
+                },
+                "osArchitecture": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.OSArchitecture"
+                        }
+                    ],
+                    "example": "x86_64"
+                },
+                "osDistribution": {
+                    "type": "string",
+                    "example": "Ubuntu 22.04"
+                },
+                "osType": {
+                    "type": "string",
+                    "example": "ubuntu 22.04"
+                },
+                "resourceType": {
+                    "type": "string",
+                    "example": "image"
+                }
+            }
+        },
         "cloudmodel.KeyValue": {
             "type": "object",
             "properties": {
@@ -3598,6 +3629,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "command": {
+                    "description": "Command is the list of commands to execute",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -3606,7 +3638,14 @@ const docTemplate = `{
                         "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
                     ]
                 },
+                "timeoutMinutes": {
+                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
+                    "type": "integer",
+                    "default": 30,
+                    "example": 30
+                },
                 "userName": {
+                    "description": "UserName is the SSH username to use for command execution",
                     "type": "string",
                     "example": "cb-user"
                 }
@@ -4219,8 +4258,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "connectionName",
-                "name",
-                "vNetId"
+                "name"
             ],
             "properties": {
                 "connectionName": {
@@ -4245,6 +4283,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "vNetId": {
+                    "description": "Optional for registration: some CSPs (e.g., Azure, Tencent, NHN) don't bind SG to VPC",
                     "type": "string"
                 }
             }
@@ -4379,7 +4418,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rootDiskSize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rootDiskType": {
                     "type": "string"
@@ -4396,6 +4435,43 @@ const docTemplate = `{
                 },
                 "vCPU": {
                     "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.SpecSummary": {
+            "type": "object",
+            "properties": {
+                "acceleratorCount": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "acceleratorMemoryGB": {
+                    "type": "number",
+                    "example": 16
+                },
+                "acceleratorModel": {
+                    "type": "string",
+                    "example": "NVIDIA Tesla V100"
+                },
+                "acceleratorType": {
+                    "type": "string",
+                    "example": "GPU"
+                },
+                "costPerHour": {
+                    "type": "number",
+                    "example": 0.0416
+                },
+                "cspSpecName": {
+                    "type": "string",
+                    "example": "t3.medium"
+                },
+                "memoryGiB": {
+                    "type": "number",
+                    "example": 4
+                },
+                "vCPU": {
+                    "type": "integer",
+                    "example": 2
                 }
             }
         },
@@ -4506,6 +4582,10 @@ const docTemplate = `{
                 },
                 "countRebooting": {
                     "description": "CountRebooting is for counting Rebooting",
+                    "type": "integer"
+                },
+                "countRegistering": {
+                    "description": "CountRegistering is for counting Registering",
                     "type": "integer"
                 },
                 "countResuming": {
@@ -4621,6 +4701,9 @@ const docTemplate = `{
         "cloudmodel.VmInfo": {
             "type": "object",
             "properties": {
+                "RootDeviceName": {
+                    "type": "string"
+                },
                 "addtionalDetails": {
                     "type": "array",
                     "items": {
@@ -4684,6 +4767,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
+                "image": {
+                    "$ref": "#/definitions/cloudmodel.ImageSummary"
+                },
                 "imageId": {
                     "type": "string"
                 },
@@ -4738,11 +4824,8 @@ const docTemplate = `{
                     "description": "ResourceType is the type of the resource",
                     "type": "string"
                 },
-                "rootDiskName": {
-                    "type": "string"
-                },
                 "rootDiskSize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rootDiskType": {
                     "type": "string"
@@ -4752,6 +4835,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "spec": {
+                    "$ref": "#/definitions/cloudmodel.SpecSummary"
                 },
                 "specId": {
                     "type": "string"
@@ -4768,7 +4854,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "sshPort": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "status": {
                     "description": "Required by CB-Tumblebug",
@@ -6196,14 +6282,20 @@ const docTemplate = `{
         "model.ImageStatus": {
             "type": "string",
             "enum": [
+                "Creating",
                 "Available",
+                "Failed",
                 "Unavailable",
+                "Deleting",
                 "Deprecated",
                 "NA"
             ],
             "x-enum-varnames": [
+                "ImageCreating",
                 "ImageAvailable",
+                "ImageFailed",
                 "ImageUnavailable",
+                "ImageDeleting",
                 "ImageDeprecated",
                 "ImageNA"
             ]
@@ -6225,9 +6317,8 @@ const docTemplate = `{
                     "example": "Description"
                 },
                 "desiredNodeSize": {
-                    "type": "string",
-                    "default": "1",
-                    "example": "1"
+                    "type": "integer",
+                    "example": 1
                 },
                 "imageId": {
                     "description": "ImageId is field for id of a image in common namespace",
@@ -6242,14 +6333,12 @@ const docTemplate = `{
                     }
                 },
                 "maxNodeSize": {
-                    "type": "string",
-                    "default": "2",
-                    "example": "3"
+                    "type": "integer",
+                    "example": 3
                 },
                 "minNodeSize": {
-                    "type": "string",
-                    "default": "1",
-                    "example": "1"
+                    "type": "integer",
+                    "example": 1
                 },
                 "name": {
                     "description": "K8sCluster name if it is not empty. Optional when used with namePrefix in multi-cluster creation.",
@@ -6267,10 +6356,9 @@ const docTemplate = `{
                     "example": "true"
                 },
                 "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "default, 30, 42, ..."
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 30
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
@@ -6298,8 +6386,8 @@ const docTemplate = `{
                     "example": "Description"
                 },
                 "desiredNodeSize": {
-                    "type": "string",
-                    "example": "1"
+                    "type": "integer",
+                    "example": 1
                 },
                 "imageId": {
                     "type": "string",
@@ -6313,12 +6401,12 @@ const docTemplate = `{
                     }
                 },
                 "maxNodeSize": {
-                    "type": "string",
-                    "example": "3"
+                    "type": "integer",
+                    "example": 3
                 },
                 "minNodeSize": {
-                    "type": "string",
-                    "example": "1"
+                    "type": "integer",
+                    "example": 1
                 },
                 "name": {
                     "type": "string",
@@ -6330,9 +6418,9 @@ const docTemplate = `{
                     "example": "true"
                 },
                 "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
-                    "type": "string",
-                    "example": "40"
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 40
                 },
                 "rootDiskType": {
                     "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
@@ -6627,8 +6715,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "connectionName",
-                "name",
-                "vNetId"
+                "name"
             ],
             "properties": {
                 "connectionName": {
@@ -6653,6 +6740,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "vNetId": {
+                    "description": "Optional for registration: some CSPs (e.g., Azure, Tencent, NHN) don't bind SG to VPC",
                     "type": "string"
                 }
             }
@@ -8431,7 +8519,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rootDiskSize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rootDiskType": {
                     "type": "string"
