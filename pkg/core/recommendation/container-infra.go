@@ -134,19 +134,19 @@ func RecommendK8sControlPlane(provider, region string, k8sInfoList KubernetesInf
 		SpecId:          "azure+koreacentral+standard_b4ms", // TODO: Search and assign a recommended spec ID
 		ImageId:         "default",                          // TODO: Search and assign a recommended image ID
 		Version:         "1.33",
-		DesiredNodeSize: fmt.Sprintf("%d", k8sControlPlaneNodeCount),
-		MinNodeSize:     "1",
-		MaxNodeSize:     fmt.Sprintf("%d", k8sControlPlaneNodeCount),
+		DesiredNodeSize: k8sControlPlaneNodeCount,
+		MinNodeSize:     1,
+		MaxNodeSize:     k8sControlPlaneNodeCount,
 		OnAutoScaling:   "false",
 		RootDiskType:    "default",
-		RootDiskSize:    "default",
+		RootDiskSize:    0,
 		Description:     fmt.Sprintf("A recommended control plane with %d nodes", k8sControlPlaneNodeCount),
 	}
 
 	log.Info().
 		Str("clusterName", recommendedControlPlane.Name).
 		Str("specId", recommendedControlPlane.SpecId).
-		Str("desiredNodeSize", recommendedControlPlane.DesiredNodeSize).
+		Int("desiredNodeSize", recommendedControlPlane.DesiredNodeSize).
 		Msg("K8s control plane recommendation completed")
 
 	return recommendedControlPlane, nil
@@ -210,19 +210,19 @@ func RecommendK8sNodeGroup(provider, region string, k8sInfoList KubernetesInfoLi
 		Name:            "recommended-worker-nodegroup",
 		SpecId:          "azure+koreacentral+standard_b4ms", // Hardcoded for testing
 		ImageId:         "default",
-		DesiredNodeSize: fmt.Sprintf("%d", k8sNodeGroupCount),
-		MinNodeSize:     "1",
-		MaxNodeSize:     fmt.Sprintf("%d", k8sNodeGroupCount),
+		DesiredNodeSize: k8sNodeGroupCount,
+		MinNodeSize:     1,
+		MaxNodeSize:     k8sNodeGroupCount,
 		OnAutoScaling:   "true",
 		RootDiskType:    "default",
-		RootDiskSize:    "default",
+		RootDiskSize:    0,
 		Description:     fmt.Sprintf("A recommended node group with %d nodes", k8sNodeGroupCount),
 	}
 
 	log.Info().
 		Str("nodeGroupName", recommendedNodeGroup.Name).
 		Str("specId", recommendedNodeGroup.SpecId).
-		Str("desiredNodeSize", recommendedNodeGroup.DesiredNodeSize).
+		Int("desiredNodeSize", recommendedNodeGroup.DesiredNodeSize).
 		Msg("K8s worker node group recommendation completed")
 
 	return recommendedNodeGroup, nil

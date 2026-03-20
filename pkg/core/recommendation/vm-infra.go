@@ -212,10 +212,10 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				SpecId:         subgroupInfo.vmSpecId,
 				Description:    "a recommended virtual machine",
 				Name:           fmt.Sprintf("migrated-%s", srcInfra.Servers[j].MachineId), // Set MachineId to identify the source server
-				RootDiskSize:   "",                                                        // TBD
+				RootDiskSize:   0,                                                         // TBD
 				RootDiskType:   "",                                                        // TBD
-				SubGroupSize:   "",
-				VmUserPassword: "",
+				SubGroupSize:   1,                                                         // TBD
+				VmUserPassword: "",                                                        // TBD
 			}
 			tempVmInfraInfo.TargetVmInfra.SubGroups = append(tempVmInfraInfo.TargetVmInfra.SubGroups, tempCreateSubgroupReq)
 		}
@@ -473,11 +473,11 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
-			RootDiskSize:     "50",                                                 // Set 50 GB as a default value
+			RootDiskSize:     50,                                                   // Set 50 GB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
 			VmUserPassword:   "",                                                   // TBD
-			SubGroupSize:     "",                                                   // TBD
+			SubGroupSize:     1,                                                    // TBD
 			Label: map[string]string{
 				"sourceMachineId": server.MachineId,
 			},
@@ -597,11 +597,11 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			SubnetId:       skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			Name:           fmt.Sprintf("migrated-%s", server.MachineId),      // Set MachineId to identify the source server
 			RootDiskType:   "",                                                // Set "" or default to use CSP's default
-			RootDiskSize:   "50",                                              // Set 50 GB as a default value
+			RootDiskSize:   50,                                                // Set 50 GB as a default value
 			SshKeyId:       skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			VmUserName:     "",                                                // TBD: Set the VM user name if needed
 			VmUserPassword: "",                                                // TBD
-			SubGroupSize:   "",                                                // TBD
+			SubGroupSize:   1,                                                 // Default: 1
 			Label: map[string]string{
 				"sourceMachineId": server.MachineId,
 			},

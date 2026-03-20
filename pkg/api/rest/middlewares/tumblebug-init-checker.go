@@ -18,7 +18,7 @@ var isTbInitalized bool = false
 func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		log.Info().Msg("[Middleware] Check and mark Tumblebug initialization status ")
+		log.Debug().Msg("[Middleware] Check and mark Tumblebug initialization status ")
 
 		if !isTbInitalized {
 			// Initialize resty client with basic auth
@@ -30,22 +30,11 @@ func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 			// set tumblebug rest url
 			epTumblebug := config.Tumblebug.RestUrl
 
-			// Search and set a target VM spec
-			method := "POST"
-			nsId := "system"
-			url := fmt.Sprintf("%s/ns/%s/resources/searchImage", epTumblebug, nsId)
+			method := "GET"
+			url := fmt.Sprintf("%s/readyz", epTumblebug)
 
-			// falseValue := false
-			trueValue := true
-			maxResult := 5
-			tbReq := tbmodel.SearchImageRequest{
-				IncludeBasicImageOnly: &trueValue,
-				MaxResults:            &maxResult,
-				OSArchitecture:        "x86_64",
-				OSType:                "ubuntu 22.04",
-			}
-
-			tbRes := tbmodel.SearchImageResponse{}
+			tbReq := common.NoBody
+			tbRes := tbmodel.ReadyzResponse{}
 
 			err := common.ExecuteHttpRequest(
 				client,
@@ -59,12 +48,25 @@ func TumblebugInitChecker(next echo.HandlerFunc) echo.HandlerFunc {
 			)
 
 			if err != nil {
-				log.Warn().Err(err).Msg("Tumblebug needs to be initialized.")
+				log.Warn().Err(err).Msg("Tumblebug is not responding or returned an error.")
+				res := common.SimpleMsg{Message: "Tumblebug is not responding or returned an error. Please check Tumblebug's status."}
+				return c.JSON(http.StatusServiceUnavailable, res)
+			}
+
+			if !tbRes.Ready {
+				log.Warn().Msg("Tumblebug is not ready.")
+				res := common.SimpleMsg{Message: "Tumblebug is not ready. Please wait until Tumblebug is ready."}
+				return c.JSON(http.StatusServiceUnavailable, res)
+			}
+
+			if !tbRes.Initialized {
+				log.Warn().Msg("Tumblebug needs to be initialized.")
 				res := common.SimpleMsg{Message: "Tumblebug needs to be initialized. See https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info"}
 				return c.JSON(http.StatusServiceUnavailable, res)
 			}
 
 			isTbInitalized = true
+			log.Info().Msg("Tumblebug is ready and initialized.")
 		}
 
 		return next(c)

@@ -15,7 +15,7 @@ WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 # 1. [On go.mod] Add `replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug`
 # 2. [On shell] Copy cb-tumblebug by `rsync -av --exclude container-volume/ --exclude .git/ ../cb-tumblebug/ ./cb-tumblebug`
 # 3. [On Dockerfile] Add `COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug`
-# 4. [On shell] Run `make compose`
+# 4. [On shell] Run `make up`
 # 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
 # COPY cb-tumblebug /go/src/github.com/cloud-barista/cb-tumblebug
 
@@ -25,7 +25,7 @@ WORKDIR /go/src/github.com/cloud-barista/cm-beetle
 # 1. [On go.mod] Add `replace github.com/cloud-barista/cm-model => ../cm-model`
 # 2. [On shell] Copy cm-model by `rsync -av --exclude container-volume/ --exclude .git/ ../cm-model/ ./cm-model`
 # 3. [On Dockerfile] Add `COPY cm-model /go/src/github.com/cloud-barista/cm-model`
-# 4. [On shell] Run `make compose`
+# 4. [On shell] Run `make up`
 # COPY cm-model /go/src/github.com/cloud-barista/cm-model
 
 # Copy dependency files to the container

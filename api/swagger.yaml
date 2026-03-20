@@ -16,6 +16,8 @@ definitions:
     - Completed
     - Failed
     - Timeout
+    - Cancelled
+    - Interrupted
     type: string
     x-enum-varnames:
     - CommandStatusQueued
@@ -23,6 +25,8 @@ definitions:
     - CommandStatusCompleted
     - CommandStatusFailed
     - CommandStatusTimeout
+    - CommandStatusCancelled
+    - CommandStatusInterrupted
   cloudmodel.CommandStatusInfo:
     properties:
       commandExecuted:
@@ -41,8 +45,8 @@ definitions:
         example: "2024-01-15 10:30:05"
         type: string
       elapsedTime:
-        description: ElapsedTime is the duration of command execution in milliseconds
-        example: 5000
+        description: ElapsedTime is the duration of command execution in seconds
+        example: 120
         type: integer
       errorMessage:
         description: ErrorMessage contains error details if the execution failed
@@ -135,10 +139,9 @@ definitions:
         example: g1
         type: string
       rootDiskSize:
-        default: default
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: "50"
-        type: string
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 50
+        type: integer
       rootDiskType:
         default: default
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
@@ -152,11 +155,10 @@ definitions:
         example: aws+ap-northeast-2+t3.nano
         type: string
       subGroupSize:
-        default: "1"
-        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
-          VMs will be created accordingly.
-        example: "3"
-        type: string
+        description: SubGroupSize is the number of VMs to create in this SubGroup.
+          If > 0, subGroup will be generated. Default is 1.
+        example: 3
+        type: integer
       vmUserPassword:
         example: ""
         type: string
@@ -203,8 +205,8 @@ definitions:
         type: string
       rootDiskSize:
         description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
-        type: string
+        example: 50
+        type: integer
       rootDiskType:
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
@@ -223,8 +225,8 @@ definitions:
       subGroupSize:
         description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
           VMs will be created accordingly.
-        example: "3"
-        type: string
+        example: 3
+        type: integer
       subnetId:
         type: string
       vNetId:
@@ -415,6 +417,25 @@ definitions:
     - ImageUnavailable
     - ImageDeprecated
     - ImageNA
+  cloudmodel.ImageSummary:
+    properties:
+      cspImageName:
+        example: ami-0123456789abcdef0
+        type: string
+      osArchitecture:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
+        example: x86_64
+      osDistribution:
+        example: Ubuntu 22.04
+        type: string
+      osType:
+        example: ubuntu 22.04
+        type: string
+      resourceType:
+        example: image
+        type: string
+    type: object
   cloudmodel.KeyValue:
     properties:
       key:
@@ -434,13 +455,22 @@ definitions:
   cloudmodel.MciCmdReq:
     properties:
       command:
+        description: Command is the list of commands to execute
         example:
         - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
           is: $client_ip'
         items:
           type: string
         type: array
+      timeoutMinutes:
+        default: 30
+        description: |-
+          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+          If not specified or set to 0, the default timeout (30 minutes) will be used
+        example: 30
+        type: integer
       userName:
+        description: UserName is the SSH username to use for command execution
         example: cb-user
         type: string
     required:
@@ -930,11 +960,12 @@ definitions:
       name:
         type: string
       vNetId:
+        description: 'Optional for registration: some CSPs (e.g., Azure, Tencent,
+          NHN) don''t bind SG to VPC'
         type: string
     required:
     - connectionName
     - name
-    - vNetId
     type: object
   cloudmodel.SpecInfo:
     properties:
@@ -1026,7 +1057,7 @@ definitions:
       regionName:
         type: string
       rootDiskSize:
-        type: string
+        type: integer
       rootDiskType:
         type: string
       systemLabel:
@@ -1040,6 +1071,33 @@ definitions:
         example: wef12awefadf1221edcf
         type: string
       vCPU:
+        type: integer
+    type: object
+  cloudmodel.SpecSummary:
+    properties:
+      acceleratorCount:
+        example: 1
+        type: integer
+      acceleratorMemoryGB:
+        example: 16
+        type: number
+      acceleratorModel:
+        example: NVIDIA Tesla V100
+        type: string
+      acceleratorType:
+        example: GPU
+        type: string
+      costPerHour:
+        example: 0.0416
+        type: number
+      cspSpecName:
+        example: t3.medium
+        type: string
+      memoryGiB:
+        example: 4
+        type: number
+      vCPU:
+        example: 2
         type: integer
     type: object
   cloudmodel.SshCmdResult:
@@ -1122,6 +1180,9 @@ definitions:
       countRebooting:
         description: CountRebooting is for counting Rebooting
         type: integer
+      countRegistering:
+        description: CountRegistering is for counting Registering
+        type: integer
       countResuming:
         description: CountResuming is for counting Resuming
         type: integer
@@ -1203,6 +1264,8 @@ definitions:
     type: object
   cloudmodel.VmInfo:
     properties:
+      RootDeviceName:
+        type: string
       addtionalDetails:
         items:
           $ref: '#/definitions/cloudmodel.KeyValue'
@@ -1250,6 +1313,8 @@ definitions:
         description: Id is unique identifier for the object
         example: aws-ap-southeast-1
         type: string
+      image:
+        $ref: '#/definitions/cloudmodel.ImageSummary'
       imageId:
         type: string
       label:
@@ -1287,16 +1352,16 @@ definitions:
       resourceType:
         description: ResourceType is the type of the resource
         type: string
-      rootDiskName:
-        type: string
       rootDiskSize:
-        type: string
+        type: integer
       rootDiskType:
         type: string
       securityGroupIds:
         items:
           type: string
         type: array
+      spec:
+        $ref: '#/definitions/cloudmodel.SpecSummary'
       specId:
         type: string
       sshHostKeyInfo:
@@ -1307,7 +1372,7 @@ definitions:
       sshKeyId:
         type: string
       sshPort:
-        type: string
+        type: integer
       status:
         description: Required by CB-Tumblebug
         type: string
@@ -2354,14 +2419,20 @@ definitions:
     type: object
   model.ImageStatus:
     enum:
+    - Creating
     - Available
+    - Failed
     - Unavailable
+    - Deleting
     - Deprecated
     - NA
     type: string
     x-enum-varnames:
+    - ImageCreating
     - ImageAvailable
+    - ImageFailed
     - ImageUnavailable
+    - ImageDeleting
     - ImageDeprecated
     - ImageNA
   model.K8sClusterDynamicReq:
@@ -2376,9 +2447,8 @@ definitions:
         example: Description
         type: string
       desiredNodeSize:
-        default: "1"
-        example: "1"
-        type: string
+        example: 1
+        type: integer
       imageId:
         description: ImageId is field for id of a image in common namespace
         example: default, tencent+ap-seoul+ubuntu20.04
@@ -2389,13 +2459,11 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       maxNodeSize:
-        default: "2"
-        example: "3"
-        type: string
+        example: 3
+        type: integer
       minNodeSize:
-        default: "1"
-        example: "1"
-        type: string
+        example: 1
+        type: integer
       name:
         description: K8sCluster name if it is not empty. Optional when used with namePrefix
           in multi-cluster creation.
@@ -2410,10 +2478,9 @@ definitions:
         example: "true"
         type: string
       rootDiskSize:
-        default: default
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: default, 30, 42, ...
-        type: string
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 30
+        type: integer
       rootDiskType:
         default: default
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
@@ -2440,8 +2507,8 @@ definitions:
         example: Description
         type: string
       desiredNodeSize:
-        example: "1"
-        type: string
+        example: 1
+        type: integer
       imageId:
         example: image-01
         type: string
@@ -2451,11 +2518,11 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       maxNodeSize:
-        example: "3"
-        type: string
+        example: 3
+        type: integer
       minNodeSize:
-        example: "1"
-        type: string
+        example: 1
+        type: integer
       name:
         example: k8sng01
         type: string
@@ -2464,9 +2531,9 @@ definitions:
         example: "true"
         type: string
       rootDiskSize:
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
-        example: "40"
-        type: string
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 40
+        type: integer
       rootDiskType:
         description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
           ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
@@ -2704,11 +2771,12 @@ definitions:
       name:
         type: string
       vNetId:
+        description: 'Optional for registration: some CSPs (e.g., Azure, Tencent,
+          NHN) don''t bind SG to VPC'
         type: string
     required:
     - connectionName
     - name
-    - vNetId
     type: object
   model.SimpleMsg:
     properties:
@@ -3971,7 +4039,7 @@ definitions:
       regionName:
         type: string
       rootDiskSize:
-        type: string
+        type: integer
       rootDiskType:
         type: string
       systemLabel:
