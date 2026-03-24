@@ -1446,12 +1446,6 @@ definitions:
         example: Any message
         type: string
     type: object
-  common.SimpleMsg:
-    properties:
-      message:
-        example: Any message
-        type: string
-    type: object
   controller.CORSRule:
     properties:
       allowedHeaders:
@@ -2008,6 +2002,44 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-cloudmodel_IdList:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.IdList'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-cloudmodel_MciInfoList:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MciInfoList'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-cloudmodel_RecommendedSecurityGroupList:
     properties:
       data:
@@ -2084,11 +2116,125 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-common_RequestDetails:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/common.RequestDetails'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_MigrateInfraResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.MigrateInfraResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_MigrateInfraWithDefaultsResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.MigrateInfraWithDefaultsResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-controller_ObjectStorageInfo:
     properties:
       data:
         allOf:
         - $ref: '#/definitions/controller.ObjectStorageInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_RecommendVmInfraResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.RecommendVmInfraResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2127,6 +2273,44 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/model.AsyncJobResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-model_K8sClusterDynamicReq:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/model.K8sClusterDynamicReq'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-model_K8sNodeGroupReq:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/model.K8sNodeGroupReq'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -5048,15 +5232,15 @@ paths:
         "200":
           description: The ID list of The migrated multi-cloud infrastructure (MCI)
           schema:
-            $ref: '#/definitions/cloudmodel.IdList'
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_IdList'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -5091,15 +5275,15 @@ paths:
         "201":
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
-            $ref: '#/definitions/controller.MigrateInfraResponse'
+            $ref: '#/definitions/model.ApiResponse-controller_MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -5143,15 +5327,15 @@ paths:
           description: The result of deleting the migrated multi-cloud infrastructure
             (MCI)
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete the migrated mult-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -5184,15 +5368,15 @@ paths:
         "200":
           description: The migrated multi-cloud infrastructure (MCI) information
           schema:
-            $ref: '#/definitions/controller.MigrateInfraResponse'
+            $ref: '#/definitions/model.ApiResponse-controller_MigrateInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Get the migrated multi-cloud infrastructure (MCI)
       tags:
       - '[Migration] Infrastructure'
@@ -5228,11 +5412,11 @@ paths:
         "201":
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
-            $ref: '#/definitions/controller.MigrateInfraWithDefaultsResponse'
+            $ref: '#/definitions/model.ApiResponse-controller_MigrateInfraWithDefaultsResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
         defaults
       tags:
@@ -5826,11 +6010,11 @@ paths:
         "200":
           description: Deprecated endpoint notice
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: (Deprecated) Recommend an appropriate container infrastructure for
         cloud migration
       tags:
@@ -5874,15 +6058,15 @@ paths:
         "200":
           description: K8s control plane recommendation (ready for cb-tumblebug API)
           schema:
-            $ref: '#/definitions/model.K8sClusterDynamicReq'
+            $ref: '#/definitions/model.ApiResponse-model_K8sClusterDynamicReq'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend K8s control plane configuration
       tags:
       - '[Recommendation] K8s Cluster (prototype)'
@@ -5926,15 +6110,15 @@ paths:
           description: K8s worker node group recommendation (ready for cb-tumblebug
             API)
           schema:
-            $ref: '#/definitions/model.K8sNodeGroupReq'
+            $ref: '#/definitions/model.ApiResponse-model_K8sNodeGroupReq'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend K8s worker node group configuration
       tags:
       - '[Recommendation] K8s Cluster (prototype)'
@@ -5984,15 +6168,15 @@ paths:
         "200":
           description: The result of recommended infrastructure
           schema:
-            $ref: '#/definitions/controller.RecommendVmInfraResponse'
+            $ref: '#/definitions/model.ApiResponse-controller_RecommendVmInfraResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: '**(To be deprecated)** Recommend an appropriate VM infrastructure
         (i.e., MCI, multi-cloud infrastructure) for cloud migration'
       tags:
@@ -6043,15 +6227,15 @@ paths:
         "200":
           description: The result of recommended infrastructure
           schema:
-            $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsResponse'
+            $ref: '#/definitions/model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
         multi-cloud infrastructure) with defaults for cloud migration
       tags:
@@ -6489,7 +6673,7 @@ paths:
           description: Migration report in markdown or HTML format
           headers:
             Content-Disposition:
-              description: inline; filename=\"migration-report.md\" or \"migration-report.html\"
+              description: inline; filename="migration-report.md" or "migration-report.html"
                 (or attachment when download=true)
               type: string
             Content-Type:
@@ -6532,11 +6716,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete a specific request's details
       tags:
       - '[Admin] API Request Management'
@@ -6569,15 +6753,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.RequestDetails'
+            $ref: '#/definitions/model.ApiResponse-common_RequestDetails'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Get request details
       tags:
       - '[Admin] API Request Management'
@@ -6598,7 +6782,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.SimpleMsg'
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete all requests' details
       tags:
       - '[Admin] API Request Management'
@@ -6727,7 +6911,7 @@ paths:
             varies by 'format' parameter)
           headers:
             Content-Disposition:
-              description: inline; filename=\"source-summary.md\" or \"source-summary.html\"
+              description: inline; filename="source-summary.md" or "source-summary.html"
                 (or attachment when download=true)
               type: string
             Content-Type:
@@ -6812,7 +6996,7 @@ paths:
             varies by 'format' parameter)
           headers:
             Content-Disposition:
-              description: inline; filename=\"target-summary.md\" or \"target-summary.html\"
+              description: inline; filename="target-summary.md" or "target-summary.html"
                 (or attachment when download=true)
               type: string
             Content-Type:

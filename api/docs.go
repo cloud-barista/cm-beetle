@@ -581,19 +581,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The ID list of The migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/cloudmodel.IdList"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_IdList"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -640,19 +640,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateInfraResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -700,19 +700,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The migrated multi-cloud infrastructure (MCI) information",
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateInfraResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -769,19 +769,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -830,13 +830,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateInfraWithDefaultsResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraWithDefaultsResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -1708,13 +1708,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Deprecated endpoint notice",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -1773,19 +1773,19 @@ const docTemplate = `{
                     "200": {
                         "description": "K8s control plane recommendation (ready for cb-tumblebug API)",
                         "schema": {
-                            "$ref": "#/definitions/model.K8sClusterDynamicReq"
+                            "$ref": "#/definitions/model.ApiResponse-model_K8sClusterDynamicReq"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -1844,19 +1844,19 @@ const docTemplate = `{
                     "200": {
                         "description": "K8s worker node group recommendation (ready for cb-tumblebug API)",
                         "schema": {
-                            "$ref": "#/definitions/model.K8sNodeGroupReq"
+                            "$ref": "#/definitions/model.ApiResponse-model_K8sNodeGroupReq"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -1918,19 +1918,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of recommended infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendVmInfraResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -1992,19 +1992,19 @@ const docTemplate = `{
                     "200": {
                         "description": "The result of recommended infrastructure",
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2547,7 +2547,7 @@ const docTemplate = `{
                         "headers": {
                             "Content-Disposition": {
                                 "type": "string",
-                                "description": "inline; filename=\\\"migration-report.md\\\" or \\\"migration-report.html\\\" (or attachment when download=true)"
+                                "description": "inline; filename=\"migration-report.md\" or \"migration-report.html\" (or attachment when download=true)"
                             },
                             "Content-Type": {
                                 "type": "string",
@@ -2597,19 +2597,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.RequestDetails"
+                            "$ref": "#/definitions/model.ApiResponse-common_RequestDetails"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2640,13 +2640,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2748,7 +2748,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.SimpleMsg"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -2819,7 +2819,7 @@ const docTemplate = `{
                         "headers": {
                             "Content-Disposition": {
                                 "type": "string",
-                                "description": "inline; filename=\\\"source-summary.md\\\" or \\\"source-summary.html\\\" (or attachment when download=true)"
+                                "description": "inline; filename=\"source-summary.md\" or \"source-summary.html\" (or attachment when download=true)"
                             },
                             "Content-Type": {
                                 "type": "string",
@@ -2914,7 +2914,7 @@ const docTemplate = `{
                         "headers": {
                             "Content-Disposition": {
                                 "type": "string",
-                                "description": "inline; filename=\\\"target-summary.md\\\" or \\\"target-summary.html\\\" (or attachment when download=true)"
+                                "description": "inline; filename=\"target-summary.md\" or \"target-summary.html\" (or attachment when download=true)"
                             },
                             "Content-Type": {
                                 "type": "string",
@@ -4958,15 +4958,6 @@ const docTemplate = `{
                 }
             }
         },
-        "common.SimpleMsg": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Any message"
-                }
-            }
-        },
         "controller.CORSRule": {
             "type": "object",
             "required": [
@@ -5701,6 +5692,62 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-cloudmodel_IdList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.IdList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_MciInfoList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MciInfoList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-cloudmodel_RecommendedSecurityGroupList": {
             "type": "object",
             "properties": {
@@ -5813,6 +5860,90 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-common_RequestDetails": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.RequestDetails"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_MigrateInfraResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.MigrateInfraResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_MigrateInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.MigrateInfraWithDefaultsResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-controller_ObjectStorageInfo": {
             "type": "object",
             "properties": {
@@ -5821,6 +5952,90 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/controller.ObjectStorageInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_RecommendVmInfraResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.RecommendVmInfraResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     ]
                 },
@@ -5877,6 +6092,62 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/model.AsyncJobResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-model_K8sClusterDynamicReq": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterDynamicReq"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-model_K8sNodeGroupReq": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sNodeGroupReq"
                         }
                     ]
                 },

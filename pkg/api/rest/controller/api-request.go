@@ -69,18 +69,18 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param reqId path string true "Request ID (from X-Request-Id header of a previous Beetle API call)"
-// @Success 200 {object} common.RequestDetails
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[common.RequestDetails]
+// @Failure 404 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /request/{reqId} [get]
 func RestGetRequest(c echo.Context) error {
 	reqId := c.Param("reqId")
 
 	if details, ok := common.GetRequest(reqId); ok {
-		return c.JSON(http.StatusOK, details)
+		return c.JSON(http.StatusOK, model.SuccessResponse(details))
 	}
 
-	return c.JSON(http.StatusNotFound, common.SimpleMsg{Message: "Request ID not found"})
+	return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Request ID not found"))
 }
 
 // RestGetAllRequests godoc
@@ -135,7 +135,7 @@ func RestGetAllRequests(c echo.Context) error {
 		logPath := filepath.Join(beetleRoot, "log", "request_log_"+time.Now().Format("20060102_150405")+".json")
 		file, err := os.Create(logPath)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "Failed to create log file"})
+			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Failed to create log file"))
 		}
 		defer file.Close()
 
@@ -170,7 +170,7 @@ func RestGetAllRequests(c echo.Context) error {
 	}
 
 	// Return the filtered requests data when savefile is not requested
-	return c.JSON(http.StatusOK, map[string][]common.RequestDetails{"requests": allRequests})
+	return c.JSON(http.StatusOK, model.SuccessResponse(map[string][]common.RequestDetails{"requests": allRequests}))
 }
 
 // RestDeleteRequest godoc
@@ -185,18 +185,18 @@ func RestGetAllRequests(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param reqId path string true "Request ID to delete (from X-Request-Id header of a previous Beetle API call)"
-// @Success 200 {object} common.SimpleMsg
-// @Failure 404 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[any]
+// @Failure 404 {object} model.ApiResponse[any]
 // @Router /request/{reqId} [delete]
 func RestDeleteRequest(c echo.Context) error {
 	reqId := c.Param("reqId")
 
 	if common.HasRequest(reqId) {
 		common.RemoveRequest(reqId)
-		return c.JSON(http.StatusOK, common.SimpleMsg{Message: "Request deleted successfully"})
+		return c.JSON(http.StatusOK, model.SimpleErrorResponse("Request deleted successfully"))
 	}
 
-	return c.JSON(http.StatusNotFound, common.SimpleMsg{Message: "Request ID not found"})
+	return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Request ID not found"))
 }
 
 // RestDeleteAllRequests godoc
@@ -210,9 +210,9 @@ func RestDeleteRequest(c echo.Context) error {
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[any]
 // @Router /requests [delete]
 func RestDeleteAllRequests(c echo.Context) error {
 	common.RemoveAllRequests()
-	return c.JSON(http.StatusOK, common.SimpleMsg{Message: "All requests deleted successfully"})
+	return c.JSON(http.StatusOK, model.SimpleSuccessResponse("All requests deleted successfully"))
 }
