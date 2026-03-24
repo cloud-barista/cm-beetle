@@ -47,7 +47,7 @@ type CSPTestReport struct {
 	ListMCIResponse        *cloudmodel.MciInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
 	GetMCIResponse         *cloudmodel.VmInfraInfo
-	DeleteMCIResponse      map[string]interface{} // Simple response
+	DeleteMCIResponse      interface{} // Simple response
 	TestResults            []TestResults
 	Summary                TestResults
 }
@@ -72,19 +72,19 @@ type AuthConfig struct {
 
 // TestResults holds test execution results
 type TestResults struct {
-	TestName     string                 `json:"testName"`
-	StartTime    time.Time              `json:"startTime"`
-	EndTime      time.Time              `json:"endTime"`
-	Duration     time.Duration          `json:"duration"`
-	Success      bool                   `json:"success"`
-	Skipped      bool                   `json:"skipped"` // True if test was skipped
-	StatusCode   int                    `json:"statusCode"`
-	Response     map[string]interface{} `json:"response"`
-	Error        string                 `json:"error,omitempty"`
-	ErrorMessage string                 `json:"errorMessage,omitempty"` // Human-readable error message
-	ErrorDetails string                 `json:"errorDetails,omitempty"` // Additional error details
-	RequestURL   string                 `json:"requestUrl,omitempty"`   // Request URL for debugging
-	RequestBody  interface{}            `json:"requestBody,omitempty"`  // Request body for debugging
+	TestName     string        `json:"testName"`
+	StartTime    time.Time     `json:"startTime"`
+	EndTime      time.Time     `json:"endTime"`
+	Duration     time.Duration `json:"duration"`
+	Success      bool          `json:"success"`
+	Skipped      bool          `json:"skipped"` // True if test was skipped
+	StatusCode   int           `json:"statusCode"`
+	Response     interface{}   `json:"response"`
+	Error        string        `json:"error,omitempty"`
+	ErrorMessage string        `json:"errorMessage,omitempty"` // Human-readable error message
+	ErrorDetails string        `json:"errorDetails,omitempty"` // Additional error details
+	RequestURL   string        `json:"requestUrl,omitempty"`   // Request URL for debugging
+	RequestBody  interface{}   `json:"requestBody,omitempty"`  // Request body for debugging
 }
 
 // TestSuite holds all test results
@@ -191,19 +191,20 @@ func populateErrorInfo(result *TestResults, err error, statusCode int, requestUR
 	result.ErrorMessage = errorMessage
 	result.ErrorDetails = errorDetails
 
-	// Ensure Response is initialized for backward compatibility
+	// Add error info to response if it's a map or nil
 	if result.Response == nil {
 		result.Response = make(map[string]interface{})
 	}
 
-	// Add error info to response for backward compatibility
-	if err != nil {
-		result.Response["error"] = err.Error()
-	} else {
-		result.Response["error"] = fmt.Sprintf("HTTP %d error", statusCode)
-	}
-	if errorMessage != "" {
-		result.Response["message"] = errorMessage
+	if respMap, ok := result.Response.(map[string]interface{}); ok {
+		if err != nil {
+			respMap["error"] = err.Error()
+		} else {
+			respMap["error"] = fmt.Sprintf("HTTP %d error", statusCode)
+		}
+		if errorMessage != "" {
+			respMap["message"] = errorMessage
+		}
 	}
 }
 
@@ -481,18 +482,13 @@ func main() {
 		}
 
 		// Test 2 succeeded, continue with processing
-		if result2.Success {
-			if structuredResponse, err := convertMapToMigrateInfraResponse(result2.Response); err == nil {
-				cspReport.MigrationResponse = structuredResponse
-			} else {
-				log.Warn().Err(err).Msg("Failed to convert migration response")
-			}
-
-			// Extract mciId from response
-			if id, ok := result2.Response["id"].(string); ok && id != "" {
-				mciId = id
-			} else if name, ok := result2.Response["name"].(string); ok && name != "" {
-				mciId = name // Use name as fallback
+		// Extract mciId from response using the structured object if possible
+		if structuredResponse, err := convertMapToMigrateInfraResponse(result2.Response); err == nil {
+			cspReport.MigrationResponse = structuredResponse
+			if structuredResponse.Id != "" {
+				mciId = structuredResponse.Id
+			} else if structuredResponse.Name != "" {
+				mciId = structuredResponse.Name
 			}
 		}
 
@@ -534,6 +530,8 @@ func main() {
 			pairSkipped++
 		} else if !result3.Success {
 			pairFailed++
+			skipRemainingTests = true
+			log.Error().Str("csp", cspPair.Csp).Str("region", cspPair.Region).Msg("Test 3 (List MCI) failed. Skipping remaining tests (except for cleanup) for this CSP-Region pair.")
 		} else {
 			pairPassed++
 		}
@@ -563,6 +561,11 @@ func main() {
 			if result4.Success {
 				if structuredResponse, err := convertMapToIdList(result4.Response); err == nil {
 					cspReport.ListMCIIDsResponse = structuredResponse
+					// If mciId is still empty, try to get it from the list
+					if mciId == "" && len(structuredResponse.IdList) > 0 {
+						mciId = structuredResponse.IdList[0]
+						log.Debug().Msgf("mciId set from list: %s", mciId)
+					}
 				} else {
 					log.Warn().Err(err).Msg("Failed to convert list MCI IDs response")
 				}
@@ -576,6 +579,8 @@ func main() {
 			pairSkipped++
 		} else if !result4.Success {
 			pairFailed++
+			skipRemainingTests = true
+			log.Error().Str("csp", cspPair.Csp).Str("region", cspPair.Region).Msg("Test 4 (List MCI IDs) failed. Skipping remaining tests (except for cleanup) for this CSP-Region pair.")
 		} else {
 			pairPassed++
 		}
@@ -618,6 +623,8 @@ func main() {
 			pairSkipped++
 		} else if !result5.Success {
 			pairFailed++
+			skipRemainingTests = true
+			log.Error().Str("csp", cspPair.Csp).Str("region", cspPair.Region).Msg("Test 5 (Get MCI) failed. Skipping remaining tests (except for cleanup) for this CSP-Region pair.")
 		} else {
 			pairPassed++
 		}
@@ -653,6 +660,8 @@ func main() {
 			pairSkipped++
 		} else if !result6.Success {
 			pairFailed++
+			skipRemainingTests = true
+			log.Error().Str("csp", cspPair.Csp).Str("region", cspPair.Region).Msg("Test 6 (Remote Command) failed. Finalizing before cleanup.")
 		} else {
 			pairPassed++
 		}
@@ -681,12 +690,30 @@ func main() {
 			log.Info().Msgf("Migration report skipped for %s due to previous test failure", displayName)
 		}
 
+		// If mciId is still empty but we had a failure, try to discover it for cleanup
+		if mciId == "" && skipRemainingTests {
+			log.Info().Msg("MCI ID is empty after failure. Attempting to discover created MCI for cleanup...")
+			discoveryResult := runListMciIdsTest(client, config, displayName)
+			if discoveryResult.Success {
+				if structuredResponse, err := convertMapToIdList(discoveryResult.Response); err == nil && len(structuredResponse.IdList) > 0 {
+					mciId = structuredResponse.IdList[0]
+					log.Info().Msgf("Discovered MCI ID for cleanup: %s", mciId)
+				}
+			}
+		}
+
 		/*
 		 * Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
 		 */
 		var result7 TestResults
-		if skipRemainingTests {
-			// Create a skipped test result
+		// Run delete if we have an MCI ID to clean up, or if the test sequence didn't fail
+		if mciId != "" || !skipRemainingTests {
+			result7, _ = runDeleteMciTest(client, config, mciId, displayName)
+			if result7.Success {
+				cspReport.DeleteMCIResponse = result7.Response
+			}
+		} else {
+			// Create a skipped test result only if skipRemainingTests is true AND we really can't or shouldn't run delete
 			result7 = TestResults{
 				TestName:     "Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}",
 				StartTime:    time.Now(),
@@ -696,20 +723,16 @@ func main() {
 				Skipped:      true,
 				StatusCode:   0,
 				Response:     map[string]interface{}{},
-				Error:        "Test skipped due to previous test failure",
-				ErrorMessage: "Test skipped due to previous test failure",
+				Error:        "Test skipped due to previous test failure and no MCI ID available",
+				ErrorMessage: "Test skipped due to previous test failure and no MCI ID available",
 				RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci/%s", config.BeetleURL, config.NamespaceID, mciId),
 			}
 			log.Warn().Msgf("Test 7 skipped for %s due to previous test failure", displayName)
-		} else {
-			result7, _ = runDeleteMciTest(client, config, mciId, displayName)
-			if result7.Success {
-				cspReport.DeleteMCIResponse = result7.Response
-			}
 		}
 
 		suite.Results = append(suite.Results, result7)
 		cspReport.TestResults = append(cspReport.TestResults, result7)
+		cspReport.DeleteMCIResponse = result7.Response
 
 		if result7.Skipped {
 			pairSkipped++
@@ -807,11 +830,21 @@ func main() {
 		if !result.Success {
 			status = "❌"
 		}
-		passedTests := result.Response["passedTests"].(int)
-		totalTests := result.Response["totalTests"].(int)
+		passedTests := 0
+		totalTests := 0
 		skippedTests := 0
-		if val, ok := result.Response["skippedTests"].(int); ok {
-			skippedTests = val
+
+		// Since this is a summary map we created ourselves in main(), it is a map[string]interface{}
+		if respMap, ok := result.Response.(map[string]interface{}); ok {
+			if val, ok := respMap["passedTests"].(int); ok {
+				passedTests = val
+			}
+			if val, ok := respMap["totalTests"].(int); ok {
+				totalTests = val
+			}
+			if val, ok := respMap["skippedTests"].(int); ok {
+				skippedTests = val
+			}
 		}
 
 		if skippedTests > 0 {
@@ -882,79 +915,104 @@ func checkBeetleReadiness(client *resty.Client, beetleURL string) error {
 	return nil
 }
 
-// convertMapToRecommendVmInfraResponse converts map[string]interface{} to RecommendVmInfraResponse
-func convertMapToRecommendVmInfraResponse(responseMap map[string]interface{}) (*controller.RecommendVmInfraResponse, error) {
+// convertMapToRecommendVmInfraResponse converts interface{} to RecommendVmInfraResponse
+func convertMapToRecommendVmInfraResponse(responseMap interface{}) (*controller.RecommendVmInfraResponse, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var response controller.RecommendVmInfraResponse
-	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, err
+	var apiResp model.ApiResponse[controller.RecommendVmInfraResponse]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response controller.RecommendVmInfraResponse
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
 	}
 
-	return &response, nil
+	return &apiResp.Data, nil
 }
 
-// convertMapToMigrateInfraResponse converts map[string]interface{} to MigrateInfraResponse
-func convertMapToMigrateInfraResponse(responseMap map[string]interface{}) (*controller.MigrateInfraResponse, error) {
+// convertMapToMigrateInfraResponse converts interface{} to MigrateInfraResponse
+func convertMapToMigrateInfraResponse(responseMap interface{}) (*controller.MigrateInfraResponse, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var response controller.MigrateInfraResponse
-	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, err
+	var apiResp model.ApiResponse[controller.MigrateInfraResponse]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response controller.MigrateInfraResponse
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
 	}
 
-	return &response, nil
+	return &apiResp.Data, nil
 }
 
-// convertMapToMciInfoList converts map[string]interface{} to MciInfoList
-func convertMapToMciInfoList(responseMap map[string]interface{}) (*cloudmodel.MciInfoList, error) {
+// convertMapToMciInfoList converts interface{} to MciInfoList
+func convertMapToMciInfoList(responseMap interface{}) (*cloudmodel.MciInfoList, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var response cloudmodel.MciInfoList
-	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, err
+	var apiResp model.ApiResponse[cloudmodel.MciInfoList]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response cloudmodel.MciInfoList
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
 	}
 
-	return &response, nil
+	return &apiResp.Data, nil
 }
 
-// convertMapToIdList converts map[string]interface{} to IdList
-func convertMapToIdList(responseMap map[string]interface{}) (*cloudmodel.IdList, error) {
+// convertMapToIdList converts interface{} to IdList
+func convertMapToIdList(responseMap interface{}) (*cloudmodel.IdList, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var response cloudmodel.IdList
-	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, err
+	var apiResp model.ApiResponse[cloudmodel.IdList]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response cloudmodel.IdList
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
 	}
 
-	return &response, nil
+	return &apiResp.Data, nil
 }
 
-// convertMapToVmInfraInfo converts map[string]interface{} to VmInfraInfo
-func convertMapToVmInfraInfo(responseMap map[string]interface{}) (*cloudmodel.VmInfraInfo, error) {
+// convertMapToVmInfraInfo converts interface{} to VmInfraInfo
+func convertMapToVmInfraInfo(responseMap interface{}) (*cloudmodel.VmInfraInfo, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var response cloudmodel.VmInfraInfo
-	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, err
+	var apiResp model.ApiResponse[cloudmodel.VmInfraInfo]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response cloudmodel.VmInfraInfo
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
 	}
 
-	return &response, nil
+	return &apiResp.Data, nil
 }
 
 // runRecommendationTest performs Test 1: POST /beetle/recommendation/vmInfra
@@ -1046,13 +1104,13 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		StartTime: time.Now(),
 	}
 
-	var response controller.MigrateInfraResponse
+	var apiResponse model.ApiResponse[controller.MigrateInfraResponse]
 	var mciId string
 
 	// Setup cleanup defer function
 	defer func() {
 		// Check if migration failed and MCI ID is available for cleanup
-		if strings.Contains(strings.ToLower(response.Status), "failed") && mciId != "" {
+		if apiResponse.Success && strings.Contains(strings.ToLower(apiResponse.Data.Status), "failed") && mciId != "" {
 			cleanupMci(client, config, mciId, displayName)
 		}
 	}()
@@ -1071,19 +1129,21 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		nil,
 		true,
 		&migrationRequestBody,
-		&response,
+		&apiResponse,
 		0,
 	)
 
+	vmInfraInfo := apiResponse.Data
+
 	// Extract MCI ID from response for potential cleanup
-	if response.Id != "" {
-		mciId = response.Id
-	} else if response.Name != "" {
-		mciId = response.Name
+	if vmInfraInfo.Id != "" {
+		mciId = vmInfraInfo.Id
+	} else if vmInfraInfo.Name != "" {
+		mciId = vmInfraInfo.Name
 	}
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", response)
+	log.Debug().Msgf("API Response Body: %+v", vmInfraInfo)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1093,9 +1153,9 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		result.Error = err.Error()
 		result.StatusCode = 0
 		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
-	} else if strings.Contains(strings.ToLower(response.Status), "failed") {
+	} else if strings.Contains(strings.ToLower(vmInfraInfo.Status), "failed") {
 		result.Success = false
-		result.Error = fmt.Errorf("failed to migrate infra (MCI status: %s)", response.Status).Error()
+		result.Error = fmt.Errorf("failed to migrate infra (MCI status: %s)", vmInfraInfo.Status).Error()
 		result.StatusCode = 0
 		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
 	} else {
@@ -1103,7 +1163,7 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		result.StatusCode = 200
 		// Convert struct response to map for TestResults compatibility
 		responseMap := make(map[string]interface{})
-		jsonBytes, _ := json.Marshal(response)
+		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
 		fmt.Println("✅ Test 2 passed")
@@ -1129,7 +1189,7 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
-	var response cloudmodel.MciInfoList
+	var apiResponse model.ApiResponse[cloudmodel.MciInfoList]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -1138,12 +1198,13 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 		nil,
 		common.SetUseBody(emptyBody),
 		&emptyBody,
-		&response,
+		&apiResponse,
 		0,
 	)
+	mciList := apiResponse.Data
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", response)
+	log.Debug().Msgf("API Response Body: %+v", mciList)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1158,7 +1219,7 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 		result.StatusCode = 200
 		// Convert struct response to map for TestResults compatibility
 		responseMap := make(map[string]interface{})
-		jsonBytes, _ := json.Marshal(response)
+		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
 		fmt.Println("✅ Test 3 passed")
@@ -1184,7 +1245,7 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
-	var response cloudmodel.IdList
+	var apiResponse model.ApiResponse[cloudmodel.IdList]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -1193,12 +1254,13 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 		nil,
 		common.SetUseBody(emptyBody),
 		&emptyBody,
-		&response,
+		&apiResponse,
 		0,
 	)
+	mciIdList := apiResponse.Data
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", response)
+	log.Debug().Msgf("API Response Body: %+v", mciIdList)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1213,7 +1275,7 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 		result.StatusCode = 200
 		// Convert struct response to map for TestResults compatibility
 		responseMap := make(map[string]interface{})
-		jsonBytes, _ := json.Marshal(response)
+		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
 		fmt.Println("✅ Test 4 passed")
@@ -1249,7 +1311,7 @@ func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName s
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
-	var response cloudmodel.VmInfraInfo
+	var apiResponse model.ApiResponse[cloudmodel.VmInfraInfo]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -1258,12 +1320,13 @@ func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName s
 		nil,
 		common.SetUseBody(emptyBody),
 		&emptyBody,
-		&response,
+		&apiResponse,
 		0,
 	)
+	vmInfraInfo := apiResponse.Data
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", response)
+	log.Debug().Msgf("API Response Body: %+v", vmInfraInfo)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1278,7 +1341,7 @@ func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName s
 		result.StatusCode = 200
 		// Convert struct response to map for TestResults compatibility
 		responseMap := make(map[string]interface{})
-		jsonBytes, _ := json.Marshal(response)
+		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
 		fmt.Println("✅ Test 5 passed")
@@ -1987,57 +2050,59 @@ func generateMarkdownContent(report *CSPTestReport) string {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 			sb.WriteString("- **Result**: All VMs are accessible via SSH\n\n")
 
-			if response, ok := remoteResult.Response["overallStatus"].(map[string]interface{}); ok {
-				if message, exists := response["message"].(string); exists {
-					sb.WriteString(fmt.Sprintf("**Summary**: %s\n\n", message))
-				}
-			}
-
-			if totalVMs, ok := remoteResult.Response["totalVMs"].(int); ok {
-				if successfulTests, ok := remoteResult.Response["successfulTests"].(int); ok {
-					if failedTests, ok := remoteResult.Response["failedTests"].(int); ok {
-						sb.WriteString("**Test Statistics**:\n\n")
-						sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
-						sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
-						sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
+			if respMap, ok := remoteResult.Response.(map[string]interface{}); ok {
+				if response, ok := respMap["overallStatus"].(map[string]interface{}); ok {
+					if message, exists := response["message"].(string); exists {
+						sb.WriteString(fmt.Sprintf("**Summary**: %s\n\n", message))
 					}
 				}
-			}
 
-			// Show VM-specific results
-			if vmResults, ok := remoteResult.Response["vmResults"].([]interface{}); ok && len(vmResults) > 0 {
-				sb.WriteString("**Per-VM Test Results**:\n\n")
-				for _, vmResult := range vmResults {
-					if vmMap, ok := vmResult.(map[string]interface{}); ok {
-						if vmId, ok := vmMap["vmId"].(string); ok {
-							sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
-							if publicIP, ok := vmMap["publicIP"].(string); ok {
-								sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
-							}
-							if subGroup, ok := vmMap["subGroup"].(string); ok {
-								sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
-							}
-							if status, ok := vmMap["status"].(string); ok {
-								if status == "success" {
-									sb.WriteString(" - ✅ **SUCCESS**")
-									if command, ok := vmMap["command"].(string); ok && command != "" {
-										sb.WriteString(fmt.Sprintf(" (Command: `%s`)", command))
-									}
-									if output, ok := vmMap["output"].(string); ok && output != "" {
-										sb.WriteString(fmt.Sprintf(" → Output: `%s`", strings.TrimSpace(output)))
-									}
-								} else {
-									sb.WriteString(" - ❌ **FAILED**")
-									if errorMsg, ok := vmMap["error"].(string); ok {
-										sb.WriteString(fmt.Sprintf(" (Error: %s)", errorMsg))
-									}
-								}
-							}
-							sb.WriteString("\n")
+				if totalVMs, ok := respMap["totalVMs"].(int); ok {
+					if successfulTests, ok := respMap["successfulTests"].(int); ok {
+						if failedTests, ok := respMap["failedTests"].(int); ok {
+							sb.WriteString("**Test Statistics**:\n\n")
+							sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
+							sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
+							sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
 						}
 					}
 				}
-				sb.WriteString("\n")
+
+				// Show VM-specific results
+				if vmResults, ok := respMap["vmResults"].([]interface{}); ok && len(vmResults) > 0 {
+					sb.WriteString("**Per-VM Test Results**:\n\n")
+					for _, vmResult := range vmResults {
+						if vmMap, ok := vmResult.(map[string]interface{}); ok {
+							if vmId, ok := vmMap["vmId"].(string); ok {
+								sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
+								if publicIP, ok := vmMap["publicIP"].(string); ok {
+									sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
+								}
+								if subGroup, ok := vmMap["subGroup"].(string); ok {
+									sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
+								}
+								if status, ok := vmMap["status"].(string); ok {
+									if status == "success" {
+										sb.WriteString(" - ✅ **SUCCESS**")
+										if command, ok := vmMap["command"].(string); ok && command != "" {
+											sb.WriteString(fmt.Sprintf(" (Command: `%s`)", command))
+										}
+										if output, ok := vmMap["output"].(string); ok && output != "" {
+											sb.WriteString(fmt.Sprintf(" → Output: `%s`", strings.TrimSpace(output)))
+										}
+									} else {
+										sb.WriteString(" - ❌ **FAILED**")
+										if errorMsg, ok := vmMap["error"].(string); ok {
+											sb.WriteString(fmt.Sprintf(" (Error: %s)", errorMsg))
+										}
+									}
+								}
+								sb.WriteString("\n")
+							}
+						}
+					}
+					sb.WriteString("\n")
+				}
 			}
 
 			sb.WriteString("**Complete Test Details**:\n\n")
@@ -2054,117 +2119,126 @@ func generateMarkdownContent(report *CSPTestReport) string {
 			sb.WriteString(fmt.Sprintf("- **Reason**: %s\n\n", remoteResult.Error))
 		} else {
 			// Failure case - check if it's partial failure or complete failure
-			if totalVMs, ok := remoteResult.Response["totalVMs"].(int); ok {
-				if successfulTests, ok := remoteResult.Response["successfulTests"].(int); ok {
-					if failedTests, ok := remoteResult.Response["failedTests"].(int); ok {
-						if successfulTests > 0 {
-							// Partial failure
-							sb.WriteString("- **Status**: ⚠️ **PARTIAL SUCCESS**\n")
-							sb.WriteString("- **Result**: Some VMs failed SSH connectivity test\n\n")
-							sb.WriteString("**Test Statistics**:\n\n")
-							sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
-							sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
-							sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
-						} else {
-							// Complete failure
-							sb.WriteString("- **Status**: ❌ **FAILED**\n")
-							sb.WriteString("- **Error**: All SSH connectivity tests failed\n\n")
+			if respMap, ok := remoteResult.Response.(map[string]interface{}); ok {
+				if totalVMs, ok := respMap["totalVMs"].(int); ok {
+					if successfulTests, ok := respMap["successfulTests"].(int); ok {
+						if failedTests, ok := respMap["failedTests"].(int); ok {
+							if successfulTests > 0 {
+								// Partial failure
+								sb.WriteString("- **Status**: ⚠️ **PARTIAL SUCCESS**\n")
+								sb.WriteString("- **Result**: Some VMs failed SSH connectivity test\n\n")
+								sb.WriteString("**Test Statistics**:\n\n")
+								sb.WriteString(fmt.Sprintf("- Total VMs: %d\n", totalVMs))
+								sb.WriteString(fmt.Sprintf("- Successful Tests: %d\n", successfulTests))
+								sb.WriteString(fmt.Sprintf("- Failed Tests: %d\n\n", failedTests))
+							} else {
+								// Complete failure
+								sb.WriteString("- **Status**: ❌ **FAILED**\n")
+								sb.WriteString("- **Error**: All SSH connectivity tests failed\n\n")
+							}
 						}
 					}
 				}
-			} else {
-				// Complete failure
-				sb.WriteString("- **Status**: ❌ **FAILED**\n")
-				sb.WriteString("- **Error**: SSH connectivity test failed\n\n")
-			}
 
-			if remoteResult.ErrorMessage != "" {
-				sb.WriteString("**Error Message**:\n\n```\n")
-				sb.WriteString(remoteResult.ErrorMessage)
-				sb.WriteString("\n```\n\n")
-			} else if remoteResult.Error != "" {
-				sb.WriteString("**Error**:\n\n```\n")
-				sb.WriteString(remoteResult.Error)
-				sb.WriteString("\n```\n\n")
-			}
+				if remoteResult.ErrorMessage != "" {
+					sb.WriteString("**Error Message**:\n\n```\n")
+					sb.WriteString(remoteResult.ErrorMessage)
+					sb.WriteString("\n```\n\n")
+				} else if remoteResult.Error != "" {
+					sb.WriteString("**Error**:\n\n```\n")
+					sb.WriteString(remoteResult.Error)
+					sb.WriteString("\n```\n\n")
+				}
 
-			if remoteResult.ErrorDetails != "" {
-				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", remoteResult.ErrorDetails))
-			}
+				if remoteResult.ErrorDetails != "" {
+					sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", remoteResult.ErrorDetails))
+				}
 
-			// Show failed VM details if available
-			if vmResults, ok := remoteResult.Response["vmResults"].([]map[string]interface{}); ok && len(vmResults) > 0 {
-				sb.WriteString("**Detailed VM Analysis**:\n\n")
-				for _, vmResult := range vmResults {
-					if vmId, ok := vmResult["vmId"].(string); ok {
-						sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
-						if publicIP, ok := vmResult["publicIP"].(string); ok {
-							sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
-						}
-						if subGroup, ok := vmResult["subGroup"].(string); ok {
-							sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
-						}
-
-						if status, ok := vmResult["status"].(string); ok {
-							if status == "success" {
-								sb.WriteString(" - ✅ **SUCCESS**")
-								if output, ok := vmResult["output"].(string); ok && output != "" {
-									sb.WriteString(fmt.Sprintf(" (Output: `%s`)", strings.TrimSpace(output)))
+				// Show failed VM details if available
+				if vmResults, ok := respMap["vmResults"].([]interface{}); ok && len(vmResults) > 0 {
+					sb.WriteString("**Detailed VM Analysis**:\n\n")
+					for _, vmResultItem := range vmResults {
+						if vmResult, ok := vmResultItem.(map[string]interface{}); ok {
+							if vmId, ok := vmResult["vmId"].(string); ok {
+								sb.WriteString(fmt.Sprintf("- **VM ID**: `%s`", vmId))
+								if publicIP, ok := vmResult["publicIP"].(string); ok {
+									sb.WriteString(fmt.Sprintf(" (IP: `%s`)", publicIP))
 								}
-							} else {
-								sb.WriteString(" - ❌ **FAILED**")
+								if subGroup, ok := vmResult["subGroup"].(string); ok {
+									sb.WriteString(fmt.Sprintf(" - SubGroup: `%s`", subGroup))
+								}
 
-								// Show network test result if available
-								if networkTest, ok := vmResult["networkTest"].(map[string]interface{}); ok {
-									if reachable, ok := networkTest["reachable"].(bool); ok {
-										if reachable {
-											if latency, ok := networkTest["latency"].(string); ok {
-												sb.WriteString(fmt.Sprintf(" | Network: ✅ (Latency: %s)", latency))
-											} else {
-												sb.WriteString(" | Network: ✅")
+								if status, ok := vmResult["status"].(string); ok {
+									if status == "success" {
+										sb.WriteString(" - ✅ **SUCCESS**")
+										if output, ok := vmResult["output"].(string); ok && output != "" {
+											sb.WriteString(fmt.Sprintf(" (Output: `%s`)", strings.TrimSpace(output)))
+										}
+									} else {
+										sb.WriteString(" - ❌ **FAILED**")
+
+										// Show network test result if available
+										if networkTest, ok := vmResult["networkTest"].(map[string]interface{}); ok {
+											if reachable, ok := networkTest["reachable"].(bool); ok {
+												if reachable {
+													if latency, ok := networkTest["latency"].(string); ok {
+														sb.WriteString(fmt.Sprintf(" | Network: ✅ (Latency: %s)", latency))
+													} else {
+														sb.WriteString(" | Network: ✅")
+													}
+												} else {
+													if netErr, ok := networkTest["error"].(string); ok {
+														sb.WriteString(fmt.Sprintf(" | Network: ❌ (%s)", netErr))
+													} else {
+														sb.WriteString(" | Network: ❌")
+													}
+												}
 											}
-										} else {
-											if netErr, ok := networkTest["error"].(string); ok {
-												sb.WriteString(fmt.Sprintf(" | Network: ❌ (%s)", netErr))
-											} else {
-												sb.WriteString(" | Network: ❌")
-											}
+										}
+
+										// Show diagnosis if available
+										if diagnosis, ok := vmResult["diagnosis"].(string); ok {
+											sb.WriteString(fmt.Sprintf("\n  - **Diagnosis**: %s", diagnosis))
+										}
+
+										// Show error details
+										if errorMsg, ok := vmResult["error"].(string); ok {
+											sb.WriteString(fmt.Sprintf("\n  - **Error**: %s", errorMsg))
 										}
 									}
 								}
-
-								// Show diagnosis if available
-								if diagnosis, ok := vmResult["diagnosis"].(string); ok {
-									sb.WriteString(fmt.Sprintf("\n  - **Diagnosis**: %s", diagnosis))
-								}
-
-								// Show error details
-								if errorMsg, ok := vmResult["error"].(string); ok {
-									sb.WriteString(fmt.Sprintf("\n  - **Error**: %s", errorMsg))
-								}
+								sb.WriteString("\n")
 							}
 						}
-						sb.WriteString("\n")
+					}
+					sb.WriteString("\n")
+
+					// Add troubleshooting guide for failed VMs
+					hasFailures := false
+					for _, vmResultItem := range vmResults {
+						if vmMap, ok := vmResultItem.(map[string]interface{}); ok {
+							if status, ok := vmMap["status"].(string); ok && status == "failed" {
+								hasFailures = true
+								break
+							}
+						}
+					}
+
+					if hasFailures {
+						sb.WriteString("**Troubleshooting Guide**:\n\n")
+						sb.WriteString("1. **Network Issues**: If network test fails, check security group rules for port 22\n")
+						sb.WriteString("2. **SSH Service**: If network test passes but SSH fails, check if SSH service is running on VM\n")
+						sb.WriteString("3. **VM Status**: Verify that VM is fully started and not in a transitional state\n")
+						sb.WriteString("4. **Authentication**: Ensure SSH key matches the key used during VM creation\n")
+						sb.WriteString("5. **User Account**: Try different usernames (ubuntu, ec2-user, admin, root)\n\n")
 					}
 				}
-				sb.WriteString("\n")
-
-				// Add troubleshooting guide for failed VMs
-				hasFailures := false
-				for _, vmResult := range vmResults {
-					if status, ok := vmResult["status"].(string); ok && status == "failed" {
-						hasFailures = true
-						break
-					}
-				}
-
-				if hasFailures {
-					sb.WriteString("**Troubleshooting Guide**:\n\n")
-					sb.WriteString("1. **Network Issues**: If network test fails, check security group rules for port 22\n")
-					sb.WriteString("2. **SSH Service**: If network test passes but SSH fails, check if SSH service is running on VM\n")
-					sb.WriteString("3. **VM Status**: Verify that VM is fully started and not in a transitional state\n")
-					sb.WriteString("4. **Authentication**: Ensure SSH key matches the key used during VM creation\n")
-					sb.WriteString("5. **User Account**: Try different usernames (ubuntu, ec2-user, admin, root)\n\n")
+			} else {
+				// Fallback for non-map response
+				sb.WriteString("- **Status**: ❌ **FAILED**\n")
+				sb.WriteString("- **Error**: SSH connectivity test failed\n\n")
+				if remoteResult.Error != "" {
+					sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", remoteResult.Error))
 				}
 			}
 		}
@@ -2186,7 +2260,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		// API response information
 		sb.WriteString("#### 7.2 API Response Information\n\n")
 		deleteResult := report.TestResults[6] // 7th test is delete
-		if deleteResult.Success && len(report.DeleteMCIResponse) > 0 {
+		if deleteResult.Success && report.DeleteMCIResponse != nil {
 			// Success case - show response
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 			sb.WriteString("- **Response**: Infrastructure deletion completed successfully\n\n")
@@ -2223,7 +2297,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 			}
 
 			// Show error response if available
-			if len(deleteResult.Response) > 0 {
+			if deleteResult.Response != nil {
 				sb.WriteString("**Response Body**:\n\n")
 				sb.WriteString("```json\n")
 				errJSON, _ := json.MarshalIndent(deleteResult.Response, "", "  ")
