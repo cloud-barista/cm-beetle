@@ -27,7 +27,6 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
@@ -63,9 +62,9 @@ type RecommendVmInfraWithDefaultsResponse struct {
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendVmInfraWithDefaultsResponse "The result of recommended infrastructure"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[RecommendVmInfraWithDefaultsResponse] "The result of recommended infrastructure"
+// @Failure 404 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /recommendation/mciWithDefaults [post]
 func RecommendVMInfraWithDefaults(c echo.Context) error {
 
@@ -102,7 +101,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid provider or region"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	// [Process]
@@ -112,10 +111,10 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	// [Ouput]
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
-		return c.JSON(http.StatusNotFound, common.SimpleMsg{Message: "Recommendation failed"})
+		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Recommendation failed"))
 	}
 
-	return c.JSON(http.StatusOK, recommendedInfraInfoList)
+	return c.JSON(http.StatusOK, model.SuccessResponse(recommendedInfraInfoList))
 }
 
 type RecommendVmInfraRequest struct {
@@ -143,9 +142,9 @@ type RecommendVmInfraResponse struct {
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} RecommendVmInfraResponse "The result of recommended infrastructure"
-// @Failure 404 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[RecommendVmInfraResponse] "The result of recommended infrastructure"
+// @Failure 404 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /recommendation/mci [post]
 func RecommendVMInfra(c echo.Context) error {
 
@@ -156,17 +155,17 @@ func RecommendVMInfra(c echo.Context) error {
 	reqt := &RecommendVmInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind a request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid request format"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 	log.Trace().Msgf("reqt: %v\n", reqt)
 
 	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
 		log.Warn().Msg("desiredCsp is required")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Provider required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
 	}
 	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
 		log.Warn().Msg("desiredRegion is required")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Region required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
 	}
 
 	csp := reqt.DesiredCspAndRegionPair.Csp
@@ -182,20 +181,20 @@ func RecommendVMInfra(c echo.Context) error {
 	ok, err := recommendation.IsValidCspAndRegion(csp, region)
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid provider or region"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	// [Process]
 	recommendedInfra, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
-		return c.JSON(http.StatusNotFound, common.SimpleMsg{Message: "Recommendation failed"})
+		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Recommendation failed"))
 	}
 
 	// [Ouput]
 	//
 
-	return c.JSON(http.StatusOK, recommendedInfra)
+	return c.JSON(http.StatusOK, model.SuccessResponse(recommendedInfra))
 }
 
 // RecommendVmInfraCandidates godoc
@@ -297,9 +296,7 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	}
 
 	// [Ouput]
-	response := model.SuccessListResponse(recommendedInfraCandidates)
-
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, model.SuccessListResponse(recommendedInfraCandidates))
 }
 
 /*
@@ -322,32 +319,32 @@ type RecommendK8sClusterResponse struct {
 // @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} tbmodel.K8sClusterDynamicReq "K8s control plane recommendation (ready for cb-tumblebug API)"
-// @Failure 400 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[tbmodel.K8sClusterDynamicReq] "K8s control plane recommendation (ready for cb-tumblebug API)"
+// @Failure 400 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /recommendation/k8sControlPlane [post]
 func RecommendK8sControlPlane(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
 
 	if desiredProvider == "" || desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' and 'desiredRegion' query parameters are required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredProvider' and 'desiredRegion' query parameters are required"))
 	}
 
 	reqt := &recommendation.KubernetesInfoList{}
 	if err := c.Bind(reqt); err != nil {
 		log.Error().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid request format"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "At least one server required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one server required"))
 	}
 
 	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
 	if !ok {
 		log.Error().Err(err).Msg("invalid provider or region")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid provider or region"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	k8sInfoList := recommendation.KubernetesInfoList{
@@ -357,10 +354,10 @@ func RecommendK8sControlPlane(c echo.Context) error {
 	result, err := recommendation.RecommendK8sControlPlane(desiredProvider, desiredRegion, k8sInfoList)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend K8s control plane")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "K8s control plane recommendation failed"})
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s control plane recommendation failed"))
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
 
 // RecommendK8sNodeGroup godoc
@@ -375,32 +372,32 @@ func RecommendK8sControlPlane(c echo.Context) error {
 // @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} tbmodel.K8sNodeGroupReq "K8s worker node group recommendation (ready for cb-tumblebug API)"
-// @Failure 400 {object} common.SimpleMsg
-// @Failure 500 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[tbmodel.K8sNodeGroupReq] "K8s worker node group recommendation (ready for cb-tumblebug API)"
+// @Failure 400 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
 // @Router /recommendation/k8sNodeGroup [post]
 func RecommendK8sNodeGroup(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
 
 	if desiredProvider == "" || desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "'desiredProvider' and 'desiredRegion' query parameters are required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredProvider' and 'desiredRegion' query parameters are required"))
 	}
 
 	reqt := &recommendation.KubernetesInfoList{}
 	if err := c.Bind(reqt); err != nil {
 		log.Error().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid request format"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
 	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "At least one server required"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one server required"))
 	}
 
 	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
 	if !ok {
 		log.Error().Err(err).Msg("invalid provider or region")
-		return c.JSON(http.StatusBadRequest, common.SimpleMsg{Message: "Invalid provider or region"})
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
 	k8sInfoList := recommendation.KubernetesInfoList{
@@ -410,10 +407,10 @@ func RecommendK8sNodeGroup(c echo.Context) error {
 	result, err := recommendation.RecommendK8sNodeGroup(desiredProvider, desiredRegion, k8sInfoList)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend K8s node group")
-		return c.JSON(http.StatusInternalServerError, common.SimpleMsg{Message: "K8s node group recommendation failed"})
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s node group recommendation failed"))
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
 
 /*
@@ -444,12 +441,10 @@ type RecommendInfraResponse struct {
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} common.SimpleMsg "Deprecated endpoint notice"
-// @Failure 400 {object} common.SimpleMsg
+// @Success 200 {object} model.ApiResponse[any] "Deprecated endpoint notice"
+// @Failure 400 {object} model.ApiResponse[any]
 // @Router /recommendation/containerInfra [post]
 // @Deprecated
 func RecommendContainerInfra(c echo.Context) error {
-	return c.JSON(http.StatusGone, common.SimpleMsg{
-		Message: "This endpoint is deprecated. Please use /recommendation/k8sCluster for control plane and /recommendation/k8sNodeGroup for worker nodes.",
-	})
+	return c.JSON(http.StatusGone, model.SimpleErrorResponse("This endpoint is deprecated. Please use /recommendation/k8sCluster for control plane and /recommendation/k8sNodeGroup for worker nodes."))
 }

@@ -14,14 +14,15 @@ limitations under the License.
 package model
 
 // Response represents a legacy API response structure.
-// @Description **(To be deprecated)** This structure is currently in use but will be replaced by the generic `ApiResponse[T]` in the future.
-type Response struct {
-	Success bool                   `json:"success" example:"true"`
-	Text    string                 `json:"text" example:"Any text"`
-	Detail  string                 `json:"details,omitempty" example:"Any details"`
-	Object  map[string]interface{} `json:"object,omitempty"`
-	List    []interface{}          `json:"list,omitempty"`
-}
+// @Description **(Deprecated)** This structure is legacy and replaced by the generic `ApiResponse[T]`.
+// Deprecated: Use ApiResponse[T] instead for standardized API responses.
+// type Response struct {
+// 	Success bool                   `json:"success" example:"true"`
+// 	Text    string                 `json:"text" example:"Any text"`
+// 	Detail  string                 `json:"details,omitempty" example:"Any details"`
+// 	Object  map[string]interface{} `json:"object,omitempty"`
+// 	List    []interface{}          `json:"list,omitempty"`
+// }
 
 // ApiResponse represents a standardized API response structure.
 // It uses generics to support different data types for successful responses.

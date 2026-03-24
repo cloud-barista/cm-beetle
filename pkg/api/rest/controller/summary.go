@@ -53,7 +53,7 @@ import (
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[summary.TargetInfraSummary] "Successfully generated target infrastructure summary (format varies by 'format' parameter)"
-// @Header 200 {string} Content-Disposition "inline; filename=\"target-summary.md\" or \"target-summary.html\" (or attachment when download=true)"
+// @Header 200 {string} Content-Disposition "inline; filename="target-summary.md" or "target-summary.html" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
@@ -138,7 +138,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	}
 
 	// Return JSON format (default)
-	return c.JSON(http.StatusOK, infraSummary)
+	return c.JSON(http.StatusOK, model.SuccessResponse(infraSummary))
 }
 
 // GenerateSourceInfraSummaryRequest represents the request body for source infrastructure summary
@@ -173,7 +173,7 @@ type GenerateSourceInfraSummaryRequest struct {
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Request body controller.GenerateSourceInfraSummaryRequest true "Source infrastructure data"
 // @Success 200 {object} model.ApiResponse[summary.SourceInfraSummary] "Successfully generated source infrastructure summary (format varies by 'format' parameter)"
-// @Header 200 {string} Content-Disposition "inline; filename=\"source-summary.md\" or \"source-summary.html\" (or attachment when download=true)"
+// @Header 200 {string} Content-Disposition "inline; filename="source-summary.md" or "source-summary.html" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
@@ -259,5 +259,5 @@ func GenerateSourceInfraSummary(c echo.Context) error {
 	}
 
 	// Return JSON format (default)
-	return c.JSON(http.StatusOK, sourceSummary)
+	return c.JSON(http.StatusOK, model.SuccessResponse(sourceSummary))
 }

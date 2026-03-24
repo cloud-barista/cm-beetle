@@ -45,7 +45,7 @@ type GenerateMigrationReportRequest struct {
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
 // @Success 200 {string} string "Migration report in markdown or HTML format"
-// @Header 200 {string} Content-Disposition "inline; filename=\"migration-report.md\" or \"migration-report.html\" (or attachment when download=true)"
+// @Header 200 {string} Content-Disposition "inline; filename="migration-report.md" or "migration-report.html" (or attachment when download=true)"
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during report generation"
