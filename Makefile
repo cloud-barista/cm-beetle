@@ -152,41 +152,8 @@ down: compose-down # Down services by docker compose
 SHELL := /bin/bash
 
 init: ## Run initialization sequence (credential registration for OpenBao and Tumblebug)
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo "CM-Beetle (with CB-Tumblebug) Initialization"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@IS_TMP_KEY=0; \
-	cleanup_tmp_key() { \
-		if [ "$$IS_TMP_KEY" = "1" ] && [ -f ~/.cloud-barista/.tmp_enc_key ]; then \
-			rm -f ~/.cloud-barista/.tmp_enc_key; \
-		fi; \
-	}; \
-	trap cleanup_tmp_key EXIT INT TERM HUP; \
-	if [ ! -f ~/.cloud-barista/.tmp_enc_key ]; then \
-		echo "Notice: A temporary key file will be created for initialization."; \
-		echo "        It will be removed automatically after initialization."; \
-		printf "Enter the password for credentials.yaml.enc: "; \
-		read -s PASS; \
-		echo ""; \
-		printf "%s" "$$PASS" > ~/.cloud-barista/.tmp_enc_key; \
-		chmod 600 ~/.cloud-barista/.tmp_enc_key; \
-		IS_TMP_KEY=1; \
-	fi; \
-	( \
-		echo "1. Registering credentials to OpenBao..."; \
-		chmod +x ./deployments/docker-compose/openbao/openbao-register-creds.sh 2>/dev/null || true; \
-		./deployments/docker-compose/openbao/openbao-register-creds.sh -y && \
-		echo "" && \
-		echo "2. Registering credentials to Tumblebug..." && \
-		chmod +x ./deployments/docker-compose/cb-tumblebug/init/init.sh 2>/dev/null || true; \
-		./deployments/docker-compose/cb-tumblebug/init/init.sh; \
-	); \
-	EXIT_CODE=$$?; \
-	if [ "$$EXIT_CODE" -ne 0 ]; then \
-		echo "Initialization failed."; \
-	fi; \
-	exit $$EXIT_CODE
-	@echo "Initialization complete!"
+	@chmod +x ./deployments/docker-compose/scripts/multi-init.sh 2>/dev/null || true
+	@./deployments/docker-compose/scripts/multi-init.sh
 
 init-openbao: ## Initialize OpenBao (one-time setup: generate unseal key + root token)
 	@echo "Initializing OpenBao..."
