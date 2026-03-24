@@ -26,7 +26,7 @@ require (
 	//github.com/cloud-barista/cb-tumblebug v0.12.2
 	github.com/cloud-barista/cb-tumblebug v0.12.3-0.20260319011454-2a0ed610ca4b
 	github.com/cloud-barista/cm-beetle/transx v0.0.0-20251124111900-c89c3b457dd5
-	github.com/cloud-barista/cm-model v0.0.18
+	github.com/cloud-barista/cm-model v0.0.19
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1

@@ -169,6 +169,9 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Recommendation] Resources for VM infrastructure
 // @tag.description APIs for recommending resources for VM infrastructure (VNet, Security Group, etc.)
 
+// @tag.name [Infrastructure] Resource Naming
+// @tag.description APIs for aligning and validating multi-cloud resource names
+
 // @tag.name [Migration] Infrastructure
 // @tag.description APIs for migrating on-premise infrastructure to cloud (VMs, VNets, etc.)
 

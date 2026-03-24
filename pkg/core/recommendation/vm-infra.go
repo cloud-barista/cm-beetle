@@ -507,7 +507,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 }
 
 // RecommendVmInfraCandidates an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedVmInfra, error) {
+func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64, nameSeed string) ([]cloudmodel.RecommendedVmInfra, error) {
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
 	// * this function estimates, recommends or just generates vNets, subnets, SSH key pair, and security groups
@@ -526,6 +526,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 
 	// Initialize the response body
 	skeletonVmInfra := cloudmodel.RecommendedVmInfra{
+		NameSeed:    nameSeed,
 		Description: "This is a recommended target infrastructures and resources. Please review and use them.",
 		Status:      "",
 		TargetCloud: cloudmodel.CloudProperty{
@@ -558,17 +559,17 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	skeletonVmInfra.TargetVNet = recommendedVNetInfoList[0]
 
 	// * Set a name to indicate a dependency between resources.
-	skeletonVmInfra.TargetVNet.Name = "mig-vnet-01"
+	skeletonVmInfra.TargetVNet.Name = "vnet-01"
 	skeletonVmInfra.TargetVNet.Description = "a recommended vNet for migration"
 	for i := range skeletonVmInfra.TargetVNet.SubnetInfoList {
-		skeletonVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("mig-subnet-%02d", i+1)
+		skeletonVmInfra.TargetVNet.SubnetInfoList[i].Name = fmt.Sprintf("subnet-%02d", i+1)
 		skeletonVmInfra.TargetVNet.SubnetInfoList[i].Description = "a recommended subnet for migration"
 	}
 
 	// 2. Recommend(?) SSH key pair
 	// var recommendedSshKey = tbmodel.SshKeyReq{}
 	// * Set a name to indicate a dependency between resources.
-	skeletonVmInfra.TargetSshKey.Name = "mig-sshkey-01"
+	skeletonVmInfra.TargetSshKey.Name = "sshkey-01"
 	skeletonVmInfra.TargetSshKey.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
 	skeletonVmInfra.TargetSshKey.Description = "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded"
 
@@ -595,7 +596,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Description:    fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
 			VNetId:         skeletonVmInfra.TargetVNet.Name,
 			SubnetId:       skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
-			Name:           fmt.Sprintf("migrated-%s", server.MachineId),      // Set MachineId to identify the source server
+			Name:           fmt.Sprintf("vm-%s", server.MachineId),            // Set MachineId to identify the source server
 			RootDiskType:   "",                                                // Set "" or default to use CSP's default
 			RootDiskSize:   50,                                                // Set 50 GB as a default value
 			SshKeyId:       skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -632,7 +633,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		exists, _, existingSg := containSg(deduplicatedSecurityGroupList, recommendedSg)
 		if !exists {
 			// If the security group does not exist, set a name to indicate a dependency between resources.
-			recommendedSg.Name = fmt.Sprintf("mig-sg-%02d", len(deduplicatedSecurityGroupList)+1)
+			recommendedSg.Name = fmt.Sprintf("sg-%02d", len(deduplicatedSecurityGroupList)+1)
 			recommendedSg.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
 			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", server.MachineId) // Set MachineId to identify the source server
 
