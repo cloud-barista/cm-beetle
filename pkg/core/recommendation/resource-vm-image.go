@@ -85,7 +85,7 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Find the best VM OS image
-	bestVmOsImage := FindBestVmOsImage(keywords, kwDelimiters, imageList, imgDelimiters)
+	bestVmOsImage := FindBestVmOsImage(csp, keywords, kwDelimiters, imageList, imgDelimiters)
 
 	log.Debug().Msgf("Best VM OS image found: %+v", bestVmOsImage)
 
@@ -105,7 +105,7 @@ func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerPr
 	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
-	vmOsImageId := FindBestVmOsImageNameUsedInCsp(keywords, kwDelimiters, imageList, imgDelimiters)
+	vmOsImageId := FindBestVmOsImageNameUsedInCsp(csp, keywords, kwDelimiters, imageList, imgDelimiters)
 
 	log.Debug().Msgf("Best VM OS image ID found: %s", vmOsImageId)
 
@@ -254,7 +254,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
-	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(keywords, kwDelimiters, imageList, imgDelimiters)
+	vmOsImageInfoList = FindAndSortVmOsImageInfoListBySimilarity(csp, keywords, kwDelimiters, imageList, imgDelimiters)
 
 	count := len(vmOsImageInfoList)
 	if count == 0 {
@@ -292,7 +292,7 @@ func SetKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []stri
 }
 
 // FindBestVmOsImage finds the best matching image based on the similarity scores
-func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) cloudmodel.ImageInfo {
+func FindBestVmOsImage(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) cloudmodel.ImageInfo {
 
 	var bestVmOsImage cloudmodel.ImageInfo
 	var highestScore float64 = 0.0
@@ -307,6 +307,13 @@ func FindBestVmOsImage(keywords string, kwDelimiters []string, vmImages []cloudm
 		)
 
 		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
+
+		// Apply penalty for low-priority images (e.g., Marketplace images)
+		priority := compat.GetImagePriority(csp, image)
+		if priority > 5 {
+			score *= 0.5
+		}
+
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImage = image
@@ -325,7 +332,7 @@ type VmOsImageInfoWithScore struct {
 }
 
 // FindAndSortVmOsImageInfoListBySimilarity finds VM OS images that match the keywords and sorts them by similarity score
-func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) []cloudmodel.ImageInfo {
+func FindAndSortVmOsImageInfoListBySimilarity(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) []cloudmodel.ImageInfo {
 
 	var imageInfoListForSorting []VmOsImageInfoWithScore
 	var imageInfoList []cloudmodel.ImageInfo
@@ -340,6 +347,13 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 		)
 
 		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
+
+		// Apply penalty for low-priority images (e.g., Marketplace images)
+		priority := compat.GetImagePriority(csp, image)
+		if priority > 5 {
+			score *= 0.5
+		}
+
 		imageInfo := VmOsImageInfoWithScore{
 			VmOsImageInfo:   image,
 			SimilarityScore: score,
@@ -359,50 +373,9 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 			return scoreI > scoreJ
 		}
 
-		// Secondary sort: prioritize standard images, then "minimal", then "k8s", then "pro-minimal", then "pro", then "test"
-		distI := strings.ToLower(imageInfoListForSorting[i].VmOsImageInfo.OSDistribution)
-		distJ := strings.ToLower(imageInfoListForSorting[j].VmOsImageInfo.OSDistribution)
-
-		// TODO: Modify when the kubernetes images are supported normally
-		hasMinimalI := strings.Contains(distI, "minimal")
-		hasK8sI := strings.Contains(distI, "k8s")
-		hasProI := strings.Contains(distI, "pro")
-		hasTestI := strings.Contains(distI, "test")
-		hasMinimalJ := strings.Contains(distJ, "minimal")
-		hasK8sJ := strings.Contains(distJ, "k8s")
-		hasProJ := strings.Contains(distJ, "pro")
-		hasTestJ := strings.Contains(distJ, "test")
-
-		// Check for pro-minimal (contains both "pro" and "minimal")
-		hasProMinimalI := hasProI && hasMinimalI
-		hasProMinimalJ := hasProJ && hasMinimalJ
-
-		// Calculate priority: 0 (standard) > 1 (minimal) > 2 (k8s) > 3 (pro-minimal) > 4 (pro) > 5 (test)
-		priorityI := 0
-		if hasTestI {
-			priorityI = 5
-		} else if hasProMinimalI {
-			priorityI = 3
-		} else if hasProI {
-			priorityI = 4
-		} else if hasK8sI {
-			priorityI = 2
-		} else if hasMinimalI {
-			priorityI = 1
-		}
-
-		priorityJ := 0
-		if hasTestJ {
-			priorityJ = 5
-		} else if hasProMinimalJ {
-			priorityJ = 3
-		} else if hasProJ {
-			priorityJ = 4
-		} else if hasK8sJ {
-			priorityJ = 2
-		} else if hasMinimalJ {
-			priorityJ = 1
-		}
+		// Calculate priority (lower is better) using centralized logic
+		priorityI := compat.GetImagePriority(csp, imageInfoListForSorting[i].VmOsImageInfo)
+		priorityJ := compat.GetImagePriority(csp, imageInfoListForSorting[j].VmOsImageInfo)
 
 		// Lower priority value comes first
 		if priorityI != priorityJ {
@@ -423,7 +396,7 @@ func FindAndSortVmOsImageInfoListBySimilarity(keywords string, kwDelimiters []st
 }
 
 // FindBestVmOsImageNameUsedInCsp finds the best matching image based on the similarity scores
-func FindBestVmOsImageNameUsedInCsp(keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) string {
+func FindBestVmOsImageNameUsedInCsp(csp string, keywords string, kwDelimiters []string, vmImages []cloudmodel.ImageInfo, imgDelimiters []string) string {
 
 	var bestVmOsImageNameUsedInCsp string
 	var highestScore float64 = 0.0
@@ -437,6 +410,13 @@ func FindBestVmOsImageNameUsedInCsp(keywords string, kwDelimiters []string, vmIm
 		)
 
 		score := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
+
+		// Apply penalty for low-priority images (e.g., Marketplace images)
+		priority := compat.GetImagePriority(csp, image)
+		if priority > 5 {
+			score *= 0.5
+		}
+
 		if score > highestScore {
 			highestScore = score
 			bestVmOsImageNameUsedInCsp = image.CspImageName

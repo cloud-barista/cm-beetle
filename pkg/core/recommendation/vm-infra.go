@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
 
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
@@ -794,7 +795,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			selectedVmOsImage = pair.Image
 
 			// Calculate match rate vector for this server-VM pair
-			matchRateVec := calculateMatchRateVector(server, selectedVmSpec, selectedVmOsImage)
+			matchRateVec := calculateMatchRateVector(csp, server, selectedVmSpec, selectedVmOsImage)
 
 			// Log candidate and spec selection details with match rate
 			log.Debug().
@@ -894,7 +895,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		candidateInfra.TargetVmInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
 
 		// Calculate overall match rate with detailed information
-		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(tempSubGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
+		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempSubGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
 
 		// Set the status and enhanced description with match rate summary
 		candidateInfra.Status = overallStatus
@@ -930,7 +931,7 @@ type InfraMatchRateSummary struct {
 
 // calculateCandidateMatchRateWithDetails calculates overall match rate with detailed summary
 // minMatchRate: Minimum match rate (0-100) for highly-matched classification (typically 90.0)
-func calculateCandidateMatchRateWithDetails(tempSubGroupList []cloudmodel.CreateSubGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo, minMatchRate float64) (string, string, InfraMatchRateSummary) {
+func calculateCandidateMatchRateWithDetails(csp string, tempSubGroupList []cloudmodel.CreateSubGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo, minMatchRate float64) (string, string, InfraMatchRateSummary) {
 
 	var overallStatus string
 	var overallStatusDesc string
@@ -973,7 +974,7 @@ func calculateCandidateMatchRateWithDetails(tempSubGroupList []cloudmodel.Create
 
 			if selectedSpec.Id != "" && selectedImage.Id != "" {
 				// Calculate match rate vector
-				matchRateVec := calculateMatchRateVector(server, selectedSpec, selectedImage)
+				matchRateVec := calculateMatchRateVector(csp, server, selectedSpec, selectedImage)
 				validServerCount++
 
 				vmMinMatchRate := matchRateVec.MinMatchRate()
@@ -1062,7 +1063,7 @@ func calculateCandidateMatchRateWithDetails(tempSubGroupList []cloudmodel.Create
 // calculateMatchRateVector calculates multi-dimensional match rate scores without weights
 // Returns: MatchRateVector with independent CPU, Memory, and Image match rate scores (0-100%)
 // Rationale: Each dimension is evaluated independently, making the system extensible and transparent
-func calculateMatchRateVector(server onpremmodel.ServerProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) MatchRateVector {
+func calculateMatchRateVector(csp string, server onpremmodel.ServerProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) MatchRateVector {
 	// Log server and VM specifications for comparison
 	log.Debug().
 		Str("machineId", server.MachineId).
@@ -1097,7 +1098,7 @@ func calculateMatchRateVector(server onpremmodel.ServerProperty, vmSpec cloudmod
 	memoryMatchRate := calculateRelativeMatch(serverMemoryGB, vmSpecMemoryGiB)
 
 	// 3. Calculate image similarity match rate
-	imageMatchRate := calculateImageMatchRateScore(server, vmImage)
+	imageMatchRate := calculateImageMatchRateScore(csp, server, vmImage)
 	imageMatchRate = imageMatchRate * 100.0 // Convert to percentage (0-100%)
 
 	// Create match rate vector
@@ -1144,7 +1145,7 @@ func calculateRelativeMatch(serverValue, vmValue float64) float64 {
 }
 
 // calculateImageMatchRateScore calculates image match rate score based on OS similarity
-func calculateImageMatchRateScore(server onpremmodel.ServerProperty, vmImage cloudmodel.ImageInfo) float64 {
+func calculateImageMatchRateScore(csp string, server onpremmodel.ServerProperty, vmImage cloudmodel.ImageInfo) float64 {
 	// Set keywords and delimiters similar to existing image recommendation logic
 	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
 
@@ -1171,6 +1172,17 @@ func calculateImageMatchRateScore(server onpremmodel.ServerProperty, vmImage clo
 
 	// Calculate similarity score (0.0 to 1.0, where 1.0 is perfect match)
 	similarityScore := similarity.CalcResourceSimilarity(keywords, kwDelimiters, vmImgKeywords, imgDelimiters)
+
+	// Apply penalty for low-priority images (e.g., Marketplace images)
+	priority := compat.GetImagePriority(csp, vmImage)
+	if priority > 5 {
+		log.Trace().
+			Str("machineId", server.MachineId).
+			Str("imageName", vmImage.CspImageName).
+			Int("priority", priority).
+			Msg("Applying penalty to low-priority image score")
+		similarityScore *= 0.5
+	}
 
 	log.Debug().
 		Str("machineId", server.MachineId).
