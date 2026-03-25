@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.0+ (e073c45)
-- cm-model: v0.0.16
-- CB-Tumblebug: vunknown
-- CB-Spider: v0.12.8
-- CB-MapUI: v0.12.15
+- CM-Beetle: v0.5.0+ (cc39642)
+- cm-model: v0.0.20
+- CB-Tumblebug: v0.12.3
+- CB-Spider: v0.12.11
+- CB-MapUI: v0.12.16
 - Target CSP: AWS
 - Target Region: ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: March 20, 2026
-- Test Time: 19:37:55 KST
-- Test Execution: 2026-03-20 19:37:55 KST
+- Test Date: March 25, 2026
+- Test Time: 18:19:34 KST
+- Test Execution: 2026-03-25 18:19:34 KST
 
 ### Scenario
 
@@ -39,19 +39,19 @@
 
 | Test | Endpoint | Status | Duration | Details |
 |------|----------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 5.029s | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 1m2.025s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 206ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 5ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 204ms | Pass |
+| 1 | `POST /beetle/recommendation/vmInfra` | ✅ **PASS** | 2.465s | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 58.248s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/mci` | ✅ **PASS** | 199ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/mci?option=id` | ✅ **PASS** | 9ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 182ms | Pass |
 | 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 1m14.351s | Pass |
+| 7 | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 58.601s | Pass |
 
 **Overall Result**: 7/7 tests passed ✅
 
-**Total Duration**: 3m38.274989755s
+**Total Duration**: 3m14.702701993s
 
-*Test executed on March 20, 2026 at 19:37:55 KST (2026-03-20 19:37:55 KST) using CM-Beetle automated test CLI*
+*Test executed on March 25, 2026 at 18:19:34 KST (2026-03-25 18:19:34 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -75,6 +75,7 @@
 
 ```json
 {
+  "nameSeed": "",
   "desiredCspAndRegionPair": {
     "csp": "aws",
     "region": "ap-northeast-2"
@@ -1940,6 +1941,7 @@
   "success": true,
   "data": [
     {
+      "nameSeed": "",
       "status": "highly-matched",
       "description": "Candidate #1 | highly-matched | Overall Match Rate: Min=100.0% Max=100.0% Avg=100.0% | VMs: 3 total, 3 matched, 0 acceptable",
       "targetCloud": {
@@ -1954,7 +1956,7 @@
         "description": "Recommended VMs comprising multi-cloud infrastructure",
         "subGroups": [
           {
-            "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+            "name": "vm-ec268ed7-821e-9d73-e79f-961262161624",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
@@ -1963,17 +1965,17 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3a.small",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-01"
+              "sg-01"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
@@ -1982,17 +1984,17 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3a.xlarge",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-02"
+              "sg-02"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
@@ -2001,12 +2003,12 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3a.large",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-03"
+              "sg-03"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           }
@@ -2018,12 +2020,12 @@
         "policyOnPartialFailure": ""
       },
       "targetVNet": {
-        "name": "mig-vnet-01",
+        "name": "vnet-01",
         "connectionName": "aws-ap-northeast-2",
         "cidrBlock": "10.0.0.0/21",
         "subnetInfoList": [
           {
-            "name": "mig-subnet-01",
+            "name": "subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
             "description": "a recommended subnet for migration"
           }
@@ -2031,7 +2033,7 @@
         "description": "a recommended vNet for migration"
       },
       "targetSshKey": {
-        "name": "mig-sshkey-01",
+        "name": "sshkey-01",
         "connectionName": "aws-ap-northeast-2",
         "description": "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded",
         "cspResourceId": "",
@@ -2507,9 +2509,9 @@
       ],
       "targetSecurityGroupList": [
         {
-          "name": "mig-sg-01",
+          "name": "sg-01",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
           "firewallRules": [
             {
@@ -2594,9 +2596,9 @@
           "cspResourceId": ""
         },
         {
-          "name": "mig-sg-02",
+          "name": "sg-02",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "firewallRules": [
             {
@@ -2711,9 +2713,9 @@
           "cspResourceId": ""
         },
         {
-          "name": "mig-sg-03",
+          "name": "sg-03",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "firewallRules": [
             {
@@ -2830,6 +2832,7 @@
       ]
     },
     {
+      "nameSeed": "",
       "status": "highly-matched",
       "description": "Candidate #2 | highly-matched | Overall Match Rate: Min=100.0% Max=100.0% Avg=100.0% | VMs: 3 total, 3 matched, 0 acceptable",
       "targetCloud": {
@@ -2844,7 +2847,7 @@
         "description": "Recommended VMs comprising multi-cloud infrastructure",
         "subGroups": [
           {
-            "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+            "name": "vm-ec268ed7-821e-9d73-e79f-961262161624",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
@@ -2853,17 +2856,17 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3.small",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-01"
+              "sg-01"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
@@ -2872,17 +2875,17 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3.xlarge",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-02"
+              "sg-02"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "subGroupSize": 1,
             "label": {
               "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
@@ -2891,12 +2894,12 @@
             "connectionName": "aws-ap-northeast-2",
             "specId": "aws+ap-northeast-2+t3.large",
             "imageId": "ami-08a4fd517a4872931",
-            "vNetId": "mig-vnet-01",
-            "subnetId": "mig-subnet-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
             "securityGroupIds": [
-              "mig-sg-03"
+              "sg-03"
             ],
-            "sshKeyId": "mig-sshkey-01",
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           }
@@ -2908,12 +2911,12 @@
         "policyOnPartialFailure": ""
       },
       "targetVNet": {
-        "name": "mig-vnet-01",
+        "name": "vnet-01",
         "connectionName": "aws-ap-northeast-2",
         "cidrBlock": "10.0.0.0/21",
         "subnetInfoList": [
           {
-            "name": "mig-subnet-01",
+            "name": "subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
             "description": "a recommended subnet for migration"
           }
@@ -2921,7 +2924,7 @@
         "description": "a recommended vNet for migration"
       },
       "targetSshKey": {
-        "name": "mig-sshkey-01",
+        "name": "sshkey-01",
         "connectionName": "aws-ap-northeast-2",
         "description": "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded",
         "cspResourceId": "",
@@ -3736,9 +3739,9 @@
       ],
       "targetSecurityGroupList": [
         {
-          "name": "mig-sg-01",
+          "name": "sg-01",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
           "firewallRules": [
             {
@@ -3823,9 +3826,9 @@
           "cspResourceId": ""
         },
         {
-          "name": "mig-sg-02",
+          "name": "sg-02",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "firewallRules": [
             {
@@ -3940,9 +3943,9 @@
           "cspResourceId": ""
         },
         {
-          "name": "mig-sg-03",
+          "name": "sg-03",
           "connectionName": "aws-ap-northeast-2",
-          "vNetId": "mig-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "firewallRules": [
             {
@@ -4087,7 +4090,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d6ui78sq517n4m9tkhpg",
+  "uid": "d71qhgv693a119t3b8ag",
   "name": "mmci01",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -4115,7 +4118,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d6ui78sq517n4m9tkhpg"
+    "sys.uid": "d71qhgv693a119t3b8ag"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -4123,12 +4126,12 @@
   "vm": [
     {
       "resourceType": "vm",
-      "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d6ui78sq517n4m9tkhqg",
-      "cspResourceName": "d6ui78sq517n4m9tkhqg",
-      "cspResourceId": "i-013c075ad2cd8746b",
-      "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "uid": "d71qhgv693a119t3b8dg",
+      "cspResourceName": "d71qhgv693a119t3b8dg",
+      "cspResourceId": "i-0c135ba8cdd1eb29f",
+      "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "subGroupId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.36,
@@ -4140,509 +4143,7 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:56",
-      "label": {
-        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
-      },
-      "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
-      "region": {
-        "region": "ap-northeast-2",
-        "zone": "ap-northeast-2a"
-      },
-      "publicIP": "13.125.37.182",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.137",
-      "privateDNS": "ip-10-0-1-137.ap-northeast-2.compute.internal",
-      "rootDiskType": "gp2",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/sda1",
-      "connectionName": "aws-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "aws-ap-northeast-2",
-        "providerName": "aws",
-        "driverName": "aws-driver-v1.0.so",
-        "credentialName": "aws",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "aws-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "Asia Pacific (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b",
-            "ap-northeast-2c",
-            "ap-northeast-2d"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "aws+ap-northeast-2+t3a.small",
-      "cspSpecName": "t3a.small",
-      "spec": {
-        "cspSpecName": "t3a.small",
-        "vCPU": 2,
-        "memoryGiB": 2,
-        "costPerHour": 0.0234
-      },
-      "imageId": "ami-08a4fd517a4872931",
-      "cspImageName": "ami-08a4fd517a4872931",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "ami-08a4fd517a4872931",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
-      },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-0f7471fda4072d4d0",
-      "securityGroupIds": [
-        "mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
-      "vmUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDdvNBPJyJYG/63N0fghQsjwUobhMQoeF0yrzVmzKnGVuoO9RACb/xR5h4wARJP06Kr6Arf+DxhjUIkW83Ue7MM=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:XNoD4E7yQQ8cmZwB9wvm7DBvRao+WfgxOhcDbA/+JIA",
-        "firstUsedAt": "2026-03-20T10:39:06Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:07Z",
-          "elapsedTime": 3,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "AmiLaunchIndex",
-          "value": "0"
-        },
-        {
-          "key": "Architecture",
-          "value": "x86_64"
-        },
-        {
-          "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:33Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0528f9b463f162d63}}"
-        },
-        {
-          "key": "BootMode",
-          "value": "uefi-preferred"
-        },
-        {
-          "key": "CapacityReservationSpecification",
-          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
-        },
-        {
-          "key": "ClientToken",
-          "value": "0F67601D-EDA5-4661-A895-8AB225FED7E8"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{CoreCount:1,ThreadsPerCore:2}"
-        },
-        {
-          "key": "EbsOptimized",
-          "value": "false"
-        },
-        {
-          "key": "EnaSupport",
-          "value": "true"
-        },
-        {
-          "key": "EnclaveOptions",
-          "value": "{Enabled:false}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "Hypervisor",
-          "value": "xen"
-        },
-        {
-          "key": "ImageId",
-          "value": "ami-08a4fd517a4872931"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-013c075ad2cd8746b"
-        },
-        {
-          "key": "InstanceType",
-          "value": "t3a.small"
-        },
-        {
-          "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
-        },
-        {
-          "key": "LaunchTime",
-          "value": "2026-03-20T10:38:32Z"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
-        },
-        {
-          "key": "Monitoring",
-          "value": "{State:disabled}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Attachment:{AttachTime:2026-03-20T10:38:32Z,AttachmentId:eni-attach-0f7471fda4072d4d0,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:41:83:2a:6e:43,NetworkInterfaceId:eni-0d83e4436c11379c0,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.137,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.137}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
-        },
-        {
-          "key": "Placement",
-          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
-        },
-        {
-          "key": "PrivateDnsName",
-          "value": "ip-10-0-1-137.ap-northeast-2.compute.internal"
-        },
-        {
-          "key": "PrivateIpAddress",
-          "value": "10.0.1.137"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "13.125.37.182"
-        },
-        {
-          "key": "RootDeviceName",
-          "value": "/dev/sda1"
-        },
-        {
-          "key": "RootDeviceType",
-          "value": "ebs"
-        },
-        {
-          "key": "SecurityGroups",
-          "value": "{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}"
-        },
-        {
-          "key": "SourceDestCheck",
-          "value": "true"
-        },
-        {
-          "key": "State",
-          "value": "{Code:16,Name:running}"
-        },
-        {
-          "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
-        },
-        {
-          "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhqg}"
-        },
-        {
-          "key": "VirtualizationType",
-          "value": "hvm"
-        },
-        {
-          "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d6ui78sq517n4m9tkhrg",
-      "cspResourceName": "d6ui78sq517n4m9tkhrg",
-      "cspResourceId": "i-0053970eeff79532e",
-      "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:50",
-      "label": {
-        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
-      },
-      "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
-      "region": {
-        "region": "ap-northeast-2",
-        "zone": "ap-northeast-2a"
-      },
-      "publicIP": "54.180.228.53",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.75",
-      "privateDNS": "ip-10-0-1-75.ap-northeast-2.compute.internal",
-      "rootDiskType": "gp2",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/sda1",
-      "connectionName": "aws-ap-northeast-2",
-      "connectionConfig": {
-        "configName": "aws-ap-northeast-2",
-        "providerName": "aws",
-        "driverName": "aws-driver-v1.0.so",
-        "credentialName": "aws",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "aws-ap-northeast-2",
-        "regionZoneInfo": {
-          "assignedRegion": "ap-northeast-2",
-          "assignedZone": "ap-northeast-2a"
-        },
-        "regionDetail": {
-          "regionId": "ap-northeast-2",
-          "regionName": "ap-northeast-2",
-          "description": "Asia Pacific (Seoul)",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "zones": [
-            "ap-northeast-2a",
-            "ap-northeast-2b",
-            "ap-northeast-2c",
-            "ap-northeast-2d"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "aws+ap-northeast-2+t3a.xlarge",
-      "cspSpecName": "t3a.xlarge",
-      "spec": {
-        "cspSpecName": "t3a.xlarge",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.1872
-      },
-      "imageId": "ami-08a4fd517a4872931",
-      "cspImageName": "ami-08a4fd517a4872931",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "ami-08a4fd517a4872931",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
-      },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-08535797d49787c86",
-      "securityGroupIds": [
-        "mig-sg-02"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
-      "vmUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJVHztuiXKZ990X9qumBvbuj2vO+JPvQd048Q46tmoTXxreCGsObfz/xcmHcdeW1fmzAN9zlLjmtlCa9AoaInDk=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:MxYLiYz9/2oLssPvKCeHd6+bxM8SngdqHF4uqKviQdY",
-        "firstUsedAt": "2026-03-20T10:39:04Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:06Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "AmiLaunchIndex",
-          "value": "0"
-        },
-        {
-          "key": "Architecture",
-          "value": "x86_64"
-        },
-        {
-          "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:32Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0805b5a3b38c658e8}}"
-        },
-        {
-          "key": "BootMode",
-          "value": "uefi-preferred"
-        },
-        {
-          "key": "CapacityReservationSpecification",
-          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
-        },
-        {
-          "key": "ClientToken",
-          "value": "12575E85-E14B-4C32-8F83-43D96A8DF2F7"
-        },
-        {
-          "key": "CpuOptions",
-          "value": "{CoreCount:2,ThreadsPerCore:2}"
-        },
-        {
-          "key": "EbsOptimized",
-          "value": "false"
-        },
-        {
-          "key": "EnaSupport",
-          "value": "true"
-        },
-        {
-          "key": "EnclaveOptions",
-          "value": "{Enabled:false}"
-        },
-        {
-          "key": "HibernationOptions",
-          "value": "{Configured:false}"
-        },
-        {
-          "key": "Hypervisor",
-          "value": "xen"
-        },
-        {
-          "key": "ImageId",
-          "value": "ami-08a4fd517a4872931"
-        },
-        {
-          "key": "InstanceId",
-          "value": "i-0053970eeff79532e"
-        },
-        {
-          "key": "InstanceType",
-          "value": "t3a.xlarge"
-        },
-        {
-          "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
-        },
-        {
-          "key": "LaunchTime",
-          "value": "2026-03-20T10:38:31Z"
-        },
-        {
-          "key": "MetadataOptions",
-          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
-        },
-        {
-          "key": "Monitoring",
-          "value": "{State:disabled}"
-        },
-        {
-          "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Attachment:{AttachTime:2026-03-20T10:38:31Z,AttachmentId:eni-attach-08535797d49787c86,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:1e:54:d6:02:2f,NetworkInterfaceId:eni-026153576221b8c7d,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.75,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.75}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
-        },
-        {
-          "key": "Placement",
-          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
-        },
-        {
-          "key": "PrivateDnsName",
-          "value": "ip-10-0-1-75.ap-northeast-2.compute.internal"
-        },
-        {
-          "key": "PrivateIpAddress",
-          "value": "10.0.1.75"
-        },
-        {
-          "key": "PublicIpAddress",
-          "value": "54.180.228.53"
-        },
-        {
-          "key": "RootDeviceName",
-          "value": "/dev/sda1"
-        },
-        {
-          "key": "RootDeviceType",
-          "value": "ebs"
-        },
-        {
-          "key": "SecurityGroups",
-          "value": "{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}"
-        },
-        {
-          "key": "SourceDestCheck",
-          "value": "true"
-        },
-        {
-          "key": "State",
-          "value": "{Code:16,Name:running}"
-        },
-        {
-          "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
-        },
-        {
-          "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhrg}"
-        },
-        {
-          "key": "VirtualizationType",
-          "value": "hvm"
-        },
-        {
-          "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d6ui78sq517n4m9tkhsg",
-      "cspResourceName": "d6ui78sq517n4m9tkhsg",
-      "cspResourceId": "i-042d8da1f2e20a29b",
-      "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-      "location": {
-        "display": "South Korea (Seoul)",
-        "latitude": 37.36,
-        "longitude": 126.78
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:51",
+      "createdTime": "2026-03-25 09:20:33",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
       },
@@ -4651,11 +4152,11 @@
         "region": "ap-northeast-2",
         "zone": "ap-northeast-2a"
       },
-      "publicIP": "13.124.4.196",
+      "publicIP": "3.34.141.220",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.127",
-      "privateDNS": "ip-10-0-1-127.ap-northeast-2.compute.internal",
+      "privateIP": "10.0.1.254",
+      "privateDNS": "ip-10-0-1-254.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/sda1",
@@ -4707,23 +4208,23 @@
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
       },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-053df7853872824be",
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-0f027c1ae75104838",
       "securityGroupIds": [
-        "mig-sg-03"
+        "sg-03"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
       "vmUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPE2ZqMVNO27YbytAwmQwDWlPDxcmqCG2QY66TMnbzgP4g9U7lnHAB2Hqf0Y0h+SxGIXUeQWq/LnLNyK/AtEWGU=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZPAwvmoRTC+chysOs6nGmKbRl6fqdip15jiKaIdr3AmnWIjdLSOl4br41jhkB35yXvJanwMDbPvbewyTCQSS0=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:fF7BCrJW2rTAt9CZZJDgYLtGl/kgA7w6juGZpfvzQPo",
-        "firstUsedAt": "2026-03-20T10:39:06Z"
+        "fingerprint": "SHA256:R1YEjFXxQ3aWfHhrlXis9ZJCxfPbg23UzMJWoaGaNbI",
+        "firstUsedAt": "2026-03-25T09:20:43Z"
       },
       "commandStatus": [
         {
@@ -4731,11 +4232,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:07Z",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:44Z",
           "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -4750,7 +4251,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:31Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0c35246b1727b9b91}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-03e2db373a30335f1}}"
         },
         {
           "key": "BootMode",
@@ -4762,7 +4263,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "9EE35789-F874-4F83-ADE1-4E76D8726F08"
+          "value": "A4180AAE-6F64-4B60-8F9B-4C96DED0E398"
         },
         {
           "key": "CpuOptions",
@@ -4794,7 +4295,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-042d8da1f2e20a29b"
+          "value": "i-0c135ba8cdd1eb29f"
         },
         {
           "key": "InstanceType",
@@ -4802,11 +4303,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
+          "value": "d71qhe7693a119t3b88g"
         },
         {
           "key": "LaunchTime",
-          "value": "2026-03-20T10:38:30Z"
+          "value": "2026-03-25T09:20:10Z"
         },
         {
           "key": "MetadataOptions",
@@ -4818,7 +4319,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Attachment:{AttachTime:2026-03-20T10:38:30Z,AttachmentId:eni-attach-053df7853872824be,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:a8:9e:13:38:59,NetworkInterfaceId:eni-06a9a41184af07d43,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.127,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.127}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-0f027c1ae75104838,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:34:4e:a6:13:67,NetworkInterfaceId:eni-0ee7a9e32ba947ff6,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.254,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.254}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
         },
         {
           "key": "Placement",
@@ -4826,15 +4327,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-10-0-1-127.ap-northeast-2.compute.internal"
+          "value": "ip-10-0-1-254.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "10.0.1.127"
+          "value": "10.0.1.254"
         },
         {
           "key": "PublicIpAddress",
-          "value": "13.124.4.196"
+          "value": "3.34.141.220"
         },
         {
           "key": "RootDeviceName",
@@ -4846,7 +4347,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}"
+          "value": "{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}"
         },
         {
           "key": "SourceDestCheck",
@@ -4858,11 +4359,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
+          "value": "subnet-015245e878365f0ba"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhsg}"
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8dg}"
         },
         {
           "key": "VirtualizationType",
@@ -4870,7 +4371,509 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
+          "value": "vpc-0b44ea281f7ddf1ca"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "d71qhgv693a119t3b8bg",
+      "cspResourceName": "d71qhgv693a119t3b8bg",
+      "cspResourceId": "i-096e19302484f3b9b",
+      "name": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "subGroupId": "vm-ec268ed7-821e-9d73-e79f-961262161624",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-03-25 09:20:30",
+      "label": {
+        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
+      },
+      "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
+      "region": {
+        "region": "ap-northeast-2",
+        "zone": "ap-northeast-2a"
+      },
+      "publicIP": "43.203.198.174",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.99",
+      "privateDNS": "ip-10-0-1-99.ap-northeast-2.compute.internal",
+      "rootDiskType": "gp2",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/sda1",
+      "connectionName": "aws-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "driverName": "aws-driver-v1.0.so",
+        "credentialName": "aws",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "aws-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "Asia Pacific (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b",
+            "ap-northeast-2c",
+            "ap-northeast-2d"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "aws+ap-northeast-2+t3a.small",
+      "cspSpecName": "t3a.small",
+      "spec": {
+        "cspSpecName": "t3a.small",
+        "vCPU": 2,
+        "memoryGiB": 2,
+        "costPerHour": 0.0234
+      },
+      "imageId": "ami-08a4fd517a4872931",
+      "cspImageName": "ami-08a4fd517a4872931",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "ami-08a4fd517a4872931",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
+      },
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-02b94e6c455710c87",
+      "securityGroupIds": [
+        "sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
+      "vmUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJWgU+Esfc7FjR7Ix81bMHSG4u3WtVQKQ9AXTIKwaOpeZHSDKCqKb48RCddXMKtjlsyTYUBAzNAwO/ZNowLn/Ps=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:xj+aDAnv7fHt9ktSaqwuJFMAJ4e7b8JxU9d6axMSBJ8",
+        "firstUsedAt": "2026-03-25T09:20:43Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:44Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "AmiLaunchIndex",
+          "value": "0"
+        },
+        {
+          "key": "Architecture",
+          "value": "x86_64"
+        },
+        {
+          "key": "BlockDeviceMappings",
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-003a8794c6c41b5ef}}"
+        },
+        {
+          "key": "BootMode",
+          "value": "uefi-preferred"
+        },
+        {
+          "key": "CapacityReservationSpecification",
+          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
+        },
+        {
+          "key": "ClientToken",
+          "value": "C2A4C4D5-B769-4C9D-B53D-39D4704A5C38"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{CoreCount:1,ThreadsPerCore:2}"
+        },
+        {
+          "key": "EbsOptimized",
+          "value": "false"
+        },
+        {
+          "key": "EnaSupport",
+          "value": "true"
+        },
+        {
+          "key": "EnclaveOptions",
+          "value": "{Enabled:false}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "xen"
+        },
+        {
+          "key": "ImageId",
+          "value": "ami-08a4fd517a4872931"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-096e19302484f3b9b"
+        },
+        {
+          "key": "InstanceType",
+          "value": "t3a.small"
+        },
+        {
+          "key": "KeyName",
+          "value": "d71qhe7693a119t3b88g"
+        },
+        {
+          "key": "LaunchTime",
+          "value": "2026-03-25T09:20:09Z"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
+        },
+        {
+          "key": "Monitoring",
+          "value": "{State:disabled}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-02b94e6c455710c87,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:d0:a3:bc:87:e5,NetworkInterfaceId:eni-0f48677c2b00150a4,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.99,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.99}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
+        },
+        {
+          "key": "Placement",
+          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
+        },
+        {
+          "key": "PrivateDnsName",
+          "value": "ip-10-0-1-99.ap-northeast-2.compute.internal"
+        },
+        {
+          "key": "PrivateIpAddress",
+          "value": "10.0.1.99"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "43.203.198.174"
+        },
+        {
+          "key": "RootDeviceName",
+          "value": "/dev/sda1"
+        },
+        {
+          "key": "RootDeviceType",
+          "value": "ebs"
+        },
+        {
+          "key": "SecurityGroups",
+          "value": "{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}"
+        },
+        {
+          "key": "SourceDestCheck",
+          "value": "true"
+        },
+        {
+          "key": "State",
+          "value": "{Code:16,Name:running}"
+        },
+        {
+          "key": "SubnetId",
+          "value": "subnet-015245e878365f0ba"
+        },
+        {
+          "key": "Tags",
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8bg}"
+        },
+        {
+          "key": "VirtualizationType",
+          "value": "hvm"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-0b44ea281f7ddf1ca"
+        }
+      ]
+    },
+    {
+      "resourceType": "vm",
+      "id": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "uid": "d71qhgv693a119t3b8cg",
+      "cspResourceName": "d71qhgv693a119t3b8cg",
+      "cspResourceId": "i-0777e6d3fbf17de76",
+      "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "subGroupId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "location": {
+        "display": "South Korea (Seoul)",
+        "latitude": 37.36,
+        "longitude": 126.78
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-03-25 09:20:30",
+      "label": {
+        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+      },
+      "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
+      "region": {
+        "region": "ap-northeast-2",
+        "zone": "ap-northeast-2a"
+      },
+      "publicIP": "13.125.62.104",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.180",
+      "privateDNS": "ip-10-0-1-180.ap-northeast-2.compute.internal",
+      "rootDiskType": "gp2",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/sda1",
+      "connectionName": "aws-ap-northeast-2",
+      "connectionConfig": {
+        "configName": "aws-ap-northeast-2",
+        "providerName": "aws",
+        "driverName": "aws-driver-v1.0.so",
+        "credentialName": "aws",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "aws-ap-northeast-2",
+        "regionZoneInfo": {
+          "assignedRegion": "ap-northeast-2",
+          "assignedZone": "ap-northeast-2a"
+        },
+        "regionDetail": {
+          "regionId": "ap-northeast-2",
+          "regionName": "ap-northeast-2",
+          "description": "Asia Pacific (Seoul)",
+          "location": {
+            "display": "South Korea (Seoul)",
+            "latitude": 37.36,
+            "longitude": 126.78
+          },
+          "zones": [
+            "ap-northeast-2a",
+            "ap-northeast-2b",
+            "ap-northeast-2c",
+            "ap-northeast-2d"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "aws+ap-northeast-2+t3a.xlarge",
+      "cspSpecName": "t3a.xlarge",
+      "spec": {
+        "cspSpecName": "t3a.xlarge",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.1872
+      },
+      "imageId": "ami-08a4fd517a4872931",
+      "cspImageName": "ami-08a4fd517a4872931",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "ami-08a4fd517a4872931",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
+      },
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-0aedd741089fd9384",
+      "securityGroupIds": [
+        "sg-02"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
+      "vmUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPiYLQCNBEEfOKV9+9ss9YR4BTmOcaVbWGQCgWbrYH3EAe8OIM50+T4Rl7N7BDh0NLS86p4CznbA/SV3RmIPLzg=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:92oG5G2cQvAl/xibtpSEsvQaqfnJvPpOCRba8ed1Z0k",
+        "firstUsedAt": "2026-03-25T09:20:41Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:43Z",
+          "elapsedTime": 2,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "AmiLaunchIndex",
+          "value": "0"
+        },
+        {
+          "key": "Architecture",
+          "value": "x86_64"
+        },
+        {
+          "key": "BlockDeviceMappings",
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:11Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0785b71eec1472331}}"
+        },
+        {
+          "key": "BootMode",
+          "value": "uefi-preferred"
+        },
+        {
+          "key": "CapacityReservationSpecification",
+          "value": "{CapacityReservationPreference:open,CapacityReservationTarget:null}"
+        },
+        {
+          "key": "ClientToken",
+          "value": "65690EAE-78CB-42B7-8875-99B4D8CCFCAC"
+        },
+        {
+          "key": "CpuOptions",
+          "value": "{CoreCount:2,ThreadsPerCore:2}"
+        },
+        {
+          "key": "EbsOptimized",
+          "value": "false"
+        },
+        {
+          "key": "EnaSupport",
+          "value": "true"
+        },
+        {
+          "key": "EnclaveOptions",
+          "value": "{Enabled:false}"
+        },
+        {
+          "key": "HibernationOptions",
+          "value": "{Configured:false}"
+        },
+        {
+          "key": "Hypervisor",
+          "value": "xen"
+        },
+        {
+          "key": "ImageId",
+          "value": "ami-08a4fd517a4872931"
+        },
+        {
+          "key": "InstanceId",
+          "value": "i-0777e6d3fbf17de76"
+        },
+        {
+          "key": "InstanceType",
+          "value": "t3a.xlarge"
+        },
+        {
+          "key": "KeyName",
+          "value": "d71qhe7693a119t3b88g"
+        },
+        {
+          "key": "LaunchTime",
+          "value": "2026-03-25T09:20:10Z"
+        },
+        {
+          "key": "MetadataOptions",
+          "value": "{HttpEndpoint:enabled,HttpPutResponseHopLimit:1,HttpTokens:optional,State:applied}"
+        },
+        {
+          "key": "Monitoring",
+          "value": "{State:disabled}"
+        },
+        {
+          "key": "NetworkInterfaces",
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Attachment:{AttachTime:2026-03-25T09:20:10Z,AttachmentId:eni-attach-0aedd741089fd9384,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:bc:af:da:dc:cd,NetworkInterfaceId:eni-0541fc5f447bd409f,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.180,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.180}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
+        },
+        {
+          "key": "Placement",
+          "value": "{Affinity:null,AvailabilityZone:ap-northeast-2a,GroupName:,HostId:null,HostResourceGroupArn:null,PartitionNumber:null,SpreadDomain:null,Tenancy:default}"
+        },
+        {
+          "key": "PrivateDnsName",
+          "value": "ip-10-0-1-180.ap-northeast-2.compute.internal"
+        },
+        {
+          "key": "PrivateIpAddress",
+          "value": "10.0.1.180"
+        },
+        {
+          "key": "PublicIpAddress",
+          "value": "13.125.62.104"
+        },
+        {
+          "key": "RootDeviceName",
+          "value": "/dev/sda1"
+        },
+        {
+          "key": "RootDeviceType",
+          "value": "ebs"
+        },
+        {
+          "key": "SecurityGroups",
+          "value": "{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}"
+        },
+        {
+          "key": "SourceDestCheck",
+          "value": "true"
+        },
+        {
+          "key": "State",
+          "value": "{Code:16,Name:running}"
+        },
+        {
+          "key": "SubnetId",
+          "value": "subnet-015245e878365f0ba"
+        },
+        {
+          "key": "Tags",
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8cg}"
+        },
+        {
+          "key": "VirtualizationType",
+          "value": "hvm"
+        },
+        {
+          "key": "VpcId",
+          "value": "vpc-0b44ea281f7ddf1ca"
         }
       ]
     }
@@ -4886,13 +4889,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "54.180.228.53",
+        "vmId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "vmIp": "13.125.62.104",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4901,13 +4904,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "13.125.37.182",
+        "vmId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "vmIp": "3.34.141.220",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4916,13 +4919,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "13.124.4.196",
+        "vmId": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "vmIp": "43.203.198.174",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4958,7 +4961,7 @@
     {
       "resourceType": "mci",
       "id": "mmci01",
-      "uid": "d6ui78sq517n4m9tkhpg",
+      "uid": "d71qhgv693a119t3b8ag",
       "name": "mmci01",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -4986,7 +4989,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "mmci01",
         "sys.namespace": "mig01",
-        "sys.uid": "d6ui78sq517n4m9tkhpg"
+        "sys.uid": "d71qhgv693a119t3b8ag"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -4994,12 +4997,12 @@
       "vm": [
         {
           "resourceType": "vm",
-          "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "d6ui78sq517n4m9tkhqg",
-          "cspResourceName": "d6ui78sq517n4m9tkhqg",
-          "cspResourceId": "i-013c075ad2cd8746b",
-          "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+          "id": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "d71qhgv693a119t3b8bg",
+          "cspResourceName": "d71qhgv693a119t3b8bg",
+          "cspResourceId": "i-096e19302484f3b9b",
+          "name": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "subGroupId": "vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.36,
@@ -5011,34 +5014,34 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-03-20 10:38:56",
+          "createdTime": "2026-03-25 09:20:30",
           "label": {
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "aws-ap-northeast-2",
-            "sys.createdTime": "2026-03-20 10:38:56",
-            "sys.cspResourceId": "i-013c075ad2cd8746b",
-            "sys.cspResourceName": "d6ui78sq517n4m9tkhqg",
-            "sys.id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.createdTime": "2026-03-25 09:20:30",
+            "sys.cspResourceId": "i-096e19302484f3b9b",
+            "sys.cspResourceName": "d71qhgv693a119t3b8bg",
+            "sys.id": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
             "sys.mciId": "mmci01",
-            "sys.name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.name": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.subnetId": "mig-subnet-01",
-            "sys.uid": "d6ui78sq517n4m9tkhqg",
-            "sys.vNetId": "mig-vnet-01"
+            "sys.subGroupId": "vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "subnet-01",
+            "sys.uid": "d71qhgv693a119t3b8bg",
+            "sys.vNetId": "vnet-01"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
           "region": {
             "region": "ap-northeast-2",
             "zone": "ap-northeast-2a"
           },
-          "publicIP": "13.125.37.182",
+          "publicIP": "43.203.198.174",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.137",
-          "privateDNS": "ip-10-0-1-137.ap-northeast-2.compute.internal",
+          "privateIP": "10.0.1.99",
+          "privateDNS": "ip-10-0-1-99.ap-northeast-2.compute.internal",
           "rootDiskType": "gp2",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/sda1",
@@ -5090,23 +5093,23 @@
             "osArchitecture": "x86_64",
             "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
           },
-          "vNetId": "mig-vnet-01",
-          "cspVNetId": "vpc-007dbf59b59762751",
-          "subnetId": "mig-subnet-01",
-          "cspSubnetId": "subnet-090b2be5d1037254c",
-          "networkInterface": "eni-attach-0f7471fda4072d4d0",
+          "vNetId": "vnet-01",
+          "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+          "subnetId": "subnet-01",
+          "cspSubnetId": "subnet-015245e878365f0ba",
+          "networkInterface": "eni-attach-02b94e6c455710c87",
           "securityGroupIds": [
-            "mig-sg-01"
+            "sg-01"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+          "sshKeyId": "sshkey-01",
+          "cspSshKeyId": "d71qhe7693a119t3b88g",
           "vmUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDdvNBPJyJYG/63N0fghQsjwUobhMQoeF0yrzVmzKnGVuoO9RACb/xR5h4wARJP06Kr6Arf+DxhjUIkW83Ue7MM=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJWgU+Esfc7FjR7Ix81bMHSG4u3WtVQKQ9AXTIKwaOpeZHSDKCqKb48RCddXMKtjlsyTYUBAzNAwO/ZNowLn/Ps=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:XNoD4E7yQQ8cmZwB9wvm7DBvRao+WfgxOhcDbA/+JIA",
-            "firstUsedAt": "2026-03-20T10:39:06Z"
+            "fingerprint": "SHA256:xj+aDAnv7fHt9ktSaqwuJFMAJ4e7b8JxU9d6axMSBJ8",
+            "firstUsedAt": "2026-03-25T09:20:43Z"
           },
           "commandStatus": [
             {
@@ -5114,11 +5117,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-03-20T10:39:04Z",
-              "completedTime": "2026-03-20T10:39:07Z",
+              "startedTime": "2026-03-25T09:20:41Z",
+              "completedTime": "2026-03-25T09:20:44Z",
               "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -5133,7 +5136,7 @@
             },
             {
               "key": "BlockDeviceMappings",
-              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:33Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0528f9b463f162d63}}"
+              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-003a8794c6c41b5ef}}"
             },
             {
               "key": "BootMode",
@@ -5145,7 +5148,7 @@
             },
             {
               "key": "ClientToken",
-              "value": "0F67601D-EDA5-4661-A895-8AB225FED7E8"
+              "value": "C2A4C4D5-B769-4C9D-B53D-39D4704A5C38"
             },
             {
               "key": "CpuOptions",
@@ -5177,7 +5180,7 @@
             },
             {
               "key": "InstanceId",
-              "value": "i-013c075ad2cd8746b"
+              "value": "i-096e19302484f3b9b"
             },
             {
               "key": "InstanceType",
@@ -5185,11 +5188,11 @@
             },
             {
               "key": "KeyName",
-              "value": "d6ui75kq517n4m9tkhng"
+              "value": "d71qhe7693a119t3b88g"
             },
             {
               "key": "LaunchTime",
-              "value": "2026-03-20T10:38:32Z"
+              "value": "2026-03-25T09:20:09Z"
             },
             {
               "key": "MetadataOptions",
@@ -5201,7 +5204,7 @@
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Attachment:{AttachTime:2026-03-20T10:38:32Z,AttachmentId:eni-attach-0f7471fda4072d4d0,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:41:83:2a:6e:43,NetworkInterfaceId:eni-0d83e4436c11379c0,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.137,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.137}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-02b94e6c455710c87,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:d0:a3:bc:87:e5,NetworkInterfaceId:eni-0f48677c2b00150a4,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.99,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.99}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
             },
             {
               "key": "Placement",
@@ -5209,15 +5212,15 @@
             },
             {
               "key": "PrivateDnsName",
-              "value": "ip-10-0-1-137.ap-northeast-2.compute.internal"
+              "value": "ip-10-0-1-99.ap-northeast-2.compute.internal"
             },
             {
               "key": "PrivateIpAddress",
-              "value": "10.0.1.137"
+              "value": "10.0.1.99"
             },
             {
               "key": "PublicIpAddress",
-              "value": "13.125.37.182"
+              "value": "43.203.198.174"
             },
             {
               "key": "RootDeviceName",
@@ -5229,7 +5232,7 @@
             },
             {
               "key": "SecurityGroups",
-              "value": "{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}"
+              "value": "{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}"
             },
             {
               "key": "SourceDestCheck",
@@ -5241,11 +5244,11 @@
             },
             {
               "key": "SubnetId",
-              "value": "subnet-090b2be5d1037254c"
+              "value": "subnet-015245e878365f0ba"
             },
             {
               "key": "Tags",
-              "value": "{Key:Name,Value:d6ui78sq517n4m9tkhqg}"
+              "value": "{Key:Name,Value:d71qhgv693a119t3b8bg}"
             },
             {
               "key": "VirtualizationType",
@@ -5253,18 +5256,18 @@
             },
             {
               "key": "VpcId",
-              "value": "vpc-007dbf59b59762751"
+              "value": "vpc-0b44ea281f7ddf1ca"
             }
           ]
         },
         {
           "resourceType": "vm",
-          "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "d6ui78sq517n4m9tkhsg",
-          "cspResourceName": "d6ui78sq517n4m9tkhsg",
-          "cspResourceId": "i-042d8da1f2e20a29b",
-          "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+          "id": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "uid": "d71qhgv693a119t3b8dg",
+          "cspResourceName": "d71qhgv693a119t3b8dg",
+          "cspResourceId": "i-0c135ba8cdd1eb29f",
+          "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "subGroupId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.36,
@@ -5276,34 +5279,34 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-03-20 10:38:51",
+          "createdTime": "2026-03-25 09:20:33",
           "label": {
             "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "aws-ap-northeast-2",
-            "sys.createdTime": "2026-03-20 10:38:51",
-            "sys.cspResourceId": "i-042d8da1f2e20a29b",
-            "sys.cspResourceName": "d6ui78sq517n4m9tkhsg",
-            "sys.id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.createdTime": "2026-03-25 09:20:33",
+            "sys.cspResourceId": "i-0c135ba8cdd1eb29f",
+            "sys.cspResourceName": "d71qhgv693a119t3b8dg",
+            "sys.id": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
             "sys.mciId": "mmci01",
-            "sys.name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "sys.subnetId": "mig-subnet-01",
-            "sys.uid": "d6ui78sq517n4m9tkhsg",
-            "sys.vNetId": "mig-vnet-01"
+            "sys.subGroupId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.subnetId": "subnet-01",
+            "sys.uid": "d71qhgv693a119t3b8dg",
+            "sys.vNetId": "vnet-01"
           },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
           "region": {
             "region": "ap-northeast-2",
             "zone": "ap-northeast-2a"
           },
-          "publicIP": "13.124.4.196",
+          "publicIP": "3.34.141.220",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.127",
-          "privateDNS": "ip-10-0-1-127.ap-northeast-2.compute.internal",
+          "privateIP": "10.0.1.254",
+          "privateDNS": "ip-10-0-1-254.ap-northeast-2.compute.internal",
           "rootDiskType": "gp2",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/sda1",
@@ -5355,23 +5358,23 @@
             "osArchitecture": "x86_64",
             "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
           },
-          "vNetId": "mig-vnet-01",
-          "cspVNetId": "vpc-007dbf59b59762751",
-          "subnetId": "mig-subnet-01",
-          "cspSubnetId": "subnet-090b2be5d1037254c",
-          "networkInterface": "eni-attach-053df7853872824be",
+          "vNetId": "vnet-01",
+          "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+          "subnetId": "subnet-01",
+          "cspSubnetId": "subnet-015245e878365f0ba",
+          "networkInterface": "eni-attach-0f027c1ae75104838",
           "securityGroupIds": [
-            "mig-sg-03"
+            "sg-03"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+          "sshKeyId": "sshkey-01",
+          "cspSshKeyId": "d71qhe7693a119t3b88g",
           "vmUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPE2ZqMVNO27YbytAwmQwDWlPDxcmqCG2QY66TMnbzgP4g9U7lnHAB2Hqf0Y0h+SxGIXUeQWq/LnLNyK/AtEWGU=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZPAwvmoRTC+chysOs6nGmKbRl6fqdip15jiKaIdr3AmnWIjdLSOl4br41jhkB35yXvJanwMDbPvbewyTCQSS0=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:fF7BCrJW2rTAt9CZZJDgYLtGl/kgA7w6juGZpfvzQPo",
-            "firstUsedAt": "2026-03-20T10:39:06Z"
+            "fingerprint": "SHA256:R1YEjFXxQ3aWfHhrlXis9ZJCxfPbg23UzMJWoaGaNbI",
+            "firstUsedAt": "2026-03-25T09:20:43Z"
           },
           "commandStatus": [
             {
@@ -5379,11 +5382,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-03-20T10:39:04Z",
-              "completedTime": "2026-03-20T10:39:07Z",
+              "startedTime": "2026-03-25T09:20:41Z",
+              "completedTime": "2026-03-25T09:20:44Z",
               "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -5398,7 +5401,7 @@
             },
             {
               "key": "BlockDeviceMappings",
-              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:31Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0c35246b1727b9b91}}"
+              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-03e2db373a30335f1}}"
             },
             {
               "key": "BootMode",
@@ -5410,7 +5413,7 @@
             },
             {
               "key": "ClientToken",
-              "value": "9EE35789-F874-4F83-ADE1-4E76D8726F08"
+              "value": "A4180AAE-6F64-4B60-8F9B-4C96DED0E398"
             },
             {
               "key": "CpuOptions",
@@ -5442,7 +5445,7 @@
             },
             {
               "key": "InstanceId",
-              "value": "i-042d8da1f2e20a29b"
+              "value": "i-0c135ba8cdd1eb29f"
             },
             {
               "key": "InstanceType",
@@ -5450,11 +5453,11 @@
             },
             {
               "key": "KeyName",
-              "value": "d6ui75kq517n4m9tkhng"
+              "value": "d71qhe7693a119t3b88g"
             },
             {
               "key": "LaunchTime",
-              "value": "2026-03-20T10:38:30Z"
+              "value": "2026-03-25T09:20:10Z"
             },
             {
               "key": "MetadataOptions",
@@ -5466,7 +5469,7 @@
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Attachment:{AttachTime:2026-03-20T10:38:30Z,AttachmentId:eni-attach-053df7853872824be,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:a8:9e:13:38:59,NetworkInterfaceId:eni-06a9a41184af07d43,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.127,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.127}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-0f027c1ae75104838,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:34:4e:a6:13:67,NetworkInterfaceId:eni-0ee7a9e32ba947ff6,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.254,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.254}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
             },
             {
               "key": "Placement",
@@ -5474,15 +5477,15 @@
             },
             {
               "key": "PrivateDnsName",
-              "value": "ip-10-0-1-127.ap-northeast-2.compute.internal"
+              "value": "ip-10-0-1-254.ap-northeast-2.compute.internal"
             },
             {
               "key": "PrivateIpAddress",
-              "value": "10.0.1.127"
+              "value": "10.0.1.254"
             },
             {
               "key": "PublicIpAddress",
-              "value": "13.124.4.196"
+              "value": "3.34.141.220"
             },
             {
               "key": "RootDeviceName",
@@ -5494,7 +5497,7 @@
             },
             {
               "key": "SecurityGroups",
-              "value": "{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}"
+              "value": "{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}"
             },
             {
               "key": "SourceDestCheck",
@@ -5506,11 +5509,11 @@
             },
             {
               "key": "SubnetId",
-              "value": "subnet-090b2be5d1037254c"
+              "value": "subnet-015245e878365f0ba"
             },
             {
               "key": "Tags",
-              "value": "{Key:Name,Value:d6ui78sq517n4m9tkhsg}"
+              "value": "{Key:Name,Value:d71qhgv693a119t3b8dg}"
             },
             {
               "key": "VirtualizationType",
@@ -5518,18 +5521,18 @@
             },
             {
               "key": "VpcId",
-              "value": "vpc-007dbf59b59762751"
+              "value": "vpc-0b44ea281f7ddf1ca"
             }
           ]
         },
         {
           "resourceType": "vm",
-          "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "d6ui78sq517n4m9tkhrg",
-          "cspResourceName": "d6ui78sq517n4m9tkhrg",
-          "cspResourceId": "i-0053970eeff79532e",
-          "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+          "id": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "uid": "d71qhgv693a119t3b8cg",
+          "cspResourceName": "d71qhgv693a119t3b8cg",
+          "cspResourceId": "i-0777e6d3fbf17de76",
+          "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "subGroupId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.36,
@@ -5541,34 +5544,34 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-03-20 10:38:50",
+          "createdTime": "2026-03-25 09:20:30",
           "label": {
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "aws-ap-northeast-2",
-            "sys.createdTime": "2026-03-20 10:38:50",
-            "sys.cspResourceId": "i-0053970eeff79532e",
-            "sys.cspResourceName": "d6ui78sq517n4m9tkhrg",
-            "sys.id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.createdTime": "2026-03-25 09:20:30",
+            "sys.cspResourceId": "i-0777e6d3fbf17de76",
+            "sys.cspResourceName": "d71qhgv693a119t3b8cg",
+            "sys.id": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.labelType": "vm",
             "sys.manager": "cb-tumblebug",
             "sys.mciId": "mmci01",
-            "sys.name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-            "sys.subnetId": "mig-subnet-01",
-            "sys.uid": "d6ui78sq517n4m9tkhrg",
-            "sys.vNetId": "mig-vnet-01"
+            "sys.subGroupId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.subnetId": "subnet-01",
+            "sys.uid": "d71qhgv693a119t3b8cg",
+            "sys.vNetId": "vnet-01"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
           "region": {
             "region": "ap-northeast-2",
             "zone": "ap-northeast-2a"
           },
-          "publicIP": "54.180.228.53",
+          "publicIP": "13.125.62.104",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.75",
-          "privateDNS": "ip-10-0-1-75.ap-northeast-2.compute.internal",
+          "privateIP": "10.0.1.180",
+          "privateDNS": "ip-10-0-1-180.ap-northeast-2.compute.internal",
           "rootDiskType": "gp2",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/sda1",
@@ -5620,23 +5623,23 @@
             "osArchitecture": "x86_64",
             "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
           },
-          "vNetId": "mig-vnet-01",
-          "cspVNetId": "vpc-007dbf59b59762751",
-          "subnetId": "mig-subnet-01",
-          "cspSubnetId": "subnet-090b2be5d1037254c",
-          "networkInterface": "eni-attach-08535797d49787c86",
+          "vNetId": "vnet-01",
+          "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+          "subnetId": "subnet-01",
+          "cspSubnetId": "subnet-015245e878365f0ba",
+          "networkInterface": "eni-attach-0aedd741089fd9384",
           "securityGroupIds": [
-            "mig-sg-02"
+            "sg-02"
           ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-sshkey-01",
-          "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+          "sshKeyId": "sshkey-01",
+          "cspSshKeyId": "d71qhe7693a119t3b88g",
           "vmUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJVHztuiXKZ990X9qumBvbuj2vO+JPvQd048Q46tmoTXxreCGsObfz/xcmHcdeW1fmzAN9zlLjmtlCa9AoaInDk=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPiYLQCNBEEfOKV9+9ss9YR4BTmOcaVbWGQCgWbrYH3EAe8OIM50+T4Rl7N7BDh0NLS86p4CznbA/SV3RmIPLzg=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:MxYLiYz9/2oLssPvKCeHd6+bxM8SngdqHF4uqKviQdY",
-            "firstUsedAt": "2026-03-20T10:39:04Z"
+            "fingerprint": "SHA256:92oG5G2cQvAl/xibtpSEsvQaqfnJvPpOCRba8ed1Z0k",
+            "firstUsedAt": "2026-03-25T09:20:41Z"
           },
           "commandStatus": [
             {
@@ -5644,11 +5647,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-03-20T10:39:04Z",
-              "completedTime": "2026-03-20T10:39:06Z",
+              "startedTime": "2026-03-25T09:20:41Z",
+              "completedTime": "2026-03-25T09:20:43Z",
               "elapsedTime": 2,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -5663,7 +5666,7 @@
             },
             {
               "key": "BlockDeviceMappings",
-              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:32Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0805b5a3b38c658e8}}"
+              "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:11Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0785b71eec1472331}}"
             },
             {
               "key": "BootMode",
@@ -5675,7 +5678,7 @@
             },
             {
               "key": "ClientToken",
-              "value": "12575E85-E14B-4C32-8F83-43D96A8DF2F7"
+              "value": "65690EAE-78CB-42B7-8875-99B4D8CCFCAC"
             },
             {
               "key": "CpuOptions",
@@ -5707,7 +5710,7 @@
             },
             {
               "key": "InstanceId",
-              "value": "i-0053970eeff79532e"
+              "value": "i-0777e6d3fbf17de76"
             },
             {
               "key": "InstanceType",
@@ -5715,11 +5718,11 @@
             },
             {
               "key": "KeyName",
-              "value": "d6ui75kq517n4m9tkhng"
+              "value": "d71qhe7693a119t3b88g"
             },
             {
               "key": "LaunchTime",
-              "value": "2026-03-20T10:38:31Z"
+              "value": "2026-03-25T09:20:10Z"
             },
             {
               "key": "MetadataOptions",
@@ -5731,7 +5734,7 @@
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Attachment:{AttachTime:2026-03-20T10:38:31Z,AttachmentId:eni-attach-08535797d49787c86,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:1e:54:d6:02:2f,NetworkInterfaceId:eni-026153576221b8c7d,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.75,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.75}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+              "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Attachment:{AttachTime:2026-03-25T09:20:10Z,AttachmentId:eni-attach-0aedd741089fd9384,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:bc:af:da:dc:cd,NetworkInterfaceId:eni-0541fc5f447bd409f,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.180,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.180}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
             },
             {
               "key": "Placement",
@@ -5739,15 +5742,15 @@
             },
             {
               "key": "PrivateDnsName",
-              "value": "ip-10-0-1-75.ap-northeast-2.compute.internal"
+              "value": "ip-10-0-1-180.ap-northeast-2.compute.internal"
             },
             {
               "key": "PrivateIpAddress",
-              "value": "10.0.1.75"
+              "value": "10.0.1.180"
             },
             {
               "key": "PublicIpAddress",
-              "value": "54.180.228.53"
+              "value": "13.125.62.104"
             },
             {
               "key": "RootDeviceName",
@@ -5759,7 +5762,7 @@
             },
             {
               "key": "SecurityGroups",
-              "value": "{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}"
+              "value": "{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}"
             },
             {
               "key": "SourceDestCheck",
@@ -5771,11 +5774,11 @@
             },
             {
               "key": "SubnetId",
-              "value": "subnet-090b2be5d1037254c"
+              "value": "subnet-015245e878365f0ba"
             },
             {
               "key": "Tags",
-              "value": "{Key:Name,Value:d6ui78sq517n4m9tkhrg}"
+              "value": "{Key:Name,Value:d71qhgv693a119t3b8cg}"
             },
             {
               "key": "VirtualizationType",
@@ -5783,7 +5786,7 @@
             },
             {
               "key": "VpcId",
-              "value": "vpc-007dbf59b59762751"
+              "value": "vpc-0b44ea281f7ddf1ca"
             }
           ]
         }
@@ -5799,13 +5802,13 @@
         "results": [
           {
             "mciId": "mmci01",
-            "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "vmIp": "54.180.228.53",
+            "vmId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "vmIp": "13.125.62.104",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5814,13 +5817,13 @@
           },
           {
             "mciId": "mmci01",
-            "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "vmIp": "13.125.37.182",
+            "vmId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "vmIp": "3.34.141.220",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5829,13 +5832,13 @@
           },
           {
             "mciId": "mmci01",
-            "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "vmIp": "13.124.4.196",
+            "vmId": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "vmIp": "43.203.198.174",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5898,7 +5901,7 @@
 {
   "resourceType": "mci",
   "id": "mmci01",
-  "uid": "d6ui78sq517n4m9tkhpg",
+  "uid": "d71qhgv693a119t3b8ag",
   "name": "mmci01",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -5926,7 +5929,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "mmci01",
     "sys.namespace": "mig01",
-    "sys.uid": "d6ui78sq517n4m9tkhpg"
+    "sys.uid": "d71qhgv693a119t3b8ag"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -5934,12 +5937,12 @@
   "vm": [
     {
       "resourceType": "vm",
-      "id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d6ui78sq517n4m9tkhqg",
-      "cspResourceName": "d6ui78sq517n4m9tkhqg",
-      "cspResourceId": "i-013c075ad2cd8746b",
-      "name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+      "id": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "d71qhgv693a119t3b8bg",
+      "cspResourceName": "d71qhgv693a119t3b8bg",
+      "cspResourceId": "i-096e19302484f3b9b",
+      "name": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "subGroupId": "vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.36,
@@ -5951,34 +5954,34 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:56",
+      "createdTime": "2026-03-25 09:20:30",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "aws-ap-northeast-2",
-        "sys.createdTime": "2026-03-20 10:38:56",
-        "sys.cspResourceId": "i-013c075ad2cd8746b",
-        "sys.cspResourceName": "d6ui78sq517n4m9tkhqg",
-        "sys.id": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.createdTime": "2026-03-25 09:20:30",
+        "sys.cspResourceId": "i-096e19302484f3b9b",
+        "sys.cspResourceName": "d71qhgv693a119t3b8bg",
+        "sys.id": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
         "sys.mciId": "mmci01",
-        "sys.name": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.name": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.subnetId": "mig-subnet-01",
-        "sys.uid": "d6ui78sq517n4m9tkhqg",
-        "sys.vNetId": "mig-vnet-01"
+        "sys.subGroupId": "vm-ec268ed7-821e-9d73-e79f-961262161624",
+        "sys.subnetId": "subnet-01",
+        "sys.uid": "d71qhgv693a119t3b8bg",
+        "sys.vNetId": "vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
       "region": {
         "region": "ap-northeast-2",
         "zone": "ap-northeast-2a"
       },
-      "publicIP": "13.125.37.182",
+      "publicIP": "43.203.198.174",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.137",
-      "privateDNS": "ip-10-0-1-137.ap-northeast-2.compute.internal",
+      "privateIP": "10.0.1.99",
+      "privateDNS": "ip-10-0-1-99.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/sda1",
@@ -6030,23 +6033,23 @@
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
       },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-0f7471fda4072d4d0",
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-02b94e6c455710c87",
       "securityGroupIds": [
-        "mig-sg-01"
+        "sg-01"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
       "vmUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDdvNBPJyJYG/63N0fghQsjwUobhMQoeF0yrzVmzKnGVuoO9RACb/xR5h4wARJP06Kr6Arf+DxhjUIkW83Ue7MM=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJWgU+Esfc7FjR7Ix81bMHSG4u3WtVQKQ9AXTIKwaOpeZHSDKCqKb48RCddXMKtjlsyTYUBAzNAwO/ZNowLn/Ps=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:XNoD4E7yQQ8cmZwB9wvm7DBvRao+WfgxOhcDbA/+JIA",
-        "firstUsedAt": "2026-03-20T10:39:06Z"
+        "fingerprint": "SHA256:xj+aDAnv7fHt9ktSaqwuJFMAJ4e7b8JxU9d6axMSBJ8",
+        "firstUsedAt": "2026-03-25T09:20:43Z"
       },
       "commandStatus": [
         {
@@ -6054,11 +6057,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:07Z",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:44Z",
           "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -6073,7 +6076,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:33Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0528f9b463f162d63}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-003a8794c6c41b5ef}}"
         },
         {
           "key": "BootMode",
@@ -6085,7 +6088,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "0F67601D-EDA5-4661-A895-8AB225FED7E8"
+          "value": "C2A4C4D5-B769-4C9D-B53D-39D4704A5C38"
         },
         {
           "key": "CpuOptions",
@@ -6117,7 +6120,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-013c075ad2cd8746b"
+          "value": "i-096e19302484f3b9b"
         },
         {
           "key": "InstanceType",
@@ -6125,11 +6128,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
+          "value": "d71qhe7693a119t3b88g"
         },
         {
           "key": "LaunchTime",
-          "value": "2026-03-20T10:38:32Z"
+          "value": "2026-03-25T09:20:09Z"
         },
         {
           "key": "MetadataOptions",
@@ -6141,7 +6144,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Attachment:{AttachTime:2026-03-20T10:38:32Z,AttachmentId:eni-attach-0f7471fda4072d4d0,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:41:83:2a:6e:43,NetworkInterfaceId:eni-0d83e4436c11379c0,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.137,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.37.182},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.137}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-02b94e6c455710c87,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:d0:a3:bc:87:e5,NetworkInterfaceId:eni-0f48677c2b00150a4,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.99,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:43.203.198.174},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.99}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
         },
         {
           "key": "Placement",
@@ -6149,15 +6152,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-10-0-1-137.ap-northeast-2.compute.internal"
+          "value": "ip-10-0-1-99.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "10.0.1.137"
+          "value": "10.0.1.99"
         },
         {
           "key": "PublicIpAddress",
-          "value": "13.125.37.182"
+          "value": "43.203.198.174"
         },
         {
           "key": "RootDeviceName",
@@ -6169,7 +6172,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-01d7c18827f7d6357,GroupName:d6ui76cq517n4m9tkho0}"
+          "value": "{GroupId:sg-0802c1d900e9436d3,GroupName:d71qhev693a119t3b890}"
         },
         {
           "key": "SourceDestCheck",
@@ -6181,11 +6184,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
+          "value": "subnet-015245e878365f0ba"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhqg}"
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8bg}"
         },
         {
           "key": "VirtualizationType",
@@ -6193,18 +6196,18 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
+          "value": "vpc-0b44ea281f7ddf1ca"
         }
       ]
     },
     {
       "resourceType": "vm",
-      "id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d6ui78sq517n4m9tkhsg",
-      "cspResourceName": "d6ui78sq517n4m9tkhsg",
-      "cspResourceId": "i-042d8da1f2e20a29b",
-      "name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      "id": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "uid": "d71qhgv693a119t3b8dg",
+      "cspResourceName": "d71qhgv693a119t3b8dg",
+      "cspResourceId": "i-0c135ba8cdd1eb29f",
+      "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "subGroupId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.36,
@@ -6216,34 +6219,34 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:51",
+      "createdTime": "2026-03-25 09:20:33",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "aws-ap-northeast-2",
-        "sys.createdTime": "2026-03-20 10:38:51",
-        "sys.cspResourceId": "i-042d8da1f2e20a29b",
-        "sys.cspResourceName": "d6ui78sq517n4m9tkhsg",
-        "sys.id": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.createdTime": "2026-03-25 09:20:33",
+        "sys.cspResourceId": "i-0c135ba8cdd1eb29f",
+        "sys.cspResourceName": "d71qhgv693a119t3b8dg",
+        "sys.id": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
         "sys.mciId": "mmci01",
-        "sys.name": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.subnetId": "mig-subnet-01",
-        "sys.uid": "d6ui78sq517n4m9tkhsg",
-        "sys.vNetId": "mig-vnet-01"
+        "sys.subGroupId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.subnetId": "subnet-01",
+        "sys.uid": "d71qhgv693a119t3b8dg",
+        "sys.vNetId": "vnet-01"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
       "region": {
         "region": "ap-northeast-2",
         "zone": "ap-northeast-2a"
       },
-      "publicIP": "13.124.4.196",
+      "publicIP": "3.34.141.220",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.127",
-      "privateDNS": "ip-10-0-1-127.ap-northeast-2.compute.internal",
+      "privateIP": "10.0.1.254",
+      "privateDNS": "ip-10-0-1-254.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/sda1",
@@ -6295,23 +6298,23 @@
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
       },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-053df7853872824be",
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-0f027c1ae75104838",
       "securityGroupIds": [
-        "mig-sg-03"
+        "sg-03"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
       "vmUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPE2ZqMVNO27YbytAwmQwDWlPDxcmqCG2QY66TMnbzgP4g9U7lnHAB2Hqf0Y0h+SxGIXUeQWq/LnLNyK/AtEWGU=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZPAwvmoRTC+chysOs6nGmKbRl6fqdip15jiKaIdr3AmnWIjdLSOl4br41jhkB35yXvJanwMDbPvbewyTCQSS0=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:fF7BCrJW2rTAt9CZZJDgYLtGl/kgA7w6juGZpfvzQPo",
-        "firstUsedAt": "2026-03-20T10:39:06Z"
+        "fingerprint": "SHA256:R1YEjFXxQ3aWfHhrlXis9ZJCxfPbg23UzMJWoaGaNbI",
+        "firstUsedAt": "2026-03-25T09:20:43Z"
       },
       "commandStatus": [
         {
@@ -6319,11 +6322,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:07Z",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:44Z",
           "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -6338,7 +6341,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:31Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0c35246b1727b9b91}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:10Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-03e2db373a30335f1}}"
         },
         {
           "key": "BootMode",
@@ -6350,7 +6353,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "9EE35789-F874-4F83-ADE1-4E76D8726F08"
+          "value": "A4180AAE-6F64-4B60-8F9B-4C96DED0E398"
         },
         {
           "key": "CpuOptions",
@@ -6382,7 +6385,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-042d8da1f2e20a29b"
+          "value": "i-0c135ba8cdd1eb29f"
         },
         {
           "key": "InstanceType",
@@ -6390,11 +6393,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
+          "value": "d71qhe7693a119t3b88g"
         },
         {
           "key": "LaunchTime",
-          "value": "2026-03-20T10:38:30Z"
+          "value": "2026-03-25T09:20:10Z"
         },
         {
           "key": "MetadataOptions",
@@ -6406,7 +6409,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Attachment:{AttachTime:2026-03-20T10:38:30Z,AttachmentId:eni-attach-053df7853872824be,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:a8:9e:13:38:59,NetworkInterfaceId:eni-06a9a41184af07d43,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.127,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.124.4.196},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.127}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Attachment:{AttachTime:2026-03-25T09:20:09Z,AttachmentId:eni-attach-0f027c1ae75104838,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:34:4e:a6:13:67,NetworkInterfaceId:eni-0ee7a9e32ba947ff6,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.254,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:3.34.141.220},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.254}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
         },
         {
           "key": "Placement",
@@ -6414,15 +6417,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-10-0-1-127.ap-northeast-2.compute.internal"
+          "value": "ip-10-0-1-254.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "10.0.1.127"
+          "value": "10.0.1.254"
         },
         {
           "key": "PublicIpAddress",
-          "value": "13.124.4.196"
+          "value": "3.34.141.220"
         },
         {
           "key": "RootDeviceName",
@@ -6434,7 +6437,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-01acf6c407c70669f,GroupName:d6ui77sq517n4m9tkhp0}"
+          "value": "{GroupId:sg-00619d2b19618b877,GroupName:d71qhg7693a119t3b8a0}"
         },
         {
           "key": "SourceDestCheck",
@@ -6446,11 +6449,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
+          "value": "subnet-015245e878365f0ba"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhsg}"
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8dg}"
         },
         {
           "key": "VirtualizationType",
@@ -6458,18 +6461,18 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
+          "value": "vpc-0b44ea281f7ddf1ca"
         }
       ]
     },
     {
       "resourceType": "vm",
-      "id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d6ui78sq517n4m9tkhrg",
-      "cspResourceName": "d6ui78sq517n4m9tkhrg",
-      "cspResourceId": "i-0053970eeff79532e",
-      "name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "id": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "uid": "d71qhgv693a119t3b8cg",
+      "cspResourceName": "d71qhgv693a119t3b8cg",
+      "cspResourceId": "i-0777e6d3fbf17de76",
+      "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "subGroupId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
         "display": "South Korea (Seoul)",
         "latitude": 37.36,
@@ -6481,34 +6484,34 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-20 10:38:50",
+      "createdTime": "2026-03-25 09:20:30",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "aws-ap-northeast-2",
-        "sys.createdTime": "2026-03-20 10:38:50",
-        "sys.cspResourceId": "i-0053970eeff79532e",
-        "sys.cspResourceName": "d6ui78sq517n4m9tkhrg",
-        "sys.id": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.createdTime": "2026-03-25 09:20:30",
+        "sys.cspResourceId": "i-0777e6d3fbf17de76",
+        "sys.cspResourceName": "d71qhgv693a119t3b8cg",
+        "sys.id": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.labelType": "vm",
         "sys.manager": "cb-tumblebug",
         "sys.mciId": "mmci01",
-        "sys.name": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-        "sys.subnetId": "mig-subnet-01",
-        "sys.uid": "d6ui78sq517n4m9tkhrg",
-        "sys.vNetId": "mig-vnet-01"
+        "sys.subGroupId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+        "sys.subnetId": "subnet-01",
+        "sys.uid": "d71qhgv693a119t3b8cg",
+        "sys.vNetId": "vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
       "region": {
         "region": "ap-northeast-2",
         "zone": "ap-northeast-2a"
       },
-      "publicIP": "54.180.228.53",
+      "publicIP": "13.125.62.104",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.75",
-      "privateDNS": "ip-10-0-1-75.ap-northeast-2.compute.internal",
+      "privateIP": "10.0.1.180",
+      "privateDNS": "ip-10-0-1-180.ap-northeast-2.compute.internal",
       "rootDiskType": "gp2",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/sda1",
@@ -6560,23 +6563,23 @@
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212"
       },
-      "vNetId": "mig-vnet-01",
-      "cspVNetId": "vpc-007dbf59b59762751",
-      "subnetId": "mig-subnet-01",
-      "cspSubnetId": "subnet-090b2be5d1037254c",
-      "networkInterface": "eni-attach-08535797d49787c86",
+      "vNetId": "vnet-01",
+      "cspVNetId": "vpc-0b44ea281f7ddf1ca",
+      "subnetId": "subnet-01",
+      "cspSubnetId": "subnet-015245e878365f0ba",
+      "networkInterface": "eni-attach-0aedd741089fd9384",
       "securityGroupIds": [
-        "mig-sg-02"
+        "sg-02"
       ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-sshkey-01",
-      "cspSshKeyId": "d6ui75kq517n4m9tkhng",
+      "sshKeyId": "sshkey-01",
+      "cspSshKeyId": "d71qhe7693a119t3b88g",
       "vmUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJVHztuiXKZ990X9qumBvbuj2vO+JPvQd048Q46tmoTXxreCGsObfz/xcmHcdeW1fmzAN9zlLjmtlCa9AoaInDk=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPiYLQCNBEEfOKV9+9ss9YR4BTmOcaVbWGQCgWbrYH3EAe8OIM50+T4Rl7N7BDh0NLS86p4CznbA/SV3RmIPLzg=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:MxYLiYz9/2oLssPvKCeHd6+bxM8SngdqHF4uqKviQdY",
-        "firstUsedAt": "2026-03-20T10:39:04Z"
+        "fingerprint": "SHA256:92oG5G2cQvAl/xibtpSEsvQaqfnJvPpOCRba8ed1Z0k",
+        "firstUsedAt": "2026-03-25T09:20:41Z"
       },
       "commandStatus": [
         {
@@ -6584,11 +6587,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-20T10:39:04Z",
-          "completedTime": "2026-03-20T10:39:06Z",
+          "startedTime": "2026-03-25T09:20:41Z",
+          "completedTime": "2026-03-25T09:20:43Z",
           "elapsedTime": 2,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
@@ -6603,7 +6606,7 @@
         },
         {
           "key": "BlockDeviceMappings",
-          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-20T10:38:32Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0805b5a3b38c658e8}}"
+          "value": "{DeviceName:/dev/sda1,Ebs:{AttachTime:2026-03-25T09:20:11Z,DeleteOnTermination:true,Status:attached,VolumeId:vol-0785b71eec1472331}}"
         },
         {
           "key": "BootMode",
@@ -6615,7 +6618,7 @@
         },
         {
           "key": "ClientToken",
-          "value": "12575E85-E14B-4C32-8F83-43D96A8DF2F7"
+          "value": "65690EAE-78CB-42B7-8875-99B4D8CCFCAC"
         },
         {
           "key": "CpuOptions",
@@ -6647,7 +6650,7 @@
         },
         {
           "key": "InstanceId",
-          "value": "i-0053970eeff79532e"
+          "value": "i-0777e6d3fbf17de76"
         },
         {
           "key": "InstanceType",
@@ -6655,11 +6658,11 @@
         },
         {
           "key": "KeyName",
-          "value": "d6ui75kq517n4m9tkhng"
+          "value": "d71qhe7693a119t3b88g"
         },
         {
           "key": "LaunchTime",
-          "value": "2026-03-20T10:38:31Z"
+          "value": "2026-03-25T09:20:10Z"
         },
         {
           "key": "MetadataOptions",
@@ -6671,7 +6674,7 @@
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Attachment:{AttachTime:2026-03-20T10:38:31Z,AttachmentId:eni-attach-08535797d49787c86,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:1e:54:d6:02:2f,NetworkInterfaceId:eni-026153576221b8c7d,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.75,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:54.180.228.53},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.75}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-090b2be5d1037254c,VpcId:vpc-007dbf59b59762751}"
+          "value": "{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Attachment:{AttachTime:2026-03-25T09:20:10Z,AttachmentId:eni-attach-0aedd741089fd9384,DeleteOnTermination:true,DeviceIndex:0,NetworkCardIndex:0,Status:attached},Description:,Groups:[{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}],InterfaceType:interface,Ipv6Addresses:null,MacAddress:02:bc:af:da:dc:cd,NetworkInterfaceId:eni-0541fc5f447bd409f,OwnerId:635484366616,PrivateDnsName:null,PrivateIpAddress:10.0.1.180,PrivateIpAddresses:[{Association:{CarrierIp:null,IpOwnerId:amazon,PublicDnsName:,PublicIp:13.125.62.104},Primary:true,PrivateDnsName:null,PrivateIpAddress:10.0.1.180}],SourceDestCheck:true,Status:in-use,SubnetId:subnet-015245e878365f0ba,VpcId:vpc-0b44ea281f7ddf1ca}"
         },
         {
           "key": "Placement",
@@ -6679,15 +6682,15 @@
         },
         {
           "key": "PrivateDnsName",
-          "value": "ip-10-0-1-75.ap-northeast-2.compute.internal"
+          "value": "ip-10-0-1-180.ap-northeast-2.compute.internal"
         },
         {
           "key": "PrivateIpAddress",
-          "value": "10.0.1.75"
+          "value": "10.0.1.180"
         },
         {
           "key": "PublicIpAddress",
-          "value": "54.180.228.53"
+          "value": "13.125.62.104"
         },
         {
           "key": "RootDeviceName",
@@ -6699,7 +6702,7 @@
         },
         {
           "key": "SecurityGroups",
-          "value": "{GroupId:sg-0613ca32934350a8a,GroupName:d6ui774q517n4m9tkhog}"
+          "value": "{GroupId:sg-0bce16356504ad811,GroupName:d71qhfn693a119t3b89g}"
         },
         {
           "key": "SourceDestCheck",
@@ -6711,11 +6714,11 @@
         },
         {
           "key": "SubnetId",
-          "value": "subnet-090b2be5d1037254c"
+          "value": "subnet-015245e878365f0ba"
         },
         {
           "key": "Tags",
-          "value": "{Key:Name,Value:d6ui78sq517n4m9tkhrg}"
+          "value": "{Key:Name,Value:d71qhgv693a119t3b8cg}"
         },
         {
           "key": "VirtualizationType",
@@ -6723,7 +6726,7 @@
         },
         {
           "key": "VpcId",
-          "value": "vpc-007dbf59b59762751"
+          "value": "vpc-0b44ea281f7ddf1ca"
         }
       ]
     }
@@ -6739,13 +6742,13 @@
     "results": [
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "54.180.228.53",
+        "vmId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "vmIp": "13.125.62.104",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6754,13 +6757,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "13.125.37.182",
+        "vmId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "vmIp": "3.34.141.220",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6769,13 +6772,13 @@
       },
       {
         "mciId": "mmci01",
-        "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "13.124.4.196",
+        "vmId": "vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "vmIp": "43.203.198.174",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6831,38 +6834,38 @@
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux ip-10-0-1-137 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "13.125.37.182",
+      "output": "Linux ip-10-0-1-99 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "43.203.198.174",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "migrated-ec268ed7-821e-9d73-e79f-961262161624",
+      "subGroup": "vm-ec268ed7-821e-9d73-e79f-961262161624",
       "testOrder": 1,
       "userName": "cb-user",
-      "vmId": "migrated-ec268ed7-821e-9d73-e79f-961262161624-1"
+      "vmId": "vm-ec268ed7-821e-9d73-e79f-961262161624-1"
     },
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux ip-10-0-1-127 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "13.124.4.196",
+      "output": "Linux ip-10-0-1-254 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "3.34.141.220",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      "subGroup": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "testOrder": 2,
       "userName": "cb-user",
-      "vmId": "migrated-ec288dd0-c6fa-8a49-2f60-bc898311febf-1"
+      "vmId": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1"
     },
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux ip-10-0-1-75 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "54.180.228.53",
+      "output": "Linux ip-10-0-1-180 6.8.0-1044-aws #46~22.04.1-Ubuntu SMP Tue Dec  2 12:52:18 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "13.125.62.104",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "subGroup": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "testOrder": 3,
       "userName": "cb-user",
-      "vmId": "migrated-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1"
+      "vmId": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1"
     }
   ]
 }
@@ -6890,8 +6893,8 @@
 
 ```json
 {
-  "success": true,
-  "text": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)"
+  "message": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mmci01)",
+  "success": true
 }
 ```
 

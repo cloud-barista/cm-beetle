@@ -1695,6 +1695,7 @@ func generateMarkdownReport(report *CSPTestReport) error {
 	defer file.Close()
 
 	content := generateMarkdownContent(report)
+	content = maskSensitiveInfo(content)
 
 	if _, err := file.WriteString(content); err != nil {
 		return fmt.Errorf("failed to write markdown content: %w", err)
@@ -1702,6 +1703,38 @@ func generateMarkdownReport(report *CSPTestReport) error {
 
 	fmt.Printf("📝 Markdown report saved to: %s\n", filename)
 	return nil
+}
+
+// maskSensitiveInfo redacts sensitive data from the content
+func maskSensitiveInfo(content string) string {
+	// 1. Mask Azure Subscription IDs
+	// Pattern: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	reSub := regexp.MustCompile(`(?i)/subscriptions/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
+	content = reSub.ReplaceAllString(content, "/subscriptions/AZURE_SUBSCRIPTION_ID")
+
+	// 2. Mask GCP Project IDs in common URL patterns
+	// Pattern: projects/project-id-123/zones/...
+	reGCP := regexp.MustCompile(`projects/([a-z0-9\-]+)/`)
+	content = reGCP.ReplaceAllStringFunc(content, func(match string) string {
+		// Identify the project ID part
+		parts := strings.Split(match, "/")
+		if len(parts) >= 2 {
+			projectId := parts[1]
+			// Check if it's a known non-sensitive part (though unlikely in this pattern)
+			if projectId == "compute" || projectId == "v1" {
+				return match
+			}
+			return "projects/GCP_PROJECT_ID/"
+		}
+		return match
+	})
+
+	// 3. Mask potentially sensitive fields in JSON (e.g., in request/response bodies)
+	// Masking email addresses (often contains project-id or user-id)
+	reEmail := regexp.MustCompile(`[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}`)
+	content = reEmail.ReplaceAllString(content, "MASKED_EMAIL")
+
+	return content
 }
 
 // generateMarkdownContent creates the markdown content based on the original document format
@@ -2375,6 +2408,7 @@ func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraMo
 
 	// Get markdown content
 	markdownContent := string(resp.Body())
+	markdownContent = maskSensitiveInfo(markdownContent)
 
 	// Log the markdown summary (it's already formatted)
 	log.Info().Msg("\n" + markdownContent)
@@ -2469,6 +2503,7 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 
 	// Get markdown content
 	markdownContent := string(resp.Body())
+	markdownContent = maskSensitiveInfo(markdownContent)
 
 	// Save markdown to file
 	cwd, err := os.Getwd()
@@ -2566,6 +2601,7 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 
 	// Get markdown content
 	markdownContent := string(resp.Body())
+	markdownContent = maskSensitiveInfo(markdownContent)
 
 	// Save markdown to file
 	cwd, err := os.Getwd()
