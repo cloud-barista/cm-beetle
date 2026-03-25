@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-_Report generated: 2026-03-25 09:26:33_
+_Report generated: 2026-03-25 12:44:18_
 
 ---
 
@@ -12,7 +12,7 @@ _Report generated: 2026-03-25 09:26:33_
 
 **Target Region:** koreasouth
 
-**Namespace:** mig01 | **MCI ID:** mmci01
+**Namespace:** mig01 | **MCI ID:** mig-1-mci101
 
 **Migration Status:** Completed
 
@@ -33,8 +33,8 @@ Summary of key infrastructure resources created or configured in the target clou
 | 1   | **Virtual Machine** | 3                 | ✅ Created  | 3 running, 3 total                                    |
 | 2   | **VM Spec**         | 3                 | ✅ Selected | Standard_B2als_v2, Standard_B2as_v2, Standard_B4as_v2 |
 | 3   | **VM OS Image**     | 2                 | ✅ Selected | Ubuntu 22.04                                          |
-| 4   | **VNet (VPC)**      | 1                 | ✅ Created  | vnet-01, CIDR: 10.0.0.0/21                            |
-| 5   | **Subnet**          | 1                 | ✅ Created  | 10.0.1.0/24 (in vnet-01)                              |
+| 4   | **VNet (VPC)**      | 1                 | ✅ Created  | mig-1-vnet-01, CIDR: 10.0.0.0/21                      |
+| 5   | **Subnet**          | 1                 | ✅ Created  | 10.0.1.0/24 (in mig-1-vnet-01)                        |
 | 6   | **Security Group**  | 3 security groups | ✅ Created  | Total 52 rules in 3 sgs                               |
 | 7   | **SSH Key**         | 1 keys            | ✅ Created  | For VM access control                                 |
 
@@ -44,11 +44,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 VM(s) have been successfully created in the target cloud, migrated from 3 source server(s) in the on-premise infrastructure.
 
-| No. | Migrated VM                                                                                                                                                                                                                                                              | Source Server                                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| 1   | **VM Name:** vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8jg<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  |
-| 2   | **VM Name:** vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8lg<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3   | **VM Name:** vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8kg<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| No. | Migrated VM                                                                                                                                                                                                                                                       | Source Server                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1   | **VM Name:** mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81m0<br>**Label(sourceMachineId):** 1-vm-ec268ed7-821e-9d73 | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec268ed7-821e-9d73 |
+| 2   | **VM Name:** mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81o0<br>**Label(sourceMachineId):** 1-vm-ec288dd0-c6fa-8a49 | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec288dd0-c6fa-8a49 |
+| 3   | **VM Name:** mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81n0<br>**Label(sourceMachineId):** 1-vm-ec2d32b5-98fb-5a96 | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec2d32b5-98fb-5a96 |
 
 ---
 
@@ -56,11 +56,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 VM specification(s) have been selected and used for the migrated VMs.
 
-| No. | Migrated VM                               | VM Spec                                                                                      | Source Server                                                                       | Source Server Spec                                                        |
-| --- | ----------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1   | vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** Standard_B2als_v2<br>**vCPUs:** 2<br>**Memory:** 3.9 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB  |
-| 2   | vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** Standard_B2as_v2<br>**vCPUs:** 2<br>**Memory:** 7.8 GB<br>**Root Disk:** 50 GB  | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB  |
-| 3   | vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** Standard_B4as_v2<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
+| No. | Migrated VM                                     | VM Spec                                                                                      | Source Server                                                | Source Server Spec                                                         |
+| --- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| 1   | mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** Standard_B2als_v2<br>**vCPUs:** 2<br>**Memory:** 3.9 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec268ed7-821e-9d73 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 2   | mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** Standard_B2as_v2<br>**vCPUs:** 2<br>**Memory:** 7.8 GB<br>**Root Disk:** 50 GB  | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec288dd0-c6fa-8a49 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 3   | mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** Standard_B4as_v2<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec2d32b5-98fb-5a96 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
 
 ---
 
@@ -68,11 +68,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 2 OS image(s) have been selected and used for the migrated VMs.
 
-| No. | Migrated VM                               | VM OS Image Info                                                                                                                                                                                             | Source Server                                                                       | Source OS                                                                                            |
-| --- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 1   | vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2   | vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts           | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3   | vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| No. | Migrated VM                                     | VM OS Image Info                                                                                                                                                                                             | Source Server                                                | Source OS                                                |
+| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------------- |
+| 1   | mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts           | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec268ed7-821e-9d73 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 2   | mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec288dd0-c6fa-8a49 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 3   | mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202601310<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts           | **Hostname:** N/A<br>**Machine ID:** 1-vm-ec2d32b5-98fb-5a96 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
 
 ---
 
@@ -80,14 +80,14 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 security group(s) with 52 security rule(s) have been created and configured for the migrated VMs.
 
-### Security Group: sg-01
+### Security Group: mig-1-sg-01
 
-**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qj57693a119t3b8h0 | **VNet:** vnet-01 | **Rules:** 14
+**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfg7693a119qk81h0 | **VNet:** mig-1-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
-- **VM:** vm-ec268ed7-821e-9d73-e79f-961262161624-1
-  - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
+- **VM:** mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 1-vm-ec268ed7-821e-9d73
 
 **Security Rules:**
 
@@ -108,14 +108,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | 13  | outbound  | UDP      | 1-65535 | 0.0.0.0/0   | -                                 | Created by system    |
 | 14  | outbound  | ALL      |         | 0.0.0.0/0   | outbound \* \*                    | Migrated from source |
 
-### Security Group: sg-02
+### Security Group: mig-1-sg-02
 
-**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qj7n693a119t3b8hg | **VNet:** vnet-01 | **Rules:** 19
+**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfkv693a119qk81jg | **VNet:** mig-1-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
-  - **Source Server:** **Hostname:** ip-10-0-1-221, **Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932
+- **VM:** mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 1-vm-ec2d32b5-98fb-5a96
 
 **Security Rules:**
 
@@ -141,14 +141,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | 18  | outbound  | UDP      | 1-65535 | 0.0.0.0/0   | -                                  | Created by system    |
 | 19  | outbound  | ALL      |         | 0.0.0.0/0   | outbound \* \*                     | Migrated from source |
 
-### Security Group: sg-03
+### Security Group: mig-1-sg-03
 
-**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qjaf693a119t3b8i0 | **VNet:** vnet-01 | **Rules:** 19
+**CSP ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfpn693a119qk81k0 | **VNet:** mig-1-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
-  - **Source Server:** **Hostname:** ip-10-0-1-138, **Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf
+- **VM:** mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 1-vm-ec288dd0-c6fa-8a49
 
 **Security Rules:**
 
@@ -182,15 +182,15 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### VPC(VNet)
 
-| No. | VPC(VNet)                                                                                                                                                    | CIDR Block  |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| 1   | **Name:** vnet-01<br>**ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71qj0f693a119t3b8fg | 10.0.0.0/21 |
+| No. | VPC(VNet)                                                                                                                                                          | CIDR Block  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| 1   | **Name:** mig-1-vnet-01<br>**ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71tf9v693a119qk818g | 10.0.0.0/21 |
 
 ### Subnets
 
-| No. | Subnet                                                                                                                                                                                      | CIDR Block  | Associated VPC(VNet) |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------- |
-| 1   | **Name:** subnet-01<br>**ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71qj0f693a119t3b8fg/subnets/d71qj0f693a119t3b8g0 | 10.0.1.0/24 | vnet-01              |
+| No. | Subnet                                                                                                                                                                                            | CIDR Block  | Associated VPC(VNet) |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------- |
+| 1   | **Name:** mig-1-subnet-01<br>**ID:** /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71tf9v693a119qk818g/subnets/d71tf9v693a119qk8190 | 10.0.1.0/24 | mig-1-vnet-01        |
 
 ### Source Network Information
 
@@ -230,9 +230,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 > **Note:** Due to security constraints and operational efficiency, it is challenging to transfer existing SSH keys from the source infrastructure. Therefore, new SSH key(s) have been generated and are commonly used across all migrated VMs. This approach ensures secure access while simplifying key management in the cloud environment.
 
-| No. | SSH Key Name | CSP Key ID                                                                                                                    | Fingerprint | Usage             |
-| --- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------- |
-| 1   | sshkey-01    | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d71qj2f693a119t3b8gg |             | Used by all 3 VMs |
+| No. | SSH Key Name    | CSP Key ID                                                                                                                    | Fingerprint | Usage             |
+| --- | --------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------- |
+| 1   | mig-1-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d71tfcf693a119qk81b0 |             | Used by all 3 VMs |
 
 ---
 

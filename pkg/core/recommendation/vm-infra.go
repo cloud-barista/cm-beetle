@@ -262,7 +262,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Region: desiredRegion,
 		},
 		TargetVmInfra: cloudmodel.MciReq{
-			Name:        "mmci01",
+			Name:        "mci101",
 			Description: "a recommended multi-cloud infrastructure",
 			SubGroups:   []cloudmodel.CreateSubGroupReq{},
 		},
@@ -535,7 +535,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Region: region,
 		},
 		TargetVmInfra: cloudmodel.MciReq{
-			Name:      "mmci01",
+			Name:      "mci101",
 			SubGroups: []cloudmodel.CreateSubGroupReq{},
 			// Description: "Recommended VMs comprising the multi-cloud infrastructure",
 		},

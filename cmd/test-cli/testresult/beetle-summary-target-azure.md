@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-03-25 09:26:25
+**Generated At:** 2026-03-25 12:44:10
 
 **Namespace:** mig01
 
-**MCI Name:** mmci01
+**MCI Name:** mig-1-mci101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property             | Value                                                 |
 | -------------------- | ----------------------------------------------------- |
-| **MCI Name**         | mmci01                                                |
+| **MCI Name**         | mig-1-mci101                                          |
 | **Description**      | Recommended VMs comprising multi-cloud infrastructure |
 | **Status**           | Running:3 (R:3/3)                                     |
 | **Target Cloud**     | AZURE                                                 |
@@ -28,62 +28,62 @@
 
 | Name              | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 | ----------------- | ----- | ------------ | --- | ------------ | --------- | --------------- | ------------------- |
-| Standard_B2als_v2 | 2     | 3.9          | -   | x86_64       |           | $0.0432         | 1                   |
 | Standard_B2as_v2  | 2     | 7.8          | -   | x86_64       |           | $0.0865         | 1                   |
 | Standard_B4as_v2  | 4     | 15.6         | -   | x86_64       |           | $0.1730         | 1                   |
+| Standard_B2als_v2 | 2     | 3.9          | -   | x86_64       |           | $0.0432         | 1                   |
 
 ### VM Images
 
 | Name                                                                              | Distribution                                            | OS Type      | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------ | ----------- | ------------ | -------------- | -------------- | -------------------- |
-| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202601310 | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 | Ubuntu 22.04 | Linux/UNIX  | x86_64       | NA             | -              | 2                    |
-| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202601310      | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts      | Ubuntu 22.04 | Linux/UNIX  | x86_64       | NA             | -              | 1                    |
+| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202601310      | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts      | Ubuntu 22.04 | Linux/UNIX  | x86_64       | NA             | -              | 2                    |
+| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202601310 | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 | Ubuntu 22.04 | Linux/UNIX  | x86_64       | NA             | -              | 1                    |
 
 ### Virtual Machines
 
-| VM Name                                   | CSP VM ID                                                                                                                       | Status  | Spec (vCPU, Memory GiB) | Image                                                                                                             | Misc                                                                                                                                            |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8jg | Running | 2 vCPU, 3.9 GiB         | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2) | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 20.214.57.165<br>**Private IP:** 10.0.1.5<br>**SGs:** sg-01<br>**SSH:** sshkey-01  |
-| vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8lg | Running | 2 vCPU, 7.8 GiB         | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts)           | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 20.200.184.197<br>**Private IP:** 10.0.1.6<br>**SGs:** sg-03<br>**SSH:** sshkey-01 |
-| vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71qjd7693a119t3b8kg | Running | 4 vCPU, 15.6 GiB        | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2) | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 20.200.169.139<br>**Private IP:** 10.0.1.4<br>**SGs:** sg-02<br>**SSH:** sshkey-01 |
+| VM Name                                         | CSP VM ID                                                                                                                       | Status  | Spec (vCPU, Memory GiB) | Image                                                                                                             | Misc                                                                                                                                                                    |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81m0 | Running | 2 vCPU, 3.9 GiB         | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts)           | **VNet:** mig-1-vnet-01<br>**Subnet:** mig-1-subnet-01<br>**Public IP:** 20.200.185.14<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-1-sg-01<br>**SSH:** mig-1-sshkey-01  |
+| mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81o0 | Running | 2 vCPU, 7.8 GiB         | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2 (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2) | **VNet:** mig-1-vnet-01<br>**Subnet:** mig-1-subnet-01<br>**Public IP:** 20.200.152.32<br>**Private IP:** 10.0.1.5<br>**SGs:** mig-1-sg-03<br>**SSH:** mig-1-sshkey-01  |
+| mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/d71tfun693a119qk81n0 | Running | 4 vCPU, 15.6 GiB        | 0001-com-ubuntu-server-jammy-daily:22_04-daily-lts (0001-com-ubuntu-server-jammy-daily:22_04-daily-lts)           | **VNet:** mig-1-vnet-01<br>**Subnet:** mig-1-subnet-01<br>**Public IP:** 20.200.136.120<br>**Private IP:** 10.0.1.4<br>**SGs:** mig-1-sg-02<br>**SSH:** mig-1-sshkey-01 |
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: vnet-01
+#### VNet: mig-1-vnet-01
 
 | Property         | Value                                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**         | vnet-01                                                                                                                         |
-| **CSP VNet ID**  | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71qj0f693a119t3b8fg |
+| **Name**         | mig-1-vnet-01                                                                                                                   |
+| **CSP VNet ID**  | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71tf9v693a119qk818g |
 | **CIDR Block**   | 10.0.0.0/21                                                                                                                     |
 | **Connection**   | azure-koreasouth                                                                                                                |
 | **Subnet Count** | 1                                                                                                                               |
 
 **Subnets:**
 
-| Name      | CSP Subnet ID                                                                                                                                                | CIDR Block  | Zone |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---- |
-| subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71qj0f693a119t3b8fg/subnets/d71qj0f693a119t3b8g0 | 10.0.1.0/24 |      |
+| Name            | CSP Subnet ID                                                                                                                                                | CIDR Block  | Zone |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---- |
+| mig-1-subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/d71tf9v693a119qk818g/subnets/d71tf9v693a119qk8190 | 10.0.1.0/24 |      |
 
 ## Security Resources
 
 ### SSH Keys
 
-| Name      | CSP SSH Key ID                                                                                                                | Username | Fingerprint |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
-| sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d71qj2f693a119t3b8gg |          |             |
+| Name            | CSP SSH Key ID                                                                                                                | Username | Fingerprint |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
+| mig-1-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/d71tfcf693a119qk81b0 |          |             |
 
 ### Security Groups
 
-#### Security Group: sg-01
+#### Security Group: mig-1-sg-01
 
 | Property                  | Value                                                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                  | sg-01                                                                                                                                 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qj57693a119t3b8h0 |
-| **VNet**                  | vnet-01                                                                                                                               |
+| **Name**                  | mig-1-sg-01                                                                                                                           |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfg7693a119qk81h0 |
+| **VNet**                  | mig-1-vnet-01                                                                                                                         |
 | **Rule Count**            | 14 rules                                                                                                                              |
 
 **Security Group Rules:**
@@ -105,13 +105,13 @@
 | outbound  | UDP      | 1-65535    | 0.0.0.0/0   |
 | outbound  | ALL      |            | 0.0.0.0/0   |
 
-#### Security Group: sg-02
+#### Security Group: mig-1-sg-02
 
 | Property                  | Value                                                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                  | sg-02                                                                                                                                 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qj7n693a119t3b8hg |
-| **VNet**                  | vnet-01                                                                                                                               |
+| **Name**                  | mig-1-sg-02                                                                                                                           |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfkv693a119qk81jg |
+| **VNet**                  | mig-1-vnet-01                                                                                                                         |
 | **Rule Count**            | 19 rules                                                                                                                              |
 
 **Security Group Rules:**
@@ -138,13 +138,13 @@
 | outbound  | UDP      | 1-65535    | 0.0.0.0/0   |
 | outbound  | ALL      |            | 0.0.0.0/0   |
 
-#### Security Group: sg-03
+#### Security Group: mig-1-sg-03
 
 | Property                  | Value                                                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                  | sg-03                                                                                                                                 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71qjaf693a119t3b8i0 |
-| **VNet**                  | vnet-01                                                                                                                               |
+| **Name**                  | mig-1-sg-03                                                                                                                           |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/d71tfpn693a119qk81k0 |
+| **VNet**                  | mig-1-vnet-01                                                                                                                         |
 | **Rule Count**            | 19 rules                                                                                                                              |
 
 **Security Group Rules:**
@@ -189,8 +189,8 @@
 
 ### Cost by Virtual Machine
 
-| VM Name                                   | Spec              | Cost/Hour (USD) | Cost/Month (USD) |
-| ----------------------------------------- | ----------------- | --------------- | ---------------- |
-| vm-ec268ed7-821e-9d73-e79f-961262161624-1 | Standard_B2als_v2 | $0.0432         | $31.10           |
-| vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | Standard_B2as_v2  | $0.0865         | $62.28           |
-| vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | Standard_B4as_v2  | $0.1730         | $124.56          |
+| VM Name                                         | Spec              | Cost/Hour (USD) | Cost/Month (USD) |
+| ----------------------------------------------- | ----------------- | --------------- | ---------------- |
+| mig-1-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | Standard_B2als_v2 | $0.0432         | $31.10           |
+| mig-1-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | Standard_B2as_v2  | $0.0865         | $62.28           |
+| mig-1-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | Standard_B4as_v2  | $0.1730         | $124.56          |

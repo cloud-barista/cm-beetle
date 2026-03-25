@@ -219,7 +219,7 @@ func ListInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
+// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mci101)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[MigrateInfraResponse] "The migrated multi-cloud infrastructure (MCI) information"
 // @Failure 404 {object} model.ApiResponse[any]
@@ -267,7 +267,7 @@ func GetInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
+// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID" default(mci101)
 // @Param option query string false "Option for deletion" Enums(terminate,force) default(terminate)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 200 {object} model.ApiResponse[any] "The result of deleting the migrated multi-cloud infrastructure (MCI)"
