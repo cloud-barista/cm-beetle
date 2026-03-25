@@ -5291,7 +5291,7 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mmci01
+      - default: mci101
         description: Migrated Multi-Cloud Infrastructure (MCI) ID
         in: path
         name: mciId
@@ -5341,7 +5341,7 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mmci01
+      - default: mci101
         description: Migrated Multi-Cloud Infrastructure (MCI) ID
         in: path
         name: mciId
@@ -6635,7 +6635,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: |-
+      description: |
         Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
 
         - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
@@ -6654,7 +6654,7 @@ paths:
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
 
-        [Optional] `nameSeed` is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
+        **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
       operationId: RecommendVmInfraCandidates
       parameters:
       - description: Specify the source infrastructure to be migrated
@@ -6727,9 +6727,9 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mmci01
+      - default: mci101
         description: MCI ID
-        example: '"mmci01"'
+        example: '"mci101"'
         in: path
         name: mciId
         required: true
@@ -7049,7 +7049,7 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mmci01
+      - default: mci101
         description: Multi-Cloud Infrastructure (MCI) ID
         in: path
         name: mciId
