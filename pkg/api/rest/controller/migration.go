@@ -24,6 +24,7 @@ import (
 	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 
@@ -133,8 +134,16 @@ func MigrateInfra(c echo.Context) error {
 	log.Debug().Msgf("req.RecommendedVmInfra: %+v", req.RecommendedVmInfra)
 
 	// [Process]
+	// Apply NameSeed (Late Binding) before migration
+	infraToMigrate := common.ApplyNameSeed(req.RecommendedVmInfra)
+
+	// Validate names and referential integrity
+	if ok, detail := common.ValidateComposedNames(infraToMigrate); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Naming/Reference validation failed: "+detail))
+	}
+
 	// Create the VM infrastructure for migration
-	mciInfo, err := migration.CreateVMInfra(nsId, &req.RecommendedVmInfra)
+	mciInfo, err := migration.CreateVMInfra(nsId, &infraToMigrate)
 
 	log.Debug().Msgf("mciInfo: %+v", mciInfo)
 

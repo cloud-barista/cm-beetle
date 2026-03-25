@@ -106,6 +106,7 @@ type TestSuite struct {
 var (
 	configFile         = flag.String("config", "testdata/config-multi-csp-and-region-pair.json", "Path to config file")
 	verbose            = flag.Bool("verbose", false, "Enable verbose output")
+	seed               = flag.String("seed", "", "Name seed for resource naming (optional)")
 	skipRemainingTests bool
 )
 
@@ -314,6 +315,7 @@ func main() {
 
 		// Create RecommendVmInfraRequest for this CSP-Region pair
 		recommendRequest := controller.RecommendVmInfraRequest{
+			NameSeed:            *seed,
 			DesiredCspAndRegionPair: cloudmodel.CloudProperty{
 				Csp:    cspPair.Csp,
 				Region: cspPair.Region,

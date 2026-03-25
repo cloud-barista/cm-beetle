@@ -825,6 +825,8 @@ definitions:
     properties:
       description:
         type: string
+      nameSeed:
+        type: string
       status:
         type: string
       targetCloud:
@@ -1495,6 +1497,8 @@ definitions:
     properties:
       description:
         type: string
+      nameSeed:
+        type: string
       status:
         type: string
       targetCloud:
@@ -1831,12 +1835,18 @@ definitions:
     properties:
       desiredCspAndRegionPair:
         $ref: '#/definitions/cloudmodel.CloudProperty'
+      nameSeed:
+        description: Base string for resource name prefix (e.g., 'mig' -> 'mig-vnet-01')
+        example: mig
+        type: string
       onpremiseInfraModel:
         $ref: '#/definitions/onpremisemodel.OnpremInfra'
     type: object
   controller.RecommendVmInfraResponse:
     properties:
       description:
+        type: string
+      nameSeed:
         type: string
       status:
         type: string
@@ -1941,26 +1951,6 @@ definitions:
         description: Whether to enable versioning
         type: boolean
     type: object
-  github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response:
-    description: '**(To be deprecated)** This structure is currently in use but will
-      be replaced by the generic `ApiResponse[T]` in the future.'
-    properties:
-      details:
-        example: Any details
-        type: string
-      list:
-        items: {}
-        type: array
-      object:
-        additionalProperties: true
-        type: object
-      success:
-        example: true
-        type: boolean
-      text:
-        example: Any text
-        type: string
-    type: object
   map_string_string:
     additionalProperties:
       type: string
@@ -2064,6 +2054,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/cloudmodel.RecommendedVNetList'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-cloudmodel_RecommendedVmInfra:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2216,25 +2225,6 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/controller.RecommendVmInfraWithDefaultsResponse'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -5327,7 +5317,7 @@ paths:
           description: The result of deleting the migrated multi-cloud infrastructure
             (MCI)
           schema:
-            $ref: '#/definitions/model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response'
+            $ref: '#/definitions/model.ApiResponse-any'
         "404":
           description: Not Found
           schema:
@@ -5940,6 +5930,104 @@ paths:
       summary: Get a specific migrated virtual network
       tags:
       - '[Migration] Resources for VM infrastructure'
+  /naming/alignment:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        When a parent/primary resource is renamed (e.g., VNet), this API updates all
+        child/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).
+
+        **Supported resourceType values** (cb-tumblebug convention):
+        - `vNet` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId
+        - `subnet` : Rename Subnet → propagates to SubGroup.SubnetId
+        - `sshKey` : Rename SSH Key → propagates to SubGroup.SshKeyId
+        - `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds
+        - `mci` : Rename MCI (no child propagation)
+
+        After propagation, names are validated with NameSeed applied (pre-flight check).
+        The returned model uses **base names only** (NameSeed is applied at migration time).
+      operationId: AlignNames
+      parameters:
+      - description: Resource type to rename
+        enum:
+        - vNet
+        - subnet
+        - securityGroup
+        - sshKey
+        - mci
+        in: query
+        name: resourceType
+        required: true
+        type: string
+      - description: Current name of the resource (before change)
+        in: query
+        name: oldName
+        required: true
+        type: string
+      - description: New name of the resource (after change)
+        in: query
+        name: newName
+        required: true
+        type: string
+      - description: The recommendation model to update
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated and validated model (base names)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra'
+        "400":
+          description: Invalid request or referential integrity failure
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Propagate a resource name change to all dependent child resources
+      tags:
+      - '[Infrastructure] Resource Naming'
+  /naming/validation:
+    post:
+      consumes:
+      - application/json
+      description: |
+        Validates that all internal references within a RecommendedVmInfra model
+        are consistent and point to existing resources.
+        NameSeed is NOT applied here; this validates the base names only.
+      operationId: ValidateNames
+      parameters:
+      - description: The recommendation model to validate
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/cloudmodel.RecommendedVmInfra'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Naming and referential integrity are valid
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "400":
+          description: Referential integrity validation failure
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Validate resource names and referential integrity
+      tags:
+      - '[Infrastructure] Resource Naming'
   /readyz:
     get:
       consumes:
@@ -6135,7 +6223,7 @@ paths:
         - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
       operationId: RecommendVMInfra
       parameters:
-      - description: Specify the your infrastructure to be migrated
+      - description: Specify the source infrastructure to be migrated
         in: body
         name: UserInfra
         required: true
@@ -6194,7 +6282,7 @@ paths:
         - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
       operationId: RecommendVMInfraWithDefaults
       parameters:
-      - description: Specify the your infrastructure to be migrated
+      - description: Specify the source infrastructure to be migrated
         in: body
         name: UserInfra
         required: true
@@ -6545,7 +6633,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: |
+      description: |-
         Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
 
         - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
@@ -6563,9 +6651,11 @@ paths:
 
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
+
+        [Optional] `nameSeed` is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
       operationId: RecommendVmInfraCandidates
       parameters:
-      - description: Specify the your infrastructure to be migrated
+      - description: Specify the source infrastructure to be migrated
         in: body
         name: UserInfra
         required: true
@@ -7119,6 +7209,8 @@ tags:
 - description: APIs for recommending resources for VM infrastructure (VNet, Security
     Group, etc.)
   name: '[Recommendation] Resources for VM infrastructure'
+- description: APIs for aligning and validating multi-cloud resource names
+  name: '[Infrastructure] Resource Naming'
 - description: APIs for migrating on-premise infrastructure to cloud (VMs, VNets,
     etc.)
   name: '[Migration] Infrastructure'

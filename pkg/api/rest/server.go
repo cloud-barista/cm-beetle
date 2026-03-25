@@ -291,6 +291,11 @@ func RunServer(port string) {
 	gRecommendation.POST("/mci", controller.RecommendVMInfra) // To be deprecated
 	gRecommendation.POST("/mciWithDefaults", controller.RecommendVMInfraWithDefaults)
 
+	// Naming and validation utility APIs
+	gNaming := gBeetle.Group("/naming")
+	gNaming.POST("/alignment", controller.AlignNames)
+	gNaming.POST("/validation", controller.ValidateNames)
+
 	// Recommendation APIs for K8s Cluster (new endpoints)
 	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)
 	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)

@@ -763,7 +763,7 @@
                     "200": {
                         "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "404": {
@@ -1607,6 +1607,128 @@
                 }
             }
         },
+        "/naming/alignment": {
+            "post": {
+                "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- `vNet` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- `subnet` : Rename Subnet → propagates to SubGroup.SubnetId\n- `sshKey` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- `mci` : Rename MCI (no child propagation)\n\nAfter propagation, names are validated with NameSeed applied (pre-flight check).\nThe returned model uses **base names only** (NameSeed is applied at migration time).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Infrastructure] Resource Naming"
+                ],
+                "summary": "Propagate a resource name change to all dependent child resources",
+                "operationId": "AlignNames",
+                "parameters": [
+                    {
+                        "enum": [
+                            "vNet",
+                            "subnet",
+                            "securityGroup",
+                            "sshKey",
+                            "mci"
+                        ],
+                        "type": "string",
+                        "description": "Resource type to rename",
+                        "name": "resourceType",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Current name of the resource (before change)",
+                        "name": "oldName",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "New name of the resource (after change)",
+                        "name": "newName",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "The recommendation model to update",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated and validated model (base names)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or referential integrity failure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/naming/validation": {
+            "post": {
+                "description": "Validates that all internal references within a RecommendedVmInfra model\nare consistent and point to existing resources.\nNameSeed is NOT applied here; this validates the base names only.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Infrastructure] Resource Naming"
+                ],
+                "summary": "Validate resource names and referential integrity",
+                "operationId": "ValidateNames",
+                "parameters": [
+                    {
+                        "description": "The recommendation model to validate",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Naming and referential integrity are valid",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "400": {
+                        "description": "Referential integrity validation failure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/readyz": {
             "get": {
                 "description": "Check Beetle is ready",
@@ -1872,7 +1994,7 @@
                 "operationId": "RecommendVMInfra",
                 "parameters": [
                     {
-                        "description": "Specify the your infrastructure to be migrated",
+                        "description": "Specify the source infrastructure to be migrated",
                         "name": "UserInfra",
                         "in": "body",
                         "required": true,
@@ -1946,7 +2068,7 @@
                 "operationId": "RecommendVMInfraWithDefaults",
                 "parameters": [
                     {
-                        "description": "Specify the your infrastructure to be migrated",
+                        "description": "Specify the source infrastructure to be migrated",
                         "name": "UserInfra",
                         "in": "body",
                         "required": true,
@@ -2382,7 +2504,7 @@
         },
         "/recommendation/vmInfra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n[Optional] `nameSeed` is a base string used to prefix resource names (e.g., 'mig' -\u003e 'mig-vnet-01').",
                 "consumes": [
                     "application/json"
                 ],
@@ -2396,7 +2518,7 @@
                 "operationId": "RecommendVmInfraCandidates",
                 "parameters": [
                     {
-                        "description": "Specify the your infrastructure to be migrated",
+                        "description": "Specify the source infrastructure to be migrated",
                         "name": "UserInfra",
                         "in": "body",
                         "required": true,
@@ -4069,6 +4191,9 @@
                 "description": {
                     "type": "string"
                 },
+                "nameSeed": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string"
                 },
@@ -5024,6 +5149,9 @@
                 "description": {
                     "type": "string"
                 },
+                "nameSeed": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string"
                 },
@@ -5444,6 +5572,11 @@
                 "desiredCspAndRegionPair": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
+                "nameSeed": {
+                    "description": "Base string for resource name prefix (e.g., 'mig' -\u003e 'mig-vnet-01')",
+                    "type": "string",
+                    "example": "mig"
+                },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
                 }
@@ -5453,6 +5586,9 @@
             "type": "object",
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "nameSeed": {
                     "type": "string"
                 },
                 "status": {
@@ -5604,32 +5740,6 @@
                 }
             }
         },
-        "github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response": {
-            "description": "**(To be deprecated)** This structure is currently in use but will be replaced by the generic `ApiResponse[T]` in the future.",
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string",
-                    "example": "Any details"
-                },
-                "list": {
-                    "type": "array",
-                    "items": {}
-                },
-                "object": {
-                    "type": "object",
-                    "additionalProperties": true
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "text": {
-                    "type": "string",
-                    "example": "Any text"
-                }
-            }
-        },
         "map_string_string": {
             "type": "object",
             "additionalProperties": {
@@ -5778,6 +5888,34 @@
                     "allOf": [
                         {
                             "$ref": "#/definitions/cloudmodel.RecommendedVNetList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedVmInfra": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
                         }
                     ]
                 },
@@ -6002,34 +6140,6 @@
                     "allOf": [
                         {
                             "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsResponse"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-github_com_cloud-barista_cm-beetle_pkg_api_rest_model_Response": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_cloud-barista_cm-beetle_pkg_api_rest_model.Response"
                         }
                     ]
                 },
@@ -9539,6 +9649,10 @@
         {
             "description": "APIs for recommending resources for VM infrastructure (VNet, Security Group, etc.)",
             "name": "[Recommendation] Resources for VM infrastructure"
+        },
+        {
+            "description": "APIs for aligning and validating multi-cloud resource names",
+            "name": "[Infrastructure] Resource Naming"
         },
         {
             "description": "APIs for migrating on-premise infrastructure to cloud (VMs, VNets, etc.)",

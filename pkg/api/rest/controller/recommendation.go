@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,7 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
@@ -58,7 +60,7 @@ type RecommendVmInfraWithDefaultsResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the source infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -118,6 +120,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 }
 
 type RecommendVmInfraRequest struct {
+	NameSeed                string                   `json:"nameSeed" example:"mig"` // Base string for resource name prefix (e.g., 'mig' -> 'mig-vnet-01')
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -138,7 +141,7 @@ type RecommendVmInfraResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the source infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -218,10 +221,11 @@ func RecommendVMInfra(c echo.Context) error {
 // @Description **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
 // @Description - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
 // @Description
+// @Description [Optional] `nameSeed` is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendVmInfraRequest true "Specify the source infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
@@ -289,13 +293,26 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
+	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate, reqt.NameSeed)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (MCI) for cloud migration")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Recommendation failed"))
 	}
 
-	// [Ouput]
+	// [Pre-flight validation with NameSeed]
+	// Apply NameSeed temporarily to validate that names + seed will be valid at migration time.
+	// The unseeded base-name model is returned so users can still inspect/modify names before migration.
+	for i, infra := range recommendedInfraCandidates {
+		seeded := common.ApplyNameSeed(infra)
+		if ok, detail := common.ValidateComposedNames(seeded); !ok {
+			log.Warn().Msgf("naming validation (with seed) failed for candidate %d: %s", i, detail)
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(
+				fmt.Sprintf("Candidate %d would have invalid names with NameSeed applied: %s", i, detail)))
+		}
+	}
+
+	// [Output]
+	// Returns base names only. NameSeed is applied at migration time (Late Binding).
 	return c.JSON(http.StatusOK, model.SuccessListResponse(recommendedInfraCandidates))
 }
 
