@@ -24,7 +24,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
 // AlignNames godoc
 // @ID AlignNames
 // @Summary Propagate a resource name change to all dependent child resources
@@ -40,6 +39,9 @@ import (
 // @Description
 // @Description After propagation, names are validated with NameSeed applied (pre-flight check).
 // @Description The returned model uses **base names only** (NameSeed is applied at migration time).
+// @Description
+// @Description See also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)
+// @Description
 // @Tags [Infrastructure] Resource Naming
 // @Accept  json
 // @Produce  json

@@ -5934,7 +5934,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: |-
+      description: |
         When a parent/primary resource is renamed (e.g., VNet), this API updates all
         child/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).
 
@@ -5947,6 +5947,8 @@ paths:
 
         After propagation, names are validated with NameSeed applied (pre-flight check).
         The returned model uses **base names only** (NameSeed is applied at migration time).
+
+        See also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)
       operationId: AlignNames
       parameters:
       - description: Resource type to rename
