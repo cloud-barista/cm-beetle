@@ -55,8 +55,8 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:edge
-    # image: cloudbaristaorg/cb-tumblebug:0.12.2
+    image: cloudbaristaorg/cb-tumblebug:0.12.3
+    # image: cloudbaristaorg/cb-tumblebug:edge
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -197,8 +197,8 @@ services:
 
   # CB-Spider
   cb-spider:
-    # image: cloudbaristaorg/cb-spider:0.12.0
-    image: cloudbaristaorg/cb-spider:0.12.8
+    image: cloudbaristaorg/cb-spider:0.12.11
+    # image: cloudbaristaorg/cb-spider:edge
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -234,7 +234,7 @@ services:
 
   # CB-MapUI
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.15
+    image: cloudbaristaorg/cb-mapui:0.12.16
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
