@@ -16,6 +16,7 @@ package report
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -502,8 +503,22 @@ func generateRecommendations(sourceSummary *summary.SourceInfraSummary, targetSu
 // extractSourceMachineID extracts machine ID from VM name
 // Example: "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1" -> "0036e4b9-c8b4-e811-906e-000ffee02d5c"
 func extractSourceMachineID(vmName string) string {
-	// Remove "migrated-" prefix and "-1" suffix
-	name := strings.TrimPrefix(vmName, "migrated-")
+	// A UUID pattern: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	re := regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
+	match := re.FindString(vmName)
+	if match != "" {
+		return match
+	}
+
+	// Fallback to legacy logic if regex fails (though unlikely for UUIDs)
+	// Remove prefixes
+	name := vmName
+	if strings.Contains(name, "migrated-") {
+		name = name[strings.Index(name, "migrated-")+len("migrated-"):]
+	} else if strings.Contains(name, "vm-") {
+		name = name[strings.Index(name, "vm-")+len("vm-"):]
+	}
+
 	parts := strings.Split(name, "-")
 	if len(parts) >= 5 {
 		// Reconstruct the GUID format
