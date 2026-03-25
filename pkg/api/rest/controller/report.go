@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/report"
@@ -40,7 +41,7 @@ type GenerateMigrationReportRequest struct {
 // @Produce text/markdown
 // @Produce text/html
 // @Param nsId path string true "Namespace ID" example("mig01") default(mig01)
-// @Param mciId path string true "MCI ID" example("mmci01") default(mmci01)
+// @Param mciId path string true "MCI ID" example("mci101") default(mci101)
 // @Param format query string false "Report format: md or html" Enums(md,html) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
@@ -108,6 +109,12 @@ func GenerateMigrationReport(c echo.Context) error {
 	migrationReport, err := report.GenerateMigrationReport(nsId, mciId, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate migration report")
+
+		// Map "not found" errors to 404
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
+		}
+
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Report generation failed"))
 	}
 

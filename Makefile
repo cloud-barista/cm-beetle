@@ -108,7 +108,7 @@ test-cli-build: ## Build the test CLI binary
 
 test-cli: test-cli-build ## Run the test CLI for all CSP-Region pairs
 	@echo "Running test CLI for all CSP-Region pairs..."
-	@cd cmd/test-cli && ./test-cli -config testdata/config-multi-csp-and-region-pair.json
+	@cd cmd/test-cli && ./test-cli -config testdata/test-config.yaml
 
 test-cli-help: ## Show test CLI help
 	@echo "Test CLI Help:"

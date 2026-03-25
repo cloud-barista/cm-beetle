@@ -3,6 +3,7 @@
     "csp": "aws",
     "region": "ap-northeast-2"
   },
+  "nameSeed": "mig",
   "onpremiseInfraModel": {
     "network": {
       "ipv4Networks": {

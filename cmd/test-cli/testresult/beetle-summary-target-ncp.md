@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-03-25 09:55:58
+**Generated At:** 2026-03-25 12:48:41
 
 **Namespace:** mig01
 
-**MCI Name:** mmci01
+**MCI Name:** mig-3-mci101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property             | Value                                                 |
 | -------------------- | ----------------------------------------------------- |
-| **MCI Name**         | mmci01                                                |
+| **MCI Name**         | mig-3-mci101                                          |
 | **Description**      | Recommended VMs comprising multi-cloud infrastructure |
 | **Status**           | Running:3 (R:3/3)                                     |
 | **Target Cloud**     | NCP                                                   |
@@ -40,50 +40,50 @@
 
 ### Virtual Machines
 
-| VM Name                                   | CSP VM ID | Status  | Spec (vCPU, Memory GiB) | Image                                                                   | Misc                                                                                                                                            |
-| ----------------------------------------- | --------- | ------- | ----------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 134444243 | Running | 2 vCPU, 4.0 GiB         | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 175.45.201.95<br>**Private IP:** 10.0.1.6<br>**SGs:** sg-01<br>**SSH:** sshkey-01  |
-| vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 134444252 | Running | 2 vCPU, 8.0 GiB         | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 49.50.133.3<br>**Private IP:** 10.0.1.7<br>**SGs:** sg-03<br>**SSH:** sshkey-01    |
-| vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 134444261 | Running | 4 vCPU, 16.0 GiB        | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** vnet-01<br>**Subnet:** subnet-01<br>**Public IP:** 211.188.49.153<br>**Private IP:** 10.0.1.8<br>**SGs:** sg-02<br>**SSH:** sshkey-01 |
+| VM Name                                         | CSP VM ID | Status  | Spec (vCPU, Memory GiB) | Image                                                                   | Misc                                                                                                                                                                     |
+| ----------------------------------------------- | --------- | ------- | ----------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 134455079 | Running | 2 vCPU, 4.0 GiB         | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-3-vnet-01<br>**Subnet:** mig-3-subnet-01<br>**Public IP:** 49.50.136.154<br>**Private IP:** 10.0.1.7<br>**SGs:** mig-3-sg-01<br>**SSH:** mig-3-sshkey-01   |
+| mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 134455087 | Running | 2 vCPU, 8.0 GiB         | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-3-vnet-01<br>**Subnet:** mig-3-subnet-01<br>**Public IP:** 110.165.17.215<br>**Private IP:** 10.0.1.8<br>**SGs:** mig-3-sg-03<br>**SSH:** mig-3-sshkey-01  |
+| mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 134455073 | Running | 4 vCPU, 16.0 GiB        | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** mig-3-vnet-01<br>**Subnet:** mig-3-subnet-01<br>**Public IP:** 223.130.140.135<br>**Private IP:** 10.0.1.6<br>**SGs:** mig-3-sg-02<br>**SSH:** mig-3-sshkey-01 |
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: vnet-01
+#### VNet: mig-3-vnet-01
 
-| Property         | Value       |
-| ---------------- | ----------- |
-| **Name**         | vnet-01     |
-| **CSP VNet ID**  | 135944      |
-| **CIDR Block**   | 10.0.0.0/21 |
-| **Connection**   | ncp-kr      |
-| **Subnet Count** | 1           |
+| Property         | Value         |
+| ---------------- | ------------- |
+| **Name**         | mig-3-vnet-01 |
+| **CSP VNet ID**  | 135959        |
+| **CIDR Block**   | 10.0.0.0/21   |
+| **Connection**   | ncp-kr        |
+| **Subnet Count** | 1             |
 
 **Subnets:**
 
-| Name      | CSP Subnet ID | CIDR Block  | Zone |
-| --------- | ------------- | ----------- | ---- |
-| subnet-01 | 293549        | 10.0.1.0/24 | KR-1 |
+| Name            | CSP Subnet ID | CIDR Block  | Zone |
+| --------------- | ------------- | ----------- | ---- |
+| mig-3-subnet-01 | 293642        | 10.0.1.0/24 | KR-1 |
 
 ## Security Resources
 
 ### SSH Keys
 
-| Name      | CSP SSH Key ID       | Username | Fingerprint |
-| --------- | -------------------- | -------- | ----------- |
-| sshkey-01 | d71quhf693a119t3b90g | cb-user  |             |
+| Name            | CSP SSH Key ID       | Username | Fingerprint |
+| --------------- | -------------------- | -------- | ----------- |
+| mig-3-sshkey-01 | d71tfgv693a119qk81hg | cb-user  |             |
 
 ### Security Groups
 
-#### Security Group: sg-01
+#### Security Group: mig-3-sg-01
 
-| Property                  | Value    |
-| ------------------------- | -------- |
-| **Name**                  | sg-01    |
-| **CSP Security Group ID** | 343805   |
-| **VNet**                  | vnet-01  |
-| **Rule Count**            | 15 rules |
+| Property                  | Value         |
+| ------------------------- | ------------- |
+| **Name**                  | mig-3-sg-01   |
+| **CSP Security Group ID** | 343878        |
+| **VNet**                  | mig-3-vnet-01 |
+| **Rule Count**            | 15 rules      |
 
 **Security Group Rules:**
 
@@ -105,14 +105,14 @@
 | outbound  | UDP      | 1-65535    | 0.0.0.0/0   |
 | outbound  | TCP      | 1-65535    | 0.0.0.0/0   |
 
-#### Security Group: sg-02
+#### Security Group: mig-3-sg-02
 
-| Property                  | Value    |
-| ------------------------- | -------- |
-| **Name**                  | sg-02    |
-| **CSP Security Group ID** | 343806   |
-| **VNet**                  | vnet-01  |
-| **Rule Count**            | 20 rules |
+| Property                  | Value         |
+| ------------------------- | ------------- |
+| **Name**                  | mig-3-sg-02   |
+| **CSP Security Group ID** | 343879        |
+| **VNet**                  | mig-3-vnet-01 |
+| **Rule Count**            | 20 rules      |
 
 **Security Group Rules:**
 
@@ -139,14 +139,14 @@
 | outbound  | UDP      | 1-65535    | 0.0.0.0/0   |
 | outbound  | TCP      | 1-65535    | 0.0.0.0/0   |
 
-#### Security Group: sg-03
+#### Security Group: mig-3-sg-03
 
-| Property                  | Value    |
-| ------------------------- | -------- |
-| **Name**                  | sg-03    |
-| **CSP Security Group ID** | 343807   |
-| **VNet**                  | vnet-01  |
-| **Rule Count**            | 20 rules |
+| Property                  | Value         |
+| ------------------------- | ------------- |
+| **Name**                  | mig-3-sg-03   |
+| **CSP Security Group ID** | 343880        |
+| **VNet**                  | mig-3-vnet-01 |
+| **Rule Count**            | 20 rules      |
 
 **Security Group Rules:**
 
@@ -191,8 +191,8 @@
 
 ### Cost by Virtual Machine
 
-| VM Name                                   | Spec   | Cost/Hour (USD) | Cost/Month (USD) |
-| ----------------------------------------- | ------ | --------------- | ---------------- |
-| vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730         | $52.56           |
-| vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3  | $0.0848         | $61.06           |
-| vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747         | $125.78          |
+| VM Name                                         | Spec   | Cost/Hour (USD) | Cost/Month (USD) |
+| ----------------------------------------------- | ------ | --------------- | ---------------- |
+| mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730         | $52.56           |
+| mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3  | $0.0848         | $61.06           |
+| mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747         | $125.78          |

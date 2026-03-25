@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
@@ -48,7 +49,7 @@ import (
 // @Produce  text/markdown
 // @Produce  text/html
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Multi-Cloud Infrastructure (MCI) ID" default(mmci01)
+// @Param mciId path string true "Multi-Cloud Infrastructure (MCI) ID" default(mci101)
 // @Param format query string false "Summary format: md, html, or json" Enums(md,html,json) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -98,6 +99,12 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	infraSummary, err := summary.GenerateInfraSummary(nsId, mciId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate infrastructure summary")
+
+		// Map "not found" errors to 404
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
+		}
+
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Summary generation failed"))
 	}
 

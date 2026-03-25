@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-_Report generated: 2026-03-25 09:21:20_
+*Report generated: 2026-03-25 12:41:42*
 
 ---
 
@@ -12,7 +12,7 @@ _Report generated: 2026-03-25 09:21:20_
 
 **Target Region:** ap-northeast-2
 
-**Namespace:** mig01 | **MCI ID:** mmci01
+**Namespace:** mig01 | **MCI ID:** mig-0-mci101
 
 **Migration Status:** Completed
 
@@ -28,15 +28,15 @@ _Report generated: 2026-03-25 09:21:20_
 
 Summary of key infrastructure resources created or configured in the target cloud:
 
-| #   | Resource Type       | Count             | Status      | Details                          |
-| --- | ------------------- | ----------------- | ----------- | -------------------------------- |
-| 1   | **Virtual Machine** | 3                 | ✅ Created  | 3 running, 3 total               |
-| 2   | **VM Spec**         | 3                 | ✅ Selected | t3a.small, t3a.large, t3a.xlarge |
-| 3   | **VM OS Image**     | 1                 | ✅ Selected | Ubuntu 22.04                     |
-| 4   | **VNet (VPC)**      | 1                 | ✅ Created  | vnet-01, CIDR: 10.0.0.0/21       |
-| 5   | **Subnet**          | 1                 | ✅ Created  | 10.0.1.0/24 (in vnet-01)         |
-| 6   | **Security Group**  | 3 security groups | ✅ Created  | Total 52 rules in 3 sgs          |
-| 7   | **SSH Key**         | 1 keys            | ✅ Created  | For VM access control            |
+| # | Resource Type | Count | Status | Details |
+|---|---------------|-------|--------|----------|
+| 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
+| 2 | **VM Spec** | 3 | ✅ Selected | t3a.small, t3a.large, t3a.xlarge |
+| 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
+| 4 | **VNet (VPC)** | 1 | ✅ Created | mig-0-vnet-01, CIDR: 10.0.0.0/21 |
+| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in mig-0-vnet-01) |
+| 6 | **Security Group** | 3 security groups | ✅ Created | Total 52 rules in 3 sgs |
+| 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
 
 ---
 
@@ -44,11 +44,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 VM(s) have been successfully created in the target cloud, migrated from 3 source server(s) in the on-premise infrastructure.
 
-| No. | Migrated VM                                                                                                                                                  | Source Server                                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| 1   | **VM Name:** vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-096e19302484f3b9b<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  |
-| 2   | **VM Name:** vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0c135ba8cdd1eb29f<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3   | **VM Name:** vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-0777e6d3fbf17de76<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| No. | Migrated VM | Source Server |
+|-----|-------------|---------------|
+| 1 | **VM Name:** mig-0-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-0fe44e8407a4c2c47<br>**Label(sourceMachineId):** 0-vm-ec268ed7-821e-9d73 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec268ed7-821e-9d73 |
+| 2 | **VM Name:** mig-0-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0782207638dbbc799<br>**Label(sourceMachineId):** 0-vm-ec288dd0-c6fa-8a49 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec288dd0-c6fa-8a49 |
+| 3 | **VM Name:** mig-0-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-0f22e32b590e94308<br>**Label(sourceMachineId):** 0-vm-ec2d32b5-98fb-5a96 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec2d32b5-98fb-5a96 |
 
 ---
 
@@ -56,11 +56,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 VM specification(s) have been selected and used for the migrated VMs.
 
-| No. | Migrated VM                               | VM Spec                                                                                | Source Server                                                                       | Source Server Spec                                                        |
-| --- | ----------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 1   | vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB   | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB  |
-| 2   | vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB   | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB  |
-| 3   | vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
+| No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
+|-----|-------------|---------|---------------|--------------------|
+| 1 | mig-0-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec268ed7-821e-9d73 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 2 | mig-0-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec288dd0-c6fa-8a49 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 3 | mig-0-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec2d32b5-98fb-5a96 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
 
 ---
 
@@ -68,11 +68,11 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 1 OS image(s) have been selected and used for the migrated VMs.
 
-| No. | Migrated VM                               | VM OS Image Info                                                                                                                                        | Source Server                                                                       | Source OS                                                                                            |
-| --- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 1   | vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624  | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 2   | vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
-| 3   | vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
+|-----|-------------|------------------|---------------|-----------|
+| 1 | mig-0-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec268ed7-821e-9d73 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 2 | mig-0-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec288dd0-c6fa-8a49 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 3 | mig-0-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** ami-08a4fd517a4872931<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20251212 | **Hostname:** N/A<br>**Machine ID:** 0-vm-ec2d32b5-98fb-5a96 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
 
 ---
 
@@ -80,99 +80,99 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 security group(s) with 52 security rule(s) have been created and configured for the migrated VMs.
 
-### Security Group: sg-01
+### Security Group: mig-0-sg-01
 
-**CSP ID:** sg-0802c1d900e9436d3 | **VNet:** vnet-01 | **Rules:** 14
-
-**Assigned VMs:**
-
-- **VM:** vm-ec268ed7-821e-9d73-e79f-961262161624-1
-  - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
-
-**Security Rules:**
-
-| No. | Direction | Protocol | Port    | CIDR        | Source Firewall Rule              | Note                 |
-| --- | --------- | -------- | ------- | ----------- | --------------------------------- | -------------------- |
-| 1   | inbound   | TCP      | 80      | 0.0.0.0/0   | inbound tcp 80                    | Migrated from source |
-| 2   | inbound   | TCP      | 8080    | 0.0.0.0/0   | inbound tcp 8080                  | Migrated from source |
-| 3   | inbound   | ALL      |         | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
-| 4   | inbound   | UDP      | 9113    | 10.0.0.0/16 | inbound udp 9113 from 10.0.0.0/16 | Migrated from source |
-| 5   | inbound   | TCP      | 22      | 0.0.0.0/0   | inbound tcp 22                    | Migrated from source |
-| 6   | inbound   | UDP      | 1900    | 0.0.0.0/0   | inbound udp 1900                  | Migrated from source |
-| 7   | inbound   | TCP      | 9113    | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
-| 8   | inbound   | UDP      | 68      | 0.0.0.0/0   | inbound udp 68                    | Migrated from source |
-| 9   | inbound   | UDP      | 5353    | 0.0.0.0/0   | inbound udp 5353                  | Migrated from source |
-| 10  | inbound   | TCP      | 443     | 0.0.0.0/0   | inbound tcp 443                   | Migrated from source |
-| 11  | inbound   | ICMP     |         | 0.0.0.0/0   | inbound icmp \*                   | Migrated from source |
-| 12  | outbound  | ALL      |         | 0.0.0.0/0   | outbound \* \*                    | Migrated from source |
-| 13  | outbound  | UDP      | 1-65535 | 0.0.0.0/0   | -                                 | Created by system    |
-| 14  | outbound  | TCP      | 1-65535 | 0.0.0.0/0   | -                                 | Created by system    |
-
-### Security Group: sg-02
-
-**CSP ID:** sg-0bce16356504ad811 | **VNet:** vnet-01 | **Rules:** 19
+**CSP ID:** sg-0219bbbd3555ef292 | **VNet:** mig-0-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
-- **VM:** vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
-  - **Source Server:** **Hostname:** ip-10-0-1-221, **Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932
+- **VM:** mig-0-vm-ec268ed7-821e-9d73-e79f-961262161624-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 0-vm-ec268ed7-821e-9d73
 
 **Security Rules:**
 
-| No. | Direction | Protocol | Port    | CIDR        | Source Firewall Rule               | Note                 |
-| --- | --------- | -------- | ------- | ----------- | ---------------------------------- | -------------------- |
-| 1   | inbound   | UDP      | 9100    | 10.0.0.0/16 | inbound udp 9100 from 10.0.0.0/16  | Migrated from source |
-| 2   | inbound   | ICMP     |         | 0.0.0.0/0   | inbound icmp \*                    | Migrated from source |
-| 3   | inbound   | UDP      | 20048   | 10.0.0.0/16 | inbound udp 20048 from 10.0.0.0/16 | Migrated from source |
-| 4   | inbound   | TCP      | 2049    | 0.0.0.0/0   | inbound tcp 2049                   | Migrated from source |
-| 5   | inbound   | TCP      | 32803   | 10.0.0.0/16 | inbound tcp 32803 from 10.0.0.0/16 | Migrated from source |
-| 6   | inbound   | ALL      |         | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16  | Migrated from source |
-| 7   | inbound   | TCP      | 20048   | 10.0.0.0/16 | inbound tcp 20048 from 10.0.0.0/16 | Migrated from source |
-| 8   | inbound   | TCP      | 22      | 0.0.0.0/0   | inbound tcp 22                     | Migrated from source |
-| 9   | inbound   | UDP      | 1900    | 0.0.0.0/0   | inbound udp 1900                   | Migrated from source |
-| 10  | inbound   | UDP      | 2049    | 0.0.0.0/0   | inbound udp 2049                   | Migrated from source |
-| 11  | inbound   | TCP      | 111     | 0.0.0.0/0   | inbound tcp 111                    | Migrated from source |
-| 12  | inbound   | UDP      | 68      | 0.0.0.0/0   | inbound udp 68                     | Migrated from source |
-| 13  | inbound   | UDP      | 5353    | 0.0.0.0/0   | inbound udp 5353                   | Migrated from source |
-| 14  | inbound   | UDP      | 32803   | 10.0.0.0/16 | inbound udp 32803 from 10.0.0.0/16 | Migrated from source |
-| 15  | inbound   | TCP      | 9100    | 10.0.0.0/16 | inbound tcp 9100 from 10.0.0.0/16  | Migrated from source |
-| 16  | inbound   | UDP      | 111     | 0.0.0.0/0   | inbound udp 111                    | Migrated from source |
-| 17  | outbound  | ALL      |         | 0.0.0.0/0   | outbound \* \*                     | Migrated from source |
-| 18  | outbound  | UDP      | 1-65535 | 0.0.0.0/0   | -                                  | Created by system    |
-| 19  | outbound  | TCP      | 1-65535 | 0.0.0.0/0   | -                                  | Created by system    |
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | TCP | 80 | 0.0.0.0/0 | inbound tcp 80 | Migrated from source |
+| 2 | inbound | TCP | 8080 | 0.0.0.0/0 | inbound tcp 8080 | Migrated from source |
+| 3 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | UDP | 9113 | 10.0.0.0/16 | inbound udp 9113 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 6 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 7 | inbound | TCP | 9113 | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 9 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 10 | inbound | TCP | 443 | 0.0.0.0/0 | inbound tcp 443 | Migrated from source |
+| 11 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 12 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 13 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 14 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
-### Security Group: sg-03
+### Security Group: mig-0-sg-02
 
-**CSP ID:** sg-00619d2b19618b877 | **VNet:** vnet-01 | **Rules:** 19
+**CSP ID:** sg-0e6eb672171533064 | **VNet:** mig-0-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
-  - **Source Server:** **Hostname:** ip-10-0-1-138, **Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf
+- **VM:** mig-0-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 0-vm-ec2d32b5-98fb-5a96
 
 **Security Rules:**
 
-| No. | Direction | Protocol | Port    | CIDR        | Source Firewall Rule              | Note                 |
-| --- | --------- | -------- | ------- | ----------- | --------------------------------- | -------------------- |
-| 1   | inbound   | UDP      | 4568    | 10.0.0.0/16 | inbound udp 4568 from 10.0.0.0/16 | Migrated from source |
-| 2   | inbound   | UDP      | 4444    | 10.0.0.0/16 | inbound udp 4444 from 10.0.0.0/16 | Migrated from source |
-| 3   | inbound   | UDP      | 9104    | 10.0.0.0/16 | inbound udp 9104 from 10.0.0.0/16 | Migrated from source |
-| 4   | inbound   | TCP      | 9104    | 10.0.0.0/16 | inbound tcp 9104 from 10.0.0.0/16 | Migrated from source |
-| 5   | inbound   | ICMP     |         | 0.0.0.0/0   | inbound icmp \*                   | Migrated from source |
-| 6   | inbound   | ALL      |         | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
-| 7   | inbound   | TCP      | 22      | 0.0.0.0/0   | inbound tcp 22                    | Migrated from source |
-| 8   | inbound   | TCP      | 4444    | 10.0.0.0/16 | inbound tcp 4444 from 10.0.0.0/16 | Migrated from source |
-| 9   | inbound   | UDP      | 3306    | 10.0.0.0/16 | inbound udp 3306 from 10.0.0.0/16 | Migrated from source |
-| 10  | inbound   | UDP      | 1900    | 0.0.0.0/0   | inbound udp 1900                  | Migrated from source |
-| 11  | inbound   | TCP      | 4568    | 10.0.0.0/16 | inbound tcp 4568 from 10.0.0.0/16 | Migrated from source |
-| 12  | inbound   | UDP      | 4567    | 10.0.0.0/16 | inbound udp 4567 from 10.0.0.0/16 | Migrated from source |
-| 13  | inbound   | TCP      | 4567    | 10.0.0.0/16 | inbound tcp 4567 from 10.0.0.0/16 | Migrated from source |
-| 14  | inbound   | UDP      | 68      | 0.0.0.0/0   | inbound udp 68                    | Migrated from source |
-| 15  | inbound   | TCP      | 3306    | 10.0.0.0/16 | inbound tcp 3306 from 10.0.0.0/16 | Migrated from source |
-| 16  | inbound   | UDP      | 5353    | 0.0.0.0/0   | inbound udp 5353                  | Migrated from source |
-| 17  | outbound  | ALL      |         | 0.0.0.0/0   | outbound \* \*                    | Migrated from source |
-| 18  | outbound  | UDP      | 1-65535 | 0.0.0.0/0   | -                                 | Created by system    |
-| 19  | outbound  | TCP      | 1-65535 | 0.0.0.0/0   | -                                 | Created by system    |
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 9100 | 10.0.0.0/16 | inbound udp 9100 from 10.0.0.0/16 | Migrated from source |
+| 2 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 3 | inbound | UDP | 20048 | 10.0.0.0/16 | inbound udp 20048 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 2049 | 0.0.0.0/0 | inbound tcp 2049 | Migrated from source |
+| 5 | inbound | TCP | 32803 | 10.0.0.0/16 | inbound tcp 32803 from 10.0.0.0/16 | Migrated from source |
+| 6 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | TCP | 20048 | 10.0.0.0/16 | inbound tcp 20048 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 9 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 10 | inbound | UDP | 2049 | 0.0.0.0/0 | inbound udp 2049 | Migrated from source |
+| 11 | inbound | TCP | 111 | 0.0.0.0/0 | inbound tcp 111 | Migrated from source |
+| 12 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 13 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 14 | inbound | UDP | 32803 | 10.0.0.0/16 | inbound udp 32803 from 10.0.0.0/16 | Migrated from source |
+| 15 | inbound | TCP | 9100 | 10.0.0.0/16 | inbound tcp 9100 from 10.0.0.0/16 | Migrated from source |
+| 16 | inbound | UDP | 111 | 0.0.0.0/0 | inbound udp 111 | Migrated from source |
+| 17 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 18 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+
+### Security Group: mig-0-sg-03
+
+**CSP ID:** sg-0d4d1ba1d981b61ec | **VNet:** mig-0-vnet-01 | **Rules:** 19
+
+**Assigned VMs:**
+
+- **VM:** mig-0-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** 0-vm-ec288dd0-c6fa-8a49
+
+**Security Rules:**
+
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 4568 | 10.0.0.0/16 | inbound udp 4568 from 10.0.0.0/16 | Migrated from source |
+| 2 | inbound | UDP | 4444 | 10.0.0.0/16 | inbound udp 4444 from 10.0.0.0/16 | Migrated from source |
+| 3 | inbound | UDP | 9104 | 10.0.0.0/16 | inbound udp 9104 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9104 | 10.0.0.0/16 | inbound tcp 9104 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 6 | inbound | ALL |  | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 8 | inbound | TCP | 4444 | 10.0.0.0/16 | inbound tcp 4444 from 10.0.0.0/16 | Migrated from source |
+| 9 | inbound | UDP | 3306 | 10.0.0.0/16 | inbound udp 3306 from 10.0.0.0/16 | Migrated from source |
+| 10 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 11 | inbound | TCP | 4568 | 10.0.0.0/16 | inbound tcp 4568 from 10.0.0.0/16 | Migrated from source |
+| 12 | inbound | UDP | 4567 | 10.0.0.0/16 | inbound udp 4567 from 10.0.0.0/16 | Migrated from source |
+| 13 | inbound | TCP | 4567 | 10.0.0.0/16 | inbound tcp 4567 from 10.0.0.0/16 | Migrated from source |
+| 14 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 15 | inbound | TCP | 3306 | 10.0.0.0/16 | inbound tcp 3306 from 10.0.0.0/16 | Migrated from source |
+| 16 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 17 | outbound | ALL |  | 0.0.0.0/0 | outbound * * | Migrated from source |
+| 18 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
 ---
 
@@ -182,15 +182,15 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### VPC(VNet)
 
-| No. | VPC(VNet)                                          | CIDR Block  |
-| --- | -------------------------------------------------- | ----------- |
-| 1   | **Name:** vnet-01<br>**ID:** vpc-0b44ea281f7ddf1ca | 10.0.0.0/21 |
+| No. | VPC(VNet) | CIDR Block |
+|-----|-----------|------------|
+| 1 | **Name:** mig-0-vnet-01<br>**ID:** vpc-05ceab61c5363f94e | 10.0.0.0/21 |
 
 ### Subnets
 
-| No. | Subnet                                                  | CIDR Block  | Associated VPC(VNet) |
-| --- | ------------------------------------------------------- | ----------- | -------------------- |
-| 1   | **Name:** subnet-01<br>**ID:** subnet-015245e878365f0ba | 10.0.1.0/24 | vnet-01              |
+| No. | Subnet | CIDR Block | Associated VPC(VNet) |
+|-----|--------|------------|----------------------|
+| 1 | **Name:** mig-0-subnet-01<br>**ID:** subnet-0580779a990b87623 | 10.0.1.0/24 | mig-0-vnet-01 |
 
 ### Source Network Information
 
@@ -202,25 +202,25 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Active Interfaces:**
 
-| Interface | IP Address  | State |
-| --------- | ----------- | ----- |
-| lo        | 127.0.0.1/8 | up    |
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
 
 #### 2. ip-10-0-1-221
 
 **Active Interfaces:**
 
-| Interface | IP Address  | State |
-| --------- | ----------- | ----- |
-| lo        | 127.0.0.1/8 | up    |
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
 
 #### 3. ip-10-0-1-138
 
 **Active Interfaces:**
 
-| Interface | IP Address  | State |
-| --------- | ----------- | ----- |
-| lo        | 127.0.0.1/8 | up    |
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
 
 ---
 
@@ -230,9 +230,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 > **Note:** Due to security constraints and operational efficiency, it is challenging to transfer existing SSH keys from the source infrastructure. Therefore, new SSH key(s) have been generated and are commonly used across all migrated VMs. This approach ensures secure access while simplifying key management in the cloud environment.
 
-| No. | SSH Key Name | CSP Key ID           | Fingerprint                                                 | Usage             |
-| --- | ------------ | -------------------- | ----------------------------------------------------------- | ----------------- |
-| 1   | sshkey-01    | d71qhe7693a119t3b88g | 25:1a:d5:2e:df:1b:3a:02:a7:57:c3:7b:7f:9e:4d:c0:58:25:5d:e0 | Used by all 3 VMs |
+| No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
+|-----|--------------|------------|-------------|-------|
+| 1 | mig-0-sshkey-01 | d71tfaf693a119qk819g | 00:41:e9:38:62:29:49:be:6c:6a:e2:08:72:3c:04:04:62:c3:0a:97 | Used by all 3 VMs |
 
 ---
 
@@ -240,23 +240,24 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Total Estimated Costs
 
-| Period  | Cost (USD) |
-| ------- | ---------- |
-| Hourly  | $0.3042    |
-| Daily   | $7.30      |
-| Monthly | $219.02    |
-| Yearly  | $2628.29   |
+| Period | Cost (USD) |
+|--------|------------|
+| Hourly | $0.3042 |
+| Daily | $7.30 |
+| Monthly | $219.02 |
+| Yearly | $2628.29 |
 
 ### Cost Breakdown by Component
 
-| Component                | Spec       | Monthly Cost | Percentage |
-| ------------------------ | ---------- | ------------ | ---------- |
-| ip-10-0-1-30 (migrated)  | t3a.small  | $16.85       | 7.7%       |
-| ip-10-0-1-221 (migrated) | t3a.xlarge | $134.78      | 61.5%      |
-| ip-10-0-1-138 (migrated) | t3a.large  | $67.39       | 30.8%      |
+| Component | Spec | Monthly Cost | Percentage |
+|-----------|------|--------------|------------|
+| ip-10-0-1-30 (migrated) | t3a.small | $16.85 | 7.7% |
+| ip-10-0-1-221 (migrated) | t3a.xlarge | $134.78 | 61.5% |
+| ip-10-0-1-138 (migrated) | t3a.large | $67.39 | 30.8% |
 
 ---
 
+
 ---
 
-_Report generated by CM-Beetle_
+*Report generated by CM-Beetle*
