@@ -683,7 +683,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mmci01",
+                        "default": "mci101",
                         "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
                         "name": "mciId",
                         "in": "path",
@@ -741,7 +741,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mmci01",
+                        "default": "mci101",
                         "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
                         "name": "mciId",
                         "in": "path",
@@ -2510,7 +2510,7 @@ const docTemplate = `{
         },
         "/recommendation/vmInfra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n[Optional] ` + "`" + `nameSeed` + "`" + ` is a base string used to prefix resource names (e.g., 'mig' -\u003e 'mig-vnet-01').",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'mig' -\u003e 'mig-vnet-01').\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -2621,8 +2621,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mmci01",
-                        "example": "\"mmci01\"",
+                        "default": "mci101",
+                        "example": "\"mci101\"",
                         "description": "MCI ID",
                         "name": "mciId",
                         "in": "path",
@@ -2991,7 +2991,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mmci01",
+                        "default": "mci101",
                         "description": "Multi-Cloud Infrastructure (MCI) ID",
                         "name": "mciId",
                         "in": "path",
