@@ -114,7 +114,9 @@ func Init() {
 		log.Fatalf("Unable to decode into struct: %v", err)
 	}
 	Beetle = RuntimeConfig.Beetle
-	Beetle.Tumblebug.RestUrl = Beetle.Tumblebug.Endpoint + "/tumblebug"
+	if Beetle.Tumblebug.RestUrl == "" {
+		Beetle.Tumblebug.RestUrl = Beetle.Tumblebug.Endpoint + "/tumblebug"
+	}
 	Tumblebug = Beetle.Tumblebug
 
 	// Print settings if in development mode
@@ -198,6 +200,7 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.node.env", "BEETLE_NODE_ENV")
 	viper.BindEnv("beetle.autocontrol.duration_ms", "BEETLE_AUTOCONTROL_DURATION_MS")
 	viper.BindEnv("beetle.tumblebug.endpoint", "BEETLE_TUMBLEBUG_ENDPOINT")
+	viper.BindEnv("beetle.tumblebug.resturl", "BEETLE_TUMBLEBUG_REST_URL")
 	viper.BindEnv("beetle.tumblebug.api.username", "BEETLE_TUMBLEBUG_API_USERNAME")
 	viper.BindEnv("beetle.tumblebug.api.password", "BEETLE_TUMBLEBUG_API_PASSWORD")
 }

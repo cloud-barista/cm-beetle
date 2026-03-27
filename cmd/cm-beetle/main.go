@@ -262,13 +262,13 @@ func main() {
 	tbclient.Init(apiConfig)
 
 	// Create the default namespace
-	log.Debug().Msgf("creating the default namespace (%s)", common.DefaulNamespaceId)
+	log.Debug().Msgf("creating the default namespace (%s)", common.DefaultNamespaceId)
 
-	nsInfo, err := tbclient.NewSession().ReadNamespace(common.DefaulNamespaceId)
+	nsInfo, err := tbclient.NewSession().ReadNamespace(common.DefaultNamespaceId)
 	if err != nil {
-		log.Debug().Msgf("not found the default namespace (nsId: %s)", common.DefaulNamespaceId)
+		log.Debug().Msgf("not found the default namespace (nsId: %s)", common.DefaultNamespaceId)
 		nsReq := tbmodel.NsReq{
-			Name:        common.DefaulNamespaceId,
+			Name:        common.DefaultNamespaceId,
 			Description: "Default namespace for computing infra migration",
 		}
 		nsInfo, err = tbclient.NewSession().CreateNamespace(nsReq)

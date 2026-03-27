@@ -44,7 +44,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	// echo-swagger middleware
-	_ "github.com/cloud-barista/cm-beetle/api"
+	apiDocs "github.com/cloud-barista/cm-beetle/api"
 	echoSwagger "github.com/swaggo/echo-swagger"
 
 	"github.com/rs/zerolog/log"
@@ -88,6 +88,10 @@ func RunServer(port string) {
 	log.Info().Msg("CM-Beetle REST API server is starting...")
 
 	e := echo.New()
+	
+	// Set dynamically Swagger info
+	apiDocs.SwaggerInfo.Host = config.Beetle.Self.Endpoint
+	apiDocs.SwaggerInfo.Version = "0.5.0"
 
 	// Middleware
 	// e.Use(middleware.Logger()) // default logger middleware in echo

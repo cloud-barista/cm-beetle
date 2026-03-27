@@ -26,11 +26,9 @@ type IdList struct {
 // SystemReady is global variable for checking SystemReady status
 var SystemReady bool
 
-var TumblebugRestUrl string
 var AutocontrolDurationMs string
 
 const (
-	StrTumblebugRestUrl           string = "TUMBLEBUG_REST_URL"
 	StrAutocontrolDurationMs      string = "AUTOCONTROL_DURATION_MS"
 	CbStoreKeyNotFoundErrorString string = "key not found"
 	StrAdd                        string = "add"
@@ -64,7 +62,7 @@ type SpiderConnectionName struct {
 	ConnectionName string `json:"ConnectionName"`
 }
 
-var DefaulNamespaceId = "mig01"
+var DefaultNamespaceId = "mig01"
 
 // NsReq is struct for namespace creation
 type NsReq struct {
