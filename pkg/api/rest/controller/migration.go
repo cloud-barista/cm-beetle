@@ -64,7 +64,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
-	// nsId := common.DefaulNamespaceId
+	// nsId := common.DefaultNamespaceId
 
 	req := new(MigrateInfraWithDefaultsRequest)
 	if err := c.Bind(req); err != nil {
@@ -123,7 +123,7 @@ func MigrateInfra(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
-	// nsId := common.DefaulNamespaceId
+	// nsId := common.DefaultNamespaceId
 
 	req := new(MigrateInfraRequest)
 	if err := c.Bind(req); err != nil {
@@ -181,7 +181,7 @@ func ListInfra(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
-	// nsId := common.DefaulNamespaceId
+	// nsId := common.DefaultNamespaceId
 
 	option := c.QueryParam("option")
 	if option != "" && option != "id" {
@@ -234,7 +234,7 @@ func GetInfra(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
-	// nsId := common.DefaulNamespaceId
+	// nsId := common.DefaultNamespaceId
 
 	mciId := c.Param("mciId")
 	if mciId == "" {
@@ -283,7 +283,7 @@ func DeleteInfra(c echo.Context) error {
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
-	// nsId := common.DefaulNamespaceId
+	// nsId := common.DefaultNamespaceId
 
 	mciId := c.Param("mciId")
 	if mciId == "" {

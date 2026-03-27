@@ -55,8 +55,7 @@ conf/*
 !conf/template-*
 conf/credentials.conf
 
-# Container Volumes & Temp Dirs
-container-volume/
+# Temporary copied files for local development
 cb-tumblebug/
 cm-model/
 
@@ -68,6 +67,7 @@ cm-model/
 # Deployment & Docker
 .env
 deployments/docker-compose/data
+!deployments/docker-compose/cb-tumblebug/
 
 **/secrets/*
 !**/secrets/.gitkeep

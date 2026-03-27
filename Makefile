@@ -47,13 +47,13 @@ update: ## Update all module dependencies
 
 swag swagger: ## Generate Swagger API documentation
 	@echo ""
-	@echo "This commend requires swag binary."
-	@echo "If you don't have it, please install swag first with the following commend"
+	@echo "This command requires swag binary."
+	@echo "If you don't have it, please install swag first with the following command"
 	@echo "- go install github.com/swaggo/swag/cmd/swag@latest"
 	@echo ""
 	@echo "Generating Swagger API documentation..."
 	@ln -sf cmd/$(MODULE_NAME)/main.go ./main.go
-	@$(SWAG) i --parseDependency --generalInfo ./main.go --dir ./ --exclude deepdiffgo,transx/examples --output ./api
+	@-$(SWAG) i --parseDependency --generalInfo ./main.go --dir ./ --exclude deepdiffgo,transx/examples --output ./api
 	@rm ./main.go
 	@echo "Generated Swagger API documentation!"
 

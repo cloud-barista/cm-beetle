@@ -1,0 +1,223 @@
+# Configuration for Cluster(Kubernetes) of Cloud Service Providers (CSPs)
+# This file is used to define the feature of clusters
+
+# The file is in YAML format and contains the following fields:
+# k8scluster: Top level key
+#   <csp>: Name of the CSP
+#     nodeGroupsOnCreation: [true/false]
+#     nodeImageDesignation: [true/false]
+#     requiredSubnetCount: [required number of subnets to create a kubernetes cluster, default value is 1]
+#     version:
+#       - region: [region1, region2, common(special keyword: most of regions)]
+#         available:
+#           - name: "1.30" [available version name (use double quotes)]
+#             id: "1.30" [available version name (use double quotes)]
+#     nodeGroupNamingRule: [regular expression or no restriction if empty]
+#
+
+k8scluster:
+  aws:
+    nodeGroupsOnCreation: false
+    nodeImageDesignation: true
+    requiredSubnetCount: 2
+    version:
+      - region: [common]
+        available:
+          - name: "1.33"
+            id: "1.33"
+          - name: "1.32"
+            id: "1.32"
+          - name: "1.31"
+            id: "1.31"
+          # Deprecated versions (not available in AWS console as of 2025-08)  
+          # - name: "1.30"
+          #   id: "1.30"
+          # - name: "1.29"
+          #   id: "1.29"
+          # - name: "1.28"
+          #   id: "1.28"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  azure:
+    nodeGroupsOnCreation: true
+    nodeImageDesignation: false
+    requiredSubnetCount: 1
+    nodeGroupNamingRule: ^[a-z][a-z0-9]*$
+    version:
+      - region: [westeurope,westus]
+        available: # Updated: 2025-10-30 (verified with az aks get-versions)
+          - name: "1.33"
+            id: "1.33.3"
+          - name: "1.32"
+            id: "1.32.7"
+          - name: "1.31"
+            id: "1.31.11"
+          - name: "1.30"
+            id: "1.30.100"
+      - region: [westindia]
+        # no available version
+      - region: [common]
+        available:
+          - name: "1.33"
+            id: "1.33.3"
+          - name: "1.32"
+            id: "1.32.7"
+          - name: "1.31"
+            id: "1.31.11"
+          - name: "1.30"
+            id: "1.30.100"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  gcp:
+    nodeGroupsOnCreation: true
+    nodeImageDesignation: true
+    requiredSubnetCount: 1
+    version:
+      - region: [common]
+        # ref: https://cloud.google.com/kubernetes-engine/docs/release-notes-stable
+        # Updated: 2026-02-19 (latest stable channel versions)
+        # gcloud container get-server-config --region=asia-northeast3 --format=json | jq '{validMasterVersions, channels: [.channels[] | {channel, defaultVersion, validVersions}]}'
+        available: # stable channel versions as of 2026-02-19 (2026-R7)
+          - name: "1.34"
+            id: "1.34.3-gke.1051003"
+          - name: "1.33"
+            id: "1.33.5-gke.2172001"
+          - name: "1.32"
+            id: "1.32.11-gke.1038000"
+      - region: [africa-south1]
+        # addnodegroup unavailble
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  alibaba:
+    nodeGroupsOnCreation: false
+    nodeImageDesignation: true
+    requiredSubnetCount: 1
+    version:
+      # ServiceUnavailable or NotSupportedSLB
+      - region: [me-east-1, cn-zhangjiakou, cn-hangzhou, cn-shenzhen, cn-chengdu, ap-south-1, ap-sourtheast-2]
+      # ap-northeast-1,ap-northeast-2,ap-southeast-1,ap-southeast-3,ap-southeast-5,us-west-1,us-east-1,eu-central-1,eu-west-1,cn-beijing,cn-hongkong,cn-shanghai,cn-huhehaote,cn-heyuan,cn-wulanchabu,cn-guangzhou
+      - region: [common] 
+        available:
+          - name: "1.34"
+            id: "1.34.1-aliyun.1"
+          - name: "1.33"
+            id: "1.33.3-aliyun.1"
+          - name: "1.32"
+            id: "1.32.7-aliyun.1"
+          - name: "1.31"
+            id: "1.31.9-aliyun.1"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: cloud_essd
+            id: cloud_essd
+        size:
+          min: 10
+          max: 40
+  nhn:
+    nodeGroupsOnCreation: true
+    nodeImageDesignation: true
+    requiredSubnetCount: 1
+    version:
+      - region: [kr1, kr2]
+        available:
+          - name: "1.33"
+            id: "v1.33.4"
+          - name: "1.32"
+            id: "v1.32.3"
+          - name: "1.31"
+            id: "v1.31.4"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  tencent:
+    nodeGroupsOnCreation: false
+    nodeImageDesignation: true
+    requiredSubnetCount: 1
+    version:
+      # ServiceUnavailable
+      - region: [ap-mumbai, eu-moscow, na-toronto]
+      # ServiceCanNotAccess
+      - region: [ap-beijing, ap-chengdu, ap-chongqing, ap-guangzhou, ap-hongkong, ap-nanjing, ap-shanghai]
+      - region: [common]
+        available:
+          - name: "1.30"
+            id: "1.30.0"
+          - name: "1.28"
+            id: "1.28.3"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  ncp:
+    nodeGroupsOnCreation: true
+    nodeImageDesignation: false
+    requiredSubnetCount: 1
+    nodeGroupNamingRule: '^[a-z][a-z0-9-]{1,18}[a-z0-9]$'
+    version:
+      - region: [common]
+        available:
+          - name: "1.33"
+            id: "1.33.4-nks.1"
+          - name: "1.32"
+            id: "1.32.8-nks.1"
+          - name: "1.31"
+            id: "1.31.7-nks.1"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
+  ibm:
+    nodeGroupsOnCreation: true
+    nodeImageDesignation: false
+    requiredSubnetCount: 1
+    version:
+      - region: [common]
+        available: # Updated: 2025-12-18 (verified from IBM Cloud API via CB-Spider)
+          - name: "1.34"
+            id: "1.34.2"
+          - name: "1.33"
+            id: "1.33.6"
+          - name: "1.32"
+            id: "1.32.10"
+          - name: "1.31"
+            id: "1.31.14"
+    rootDisk:
+      - region: [common]
+        type:
+          - name: default
+            id: default
+        size:
+          min: 10
+          max: 40
