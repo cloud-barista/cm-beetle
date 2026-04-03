@@ -150,6 +150,12 @@ definitions:
           TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
         example: gp3
         type: string
+      sgTemplateId:
+        description: |-
+          SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.
+          If empty, inherits the SgTemplateId from the parent MciDynamicReq.
+        example: ""
+        type: string
       specId:
         description: SpecId is field for id of a spec in common namespace
         example: aws+ap-northeast-2+t3.nano
@@ -159,6 +165,12 @@ definitions:
           If > 0, subGroup will be generated. Default is 1.
         example: 3
         type: integer
+      vNetTemplateId:
+        description: |-
+          VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.
+          If empty, inherits the VNetTemplateId from the parent MciDynamicReq.
+        example: ""
+        type: string
       vmUserPassword:
         example: ""
         type: string
@@ -543,6 +555,13 @@ definitions:
         allOf:
         - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
+      sgTemplateId:
+        description: |-
+          SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
+          when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
+          overridden at the SubGroup level. If empty, the default all-open behavior is used.
+        example: default-sg
+        type: string
       subGroups:
         description: |-
           SubGroups is array of VM requests for multi-cloud infrastructure
@@ -580,6 +599,13 @@ definitions:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
         example: ""
+        type: string
+      vNetTemplateId:
+        description: |-
+          VNetTemplateId specifies the vNet template ID (from system namespace) to use when
+          auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
+          at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+        example: default-vnet
         type: string
     required:
     - name
@@ -1649,6 +1675,13 @@ definitions:
         allOf:
         - $ref: '#/definitions/cloudmodel.MciCmdReq'
         description: PostCommand is for the command to bootstrap the VMs
+      sgTemplateId:
+        description: |-
+          SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
+          when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
+          overridden at the SubGroup level. If empty, the default all-open behavior is used.
+        example: default-sg
+        type: string
       subGroups:
         description: |-
           SubGroups is array of VM requests for multi-cloud infrastructure
@@ -1686,6 +1719,13 @@ definitions:
         description: SystemLabel is for describing the mci in a keyword (any string
           can be used) for special System purpose
         example: ""
+        type: string
+      vNetTemplateId:
+        description: |-
+          VNetTemplateId specifies the vNet template ID (from system namespace) to use when
+          auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
+          at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+        example: default-vnet
         type: string
     required:
     - name
@@ -2468,6 +2508,8 @@ definitions:
   model.BastionNode:
     properties:
       mciId:
+        type: string
+      nsId:
         type: string
       vmId:
         type: string

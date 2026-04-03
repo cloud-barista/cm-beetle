@@ -1,0 +1,125 @@
+{
+  "resourceType": "mci",
+  "name": "global-mci-template",
+  "description": "Global MCI template with VMs across multiple AWS regions worldwide",
+  "mciDynamicReq": {
+    "subGroups": [
+      {
+        "name": "g1",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ap-northeast-2+c5a.xlarge",
+        "imageId": "ami-08a4fd517a4872931",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ap-northeast-2",
+        "zone": "ap-northeast-2a"
+      },
+      {
+        "name": "g10",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+us-west-1+t3a.xlarge",
+        "imageId": "ami-072028e29f8a73b88",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-us-west-1",
+        "zone": "us-west-1a"
+      },
+      {
+        "name": "g11",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ca-west-1+t3.xlarge",
+        "imageId": "ami-085de7df2c3c01773",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ca-west-1",
+        "zone": "ca-west-1a"
+      },
+      {
+        "name": "g12",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+sa-east-1+c6a.xlarge",
+        "imageId": "ami-0533a139e02b00be4",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-sa-east-1",
+        "zone": "sa-east-1a"
+      },
+      {
+        "name": "g2",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ap-east-1+c5a.xlarge",
+        "imageId": "ami-0ed4fd6805d8ecb23",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ap-east-1",
+        "zone": "ap-east-1a"
+      },
+      {
+        "name": "g3",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ap-southeast-4+t3.xlarge",
+        "imageId": "ami-01ee1aa829a2ed7d2",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ap-southeast-4",
+        "zone": "ap-southeast-4a"
+      },
+      {
+        "name": "g4",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ap-southeast-3+c7i-flex.xlarge",
+        "imageId": "ami-0dfe3f8d6e153be6f",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ap-southeast-3",
+        "zone": "ap-southeast-3a"
+      },
+      {
+        "name": "g5",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ap-south-1+c6a.xlarge",
+        "imageId": "ami-0ff91eb5c6fe7cc86",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ap-south-1",
+        "zone": "ap-south-1a"
+      },
+      {
+        "name": "g8",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+eu-north-1+c5a.xlarge",
+        "imageId": "ami-0c33fcb753a7176f6",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-eu-north-1",
+        "zone": "eu-north-1a"
+      },
+      {
+        "name": "g9",
+        "subGroupSize": 1,
+        "description": "mapui",
+        "specId": "aws+ca-central-1+t3a.xlarge",
+        "imageId": "ami-0631168b8ae6e1731",
+        "rootDiskType": "gp2",
+        "rootDiskSize": 200,
+        "connectionName": "aws-ca-central-1",
+        "zone": "ca-central-1a"
+      }
+    ],
+    "postCommand": {
+      "userName": "",
+      "command": null
+    },
+    "systemLabel": "",
+    "description": "Made via cb-mapui"
+  }
+}

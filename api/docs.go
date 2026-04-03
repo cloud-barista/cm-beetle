@@ -3355,6 +3355,11 @@ const docTemplate = `{
                     "default": "default",
                     "example": "gp3"
                 },
+                "sgTemplateId": {
+                    "description": "SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.\nIf empty, inherits the SgTemplateId from the parent MciDynamicReq.",
+                    "type": "string",
+                    "example": ""
+                },
                 "specId": {
                     "description": "SpecId is field for id of a spec in common namespace",
                     "type": "string",
@@ -3364,6 +3369,11 @@ const docTemplate = `{
                     "description": "SubGroupSize is the number of VMs to create in this SubGroup. If \u003e 0, subGroup will be generated. Default is 1.",
                     "type": "integer",
                     "example": 3
+                },
+                "vNetTemplateId": {
+                    "description": "VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.\nIf empty, inherits the VNetTemplateId from the parent MciDynamicReq.",
+                    "type": "string",
+                    "example": ""
                 },
                 "vmUserPassword": {
                     "type": "string",
@@ -3859,6 +3869,11 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "sgTemplateId": {
+                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless\noverridden at the SubGroup level. If empty, the default all-open behavior is used.",
+                    "type": "string",
+                    "example": "default-sg"
+                },
                 "subGroups": {
                     "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
                     "type": "array",
@@ -3870,6 +3885,11 @@ const docTemplate = `{
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                },
+                "vNetTemplateId": {
+                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all SubGroups unless overridden\nat the SubGroup level. If empty, the default hard-coded CIDR behavior is used.",
+                    "type": "string",
+                    "example": "default-vnet"
                 }
             }
         },
@@ -5362,6 +5382,11 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "sgTemplateId": {
+                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless\noverridden at the SubGroup level. If empty, the default all-open behavior is used.",
+                    "type": "string",
+                    "example": "default-sg"
+                },
                 "subGroups": {
                     "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
                     "type": "array",
@@ -5373,6 +5398,11 @@ const docTemplate = `{
                     "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
+                },
+                "vNetTemplateId": {
+                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all SubGroups unless overridden\nat the SubGroup level. If empty, the default hard-coded CIDR behavior is used.",
+                    "type": "string",
+                    "example": "default-vnet"
                 }
             }
         },
@@ -6494,6 +6524,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "mciId": {
+                    "type": "string"
+                },
+                "nsId": {
                     "type": "string"
                 },
                 "vmId": {

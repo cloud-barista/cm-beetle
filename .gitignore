@@ -39,6 +39,10 @@ pkg/testclient/scripts/credentials*
 
 # Python & Virtual Env
 .venv/
+__pycache__/
+*.pyc
+*.pyo
+deployments/docker-compose/cb-tumblebug/init/__pycache__/
 
 # Database & Runtime Data
 *.db

@@ -55,16 +55,14 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.3
-    # image: cloudbaristaorg/cb-tumblebug:edge
+    image: cloudbaristaorg/cb-tumblebug:0.12.4
     container_name: cb-tumblebug
-    # build:
-    #   context: ${PROJECT_ROOT}/../cb-tumblebug
-    #   dockerfile: Dockerfile
+    build:
+      context: ${PROJECT_ROOT}/../cb-tumblebug
+      dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network
-      # - terrarium_network # Uncomment this line when you use this compose and the terrarium compose
     ports:
       - 1323:1323
     depends_on:
@@ -89,7 +87,7 @@ services:
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
-      # - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
@@ -105,7 +103,6 @@ services:
       - TB_API_USERNAME=${TB_API_USERNAME:?Please set TB_API_USERNAME}
       - TB_API_PASSWORD=${TB_API_PASSWORD:?Please set TB_API_PASSWORD}
       # - TB_AUTOCONTROL_DURATION_MS=10000
-      # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
       # - TB_DEFAULT_NAMESPACE=default
       # - TB_DEFAULT_CREDENTIALHOLDER=admin
       # - TB_LOGFILE_PATH=/app/log/tumblebug.log
@@ -116,6 +113,8 @@ services:
       - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
+      - VAULT_ADDR=http://openbao:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
     healthcheck: # for CB-Tumblebug
       test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
       interval: 1m
@@ -123,7 +122,8 @@ services:
       retries: 3
       start_period: 10s
 
-  # cb-tumblebug-etcd
+  # CB-Tumblebug ETCD
+  # This is used for storing CB-Tumblebug metadata.
   cb-tumblebug-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.21
     container_name: cb-tumblebug-etcd
@@ -198,7 +198,6 @@ services:
   # CB-Spider
   cb-spider:
     image: cloudbaristaorg/cb-spider:0.12.11
-    # image: cloudbaristaorg/cb-spider:edge
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -206,7 +205,7 @@ services:
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
-    # Uncomment the following lines to expose the CB-Spider AdminWeb for remote access
+    # Uncomment below if you want to access CB-Spider for remote
     # ports:
     #   - 1024:1024
     volumes:
@@ -218,13 +217,13 @@ services:
     environment:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
-      # if you leave these values empty, REST Auth will be disabled.
       - SPIDER_USERNAME=${SPIDER_USERNAME:?Please set SPIDER_USERNAME}
       - SPIDER_PASSWORD=${SPIDER_PASSWORD:?Please set SPIDER_PASSWORD}
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
       - ADMINWEB=OFF
+      - SPIDER_BACKUP_ENABLED=false
     healthcheck: # for CB-Spider
       test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
       interval: 1m
@@ -233,8 +232,9 @@ services:
       start_period: 10s
 
   # CB-MapUI
+  # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.16
+    image: cloudbaristaorg/cb-mapui:0.12.19
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
@@ -246,19 +246,18 @@ services:
       - target: 1324
         published: 1324
         protocol: tcp
-    healthcheck: # for cb-mapui
-      test: ["CMD", "nc", "-vz", "localhost", "1324"]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:1324"]
+    #   interval: 30s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 10s
 
-  # NOTE: Synchronize the stable version of TB MCP Server before running it
   # TB-MCP (Tumblebug Model Context Protocol Server)
   # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
   # cb-tumblebug-mcp-server:
   #   build:
-  #     context: ./src/interface/mcp
+  #     context: ./cb-tumblebug/interface/mcp
   #     dockerfile: Dockerfile
   #   container_name: cb-tumblebug-mcp-server
   #   networks:
@@ -274,14 +273,14 @@ services:
   #     - PYTHONUNBUFFERED=1
   #     - MCP_SERVER_HOST=0.0.0.0
   #     - MCP_SERVER_PORT=8000
-  #       # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
+  #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
   #     - MCP_LOG_LEVEL=INFO
 
   # ── MC-Terrarium ──────────────────────────────────────────────────────────
   # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
   # CSP credentials are managed by OpenBao (no more env_file injection).
   mc-terrarium:
-    image: cloudbaristaorg/mc-terrarium:0.1.2
+    image: cloudbaristaorg/mc-terrarium:0.1.4
     container_name: mc-terrarium
     # build:
     #   context: ${PROJECT_ROOT}/../mc-terrarium
@@ -294,10 +293,11 @@ services:
         published: 8055
         protocol: tcp
     # [Legacy] CSP credentials via env_file — replaced by OpenBao centralized credential management.
+    # Credentials are now read from OpenBao at runtime via the vault provider.
     # env_file:
     #   - ${HOME}/.cloud-barista/secrets/credentials             # AWS credential
     #   - ${HOME}/.cloud-barista/secrets/credential-azure.env    # Azure credential
-    #   - ${HOME}//.cloud-barista/secrets/credential-alibaba.env  # Alibaba credential
+    #   - ${HOME}/.cloud-barista/secrets/credential-alibaba.env  # Alibaba credential
     #   - ${HOME}/.cloud-barista/secrets/credential-tencent.env  # Tencent credential
     #   - ${HOME}/.cloud-barista/secrets/credential-ibm.env      # IBM credential
     #   - ${HOME}/.cloud-barista/secrets/credential-ncp.env      # NCP credential
@@ -313,7 +313,7 @@ services:
       # - TERRARIUM_API_AUTH_ENABLED=true
       - TERRARIUM_API_USERNAME=${TERRARIUM_API_USERNAME:?Please set TERRARIUM_API_USERNAME}
       - TERRARIUM_API_PASSWORD=${TERRARIUM_API_PASSWORD:?Please set TERRARIUM_API_PASSWORD}
-      # - TERRARIUM_LOGFILE_PATH=/app/log/terrarium.log
+      # - TERRARIUM_LOGFILE_PATH=log/terrarium.log
       # - TERRARIUM_LOGFILE_MAXSIZE=1000
       # - TERRARIUM_LOGFILE_MAXBACKUPS=3
       # - TERRARIUM_LOGFILE_MAXAGE=30
@@ -325,10 +325,11 @@ services:
       # Note: OpenBao does not have its own OpenTofu/Terraform provider yet.
       # The only available option is the hashicorp/vault provider, which
       # exclusively reads VAULT_ADDR and VAULT_TOKEN from env vars.
+      # See: https://registry.terraform.io/providers/hashicorp/vault/latest/docs#token
       - VAULT_ADDR=http://openbao:8200
       - VAULT_TOKEN=${VAULT_TOKEN:-}
-    healthcheck: # for MC-Terrarirum
-      test: ["CMD", "curl", "-f", "http://localhost:8055/terrarium/readyz"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8055/terrarium/readyz"]
       interval: 10m
       timeout: 5s
       retries: 3
@@ -340,6 +341,17 @@ services:
 
   # ── OpenBao (secrets management) ──────────────────────────────────────────
   # OpenBao securely stores and provides CSP credentials via API.
+  #
+  # [Persistent mode] (default)
+  #   - File-based storage — secrets survive restarts
+  #   - Requires one-time initialization + unseal after every restart
+  #   - First run:  ./openbao/openbao-init.sh (or make init-openbao)
+  #   - After restart: ./openbao/openbao-unseal.sh (or make unseal)
+  #
+  # [Dev mode]
+  #   - In-memory storage — secrets are LOST on container restart
+  #   - Auto-initialized, auto-unsealed, root token set by BAO_DEV_ROOT_TOKEN_ID
+  #   - To switch: see "Switching to dev mode" comments below
   openbao:
     image: openbao/openbao:2.5.1
     container_name: openbao
@@ -352,10 +364,12 @@ services:
       - target: 8200
         published: 8200
         protocol: tcp
+
     # ── Persistent mode (active) ─────────────────────────────────────
     environment:
       - BAO_ADDR=http://0.0.0.0:8200 # BAO_ADDR is for binding listener inside container
       - SKIP_SETCAP=true
+    # Fix bind-mount ownership (host UID 1000 → container openbao UID 100)
     entrypoint: ["sh", "-c"]
     command:
       - |
@@ -364,7 +378,23 @@ services:
     volumes:
       - ./data/openbao-data:/openbao/data
       - ./openbao/openbao-config.hcl:/openbao/config/openbao-config.hcl:ro
+
+    # ── Dev mode (inactive) ────────────────────────────────────────
+    # To switch to dev mode:
+    #   1. Comment out the "Persistent mode" environment, command, and volumes above
+    #   2. Uncomment the "Dev mode" environment and command below
+    #   3. Run: docker compose up -d
+    #   (No init/unseal needed — dev mode is auto-initialized and auto-unsealed)
+    #
+    # environment:
+    #   - BAO_ADDR=http://0.0.0.0:8200
+    #   - BAO_DEV_ROOT_TOKEN_ID=${VAULT_TOKEN:-root-token}
+    # command: server -dev
+
     healthcheck:
+      # 'bao status' exit codes:
+      #   0 = unsealed, 1 = sealed but running, 2 = uninitialized (first run)
+      # All three mean the OpenBao process is up and accepting API calls.
       test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
       interval: 10s
       timeout: 5s
@@ -372,12 +402,64 @@ services:
       start_period: 5s
     restart: unless-stopped
 
-  # # CB-Tumblebug Metabase Dashboard for PostgreSQL
-  # # Enable this service to manage the PostgreSQL database of CB-Tumblebug.
+  # # Swagger UI
+  # swagger-ui:
+  #   image: swaggerapi/swagger-ui
+  #   container_name: swagger-ui
+  #   networks:
+  #     - external_network
+  #   ports:
+  #     - 1325:8080
+  #   volumes:
+  #     # cb-tumblebug swagger.yaml mount
+  #     - ./src/interface/rest/docs/swagger.yaml:/swagger.yaml
+  #   environment:
+  #     # Options: https://github.com/swagger-api/swagger-ui/blob/37b8c1a8b67200dd425216ab8f97b725a429a5c0/docs/usage/configuration.md#docker
+  #     - SWAGGER_JSON=/swagger.yaml
+  #     - QUERY_CONFIG_ENABLED=true
+  #   logging:
+  #     # Disable logging
+  #     driver: "none"
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "localhost", "1325"]
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 3s
+
+  # # cb-tumblebug-etcd-conf
+  # cb-tumblebug-etcd-conf:
+  #   image: alpine:latest
+  #   container_name: cb-tumblebug-etcd-conf
+  #   networks:
+  #     - internal_network
+  #     - external_network
+  #   depends_on:
+  #     - cb-tumblebug-etcd
+  #   volumes:
+  #     - ./scripts/etcd/:/scripts/etcd/
+  #   environment:
+  #     - ETCD_VERSION_TAG=v3.5.14
+  #     - ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
+  #     - ETCD_PATH=/tmp/etcd-download-test
+  #     - ETCD_AUTH_ENABLED=true
+  #     - ETCD_ROOT_PASSWORD=default
+  #     - ETCD_ADMIN_USERNAME=default
+  #     - ETCD_ADMIN_PASSWORD=default
+  #   command: sh -c "sh /scripts/etcd/etcd-conf.sh"
+  #   healthcheck: # for etcd-conf
+  #     test: ["CMD", "test", "-f", "/tmp/healthcheck"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 10s
+
+  # CB-Tumblebug Metabase Dashboard for PostgreSQL
+  # Enable this service to manage the PostgreSQL database of CB-Tumblebug.
   # cb-tumblebug-metabase:
   #   image: metabase/metabase:latest
   #   container_name: cb-tumblebug-metabase
   #   restart: always
+  #   attach: false # Exclude from docker compose up foreground output
   #   networks:
   #     - internal_network
   #     - external_network
@@ -428,6 +510,8 @@ services:
   #   depends_on:
   #     cb-tumblebug-metabase:
   #       condition: service_started
+  #     cb-tumblebug-postgres:
+  #       condition: service_healthy
   #   volumes:
   #     - ./cb-tumblebug/init/initMetabase.sh:/scripts/initMetabase.sh:ro
   #     - ./data/cb-tumblebug-container/meta_db/metabase-init-marker:/marker
@@ -443,22 +527,31 @@ services:
   #     - ADMIN_PASSWORD=admin1@your.org
   #   command: |
   #     sh -c "
-  #       apk add --no-cache curl jq
+  #       apk add --no-cache curl jq >/dev/null 2>&1
+  #       sleep 5  # Wait for services to stabilize
+
+  #       # Skip if already initialized
   #       if [ -f /marker/init-completed ]; then
-  #         echo 'Metabase initialization already completed (marker found)'
-  #         echo 'Skipping initialization to prevent duplicate databases...'
+  #         echo '[Metabase] Already initialized, skipping.'
   #         exit 0
   #       fi
-  #       cat /scripts/initMetabase.sh | sh
-  #       if [ \$? -eq 0 ]; then
-  #         mkdir -p /marker
-  #         touch /marker/init-completed
-  #         echo 'Metabase initialization completed, marker created'
-  #       fi
+
+  #       # Retry init up to 3 times
+  #       for i in 1 2 3; do
+  #         echo \"[Metabase] Init attempt \$$i/3...\"
+  #         sh /scripts/initMetabase.sh && {
+  #           mkdir -p /marker && date > /marker/init-completed
+  #           echo '[Metabase] Init completed.'
+  #           exit 0
+  #         }
+  #         [ \$$i -lt 3 ] && sleep 30
+  #       done
+
+  #       echo '[Metabase] Init failed. Configure manually at http://localhost:3000'
+  #       exit 1
   #     "
   #   restart: "no"
-  #   # To re-init metabase, remove the marker and metabase data
-  #   # sudo rm -rf container-volume/cb-tumblebug-container/meta_db/metabase-*
+  #   # To re-init: sudo rm -rf data/cb-tumblebug-container/meta_db/metabase-*
 
   # # CB-Tumblebug pgAdmin Dashboard for PostgreSQL
   # # Enable this service to manage the PostgreSQL database of CB-Tumblebug.
