@@ -15,13 +15,15 @@ Usage:
 """
 
 import argparse
+
 # import json
 import os
 import subprocess
 import sys
-from getpass import getpass
-import sys
+
+# import sys
 import time
+from getpass import getpass
 
 import requests
 import yaml
@@ -72,9 +74,7 @@ def get_project_root():
     """Find the project root directory by looking for .git or go.mod."""
     # Method 1: Try Git
     try:
-        git_root = (
-            subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.STDOUT).decode().strip()
-        )
+        git_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.STDOUT).decode().strip()
         if os.path.isdir(git_root):
             return git_root
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -273,8 +273,8 @@ def get_decrypted_content():
     sys.exit(1)
 
 
-def register_credential(provider, credentials):
-    """Register a single CSP credential to OpenBao."""
+def register_credential(holder, provider, credentials):
+    """Register a single CSP credential to OpenBao for a specific holder."""
     # Check if provider has any non-empty values
     has_value = any(v for v in credentials.values() if v)
     if not has_value:
@@ -309,9 +309,17 @@ def register_credential(provider, credentials):
     if not mapped_keys and not placeholder_keys:
         return provider, "skip", "No keys to register"
 
+    # Determine secret prefix based on holder
+    # - admin  -> csp/
+    # - others -> users/{holder}/csp/
+    if holder == "admin":
+        prefix = SECRET_PREFIX
+    else:
+        prefix = f"users/{holder}/{SECRET_PREFIX}"
+
     # Register to OpenBao via KV v2 API
     # KV v2 write path: /v1/{mount}/data/{prefix}/{name}
-    url = f"{VAULT_ADDR}/v1/{KV_MOUNT}/data/{SECRET_PREFIX}/{provider}"
+    url = f"{VAULT_ADDR}/v1/{KV_MOUNT}/data/{prefix}/{provider}"
     headers = {
         "X-Vault-Token": VAULT_TOKEN,
         "Content-Type": "application/json",
@@ -363,10 +371,7 @@ def register_placeholder_secrets(registered_providers):
         try:
             resp = requests.post(url, json={"data": placeholder_data}, headers=headers, timeout=10)
             resp.raise_for_status()
-            print(
-                f"  {Fore.YELLOW}PLCH{Style.RESET_ALL} {provider:12s}  placeholder registered "
-                f"({len(placeholder_data)} keys, all placeholders)"
-            )
+            print(f"  {Fore.YELLOW}PLCH{Style.RESET_ALL} {provider:12s}  placeholder registered " f"({len(placeholder_data)} keys, all placeholders)")
             placeholder_count += 1
         except requests.RequestException as e:
             print(f"  {Fore.RED}FAIL{Style.RESET_ALL} {provider:12s}  placeholder failed: {str(e).split(':')[0]}")
@@ -457,7 +462,10 @@ def main():
         # Parse YAML
         try:
             data = yaml.safe_load(decrypted_content)
-            cred_data = data["credentialholder"]["admin"]
+            cred_holders = data.get("credentialholder", {})
+            if not cred_holders:
+                print(Fore.RED + "No 'credentialholder' found in credentials YAML.")
+                sys.exit(1)
         except Exception:
             print(Fore.RED + "Error parsing credentials YAML. Ensure the format is correct.")
             sys.exit(1)
@@ -469,30 +477,35 @@ def main():
         success_count = 0
         skip_count = 0
         fail_count = 0
-        registered_providers = set()
+        # Track admin provider registrations to build admin placeholders only.
+        admin_registered = set()
 
-        for provider, credentials in cred_data.items():
-            provider_name, status, message = register_credential(provider, credentials)
-            if status == "ok":
-                print(f"  {Fore.GREEN}OK  {Style.RESET_ALL} {provider_name:12s}  {message}")
-                success_count += 1
-                registered_providers.add(provider_name)
-            elif status == "skip":
-                print(f"  {Fore.YELLOW}SKIP{Style.RESET_ALL} {provider_name:12s}  ({message})")
-                skip_count += 1
-            else:
-                print(f"  {Fore.RED}FAIL{Style.RESET_ALL} {provider_name:12s}  {message}")
-                fail_count += 1
+        for holder, holder_creds in cred_holders.items():
+            print(f" Holder: {Fore.MAGENTA}{holder}{Style.RESET_ALL}")
+            for provider, credentials in holder_creds.items():
+                provider_name, status, message = register_credential(holder, provider, credentials)
+                if status == "ok":
+                    print(f"  {Fore.GREEN}OK  {Style.RESET_ALL} {provider_name:12s}  {message}")
+                    success_count += 1
+                    if holder == "admin":
+                        admin_registered.add(provider_name)
+                elif status == "skip":
+                    print(f"  {Fore.YELLOW}SKIP{Style.RESET_ALL} {provider_name:12s}  ({message})")
+                    skip_count += 1
+                else:
+                    print(f"  {Fore.RED}FAIL{Style.RESET_ALL} {provider_name:12s}  {message}")
+                    fail_count += 1
+            print()
 
         # Register placeholder secrets for CSPs not in the credential file.
-        placeholder_count = register_placeholder_secrets(registered_providers)
+        placeholder_count = register_placeholder_secrets(admin_registered)
 
         print()
+        placeholder_msg = f", {Fore.CYAN}{placeholder_count} placeholders{Style.RESET_ALL}" if placeholder_count > 0 else ""
         print(
             f"Results: {Fore.GREEN}{success_count} registered{Style.RESET_ALL}, "
             f"{Fore.YELLOW}{skip_count} skipped{Style.RESET_ALL}, "
-            f"{Fore.RED}{fail_count} failed{Style.RESET_ALL}"
-            + (f", {Fore.CYAN}{placeholder_count} placeholders{Style.RESET_ALL}" if placeholder_count > 0 else "")
+            f"{Fore.RED}{fail_count} failed{Style.RESET_ALL}{placeholder_msg}"
         )
 
         if fail_count > 0:
@@ -514,10 +527,7 @@ def main():
     # Usage hint
     print("To verify a credential:")
     print("  source .env")
-    print(
-        f'  curl -s -H "X-Vault-Token: $$VAULT_TOKEN" {VAULT_ADDR}/v1/{KV_MOUNT}/data/{SECRET_PREFIX}/aws '
-        "| jq .data.data"
-    )
+    print(f'  curl -s -H "X-Vault-Token: $$VAULT_TOKEN" {VAULT_ADDR}/v1/{KV_MOUNT}/data/{SECRET_PREFIX}/aws ' "| jq .data.data")
     print(f"  bao kv get {KV_MOUNT}/{SECRET_PREFIX}/aws")
     print()
 

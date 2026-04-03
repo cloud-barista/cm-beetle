@@ -5,7 +5,7 @@ test:
     - csp: aws
       region: ap-northeast-2
       name: AWS-Seoul
-      execute: false
+      execute: true
     - csp: azure
       region: koreasouth
       name: Azure-Busan
@@ -21,7 +21,7 @@ test:
     - csp: alibaba
       region: ap-northeast-2
       name: Alibaba-Seoul
-      execute: true
+      execute: false
     - csp: ibm
       region: au-syd
       name: IBMCloud-Sydney
