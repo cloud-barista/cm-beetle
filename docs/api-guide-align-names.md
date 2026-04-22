@@ -1,5 +1,6 @@
 # API Guide: Align Names
-*Subtitle: Propagate Name Changes to Dependent Resources*
+
+_Subtitle: Propagate Name Changes to Dependent Resources_
 
 This guide covers the **Align Names** API (`POST /naming/alignment`), which propagates a resource name change
 to all dependent child resources within a `RecommendedVmInfra` model.
@@ -10,6 +11,7 @@ When a parent resource (e.g., VNet) is renamed, child resources that reference i
 must also be updated to maintain internal consistency. The Align Names API automates this propagation.
 
 CM-Beetle also uses a **Late Binding** strategy for final resource names:
+
 - Recommendation returns **base names** (e.g., `vnet-01`) that are easy to inspect and modify.
 - Migration applies a `NameSeed` prefix (e.g., `mig01-vnet-01`) at the very last moment before resource creation.
 

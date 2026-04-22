@@ -42,26 +42,130 @@ Tags that are just `vX.Y.Z` (without a prefix) refer to the **root module** of t
 
 You can create these prefixed tags using the Git CLI. This is the recommended method for sub-modules to avoid cluttering the repository's main Release history.
 
-### Using Git CLI (Recommended)
+### Repository Setup
 
-```bash
-# 1. Create an annotated tag with a simple release note
-# -a: create an annotated tag, -m: include a message (release note)
-git tag -a transx/v0.1.0 -m "Release notes: brief summary of changes"
+This project follows a three-tier Git workflow:
 
-# 2. Push the tag to your remote (origin or upstream)
-git push origin transx/v0.1.0
-git push upstream transx/v0.1.0
+- **upstream**: The official repository (`github.com/cloud-barista/cm-beetle`)
+- **origin**: Your personal fork of the upstream repository
+- **local**: Your local clone of the origin fork
+
+**Normal code change workflow:**
+
+```
+local commit → git push origin <branch> → PR to upstream/main → merge
 ```
 
-### Important: Git Tag vs. GitHub Release
+**Tagging workflow is different.** Tags are not pushed via PR — they are applied to a specific commit and pushed **directly to upstream**. The correct sequence is:
 
-- **Git Tag (CLI)**: This is a **technical requirement** for Go modules. Using **annotated tags** (`-a`) allows you to include a simple message (release note) within the tag itself, which can be viewed via `git show <tagname>`.
-- **GitHub Release (UI)**: This is a **human-facing announcement**. It includes changelogs and assets.
-  - **Recommendation**: For internal sub-modules like `transx`, it is often better to use **Option B (Git CLI)** only. This avoids "noise" in the repository's main Release history.
-  - **Main Beetle releases** should continue using the GitHub UI for visibility.
+1. Ensure the relevant changes are already merged into `upstream/main` via PR.
+2. Fetch the latest state of `upstream/main` to your local repository.
+3. Create an annotated tag locally, pointing to `upstream/main`.
+4. Push the tag directly to `upstream` (not `origin`).
 
-## 3. Local Development (Replace Directive)
+> **Note:** Pushing a tag to `origin` is not required. The Go module proxy resolves versions from the upstream (official) repository's tags. If you do not have push access to `upstream`, ask a maintainer with push access to create the tag.
+
+## 4. Quick Guide: Two Independent Workflows
+
+> [!IMPORTANT]
+>
+> 1. Release and tag `transx` first.
+> 2. Then update Beetle `go.mod` to that tag.
+
+Why: `go.mod` can use `github.com/cloud-barista/cm-beetle/transx v0.1.0` only after the tag `transx/v0.1.0` exists on `upstream`.
+
+Dependency rule: Workflow B starts only after Workflow A tag is available on `upstream`.
+
+Development note: Feature development can continue between Workflow A and Workflow B. After `transx/v0.1.0` is tagged, apply that version in Beetle `go.mod` when you start Workflow B.
+
+Typical timeline:
+
+1. Workflow A complete (`transx` tag published).
+2. Ongoing Beetle feature development and staging work.
+3. Workflow B starts (update `go.mod` to tagged `transx` version), then PR/merge/release.
+
+### Workflow A: Release and Tag transx
+
+Goal: create `transx/v0.1.0` on `upstream`.
+
+```bash
+# 1) Develop transx on a branch
+git checkout upstream/main -b feat-transx-v0.1.0
+# edit transx/
+git add transx/
+git commit -m "feat(transx): ..."
+git push origin feat-transx-v0.1.0
+
+# 2) Open PR: origin/feat-transx-v0.1.0 -> upstream/main
+#    Wait until merged.
+
+# 3) Tag the merge result on upstream/main
+git fetch upstream
+git log upstream/main --oneline -5
+git tag -a transx/v0.1.0 upstream/main -m "transx: release v0.1.0"
+
+# Optional (safer if upstream/main has moved):
+# git tag -a transx/v0.1.0 <merge_commit_sha> -m "transx: release v0.1.0"
+
+# 4) Push tag to upstream
+git push upstream transx/v0.1.0
+
+# 5) Verify
+git show transx/v0.1.0
+```
+
+Note: tag `upstream/main` (merge result), not your old branch commit hash.
+If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`.
+
+### Workflow B: Update Beetle to the Tagged Version
+
+Goal: upgrade Beetle dependency to `transx v0.1.0`, then release Beetle.
+
+```bash
+# 1) Start a new branch
+git fetch upstream
+git checkout upstream/main -b feat-beetle-use-transx-v0.1.0
+
+# 2) Update dependency
+go get github.com/cloud-barista/cm-beetle/transx@v0.1.0
+go mod tidy
+
+# 3) Continue Beetle development and staging work
+make build
+make swag
+go test ./...
+
+# 4) Commit and push
+# Option A: keep dependency bump and feature work in separate commits (recommended)
+#   git add go.mod go.sum
+#   git commit -m "chore(deps): bump transx to v0.1.0"
+#   git add <feature-files>
+#   git commit -m "feat(...): ..."
+#
+# Option B: single commit for small changes
+git add .
+git commit -m "chore(deps): bump transx to v0.1.0"
+git push origin feat-beetle-use-transx-v0.1.0
+
+# 5) Open PR -> upstream/main and merge
+# 6) Create GitHub Release for Beetle (vX.Y.Z)
+```
+
+### One-Line Checklist
+
+- Workflow A complete: `transx/v0.1.0` exists on `upstream`.
+- Workflow B complete: Beetle PR merged with updated `go.mod`.
+- Final: Beetle GitHub Release created.
+
+### First-Time Maintainer Checklist
+
+- Confirm PR is merged to `upstream/main` before tagging.
+- Tag `upstream` merge commit, not local feature branch commit.
+- Push tag to `upstream`, not only `origin`.
+- Confirm tag with `git show`.
+- Start Beetle version bump only after tag is visible on `upstream`.
+
+## 5. Local Development (Replace Directive)
 
 If you are developing another project locally and want to use the local version of these packages without pushing tags, use the `replace` directive in your project's `go.mod`:
 
@@ -75,7 +179,7 @@ require github.com/cloud-barista/cm-beetle/transx v0.0.0-unused
 replace github.com/cloud-barista/cm-beetle/transx => ../cm-beetle/transx
 ```
 
-## 4. Summary Table
+## 6. Summary Table
 
 | Module         | Module Path                                     | Tag Format Example  |
 | :------------- | :---------------------------------------------- | :------------------ |
@@ -84,7 +188,7 @@ replace github.com/cloud-barista/cm-beetle/transx => ../cm-beetle/transx
 | **Transx**     | `github.com/cloud-barista/cm-beetle/transx`     | `transx/v0.1.0`     |
 | **Deepdiffgo** | `github.com/cloud-barista/cm-beetle/deepdiffgo` | `deepdiffgo/v0.1.0` |
 
-## 5. Real-World Reference Examples
+## 7. Real-World Reference Examples
 
 Many large-scale Go projects use this same "multi-module monorepo" pattern. You can refer to these projects' release/tagging history:
 
@@ -93,9 +197,9 @@ Many large-scale Go projects use this same "multi-module monorepo" pattern. You 
 - **[Go Tools (gopls)](https://github.com/golang/tools/tags)**: The `gopls` language server is a module within the `tools` repo. Tags are `gopls/v0.17.1`, etc.
 - **[AWS SDK for Go v2](https://github.com/aws/aws-sdk-go-v2/tags)**: Manages hundreds of service-specific modules. Tags are `service/s3/v1.66.0`, `service/dynamodb/v1.59.0`, etc.
 
-## 6. Best Practices for Maintainers
+## 8. Best Practices for Maintainers
 
-### 6.1. Reducing Confusion
+### 8.1. Reducing Confusion
 
 To ensure clarity for contributors and users:
 
@@ -103,14 +207,14 @@ To ensure clarity for contributors and users:
 - **Consistent Naming**: Use the module's subdirectory name as the tag prefix (e.g., `transx/v1.0.0` for `./transx`).
 - **Semantic Versioning**: Follow SemVer strictly for each module independently.
 
-### 6.2. Documenting in Release Notes
+### 8.2. Documenting in Release Notes
 
 In the main Beetle release notes (under **"Related components"**), explicitly list the versions of internal modules that were tested and included:
 
 - **transx**: `v0.1.0` ([Link to tag](https://github.com/cloud-barista/cm-beetle/tags/transx/v0.1.0))
 - **analyzer**: `v0.1.5` ([Link to tag](https://github.com/cloud-barista/cm-beetle/tags/analyzer/v0.1.5))
 
-### 6.3. Operational Efficiency (Automation)
+### 8.3. Operational Efficiency (Automation)
 
 Managing multiple tags manually can be tedious. You can automate this process:
 
@@ -119,10 +223,13 @@ Managing multiple tags manually can be tedious. You can automate this process:
 
 ```bash
 # Example batch tagging script
+# Run this after all changes are merged into upstream/main
+git fetch upstream
+
 VERSION="v0.5.0"
 TAGS=("transx/$VERSION" "analyzer/$VERSION" "deepdiffgo/$VERSION" "$VERSION")
 for TAG in "${TAGS[@]}"; do
-  git tag "$TAG"
-  git push origin "$TAG"
+  git tag -a "$TAG" upstream/main -m "Release $TAG"
+  git push upstream "$TAG"
 done
 ```
