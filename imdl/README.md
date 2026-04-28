@@ -89,3 +89,49 @@ See [tb-sync.instructions.md](../.github/instructions/tb-sync.instructions.md) f
 - **Origin**: Migrated from `github.com/cloud-barista/cm-model/infra` (v0.0.21)
 - **Rationale**: Internalized to reduce external dependencies and improve version control
 - **Module**: `github.com/cloud-barista/cm-beetle/imdl`
+
+## Version Management and Tagging
+
+This module is independently versioned using Git tags with the `imdl/` prefix (e.g., `imdl/v0.1.0`).
+
+### Releasing a New Version
+
+After your changes to `imdl/` have been merged into `upstream/main`, create and push the version tag:
+
+```bash
+# 1) Fetch latest upstream and verify merge
+git fetch upstream
+git log upstream/main --oneline -5
+
+# 2) Tag the merge result on upstream/main
+git tag -a imdl/v0.1.0 upstream/main -m "imdl: release v0.1.0"
+# Optional (safer if upstream/main has moved):
+# git tag -a imdl/v0.1.0 <merge_commit_sha> -m "imdl: release v0.1.0"
+
+# 3) Push tag to upstream
+git push upstream imdl/v0.1.0
+
+# 4) Verify tag
+git show imdl/v0.1.0
+```
+
+> **Note:** Tag `upstream/main` (the merge result), not your old branch commit hash. If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`.
+
+### Updating CM-Beetle Dependency
+
+After creating and pushing the tag, update the main CM-Beetle project to use the new version:
+
+```bash
+# 1) Start a new branch for CM-Beetle update
+git fetch upstream
+# Optional (skip this if working in an existing branch):
+# git checkout upstream/main -b feat-beetle-use-imdl-v0.1.0
+
+# 2) Update dependency to the new version
+go get github.com/cloud-barista/cm-beetle/imdl@v0.1.0
+go mod tidy
+
+# 3) Then follow standard development workflow: verify, test, commit, push, and open PR
+```
+
+For detailed instructions on the complete workflow, see [docs/module-import-guide.md](../docs/module-import-guide.md).

@@ -14,6 +14,7 @@ go 1.25.0
 
 require (
 	github.com/cloud-barista/cb-tumblebug v0.12.5
+	github.com/cloud-barista/cm-beetle/imdl v0.1.0
 	github.com/cloud-barista/cm-beetle/transx v0.1.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
