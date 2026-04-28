@@ -12,20 +12,9 @@ go 1.25.0
 // 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
 // replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
-// Keep this for cm-model contributors
-// you can use the following guide.
-// For example, this is useful when you are developing cm-beetle and cm-model at the same time.
-// 1. [On go.mod] Add `replace github.com/cloud-barista/cm-model => ../cm-model`
-// 2. [On shell] Copy cm-model by `rsync -av --exclude container-volume/ --exclude .git/ ../cm-model/ ./cm-model`
-// 3. [On Dockerfile] Add `COPY cm-model /go/src/github.com/cloud-barista/cm-model`
-// 4. [On shell] Run `make compose`
-// 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
-// replace github.com/cloud-barista/cm-model => ../cm-model
-
 require (
 	github.com/cloud-barista/cb-tumblebug v0.12.5
 	github.com/cloud-barista/cm-beetle/transx v0.1.0
-	github.com/cloud-barista/cm-model v0.0.21
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.13.1

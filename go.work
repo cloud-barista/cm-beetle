@@ -5,4 +5,5 @@ use (
 	./analyzer
 	./transx
 	./deepdiffgo
+	./imdl
 )

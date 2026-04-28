@@ -30,8 +30,8 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 )
 
 // CSPTestReport holds test results for a specific CSP

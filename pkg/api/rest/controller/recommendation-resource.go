@@ -20,8 +20,8 @@ import (
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )

@@ -21,7 +21,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 )
 
 // GenerateSourceInfraSummary generates a comprehensive source infrastructure summary from on-premise data

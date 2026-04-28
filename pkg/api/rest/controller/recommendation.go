@@ -24,8 +24,8 @@ import (
 
 	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"

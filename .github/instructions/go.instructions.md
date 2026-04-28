@@ -31,9 +31,9 @@ tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 tbresource "github.com/cloud-barista/cb-tumblebug/src/interface/rest/server/resource"
 "github.com/cloud-barista/cb-tumblebug/src/core/common/netutil"
 
-// cm-model imports - Two main packages (version specified in go.mod)
-cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+// Internal model imports (imdl - internalized infrastructure models)
+cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
 // Internal packages
 "github.com/cloud-barista/cm-beetle/pkg/config"
