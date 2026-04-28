@@ -116,36 +116,58 @@ KEY_FILE = os.path.join(CRED_PATH, ".tmp_enc_key")
 # CSP key mapping: cb-tumblebug YAML keys → Terrarium/OpenTofu env var keys
 KEY_MAP = {
     "aws": {
-        "ClientId": "AWS_ACCESS_KEY_ID",
-        "ClientSecret": "AWS_SECRET_ACCESS_KEY",
+        "aws_access_key_id": "AWS_ACCESS_KEY_ID",
+        "aws_secret_access_key": "AWS_SECRET_ACCESS_KEY",
     },
     "azure": {
-        "ClientId": "ARM_CLIENT_ID",
-        "ClientSecret": "ARM_CLIENT_SECRET",
-        "TenantId": "ARM_TENANT_ID",
-        "SubscriptionId": "ARM_SUBSCRIPTION_ID",
+        "clientId": "ARM_CLIENT_ID",
+        "clientSecret": "ARM_CLIENT_SECRET",
+        "tenantId": "ARM_TENANT_ID",
+        "subscriptionId": "ARM_SUBSCRIPTION_ID",
     },
     "gcp": {
-        "ProjectID": "project_id",
-        "ClientEmail": "client_email",
-        "PrivateKey": "private_key",
+        "project_id": "project_id",
+        "client_email": "client_email",
+        "private_key": "private_key",
         "private_key_id": "private_key_id",
         "client_id": "client_id",
+        "S3AccessKey": "S3AccessKey",
+        "S3SecretKey": "S3SecretKey",
     },
     "alibaba": {
-        "ClientId": "ALIBABA_CLOUD_ACCESS_KEY_ID",
-        "ClientSecret": "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
+        "AccessKeyId": "ALIBABA_CLOUD_ACCESS_KEY_ID",
+        "AccessKeySecret": "ALIBABA_CLOUD_ACCESS_KEY_SECRET",
     },
     "ibm": {
         "ApiKey": "IC_API_KEY",
+        "S3AccessKey": "S3_ACCESS_KEY",
+        "S3SecretKey": "S3_SECRET_KEY",
     },
     "ncp": {
-        "ClientId": "NCLOUD_ACCESS_KEY",
-        "ClientSecret": "NCLOUD_SECRET_KEY",
+        "ncloud_access_key": "NCLOUD_ACCESS_KEY",
+        "ncloud_secret_key": "NCLOUD_SECRET_KEY",
     },
     "tencent": {
-        "ClientId": "TENCENTCLOUD_SECRET_ID",
-        "ClientSecret": "TENCENTCLOUD_SECRET_KEY",
+        "SecretId": "TENCENTCLOUD_SECRET_ID",
+        "SecretKey": "TENCENTCLOUD_SECRET_KEY",
+    },
+    "kt": {
+        "IdentityEndpoint": "KT_IDENTITY_ENDPOINT",
+        "Username": "KT_USERNAME",
+        "Password": "KT_PASSWORD",
+        "DomainName": "KT_DOMAIN_NAME",
+        "ProjectID": "KT_PROJECT_ID",
+        "S3AccessKey": "KT_S3_ACCESS_KEY",
+        "S3SecretKey": "KT_S3_SECRET_KEY",
+    },
+    "nhn": {
+        "IdentityEndpoint": "NHN_IDENTITY_ENDPOINT",
+        "Username": "NHN_USERNAME",
+        "Password": "NHN_PASSWORD",
+        "DomainName": "NHN_DOMAIN_NAME",
+        "TenantId": "NHN_TENANT_ID",
+        "S3AccessKey": "NHN_S3_ACCESS_KEY",
+        "S3SecretKey": "NHN_S3_SECRET_KEY",
     },
     "openstack": {
         "IdentityEndpoint": "OS_AUTH_URL",
@@ -153,6 +175,8 @@ KEY_MAP = {
         "Password": "OS_PASSWORD",
         "DomainName": "OS_DOMAIN_NAME",
         "ProjectID": "OS_PROJECT_ID",
+        "S3AccessKey": "OS_S3_ACCESS_KEY",
+        "S3SecretKey": "OS_S3_SECRET_KEY",
     },
 }
 
@@ -252,7 +276,7 @@ def get_decrypted_content():
             return content, True  # (content, used_key_file)
         print(Fore.RED + error)
 
-    # 2.5 Check Environment Variable (MULTI_INIT_PWD)
+    # 3. Check Environment Variable (MULTI_INIT_PWD)
     env_password = os.environ.get("MULTI_INIT_PWD")
     if env_password:
         content, error = decrypt_credentials(ENC_FILE, env_password)
