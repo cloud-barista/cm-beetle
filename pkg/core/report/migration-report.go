@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
 

@@ -40,8 +40,6 @@ github.com/cloud-barista/cb-tumblebug v0.12.5 h1:TR7QudC8onbHJUaeLJ+/ZSkOnkTLYAh
 github.com/cloud-barista/cb-tumblebug v0.12.5/go.mod h1:djpunMf0l2NIdgOnkpfT1V6dM70gy9T2OxURWWR8DxA=
 github.com/cloud-barista/cm-beetle/transx v0.1.0 h1:DVQSslEnaVGjuJ+VtIq/2Rr/E7hjsvFja4Gy4kzhUpE=
 github.com/cloud-barista/cm-beetle/transx v0.1.0/go.mod h1:lEgonyJmSY6L7cBLNS1YItx7Pw1nN48j6y9pquBHyDQ=
-github.com/cloud-barista/cm-model v0.0.21 h1:j8Vk+OLKC6lyaspQ1i3P+OBzpgcEk/hJthLT4A8H/mg=
-github.com/cloud-barista/cm-model v0.0.21/go.mod h1:gSuMhQxD813KIdSvkp8uGptYOeyDik749sYcICZjhj8=
 github.com/cloud-barista/mc-terrarium v0.1.4 h1:w60hp6lEquL41/f1L08E9qchm7qL9hfiyr3AXASZIdI=
 github.com/cloud-barista/mc-terrarium v0.1.4/go.mod h1:eniYTowDEnor3XVe/EI8abO83XJ7IrZN19LLDdx5428=
 github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr4=

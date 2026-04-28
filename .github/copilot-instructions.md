@@ -16,7 +16,7 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - **Objectives:** Recommend optimal target computing infrastructure (cloud infrastructure) based on source infrastructure information, and execute migration according to the recommendation.
 - **Languages:** Go (1.25.0+).
 - **Frameworks:** Echo (Web Framework), Viper (Config), Zerolog (Logging), Swag (API Docs).
-- **Dependencies:** `cb-tumblebug`, `cm-model`.
+- **Dependencies:** `cb-tumblebug`.
 - **Supported Clouds:** AWS, Azure, GCP, NCP, Alibaba Cloud.
 - **Architecture:** REST API server (Echo) with a modular architecture separating API handlers from core logic (migration, recommendation). It functions as an orchestration layer, tightly integrated with CB-Tumblebug for managing multi-cloud resources.
 
@@ -38,11 +38,13 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - **Key Components:**
   - `TumblebugClient`: Main client for interactions (MCI, Namespace, VM, VNet, SecurityGroup, SSH key).
 
-### cm-model Integration
+### Internal Model Integration (imdl)
 
-- **Cloud Model Import:** `cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"`
-- **On-Premise Model Import:** `onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"`
-- **Usage:** Shared data models for cloud and on-premise infrastructure.
+- **Cloud Model Import:** `cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"`
+- **On-Premise Model Import:** `onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"`
+- **Usage:** Internalized data models for cloud and on-premise infrastructure (originally from cm-model).
+- **Synchronization:** CB-Tumblebug models in `imdl/cloud-model/copied-tb-model.go` are kept in sync with specific TB versions.
+- **Sync Process:** Use the SyncTB prompt (`.github/prompts/sync-tb.prompt.md`) to update TB models.
 
 ## Architecture & Code Organization
 
@@ -56,7 +58,8 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
   - `recommendation/`: Infrastructure recommendation logic (VM Specs, OS Images).
   - `common/`: Shared utilities.
 - `pkg/config/`: Configuration management (Viper).
-- `pkg/modelconv/`: Model conversion utilities between internal, Tumblebug, and cm-model formats.
+- `pkg/modelconv/`: Model conversion utilities between internal, Tumblebug, and imdl model formats.
+- `imdl/`: Internalized infrastructure models (cloud and on-premise).
 
 ### Key Functional Areas
 
@@ -74,7 +77,7 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
   - Authentication and CORS handling.
 - **Model Conversion Pattern:**
   - Use `modelconv` package for converting between different model formats.
-  - Heavy use of CB-Tumblebug and cm-model structures.
+  - Heavy use of CB-Tumblebug and internal imdl structures.
 
 ## Coding Standards & Conventions
 
@@ -201,15 +204,15 @@ cloudModel := cloudmodel.SomeModel{}
 - Respect CB-Tumblebug's REST API patterns and authentication.
 - Use proper namespace management.
 
-#### cm-model Integration
+#### Internal Model Integration
 
-- Import shared models from `cm-model` package.
-- Ensure model compatibility between versions.
+- Import models from `imdl` package (cloud-model and on-premise-model).
+- Maintain TB model synchronization using SyncTB prompt.
 - Use conversion utilities (`pkg/modelconv/`) when transforming data.
 
 ### Environment Setup
 
-- **Local Development:** Use `replace` directives in `go.mod` for local dependency testing (e.g., `cb-tumblebug`, `cm-model`).
+- **Local Development:** Use `replace` directives in `go.mod` for local dependency testing (e.g., `cb-tumblebug`).
 - **Production:** Ensure `go.mod` specifies production versions.
 
 ## Build and Run Instructions

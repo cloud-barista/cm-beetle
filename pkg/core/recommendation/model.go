@@ -2,7 +2,7 @@ package recommendation
 
 import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 )
 
 // RecommendationStatus represents the status of a recommendation.

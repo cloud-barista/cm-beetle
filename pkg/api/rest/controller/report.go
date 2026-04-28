@@ -22,7 +22,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/report"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )

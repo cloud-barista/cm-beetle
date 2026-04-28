@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )

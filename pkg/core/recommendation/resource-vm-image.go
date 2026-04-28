@@ -10,8 +10,8 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-model/infra/on-premise-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
 

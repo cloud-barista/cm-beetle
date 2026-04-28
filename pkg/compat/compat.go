@@ -5,7 +5,7 @@ package compat
 import (
 	"strings"
 
-	cloudmodel "github.com/cloud-barista/cm-model/infra/cloud-model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/rs/zerolog/log"
 )
 
