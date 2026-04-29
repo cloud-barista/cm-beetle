@@ -46,8 +46,9 @@ services:
       - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       # - BEETLE_TUMBLEBUG_API_USERNAME=default
       # - BEETLE_TUMBLEBUG_API_PASSWORD=default
-    healthcheck: # for CM-Beetle
-      test: ["CMD", "curl", "-f", "http://localhost:8056/beetle/readyz"]
+    healthcheck:
+      # for CM-Beetle
+      test: [ "CMD", "curl", "-f", "http://localhost:8056/beetle/readyz" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -55,7 +56,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.4
+    image: cloudbaristaorg/cb-tumblebug:0.12.9
     container_name: cb-tumblebug
     build:
       context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -115,8 +116,9 @@ services:
       # - TB_NODE_ENV=development
       - VAULT_ADDR=http://openbao:8200
       - VAULT_TOKEN=${VAULT_TOKEN:-}
-    healthcheck: # for CB-Tumblebug
-      test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
+    healthcheck:
+      # for CB-Tumblebug
+      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -162,8 +164,9 @@ services:
       - stderr
       - --auth-token
       - simple
-    healthcheck: # for etcd
-      test: ["CMD", "/usr/local/bin/etcd", "--version"]
+    healthcheck:
+      # for etcd
+      test: [ "CMD", "/usr/local/bin/etcd", "--version" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -189,7 +192,7 @@ services:
       - POSTGRES_PASSWORD=tumblebug
       - POSTGRES_DB=tumblebug
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tumblebug"]
+      test: [ "CMD-SHELL", "pg_isready -U tumblebug" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -197,7 +200,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.12.11
+    image: cloudbaristaorg/cb-spider:0.12.17
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -224,8 +227,9 @@ services:
       - ID_TRANSFORM_MODE=OFF
       - ADMINWEB=OFF
       - SPIDER_BACKUP_ENABLED=false
-    healthcheck: # for CB-Spider
-      test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
+    healthcheck:
+      # for CB-Spider
+      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -234,7 +238,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.19
+    image: cloudbaristaorg/cb-mapui:0.12.30
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
@@ -253,32 +257,32 @@ services:
     #   retries: 3
     #   start_period: 10s
 
-  # TB-MCP (Tumblebug Model Context Protocol Server)
-  # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
-  # cb-tumblebug-mcp-server:
-  #   build:
-  #     context: ./cb-tumblebug/interface/mcp
-  #     dockerfile: Dockerfile
-  #   container_name: cb-tumblebug-mcp-server
-  #   networks:
-  #     - internal_network
-  #     - external_network
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     # TB-MCP Configuration
-  #     - TUMBLEBUG_API_BASE_URL=http://cb-tumblebug:1323/tumblebug
-  #     - TUMBLEBUG_USERNAME=default
-  #     - TUMBLEBUG_PASSWORD=default
-  #     - PYTHONUNBUFFERED=1
-  #     - MCP_SERVER_HOST=0.0.0.0
-  #     - MCP_SERVER_PORT=8000
-  #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
-  #     - MCP_LOG_LEVEL=INFO
+    # TB-MCP (Tumblebug Model Context Protocol Server)
+    # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
+    # cb-tumblebug-mcp-server:
+    #   build:
+    #     context: ./cb-tumblebug/interface/mcp
+    #     dockerfile: Dockerfile
+    #   container_name: cb-tumblebug-mcp-server
+    #   networks:
+    #     - internal_network
+    #     - external_network
+    #   ports:
+    #     - "8000:8000"
+    #   environment:
+    #     # TB-MCP Configuration
+    #     - TUMBLEBUG_API_BASE_URL=http://cb-tumblebug:1323/tumblebug
+    #     - TUMBLEBUG_USERNAME=default
+    #     - TUMBLEBUG_PASSWORD=default
+    #     - PYTHONUNBUFFERED=1
+    #     - MCP_SERVER_HOST=0.0.0.0
+    #     - MCP_SERVER_PORT=8000
+    #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
+    #     - MCP_LOG_LEVEL=INFO
 
-  # ── MC-Terrarium ──────────────────────────────────────────────────────────
-  # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
-  # CSP credentials are managed by OpenBao (no more env_file injection).
+    # MC-Terrarium 
+    # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
+    # CSP credentials are managed by OpenBao (no more env_file injection).
   mc-terrarium:
     image: cloudbaristaorg/mc-terrarium:0.1.4
     container_name: mc-terrarium
@@ -329,7 +333,7 @@ services:
       - VAULT_ADDR=http://openbao:8200
       - VAULT_TOKEN=${VAULT_TOKEN:-}
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8055/terrarium/readyz"]
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8055/terrarium/readyz" ]
       interval: 10m
       timeout: 5s
       retries: 3
@@ -339,7 +343,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # ── OpenBao (secrets management) ──────────────────────────────────────────
+  # OpenBao (secrets management)
   # OpenBao securely stores and provides CSP credentials via API.
   #
   # [Persistent mode] (default)
@@ -365,12 +369,12 @@ services:
         published: 8200
         protocol: tcp
 
-    # ── Persistent mode (active) ─────────────────────────────────────
+    # Persistent mode (active)
     environment:
       - BAO_ADDR=http://0.0.0.0:8200 # BAO_ADDR is for binding listener inside container
       - SKIP_SETCAP=true
     # Fix bind-mount ownership (host UID 1000 → container openbao UID 100)
-    entrypoint: ["sh", "-c"]
+    entrypoint: [ "sh", "-c" ]
     command:
       - |
         chown -R openbao:openbao /openbao/data || { echo "ERROR: chown failed on /openbao/data"; exit 1; }
@@ -379,7 +383,7 @@ services:
       - ./data/openbao-data:/openbao/data
       - ./openbao/openbao-config.hcl:/openbao/config/openbao-config.hcl:ro
 
-    # ── Dev mode (inactive) ────────────────────────────────────────
+    # Dev mode (inactive)
     # To switch to dev mode:
     #   1. Comment out the "Persistent mode" environment, command, and volumes above
     #   2. Uncomment the "Dev mode" environment and command below
@@ -395,13 +399,12 @@ services:
       # 'bao status' exit codes:
       #   0 = unsealed, 1 = sealed but running, 2 = uninitialized (first run)
       # All three mean the OpenBao process is up and accepting API calls.
-      test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
+      test: [ "CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]" ]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
     restart: unless-stopped
-
   # # Swagger UI
   # swagger-ui:
   #   image: swaggerapi/swagger-ui

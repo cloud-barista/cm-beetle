@@ -24,14 +24,14 @@ import (
 
 	// Import Beetle's existing packages
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
-	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 )
 
 // CSPTestReport holds test results for a specific CSP
@@ -48,7 +48,7 @@ type CSPTestReport struct {
 	RecommendationRequest  controller.RecommendVmInfraRequest
 	RecommendationResponse *model.ApiResponse[[]cloudmodel.RecommendedVmInfra]
 	MigrationResponse      *controller.MigrateInfraResponse
-	ListMCIResponse        *cloudmodel.MciInfoList
+	ListMCIResponse        *cloudmodel.InfraInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
 	GetMCIResponse         *cloudmodel.VmInfraInfo
 	DeleteMCIResponse      interface{} // Simple response
@@ -299,10 +299,13 @@ func main() {
 			continue
 		}
 
-		// Determine NameSeed for this specific test case
+		// Determine NameSeed for this specific test case.
+		// In parallel mode with multiple cases, append the 1-based index to avoid name
+		// collisions between concurrent runs (e.g., "my" → "my01", "my02", ...).
+		// A single case never gets a suffix so the seed stays as-is (e.g., "my").
 		caseNameSeed := baseNameSeed
-		if isParallel {
-			caseNameSeed = fmt.Sprintf("%s-%d", baseNameSeed, i)
+		if isParallel && len(config.Test.Cases) > 1 {
+			caseNameSeed = fmt.Sprintf("%s%02d", baseNameSeed, i+1)
 		}
 
 		if isParallel {
@@ -474,7 +477,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	if !stopTesting {
 		result3 = runListMciTest(client, config, displayName)
 		if result3.Success {
-			if structuredResponse, err := convertMapToMciInfoList(result3.Response); err == nil {
+			if structuredResponse, err := convertMapToInfraInfoList(result3.Response); err == nil {
 				cspReport.ListMCIResponse = structuredResponse
 			} else {
 				log.Warn().Err(err).Msg("Failed to convert list MCI response")
@@ -766,17 +769,17 @@ func convertMapToMigrateInfraResponse(responseMap interface{}) (*controller.Migr
 	return &apiResp.Data, nil
 }
 
-// convertMapToMciInfoList converts interface{} to MciInfoList
-func convertMapToMciInfoList(responseMap interface{}) (*cloudmodel.MciInfoList, error) {
+// convertMapToInfraInfoList converts interface{} to InfraInfoList
+func convertMapToInfraInfoList(responseMap interface{}) (*cloudmodel.InfraInfoList, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var apiResp model.ApiResponse[cloudmodel.MciInfoList]
+	var apiResp model.ApiResponse[cloudmodel.InfraInfoList]
 	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
 		// Fallback for direct unmarshal if not wrapped
-		var response cloudmodel.MciInfoList
+		var response cloudmodel.InfraInfoList
 		if err := json.Unmarshal(jsonBytes, &response); err != nil {
 			return nil, err
 		}
@@ -984,7 +987,7 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
-	var apiResponse model.ApiResponse[cloudmodel.MciInfoList]
+	var apiResponse model.ApiResponse[cloudmodel.InfraInfoList]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -2560,7 +2563,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 	tbCli := tbclient.NewDefaultClient()
 	// tbSess := tbCli.NewSession() // or tbclient.NewSession()
-	accessInfo, err := tbCli.NewSession().ReadMciAccessInfo(config.Beetle.NamespaceID, mciId, "accessinfo", "showSshKey")
+	accessInfo, err := tbCli.NewSession().ReadInfraAccessInfo(config.Beetle.NamespaceID, mciId, "accessinfo", "showSshKey")
 	if err != nil {
 		populateErrorInfo(&result, err, 0, "ReadMciAccessInfo", nil)
 		log.Error().Err(err).Msg("Failed to get MCI access info")
@@ -2569,42 +2572,42 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 	log.Debug().Msgf("Access info retrieved successfully")
 
-	// Step 2: Extract all VM information from all subgroups
-	if len(accessInfo.MciSubGroupAccessInfo) == 0 {
-		err := fmt.Errorf("no subgroups found in MCI access info")
+	// Step 2: Extract all VM information from all nodegroups
+	if len(accessInfo.InfraNodeGroupAccessInfo) == 0 {
+		err := fmt.Errorf("no nodegroups found in infra access info")
 		populateErrorInfo(&result, err, 0, "Extract VM Info", nil)
-		log.Error().Err(err).Msg("No VM subgroups found")
+		log.Error().Err(err).Msg("No VM nodegroups found")
 		return result
 	}
 
-	// Collect all VMs from all subgroups
+	// Collect all VMs from all nodegroups
 	var allVMs []struct {
-		SubGroupId string
-		VmInfo     interface{}
+		NodeGroupId string
+		VmInfo      interface{}
 	}
 
 	totalVMs := 0
-	for _, subGroup := range accessInfo.MciSubGroupAccessInfo {
-		for _, vmInfo := range subGroup.MciVmAccessInfo {
+	for _, nodeGroup := range accessInfo.InfraNodeGroupAccessInfo {
+		for _, vmInfo := range nodeGroup.NodeAccessInfo {
 			allVMs = append(allVMs, struct {
-				SubGroupId string
-				VmInfo     interface{}
+				NodeGroupId string
+				VmInfo      interface{}
 			}{
-				SubGroupId: subGroup.SubGroupId,
-				VmInfo:     vmInfo,
+				NodeGroupId: nodeGroup.NodeGroupId,
+				VmInfo:      vmInfo,
 			})
 			totalVMs++
 		}
 	}
 
 	if totalVMs == 0 {
-		err := fmt.Errorf("no VMs found in any subgroup")
+		err := fmt.Errorf("no VMs found in any nodegroup")
 		populateErrorInfo(&result, err, 0, "Extract VM Info", nil)
-		log.Error().Err(err).Msg("No VMs found in any subgroup")
+		log.Error().Err(err).Msg("No VMs found in any nodegroup")
 		return result
 	}
 
-	log.Info().Msgf("Step 2: Found %d VMs across %d subgroups for testing", totalVMs, len(accessInfo.MciSubGroupAccessInfo))
+	log.Info().Msgf("Step 2: Found %d VMs across %d nodegroups for testing", totalVMs, len(accessInfo.InfraNodeGroupAccessInfo))
 
 	// Step 3: Perform SSH connectivity test for all VMs
 	log.Info().Msg("Step 3: Testing SSH connectivity for all VMs...")
@@ -2615,7 +2618,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 	for i, vm := range allVMs {
 		// Type assertion to get VM info
-		vmInfo, ok := vm.VmInfo.(tbmodel.MciVmAccessInfo)
+		vmInfo, ok := vm.VmInfo.(tbmodel.InfraNodeAccessInfo)
 		if !ok {
 			log.Error().Msgf("Failed to cast VM info for VM %d", i+1)
 			failedTests++
@@ -2624,20 +2627,20 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 		publicIP := vmInfo.PublicIP
 		privateKey := vmInfo.PrivateKey
-		vmId := vmInfo.VmId
-		userName := vmInfo.VmUserName
+		nodeId := vmInfo.NodeId
+		userName := vmInfo.NodeUserName
 
 		if userName == "" {
-			log.Warn().Str("vmId", vmId).Msg("No username provided in access info, defaulting to 'cb-user'")
+			log.Warn().Str("nodeId", nodeId).Msg("No username provided in access info, defaulting to 'cb-user'")
 			userName = "cb-user" // Default user in this platform
 		}
 
-		log.Info().Msgf("Testing VM %d/%d: %s (IP: %s, SubGroup: %s)", i+1, totalVMs, vmId, publicIP, vm.SubGroupId)
+		log.Info().Msgf("Testing VM %d/%d: %s (IP: %s, NodeGroup: %s)", i+1, totalVMs, nodeId, publicIP, vm.NodeGroupId)
 
 		vmResult := map[string]interface{}{
-			"vmId":      vmId,
+			"nodeId":    nodeId,
 			"publicIP":  publicIP,
-			"subGroup":  vm.SubGroupId,
+			"nodeGroup": vm.NodeGroupId,
 			"userName":  userName,
 			"testOrder": i + 1,
 		}
@@ -2647,26 +2650,26 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 			vmResult["error"] = "no public IP available"
 			vmResult["sshTest"] = "skipped"
 			failedTests++
-			log.Warn().Str("vmId", vmId).Msg("⚠️ Skipping SSH test - no public IP available")
+			log.Warn().Str("nodeId", nodeId).Msg("⚠️ Skipping SSH test - no public IP available")
 		} else if privateKey == "" {
 			vmResult["status"] = "failed"
 			vmResult["error"] = "no private key available"
 			vmResult["sshTest"] = "skipped"
 			failedTests++
-			log.Warn().Str("vmId", vmId).Msg("⚠️ Skipping SSH test - no private key available")
+			log.Warn().Str("nodeId", nodeId).Msg("⚠️ Skipping SSH test - no private key available")
 		} else {
 			// Debug: Log private key info (safely)
 			keyPreview := privateKey
 			if len(keyPreview) > 100 {
 				keyPreview = keyPreview[:50] + "..." + keyPreview[len(keyPreview)-50:]
 			}
-			log.Debug().Str("vmId", vmId).Str("keyPreview", keyPreview).Bool("hasLiteralNewlines", strings.Contains(privateKey, "\\n")).Msg("Private key info")
+			log.Debug().Str("nodeId", nodeId).Str("keyPreview", keyPreview).Bool("hasLiteralNewlines", strings.Contains(privateKey, "\\n")).Msg("Private key info")
 
 			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
 			sshUserName := userName
 
 			// Perform SSH connectivity test with retry logic
-			log.Info().Str("vmId", vmId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
+			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
 
 			const maxRetries = 3
 			const retryDelay = 3 * time.Second
@@ -2675,7 +2678,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 			for attempt := 1; attempt <= maxRetries; attempt++ {
 				if attempt > 1 {
-					log.Info().Str("vmId", vmId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying SSH connection...")
+					log.Info().Str("nodeId", nodeId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying SSH connection...")
 					time.Sleep(retryDelay)
 				}
 
@@ -2689,13 +2692,13 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 					vmResult["attempts"] = attempt
 					successfulTests++
 					if attempt > 1 {
-						log.Info().Str("vmId", vmId).Str("ip", publicIP).Int("attempt", attempt).Msg("✅ SSH connectivity test passed after retry")
+						log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Int("attempt", attempt).Msg("✅ SSH connectivity test passed after retry")
 					} else {
-						log.Info().Str("vmId", vmId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
+						log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
 					}
 					break
 				} else {
-					log.Warn().Err(lastErr).Str("vmId", vmId).Str("ip", publicIP).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ SSH connection attempt failed")
+					log.Warn().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ SSH connection attempt failed")
 				}
 			}
 
@@ -2705,7 +2708,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 				vmResult["sshTest"] = "failed"
 				vmResult["attempts"] = maxRetries
 				failedTests++
-				log.Error().Err(lastErr).Str("vmId", vmId).Str("ip", publicIP).Int("maxRetries", maxRetries).Msg("❌ SSH connectivity test failed after all retries")
+				log.Error().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).Int("maxRetries", maxRetries).Msg("❌ SSH connectivity test failed after all retries")
 			}
 		}
 

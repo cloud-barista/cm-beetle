@@ -103,19 +103,26 @@ After your changes to `imdl/` have been merged into `upstream/main`, create and 
 git fetch upstream
 git log upstream/main --oneline -5
 
-# 2) Tag the merge result on upstream/main
-git tag -a imdl/v0.1.0 upstream/main -m "imdl: release v0.1.0"
+# 2) Check recent imdl tags to determine next version
+git tag -l "imdl/*" --sort=-v:refname | head -5
+
+# 3) Set next version manually based on the list above
+export NEXT_IMDL_TAG=  # Update this value (e.g., export NEXT_IMDL_TAG="imdl/v0.1.0")
+echo "Next imdl tag: $NEXT_IMDL_TAG"
+
+# 4) Tag the merge result on upstream/main
+git tag -a $NEXT_IMDL_TAG upstream/main -m "imdl: release ${NEXT_IMDL_TAG#imdl/}"
 # Optional (safer if upstream/main has moved):
-# git tag -a imdl/v0.1.0 <merge_commit_sha> -m "imdl: release v0.1.0"
+# git tag -a $NEXT_IMDL_TAG <merge_commit_sha> -m "imdl: release ${NEXT_IMDL_TAG#imdl/}"
 
-# 3) Push tag to upstream
-git push upstream imdl/v0.1.0
+# 5) Push tag to upstream
+git push upstream $NEXT_IMDL_TAG
 
-# 4) Verify tag
-git show imdl/v0.1.0
+# 6) Verify tag
+git show $NEXT_IMDL_TAG
 ```
 
-> **Note:** Tag `upstream/main` (the merge result), not your old branch commit hash. If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`.
+> **Note:** Tag `upstream/main` (the merge result), not your old branch commit hash. If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`. Using `$NEXT_IMDL_TAG` environment variable ensures consistency across all commands.
 
 ### Updating CM-Beetle Dependency
 
@@ -125,10 +132,12 @@ After creating and pushing the tag, update the main CM-Beetle project to use the
 # 1) Start a new branch for CM-Beetle update
 git fetch upstream
 # Optional (skip this if working in an existing branch):
-# git checkout upstream/main -b feat-beetle-use-imdl-v0.1.0
+# git checkout upstream/main -b feat-beetle-use-${NEXT_IMDL_TAG#imdl/}
 
-# 2) Update dependency to the new version
-go get github.com/cloud-barista/cm-beetle/imdl@v0.1.0
+# 2) Update dependency to the latest version
+go get -u github.com/cloud-barista/cm-beetle/imdl
+# Or specify exact version (use $NEXT_IMDL_TAG from previous step):
+# go get github.com/cloud-barista/cm-beetle/imdl@${NEXT_IMDL_TAG#imdl/}
 go mod tidy
 
 # 3) Then follow standard development workflow: verify, test, commit, push, and open PR

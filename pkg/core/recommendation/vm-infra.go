@@ -199,29 +199,29 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 		tempVmInfraInfo := cloudmodel.RecommendedVmInfraDynamic{
 			Status:      string(NothingRecommended),
 			Description: "This is a recommended target infrastructure.",
-			TargetVmInfra: cloudmodel.MciDynamicReq{
+			TargetVmInfra: cloudmodel.InfraDynamicReq{
 				Name:        fmt.Sprintf("migrated-%02d", i),
 				Description: "a recommended multi-cloud infrastructure",
-				SubGroups:   []cloudmodel.CreateSubGroupDynamicReq{},
+				NodeGroups:  []cloudmodel.CreateNodeGroupDynamicReq{},
 			},
 		}
 
-		for j, subgroupInfo := range vmInfoList {
-			tempCreateSubgroupReq := cloudmodel.CreateSubGroupDynamicReq{
-				ConnectionName: fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
-				ImageId:        subgroupInfo.vmOsImageId,
-				SpecId:         subgroupInfo.vmSpecId,
-				Description:    "a recommended virtual machine",
-				Name:           fmt.Sprintf("migrated-%s", srcInfra.Servers[j].MachineId), // Set MachineId to identify the source server
-				RootDiskSize:   0,                                                         // TBD
-				RootDiskType:   "",                                                        // TBD
-				SubGroupSize:   1,                                                         // TBD
-				VmUserPassword: "",                                                        // TBD
+		for j, nodegroupInfo := range vmInfoList {
+			tempCreateNodegroupReq := cloudmodel.CreateNodeGroupDynamicReq{
+				ConnectionName:   fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
+				ImageId:          nodegroupInfo.vmOsImageId,
+				SpecId:           nodegroupInfo.vmSpecId,
+				Description:      "a recommended virtual machine",
+				Name:             fmt.Sprintf("migrated-%s", srcInfra.Servers[j].MachineId), // Set MachineId to identify the source server
+				RootDiskSize:     0,                                                         // TBD
+				RootDiskType:     "",                                                        // TBD
+				NodeGroupSize:    1,                                                         // TBD
+				NodeUserPassword: "",                                                        // TBD
 			}
-			tempVmInfraInfo.TargetVmInfra.SubGroups = append(tempVmInfraInfo.TargetVmInfra.SubGroups, tempCreateSubgroupReq)
+			tempVmInfraInfo.TargetVmInfra.NodeGroups = append(tempVmInfraInfo.TargetVmInfra.NodeGroups, tempCreateNodegroupReq)
 		}
 
-		status := checkOverallSubGroupStatus(tempVmInfraInfo.TargetVmInfra.SubGroups)
+		status := checkOverallSubGroupStatus(tempVmInfraInfo.TargetVmInfra.NodeGroups)
 		tempVmInfraInfo.Status = status
 		if status == string(NothingRecommended) {
 			tempVmInfraInfo.Description = "Could not find approprate VMs."
@@ -261,10 +261,10 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Csp:    desiredCsp,
 			Region: desiredRegion,
 		},
-		TargetVmInfra: cloudmodel.MciReq{
-			Name:        "mci101",
+		TargetVmInfra: cloudmodel.InfraReq{
+			Name:        "infra101",
 			Description: "a recommended multi-cloud infrastructure",
-			SubGroups:   []cloudmodel.CreateSubGroupReq{},
+			NodeGroups:  []cloudmodel.CreateNodeGroupReq{},
 		},
 	}
 
@@ -307,7 +307,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	// 3. Recommend VM specs, OS images, and security groups, and
 	// recommend VMs by removing duplicates of VM specs, OS images, and security groups and specifying them.
 	// Note: Don't need to register specs and OS images.
-	var recommendedSubgroupList = []cloudmodel.CreateSubGroupReq{}
+	var recommendedNodegroupList = []cloudmodel.CreateNodeGroupReq{}
 	var recommendedVmSpecList = []cloudmodel.SpecInfo{}
 	var recommendedVmOsImageList = []cloudmodel.ImageInfo{}
 	var recommendedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
@@ -464,7 +464,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// - KT: ["HDD", "SSD"]
 
 		// * Set names to indicate a dependency between resources.
-		tempCreateSubGroupReq := cloudmodel.CreateSubGroupReq{
+		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
 			SpecId:           selectedVmSpec.Id,
@@ -476,28 +476,28 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
 			RootDiskSize:     50,                                                   // Set 50 GB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
-			VmUserName:       "",                                                   // TBD: Set the VM user name if needed
-			VmUserPassword:   "",                                                   // TBD
-			SubGroupSize:     1,                                                    // TBD
+			NodeUserName:     "",                                                   // TBD: Set the VM user name if needed
+			NodeUserPassword: "",                                                   // TBD
+			NodeGroupSize:    1,                                                    // TBD
 			Label: map[string]string{
 				"sourceMachineId": server.MachineId,
 			},
 		}
 
 		// ! Set the root disk type for Alibaba Cloud
-		if csp == "alibaba" && tempCreateSubGroupReq.RootDiskType == "" {
+		if csp == "alibaba" && tempCreateNodeGroupReq.RootDiskType == "" {
 			log.Warn().Msg("set the root disk type to 'cloud_essd' for Alibaba Cloud")
-			tempCreateSubGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
+			tempCreateNodeGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
 		}
 
 		// Append the VM request to the list
-		recommendedSubgroupList = append(recommendedSubgroupList, tempCreateSubGroupReq)
+		recommendedNodegroupList = append(recommendedNodegroupList, tempCreateNodeGroupReq)
 	}
 
 	/*
 	 * [Output]
 	 */
-	recommendedVmInfra.TargetVmInfra.SubGroups = recommendedSubgroupList
+	recommendedVmInfra.TargetVmInfra.NodeGroups = recommendedNodegroupList
 	recommendedVmInfra.TargetVmSpecList = recommendedVmSpecList
 	recommendedVmInfra.TargetVmOsImageList = recommendedVmOsImageList
 	recommendedVmInfra.TargetSecurityGroupList = recommendedSecurityGroupList
@@ -534,9 +534,9 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Csp:    csp,
 			Region: region,
 		},
-		TargetVmInfra: cloudmodel.MciReq{
-			Name:      "mci101",
-			SubGroups: []cloudmodel.CreateSubGroupReq{},
+		TargetVmInfra: cloudmodel.InfraReq{
+			Name:       "infra101",
+			NodeGroups: []cloudmodel.CreateNodeGroupReq{},
 			// Description: "Recommended VMs comprising the multi-cloud infrastructure",
 		},
 	}
@@ -574,8 +574,8 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	skeletonVmInfra.TargetSshKey.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
 	skeletonVmInfra.TargetSshKey.Description = "a SSH Key pair for migration (Note - provided ONLY once, MUST be downloaded"
 
-	// 3. Generate a skeleton of SubGroup List for VMs
-	var skeletonSubgroupList = []cloudmodel.CreateSubGroupReq{}
+	// 3. Generate a skeleton of NodeGroup List for VMs
+	var skeletonNodegroupList = []cloudmodel.CreateNodeGroupReq{}
 
 	// TODO: Select a subnet by the server's network information (for now, select the first one)
 	// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
@@ -592,35 +592,35 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// * Set names to indicate a dependency between resources.
 	for i, server := range srcInfra.Servers {
 		// * Set names to indicate a dependency between resources.
-		tempCreateSubGroupReq := cloudmodel.CreateSubGroupReq{
-			ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-			Description:    fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
-			VNetId:         skeletonVmInfra.TargetVNet.Name,
-			SubnetId:       skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
-			Name:           fmt.Sprintf("vm-%s", server.MachineId),            // Set MachineId to identify the source server
-			RootDiskType:   "",                                                // Set "" or default to use CSP's default
-			RootDiskSize:   50,                                                // Set 50 GB as a default value
-			SshKeyId:       skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
-			VmUserName:     "",                                                // TBD: Set the VM user name if needed
-			VmUserPassword: "",                                                // TBD
-			SubGroupSize:   1,                                                 // Default: 1
+		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
+			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
+			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
+			VNetId:           skeletonVmInfra.TargetVNet.Name,
+			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
+			Name:             fmt.Sprintf("vm-%s", server.MachineId),            // Set MachineId to identify the source server
+			RootDiskType:     "",                                                // Set "" or default to use CSP's default
+			RootDiskSize:     50,                                                // Set 50 GB as a default value
+			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
+			NodeUserName:     "",                                                // TBD: Set the VM user name if needed
+			NodeUserPassword: "",                                                // TBD
+			NodeGroupSize:    1,                                                 // Default: 1
 			Label: map[string]string{
 				"sourceMachineId": server.MachineId,
 			},
 		}
 
 		// ! Set the root disk type for Alibaba Cloud
-		if csp == "alibaba" && tempCreateSubGroupReq.RootDiskType == "" {
+		if csp == "alibaba" && tempCreateNodeGroupReq.RootDiskType == "" {
 			log.Warn().Msg("set the root disk type to 'cloud_essd' for Alibaba Cloud")
-			tempCreateSubGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
+			tempCreateNodeGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
 		}
 
 		// Append the VM request to the list
-		skeletonSubgroupList = append(skeletonSubgroupList, tempCreateSubGroupReq)
+		skeletonNodegroupList = append(skeletonNodegroupList, tempCreateNodeGroupReq)
 	}
 
 	// 4. Recommend security groups with removing duplicates,
-	// and set the recommended security groups to the skeleton SubGroup List
+	// and set the recommended security groups to the skeleton NodeGroup List
 	var deduplicatedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
 	for i, server := range srcInfra.Servers {
 
@@ -648,7 +648,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		}
 
 		// * Set the security group ID to the skeleton SubGroup List
-		skeletonSubgroupList[i].SecurityGroupIds = []string{recommendedSg.Name}
+		skeletonNodegroupList[i].SecurityGroupIds = []string{recommendedSg.Name}
 	}
 
 	/*
@@ -762,8 +762,8 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	for i := 0; i < actualLimit; i++ {
 
 		// Create a copy of the skeleton SubGroup List
-		tempSubGroupList := make([]cloudmodel.CreateSubGroupReq, len(skeletonSubgroupList))
-		copy(tempSubGroupList, skeletonSubgroupList)
+		tempNodeGroupList := make([]cloudmodel.CreateNodeGroupReq, len(skeletonNodegroupList))
+		copy(tempNodeGroupList, skeletonNodegroupList)
 
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
@@ -840,13 +840,13 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 				Str("recommendedOSImage", selectedVmOsImage.CspImageName).
 				Msg("OS comparison")
 
-			// * Set the selected spec and image IDs to the corresponding SubGroup
-			tempSubGroupList[j].SpecId = selectedVmSpec.Id
-			tempSubGroupList[j].ImageId = selectedVmOsImage.Id
+			// * Set the selected spec and image IDs to the corresponding NodeGroup
+			tempNodeGroupList[j].SpecId = selectedVmSpec.Id
+			tempNodeGroupList[j].ImageId = selectedVmOsImage.Id
 
-			// * Include match rate vector in SubGroup description for transparency
+			// * Include match rate vector in NodeGroup description for transparency
 			// Format: "Recommended VM for {serverId} | Match Rate: CPU={x}% Memory={y}% Image={z}% (Min={min}% Avg={avg}%)"
-			tempSubGroupList[j].Description = fmt.Sprintf(
+			tempNodeGroupList[j].Description = fmt.Sprintf(
 				"Recommended VM for %s | Match Rate: CPU=%.1f%% Memory=%.1f%% Image=%.1f%%",
 				server.MachineId,
 				matchRateVec.CPU,
@@ -886,16 +886,16 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			}
 		}
 
-		// Create a candidate infrastructure based on skeleton and current tempSubGroupList
+		// Create a candidate infrastructure based on skeleton and current tempNodeGroupList
 		candidateInfra := skeletonVmInfra
-		candidateInfra.TargetVmInfra.SubGroups = tempSubGroupList
+		candidateInfra.TargetVmInfra.NodeGroups = tempNodeGroupList
 		candidateInfra.TargetVmSpecList = deduplicatedVmSpecList
 		candidateInfra.TargetVmOsImageList = deduplicatedVmOsImageList
 		candidateInfra.TargetSecurityGroupList = deduplicatedSecurityGroupList
 		candidateInfra.TargetVmInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
 
 		// Calculate overall match rate with detailed information
-		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempSubGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
+		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempNodeGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)
 
 		// Set the status and enhanced description with match rate summary
 		candidateInfra.Status = overallStatus
@@ -931,13 +931,13 @@ type InfraMatchRateSummary struct {
 
 // calculateCandidateMatchRateWithDetails calculates overall match rate with detailed summary
 // minMatchRate: Minimum match rate (0-100) for highly-matched classification (typically 90.0)
-func calculateCandidateMatchRateWithDetails(csp string, tempSubGroupList []cloudmodel.CreateSubGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo, minMatchRate float64) (string, string, InfraMatchRateSummary) {
+func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []cloudmodel.CreateNodeGroupReq, srcInfra onpremmodel.OnpremInfra, deduplicatedVmSpecList []cloudmodel.SpecInfo, deduplicatedVmOsImageList []cloudmodel.ImageInfo, minMatchRate float64) (string, string, InfraMatchRateSummary) {
 
 	var overallStatus string
 	var overallStatusDesc string
 	var summary InfraMatchRateSummary
 
-	if len(tempSubGroupList) == 0 {
+	if len(tempNodeGroupList) == 0 {
 		overallStatus = "nothing-to-recommend"
 		overallStatusDesc = "No VMs available for recommendation"
 		summary = InfraMatchRateSummary{MinMatchRate: 0, MaxMatchRate: 0, AvgMatchRate: 0, BestEffortRate: 0, TotalVMs: 0}
@@ -950,8 +950,8 @@ func calculateCandidateMatchRateWithDetails(csp string, tempSubGroupList []cloud
 	var bestEffortCount int = 0
 	var validServerCount int = 0
 
-	for j, subGroup := range tempSubGroupList {
-		if subGroup.SpecId != "" && subGroup.ImageId != "" {
+	for j, nodeGroup := range tempNodeGroupList {
+		if nodeGroup.SpecId != "" && nodeGroup.ImageId != "" {
 			server := srcInfra.Servers[j]
 
 			// Find the spec and image from deduplicated lists
@@ -959,14 +959,14 @@ func calculateCandidateMatchRateWithDetails(csp string, tempSubGroupList []cloud
 			var selectedImage cloudmodel.ImageInfo
 
 			for _, spec := range deduplicatedVmSpecList {
-				if spec.Id == subGroup.SpecId {
+				if spec.Id == nodeGroup.SpecId {
 					selectedSpec = spec
 					break
 				}
 			}
 
 			for _, image := range deduplicatedVmOsImageList {
-				if image.Id == subGroup.ImageId {
+				if image.Id == nodeGroup.ImageId {
 					selectedImage = image
 					break
 				}

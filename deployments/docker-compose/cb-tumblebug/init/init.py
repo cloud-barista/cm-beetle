@@ -578,6 +578,58 @@ def fetch_price():
         return {"error": error_msg}
 
 
+def print_assets_summary(ns_id="system"):
+    try:
+        response = requests.get(
+            f"http://{TUMBLEBUG_SERVER}/tumblebug/assetsSummary",
+            params={"nsId": ns_id},
+            headers=HEADERS,
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+
+        providers = payload.get("providers", [])
+        if not providers:
+            print(Fore.YELLOW + "\nNo asset summary data found.")
+            return
+
+        print(Fore.CYAN + "\nAsset Summary (DB-backed, by CSP)")
+
+        rows = []
+        for p in providers:
+            rows.append(
+                [
+                    p.get("providerName", ""),
+                    p.get("specCount", 0),
+                    p.get("pricedSpecCount", 0),
+                    p.get("unpricedSpecCount", 0),
+                    p.get("imageCount", 0),
+                ]
+            )
+
+        print(
+            tabulate(
+                rows,
+                headers=["Provider", "Specs", "Specs(priced)", "Specs(price-NA)", "Images"],
+                tablefmt="simple",
+            )
+        )
+
+        print(
+            Fore.CYAN
+            + "Totals: "
+            + f"specs={payload.get('totalSpecCount', 0)}, "
+            + f"priced={payload.get('pricedSpecCount', 0)}, "
+            + f"price-NA={payload.get('unpricedSpecCount', 0)}, "
+            + f"images={payload.get('totalImageCount', 0)}"
+        )
+    except requests.RequestException as e:
+        print(Fore.YELLOW + f"\nCould not fetch asset summary from CB-TB API: {str(e)}")
+    except Exception as e:
+        print(Fore.YELLOW + f"\nFailed to render asset summary: {str(e)}")
+
+
 # Register credentials to Tumblebug if requested
 if run_credentials:
     # all_holders was already parsed before health check to ensure all user inputs complete first
@@ -586,8 +638,7 @@ if run_credentials:
 
     # Validate holder names (only lowercase alphanumeric and underscores allowed; no hyphens)
     import re
-
-    holder_name_pattern = re.compile(r"^[a-z0-9_]+$")
+    holder_name_pattern = re.compile(r'^[a-z0-9_]+$')
     for holder_name in holder_names:
         if not holder_name_pattern.match(holder_name.lower()):
             print(Fore.RED + f"\nError: Invalid credential holder name '{holder_name}'.")
@@ -609,7 +660,8 @@ if run_credentials:
         # Register credentials to TumblebugServer using ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=20) as executor:
             future_to_key = {
-                executor.submit(register_credential, holder_name, provider, credentials): (holder_name, provider) for provider, credentials in cred_data.items()
+                executor.submit(register_credential, holder_name, provider, credentials): (holder_name, provider)
+                for provider, credentials in cred_data.items()
             }
             for future in as_completed(future_to_key):
                 holder, provider, message, color = future.result()
@@ -869,19 +921,19 @@ if run_load_templates:
 
                     # Determine template type from resourceType field or content-based auto-detection.
                     # Detection priority:
-                    # 1. 'resourceType' field (e.g., "mci", "vNet")
+                    # 1. 'resourceType' field (e.g., "infra", "vNet")
                     #    - Consistent with Go model's ResourceType field
                     #    - Works for both hand-crafted files and GET API response saved as file
-                    # 2. Content-based detection (presence of 'mciDynamicReq' or 'vNetReq' key)
+                    # 2. Content-based detection (presence of 'infraDynamicReq' or 'vNetReq' key)
                     resource_type = template_data.pop("resourceType", None)
-                    if resource_type == "mci":
-                        template_type = "mci"
+                    if resource_type == "infra":
+                        template_type = "infra"
                     elif resource_type == "vNet":
                         template_type = "vNet"
                     elif resource_type == "securityGroup":
                         template_type = "securityGroup"
-                    elif "mciDynamicReq" in template_data:
-                        template_type = "mci"
+                    elif "infraDynamicReq" in template_data:
+                        template_type = "infra"
                     elif "vNetReq" in template_data or "vNetPolicy" in template_data:
                         template_type = "vNet"
                     elif "securityGroupReq" in template_data:
@@ -931,6 +983,10 @@ if run_load_templates:
             print(Fore.CYAN + f"\nNo template files found in {templates_dir}")
     else:
         print(Fore.CYAN + f"\nTemplates directory not found: {templates_dir}")
+
+# Print final DB-backed summary for fetched common assets.
+if run_all or run_load_assets or run_fetch_price:
+    print_assets_summary("system")
 
 # Final message and set initialization status
 if run_all or (run_credentials and run_load_assets):

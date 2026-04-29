@@ -35,23 +35,23 @@ type TargetInfraSummary struct {
 type TargetSummaryMetadata struct {
 	GeneratedAt    time.Time `json:"generatedAt" example:"2025-10-31T14:30:00Z"`
 	Namespace      string    `json:"namespace" example:"mig01"`
-	MciId          string    `json:"mciId" example:"mmci01"`
-	MciName        string    `json:"mciName" example:"my-migrated-infrastructure"`
+	InfraId        string    `json:"infraId" example:"infra01"`
+	InfraName      string    `json:"infraName" example:"my-migrated-infrastructure"`
 	SummaryVersion string    `json:"summaryVersion" example:"1.0"`
 }
 
 // TargetInfraOverview provides high-level overview of the target infrastructure
 type TargetInfraOverview struct {
-	MciName         string            `json:"mciName" example:"mmci01"`
-	MciDescription  string            `json:"mciDescription" example:"Migrated infrastructure"`
-	Status          string            `json:"status" example:"Running"`
-	TargetCloud     string            `json:"targetCloud" example:"AWS"`
-	TargetRegion    string            `json:"targetRegion" example:"ap-northeast-2"`
-	TotalVmCount    int               `json:"totalVmCount" example:"3"`
-	RunningVmCount  int               `json:"runningVmCount" example:"3"`
-	StoppedVmCount  int               `json:"stoppedVmCount" example:"0"`
-	Label           map[string]string `json:"label,omitempty"`
-	InstallMonAgent string            `json:"installMonAgent" example:"no"`
+	InfraName        string            `json:"infraName" example:"infra01"`
+	InfraDescription string            `json:"infraDescription" example:"Migrated infrastructure"`
+	Status           string            `json:"status" example:"Running"`
+	TargetCloud      string            `json:"targetCloud" example:"AWS"`
+	TargetRegion     string            `json:"targetRegion" example:"ap-northeast-2"`
+	TotalVmCount     int               `json:"totalVmCount" example:"3"`
+	RunningVmCount   int               `json:"runningVmCount" example:"3"`
+	StoppedVmCount   int               `json:"stoppedVmCount" example:"0"`
+	Label            map[string]string `json:"label,omitempty"`
+	InstallMonAgent  string            `json:"installMonAgent" example:"no"`
 }
 
 // SummaryNetworkResources contains VNet and Subnet information

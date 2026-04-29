@@ -27,7 +27,7 @@ func GenerateMarkdownSummary(summary *TargetInfraSummary) string {
 	md.WriteString("# Target Cloud Infrastructure Summary\n\n")
 	md.WriteString(fmt.Sprintf("**Generated At:** %s\n\n", summary.SummaryMetadata.GeneratedAt.Format("2006-01-02 15:04:05")))
 	md.WriteString(fmt.Sprintf("**Namespace:** %s\n\n", summary.SummaryMetadata.Namespace))
-	md.WriteString(fmt.Sprintf("**MCI Name:** %s\n\n", summary.SummaryMetadata.MciName))
+	md.WriteString(fmt.Sprintf("**Infra Name:** %s\n\n", summary.SummaryMetadata.InfraName))
 	md.WriteString("---\n\n")
 
 	// Overview Section
@@ -64,8 +64,8 @@ func generateOverviewMarkdown(overview *TargetInfraOverview) string {
 
 	md.WriteString("| Property | Value |\n")
 	md.WriteString("|----------|-------|\n")
-	md.WriteString(fmt.Sprintf("| **MCI Name** | %s |\n", overview.MciName))
-	md.WriteString(fmt.Sprintf("| **Description** | %s |\n", overview.MciDescription))
+	md.WriteString(fmt.Sprintf("| **Infra Name** | %s |\n", overview.InfraName))
+	md.WriteString(fmt.Sprintf("| **Description** | %s |\n", overview.InfraDescription))
 	md.WriteString(fmt.Sprintf("| **Status** | %s |\n", overview.Status))
 	md.WriteString(fmt.Sprintf("| **Target Cloud** | %s |\n", overview.TargetCloud))
 	md.WriteString(fmt.Sprintf("| **Target Region** | %s |\n", overview.TargetRegion))
