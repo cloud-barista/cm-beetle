@@ -172,7 +172,7 @@ If you are developing another project locally and want to use the local version 
 ```go
 module my-other-project
 
-go 1.25.0
+go 1.26.2
 
 require github.com/cloud-barista/cm-beetle/transx v0.0.0-unused
 
