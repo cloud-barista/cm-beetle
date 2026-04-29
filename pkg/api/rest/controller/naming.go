@@ -35,7 +35,7 @@ import (
 // @Description - `subnet` : Rename Subnet → propagates to SubGroup.SubnetId
 // @Description - `sshKey` : Rename SSH Key → propagates to SubGroup.SshKeyId
 // @Description - `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds
-// @Description - `mci` : Rename MCI (no child propagation)
+// @Description - `infra` : Rename Infra (no child propagation)
 // @Description
 // @Description After propagation, names are validated with NameSeed applied (pre-flight check).
 // @Description The returned model uses **base names only** (NameSeed is applied at migration time).
@@ -45,12 +45,12 @@ import (
 // @Tags [Infrastructure] Resource Naming
 // @Accept  json
 // @Produce  json
-// @Param resourceType query string true "Resource type to rename" Enums(vNet,subnet,securityGroup,sshKey,mci)
+// @Param resourceType query string true "Resource type to rename" Enums(vNet,subnet,securityGroup,sshKey,infra)
 // @Param oldName query string true "Current name of the resource (before change)"
 // @Param newName query string true "New name of the resource (after change)"
-// @Param UserInfra body cloudmodel.RecommendedVmInfra true "The recommendation model to update"
+// @Param UserInfra body cloudmodel.RecommendedInfra true "The recommendation model to update"
 // @Param X-Request-Id header string false "Unique request ID"
-// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmInfra] "Updated and validated model (base names)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedInfra] "Updated and validated model (base names)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request or referential integrity failure"
 // @Router /naming/alignment [post]
 func AlignNames(c echo.Context) error {
@@ -62,7 +62,7 @@ func AlignNames(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("query params 'resourceType', 'oldName', and 'newName' are all required"))
 	}
 
-	req := &cloudmodel.RecommendedVmInfra{}
+	req := &cloudmodel.RecommendedInfra{}
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request body format"))
 	}
@@ -85,20 +85,20 @@ func AlignNames(c echo.Context) error {
 // ValidateNames godoc
 // @ID ValidateNames
 // @Summary Validate resource names and referential integrity
-// @Description Validates that all internal references within a RecommendedVmInfra model
+// @Description Validates that all internal references within a RecommendedInfra model
 // @Description are consistent and point to existing resources.
 // @Description NameSeed is NOT applied here; this validates the base names only.
 // @Description
 // @Tags [Infrastructure] Resource Naming
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body cloudmodel.RecommendedVmInfra true "The recommendation model to validate"
+// @Param UserInfra body cloudmodel.RecommendedInfra true "The recommendation model to validate"
 // @Param X-Request-Id header string false "Unique request ID"
 // @Success 200 {object} model.ApiResponse[any] "Naming and referential integrity are valid"
 // @Failure 400 {object} model.ApiResponse[any] "Referential integrity validation failure"
 // @Router /naming/validation [post]
 func ValidateNames(c echo.Context) error {
-	req := &cloudmodel.RecommendedVmInfra{}
+	req := &cloudmodel.RecommendedInfra{}
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}

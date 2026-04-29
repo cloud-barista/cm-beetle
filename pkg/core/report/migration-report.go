@@ -20,14 +20,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
 	"github.com/rs/zerolog/log"
 )
 
 // GenerateMigrationReport generates a comprehensive migration report
-func GenerateMigrationReport(nsId, mciId string, sourceInfra onpremmodel.OnpremInfra) (*MigrationReport, error) {
-	log.Info().Msgf("Generating migration report (nsId: %s, mciId: %s)", nsId, mciId)
+func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.OnpremInfra) (*MigrationReport, error) {
+	log.Info().Msgf("Generating migration report (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Step 1: Generate source infrastructure summary
 	sourceInfraName := fmt.Sprintf("infra-%d-servers", len(sourceInfra.Servers))
@@ -38,7 +38,7 @@ func GenerateMigrationReport(nsId, mciId string, sourceInfra onpremmodel.OnpremI
 	}
 
 	// Step 2: Generate target infrastructure summary
-	targetSummary, err := summary.GenerateInfraSummary(nsId, mciId)
+	targetSummary, err := summary.GenerateInfraSummary(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate target infrastructure summary")
 		return nil, fmt.Errorf("failed to generate target infrastructure summary: %w", err)
@@ -47,9 +47,9 @@ func GenerateMigrationReport(nsId, mciId string, sourceInfra onpremmodel.OnpremI
 	// Step 3: Build report metadata
 	metadata := ReportMetadata{
 		GeneratedAt:   time.Now(),
-		MigrationID:   fmt.Sprintf("%s/%s", nsId, mciId),
+		MigrationID:   fmt.Sprintf("%s/%s", nsId, infraId),
 		Namespace:     nsId,
-		MciID:         mciId,
+		InfraID:       infraId,
 		ReportVersion: "1.0",
 	}
 
@@ -84,7 +84,7 @@ func GenerateMigrationReport(nsId, mciId string, sourceInfra onpremmodel.OnpremI
 		TargetDetails:     targetSummary,
 	}
 
-	log.Info().Msgf("Successfully generated migration report (nsId: %s, mciId: %s)", nsId, mciId)
+	log.Info().Msgf("Successfully generated migration report (nsId: %s, infraId: %s)", nsId, infraId)
 	return report, nil
 }
 

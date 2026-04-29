@@ -18,6 +18,7 @@ on:
       - "src/testclient/scripts/**"
       - "docs/**"
       - "deepdiffgo/**"
+      - "imdl/**"
 
 jobs:
   # The job key (i.e., ID) is "build-source-code"

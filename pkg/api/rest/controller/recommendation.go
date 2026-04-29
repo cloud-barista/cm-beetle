@@ -39,13 +39,13 @@ import (
  * VM Infrastructure Recommendation
  */
 
-type RecommendVmInfraWithDefaultsRequest struct {
+type RecommendInfraWithDefaultsRequest struct {
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
-type RecommendVmInfraWithDefaultsResponse struct {
-	cloudmodel.RecommendedVmInfraDynamicList
+type RecommendInfraWithDefaultsResponse struct {
+	cloudmodel.RecommendedInfraDynamicList
 }
 
 // RecommendVMInfraWithDefaults godoc
@@ -60,21 +60,21 @@ type RecommendVmInfraWithDefaultsResponse struct {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraWithDefaultsRequest true "Specify the source infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraWithDefaultsRequest true "Specify the source infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[RecommendVmInfraWithDefaultsResponse] "The result of recommended infrastructure"
+// @Success 200 {object} model.ApiResponse[RecommendInfraWithDefaultsResponse] "The result of recommended infrastructure"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /recommendation/mciWithDefaults [post]
+// @Router /recommendation/infraWithDefaults [post]
 func RecommendVMInfraWithDefaults(c echo.Context) error {
 
 	// [Input]
 	desiredCsp := c.QueryParam("desiredCsp")
 	desiredRegion := c.QueryParam("desiredRegion")
 
-	reqt := &RecommendVmInfraWithDefaultsRequest{}
+	reqt := &RecommendInfraWithDefaultsRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind a request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -119,85 +119,14 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	return c.JSON(http.StatusOK, model.SuccessResponse(recommendedInfraInfoList))
 }
 
-type RecommendVmInfraRequest struct {
+type RecommendInfraRequest struct {
 	NameSeed                string                   `json:"nameSeed" example:"my"` // Base string for resource name prefix (e.g., 'my' -> 'my-vnet-01')
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
 
-type RecommendVmInfraResponse struct {
-	cloudmodel.RecommendedVmInfra
-}
-
-// RecommendVMInfra godoc
-// @ID RecommendVMInfra
-// @Summary **(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
-// @Description **(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration
-// @Description
-// @Description [Note] `desiredCsp` and `desiredRegion` are required.
-// @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
-// @Description
-// @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Infrastructure
-// @Accept  json
-// @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the source infrastructure to be migrated"
-// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
-// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[RecommendVmInfraResponse] "The result of recommended infrastructure"
-// @Failure 404 {object} model.ApiResponse[any]
-// @Failure 500 {object} model.ApiResponse[any]
-// @Router /recommendation/mci [post]
-func RecommendVMInfra(c echo.Context) error {
-
-	// [Input]
-	desiredCsp := c.QueryParam("desiredCsp")
-	desiredRegion := c.QueryParam("desiredRegion")
-
-	reqt := &RecommendVmInfraRequest{}
-	if err := c.Bind(reqt); err != nil {
-		log.Warn().Err(err).Msg("failed to bind a request body")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
-	}
-	log.Trace().Msgf("reqt: %v\n", reqt)
-
-	if reqt.DesiredCspAndRegionPair.Csp == "" && desiredCsp == "" {
-		log.Warn().Msg("desiredCsp is required")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
-	}
-	if reqt.DesiredCspAndRegionPair.Region == "" && desiredRegion == "" {
-		log.Warn().Msg("desiredRegion is required")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
-	}
-
-	csp := reqt.DesiredCspAndRegionPair.Csp
-	if csp == "" {
-		csp = desiredCsp
-	}
-	region := reqt.DesiredCspAndRegionPair.Region
-	if region == "" {
-		region = desiredRegion
-	}
-	sourceInfra := reqt.OnpremiseInfraModel
-
-	ok, err := recommendation.IsValidCspAndRegion(csp, region)
-	if !ok {
-		log.Error().Err(err).Msg("failed to validate CSP and region")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
-	}
-
-	// [Process]
-	recommendedInfra, err := recommendation.RecommendVmInfra(csp, region, sourceInfra)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
-		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Recommendation failed"))
-	}
-
-	// [Ouput]
-	//
-
-	return c.JSON(http.StatusOK, model.SuccessResponse(recommendedInfra))
+type RecommendInfraResponse struct {
+	cloudmodel.RecommendedInfra
 }
 
 // RecommendVmInfraCandidates godoc
@@ -226,16 +155,16 @@ func RecommendVMInfra(c echo.Context) error {
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the source infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraRequest true "Specify the source infrastructure to be migrated"
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedVmInfra] "Successfully recommended infrastructure candidates"
+// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "Successfully recommended infrastructure candidates"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
-// @Router /recommendation/vmInfra [post]
+// @Router /recommendation/infra [post]
 func RecommendVmInfraCandidates(c echo.Context) error {
 
 	// [Input]
@@ -261,7 +190,7 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 		}
 	}
 
-	reqt := &RecommendVmInfraRequest{}
+	reqt := &RecommendInfraRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind a request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -429,40 +358,4 @@ func RecommendK8sNodeGroup(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
-}
-
-/*
- * Container Infrastructure Recommendation (Legacy - will be deprecated)
- */
-type RecommendInfraRequest struct {
-	DesiredProvider string                      `json:"desiredProvider" example:"aws"`
-	DesiredRegion   string                      `json:"desiredRegion" example:"ap-northeast-2"`
-	Servers         []recommendation.Kubernetes `json:"servers"`
-}
-
-// recommendation.KubernetesInfoList is defined in pkg/core/recommendation/container-infra.go
-
-type RecommendInfraResponse struct {
-	recommendation.RecommendedInfraInfo
-}
-
-// RecommendContainerInfra godoc
-// @ID RecommendContainerInfra
-// @Summary (Deprecated) Recommend an appropriate container infrastructure for cloud migration
-// @Description [DEPRECATED] This endpoint is deprecated. Use /recommendation/k8sCluster and /recommendation/k8sNodeGroup instead.
-// @Description
-// @Description [Note] `desiredProvider` and `desiredRegion` are required.
-// @Tags [Recommendation] Infrastructure
-// @Accept  json
-// @Produce  json
-// @Param UserInfra body RecommendInfraRequest true "Specify the source container infrastructure"
-// @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
-// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[any] "Deprecated endpoint notice"
-// @Failure 400 {object} model.ApiResponse[any]
-// @Router /recommendation/containerInfra [post]
-// @Deprecated
-func RecommendContainerInfra(c echo.Context) error {
-	return c.JSON(http.StatusGone, model.SimpleErrorResponse("This endpoint is deprecated. Please use /recommendation/k8sCluster for control plane and /recommendation/k8sNodeGroup for worker nodes."))
 }

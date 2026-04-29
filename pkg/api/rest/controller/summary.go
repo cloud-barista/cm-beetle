@@ -19,9 +19,9 @@ import (
 	"net/http"
 	"strings"
 
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
-	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -58,7 +58,7 @@ import (
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during summary generation"
-// @Router /summary/target/ns/{nsId}/mci/{mciId} [get]
+// @Router /summary/target/ns/{nsId}/infra/{infraId} [get]
 func GenerateTargetInfraSummary(c echo.Context) error {
 
 	// [Input]
@@ -68,10 +68,10 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
 	}
 
-	mciId := c.Param("mciId")
-	if mciId == "" {
-		log.Warn().Msg("MCI ID is required")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("MCI ID required"))
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		log.Warn().Msg("Infra ID is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Infra ID required"))
 	}
 
 	format := c.QueryParam("format")
@@ -93,10 +93,10 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	}
 
 	// [Process]
-	log.Info().Msgf("Generating infrastructure summary (nsId: %s, mciId: %s, format: %s, download: %s)", nsId, mciId, format, download)
+	log.Info().Msgf("Generating infrastructure summary (nsId: %s, infraId: %s, format: %s, download: %s)", nsId, infraId, format, download)
 
 	// Generate the infrastructure summary
-	infraSummary, err := summary.GenerateInfraSummary(nsId, mciId)
+	infraSum, err := summary.GenerateInfraSummary(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate infrastructure summary")
 
@@ -111,7 +111,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	// [Output]
 	if format == "md" || format == "html" {
 		// Generate markdown summary
-		markdownSummary := summary.GenerateMarkdownSummary(infraSummary)
+		markdownSummary := summary.GenerateMarkdownSummary(infraSum)
 
 		var content []byte
 		var contentType string
@@ -132,7 +132,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 		// Set Content-Disposition header based on download parameter
 		// - "inline": displays content in browser/Swagger UI (allows both viewing and downloading)
 		// - "attachment": forces file download in browser (content not displayed in Swagger UI response body)
-		filename := fmt.Sprintf("target-summary-%s-%s.%s", nsId, mciId, fileExtension)
+		filename := fmt.Sprintf("target-summary-%s-%s.%s", nsId, infraId, fileExtension)
 		dispositionType := "inline"
 		if download == "true" {
 			dispositionType = "attachment"
@@ -145,7 +145,7 @@ func GenerateTargetInfraSummary(c echo.Context) error {
 	}
 
 	// Return JSON format (default)
-	return c.JSON(http.StatusOK, model.SuccessResponse(infraSummary))
+	return c.JSON(http.StatusOK, model.SuccessResponse(infraSum))
 }
 
 // GenerateSourceInfraSummaryRequest represents the request body for source infrastructure summary

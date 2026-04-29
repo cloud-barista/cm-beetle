@@ -54,7 +54,7 @@ type MigrateInfraWithDefaultsResponse struct {
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 201 {object} model.ApiResponse[MigrateInfraWithDefaultsResponse] "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /migration/ns/{nsId}/mciWithDefaults [post]
+// @Router /migration/ns/{nsId}/infraWithDefaults [post]
 func MigrateInfraWithDefaults(c echo.Context) error {
 
 	// [Input]
@@ -93,7 +93,7 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 // TODO: Check and dev the request and response bodies for the following API
 
 type MigrateInfraRequest struct {
-	cloudmodel.RecommendedVmInfra
+	cloudmodel.RecommendedInfra
 }
 
 type MigrateInfraResponse struct {
@@ -108,12 +108,12 @@ type MigrateInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciInfo body MigrateInfraRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
+// @Param infraInfo body MigrateInfraRequest true "Specify the information for the targeted multi-cloud infrastructure"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 201 {object} model.ApiResponse[MigrateInfraResponse] "Successfully migrated to the multi-cloud infrastructure"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /migration/ns/{nsId}/mci [post]
+// @Router /migration/ns/{nsId}/infra [post]
 func MigrateInfra(c echo.Context) error {
 
 	// [Input]
@@ -131,11 +131,11 @@ func MigrateInfra(c echo.Context) error {
 	}
 
 	// log.Debug().Msgf("req: %+v", req)
-	log.Debug().Msgf("req.RecommendedVmInfra: %+v", req.RecommendedVmInfra)
+	log.Debug().Msgf("req.RecommendedVmInfra: %+v", req.RecommendedInfra)
 
 	// [Process]
 	// Apply NameSeed (Late Binding) before migration
-	infraToMigrate := common.ApplyNameSeed(req.RecommendedVmInfra)
+	infraToMigrate := common.ApplyNameSeed(req.RecommendedInfra)
 
 	// Validate names and referential integrity
 	if ok, detail := common.ValidateComposedNames(infraToMigrate); !ok {
@@ -171,7 +171,7 @@ func MigrateInfra(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[cloudmodel.IdList] "The ID list of The migrated multi-cloud infrastructure (Infra)"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /migration/ns/{nsId}/mci [get]
+// @Router /migration/ns/{nsId}/infra [get]
 func ListInfra(c echo.Context) error {
 
 	// [Input]
@@ -219,12 +219,12 @@ func ListInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')" default(my-infra101)
+// @Param infraId path string true "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')" default(my-infra101)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[MigrateInfraResponse] "The migrated multi-cloud infrastructure (MCI) information"
+// @Success 200 {object} model.ApiResponse[MigrateInfraResponse] "The migrated multi-cloud infrastructure information"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /migration/ns/{nsId}/mci/{mciId} [get]
+// @Router /migration/ns/{nsId}/infra/{infraId} [get]
 func GetInfra(c echo.Context) error {
 
 	// [Input]
@@ -236,15 +236,15 @@ func GetInfra(c echo.Context) error {
 	}
 	// nsId := common.DefaultNamespaceId
 
-	mciId := c.Param("mciId")
-	if mciId == "" {
-		err := fmt.Errorf("invalid request, the multi-cloud infrastructure ID (mciId: %s) is required", mciId)
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		err := fmt.Errorf("invalid request, the cloud infrastructure ID (infraId: %s) is required", infraId)
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
 	// [Process]
-	vmInfraInfo, err := migration.GetVMInfra(nsId, mciId)
+	vmInfraInfo, err := migration.GetVMInfra(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure")
 
@@ -267,13 +267,13 @@ func GetInfra(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')" default(my-infra101)
+// @Param infraId path string true "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')" default(my-infra101)
 // @Param option query string false "Option for deletion" Enums(terminate,force) default(terminate)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[any] "The result of deleting the migrated multi-cloud infrastructure (MCI)"
+// @Success 200 {object} model.ApiResponse[any] "The result of deleting the migrated multi-cloud infrastructure"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Router /migration/ns/{nsId}/mci/{mciId} [delete]
+// @Router /migration/ns/{nsId}/infra/{infraId} [delete]
 func DeleteInfra(c echo.Context) error {
 
 	// [Input]
@@ -285,9 +285,9 @@ func DeleteInfra(c echo.Context) error {
 	}
 	// nsId := common.DefaultNamespaceId
 
-	mciId := c.Param("mciId")
-	if mciId == "" {
-		err := fmt.Errorf("invalid request, the multi-cloud infrastructure ID (mciId: %s) is required", mciId)
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		err := fmt.Errorf("invalid request, the cloud infrastructure ID (infraId: %s) is required", infraId)
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
@@ -300,7 +300,7 @@ func DeleteInfra(c echo.Context) error {
 	}
 
 	// [Process]
-	retMsg, err := migration.DeleteVMInfra(nsId, mciId, option)
+	retMsg, err := migration.DeleteVMInfra(nsId, infraId, option)
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete the migrated multi-cloud infrastructure")

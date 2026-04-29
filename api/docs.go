@@ -538,7 +538,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/ns/{nsId}/mci": {
+        "/migration/ns/{nsId}/infra": {
             "get": {
                 "description": "Get the migrated multi-cloud infrastructure (MCI)",
                 "consumes": [
@@ -621,8 +621,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Specify the information for the targeted mulci-cloud infrastructure (MCI)",
-                        "name": "mciInfo",
+                        "description": "Specify the information for the targeted multi-cloud infrastructure",
+                        "name": "infraInfo",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -658,7 +658,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/ns/{nsId}/mci/{mciId}": {
+        "/migration/ns/{nsId}/infra/{infraId}": {
             "get": {
                 "description": "Get the migrated multi-cloud infrastructure (MCI)",
                 "consumes": [
@@ -684,8 +684,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "my-infra101",
-                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
-                        "name": "mciId",
+                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
+                        "name": "infraId",
                         "in": "path",
                         "required": true
                     },
@@ -698,7 +698,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The migrated multi-cloud infrastructure (MCI) information",
+                        "description": "The migrated multi-cloud infrastructure information",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraResponse"
                         }
@@ -742,8 +742,8 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "default": "my-infra101",
-                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
-                        "name": "mciId",
+                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
+                        "name": "infraId",
                         "in": "path",
                         "required": true
                     },
@@ -767,7 +767,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The result of deleting the migrated multi-cloud infrastructure (MCI)",
+                        "description": "The result of deleting the migrated multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -787,7 +787,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/migration/ns/{nsId}/mciWithDefaults": {
+        "/migration/ns/{nsId}/infraWithDefaults": {
             "post": {
                 "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.",
                 "consumes": [
@@ -1615,7 +1615,7 @@ const docTemplate = `{
         },
         "/naming/alignment": {
             "post": {
-                "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- ` + "`" + `vNet` + "`" + ` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- ` + "`" + `subnet` + "`" + ` : Rename Subnet → propagates to SubGroup.SubnetId\n- ` + "`" + `sshKey` + "`" + ` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- ` + "`" + `securityGroup` + "`" + ` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- ` + "`" + `mci` + "`" + ` : Rename MCI (no child propagation)\n\nAfter propagation, names are validated with NameSeed applied (pre-flight check).\nThe returned model uses **base names only** (NameSeed is applied at migration time).\n\nSee also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)\n",
+                "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- ` + "`" + `vNet` + "`" + ` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- ` + "`" + `subnet` + "`" + ` : Rename Subnet → propagates to SubGroup.SubnetId\n- ` + "`" + `sshKey` + "`" + ` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- ` + "`" + `securityGroup` + "`" + ` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- ` + "`" + `infra` + "`" + ` : Rename Infra (no child propagation)\n\nAfter propagation, names are validated with NameSeed applied (pre-flight check).\nThe returned model uses **base names only** (NameSeed is applied at migration time).\n\nSee also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1634,7 +1634,7 @@ const docTemplate = `{
                             "subnet",
                             "securityGroup",
                             "sshKey",
-                            "mci"
+                            "infra"
                         ],
                         "type": "string",
                         "description": "Resource type to rename",
@@ -1662,7 +1662,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                            "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                         }
                     },
                     {
@@ -1676,7 +1676,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Updated and validated model (base names)",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmInfra"
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedInfra"
                         }
                     },
                     "400": {
@@ -1690,7 +1690,7 @@ const docTemplate = `{
         },
         "/naming/validation": {
             "post": {
-                "description": "Validates that all internal references within a RecommendedVmInfra model\nare consistent and point to existing resources.\nNameSeed is NOT applied here; this validates the base names only.\n",
+                "description": "Validates that all internal references within a RecommendedInfra model\nare consistent and point to existing resources.\nNameSeed is NOT applied here; this validates the base names only.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1709,7 +1709,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                            "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                         }
                     },
                     {
@@ -1773,9 +1773,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/containerInfra": {
+        "/recommendation/infra": {
             "post": {
-                "description": "[DEPRECATED] This endpoint is deprecated. Use /recommendation/k8sCluster and /recommendation/k8sNodeGroup instead.\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'my' -\u003e 'my-vnet-01').\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1785,12 +1785,11 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "(Deprecated) Recommend an appropriate container infrastructure for cloud migration",
-                "operationId": "RecommendContainerInfra",
-                "deprecated": true,
+                "summary": "Recommend multiple VM infrastructure candidates for cloud migration",
+                "operationId": "RecommendVmInfraCandidates",
                 "parameters": [
                     {
-                        "description": "Specify the source container infrastructure",
+                        "description": "Specify the source infrastructure to be migrated",
                         "name": "UserInfra",
                         "in": "body",
                         "required": true,
@@ -1809,7 +1808,93 @@ const docTemplate = `{
                         "type": "string",
                         "default": "aws",
                         "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredProvider",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit (default: 3) the number of recommended infrastructures",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "name": "minMatchRate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended infrastructure candidates",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/infraWithDefaults": {
+            "post": {
+                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "(To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration",
+                "operationId": "RecommendVMInfraWithDefaults",
+                "parameters": [
+                    {
+                        "description": "Specify the source infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraWithDefaultsRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
                         "in": "query"
                     },
                     {
@@ -1828,13 +1913,19 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deprecated endpoint notice",
+                        "description": "The result of recommended infrastructure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendInfraWithDefaultsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1984,154 +2075,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/mci": {
-            "post": {
-                "description": "**(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] Infrastructure"
-                ],
-                "summary": "**(To be deprecated)** Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) for cloud migration",
-                "operationId": "RecommendVMInfra",
-                "parameters": [
-                    {
-                        "description": "Specify the source infrastructure to be migrated",
-                        "name": "UserInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
-                        ],
-                        "type": "string",
-                        "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredCsp",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The result of recommended infrastructure",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendVmInfraResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/recommendation/mciWithDefaults": {
-            "post": {
-                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] Infrastructure"
-                ],
-                "summary": "(To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration",
-                "operationId": "RecommendVMInfraWithDefaults",
-                "parameters": [
-                    {
-                        "description": "Specify the source infrastructure to be migrated",
-                        "name": "UserInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsRequest"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
-                        ],
-                        "type": "string",
-                        "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredCsp",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The result of recommended infrastructure",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    }
-                }
-            }
-        },
         "/recommendation/middleware/objectStorage": {
             "post": {
                 "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Warning] the recommended bucket name may be globally unique.\n- Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.\n- Suppose that the existing bucket name is unique enough.\n- Generate a suffix based on the existing bucket name.\n- e.g., \"my-bucket\" -\u003e SHA256 hash -\u003e base64 URL-safe encoding (6 bytes) -\u003e lowercase -\u003e \"my-bucket-{suffix}\"",
@@ -2206,6 +2149,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/recommendation/resources/osImages": {
+            "post": {
+                "description": "Recommend an appropriate OS image for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for VM infrastructure"
+                ],
+                "summary": "Recommend an appropriate OS image for cloud migration",
+                "operationId": "RecommendVmOsImages",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended VM OS image(s)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedOsImageList"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/recommendation/resources/securityGroups": {
             "post": {
                 "description": "Recommend an appropriate security group for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
@@ -2227,7 +2244,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
                     },
                     {
@@ -2280,6 +2297,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/recommendation/resources/specs": {
+            "post": {
+                "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.\n- If ` + "`" + `targetMachineId` + "`" + ` is provided, only that specific machine will be processed.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for VM infrastructure"
+                ],
+                "summary": "Recommend an appropriate VM specification for cloud migration",
+                "operationId": "RecommendVmSpecs",
+                "parameters": [
+                    {
+                        "description": "Specify the your infrastructure to be migrated",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws, azure, gcp)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target Machine ID to focus recommendation on (optional)",
+                        "name": "targetMachineId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended VM spec(s)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedSpecList"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/recommendation/resources/vNet": {
             "post": {
                 "description": "Recommend an appropriate virtual network for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
@@ -2301,7 +2398,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
+                            "$ref": "#/definitions/controller.RecommendInfraRequest"
                         }
                     },
                     {
@@ -2354,247 +2451,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/resources/vmOsImages": {
-            "post": {
-                "description": "Recommend an appropriate OS image for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
-                ],
-                "summary": "Recommend an appropriate OS image for cloud migration",
-                "operationId": "RecommendVmOsImages",
-                "parameters": [
-                    {
-                        "description": "Specify the your infrastructure to be migrated",
-                        "name": "UserInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
-                        ],
-                        "type": "string",
-                        "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredProvider",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully recommended VM OS image(s)",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmOsImageList"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error during recommendation",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/recommendation/resources/vmSpecs": {
-            "post": {
-                "description": "Recommend an appropriate VM specification for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.\n- If ` + "`" + `targetMachineId` + "`" + ` is provided, only that specific machine will be processed.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
-                ],
-                "summary": "Recommend an appropriate VM specification for cloud migration",
-                "operationId": "RecommendVmSpecs",
-                "parameters": [
-                    {
-                        "description": "Specify the your infrastructure to be migrated",
-                        "name": "UserInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
-                        ],
-                        "type": "string",
-                        "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredProvider",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Target Machine ID to focus recommendation on (optional)",
-                        "name": "targetMachineId",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully recommended VM spec(s)",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedVmSpecList"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error during recommendation",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/recommendation/vmInfra": {
-            "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'my' -\u003e 'my-vnet-01').\n",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] Infrastructure"
-                ],
-                "summary": "Recommend multiple VM infrastructure candidates for cloud migration",
-                "operationId": "RecommendVmInfraCandidates",
-                "parameters": [
-                    {
-                        "description": "Specify the source infrastructure to be migrated",
-                        "name": "UserInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.RecommendVmInfraRequest"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws",
-                            "azure",
-                            "gcp",
-                            "alibaba",
-                            "ncp"
-                        ],
-                        "type": "string",
-                        "default": "aws",
-                        "description": "Provider (e.g., aws, azure, gcp)",
-                        "name": "desiredCsp",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit (default: 3) the number of recommended infrastructures",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
-                        "name": "minMatchRate",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully recommended infrastructure candidates",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedVmInfra"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request parameters",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error during recommendation",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    }
-                }
-            }
-        },
-        "/report/migration/ns/{nsId}/mci/{mciId}": {
+        "/report/migration/ns/{nsId}/infra/{infraId}": {
             "post": {
                 "description": "Generate a comprehensive migration report comparing source infrastructure with target cloud VMs, including resource mappings, network/security analysis, cost summary, and recommendations in Markdown or HTML format",
                 "consumes": [
@@ -2621,10 +2478,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mci101",
-                        "example": "\"mci101\"",
-                        "description": "MCI ID",
-                        "name": "mciId",
+                        "default": "infra101",
+                        "example": "\"infra101\"",
+                        "description": "Infra ID",
+                        "name": "infraId",
                         "in": "path",
                         "required": true
                     },
@@ -2964,7 +2821,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/summary/target/ns/{nsId}/mci/{mciId}": {
+        "/summary/target/ns/{nsId}/infra/{infraId}": {
             "get": {
                 "description": "Generate a comprehensive target infrastructure summary in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[TargetInfraSummary] with Content-Type: application/json\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
                 "consumes": [
@@ -4367,6 +4224,104 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
+        "cloudmodel.RecommendedInfra": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "nameSeed": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedInfraDynamic": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraDynamicReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedOsImage": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetOsImage": {
+                    "$ref": "#/definitions/cloudmodel.ImageInfo"
+                }
+            }
+        },
+        "cloudmodel.RecommendedOsImageList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedOsImage"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.RecommendedSecurityGroup": {
             "type": "object",
             "properties": {
@@ -4407,6 +4362,46 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.RecommendedSpec": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "sourceServers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetSpec": {
+                    "$ref": "#/definitions/cloudmodel.SpecInfo"
+                }
+            }
+        },
+        "cloudmodel.RecommendedSpecList": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "recommendedSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.RecommendedSpec"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.RecommendedVNet": {
             "type": "object",
             "properties": {
@@ -4435,144 +4430,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.RecommendedVNet"
                     }
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmInfra": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
-                    }
-                },
-                "targetSshKey": {
-                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
-                },
-                "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.VNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.InfraReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.ImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SpecInfo"
-                    }
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmInfraDynamic": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.InfraDynamicReq"
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmOsImage": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "sourceServers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetVmOsImage": {
-                    "$ref": "#/definitions/cloudmodel.ImageInfo"
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmOsImageList": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmOsImage"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmSpec": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "sourceServers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetVmSpec": {
-                    "$ref": "#/definitions/cloudmodel.SpecInfo"
-                }
-            }
-        },
-        "cloudmodel.RecommendedVmSpecList": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "recommendedVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmSpec"
-                    }
-                },
-                "status": {
-                    "type": "string"
                 }
             }
         },
@@ -5194,10 +5051,25 @@ const docTemplate = `{
                 "targetCloud": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
                 "targetSecurityGroupList": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
                     }
                 },
                 "targetSshKey": {
@@ -5205,21 +5077,6 @@ const docTemplate = `{
                 },
                 "targetVNet": {
                     "$ref": "#/definitions/cloudmodel.VNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.InfraReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.ImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SpecInfo"
-                    }
                 }
             }
         },
@@ -5577,18 +5434,43 @@ const docTemplate = `{
         "controller.RecommendInfraRequest": {
             "type": "object",
             "properties": {
-                "desiredProvider": {
-                    "type": "string",
-                    "example": "aws"
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
-                "desiredRegion": {
+                "nameSeed": {
+                    "description": "Base string for resource name prefix (e.g., 'my' -\u003e 'my-vnet-01')",
                     "type": "string",
-                    "example": "ap-northeast-2"
+                    "example": "my"
                 },
-                "servers": {
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendInfraWithDefaultsRequest": {
+            "type": "object",
+            "properties": {
+                "desiredCspAndRegionPair": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendInfraWithDefaultsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "targetInfraList": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/recommendation.Kubernetes"
+                        "$ref": "#/definitions/cloudmodel.RecommendedInfraDynamic"
                     }
                 }
             }
@@ -5608,94 +5490,6 @@ const docTemplate = `{
                     "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/controller.SourceObjectStorageProperty"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVmInfraRequest": {
-            "type": "object",
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "nameSeed": {
-                    "description": "Base string for resource name prefix (e.g., 'my' -\u003e 'my-vnet-01')",
-                    "type": "string",
-                    "example": "my"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendVmInfraResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "targetCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "targetSecurityGroupList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
-                    }
-                },
-                "targetSshKey": {
-                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
-                },
-                "targetVNet": {
-                    "$ref": "#/definitions/cloudmodel.VNetReq"
-                },
-                "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.InfraReq"
-                },
-                "targetVmOsImageList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.ImageInfo"
-                    }
-                },
-                "targetVmSpecList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.SpecInfo"
-                    }
-                }
-            }
-        },
-        "controller.RecommendVmInfraWithDefaultsRequest": {
-            "type": "object",
-            "properties": {
-                "desiredCspAndRegionPair": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "onpremiseInfraModel": {
-                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
-                }
-            }
-        },
-        "controller.RecommendVmInfraWithDefaultsResponse": {
-            "type": "object",
-            "properties": {
-                "count": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "targetVmInfraList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfraDynamic"
                     }
                 }
             }
@@ -5815,14 +5609,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-array_cloudmodel_RecommendedVmInfra": {
+        "model.ApiResponse-array_cloudmodel_RecommendedInfra": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
+                        "$ref": "#/definitions/cloudmodel.RecommendedInfra"
                     }
                 },
                 "error": {
@@ -5898,6 +5692,62 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-cloudmodel_RecommendedInfra": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedInfra"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_RecommendedOsImageList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedOsImageList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-cloudmodel_RecommendedSecurityGroupList": {
             "type": "object",
             "properties": {
@@ -5926,6 +5776,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-cloudmodel_RecommendedSpecList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RecommendedSpecList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-cloudmodel_RecommendedVNetList": {
             "type": "object",
             "properties": {
@@ -5934,90 +5812,6 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/cloudmodel.RecommendedVNetList"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-cloudmodel_RecommendedVmInfra": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmInfra"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-cloudmodel_RecommendedVmOsImageList": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmOsImageList"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-cloudmodel_RecommendedVmSpecList": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.RecommendedVmSpecList"
                         }
                     ]
                 },
@@ -6150,42 +5944,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-controller_RecommendVmInfraResponse": {
+        "model.ApiResponse-controller_RecommendInfraWithDefaultsResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/controller.RecommendVmInfraResponse"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-controller_RecommendVmInfraWithDefaultsResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/controller.RecommendVmInfraWithDefaultsResponse"
+                            "$ref": "#/definitions/controller.RecommendInfraWithDefaultsResponse"
                         }
                     ]
                 },

@@ -107,7 +107,7 @@ The proposed commit title/message is then reviewed and finalized by the contribu
 Need documentation for an API endpoint? Use the Copilot CLI tool:
 
 ```bash
-make api-guide API_PATH=/migration/ns/{nsId}/mci
+make api-guide API_PATH=/migration/ns/{nsId}/infra
 ```
 
 This uses GitHub Copilot CLI to read our Swagger specs and generate comprehensive guides with realistic examples.

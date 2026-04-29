@@ -80,6 +80,8 @@ github.com/cloud-barista/cb-tumblebug v0.12.9 h1:d1m2sdmVAw9u1bXL920aRKs5UBTx5G8
 github.com/cloud-barista/cb-tumblebug v0.12.9/go.mod h1:MUMXO9BWx5AJpZl/yapk5W44EIG5Po19hgnE1Rt/g5k=
 github.com/cloud-barista/cm-beetle/imdl v0.1.1 h1:0YqkjBTq7Mgo7sHf2PcIf8VYSPrwhYcHX1kBl+o5TIM=
 github.com/cloud-barista/cm-beetle/imdl v0.1.1/go.mod h1:RfpzPB67XRW5TDGs5f4Cv/W/zJ3c+eU8eV291oj+ns0=
+github.com/cloud-barista/cm-beetle/imdl v0.1.2 h1:uTEw4VF6T1ZjJ2+3TigO8FxX44Fs21/F24+tPmPNG6o=
+github.com/cloud-barista/cm-beetle/imdl v0.1.2/go.mod h1:RfpzPB67XRW5TDGs5f4Cv/W/zJ3c+eU8eV291oj+ns0=
 github.com/cloud-barista/cm-beetle/transx v0.1.0 h1:DVQSslEnaVGjuJ+VtIq/2Rr/E7hjsvFja4Gy4kzhUpE=
 github.com/cloud-barista/cm-beetle/transx v0.1.0/go.mod h1:lEgonyJmSY6L7cBLNS1YItx7Pw1nN48j6y9pquBHyDQ=
 github.com/cloud-barista/mc-terrarium v0.1.4 h1:w60hp6lEquL41/f1L08E9qchm7qL9hfiyr3AXASZIdI=

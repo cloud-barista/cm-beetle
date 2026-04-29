@@ -38,7 +38,7 @@ type ReportMetadata struct {
 	GeneratedAt   time.Time `json:"generatedAt" example:"2025-11-04T10:30:00Z"`
 	MigrationID   string    `json:"migrationId" example:"mig01/mmci01"`
 	Namespace     string    `json:"namespace" example:"mig01"`
-	MciID         string    `json:"mciId" example:"mmci01"`
+	InfraID       string    `json:"infraId" example:"infra01"`
 	ReportVersion string    `json:"reportVersion" example:"1.0"`
 }
 

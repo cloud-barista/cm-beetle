@@ -133,7 +133,7 @@ func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicR
 }
 
 // CreateVMInfra creates a VM infrastructure for the computing infra migration
-func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra) (cloudmodel.VmInfraInfo, error) {
+func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
 	log.Info().Msg("Creating VM infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
@@ -163,10 +163,10 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 		return emptyRet, err
 	}
 
-	log.Debug().Msgf("Checking if the Infra (%s) exists in the namespace (%s)", targetInfraModel.TargetVmInfra.Name, nsId)
-	tempInfraInfo, err := tbclient.NewSession().ReadInfra(nsId, targetInfraModel.TargetVmInfra.Name)
+	log.Debug().Msgf("Checking if the Infra (%s) exists in the namespace (%s)", targetInfraModel.TargetInfra.Name, nsId)
+	tempInfraInfo, err := tbclient.NewSession().ReadInfra(nsId, targetInfraModel.TargetInfra.Name)
 	if tempInfraInfo.Id != "" {
-		log.Error().Err(err).Msgf("the Infra already exist (nsId: %s, infraName: %s)", nsId, targetInfraModel.TargetVmInfra.Name)
+		log.Error().Err(err).Msgf("the Infra already exist (nsId: %s, infraName: %s)", nsId, targetInfraModel.TargetInfra.Name)
 		return emptyRet, err
 	}
 
@@ -254,7 +254,7 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedVmInfra)
 
 	// 7. Create a VM infrastructure (i.e., Infra)
 	// Get multi-cloud infrastructure (Infra) request body from the input infraModel
-	infraReq := targetInfraModel.TargetVmInfra
+	infraReq := targetInfraModel.TargetInfra
 	log.Debug().Msgf("Creating a multi-cloud infrastructure (nsId: %s, infraName: %s)", nsId, infraReq.Name)
 	log.Debug().Msgf("infraReq: %+v", infraReq)
 
@@ -514,14 +514,14 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	return ret, nil
 }
 
-func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.RecommendedVmInfra) error {
+func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.RecommendedInfra) error {
 
 	// * 1. Validate that name fieleds are not empty
 	if targetVmInfraModel == nil {
 		log.Error().Msgf("target infrastructure model is nil (nsId: %s)", nsId)
 		return fmt.Errorf("target infrastructure model is nil")
 	}
-	if targetVmInfraModel.TargetVmInfra.Name == "" { // MCI name
+	if targetVmInfraModel.TargetInfra.Name == "" { // MCI name
 		log.Error().Msgf("target VM infrastructure name is empty (nsId: %s)", nsId)
 		return fmt.Errorf("target VM infrastructure name is empty")
 	}
@@ -542,7 +542,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 
 	// * 2. Validate that the names or IDs are matched in the model
 	// Check if the each Node's vNetId matches the target VNet name
-	for _, nodegroup := range targetVmInfraModel.TargetVmInfra.NodeGroups {
+	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
 		if nodegroup.VNetId != targetVmInfraModel.TargetVNet.Name {
 			log.Error().Msgf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
 				nodegroup.VNetId, targetVmInfraModel.TargetVNet.Name)
@@ -552,7 +552,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	}
 
 	// Check if each Node's SshKeyId matches the target SSH key name
-	for _, nodegroup := range targetVmInfraModel.TargetVmInfra.NodeGroups {
+	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
 		if nodegroup.SshKeyId != targetVmInfraModel.TargetSshKey.Name {
 			log.Error().Msgf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
 				nodegroup.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
@@ -566,7 +566,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	// tbSess := tbclient.NewSession()
 
 	// Check if each Node's spec and image are valid and compatible
-	for _, nodegroup := range targetVmInfraModel.TargetVmInfra.NodeGroups {
+	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
 
 		specId := strings.TrimSpace(nodegroup.SpecId)
 		imageId := strings.TrimSpace(nodegroup.ImageId)
@@ -653,7 +653,7 @@ func validateTargeVmtInfraModel(nsId string, targetVmInfraModel *cloudmodel.Reco
 	}
 
 	// Check if each security group name is contained in the target security group list
-	for _, nodegroup := range targetVmInfraModel.TargetVmInfra.NodeGroups {
+	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
 		found := false
 		for _, sgId := range nodegroup.SecurityGroupIds {
 			// Check if the security group name matches any target security group name

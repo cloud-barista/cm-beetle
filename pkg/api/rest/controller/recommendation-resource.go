@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -38,7 +38,7 @@ import (
 // @Tags [Recommendation] Resources for VM infrastructure
 // @Accept json
 // @Produce	json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -49,7 +49,7 @@ import (
 func RecommendVNet(c echo.Context) error {
 
 	// [Input]
-	var req RecommendVmInfraRequest
+	var req RecommendInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -109,7 +109,7 @@ func RecommendVNet(c echo.Context) error {
 // @Tags [Recommendation] Resources for VM infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
@@ -120,7 +120,7 @@ func RecommendVNet(c echo.Context) error {
 func RecommendSecurityGroups(c echo.Context) error {
 
 	// [Input]
-	var req RecommendVmInfraRequest
+	var req RecommendInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -156,7 +156,7 @@ func RecommendSecurityGroups(c echo.Context) error {
 }
 
 type RecommendVmSpecResponse struct {
-	cloudmodel.RecommendedVmSpecList
+	cloudmodel.RecommendedSpecList
 }
 
 // RecommendVmSpecs godoc
@@ -172,19 +172,19 @@ type RecommendVmSpecResponse struct {
 // @Tags [Recommendation] Resources for VM infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param targetMachineId query string false "Target Machine ID to focus recommendation on (optional)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmSpecList] "Successfully recommended VM spec(s)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedSpecList] "Successfully recommended VM spec(s)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
-// @Router /recommendation/resources/vmSpecs [post]
+// @Router /recommendation/resources/specs [post]
 func RecommendVmSpecs(c echo.Context) error {
 
 	// [Input]
-	var req RecommendVmInfraRequest
+	var req RecommendInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -237,7 +237,7 @@ func RecommendVmSpecs(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedVmSpecList := cloudmodel.RecommendedVmSpecList{}
+	recommendedVmSpecList := cloudmodel.RecommendedSpecList{}
 	for i, server := range serversToProcess {
 
 		specsLimit := recommendation.GetDefaultSpecsLimit()
@@ -248,26 +248,26 @@ func RecommendVmSpecs(c echo.Context) error {
 		if err != nil {
 			log.Error().Err(err).Msg("failed to recommend VM specs")
 
-			temp := cloudmodel.RecommendedVmSpec{
+			temp := cloudmodel.RecommendedSpec{
 				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
 				Description:   fmt.Sprintf("failed to recommend VM specs for server %d: %s", i+1, server.MachineId),
 				Status:        string(recommendation.NothingRecommended),
-				TargetVmSpec:  cloudmodel.SpecInfo{},
+				TargetSpec:    cloudmodel.SpecInfo{},
 			}
-			recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
+			recommendedVmSpecList.RecommendedSpecList = append(recommendedVmSpecList.RecommendedSpecList, temp)
 			continue
 		}
 		log.Trace().Msgf("specList: %v, count: %d", specList, count)
 		if count == 0 {
 			log.Warn().Msgf("no VM specs recommended for server: %s", server.MachineId)
 
-			temp := cloudmodel.RecommendedVmSpec{
+			temp := cloudmodel.RecommendedSpec{
 				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
 				Description:   fmt.Sprintf("no VM specs recommended for server %d: %s", i+1, server.MachineId),
 				Status:        string(recommendation.NothingRecommended),
-				TargetVmSpec:  cloudmodel.SpecInfo{},
+				TargetSpec:    cloudmodel.SpecInfo{},
 			}
-			recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
+			recommendedVmSpecList.RecommendedSpecList = append(recommendedVmSpecList.RecommendedSpecList, temp)
 			continue
 		}
 
@@ -276,8 +276,8 @@ func RecommendVmSpecs(c echo.Context) error {
 			// Check if the spec already exists in the list
 			exists := false
 			idx := -1
-			for i, existingSpec := range recommendedVmSpecList.RecommendedVmSpecList {
-				if existingSpec.TargetVmSpec.Id == spec.Id {
+			for i, existingSpec := range recommendedVmSpecList.RecommendedSpecList {
+				if existingSpec.TargetSpec.Id == spec.Id {
 					exists = true
 					idx = i
 					break
@@ -287,31 +287,31 @@ func RecommendVmSpecs(c echo.Context) error {
 			// If the spec already exists, append the server to the existing list
 			// Otherwise, create a new entry
 			if exists {
-				recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers = append(
-					recommendedVmSpecList.RecommendedVmSpecList[idx].SourceServers,
+				recommendedVmSpecList.RecommendedSpecList[idx].SourceServers = append(
+					recommendedVmSpecList.RecommendedSpecList[idx].SourceServers,
 					server.MachineId, // Set MachineId to identify the source server
 				)
 			} else {
-				temp := cloudmodel.RecommendedVmSpec{
+				temp := cloudmodel.RecommendedSpec{
 					Status:        string(recommendation.FullyRecommended),
 					SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
 					Description:   fmt.Sprintf("Recommended VM spec for server %d: %s", i+1, server.MachineId),
-					TargetVmSpec:  spec,
+					TargetSpec:    spec,
 				}
-				recommendedVmSpecList.RecommendedVmSpecList = append(recommendedVmSpecList.RecommendedVmSpecList, temp)
+				recommendedVmSpecList.RecommendedSpecList = append(recommendedVmSpecList.RecommendedSpecList, temp)
 			}
 		}
 	}
 
 	// [Output]
 	countFailed := 0
-	for _, spec := range recommendedVmSpecList.RecommendedVmSpecList {
+	for _, spec := range recommendedVmSpecList.RecommendedSpecList {
 		if spec.Status == string(recommendation.NothingRecommended) {
 			countFailed++
 		}
 	}
 
-	recommendedVmSpecList.Count = len(recommendedVmSpecList.RecommendedVmSpecList)
+	recommendedVmSpecList.Count = len(recommendedVmSpecList.RecommendedSpecList)
 	switch countFailed {
 	case 0:
 		recommendedVmSpecList.Status = string(recommendation.FullyRecommended)
@@ -363,17 +363,17 @@ func RecommendVmSpecs(c echo.Context) error {
 // @Tags [Recommendation] Resources for VM infrastructure
 // @Accept  json
 // @Produce  json
-// @Param UserInfra body RecommendVmInfraRequest true "Specify the your infrastructure to be migrated"
+// @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
 // @Param desiredProvider query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVmOsImageList] "Successfully recommended VM OS image(s)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedOsImageList] "Successfully recommended VM OS image(s)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
-// @Router /recommendation/resources/vmOsImages [post]
+// @Router /recommendation/resources/osImages [post]
 func RecommendVmOsImages(c echo.Context) error {
 	// [Input]
-	var req RecommendVmInfraRequest
+	var req RecommendInfraRequest
 	if err := c.Bind(&req); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
@@ -394,7 +394,7 @@ func RecommendVmOsImages(c echo.Context) error {
 	}
 
 	// [Process]
-	recommendedOsImageList := cloudmodel.RecommendedVmOsImageList{}
+	recommendedOsImageList := cloudmodel.RecommendedOsImageList{}
 	for i, server := range req.OnpremiseInfraModel.Servers {
 
 		imagesLimit := recommendation.GetDefaultImagesLimit()
@@ -404,26 +404,26 @@ func RecommendVmOsImages(c echo.Context) error {
 		if err != nil {
 			log.Error().Err(err).Msg("failed to recommend VM OS images")
 
-			temp := cloudmodel.RecommendedVmOsImage{
-				Status:          string(recommendation.NothingRecommended),
-				SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:     fmt.Sprintf("Failed to recommend VM OS images for server %d: %s", i+1, server.MachineId),
-				TargetVmOsImage: cloudmodel.ImageInfo{},
+			temp := cloudmodel.RecommendedOsImage{
+				Status:        string(recommendation.NothingRecommended),
+				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:   fmt.Sprintf("Failed to recommend VM OS images for server %d: %s", i+1, server.MachineId),
+				TargetOsImage: cloudmodel.ImageInfo{},
 			}
-			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+			recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
 			continue
 		}
 
 		if len(vmOsImageList) == 0 {
 			log.Warn().Msgf("no VM OS images recommended for server: %s", server.MachineId)
 
-			temp := cloudmodel.RecommendedVmOsImage{
-				Status:          string(recommendation.NothingRecommended),
-				SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:     fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.MachineId),
-				TargetVmOsImage: cloudmodel.ImageInfo{},
+			temp := cloudmodel.RecommendedOsImage{
+				Status:        string(recommendation.NothingRecommended),
+				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+				Description:   fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.MachineId),
+				TargetOsImage: cloudmodel.ImageInfo{},
 			}
-			recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+			recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
 			continue
 		}
 
@@ -432,8 +432,8 @@ func RecommendVmOsImages(c echo.Context) error {
 			// Check if the OS image already exists in the list
 			exists := false
 			idx := -1
-			for i, existingOsImage := range recommendedOsImageList.RecommendedVmOsImageList {
-				if existingOsImage.TargetVmOsImage.Id == vmOsImage.Id {
+			for i, existingOsImage := range recommendedOsImageList.RecommendedOsImageList {
+				if existingOsImage.TargetOsImage.Id == vmOsImage.Id {
 					exists = true
 					idx = i
 					break
@@ -442,30 +442,30 @@ func RecommendVmOsImages(c echo.Context) error {
 			// If the OS image already exists, append the server to the existing list
 			// Otherwise, create a new entry
 			if exists {
-				recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers = append(
-					recommendedOsImageList.RecommendedVmOsImageList[idx].SourceServers,
+				recommendedOsImageList.RecommendedOsImageList[idx].SourceServers = append(
+					recommendedOsImageList.RecommendedOsImageList[idx].SourceServers,
 					server.MachineId, // Set MachineId to identify the source server
 				)
 			} else {
-				temp := cloudmodel.RecommendedVmOsImage{
-					Status:          string(recommendation.FullyRecommended),
-					SourceServers:   []string{server.MachineId}, // Set MachineId to identify the source server
-					Description:     fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.MachineId),
-					TargetVmOsImage: vmOsImage,
+				temp := cloudmodel.RecommendedOsImage{
+					Status:        string(recommendation.FullyRecommended),
+					SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
+					Description:   fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.MachineId),
+					TargetOsImage: vmOsImage,
 				}
-				recommendedOsImageList.RecommendedVmOsImageList = append(recommendedOsImageList.RecommendedVmOsImageList, temp)
+				recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
 			}
 		}
 	}
 
 	// [Output]
 	countFailed := 0
-	for _, osImage := range recommendedOsImageList.RecommendedVmOsImageList {
+	for _, osImage := range recommendedOsImageList.RecommendedOsImageList {
 		if osImage.Status == string(recommendation.NothingRecommended) {
 			countFailed++
 		}
 	}
-	recommendedOsImageList.Count = len(recommendedOsImageList.RecommendedVmOsImageList)
+	recommendedOsImageList.Count = len(recommendedOsImageList.RecommendedOsImageList)
 	successCount := recommendedOsImageList.Count - countFailed
 	switch countFailed {
 	case 0:

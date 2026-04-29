@@ -19,10 +19,10 @@ import (
 	"net/http"
 	"strings"
 
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/report"
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
-	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -41,7 +41,7 @@ type GenerateMigrationReportRequest struct {
 // @Produce text/markdown
 // @Produce text/html
 // @Param nsId path string true "Namespace ID" example("mig01") default(mig01)
-// @Param mciId path string true "MCI ID" example("mci101") default(mci101)
+// @Param infraId path string true "Infra ID" example("infra101") default(infra101)
 // @Param format query string false "Report format: md or html" Enums(md,html) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param onpremiseInfraModel body controller.GenerateMigrationReportRequest true "Source infrastructure data from on-premise"
@@ -50,7 +50,7 @@ type GenerateMigrationReportRequest struct {
 // @Header 200 {string} Content-Type "text/markdown; charset=utf-8 or text/html; charset=utf-8"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during report generation"
-// @Router /report/migration/ns/{nsId}/mci/{mciId} [post]
+// @Router /report/migration/ns/{nsId}/infra/{infraId} [post]
 func GenerateMigrationReport(c echo.Context) error {
 	// Extract path parameters
 	nsId := c.Param("nsId")
@@ -59,10 +59,10 @@ func GenerateMigrationReport(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
 	}
 
-	mciId := c.Param("mciId")
-	if mciId == "" {
-		log.Warn().Msg("mciId is required")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("MCI ID required"))
+	infraId := c.Param("infraId")
+	if infraId == "" {
+		log.Warn().Msg("infraId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Infra ID required"))
 	}
 
 	// Extract query parameters
@@ -100,13 +100,13 @@ func GenerateMigrationReport(c echo.Context) error {
 	// Generate migration report
 	log.Info().
 		Str("nsId", nsId).
-		Str("mciId", mciId).
+		Str("infraId", infraId).
 		Int("sourceServers", len(req.OnpremiseInfraModel.Servers)).
 		Str("format", format).
 		Str("download", download).
 		Msg("Generating migration report")
 
-	migrationReport, err := report.GenerateMigrationReport(nsId, mciId, req.OnpremiseInfraModel)
+	migrationReport, err := report.GenerateMigrationReport(nsId, infraId, req.OnpremiseInfraModel)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate migration report")
 
@@ -141,7 +141,7 @@ func GenerateMigrationReport(c echo.Context) error {
 	// Set Content-Disposition header based on download parameter
 	// - "inline": displays content in browser/Swagger UI (allows both viewing and downloading)
 	// - "attachment": forces file download in browser (content not displayed in Swagger UI response body)
-	filename := fmt.Sprintf("migration-report-%s-%s.%s", nsId, mciId, fileExtension)
+	filename := fmt.Sprintf("migration-report-%s-%s.%s", nsId, infraId, fileExtension)
 	dispositionType := "inline"
 	if download == "true" {
 		dispositionType = "attachment"
