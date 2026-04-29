@@ -5,11 +5,11 @@ package cloudmodel
 // }
 
 type VmInfraInfo struct {
-	MciInfo
+	InfraInfo
 }
 
-type MciInfoList struct {
-	Mci []MciInfo `json:"mci"`
+type InfraInfoList struct {
+	Infra []InfraInfo `json:"infra"`
 }
 
 type IdList struct {

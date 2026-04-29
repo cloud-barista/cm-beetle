@@ -2,12 +2,12 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.5 (commit: accd857011f30e34196cabc7a1388a8b3e68d4d7)
-// * Synchronized: 2026-04-03 (Added VNet/SG template fields to MciDynamicReq and CreateSubGroupDynamicReq; other changes include credential holder management, global DNS support, and VNet template policies)
+// * Version: CB-Tumblebug v0.12.9 (commit: 01de7bdea9e54b4000831e683916d2f24c163925)
+// * Synchronized: 2026-04-28 (Major rename: MCI→Infra, VM→Node, SubGroup→NodeGroup; Breaking change for cm-beetle integration)
 
-// MciReq is struct for requirements to create MCI
-type MciReq struct {
-	Name string `json:"name" validate:"required" example:"mci01"`
+// InfraReq is struct for requirements to create Infra
+type InfraReq struct {
+	Name string `json:"name" validate:"required" example:"infra01"`
 
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:yes)
 	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
@@ -15,34 +15,34 @@ type MciReq struct {
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
 
-	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
+	// SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
 
 	PlacementAlgo string `json:"placementAlgo,omitempty"`
 	Description   string `json:"description" example:"Made in CB-TB"`
 
-	SubGroups []CreateSubGroupReq `json:"subGroups" validate:"required"`
+	NodeGroups []CreateNodeGroupReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommand is for the command to bootstrap the VMs
-	PostCommand MciCmdReq `json:"postCommand" validate:"omitempty"`
+	// PostCommand is for the command to bootstrap the Nodes
+	PostCommand InfraCmdReq `json:"postCommand" validate:"omitempty"`
 
-	// PolicyOnPartialFailure determines how to handle VM creation failures
-	// - "continue": Continue with partial MCI creation (default)
-	// - "rollback": Cleanup entire MCI when any VM fails
-	// - "refine": Mark failed VMs for refinement
+	// PolicyOnPartialFailure determines how to handle Node creation failures
+	// - "continue": Continue with partial Infra creation (default)
+	// - "rollback": Cleanup entire Infra when any Node fails
+	// - "refine": Mark failed Nodes for refinement
 	PolicyOnPartialFailure string `json:"policyOnPartialFailure" example:"continue" default:"continue" enums:"continue,rollback,refine"`
 }
 
-// CreateSubGroupReq is struct to get requirements to create a new server instance
-type CreateSubGroupReq struct {
-	// SubGroup name of VMs. Actual VM name will be generated with -N postfix.
+// CreateNodeGroupReq is struct to get requirements to create a new server instance
+type CreateNodeGroupReq struct {
+	// NodeGroup name of Nodes. Actual Node name will be generated with -N postfix.
 	Name string `json:"name" validate:"required" example:"g1-1"`
 
 	// CspResourceId is resource identifier managed by CSP (required for option=register)
 	CspResourceId string `json:"cspResourceId,omitempty" example:"i-014fa6ede6ada0b2c"`
 
-	// if subGroupSize is (not empty) && (> 0), subGroup will be generated. VMs will be created accordingly.
-	SubGroupSize int `json:"subGroupSize" example:"3" default:""`
+	// NodeGroupSize is the number of Nodes to create in this NodeGroup. If > 0, nodeGroup will be generated.
+	NodeGroupSize int `json:"nodeGroupSize" example:"3"`
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
@@ -52,37 +52,43 @@ type CreateSubGroupReq struct {
 	ConnectionName string `json:"connectionName" validate:"required" example:"testcloud01-seoul"`
 	SpecId         string `json:"specId" validate:"required"`
 	// ImageType        string   `json:"imageType"`
-	ImageId          string   `json:"imageId" validate:"required"`
+	ImageId string `json:"imageId" validate:"required"`
+	// CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable
+	// at nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty
+	// and the image is not a custom image, CreateNode skips the redundant per-VM GetImage
+	// DB call, significantly reducing concurrent DB load during large infra creation.
+	// Custom images always go through the full GetImage path (this field stays empty for them).
+	CspImageName     string   `json:"cspImageName,omitempty"`
 	VNetId           string   `json:"vNetId" validate:"required"`
 	SubnetId         string   `json:"subnetId" validate:"required"`
 	SecurityGroupIds []string `json:"securityGroupIds" validate:"required"`
 	SshKeyId         string   `json:"sshKeyId" validate:"required"`
-	VmUserName       string   `json:"vmUserName,omitempty"`
-	VmUserPassword   string   `json:"vmUserPassword,omitempty"`
+	NodeUserName     string   `json:"nodeUserName,omitempty"`
+	NodeUserPassword string   `json:"nodeUserPassword,omitempty"`
 	RootDiskType     string   `json:"rootDiskType,omitempty" example:"default, TYPE1, ..."` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
-	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"50"`                  // "default", Integer (GB): ["50", ..., "1000"]
+	RootDiskSize     int      `json:"rootDiskSize,omitempty" example:"50"`                  // Root disk size in GB. 0 = use CSP default.
 	DataDiskIds      []string `json:"dataDiskIds"`
 }
 
-// MciDynamicReq is struct for requirements to create MCI dynamically (with default resource option)
-type MciDynamicReq struct {
-	Name string `json:"name" validate:"required" example:"mci01"`
+// InfraDynamicReq is struct for requirements to create Infra dynamically (with default resource option)
+type InfraDynamicReq struct {
+	Name string `json:"name" validate:"required" example:"infra01"`
 
-	// PolicyOnPartialFailure determines how to handle VM creation failures
-	// - "continue": Continue with partial MCI creation (default)
-	// - "rollback": Cleanup entire MCI when any VM fails
-	// - "refine": Mark failed VMs for refinement
+	// PolicyOnPartialFailure determines how to handle Node creation failures
+	// - "continue": Continue with partial Infra creation (default)
+	// - "rollback": Cleanup entire Infra when any Node fails
+	// - "refine": Mark failed Nodes for refinement
 	PolicyOnPartialFailure string `json:"policyOnPartialFailure" example:"continue" default:"continue" enums:"continue,rollback,refine"`
 
 	// InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no] default:no)
 	InstallMonAgent string `json:"installMonAgent" example:"no" default:"no" enums:"yes,no"` // yes or no
 
-	// SubGroups is array of VM requests for multi-cloud infrastructure
-	// Example: Multiple VM groups across different CSPs
+	// NodeGroups is array of Node requests for multi-cloud infrastructure
+	// Example: Multiple Node groups across different CSPs
 	// [
 	//   {
 	//     "name": "aws-group",
-	//     "subGroupSize": "3",
+	//     "nodeGroupSize": "3",
 	//     "specId": "aws+ap-northeast-2+t3.nano",
 	//     "imageId": "ami-01f71f215b23ba262",
 	//     "rootDiskSize": "50",
@@ -90,7 +96,7 @@ type MciDynamicReq struct {
 	//   },
 	//   {
 	//     "name": "azure-group",
-	//     "subGroupSize": "2",
+	//     "nodeGroupSize": "2",
 	//     "specId": "azure+koreasouth+standard_b1s",
 	//     "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
 	//     "rootDiskSize": "50",
@@ -98,19 +104,19 @@ type MciDynamicReq struct {
 	//   },
 	//   {
 	//     "name": "gcp-group",
-	//     "subGroupSize": "1",
+	//     "nodeGroupSize": "1",
 	//     "specId": "gcp+asia-northeast3+g1-small",
 	//     "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
 	//     "rootDiskSize": "50",
 	//     "label": {"role": "test", "csp": "gcp"}
 	//   }
 	// ]
-	SubGroups []CreateSubGroupDynamicReq `json:"subGroups" validate:"required"`
+	NodeGroups []CreateNodeGroupDynamicReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommand is for the command to bootstrap the VMs
-	PostCommand MciCmdReq `json:"postCommand"`
+	// PostCommand is for the command to bootstrap the Nodes
+	PostCommand InfraCmdReq `json:"postCommand"`
 
-	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
+	// SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
 
 	Description string `json:"description" example:"Made in CB-TB"`
@@ -119,23 +125,23 @@ type MciDynamicReq struct {
 	Label map[string]string `json:"label"`
 
 	// VNetTemplateId specifies the vNet template ID (from system namespace) to use when
-	// auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
-	// at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+	// auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
+	// at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
 	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:"default-vnet"`
 
 	// SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
-	// when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
-	// overridden at the SubGroup level. If empty, the default all-open behavior is used.
+	// when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
+	// overridden at the NodeGroup level. If empty, the default all-open behavior is used.
 	SgTemplateId string `json:"sgTemplateId,omitempty" example:"default-sg"`
 }
 
-// CreateSubGroupDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
-type CreateSubGroupDynamicReq struct {
-	// SubGroup name, actual VM name will be generated with -N postfix.
+// CreateNodeGroupDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
+type CreateNodeGroupDynamicReq struct {
+	// NodeGroup name, actual Node name will be generated with -N postfix.
 	Name string `json:"name" example:"g1"`
 
-	// SubGroupSize is the number of VMs to create in this SubGroup. If > 0, subGroup will be generated. Default is 1.
-	SubGroupSize int `json:"subGroupSize" example:"3"`
+	// NodeGroupSize is the number of Nodes to create in this NodeGroup. If > 0, nodeGroup will be generated. Default is 1.
+	NodeGroupSize int `json:"nodeGroupSize" example:"3"`
 
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label" example:"{\"role\":\"worker\",\"env\":\"test\"}"`
@@ -150,26 +156,26 @@ type CreateSubGroupDynamicReq struct {
 	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	RootDiskSize int    `json:"rootDiskSize,omitempty" example:"50"`                    // Root disk size in GB. 0 = use CSP default.
 
-	VmUserPassword string `json:"vmUserPassword,omitempty" example:"" default:""`
-	// if ConnectionName is given, the VM tries to use associtated credential.
+	NodeUserPassword string `json:"nodeUserPassword,omitempty" example:"" default:""`
+	// if ConnectionName is given, the Node tries to use associated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
-	// Zone is an optional field to specify the availability zone for VM placement.
-	// If specified, subnet will be created in this zone for resources like GPU VMs
+	// Zone is an optional field to specify the availability zone for Node placement.
+	// If specified, subnet will be created in this zone for resources like GPU Nodes
 	// that may only be available in specific zones. If empty, auto-selection applies.
 	Zone string `json:"zone,omitempty" example:"ap-northeast-2a" default:""`
 
-	// VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.
-	// If empty, inherits the VNetTemplateId from the parent MciDynamicReq.
+	// VNetTemplateId overrides the Infra-level VNetTemplateId for this NodeGroup.
+	// If empty, inherits the VNetTemplateId from the parent InfraDynamicReq.
 	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:""`
 
-	// SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.
-	// If empty, inherits the SgTemplateId from the parent MciDynamicReq.
+	// SgTemplateId overrides the Infra-level SgTemplateId for this NodeGroup.
+	// If empty, inherits the SgTemplateId from the parent InfraDynamicReq.
 	SgTemplateId string `json:"sgTemplateId,omitempty" example:""`
 }
 
-// MciCmdReq is struct for remote command
-type MciCmdReq struct {
+// InfraCmdReq is struct for remote command
+type InfraCmdReq struct {
 	// UserName is the SSH username to use for command execution
 	UserName string `json:"userName" example:"cb-user" default:""`
 
@@ -218,7 +224,7 @@ type CommandStatusInfo struct {
 	// CommandRequested is the original command as requested by the user
 	CommandRequested string `json:"commandRequested" example:"ls -la"`
 
-	// CommandExecuted is the actual SSH command executed on the VM (may be adjusted)
+	// CommandExecuted is the actual SSH command executed on the Node (may be adjusted)
 	CommandExecuted string `json:"commandExecuted" example:"ls -la"`
 
 	// Status represents the current status of the command execution
@@ -246,8 +252,8 @@ type CommandStatusInfo struct {
 	Stderr string `json:"stderr,omitempty" example:""`
 }
 
-// MciInfo is struct for MCI info
-type MciInfo struct {
+// InfraInfo is struct for Infra info
+type InfraInfo struct {
 	// ResourceType is the type of the resource
 	ResourceType string `json:"resourceType"`
 
@@ -273,54 +279,54 @@ type MciInfo struct {
 	// Label is for describing the object by keywords
 	Label map[string]string `json:"label"`
 
-	// SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose
+	// SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"Managed by CB-Tumblebug" default:""`
 
 	// Latest system message such as error message
 	SystemMessage []string `json:"systemMessage"` // systeam-given string message
 
-	PlacementAlgo string   `json:"placementAlgo,omitempty"`
-	Description   string   `json:"description"`
-	Vm            []VmInfo `json:"vm"`
+	PlacementAlgo string     `json:"placementAlgo,omitempty"`
+	Description   string     `json:"description"`
+	Node          []NodeInfo `json:"node"`
 
-	// List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.
-	NewVmList []string `json:"newVmList"`
+	// List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.
+	NewNodeList []string `json:"newNodeList"`
 
-	// PostCommand is for the command to bootstrap the VMs
-	PostCommand MciCmdReq `json:"postCommand"`
+	// PostCommand is for the command to bootstrap the Nodes
+	PostCommand InfraCmdReq `json:"postCommand"`
 
-	// PostCommandResult is the result of the command for bootstraping the VMs
-	PostCommandResult MciSshCmdResult `json:"postCommandResult"`
+	// PostCommandResult is the result of the command for bootstraping the Nodes
+	PostCommandResult InfraSshCmdResult `json:"postCommandResult"`
 
-	// CreationErrors contains information about VM creation failures (if any)
-	CreationErrors *MciCreationErrors `json:"creationErrors,omitempty"`
+	// CreationErrors contains information about Node creation failures (if any)
+	CreationErrors *InfraCreationErrors `json:"creationErrors,omitempty"`
 }
 
-// MciCreationErrors represents errors that occurred during MCI creation
-type MciCreationErrors struct {
-	// VmObjectCreationErrors contains errors from VM object creation phase
-	VmObjectCreationErrors []VmCreationError `json:"vmObjectCreationErrors,omitempty"`
+// InfraCreationErrors represents errors that occurred during Infra creation
+type InfraCreationErrors struct {
+	// NodeObjectCreationErrors contains errors from Node object creation phase
+	NodeObjectCreationErrors []NodeCreationError `json:"nodeObjectCreationErrors,omitempty"`
 
-	// VmCreationErrors contains errors from actual VM creation phase
-	VmCreationErrors []VmCreationError `json:"vmCreationErrors,omitempty"`
+	// NodeCreationErrors contains errors from actual Node creation phase
+	NodeCreationErrors []NodeCreationError `json:"nodeCreationErrors,omitempty"`
 
-	// TotalVmCount is the total number of VMs that were supposed to be created
-	TotalVmCount int `json:"totalVmCount"`
+	// TotalNodeCount is the total number of Nodes that were supposed to be created
+	TotalNodeCount int `json:"totalNodeCount"`
 
-	// SuccessfulVmCount is the number of VMs that were successfully created
-	SuccessfulVmCount int `json:"successfulVmCount"`
+	// SuccessfulNodeCount is the number of Nodes that were successfully created
+	SuccessfulNodeCount int `json:"successfulNodeCount"`
 
-	// FailedVmCount is the number of VMs that failed to be created
-	FailedVmCount int `json:"failedVmCount"`
+	// FailedNodeCount is the number of Nodes that failed to be created
+	FailedNodeCount int `json:"failedNodeCount"`
 
 	// FailureHandlingStrategy indicates how failures were handled
 	FailureHandlingStrategy string `json:"failureHandlingStrategy,omitempty"` // "rollback", "refine", "continue"
 }
 
-// VmCreationError represents a single VM creation error
-type VmCreationError struct {
-	// VmName is the name of the VM that failed
-	VmName string `json:"vmName"`
+// NodeCreationError represents a single Node creation error
+type NodeCreationError struct {
+	// NodeName is the name of the Node that failed
+	NodeName string `json:"nodeName"`
 
 	// Error is the error message
 	Error string `json:"error"`
@@ -332,10 +338,10 @@ type VmCreationError struct {
 	Timestamp string `json:"timestamp"`
 }
 
-// StatusCountInfo is struct to count the number of VMs in each status. ex: Running=4, Suspended=8.
+// StatusCountInfo is struct to count the number of Nodes in each status. ex: Running=4, Suspended=8.
 type StatusCountInfo struct {
 
-	// CountTotal is for Total VMs
+	// CountTotal is for Total Nodes
 	CountTotal int `json:"countTotal"`
 
 	// CountCreating is for counting Creating
@@ -372,7 +378,7 @@ type StatusCountInfo struct {
 	CountUndefined int `json:"countUndefined"`
 }
 
-type VmInfo struct {
+type NodeInfo struct {
 	// ResourceType is the type of the resource
 	ResourceType string `json:"resourceType"`
 
@@ -388,8 +394,8 @@ type VmInfo struct {
 	// Name is human-readable string to represent the object
 	Name string `json:"name" example:"aws-ap-southeast-1"`
 
-	// defined if the VM is in a group
-	SubGroupId string `json:"subGroupId"`
+	// defined if the Node is in a group
+	NodeGroupId string `json:"nodeGroupId"`
 
 	Location Location `json:"location"`
 
@@ -440,28 +446,28 @@ type VmInfo struct {
 	DataDiskIds      []string     `json:"dataDiskIds"`
 	SshKeyId         string       `json:"sshKeyId"`
 	CspSshKeyId      string       `json:"cspSshKeyId"`
-	VmUserName       string       `json:"vmUserName,omitempty"`
-	VmUserPassword   string       `json:"vmUserPassword,omitempty"`
+	NodeUserName     string       `json:"nodeUserName,omitempty"`
+	NodeUserPassword string       `json:"nodeUserPassword,omitempty"`
 
 	// SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification
 	SshHostKeyInfo *SshHostKeyInfo `json:"sshHostKeyInfo,omitempty"`
 
-	// CommandStatus stores the status and history of remote commands executed on this VM
+	// CommandStatus stores the status and history of remote commands executed on this Node
 	CommandStatus []CommandStatusInfo `json:"commandStatus,omitempty"`
 
 	AddtionalDetails []KeyValue `json:"addtionalDetails,omitempty"`
 }
 
-// MciSshCmdResult is struct for Set of SshCmd Results in terms of MCI
-type MciSshCmdResult struct {
+// InfraSshCmdResult is struct for Set of SshCmd Results in terms of Infra
+type InfraSshCmdResult struct {
 	Results []SshCmdResult `json:"results"`
 }
 
 // SshCmdResult is struct for SshCmd Result
 type SshCmdResult struct { // Tumblebug
-	MciId   string         `json:"mciId"`
-	VmId    string         `json:"vmId"`
-	VmIp    string         `json:"vmIp"`
+	InfraId string         `json:"infraId"`
+	NodeId  string         `json:"nodeId"`
+	NodeIp  string         `json:"nodeIp"`
 	Command map[int]string `json:"command"`
 	Stdout  map[int]string `json:"stdout"`
 	Stderr  map[int]string `json:"stderr"`
@@ -653,8 +659,8 @@ type ImageInfo struct {
 
 	// CspImageId is resource identifier managed by CSP
 	CspImageId string `json:"cspImageId,omitempty" example:"ami-0d399fba46a30a310"`
-	// SourceVmUid is the UID of the source VM from which this image was created
-	SourceVmUid string `json:"sourceVmUid" example:"wef12awefadf1221edcf"`
+	// SourceNodeUid is the UID of the source Node from which this image was created
+	SourceNodeUid string `json:"sourceNodeUid" example:"wef12awefadf1221edcf"`
 	// SourceCspImageName is the name of the source CSP image from which this image was created
 	SourceCspImageName string `json:"sourceCspImageName" example:"csp-06eb41e14121c550a"`
 
@@ -728,10 +734,29 @@ const (
 type ImageStatus string
 
 const (
-	ImageAvailable   ImageStatus = "Available"
+	// ImageCreating indicates the image is being created (e.g., snapshot in progress)
+	// This is a CB-Tumblebug managed state, independent of CB-Spider's status
+	ImageCreating ImageStatus = "Creating"
+
+	// ImageAvailable indicates the image is ready and can be used
+	ImageAvailable ImageStatus = "Available"
+
+	// ImageFailed indicates the image creation failed
+	// This is a terminal state - no further status updates needed
+	ImageFailed ImageStatus = "Failed"
+
+	// ImageUnavailable indicates the image is temporarily unavailable
+	// This may transition to Available or Failed
 	ImageUnavailable ImageStatus = "Unavailable"
-	ImageDeprecated  ImageStatus = "Deprecated"
-	ImageNA          ImageStatus = "NA"
+
+	// ImageDeleting indicates the image is being deleted
+	ImageDeleting ImageStatus = "Deleting"
+
+	// ImageDeprecated indicates the image is deprecated and should not be used
+	ImageDeprecated ImageStatus = "Deprecated"
+
+	// ImageNA indicates the status is not applicable or unknown
+	ImageNA ImageStatus = "NA"
 )
 
 // SecurityGroupReq is a struct to handle 'Create security group' request toward CB-Tumblebug.
