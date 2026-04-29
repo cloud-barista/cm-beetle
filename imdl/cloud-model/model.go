@@ -1,21 +1,21 @@
 package cloudmodel
 
-// RecommendedVmInfraModel represents the recommended virtual machine infrastructure model.
-type RecommendedVmInfraModel struct {
-	RecommendedVmInfraModel RecommendedVmInfra `json:"recommendedVmInfraModel" validate:"required"`
+// RecommendedInfraModel represents the recommended virtual machine infrastructure model.
+type RecommendedInfraModel struct {
+	RecommendedInfraModel RecommendedInfra `json:"recommendedInfraModel" validate:"required"`
 }
 
-// RecommendedVmInfra represents the recommended virtual machine infrastructure information.
-type RecommendedVmInfra struct {
+// RecommendedInfra represents the recommended virtual machine infrastructure information.
+type RecommendedInfra struct {
 	NameSeed                string             `json:"nameSeed"`
 	Status                  string             `json:"status"`
 	Description             string             `json:"description"`
 	TargetCloud             CloudProperty      `json:"targetCloud"`
-	TargetVmInfra           InfraReq           `json:"targetVmInfra"`
+	TargetInfra             InfraReq           `json:"targetInfra"`
 	TargetVNet              VNetReq            `json:"targetVNet"`
 	TargetSshKey            SshKeyReq          `json:"targetSshKey"`
-	TargetVmSpecList        []SpecInfo         `json:"targetVmSpecList"`
-	TargetVmOsImageList     []ImageInfo        `json:"targetVmOsImageList"`
+	TargetSpecList          []SpecInfo         `json:"targetSpecList"`
+	TargetOsImageList       []ImageInfo        `json:"targetOsImageList"`
 	TargetSecurityGroupList []SecurityGroupReq `json:"targetSecurityGroupList"`
 }
 
@@ -25,18 +25,18 @@ type CloudProperty struct {
 	Region string `json:"region" example:"ap-northeast-2"`
 }
 
-// RecommendedVmInfraDynamic represents the recommended virtual machine infrastructure information.
-type RecommendedVmInfraDynamic struct {
-	Status        string        `json:"status"`
-	Description   string        `json:"description"`
-	TargetVmInfra InfraDynamicReq `json:"targetVmInfra"`
+// RecommendedInfraDynamic represents the recommended virtual machine infrastructure information.
+type RecommendedInfraDynamic struct {
+	Status      string          `json:"status"`
+	Description string          `json:"description"`
+	TargetInfra InfraDynamicReq `json:"targetInfra"`
 }
 
-// RecommendedVmInfraDynamicList represents a list of recommended virtual machine infrastructure information.
-type RecommendedVmInfraDynamicList struct {
-	Description       string                      `json:"description"`
-	Count             int                         `json:"count"`
-	TargetVmInfraList []RecommendedVmInfraDynamic `json:"targetVmInfraList"`
+// RecommendedInfraDynamicList represents a list of recommended virtual machine infrastructure information.
+type RecommendedInfraDynamicList struct {
+	Description     string                    `json:"description"`
+	Count           int                       `json:"count"`
+	TargetInfraList []RecommendedInfraDynamic `json:"targetInfraList"`
 }
 
 // RecommendedVNet represents the recommended virtual network information.
@@ -70,36 +70,36 @@ type RecommendedSecurityGroupList struct {
 	TargetSecurityGroupList []RecommendedSecurityGroup `json:"targetSecurityGroupList"`
 }
 
-// RecommendedVmSpec represents the recommended virtual machine specification information for a single server.
-type RecommendedVmSpec struct {
+// RecommendedSpec represents the recommended virtual machine specification information for a single server.
+type RecommendedSpec struct {
 	Status        string   `json:"status"`
 	SourceServers []string `json:"sourceServers"`
 	Description   string   `json:"description"`
-	TargetVmSpec  SpecInfo `json:"targetVmSpec"`
+	TargetSpec    SpecInfo `json:"targetSpec"`
 }
 
-// RecommendedVmSpecList represents a collection of recommended VM specifications across multiple source servers.
-type RecommendedVmSpecList struct {
-	Status                string              `json:"status"`
-	Description           string              `json:"description"`
-	Count                 int                 `json:"count"`
-	RecommendedVmSpecList []RecommendedVmSpec `json:"recommendedVmSpecList"`
+// RecommendedSpecList represents a collection of recommended VM specifications across multiple source servers.
+type RecommendedSpecList struct {
+	Status              string            `json:"status"`
+	Description         string            `json:"description"`
+	Count               int               `json:"count"`
+	RecommendedSpecList []RecommendedSpec `json:"recommendedSpecList"`
 }
 
-// RecommendedVmOsImage represents the recommended virtual machine OS image information for a single server.
-type RecommendedVmOsImage struct {
-	Status          string    `json:"status"`
-	SourceServers   []string  `json:"sourceServers"`
-	Description     string    `json:"description"`
-	TargetVmOsImage ImageInfo `json:"targetVmOsImage"`
+// RecommendedOsImage represents the recommended virtual machine OS image information for a single server.
+type RecommendedOsImage struct {
+	Status        string    `json:"status"`
+	SourceServers []string  `json:"sourceServers"`
+	Description   string    `json:"description"`
+	TargetOsImage ImageInfo `json:"targetOsImage"`
 	// Count            int                   `json:"count"`
 	// TargetVmOsImages []ImageInfo `json:"targetVmOsImages"`
 }
 
-// RecommendedVmOsImageList represents a collection of recommended VM OS images across multiple source servers.
-type RecommendedVmOsImageList struct {
-	Status                   string                 `json:"status"`
-	Description              string                 `json:"description"`
-	Count                    int                    `json:"count"`
-	RecommendedVmOsImageList []RecommendedVmOsImage `json:"recommendedVmOsImageList"`
+// RecommendedOsImageList represents a collection of recommended VM OS images across multiple source servers.
+type RecommendedOsImageList struct {
+	Status                 string               `json:"status"`
+	Description            string               `json:"description"`
+	Count                  int                  `json:"count"`
+	RecommendedOsImageList []RecommendedOsImage `json:"recommendedOsImageList"`
 }
