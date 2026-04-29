@@ -497,7 +497,7 @@ plan, _ := analyzer.CreateMigrationPlan(
 ### 테스트 환경
 
 - **운영체제**: Linux (Ubuntu 22.04)
-- **Go 버전**: 1.25.0
+- **Go 버전**: 1.26.2
 - **테스트 위치**: `/home/ubuntu/dev/cloud-barista/cm-beetle/analyzer`
 
 ### 단위 테스트 실행 결과

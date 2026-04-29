@@ -184,7 +184,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 
 		// Call Tumblebug API to get recommended VM specs
 		var err error
-		vmSpecInfoList, err = tbclient.NewSession().MciRecommendSpec(planToSearchProperVm)
+		vmSpecInfoList, err = tbclient.NewSession().InfraRecommendSpec(planToSearchProperVm)
 		if err != nil {
 			log.Error().Err(err).
 				Str("machineId", server.MachineId).

@@ -280,4 +280,4 @@ cmd/test-cli/
     └── beetle.log                             # Test logs
 ```
 
-Built with Go 1.25+ for quality assurance and multi-cloud compatibility testing of CM-Beetle.
+Built with Go 1.26.2+ for quality assurance and multi-cloud compatibility testing of CM-Beetle.

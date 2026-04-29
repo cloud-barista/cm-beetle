@@ -579,7 +579,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "The ID list of The migrated multi-cloud infrastructure (MCI)",
+                        "description": "The ID list of The migrated multi-cloud infrastructure (Infra)",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-cloudmodel_IdList"
                         }
@@ -683,8 +683,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mci101",
-                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
+                        "default": "my-infra101",
+                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
                         "name": "mciId",
                         "in": "path",
                         "required": true
@@ -741,8 +741,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mci101",
-                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID",
+                        "default": "my-infra101",
+                        "description": "Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
                         "name": "mciId",
                         "in": "path",
                         "required": true
@@ -2510,7 +2510,7 @@ const docTemplate = `{
         },
         "/recommendation/vmInfra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'mig' -\u003e 'mig-vnet-01').\n",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'my' -\u003e 'my-vnet-01').\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -3207,7 +3207,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "commandExecuted": {
-                    "description": "CommandExecuted is the actual SSH command executed on the VM (may be adjusted)",
+                    "description": "CommandExecuted is the actual SSH command executed on the Node (may be adjusted)",
                     "type": "string",
                     "example": "ls -la"
                 },
@@ -3307,7 +3307,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.CreateSubGroupDynamicReq": {
+        "cloudmodel.CreateNodeGroupDynamicReq": {
             "type": "object",
             "required": [
                 "imageId",
@@ -3315,7 +3315,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                    "description": "if ConnectionName is given, the Node tries to use associated credential.\nif not, it will use predefined ConnectionName in Spec objects",
                     "type": "string",
                     "example": "aws-ap-northeast-2"
                 },
@@ -3340,9 +3340,18 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "description": "SubGroup name, actual VM name will be generated with -N postfix.",
+                    "description": "NodeGroup name, actual Node name will be generated with -N postfix.",
                     "type": "string",
                     "example": "g1"
+                },
+                "nodeGroupSize": {
+                    "description": "NodeGroupSize is the number of Nodes to create in this NodeGroup. If \u003e 0, nodeGroup will be generated. Default is 1.",
+                    "type": "integer",
+                    "example": 3
+                },
+                "nodeUserPassword": {
+                    "type": "string",
+                    "example": ""
                 },
                 "rootDiskSize": {
                     "description": "Root disk size in GB. 0 = use CSP default.",
@@ -3356,7 +3365,7 @@ const docTemplate = `{
                     "example": "gp3"
                 },
                 "sgTemplateId": {
-                    "description": "SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.\nIf empty, inherits the SgTemplateId from the parent MciDynamicReq.",
+                    "description": "SgTemplateId overrides the Infra-level SgTemplateId for this NodeGroup.\nIf empty, inherits the SgTemplateId from the parent InfraDynamicReq.",
                     "type": "string",
                     "example": ""
                 },
@@ -3365,28 +3374,19 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws+ap-northeast-2+t3.nano"
                 },
-                "subGroupSize": {
-                    "description": "SubGroupSize is the number of VMs to create in this SubGroup. If \u003e 0, subGroup will be generated. Default is 1.",
-                    "type": "integer",
-                    "example": 3
-                },
                 "vNetTemplateId": {
-                    "description": "VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.\nIf empty, inherits the VNetTemplateId from the parent MciDynamicReq.",
-                    "type": "string",
-                    "example": ""
-                },
-                "vmUserPassword": {
+                    "description": "VNetTemplateId overrides the Infra-level VNetTemplateId for this NodeGroup.\nIf empty, inherits the VNetTemplateId from the parent InfraDynamicReq.",
                     "type": "string",
                     "example": ""
                 },
                 "zone": {
-                    "description": "Zone is an optional field to specify the availability zone for VM placement.\nIf specified, subnet will be created in this zone for resources like GPU VMs\nthat may only be available in specific zones. If empty, auto-selection applies.",
+                    "description": "Zone is an optional field to specify the availability zone for Node placement.\nIf specified, subnet will be created in this zone for resources like GPU Nodes\nthat may only be available in specific zones. If empty, auto-selection applies.",
                     "type": "string",
                     "example": "ap-northeast-2a"
                 }
             }
         },
-        "cloudmodel.CreateSubGroupReq": {
+        "cloudmodel.CreateNodeGroupReq": {
             "type": "object",
             "required": [
                 "connectionName",
@@ -3402,6 +3402,10 @@ const docTemplate = `{
                 "connectionName": {
                     "type": "string",
                     "example": "testcloud01-seoul"
+                },
+                "cspImageName": {
+                    "description": "CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable\nat nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty\nand the image is not a custom image, CreateNode skips the redundant per-VM GetImage\nDB call, significantly reducing concurrent DB load during large infra creation.\nCustom images always go through the full GetImage path (this field stays empty for them).",
+                    "type": "string"
                 },
                 "cspResourceId": {
                     "description": "CspResourceId is resource identifier managed by CSP (required for option=register)",
@@ -3430,12 +3434,23 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "description": "SubGroup name of VMs. Actual VM name will be generated with -N postfix.",
+                    "description": "NodeGroup name of Nodes. Actual Node name will be generated with -N postfix.",
                     "type": "string",
                     "example": "g1-1"
                 },
+                "nodeGroupSize": {
+                    "description": "NodeGroupSize is the number of Nodes to create in this NodeGroup. If \u003e 0, nodeGroup will be generated.",
+                    "type": "integer",
+                    "example": 3
+                },
+                "nodeUserName": {
+                    "type": "string"
+                },
+                "nodeUserPassword": {
+                    "type": "string"
+                },
                 "rootDiskSize": {
-                    "description": "\"default\", Integer (GB): [\"50\", ..., \"1000\"]",
+                    "description": "Root disk size in GB. 0 = use CSP default.",
                     "type": "integer",
                     "example": 50
                 },
@@ -3456,21 +3471,10 @@ const docTemplate = `{
                 "sshKeyId": {
                     "type": "string"
                 },
-                "subGroupSize": {
-                    "description": "if subGroupSize is (not empty) \u0026\u0026 (\u003e 0), subGroup will be generated. VMs will be created accordingly.",
-                    "type": "integer",
-                    "example": 3
-                },
                 "subnetId": {
                     "type": "string"
                 },
                 "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
                     "type": "string"
                 }
             }
@@ -3655,8 +3659,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": "csp-06eb41e14121c550a"
                 },
-                "sourceVmUid": {
-                    "description": "SourceVmUid is the UID of the source VM from which this image was created",
+                "sourceNodeUid": {
+                    "description": "SourceNodeUid is the UID of the source Node from which this image was created",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
                 },
@@ -3688,14 +3692,20 @@ const docTemplate = `{
         "cloudmodel.ImageStatus": {
             "type": "string",
             "enum": [
+                "Creating",
                 "Available",
+                "Failed",
                 "Unavailable",
+                "Deleting",
                 "Deprecated",
                 "NA"
             ],
             "x-enum-varnames": [
+                "ImageCreating",
                 "ImageAvailable",
+                "ImageFailed",
                 "ImageUnavailable",
+                "ImageDeleting",
                 "ImageDeprecated",
                 "ImageNA"
             ]
@@ -3729,32 +3739,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.KeyValue": {
-            "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.Location": {
-            "type": "object",
-            "properties": {
-                "display": {
-                    "type": "string"
-                },
-                "latitude": {
-                    "type": "number"
-                },
-                "longitude": {
-                    "type": "number"
-                }
-            }
-        },
-        "cloudmodel.MciCmdReq": {
+        "cloudmodel.InfraCmdReq": {
             "type": "object",
             "required": [
                 "command"
@@ -3783,46 +3768,46 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.MciCreationErrors": {
+        "cloudmodel.InfraCreationErrors": {
             "type": "object",
             "properties": {
-                "failedVmCount": {
-                    "description": "FailedVmCount is the number of VMs that failed to be created",
+                "failedNodeCount": {
+                    "description": "FailedNodeCount is the number of Nodes that failed to be created",
                     "type": "integer"
                 },
                 "failureHandlingStrategy": {
                     "description": "FailureHandlingStrategy indicates how failures were handled",
                     "type": "string"
                 },
-                "successfulVmCount": {
-                    "description": "SuccessfulVmCount is the number of VMs that were successfully created",
-                    "type": "integer"
-                },
-                "totalVmCount": {
-                    "description": "TotalVmCount is the total number of VMs that were supposed to be created",
-                    "type": "integer"
-                },
-                "vmCreationErrors": {
-                    "description": "VmCreationErrors contains errors from actual VM creation phase",
+                "nodeCreationErrors": {
+                    "description": "NodeCreationErrors contains errors from actual Node creation phase",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                        "$ref": "#/definitions/cloudmodel.NodeCreationError"
                     }
                 },
-                "vmObjectCreationErrors": {
-                    "description": "VmObjectCreationErrors contains errors from VM object creation phase",
+                "nodeObjectCreationErrors": {
+                    "description": "NodeObjectCreationErrors contains errors from Node object creation phase",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.VmCreationError"
+                        "$ref": "#/definitions/cloudmodel.NodeCreationError"
                     }
+                },
+                "successfulNodeCount": {
+                    "description": "SuccessfulNodeCount is the number of Nodes that were successfully created",
+                    "type": "integer"
+                },
+                "totalNodeCount": {
+                    "description": "TotalNodeCount is the total number of Nodes that were supposed to be created",
+                    "type": "integer"
                 }
             }
         },
-        "cloudmodel.MciDynamicReq": {
+        "cloudmodel.InfraDynamicReq": {
             "type": "object",
             "required": [
                 "name",
-                "subGroups"
+                "nodeGroups"
             ],
             "properties": {
                 "description": {
@@ -3848,10 +3833,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mci01"
+                    "example": "infra01"
+                },
+                "nodeGroups": {
+                    "description": "NodeGroups is array of Node requests for multi-cloud infrastructure\nExample: Multiple Node groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"nodeGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"nodeGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"nodeGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CreateNodeGroupDynamicReq"
+                    }
                 },
                 "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "description": "PolicyOnPartialFailure determines how to handle Node creation failures\n- \"continue\": Continue with partial Infra creation (default)\n- \"rollback\": Cleanup entire Infra when any Node fails\n- \"refine\": Mark failed Nodes for refinement",
                     "type": "string",
                     "default": "continue",
                     "enum": [
@@ -3862,38 +3854,31 @@ const docTemplate = `{
                     "example": "continue"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
                 "sgTemplateId": {
-                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless\noverridden at the SubGroup level. If empty, the default all-open behavior is used.",
+                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
                     "type": "string",
                     "example": "default-sg"
                 },
-                "subGroups": {
-                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.CreateSubGroupDynamicReq"
-                    }
-                },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 },
                 "vNetTemplateId": {
-                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all SubGroups unless overridden\nat the SubGroup level. If empty, the default hard-coded CIDR behavior is used.",
+                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all NodeGroups unless overridden\nat the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.",
                     "type": "string",
                     "example": "default-vnet"
                 }
             }
         },
-        "cloudmodel.MciInfo": {
+        "cloudmodel.InfraInfo": {
             "type": "object",
             "properties": {
                 "configureCloudAdaptiveNetwork": {
@@ -3907,10 +3892,10 @@ const docTemplate = `{
                     "example": "yes"
                 },
                 "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "description": "CreationErrors contains information about Node creation failures (if any)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                            "$ref": "#/definitions/cloudmodel.InfraCreationErrors"
                         }
                     ]
                 },
@@ -3944,29 +3929,35 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                "newNodeList": {
+                    "description": "List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.",
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "node": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NodeInfo"
                     }
                 },
                 "placementAlgo": {
                     "type": "string"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
                 "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
                         }
                     ]
                 },
@@ -3981,7 +3972,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.StatusCountInfo"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
                 },
@@ -4002,31 +3993,25 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.VmInfo"
-                    }
                 }
             }
         },
-        "cloudmodel.MciInfoList": {
+        "cloudmodel.InfraInfoList": {
             "type": "object",
             "properties": {
-                "mci": {
+                "infra": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.MciInfo"
+                        "$ref": "#/definitions/cloudmodel.InfraInfo"
                     }
                 }
             }
         },
-        "cloudmodel.MciReq": {
+        "cloudmodel.InfraReq": {
             "type": "object",
             "required": [
                 "name",
-                "subGroups"
+                "nodeGroups"
             ],
             "properties": {
                 "description": {
@@ -4052,13 +4037,19 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mci01"
+                    "example": "infra01"
+                },
+                "nodeGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CreateNodeGroupReq"
+                    }
                 },
                 "placementAlgo": {
                     "type": "string"
                 },
                 "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "description": "PolicyOnPartialFailure determines how to handle Node creation failures\n- \"continue\": Continue with partial Infra creation (default)\n- \"rollback\": Cleanup entire Infra when any Node fails\n- \"refine\": Mark failed Nodes for refinement",
                     "type": "string",
                     "default": "continue",
                     "enum": [
@@ -4069,27 +4060,21 @@ const docTemplate = `{
                     "example": "continue"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
-                "subGroups": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.CreateSubGroupReq"
-                    }
-                },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 }
             }
         },
-        "cloudmodel.MciSshCmdResult": {
+        "cloudmodel.InfraSshCmdResult": {
             "type": "object",
             "properties": {
                 "results": {
@@ -4097,6 +4082,248 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.SshCmdResult"
                     }
+                }
+            }
+        },
+        "cloudmodel.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.Location": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "cloudmodel.NodeCreationError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error is the error message",
+                    "type": "string"
+                },
+                "nodeName": {
+                    "description": "NodeName is the name of the Node that failed",
+                    "type": "string"
+                },
+                "phase": {
+                    "description": "Phase indicates when the error occurred",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Timestamp when the error occurred",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NodeInfo": {
+            "type": "object",
+            "properties": {
+                "RootDeviceName": {
+                    "type": "string"
+                },
+                "addtionalDetails": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
+                },
+                "commandStatus": {
+                    "description": "CommandStatus stores the status and history of remote commands executed on this Node",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CommandStatusInfo"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/cloudmodel.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "createdTime": {
+                    "description": "Created time",
+                    "type": "string",
+                    "example": "2022-11-10 23:00:00"
+                },
+                "cspImageName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "cspSpecName": {
+                    "type": "string"
+                },
+                "cspSshKeyId": {
+                    "type": "string"
+                },
+                "cspSubnetId": {
+                    "type": "string"
+                },
+                "cspVNetId": {
+                    "type": "string"
+                },
+                "dataDiskIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "image": {
+                    "$ref": "#/definitions/cloudmodel.ImageSummary"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "location": {
+                    "$ref": "#/definitions/cloudmodel.Location"
+                },
+                "monAgentStatus": {
+                    "description": "Montoring agent status",
+                    "type": "string",
+                    "example": "[installed, notInstalled, failed]"
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "networkAgentStatus": {
+                    "description": "NetworkAgent status",
+                    "type": "string",
+                    "example": "[notInstalled, installing, installed, failed]"
+                },
+                "networkInterface": {
+                    "type": "string"
+                },
+                "nodeGroupId": {
+                    "description": "defined if the Node is in a group",
+                    "type": "string"
+                },
+                "nodeUserName": {
+                    "type": "string"
+                },
+                "nodeUserPassword": {
+                    "type": "string"
+                },
+                "privateDNS": {
+                    "type": "string"
+                },
+                "privateIP": {
+                    "type": "string"
+                },
+                "publicDNS": {
+                    "type": "string"
+                },
+                "publicIP": {
+                    "type": "string"
+                },
+                "region": {
+                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.RegionInfo"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "rootDiskSize": {
+                    "type": "integer"
+                },
+                "rootDiskType": {
+                    "type": "string"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "spec": {
+                    "$ref": "#/definitions/cloudmodel.SpecSummary"
+                },
+                "specId": {
+                    "type": "string"
+                },
+                "sshHostKeyInfo": {
+                    "description": "SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.SshHostKeyInfo"
+                        }
+                    ]
+                },
+                "sshKeyId": {
+                    "type": "string"
+                },
+                "sshPort": {
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Required by CB-Tumblebug",
+                    "type": "string"
+                },
+                "subnetId": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "targetAction": {
+                    "type": "string"
+                },
+                "targetStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vNetId": {
+                    "type": "string"
                 }
             }
         },
@@ -4239,7 +4466,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.VNetReq"
                 },
                 "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.MciReq"
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
                 "targetVmOsImageList": {
                     "type": "array",
@@ -4265,7 +4492,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.MciDynamicReq"
+                    "$ref": "#/definitions/cloudmodel.InfraDynamicReq"
                 }
             }
         },
@@ -4630,7 +4857,13 @@ const docTemplate = `{
                     }
                 },
                 "err": {},
-                "mciId": {
+                "infraId": {
+                    "type": "string"
+                },
+                "nodeId": {
+                    "type": "string"
+                },
+                "nodeIp": {
                     "type": "string"
                 },
                 "stderr": {
@@ -4644,12 +4877,6 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
-                },
-                "vmId": {
-                    "type": "string"
-                },
-                "vmIp": {
-                    "type": "string"
                 }
             }
         },
@@ -4758,7 +4985,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "countTotal": {
-                    "description": "CountTotal is for Total VMs",
+                    "description": "CountTotal is for Total Nodes",
                     "type": "integer"
                 },
                 "countUndefined": {
@@ -4819,223 +5046,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cloudmodel.SubnetReq"
                     }
-                }
-            }
-        },
-        "cloudmodel.VmCreationError": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "description": "Error is the error message",
-                    "type": "string"
-                },
-                "phase": {
-                    "description": "Phase indicates when the error occurred",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "Timestamp when the error occurred",
-                    "type": "string"
-                },
-                "vmName": {
-                    "description": "VmName is the name of the VM that failed",
-                    "type": "string"
-                }
-            }
-        },
-        "cloudmodel.VmInfo": {
-            "type": "object",
-            "properties": {
-                "RootDeviceName": {
-                    "type": "string"
-                },
-                "addtionalDetails": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.KeyValue"
-                    }
-                },
-                "commandStatus": {
-                    "description": "CommandStatus stores the status and history of remote commands executed on this VM",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.CommandStatusInfo"
-                    }
-                },
-                "connectionConfig": {
-                    "$ref": "#/definitions/cloudmodel.ConnConfig"
-                },
-                "connectionName": {
-                    "type": "string"
-                },
-                "createdTime": {
-                    "description": "Created time",
-                    "type": "string",
-                    "example": "2022-11-10 23:00:00"
-                },
-                "cspImageName": {
-                    "type": "string"
-                },
-                "cspResourceId": {
-                    "description": "CspResourceId is resource identifier managed by CSP",
-                    "type": "string",
-                    "example": "csp-06eb41e14121c550a"
-                },
-                "cspResourceName": {
-                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
-                    "type": "string",
-                    "example": "we12fawefadf1221edcf"
-                },
-                "cspSpecName": {
-                    "type": "string"
-                },
-                "cspSshKeyId": {
-                    "type": "string"
-                },
-                "cspSubnetId": {
-                    "type": "string"
-                },
-                "cspVNetId": {
-                    "type": "string"
-                },
-                "dataDiskIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "image": {
-                    "$ref": "#/definitions/cloudmodel.ImageSummary"
-                },
-                "imageId": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "location": {
-                    "$ref": "#/definitions/cloudmodel.Location"
-                },
-                "monAgentStatus": {
-                    "description": "Montoring agent status",
-                    "type": "string",
-                    "example": "[installed, notInstalled, failed]"
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "aws-ap-southeast-1"
-                },
-                "networkAgentStatus": {
-                    "description": "NetworkAgent status",
-                    "type": "string",
-                    "example": "[notInstalled, installing, installed, failed]"
-                },
-                "networkInterface": {
-                    "type": "string"
-                },
-                "privateDNS": {
-                    "type": "string"
-                },
-                "privateIP": {
-                    "type": "string"
-                },
-                "publicDNS": {
-                    "type": "string"
-                },
-                "publicIP": {
-                    "type": "string"
-                },
-                "region": {
-                    "description": "AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.RegionInfo"
-                        }
-                    ]
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of the resource",
-                    "type": "string"
-                },
-                "rootDiskSize": {
-                    "type": "integer"
-                },
-                "rootDiskType": {
-                    "type": "string"
-                },
-                "securityGroupIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "spec": {
-                    "$ref": "#/definitions/cloudmodel.SpecSummary"
-                },
-                "specId": {
-                    "type": "string"
-                },
-                "sshHostKeyInfo": {
-                    "description": "SshHostKeyInfo contains SSH host key information for TOFU (Trust On First Use) verification",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.SshHostKeyInfo"
-                        }
-                    ]
-                },
-                "sshKeyId": {
-                    "type": "string"
-                },
-                "sshPort": {
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "Required by CB-Tumblebug",
-                    "type": "string"
-                },
-                "subGroupId": {
-                    "description": "defined if the VM is in a group",
-                    "type": "string"
-                },
-                "subnetId": {
-                    "type": "string"
-                },
-                "systemMessage": {
-                    "description": "Latest system message such as error message",
-                    "type": "string",
-                    "example": "Failed because ..."
-                },
-                "targetAction": {
-                    "type": "string"
-                },
-                "targetStatus": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                },
-                "vNetId": {
-                    "type": "string"
-                },
-                "vmUserName": {
-                    "type": "string"
-                },
-                "vmUserPassword": {
-                    "type": "string"
                 }
             }
         },
@@ -5197,7 +5207,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.VNetReq"
                 },
                 "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.MciReq"
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
                 "targetVmOsImageList": {
                     "type": "array",
@@ -5227,10 +5237,10 @@ const docTemplate = `{
                     "example": "yes"
                 },
                 "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "description": "CreationErrors contains information about Node creation failures (if any)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                            "$ref": "#/definitions/cloudmodel.InfraCreationErrors"
                         }
                     ]
                 },
@@ -5264,29 +5274,35 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                "newNodeList": {
+                    "description": "List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.",
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "node": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NodeInfo"
                     }
                 },
                 "placementAlgo": {
                     "type": "string"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
                 "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
                         }
                     ]
                 },
@@ -5301,7 +5317,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.StatusCountInfo"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
                 },
@@ -5322,12 +5338,6 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.VmInfo"
-                    }
                 }
             }
         },
@@ -5335,7 +5345,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "name",
-                "subGroups"
+                "nodeGroups"
             ],
             "properties": {
                 "description": {
@@ -5361,10 +5371,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
-                    "example": "mci01"
+                    "example": "infra01"
+                },
+                "nodeGroups": {
+                    "description": "NodeGroups is array of Node requests for multi-cloud infrastructure\nExample: Multiple Node groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"nodeGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"nodeGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"nodeGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CreateNodeGroupDynamicReq"
+                    }
                 },
                 "policyOnPartialFailure": {
-                    "description": "PolicyOnPartialFailure determines how to handle VM creation failures\n- \"continue\": Continue with partial MCI creation (default)\n- \"rollback\": Cleanup entire MCI when any VM fails\n- \"refine\": Mark failed VMs for refinement",
+                    "description": "PolicyOnPartialFailure determines how to handle Node creation failures\n- \"continue\": Continue with partial Infra creation (default)\n- \"rollback\": Cleanup entire Infra when any Node fails\n- \"refine\": Mark failed Nodes for refinement",
                     "type": "string",
                     "default": "continue",
                     "enum": [
@@ -5375,32 +5392,25 @@ const docTemplate = `{
                     "example": "continue"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
                 "sgTemplateId": {
-                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless\noverridden at the SubGroup level. If empty, the default all-open behavior is used.",
+                    "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
                     "type": "string",
                     "example": "default-sg"
                 },
-                "subGroups": {
-                    "description": "SubGroups is array of VM requests for multi-cloud infrastructure\nExample: Multiple VM groups across different CSPs\n[\n  {\n    \"name\": \"aws-group\",\n    \"subGroupSize\": \"3\",\n    \"specId\": \"aws+ap-northeast-2+t3.nano\",\n    \"imageId\": \"ami-01f71f215b23ba262\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"worker\", \"csp\": \"aws\"}\n  },\n  {\n    \"name\": \"azure-group\",\n    \"subGroupSize\": \"2\",\n    \"specId\": \"azure+koreasouth+standard_b1s\",\n    \"imageId\": \"Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"head\", \"csp\": \"azure\"}\n  },\n  {\n    \"name\": \"gcp-group\",\n    \"subGroupSize\": \"1\",\n    \"specId\": \"gcp+asia-northeast3+g1-small\",\n    \"imageId\": \"https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712\",\n    \"rootDiskSize\": \"50\",\n    \"label\": {\"role\": \"test\", \"csp\": \"gcp\"}\n  }\n]",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.CreateSubGroupDynamicReq"
-                    }
-                },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": ""
                 },
                 "vNetTemplateId": {
-                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all SubGroups unless overridden\nat the SubGroup level. If empty, the default hard-coded CIDR behavior is used.",
+                    "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all NodeGroups unless overridden\nat the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.",
                     "type": "string",
                     "example": "default-vnet"
                 }
@@ -5420,10 +5430,10 @@ const docTemplate = `{
                     "example": "yes"
                 },
                 "creationErrors": {
-                    "description": "CreationErrors contains information about VM creation failures (if any)",
+                    "description": "CreationErrors contains information about Node creation failures (if any)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCreationErrors"
+                            "$ref": "#/definitions/cloudmodel.InfraCreationErrors"
                         }
                     ]
                 },
@@ -5457,29 +5467,35 @@ const docTemplate = `{
                     "type": "string",
                     "example": "aws-ap-southeast-1"
                 },
-                "newVmList": {
-                    "description": "List of IDs for new VMs. Return IDs if the VMs are newly added. This field should be used for return body only.",
+                "newNodeList": {
+                    "description": "List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.",
                     "type": "array",
                     "items": {
                         "type": "string"
+                    }
+                },
+                "node": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NodeInfo"
                     }
                 },
                 "placementAlgo": {
                     "type": "string"
                 },
                 "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the VMs",
+                    "description": "PostCommand is for the command to bootstrap the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciCmdReq"
+                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
                         }
                     ]
                 },
                 "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the VMs",
+                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
                         }
                     ]
                 },
@@ -5494,7 +5510,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.StatusCountInfo"
                 },
                 "systemLabel": {
-                    "description": "SystemLabel is for describing the mci in a keyword (any string can be used) for special System purpose",
+                    "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
                 },
@@ -5515,12 +5531,6 @@ const docTemplate = `{
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
-                },
-                "vm": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.VmInfo"
-                    }
                 }
             }
         },
@@ -5609,9 +5619,9 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
                 },
                 "nameSeed": {
-                    "description": "Base string for resource name prefix (e.g., 'mig' -\u003e 'mig-vnet-01')",
+                    "description": "Base string for resource name prefix (e.g., 'my' -\u003e 'my-vnet-01')",
                     "type": "string",
-                    "example": "mig"
+                    "example": "my"
                 },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
@@ -5646,7 +5656,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/cloudmodel.VNetReq"
                 },
                 "targetVmInfra": {
-                    "$ref": "#/definitions/cloudmodel.MciReq"
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
                 "targetVmOsImageList": {
                     "type": "array",
@@ -5860,14 +5870,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-cloudmodel_MciInfoList": {
+        "model.ApiResponse-cloudmodel_InfraInfoList": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.MciInfoList"
+                            "$ref": "#/definitions/cloudmodel.InfraInfoList"
                         }
                     ]
                 },
@@ -6523,16 +6533,62 @@ const docTemplate = `{
         "model.BastionNode": {
             "type": "object",
             "properties": {
-                "mciId": {
+                "infraId": {
+                    "type": "string"
+                },
+                "nodeId": {
                     "type": "string"
                 },
                 "nsId": {
                     "type": "string"
-                },
-                "vmId": {
-                    "type": "string"
                 }
             }
+        },
+        "model.Condition": {
+            "type": "object",
+            "properties": {
+                "lastTransitionTime": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.ConditionStatus"
+                },
+                "type": {
+                    "$ref": "#/definitions/model.ConditionType"
+                }
+            }
+        },
+        "model.ConditionStatus": {
+            "type": "string",
+            "enum": [
+                "True",
+                "False",
+                "Unknown"
+            ],
+            "x-enum-varnames": [
+                "ConditionTrue",
+                "ConditionFalse",
+                "ConditionUnknown"
+            ]
+        },
+        "model.ConditionType": {
+            "type": "string",
+            "enum": [
+                "Ready",
+                "Synced",
+                "ChildrenReady"
+            ],
+            "x-enum-varnames": [
+                "ConditionReady",
+                "ConditionSynced",
+                "ConditionChildrenReady"
+            ]
         },
         "model.ConnConfig": {
             "type": "object",
@@ -6944,6 +7000,12 @@ const docTemplate = `{
         "model.ObjectStorageInfo": {
             "type": "object",
             "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Condition"
+                    }
+                },
                 "connectionConfig": {
                     "$ref": "#/definitions/model.ConnConfig"
                 },
@@ -7007,6 +7069,9 @@ const docTemplate = `{
                     "example": "ObjectStorage"
                 },
                 "status": {
+                    "type": "string"
+                },
+                "systemMessage": {
                     "type": "string"
                 },
                 "uid": {
@@ -7292,6 +7357,12 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.BastionNode"
                     }
                 },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Condition"
+                    }
+                },
                 "connectionConfig": {
                     "$ref": "#/definitions/model.ConnConfig"
                 },
@@ -7347,6 +7418,9 @@ const docTemplate = `{
                 "status": {
                     "type": "string"
                 },
+                "systemMessage": {
+                    "type": "string"
+                },
                 "uid": {
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
                     "type": "string",
@@ -7392,6 +7466,12 @@ const docTemplate = `{
                 },
                 "cidrBlock": {
                     "type": "string"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Condition"
+                    }
                 },
                 "connectionConfig": {
                     "$ref": "#/definitions/model.ConnConfig"
@@ -7448,6 +7528,9 @@ const docTemplate = `{
                     "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
@@ -8728,8 +8811,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": "csp-06eb41e14121c550a"
                 },
-                "sourceVmUid": {
-                    "description": "SourceVmUid is the UID of the source VM from which this image was created",
+                "sourceNodeUid": {
+                    "description": "SourceNodeUid is the UID of the source Node from which this image was created",
                     "type": "string",
                     "example": "wef12awefadf1221edcf"
                 },
@@ -9160,6 +9243,14 @@ const docTemplate = `{
         "summary.TargetInfraOverview": {
             "type": "object",
             "properties": {
+                "infraDescription": {
+                    "type": "string",
+                    "example": "Migrated infrastructure"
+                },
+                "infraName": {
+                    "type": "string",
+                    "example": "infra01"
+                },
                 "installMonAgent": {
                     "type": "string",
                     "example": "no"
@@ -9169,14 +9260,6 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
-                },
-                "mciDescription": {
-                    "type": "string",
-                    "example": "Migrated infrastructure"
-                },
-                "mciName": {
-                    "type": "string",
-                    "example": "mmci01"
                 },
                 "runningVmCount": {
                     "type": "integer",
@@ -9234,11 +9317,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2025-10-31T14:30:00Z"
                 },
-                "mciId": {
+                "infraId": {
                     "type": "string",
-                    "example": "mmci01"
+                    "example": "infra01"
                 },
-                "mciName": {
+                "infraName": {
                     "type": "string",
                     "example": "my-migrated-infrastructure"
                 },

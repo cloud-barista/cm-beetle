@@ -30,7 +30,7 @@ definitions:
   cloudmodel.CommandStatusInfo:
     properties:
       commandExecuted:
-        description: CommandExecuted is the actual SSH command executed on the VM
+        description: CommandExecuted is the actual SSH command executed on the Node
           (may be adjusted)
         example: ls -la
         type: string
@@ -111,11 +111,11 @@ definitions:
       verified:
         type: boolean
     type: object
-  cloudmodel.CreateSubGroupDynamicReq:
+  cloudmodel.CreateNodeGroupDynamicReq:
     properties:
       connectionName:
         description: |-
-          if ConnectionName is given, the VM tries to use associtated credential.
+          if ConnectionName is given, the Node tries to use associated credential.
           if not, it will use predefined ConnectionName in Spec objects
         example: aws-ap-northeast-2
         type: string
@@ -135,8 +135,16 @@ definitions:
           '{"role"': '"worker"'
         type: object
       name:
-        description: SubGroup name, actual VM name will be generated with -N postfix.
+        description: NodeGroup name, actual Node name will be generated with -N postfix.
         example: g1
+        type: string
+      nodeGroupSize:
+        description: NodeGroupSize is the number of Nodes to create in this NodeGroup.
+          If > 0, nodeGroup will be generated. Default is 1.
+        example: 3
+        type: integer
+      nodeUserPassword:
+        example: ""
         type: string
       rootDiskSize:
         description: Root disk size in GB. 0 = use CSP default.
@@ -152,32 +160,24 @@ definitions:
         type: string
       sgTemplateId:
         description: |-
-          SgTemplateId overrides the MCI-level SgTemplateId for this SubGroup.
-          If empty, inherits the SgTemplateId from the parent MciDynamicReq.
+          SgTemplateId overrides the Infra-level SgTemplateId for this NodeGroup.
+          If empty, inherits the SgTemplateId from the parent InfraDynamicReq.
         example: ""
         type: string
       specId:
         description: SpecId is field for id of a spec in common namespace
         example: aws+ap-northeast-2+t3.nano
         type: string
-      subGroupSize:
-        description: SubGroupSize is the number of VMs to create in this SubGroup.
-          If > 0, subGroup will be generated. Default is 1.
-        example: 3
-        type: integer
       vNetTemplateId:
         description: |-
-          VNetTemplateId overrides the MCI-level VNetTemplateId for this SubGroup.
-          If empty, inherits the VNetTemplateId from the parent MciDynamicReq.
-        example: ""
-        type: string
-      vmUserPassword:
+          VNetTemplateId overrides the Infra-level VNetTemplateId for this NodeGroup.
+          If empty, inherits the VNetTemplateId from the parent InfraDynamicReq.
         example: ""
         type: string
       zone:
         description: |-
-          Zone is an optional field to specify the availability zone for VM placement.
-          If specified, subnet will be created in this zone for resources like GPU VMs
+          Zone is an optional field to specify the availability zone for Node placement.
+          If specified, subnet will be created in this zone for resources like GPU Nodes
           that may only be available in specific zones. If empty, auto-selection applies.
         example: ap-northeast-2a
         type: string
@@ -185,10 +185,18 @@ definitions:
     - imageId
     - specId
     type: object
-  cloudmodel.CreateSubGroupReq:
+  cloudmodel.CreateNodeGroupReq:
     properties:
       connectionName:
         example: testcloud01-seoul
+        type: string
+      cspImageName:
+        description: |-
+          CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable
+          at nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty
+          and the image is not a custom image, CreateNode skips the redundant per-VM GetImage
+          DB call, significantly reducing concurrent DB load during large infra creation.
+          Custom images always go through the full GetImage path (this field stays empty for them).
         type: string
       cspResourceId:
         description: CspResourceId is resource identifier managed by CSP (required
@@ -211,12 +219,21 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        description: SubGroup name of VMs. Actual VM name will be generated with -N
-          postfix.
+        description: NodeGroup name of Nodes. Actual Node name will be generated with
+          -N postfix.
         example: g1-1
         type: string
+      nodeGroupSize:
+        description: NodeGroupSize is the number of Nodes to create in this NodeGroup.
+          If > 0, nodeGroup will be generated.
+        example: 3
+        type: integer
+      nodeUserName:
+        type: string
+      nodeUserPassword:
+        type: string
       rootDiskSize:
-        description: '"default", Integer (GB): ["50", ..., "1000"]'
+        description: Root disk size in GB. 0 = use CSP default.
         example: 50
         type: integer
       rootDiskType:
@@ -234,18 +251,9 @@ definitions:
         type: string
       sshKeyId:
         type: string
-      subGroupSize:
-        description: if subGroupSize is (not empty) && (> 0), subGroup will be generated.
-          VMs will be created accordingly.
-        example: 3
-        type: integer
       subnetId:
         type: string
       vNetId:
-        type: string
-      vmUserName:
-        type: string
-      vmUserPassword:
         type: string
     required:
     - connectionName
@@ -392,8 +400,8 @@ definitions:
           this image was created
         example: csp-06eb41e14121c550a
         type: string
-      sourceVmUid:
-        description: SourceVmUid is the UID of the source VM from which this image
+      sourceNodeUid:
+        description: SourceNodeUid is the UID of the source Node from which this image
           was created
         example: wef12awefadf1221edcf
         type: string
@@ -419,14 +427,20 @@ definitions:
     type: object
   cloudmodel.ImageStatus:
     enum:
+    - Creating
     - Available
+    - Failed
     - Unavailable
+    - Deleting
     - Deprecated
     - NA
     type: string
     x-enum-varnames:
+    - ImageCreating
     - ImageAvailable
+    - ImageFailed
     - ImageUnavailable
+    - ImageDeleting
     - ImageDeprecated
     - ImageNA
   cloudmodel.ImageSummary:
@@ -448,23 +462,7 @@ definitions:
         example: image
         type: string
     type: object
-  cloudmodel.KeyValue:
-    properties:
-      key:
-        type: string
-      value:
-        type: string
-    type: object
-  cloudmodel.Location:
-    properties:
-      display:
-        type: string
-      latitude:
-        type: number
-      longitude:
-        type: number
-    type: object
-  cloudmodel.MciCmdReq:
+  cloudmodel.InfraCmdReq:
     properties:
       command:
         description: Command is the list of commands to execute
@@ -488,35 +486,36 @@ definitions:
     required:
     - command
     type: object
-  cloudmodel.MciCreationErrors:
+  cloudmodel.InfraCreationErrors:
     properties:
-      failedVmCount:
-        description: FailedVmCount is the number of VMs that failed to be created
+      failedNodeCount:
+        description: FailedNodeCount is the number of Nodes that failed to be created
         type: integer
       failureHandlingStrategy:
         description: FailureHandlingStrategy indicates how failures were handled
         type: string
-      successfulVmCount:
-        description: SuccessfulVmCount is the number of VMs that were successfully
-          created
-        type: integer
-      totalVmCount:
-        description: TotalVmCount is the total number of VMs that were supposed to
-          be created
-        type: integer
-      vmCreationErrors:
-        description: VmCreationErrors contains errors from actual VM creation phase
-        items:
-          $ref: '#/definitions/cloudmodel.VmCreationError'
-        type: array
-      vmObjectCreationErrors:
-        description: VmObjectCreationErrors contains errors from VM object creation
+      nodeCreationErrors:
+        description: NodeCreationErrors contains errors from actual Node creation
           phase
         items:
-          $ref: '#/definitions/cloudmodel.VmCreationError'
+          $ref: '#/definitions/cloudmodel.NodeCreationError'
         type: array
+      nodeObjectCreationErrors:
+        description: NodeObjectCreationErrors contains errors from Node object creation
+          phase
+        items:
+          $ref: '#/definitions/cloudmodel.NodeCreationError'
+        type: array
+      successfulNodeCount:
+        description: SuccessfulNodeCount is the number of Nodes that were successfully
+          created
+        type: integer
+      totalNodeCount:
+        description: TotalNodeCount is the total number of Nodes that were supposed
+          to be created
+        type: integer
     type: object
-  cloudmodel.MciDynamicReq:
+  cloudmodel.InfraDynamicReq:
     properties:
       description:
         example: Made in CB-TB
@@ -536,15 +535,48 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        example: mci01
+        example: infra01
         type: string
+      nodeGroups:
+        description: |-
+          NodeGroups is array of Node requests for multi-cloud infrastructure
+          Example: Multiple Node groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "nodeGroupSize": "3",
+              "specId": "aws+ap-northeast-2+t3.nano",
+              "imageId": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "nodeGroupSize": "2",
+              "specId": "azure+koreasouth+standard_b1s",
+              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "nodeGroupSize": "1",
+              "specId": "gcp+asia-northeast3+g1-small",
+              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
+        items:
+          $ref: '#/definitions/cloudmodel.CreateNodeGroupDynamicReq'
+        type: array
       policyOnPartialFailure:
         default: continue
         description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
+          PolicyOnPartialFailure determines how to handle Node creation failures
+          - "continue": Continue with partial Infra creation (default)
+          - "rollback": Cleanup entire Infra when any Node fails
+          - "refine": Mark failed Nodes for refinement
         enum:
         - continue
         - rollback
@@ -553,65 +585,32 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
-          when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
-          overridden at the SubGroup level. If empty, the default all-open behavior is used.
+          when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
+          overridden at the NodeGroup level. If empty, the default all-open behavior is used.
         example: default-sg
         type: string
-      subGroups:
-        description: |-
-          SubGroups is array of VM requests for multi-cloud infrastructure
-          Example: Multiple VM groups across different CSPs
-          [
-            {
-              "name": "aws-group",
-              "subGroupSize": "3",
-              "specId": "aws+ap-northeast-2+t3.nano",
-              "imageId": "ami-01f71f215b23ba262",
-              "rootDiskSize": "50",
-              "label": {"role": "worker", "csp": "aws"}
-            },
-            {
-              "name": "azure-group",
-              "subGroupSize": "2",
-              "specId": "azure+koreasouth+standard_b1s",
-              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-              "rootDiskSize": "50",
-              "label": {"role": "head", "csp": "azure"}
-            },
-            {
-              "name": "gcp-group",
-              "subGroupSize": "1",
-              "specId": "gcp+asia-northeast3+g1-small",
-              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-              "rootDiskSize": "50",
-              "label": {"role": "test", "csp": "gcp"}
-            }
-          ]
-        items:
-          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
-        type: array
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
       vNetTemplateId:
         description: |-
           VNetTemplateId specifies the vNet template ID (from system namespace) to use when
-          auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
-          at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+          auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
+          at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
         example: default-vnet
         type: string
     required:
     - name
-    - subGroups
+    - nodeGroups
     type: object
-  cloudmodel.MciInfo:
+  cloudmodel.InfraInfo:
     properties:
       configureCloudAdaptiveNetwork:
         default: "no"
@@ -624,8 +623,8 @@ definitions:
         type: string
       creationErrors:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
+        - $ref: '#/definitions/cloudmodel.InfraCreationErrors'
+        description: CreationErrors contains information about Node creation failures
           (if any)
       description:
         type: string
@@ -651,23 +650,27 @@ definitions:
         description: Name is human-readable string to represent the object
         example: aws-ap-southeast-1
         type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
+      newNodeList:
+        description: List of IDs for new nodes. Return IDs if the nodes are newly
+          added. This field should be used for return body only.
         items:
           type: string
+        type: array
+      node:
+        items:
+          $ref: '#/definitions/cloudmodel.NodeInfo'
         type: array
       placementAlgo:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       postCommandResult:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        - $ref: '#/definitions/cloudmodel.InfraSshCmdResult'
         description: PostCommandResult is the result of the command for bootstraping
-          the VMs
+          the Nodes
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -676,7 +679,7 @@ definitions:
       statusCount:
         $ref: '#/definitions/cloudmodel.StatusCountInfo'
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: Managed by CB-Tumblebug
         type: string
@@ -694,19 +697,15 @@ definitions:
           labelSelector
         example: wef12awefadf1221edcf
         type: string
-      vm:
-        items:
-          $ref: '#/definitions/cloudmodel.VmInfo'
-        type: array
     type: object
-  cloudmodel.MciInfoList:
+  cloudmodel.InfraInfoList:
     properties:
-      mci:
+      infra:
         items:
-          $ref: '#/definitions/cloudmodel.MciInfo'
+          $ref: '#/definitions/cloudmodel.InfraInfo'
         type: array
     type: object
-  cloudmodel.MciReq:
+  cloudmodel.InfraReq:
     properties:
       description:
         example: Made in CB-TB
@@ -726,17 +725,21 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        example: mci01
+        example: infra01
         type: string
+      nodeGroups:
+        items:
+          $ref: '#/definitions/cloudmodel.CreateNodeGroupReq'
+        type: array
       placementAlgo:
         type: string
       policyOnPartialFailure:
         default: continue
         description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
+          PolicyOnPartialFailure determines how to handle Node creation failures
+          - "continue": Continue with partial Infra creation (default)
+          - "rollback": Cleanup entire Infra when any Node fails
+          - "refine": Mark failed Nodes for refinement
         enum:
         - continue
         - rollback
@@ -745,27 +748,193 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
-      subGroups:
-        items:
-          $ref: '#/definitions/cloudmodel.CreateSubGroupReq'
-        type: array
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
     required:
     - name
-    - subGroups
+    - nodeGroups
     type: object
-  cloudmodel.MciSshCmdResult:
+  cloudmodel.InfraSshCmdResult:
     properties:
       results:
         items:
           $ref: '#/definitions/cloudmodel.SshCmdResult'
         type: array
+    type: object
+  cloudmodel.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  cloudmodel.Location:
+    properties:
+      display:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  cloudmodel.NodeCreationError:
+    properties:
+      error:
+        description: Error is the error message
+        type: string
+      nodeName:
+        description: NodeName is the name of the Node that failed
+        type: string
+      phase:
+        description: Phase indicates when the error occurred
+        type: string
+      timestamp:
+        description: Timestamp when the error occurred
+        type: string
+    type: object
+  cloudmodel.NodeInfo:
+    properties:
+      RootDeviceName:
+        type: string
+      addtionalDetails:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      commandStatus:
+        description: CommandStatus stores the status and history of remote commands
+          executed on this Node
+        items:
+          $ref: '#/definitions/cloudmodel.CommandStatusInfo'
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/cloudmodel.ConnConfig'
+      connectionName:
+        type: string
+      createdTime:
+        description: Created time
+        example: "2022-11-10 23:00:00"
+        type: string
+      cspImageName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      cspSpecName:
+        type: string
+      cspSshKeyId:
+        type: string
+      cspSubnetId:
+        type: string
+      cspVNetId:
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      image:
+        $ref: '#/definitions/cloudmodel.ImageSummary'
+      imageId:
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        type: object
+      location:
+        $ref: '#/definitions/cloudmodel.Location'
+      monAgentStatus:
+        description: Montoring agent status
+        example: '[installed, notInstalled, failed]'
+        type: string
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      networkAgentStatus:
+        description: NetworkAgent status
+        example: '[notInstalled, installing, installed, failed]'
+        type: string
+      networkInterface:
+        type: string
+      nodeGroupId:
+        description: defined if the Node is in a group
+        type: string
+      nodeUserName:
+        type: string
+      nodeUserPassword:
+        type: string
+      privateDNS:
+        type: string
+      privateIP:
+        type: string
+      publicDNS:
+        type: string
+      publicIP:
+        type: string
+      region:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.RegionInfo'
+        description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      rootDiskSize:
+        type: integer
+      rootDiskType:
+        type: string
+      securityGroupIds:
+        items:
+          type: string
+        type: array
+      spec:
+        $ref: '#/definitions/cloudmodel.SpecSummary'
+      specId:
+        type: string
+      sshHostKeyInfo:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.SshHostKeyInfo'
+        description: SshHostKeyInfo contains SSH host key information for TOFU (Trust
+          On First Use) verification
+      sshKeyId:
+        type: string
+      sshPort:
+        type: integer
+      status:
+        description: Required by CB-Tumblebug
+        type: string
+      subnetId:
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      targetAction:
+        type: string
+      targetStatus:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vNetId:
+        type: string
     type: object
   cloudmodel.OSArchitecture:
     enum:
@@ -866,7 +1035,7 @@ definitions:
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
       targetVmInfra:
-        $ref: '#/definitions/cloudmodel.MciReq'
+        $ref: '#/definitions/cloudmodel.InfraReq'
       targetVmOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -883,7 +1052,7 @@ definitions:
       status:
         type: string
       targetVmInfra:
-        $ref: '#/definitions/cloudmodel.MciDynamicReq'
+        $ref: '#/definitions/cloudmodel.InfraDynamicReq'
     type: object
   cloudmodel.RecommendedVmOsImage:
     properties:
@@ -1135,7 +1304,11 @@ definitions:
           type: string
         type: object
       err: {}
-      mciId:
+      infraId:
+        type: string
+      nodeId:
+        type: string
+      nodeIp:
         type: string
       stderr:
         additionalProperties:
@@ -1145,10 +1318,6 @@ definitions:
         additionalProperties:
           type: string
         type: object
-      vmId:
-        type: string
-      vmIp:
-        type: string
     type: object
   cloudmodel.SshHostKeyInfo:
     properties:
@@ -1230,7 +1399,7 @@ definitions:
         description: CountTerminating is for counting Terminating
         type: integer
       countTotal:
-        description: CountTotal is for Total VMs
+        description: CountTotal is for Total Nodes
         type: integer
       countUndefined:
         description: CountUndefined is for counting Undefined
@@ -1274,160 +1443,6 @@ definitions:
     required:
     - connectionName
     - name
-    type: object
-  cloudmodel.VmCreationError:
-    properties:
-      error:
-        description: Error is the error message
-        type: string
-      phase:
-        description: Phase indicates when the error occurred
-        type: string
-      timestamp:
-        description: Timestamp when the error occurred
-        type: string
-      vmName:
-        description: VmName is the name of the VM that failed
-        type: string
-    type: object
-  cloudmodel.VmInfo:
-    properties:
-      RootDeviceName:
-        type: string
-      addtionalDetails:
-        items:
-          $ref: '#/definitions/cloudmodel.KeyValue'
-        type: array
-      commandStatus:
-        description: CommandStatus stores the status and history of remote commands
-          executed on this VM
-        items:
-          $ref: '#/definitions/cloudmodel.CommandStatusInfo'
-        type: array
-      connectionConfig:
-        $ref: '#/definitions/cloudmodel.ConnConfig'
-      connectionName:
-        type: string
-      createdTime:
-        description: Created time
-        example: "2022-11-10 23:00:00"
-        type: string
-      cspImageName:
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: csp-06eb41e14121c550a
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: we12fawefadf1221edcf
-        type: string
-      cspSpecName:
-        type: string
-      cspSshKeyId:
-        type: string
-      cspSubnetId:
-        type: string
-      cspVNetId:
-        type: string
-      dataDiskIds:
-        items:
-          type: string
-        type: array
-      description:
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: aws-ap-southeast-1
-        type: string
-      image:
-        $ref: '#/definitions/cloudmodel.ImageSummary'
-      imageId:
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        type: object
-      location:
-        $ref: '#/definitions/cloudmodel.Location'
-      monAgentStatus:
-        description: Montoring agent status
-        example: '[installed, notInstalled, failed]'
-        type: string
-      name:
-        description: Name is human-readable string to represent the object
-        example: aws-ap-southeast-1
-        type: string
-      networkAgentStatus:
-        description: NetworkAgent status
-        example: '[notInstalled, installing, installed, failed]'
-        type: string
-      networkInterface:
-        type: string
-      privateDNS:
-        type: string
-      privateIP:
-        type: string
-      publicDNS:
-        type: string
-      publicIP:
-        type: string
-      region:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.RegionInfo'
-        description: AWS, ex) {us-east1, us-east1-c} or {ap-northeast-2}
-      resourceType:
-        description: ResourceType is the type of the resource
-        type: string
-      rootDiskSize:
-        type: integer
-      rootDiskType:
-        type: string
-      securityGroupIds:
-        items:
-          type: string
-        type: array
-      spec:
-        $ref: '#/definitions/cloudmodel.SpecSummary'
-      specId:
-        type: string
-      sshHostKeyInfo:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.SshHostKeyInfo'
-        description: SshHostKeyInfo contains SSH host key information for TOFU (Trust
-          On First Use) verification
-      sshKeyId:
-        type: string
-      sshPort:
-        type: integer
-      status:
-        description: Required by CB-Tumblebug
-        type: string
-      subGroupId:
-        description: defined if the VM is in a group
-        type: string
-      subnetId:
-        type: string
-      systemMessage:
-        description: Latest system message such as error message
-        example: Failed because ...
-        type: string
-      targetAction:
-        type: string
-      targetStatus:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-      vNetId:
-        type: string
-      vmUserName:
-        type: string
-      vmUserPassword:
-        type: string
     type: object
   common.RequestDetails:
     properties:
@@ -1538,7 +1553,7 @@ definitions:
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
       targetVmInfra:
-        $ref: '#/definitions/cloudmodel.MciReq'
+        $ref: '#/definitions/cloudmodel.InfraReq'
       targetVmOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -1561,8 +1576,8 @@ definitions:
         type: string
       creationErrors:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
+        - $ref: '#/definitions/cloudmodel.InfraCreationErrors'
+        description: CreationErrors contains information about Node creation failures
           (if any)
       description:
         type: string
@@ -1588,23 +1603,27 @@ definitions:
         description: Name is human-readable string to represent the object
         example: aws-ap-southeast-1
         type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
+      newNodeList:
+        description: List of IDs for new nodes. Return IDs if the nodes are newly
+          added. This field should be used for return body only.
         items:
           type: string
+        type: array
+      node:
+        items:
+          $ref: '#/definitions/cloudmodel.NodeInfo'
         type: array
       placementAlgo:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       postCommandResult:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        - $ref: '#/definitions/cloudmodel.InfraSshCmdResult'
         description: PostCommandResult is the result of the command for bootstraping
-          the VMs
+          the Nodes
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -1613,7 +1632,7 @@ definitions:
       statusCount:
         $ref: '#/definitions/cloudmodel.StatusCountInfo'
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: Managed by CB-Tumblebug
         type: string
@@ -1631,10 +1650,6 @@ definitions:
           labelSelector
         example: wef12awefadf1221edcf
         type: string
-      vm:
-        items:
-          $ref: '#/definitions/cloudmodel.VmInfo'
-        type: array
     type: object
   controller.MigrateInfraWithDefaultsRequest:
     properties:
@@ -1656,15 +1671,48 @@ definitions:
         description: Label is for describing the object by keywords
         type: object
       name:
-        example: mci01
+        example: infra01
         type: string
+      nodeGroups:
+        description: |-
+          NodeGroups is array of Node requests for multi-cloud infrastructure
+          Example: Multiple Node groups across different CSPs
+          [
+            {
+              "name": "aws-group",
+              "nodeGroupSize": "3",
+              "specId": "aws+ap-northeast-2+t3.nano",
+              "imageId": "ami-01f71f215b23ba262",
+              "rootDiskSize": "50",
+              "label": {"role": "worker", "csp": "aws"}
+            },
+            {
+              "name": "azure-group",
+              "nodeGroupSize": "2",
+              "specId": "azure+koreasouth+standard_b1s",
+              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
+              "rootDiskSize": "50",
+              "label": {"role": "head", "csp": "azure"}
+            },
+            {
+              "name": "gcp-group",
+              "nodeGroupSize": "1",
+              "specId": "gcp+asia-northeast3+g1-small",
+              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
+              "rootDiskSize": "50",
+              "label": {"role": "test", "csp": "gcp"}
+            }
+          ]
+        items:
+          $ref: '#/definitions/cloudmodel.CreateNodeGroupDynamicReq'
+        type: array
       policyOnPartialFailure:
         default: continue
         description: |-
-          PolicyOnPartialFailure determines how to handle VM creation failures
-          - "continue": Continue with partial MCI creation (default)
-          - "rollback": Cleanup entire MCI when any VM fails
-          - "refine": Mark failed VMs for refinement
+          PolicyOnPartialFailure determines how to handle Node creation failures
+          - "continue": Continue with partial Infra creation (default)
+          - "rollback": Cleanup entire Infra when any Node fails
+          - "refine": Mark failed Nodes for refinement
         enum:
         - continue
         - rollback
@@ -1673,63 +1721,30 @@ definitions:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
-          when auto-creating shared SecurityGroup resources. Propagates to all SubGroups unless
-          overridden at the SubGroup level. If empty, the default all-open behavior is used.
+          when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
+          overridden at the NodeGroup level. If empty, the default all-open behavior is used.
         example: default-sg
         type: string
-      subGroups:
-        description: |-
-          SubGroups is array of VM requests for multi-cloud infrastructure
-          Example: Multiple VM groups across different CSPs
-          [
-            {
-              "name": "aws-group",
-              "subGroupSize": "3",
-              "specId": "aws+ap-northeast-2+t3.nano",
-              "imageId": "ami-01f71f215b23ba262",
-              "rootDiskSize": "50",
-              "label": {"role": "worker", "csp": "aws"}
-            },
-            {
-              "name": "azure-group",
-              "subGroupSize": "2",
-              "specId": "azure+koreasouth+standard_b1s",
-              "imageId": "Canonical:0001-com-ubuntu-server-jammy:22_04-lts:22.04.202505210",
-              "rootDiskSize": "50",
-              "label": {"role": "head", "csp": "azure"}
-            },
-            {
-              "name": "gcp-group",
-              "subGroupSize": "1",
-              "specId": "gcp+asia-northeast3+g1-small",
-              "imageId": "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20250712",
-              "rootDiskSize": "50",
-              "label": {"role": "test", "csp": "gcp"}
-            }
-          ]
-        items:
-          $ref: '#/definitions/cloudmodel.CreateSubGroupDynamicReq'
-        type: array
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: ""
         type: string
       vNetTemplateId:
         description: |-
           VNetTemplateId specifies the vNet template ID (from system namespace) to use when
-          auto-creating shared vNet resources. Propagates to all SubGroups unless overridden
-          at the SubGroup level. If empty, the default hard-coded CIDR behavior is used.
+          auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
+          at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
         example: default-vnet
         type: string
     required:
     - name
-    - subGroups
+    - nodeGroups
     type: object
   controller.MigrateInfraWithDefaultsResponse:
     properties:
@@ -1744,8 +1759,8 @@ definitions:
         type: string
       creationErrors:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCreationErrors'
-        description: CreationErrors contains information about VM creation failures
+        - $ref: '#/definitions/cloudmodel.InfraCreationErrors'
+        description: CreationErrors contains information about Node creation failures
           (if any)
       description:
         type: string
@@ -1771,23 +1786,27 @@ definitions:
         description: Name is human-readable string to represent the object
         example: aws-ap-southeast-1
         type: string
-      newVmList:
-        description: List of IDs for new VMs. Return IDs if the VMs are newly added.
-          This field should be used for return body only.
+      newNodeList:
+        description: List of IDs for new nodes. Return IDs if the nodes are newly
+          added. This field should be used for return body only.
         items:
           type: string
+        type: array
+      node:
+        items:
+          $ref: '#/definitions/cloudmodel.NodeInfo'
         type: array
       placementAlgo:
         type: string
       postCommand:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciCmdReq'
-        description: PostCommand is for the command to bootstrap the VMs
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
       postCommandResult:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciSshCmdResult'
+        - $ref: '#/definitions/cloudmodel.InfraSshCmdResult'
         description: PostCommandResult is the result of the command for bootstraping
-          the VMs
+          the Nodes
       resourceType:
         description: ResourceType is the type of the resource
         type: string
@@ -1796,7 +1815,7 @@ definitions:
       statusCount:
         $ref: '#/definitions/cloudmodel.StatusCountInfo'
       systemLabel:
-        description: SystemLabel is for describing the mci in a keyword (any string
+        description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
         example: Managed by CB-Tumblebug
         type: string
@@ -1814,10 +1833,6 @@ definitions:
           labelSelector
         example: wef12awefadf1221edcf
         type: string
-      vm:
-        items:
-          $ref: '#/definitions/cloudmodel.VmInfo'
-        type: array
     type: object
   controller.MigrateObjectStorageRequest:
     properties:
@@ -1876,8 +1891,8 @@ definitions:
       desiredCspAndRegionPair:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       nameSeed:
-        description: Base string for resource name prefix (e.g., 'mig' -> 'mig-vnet-01')
-        example: mig
+        description: Base string for resource name prefix (e.g., 'my' -> 'my-vnet-01')
+        example: my
         type: string
       onpremiseInfraModel:
         $ref: '#/definitions/onpremisemodel.OnpremInfra'
@@ -1901,7 +1916,7 @@ definitions:
       targetVNet:
         $ref: '#/definitions/cloudmodel.VNetReq'
       targetVmInfra:
-        $ref: '#/definitions/cloudmodel.MciReq'
+        $ref: '#/definitions/cloudmodel.InfraReq'
       targetVmOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -2051,11 +2066,11 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-cloudmodel_MciInfoList:
+  model.ApiResponse-cloudmodel_InfraInfoList:
     properties:
       data:
         allOf:
-        - $ref: '#/definitions/cloudmodel.MciInfoList'
+        - $ref: '#/definitions/cloudmodel.InfraInfoList'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2507,13 +2522,46 @@ definitions:
     type: object
   model.BastionNode:
     properties:
-      mciId:
+      infraId:
+        type: string
+      nodeId:
         type: string
       nsId:
         type: string
-      vmId:
-        type: string
     type: object
+  model.Condition:
+    properties:
+      lastTransitionTime:
+        type: string
+      message:
+        type: string
+      reason:
+        type: string
+      status:
+        $ref: '#/definitions/model.ConditionStatus'
+      type:
+        $ref: '#/definitions/model.ConditionType'
+    type: object
+  model.ConditionStatus:
+    enum:
+    - "True"
+    - "False"
+    - Unknown
+    type: string
+    x-enum-varnames:
+    - ConditionTrue
+    - ConditionFalse
+    - ConditionUnknown
+  model.ConditionType:
+    enum:
+    - Ready
+    - Synced
+    - ChildrenReady
+    type: string
+    x-enum-varnames:
+    - ConditionReady
+    - ConditionSynced
+    - ConditionChildrenReady
   model.ConnConfig:
     properties:
       configName:
@@ -2834,6 +2882,10 @@ definitions:
     type: object
   model.ObjectStorageInfo:
     properties:
+      conditions:
+        items:
+          $ref: '#/definitions/model.Condition'
+        type: array
       connectionConfig:
         $ref: '#/definitions/model.ConnConfig'
       connectionName:
@@ -2883,6 +2935,8 @@ definitions:
         example: ObjectStorage
         type: string
       status:
+        type: string
+      systemMessage:
         type: string
       uid:
         description: Uid is universally unique identifier for the object, used for
@@ -3092,6 +3146,10 @@ definitions:
         items:
           $ref: '#/definitions/model.BastionNode'
         type: array
+      conditions:
+        items:
+          $ref: '#/definitions/model.Condition'
+        type: array
       connectionConfig:
         $ref: '#/definitions/model.ConnConfig'
       connectionName:
@@ -3134,6 +3192,8 @@ definitions:
         type: string
       status:
         type: string
+      systemMessage:
+        type: string
       uid:
         description: Uid is universally unique identifier for the object, used for
           labelSelector
@@ -3167,6 +3227,10 @@ definitions:
         type: array
       cidrBlock:
         type: string
+      conditions:
+        items:
+          $ref: '#/definitions/model.Condition'
+        type: array
       connectionConfig:
         $ref: '#/definitions/model.ConnConfig'
       connectionName:
@@ -3209,6 +3273,8 @@ definitions:
         description: SystemLabel is for describing the Resource in a keyword (any
           string can be used) for special System purpose
         example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
         type: string
       uid:
         description: Uid is universally unique identifier for the object, used for
@@ -4112,8 +4178,8 @@ definitions:
           this image was created
         example: csp-06eb41e14121c550a
         type: string
-      sourceVmUid:
-        description: SourceVmUid is the UID of the source VM from which this image
+      sourceNodeUid:
+        description: SourceNodeUid is the UID of the source Node from which this image
           was created
         example: wef12awefadf1221edcf
         type: string
@@ -4419,6 +4485,12 @@ definitions:
     type: object
   summary.TargetInfraOverview:
     properties:
+      infraDescription:
+        example: Migrated infrastructure
+        type: string
+      infraName:
+        example: infra01
+        type: string
       installMonAgent:
         example: "no"
         type: string
@@ -4426,12 +4498,6 @@ definitions:
         additionalProperties:
           type: string
         type: object
-      mciDescription:
-        example: Migrated infrastructure
-        type: string
-      mciName:
-        example: mmci01
-        type: string
       runningVmCount:
         example: 3
         type: integer
@@ -4471,10 +4537,10 @@ definitions:
       generatedAt:
         example: "2025-10-31T14:30:00Z"
         type: string
-      mciId:
-        example: mmci01
+      infraId:
+        example: infra01
         type: string
-      mciName:
+      infraName:
         example: my-migrated-infrastructure
         type: string
       namespace:
@@ -5262,7 +5328,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: The ID list of The migrated multi-cloud infrastructure (MCI)
+          description: The ID list of The migrated multi-cloud infrastructure (Infra)
           schema:
             $ref: '#/definitions/model.ApiResponse-cloudmodel_IdList'
         "404":
@@ -5333,8 +5399,9 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mci101
-        description: Migrated Multi-Cloud Infrastructure (MCI) ID
+      - default: my-infra101
+        description: Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned
+          by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')
         in: path
         name: mciId
         required: true
@@ -5383,8 +5450,9 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mci101
-        description: Migrated Multi-Cloud Infrastructure (MCI) ID
+      - default: my-infra101
+        description: Migrated Multi-Cloud Infrastructure (MCI) ID (the actual ID returned
+          by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')
         in: path
         name: mciId
         required: true
@@ -6696,7 +6764,7 @@ paths:
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
 
-        **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
+        **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'my' -> 'my-vnet-01').
       operationId: RecommendVmInfraCandidates
       parameters:
       - description: Specify the source infrastructure to be migrated

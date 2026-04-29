@@ -14,7 +14,7 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 ## Project Overview
 
 - **Objectives:** Recommend optimal target computing infrastructure (cloud infrastructure) based on source infrastructure information, and execute migration according to the recommendation.
-- **Languages:** Go (1.25.0+).
+- **Languages:** Go (1.26.2+).
 - **Frameworks:** Echo (Web Framework), Viper (Config), Zerolog (Logging), Swag (API Docs).
 - **Dependencies:** `cb-tumblebug`.
 - **Supported Clouds:** AWS, Azure, GCP, NCP, Alibaba Cloud.

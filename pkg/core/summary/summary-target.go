@@ -28,22 +28,22 @@ import (
 
 // GenerateInfraSummary generates a comprehensive infrastructure summary
 // Note: This function does NOT modify existing tbmodel structs, only reads from them
-func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
-	log.Info().Msgf("Generating infrastructure summary for MCI (nsId: %s, mciId: %s)", nsId, mciId)
+func GenerateInfraSummary(nsId, infraId string) (*TargetInfraSummary, error) {
+	log.Info().Msgf("Generating infrastructure summary for Infra (nsId: %s, infraId: %s)", nsId, infraId)
 
-	// Step 1: Collect MCI information
-	mciInfo, err := tbclient.NewSession().ReadMci(nsId, mciId)
+	// Step 1: Collect Infra information
+	infraInfo, err := tbclient.NewSession().ReadInfra(nsId, infraId)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to retrieve MCI information")
-		return nil, fmt.Errorf("failed to retrieve MCI information: %w", err)
+		log.Error().Err(err).Msg("Failed to retrieve Infra information")
+		return nil, fmt.Errorf("failed to retrieve Infra information: %w", err)
 	}
 
 	// Step 2: Extract unique resource IDs
-	uniqueVNetIds := extractUniqueVNetIds(mciInfo.Vm)
-	uniqueSshKeyIds := extractUniqueSshKeyIds(mciInfo.Vm)
-	uniqueSecurityGroupIds := extractUniqueSecurityGroupIds(mciInfo.Vm)
-	uniqueSpecIds := extractUniqueSpecIds(mciInfo.Vm)
-	uniqueImageIds := extractUniqueImageIds(mciInfo.Vm)
+	uniqueVNetIds := extractUniqueVNetIds(infraInfo.Node)
+	uniqueSshKeyIds := extractUniqueSshKeyIds(infraInfo.Node)
+	uniqueSecurityGroupIds := extractUniqueSecurityGroupIds(infraInfo.Node)
+	uniqueSpecIds := extractUniqueSpecIds(infraInfo.Node)
+	uniqueImageIds := extractUniqueImageIds(infraInfo.Node)
 
 	log.Debug().Msgf("Unique resource counts - VNets: %d, SSHKeys: %d, SecurityGroups: %d, Specs: %d, Images: %d",
 		len(uniqueVNetIds), len(uniqueSshKeyIds), len(uniqueSecurityGroupIds), len(uniqueSpecIds), len(uniqueImageIds))
@@ -61,7 +61,7 @@ func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
 	}
 
 	// Step 5: Collect compute resources
-	computeResources, err := collectComputeResources(nsId, &mciInfo, uniqueSpecIds, uniqueImageIds)
+	computeResources, err := collectComputeResources(nsId, &infraInfo, uniqueSpecIds, uniqueImageIds)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to collect some compute resources")
 	}
@@ -73,13 +73,13 @@ func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
 	metadata := TargetSummaryMetadata{
 		GeneratedAt:    time.Now(),
 		Namespace:      nsId,
-		MciId:          mciId,
-		MciName:        mciInfo.Name,
+		InfraId:        infraId,
+		InfraName:      infraInfo.Name,
 		SummaryVersion: "1.0",
 	}
 
 	// Step 8: Build infrastructure overview
-	overview := buildInfraOverview(&mciInfo)
+	overview := buildInfraOverview(&infraInfo)
 
 	// Step 9: Assemble final summary
 	infraSummary := &TargetInfraSummary{
@@ -91,16 +91,16 @@ func GenerateInfraSummary(nsId, mciId string) (*TargetInfraSummary, error) {
 		CostEstimation:    costEstimation,
 	}
 
-	log.Info().Msgf("Successfully generated infrastructure summary for MCI: %s", mciId)
+	log.Info().Msgf("Successfully generated infrastructure summary for Infra: %s", infraId)
 	return infraSummary, nil
 }
 
-// extractUniqueVNetIds extracts unique VNet IDs from VMs
-func extractUniqueVNetIds(vms []tbmodel.VmInfo) []string {
+// extractUniqueVNetIds extracts unique VNet IDs from Nodes
+func extractUniqueVNetIds(nodes []tbmodel.NodeInfo) []string {
 	idMap := make(map[string]struct{})
-	for _, vm := range vms {
-		if vm.VNetId != "" {
-			idMap[vm.VNetId] = struct{}{}
+	for _, node := range nodes {
+		if node.VNetId != "" {
+			idMap[node.VNetId] = struct{}{}
 		}
 	}
 
@@ -111,12 +111,12 @@ func extractUniqueVNetIds(vms []tbmodel.VmInfo) []string {
 	return ids
 }
 
-// extractUniqueSshKeyIds extracts unique SSH Key IDs from VMs
-func extractUniqueSshKeyIds(vms []tbmodel.VmInfo) []string {
+// extractUniqueSshKeyIds extracts unique SSH Key IDs from Nodes
+func extractUniqueSshKeyIds(nodes []tbmodel.NodeInfo) []string {
 	idMap := make(map[string]struct{})
-	for _, vm := range vms {
-		if vm.SshKeyId != "" {
-			idMap[vm.SshKeyId] = struct{}{}
+	for _, node := range nodes {
+		if node.SshKeyId != "" {
+			idMap[node.SshKeyId] = struct{}{}
 		}
 	}
 
@@ -127,11 +127,11 @@ func extractUniqueSshKeyIds(vms []tbmodel.VmInfo) []string {
 	return ids
 }
 
-// extractUniqueSecurityGroupIds extracts unique Security Group IDs from VMs
-func extractUniqueSecurityGroupIds(vms []tbmodel.VmInfo) []string {
+// extractUniqueSecurityGroupIds extracts unique Security Group IDs from Nodes
+func extractUniqueSecurityGroupIds(nodes []tbmodel.NodeInfo) []string {
 	idMap := make(map[string]struct{})
-	for _, vm := range vms {
-		for _, sgId := range vm.SecurityGroupIds {
+	for _, node := range nodes {
+		for _, sgId := range node.SecurityGroupIds {
 			if sgId != "" {
 				idMap[sgId] = struct{}{}
 			}
@@ -145,12 +145,12 @@ func extractUniqueSecurityGroupIds(vms []tbmodel.VmInfo) []string {
 	return ids
 }
 
-// extractUniqueSpecIds extracts unique Spec IDs from VMs
-func extractUniqueSpecIds(vms []tbmodel.VmInfo) []string {
+// extractUniqueSpecIds extracts unique Spec IDs from Nodes
+func extractUniqueSpecIds(nodes []tbmodel.NodeInfo) []string {
 	idMap := make(map[string]struct{})
-	for _, vm := range vms {
-		if vm.SpecId != "" {
-			idMap[vm.SpecId] = struct{}{}
+	for _, node := range nodes {
+		if node.SpecId != "" {
+			idMap[node.SpecId] = struct{}{}
 		}
 	}
 
@@ -161,12 +161,12 @@ func extractUniqueSpecIds(vms []tbmodel.VmInfo) []string {
 	return ids
 }
 
-// extractUniqueImageIds extracts unique Image IDs from VMs
-func extractUniqueImageIds(vms []tbmodel.VmInfo) []string {
+// extractUniqueImageIds extracts unique Image IDs from Nodes
+func extractUniqueImageIds(nodes []tbmodel.NodeInfo) []string {
 	idMap := make(map[string]struct{})
-	for _, vm := range vms {
-		if vm.ImageId != "" {
-			idMap[vm.ImageId] = struct{}{}
+	for _, node := range nodes {
+		if node.ImageId != "" {
+			idMap[node.ImageId] = struct{}{}
 		}
 	}
 
@@ -286,8 +286,8 @@ func collectSecurityResources(nsId string, sshKeyIds, securityGroupIds []string)
 	return resources, nil
 }
 
-// collectComputeResources collects Spec, Image, and VM information
-func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
+// collectComputeResources collects Spec, Image, and Node information
+func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds, imageIds []string) (SummaryComputeResources, error) {
 	var resources SummaryComputeResources
 
 	// Collect specs with usage count
@@ -318,10 +318,10 @@ func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, ima
 		imageMap[imageId] = &imageInfo
 	}
 
-	// Count usage and build VM list
-	for _, vm := range mciInfo.Vm {
-		specUsage[vm.SpecId]++
-		imageUsage[vm.ImageId]++
+	// Count usage and build Node list
+	for _, node := range infraInfo.Node {
+		specUsage[node.SpecId]++
+		imageUsage[node.ImageId]++
 	}
 
 	// Build spec list for report - using tbmodel.SpecInfo directly
@@ -342,17 +342,17 @@ func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, ima
 		resources.Images = append(resources.Images, imageWithUsage)
 	}
 
-	// Build VM list for report
-	for _, vm := range mciInfo.Vm {
-		spec := specMap[vm.SpecId]
-		image := imageMap[vm.ImageId]
+	// Build Node list for report
+	for _, node := range infraInfo.Node {
+		spec := specMap[node.SpecId]
+		image := imageMap[node.ImageId]
 
 		reportVm := SummaryVmInfo{
-			Name:    vm.Name,
-			CspVmId: vm.CspResourceId,
-			Status:  vm.Status,
+			Name:    node.Name,
+			CspVmId: node.CspResourceId,
+			Status:  node.Status,
 			Spec: SummaryVmSpecInfo{
-				Name:         extractShortSpecName(vm.CspSpecName),
+				Name:         extractShortSpecName(node.CspSpecName),
 				VCpus:        getSpecVCpus(spec),
 				MemoryGiB:    getSpecMemory(spec),
 				Architecture: getSpecArchitecture(spec),
@@ -365,16 +365,16 @@ func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, ima
 				OsVersion:    getImageOsVersion(image),
 			},
 			Misc: SummaryVmMiscInfo{
-				VNet:           vm.VNetId,
-				Subnet:         vm.SubnetId,
-				PublicIp:       vm.PublicIP,
-				PrivateIp:      vm.PrivateIP,
-				SecurityGroups: vm.SecurityGroupIds,
-				SshKey:         vm.SshKeyId,
-				ConnectionName: vm.ConnectionName,
+				VNet:           node.VNetId,
+				Subnet:         node.SubnetId,
+				PublicIp:       node.PublicIP,
+				PrivateIp:      node.PrivateIP,
+				SecurityGroups: node.SecurityGroupIds,
+				SshKey:         node.SshKeyId,
+				ConnectionName: node.ConnectionName,
 			},
-			Region: vm.Region.Region,
-			Zone:   vm.Region.Zone,
+			Region: node.Region.Region,
+			Zone:   node.Region.Zone,
 		}
 
 		resources.Vms = append(resources.Vms, reportVm)
@@ -383,37 +383,37 @@ func collectComputeResources(nsId string, mciInfo *tbmodel.MciInfo, specIds, ima
 	return resources, nil
 }
 
-// buildInfraOverview builds the migration summary from MCI info
-func buildInfraOverview(mciInfo *tbmodel.MciInfo) TargetInfraOverview {
+// buildInfraOverview builds the migration summary from Infra info
+func buildInfraOverview(infraInfo *tbmodel.InfraInfo) TargetInfraOverview {
 	runningCount := 0
 	stoppedCount := 0
 
-	for _, vm := range mciInfo.Vm {
-		if strings.EqualFold(vm.Status, "running") {
+	for _, node := range infraInfo.Node {
+		if strings.EqualFold(node.Status, "running") {
 			runningCount++
-		} else if strings.EqualFold(vm.Status, "stopped") || strings.EqualFold(vm.Status, "terminated") {
+		} else if strings.EqualFold(node.Status, "stopped") || strings.EqualFold(node.Status, "terminated") {
 			stoppedCount++
 		}
 	}
 
 	targetCloud := "Unknown"
 	targetRegion := "Unknown"
-	if len(mciInfo.Vm) > 0 {
-		targetCloud = strings.ToUpper(mciInfo.Vm[0].ConnectionConfig.ProviderName)
-		targetRegion = mciInfo.Vm[0].Region.Region
+	if len(infraInfo.Node) > 0 {
+		targetCloud = strings.ToUpper(infraInfo.Node[0].ConnectionConfig.ProviderName)
+		targetRegion = infraInfo.Node[0].Region.Region
 	}
 
 	return TargetInfraOverview{
-		MciName:         mciInfo.Name,
-		MciDescription:  mciInfo.Description,
-		Status:          mciInfo.Status,
+		InfraName:       infraInfo.Name,
+		InfraDescription: infraInfo.Description,
+		Status:          infraInfo.Status,
 		TargetCloud:     targetCloud,
 		TargetRegion:    targetRegion,
-		TotalVmCount:    len(mciInfo.Vm),
+		TotalVmCount:    len(infraInfo.Node),
 		RunningVmCount:  runningCount,
 		StoppedVmCount:  stoppedCount,
-		Label:           mciInfo.Label,
-		InstallMonAgent: mciInfo.InstallMonAgent,
+		Label:           infraInfo.Label,
+		InstallMonAgent: infraInfo.InstallMonAgent,
 	}
 }
 

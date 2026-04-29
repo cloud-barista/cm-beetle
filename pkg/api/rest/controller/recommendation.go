@@ -120,7 +120,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 }
 
 type RecommendVmInfraRequest struct {
-	NameSeed                string                   `json:"nameSeed" example:"mig"` // Base string for resource name prefix (e.g., 'mig' -> 'mig-vnet-01')
+	NameSeed                string                   `json:"nameSeed" example:"my"` // Base string for resource name prefix (e.g., 'my' -> 'my-vnet-01')
 	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
 	OnpremiseInfraModel     onpremmodel.OnpremInfra
 }
@@ -221,7 +221,7 @@ func RecommendVMInfra(c echo.Context) error {
 // @Description **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
 // @Description - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
 // @Description
-// @Description **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'mig' -> 'mig-vnet-01').
+// @Description **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'my' -> 'my-vnet-01').
 // @Description
 // @Tags [Recommendation] Infrastructure
 // @Accept  json

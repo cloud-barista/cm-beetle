@@ -28,15 +28,15 @@ func transposeMatrix[T any](matrix [][]T) [][]T {
 }
 
 // Function to check overall status for the entire list of VMs
-func checkOverallSubGroupStatus(subgroups []cloudmodel.CreateSubGroupDynamicReq) string {
+func checkOverallSubGroupStatus(nodegroups []cloudmodel.CreateNodeGroupDynamicReq) string {
 	allOk := true
 	allNone := true
 
-	for _, subgroup := range subgroups {
-		if subgroup.ImageId == "" || subgroup.SpecId == "" {
+	for _, nodegroup := range nodegroups {
+		if nodegroup.ImageId == "" || nodegroup.SpecId == "" {
 			allOk = false // At least one VM is not fully populated
 		}
-		if subgroup.ImageId != "" || subgroup.SpecId != "" {
+		if nodegroup.ImageId != "" || nodegroup.SpecId != "" {
 			allNone = false // At least one VM has a value
 		}
 	}

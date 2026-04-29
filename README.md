@@ -17,7 +17,7 @@ Computing Infrastructure Migration framework (codename: cm-beetle) is going to s
 - Operating system (OS):
   - Ubuntu 22.04
 - Languages:
-  - Go: 1.25.0+
+  - Go: 1.26.2+
   - Python: 3.10.12
 - Container runtime:
   - Docker: 24.0.7

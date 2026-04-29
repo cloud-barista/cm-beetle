@@ -128,5 +128,5 @@ type CompatibleSpecImagePair struct {
 type RecommendedInfraInfo struct {
 	Status      string                `json:"status"`
 	Description string                `json:"description"`
-	TargetInfra tbmodel.MciDynamicReq `json:"targetInfra"`
+	TargetInfra tbmodel.InfraDynamicReq `json:"targetInfra"`
 }
