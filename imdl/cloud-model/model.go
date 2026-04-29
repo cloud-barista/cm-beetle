@@ -11,7 +11,7 @@ type RecommendedVmInfra struct {
 	Status                  string             `json:"status"`
 	Description             string             `json:"description"`
 	TargetCloud             CloudProperty      `json:"targetCloud"`
-	TargetVmInfra           MciReq             `json:"targetVmInfra"`
+	TargetVmInfra           InfraReq           `json:"targetVmInfra"`
 	TargetVNet              VNetReq            `json:"targetVNet"`
 	TargetSshKey            SshKeyReq          `json:"targetSshKey"`
 	TargetVmSpecList        []SpecInfo         `json:"targetVmSpecList"`
@@ -29,7 +29,7 @@ type CloudProperty struct {
 type RecommendedVmInfraDynamic struct {
 	Status        string        `json:"status"`
 	Description   string        `json:"description"`
-	TargetVmInfra MciDynamicReq `json:"targetVmInfra"`
+	TargetVmInfra InfraDynamicReq `json:"targetVmInfra"`
 }
 
 // RecommendedVmInfraDynamicList represents a list of recommended virtual machine infrastructure information.
