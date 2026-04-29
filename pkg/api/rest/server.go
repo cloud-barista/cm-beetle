@@ -88,7 +88,7 @@ func RunServer(port string) {
 	log.Info().Msg("CM-Beetle REST API server is starting...")
 
 	e := echo.New()
-	
+
 	// Set dynamically Swagger info
 	apiDocs.SwaggerInfo.Host = config.Beetle.Self.Endpoint
 	apiDocs.SwaggerInfo.Version = "0.5.0"
@@ -101,7 +101,7 @@ func RunServer(port string) {
 		{"/tumblebug/api"},
 		{"/.well-known/appspecific/com.chrome.devtools.json"},
 		{"/favicon.ico"},
-		// {"/mci", "option=status"},
+		// {"/infra", "option=status"},
 	}
 
 	// Custom logger middleware with zerolog
@@ -291,9 +291,8 @@ func RunServer(port string) {
 	gRecommendation.Use(middlewares.TumblebugInitChecker)
 
 	// Recommendation APIs for VM infrastructure
-	gRecommendation.POST("/vmInfra", controller.RecommendVmInfraCandidates)
-	gRecommendation.POST("/mci", controller.RecommendVMInfra) // To be deprecated
-	gRecommendation.POST("/mciWithDefaults", controller.RecommendVMInfraWithDefaults)
+	gRecommendation.POST("/infra", controller.RecommendVmInfraCandidates)
+	gRecommendation.POST("/infraWithDefaults", controller.RecommendVMInfraWithDefaults)
 
 	// Naming and validation utility APIs
 	gNaming := gBeetle.Group("/naming")
@@ -305,13 +304,12 @@ func RunServer(port string) {
 	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)
 
 	// Deprecated: Use /k8sControlPlane and /k8sNodeGroup instead
-	gRecommendation.POST("/containerInfra", controller.RecommendContainerInfra)
 
 	// Recommedation APIs for resources for VM infrastructure
 	gRecommendation.POST("/resources/vNet", controller.RecommendVNet)
 	gRecommendation.POST("/resources/securityGroups", controller.RecommendSecurityGroups)
-	gRecommendation.POST("/resources/vmOsImages", controller.RecommendVmOsImages)
-	gRecommendation.POST("/resources/vmSpecs", controller.RecommendVmSpecs)
+	gRecommendation.POST("/resources/osImages", controller.RecommendVmOsImages)
+	gRecommendation.POST("/resources/specs", controller.RecommendVmSpecs)
 
 	/*
 	 * API group for managed middleware recommendation
@@ -336,11 +334,11 @@ func RunServer(port string) {
 	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
 
 	// Migration APIs for VM infrastructure
-	gMigration.POST("/ns/:nsId/mciWithDefaults", controller.MigrateInfraWithDefaults)
-	gMigration.POST("/ns/:nsId/mci", controller.MigrateInfra)
-	gMigration.GET("/ns/:nsId/mci", controller.ListInfra)
-	gMigration.GET("/ns/:nsId/mci/:mciId", controller.GetInfra)
-	gMigration.DELETE("/ns/:nsId/mci/:mciId", controller.DeleteInfra)
+	gMigration.POST("/ns/:nsId/infraWithDefaults", controller.MigrateInfraWithDefaults)
+	gMigration.POST("/ns/:nsId/infra", controller.MigrateInfra)
+	gMigration.GET("/ns/:nsId/infra", controller.ListInfra)
+	gMigration.GET("/ns/:nsId/infra/:infraId", controller.GetInfra)
+	gMigration.DELETE("/ns/:nsId/infra/:infraId", controller.DeleteInfra)
 
 	// Migration APIs for resources for VM infrastructure
 	// APIs for the VM spec resources
@@ -404,7 +402,7 @@ func RunServer(port string) {
 	gReport.Use(middlewares.TumblebugInitChecker)
 
 	// Report APIs for migration analysis
-	gReport.POST("/migration/ns/:nsId/mci/:mciId", controller.GenerateMigrationReport)
+	gReport.POST("/migration/ns/:nsId/infra/:infraId", controller.GenerateMigrationReport)
 
 	/*
 	 * API group for infrastructure summary
@@ -414,7 +412,7 @@ func RunServer(port string) {
 	gSummary.Use(middlewares.TumblebugInitChecker)
 
 	// Summary APIs for target infrastructure
-	gSummary.GET("/target/ns/:nsId/mci/:mciId", controller.GenerateTargetInfraSummary)
+	gSummary.GET("/target/ns/:nsId/infra/:infraId", controller.GenerateTargetInfraSummary)
 
 	// Summary APIs for source infrastructure
 	gSummary.POST("/source", controller.GenerateSourceInfraSummary)

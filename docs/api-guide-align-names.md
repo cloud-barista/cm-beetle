@@ -41,12 +41,12 @@ Set the `nameSeed` field in your request to distinguish resources across paralle
 
 ### Late Binding Workflow
 
-| Step                   | API                             | Naming Behavior                                                                                       |
-| ---------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1. Recommend           | `POST /recommendation/vm-infra` | Returns **base names** (e.g., `vnet-01`). <br>Pre-flight validates `seed + name` without applying it. |
-| 2. Align (optional)    | `POST /naming/alignment`        | Rename a resource and propagate to child references.                                                  |
-| 3. Validate (optional) | `POST /naming/validation`       | Verify internal reference consistency.                                                                |
-| 4. Migrate             | `POST /migration/.../mci`       | Applies `NameSeed` → `{seed}-{name}` and creates resources.                                           |
+| Step                   | API                          | Naming Behavior                                                                                       |
+| ---------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1. Recommend           | `POST /recommendation/infra` | Returns **base names** (e.g., `vnet-01`). <br>Pre-flight validates `seed + name` without applying it. |
+| 2. Align (optional)    | `POST /naming/alignment`     | Rename a resource and propagate to child references.                                                  |
+| 3. Validate (optional) | `POST /naming/validation`    | Verify internal reference consistency.                                                                |
+| 4. Migrate             | `POST /migration/.../infra`  | Applies `NameSeed` → `{seed}-{name}` and creates resources.                                           |
 
 ---
 

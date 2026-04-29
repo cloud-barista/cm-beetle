@@ -45,8 +45,8 @@ type CSPTestReport struct {
 	BeetleURL              string
 	NamespaceID            string
 	OnpremiseInfraModel    onpremmodel.OnpremInfra
-	RecommendationRequest  controller.RecommendVmInfraRequest
-	RecommendationResponse *model.ApiResponse[[]cloudmodel.RecommendedVmInfra]
+	RecommendationRequest  controller.RecommendInfraRequest
+	RecommendationResponse *model.ApiResponse[[]cloudmodel.RecommendedInfra]
 	MigrationResponse      *controller.MigrateInfraResponse
 	ListMCIResponse        *cloudmodel.InfraInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
@@ -368,7 +368,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	pairSkipped := 0
 
 	// Create RecommendVmInfraRequest for this CSP-Region pair
-	recommendRequest := controller.RecommendVmInfraRequest{
+	recommendRequest := controller.RecommendInfraRequest{
 		NameSeed: nameSeed,
 		DesiredCspAndRegionPair: cloudmodel.CloudProperty{
 			Csp:    cspPair.Csp,
@@ -392,7 +392,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		TestResults:           make([]TestResults, 0),
 	}
 
-	var mciId string
+	var infraId string
 	var stopTesting bool
 
 	// Local helper to record results safely
@@ -414,7 +414,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 1: POST /beetle/recommendation/vmInfra
+	 * Test 1: POST /beetle/recommendation/infra
 	 */
 	recommendationApiResponse, result1 := runRecommendationTest(client, config, cspPair.CloudProperty, recommendRequest, displayName)
 	recordResult(result1)
@@ -426,26 +426,26 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		// Set tentative MCI ID from recommendation as a fallback for cleanup
 		if len(recommendationApiResponse.Data) > 0 {
 			// Predict the final name that Beetle will use after applying NameSeed
-			mciId = common.ComposeName(recommendationApiResponse.Data[0].TargetVmInfra.Name, nameSeed)
+			infraId = common.ComposeName(recommendationApiResponse.Data[0].TargetInfra.Name, nameSeed)
 		}
 	}
 
 	/*
-	 * Test 2: POST /beetle/migration/ns/{nsId}/mci
+	 * Test 2: POST /beetle/migration/ns/{nsId}/infra
 	 */
 	var result2 TestResults
 	if !stopTesting {
 		// Convert RecommendedVmInfra to MigrateInfraRequest
 		migrationRequest := controller.MigrateInfraRequest{
-			RecommendedVmInfra: recommendationApiResponse.Data[0],
+			RecommendedInfra: recommendationApiResponse.Data[0],
 		}
 		result2 = runMigrationTest(client, config, migrationRequest, displayName)
 		if structuredResponse, err := convertMapToMigrateInfraResponse(result2.Response); err == nil {
 			cspReport.MigrationResponse = structuredResponse
 			if structuredResponse.Id != "" {
-				mciId = structuredResponse.Id
+				infraId = structuredResponse.Id
 			} else if structuredResponse.Name != "" {
-				mciId = structuredResponse.Name
+				infraId = structuredResponse.Name
 			}
 		}
 		recordResult(result2)
@@ -455,7 +455,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result2 = TestResults{
-			TestName:     "Test 2: POST /beetle/migration/ns/{nsId}/mci",
+			TestName:     "Test 2: POST /beetle/migration/ns/{nsId}/infra",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -465,17 +465,17 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 			Response:     map[string]interface{}{},
 			Error:        "Test skipped due to previous test failure",
 			ErrorMessage: "Test skipped due to previous test failure",
-			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci", config.Beetle.Endpoint, config.Beetle.NamespaceID),
+			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID),
 		}
 		recordResult(result2)
 	}
 
 	/*
-	 * Test 3: GET /beetle/migration/ns/{nsId}/mci
+	 * Test 3: GET /beetle/migration/ns/{nsId}/infra
 	 */
 	var result3 TestResults
 	if !stopTesting {
-		result3 = runListMciTest(client, config, displayName)
+		result3 = runListInfraTest(client, config, displayName)
 		if result3.Success {
 			if structuredResponse, err := convertMapToInfraInfoList(result3.Response); err == nil {
 				cspReport.ListMCIResponse = structuredResponse
@@ -489,7 +489,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result3 = TestResults{
-			TestName:     "Test 3: GET /beetle/migration/ns/{nsId}/mci",
+			TestName:     "Test 3: GET /beetle/migration/ns/{nsId}/infra",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -499,26 +499,26 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 			Response:     map[string]interface{}{},
 			Error:        "Test skipped due to previous test failure",
 			ErrorMessage: "Test skipped due to previous test failure",
-			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci", config.Beetle.Endpoint, config.Beetle.NamespaceID),
+			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID),
 		}
 		recordResult(result3)
 	}
 
 	/*
-	 * Test 4: GET /beetle/migration/ns/{nsId}/mci?option=id
+	 * Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id
 	 */
 	var result4 TestResults
 	if !stopTesting {
-		result4 = runListMciIdsTest(client, config, displayName)
+		result4 = runListInfraIdsTest(client, config, displayName)
 		if result4.Success {
 			if structuredResponse, err := convertMapToIdList(result4.Response); err == nil {
 				cspReport.ListMCIIDsResponse = structuredResponse
-				if mciId == "" && len(structuredResponse.IdList) > 0 {
+				if infraId == "" && len(structuredResponse.IdList) > 0 {
 					// Scoped identification: only pick an ID that contains the current nameSeed
 					// to prevent picking up another parallel test's MCI
 					for _, id := range structuredResponse.IdList {
 						if strings.Contains(id, nameSeed) {
-							mciId = id
+							infraId = id
 							break
 						}
 					}
@@ -531,7 +531,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result4 = TestResults{
-			TestName:     "Test 4: GET /beetle/migration/ns/{nsId}/mci?option=id",
+			TestName:     "Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -541,16 +541,16 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 			Response:     map[string]interface{}{},
 			Error:        "Test skipped due to previous test failure",
 			ErrorMessage: "Test skipped due to previous test failure",
-			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/mci?option=id", config.Beetle.Endpoint, config.Beetle.NamespaceID),
+			RequestURL:   fmt.Sprintf("%s/beetle/migration/ns/%s/infra?option=id", config.Beetle.Endpoint, config.Beetle.NamespaceID),
 		}
 		recordResult(result4)
 	}
 
 	/*
-	 * Test 5: GET /beetle/migration/ns/{nsId}/mci/{mciId}
+	 * Test 5: GET /beetle/migration/ns/{nsId}/infra/{infraId}
 	 */
-	if !stopTesting && mciId != "" {
-		result5, _ := runGetMciTest(client, config, mciId, displayName)
+	if !stopTesting && infraId != "" {
+		result5, _ := runGetInfraTest(client, config, infraId, displayName)
 		if structuredResponse, err := convertMapToVmInfraInfo(result5.Response); err == nil {
 			cspReport.GetMCIResponse = structuredResponse
 		}
@@ -566,7 +566,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	 * Test 6: Remote Command Accessibility Check
 	 */
 	if !stopTesting {
-		result6 := runRemoteCommandTest(client, config, mciId, displayName)
+		result6 := runRemoteCommandTest(client, config, infraId, displayName)
 		recordResult(result6)
 		if !result6.Success {
 			stopTesting = true
@@ -578,8 +578,8 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	/*
 	 * Test 7: Target Infrastructure Summary
 	 */
-	if mciId != "" {
-		resultTargetSummary := runTargetSummaryTest(client, config, mciId, cspPair.Csp, displayName)
+	if infraId != "" {
+		resultTargetSummary := runTargetSummaryTest(client, config, infraId, cspPair.Csp, displayName)
 		recordResult(resultTargetSummary)
 	} else {
 		recordResult(TestResults{
@@ -599,8 +599,8 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	/*
 	 * Test 8: Migration Report
 	 */
-	if mciId != "" {
-		resultMigrationReport := runMigrationReportTest(client, config, onpremInfraModel, mciId, cspPair.Csp, displayName)
+	if infraId != "" {
+		resultMigrationReport := runMigrationReportTest(client, config, onpremInfraModel, infraId, cspPair.Csp, displayName)
 		recordResult(resultMigrationReport)
 	} else {
 		recordResult(TestResults{
@@ -618,11 +618,11 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 9: DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (CLEANUP)
+	 * Test 9: DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (CLEANUP)
 	 * Ensure resource cleanup (Test 9) runs even on failure of Tests 1-8
 	 */
-	if mciId != "" {
-		result9, _ := runDeleteMciTest(client, config, mciId, displayName)
+	if infraId != "" {
+		result9, _ := runDeleteInfraTest(client, config, infraId, displayName)
 		if result9.Success {
 			cspReport.DeleteMCIResponse = result9.Response
 		}
@@ -730,16 +730,16 @@ func checkBeetleReadiness(client *resty.Client, beetleURL string) error {
 }
 
 // convertMapToRecommendVmInfraResponse converts interface{} to RecommendVmInfraResponse
-func convertMapToRecommendVmInfraResponse(responseMap interface{}) (*controller.RecommendVmInfraResponse, error) {
+func convertMapToRecommendVmInfraResponse(responseMap interface{}) (*controller.RecommendInfraResponse, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var apiResp model.ApiResponse[controller.RecommendVmInfraResponse]
+	var apiResp model.ApiResponse[controller.RecommendInfraResponse]
 	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
 		// Fallback for direct unmarshal if not wrapped
-		var response controller.RecommendVmInfraResponse
+		var response controller.RecommendInfraResponse
 		if err := json.Unmarshal(jsonBytes, &response); err != nil {
 			return nil, err
 		}
@@ -829,15 +829,15 @@ func convertMapToVmInfraInfo(responseMap interface{}) (*cloudmodel.VmInfraInfo, 
 	return &apiResp.Data, nil
 }
 
-// runRecommendationTest performs Test 1: POST /beetle/recommendation/vmInfra
-func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendVmInfraRequest, displayName string) (model.ApiResponse[[]cloudmodel.RecommendedVmInfra], TestResults) {
-	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/vmInfra ---")
+// runRecommendationTest performs Test 1: POST /beetle/recommendation/infra
+func runRecommendationTest(client *resty.Client, config TestConfig, cspPair cloudmodel.CloudProperty, recommendRequest controller.RecommendInfraRequest, displayName string) (model.ApiResponse[[]cloudmodel.RecommendedInfra], TestResults) {
+	log.Info().Msg("\n--- Test 1: POST /beetle/recommendation/infra ---")
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("POST /beetle/recommendation/vmInfra (%s)", displayName),
+		TestName:  fmt.Sprintf("POST /beetle/recommendation/infra (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
@@ -845,14 +845,14 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 	limit := 2
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/recommendation/vmInfra?desiredCsp=%s&desiredRegion=%s&limit=%d", config.Beetle.Endpoint, cspPair.Csp, cspPair.Region, limit)
+	url := fmt.Sprintf("%s/beetle/recommendation/infra?desiredCsp=%s&desiredRegion=%s&limit=%d", config.Beetle.Endpoint, cspPair.Csp, cspPair.Region, limit)
 	log.Debug().Msgf("API Request URL: %s", url)
 
 	// Log request body
 	log.Debug().Msgf("API Request Body: %+v", recommendRequest)
 
 	// The new API returns multiple candidates using generic ApiResponse
-	var apiResponse model.ApiResponse[[]cloudmodel.RecommendedVmInfra]
+	var apiResponse model.ApiResponse[[]cloudmodel.RecommendedInfra]
 	err := common.ExecuteHttpRequest(
 		client,
 		"POST",
@@ -874,7 +874,7 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		populateErrorInfo(&result, err, 0, url, recommendRequest)
 		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
 		log.Error().Err(err).Str("url", url).Msg("Recommendation test failed")
-		return model.ApiResponse[[]cloudmodel.RecommendedVmInfra]{}, result
+		return model.ApiResponse[[]cloudmodel.RecommendedInfra]{}, result
 	}
 
 	// Check if we have at least one candidate
@@ -886,7 +886,7 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 		populateErrorInfo(&result, fmt.Errorf("%s", errMsg), 0, url, recommendRequest)
 		fmt.Printf("❌ Test 1 failed: %s\n", result.ErrorMessage)
 		log.Error().Str("url", url).Msg("No recommendation candidates found")
-		return model.ApiResponse[[]cloudmodel.RecommendedVmInfra]{}, result
+		return model.ApiResponse[[]cloudmodel.RecommendedInfra]{}, result
 	}
 
 	// Log number of candidates received
@@ -906,22 +906,22 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 	return apiResponse, result
 }
 
-// runMigrationTest performs Test 2: POST /beetle/migration/ns/{nsId}/mci
+// runMigrationTest performs Test 2: POST /beetle/migration/ns/{nsId}/infra
 func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestBody controller.MigrateInfraRequest, displayName string) TestResults {
-	fmt.Printf("\n--- Test 2: POST /beetle/migration/ns/%s/mci ---\n", config.Beetle.NamespaceID)
+	fmt.Printf("\n--- Test 2: POST /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability (migration needs more time) with spinner
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("POST /beetle/migration/ns/{nsId}/mci (%s)", displayName),
+		TestName:  fmt.Sprintf("POST /beetle/migration/ns/{nsId}/infra (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	var apiResponse model.ApiResponse[controller.MigrateInfraResponse]
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci", config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID)
 	log.Debug().Msgf("API Request URL: %s", url)
 
 	// Log request body
@@ -970,20 +970,20 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 	return result
 }
 
-// runListMciTest performs Test 3: GET /beetle/migration/ns/{nsId}/mci
-func runListMciTest(client *resty.Client, config TestConfig, displayName string) TestResults {
-	fmt.Printf("\n--- Test 3: GET /beetle/migration/ns/%s/mci ---\n", config.Beetle.NamespaceID)
+// runListInfraTest performs Test 3: GET /beetle/migration/ns/{nsId}/infra
+func runListInfraTest(client *resty.Client, config TestConfig, displayName string) TestResults {
+	fmt.Printf("\n--- Test 3: GET /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci (%s)", displayName),
+		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/infra (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci", config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
@@ -1026,20 +1026,20 @@ func runListMciTest(client *resty.Client, config TestConfig, displayName string)
 	return result
 }
 
-// runListMciIdsTest performs Test 4: GET /beetle/migration/ns/{nsId}/mci?option=id
-func runListMciIdsTest(client *resty.Client, config TestConfig, displayName string) TestResults {
-	fmt.Printf("\n--- Test 4: GET /beetle/migration/ns/%s/mci?option=id ---\n", config.Beetle.NamespaceID)
+// runListInfraIdsTest performs Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id
+func runListInfraIdsTest(client *resty.Client, config TestConfig, displayName string) TestResults {
+	fmt.Printf("\n--- Test 4: GET /beetle/migration/ns/%s/infra?option=id ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci?option=id (%s)", displayName),
+		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/infra?option=id (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci?option=id", config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra?option=id", config.Beetle.Endpoint, config.Beetle.NamespaceID)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
@@ -1055,10 +1055,10 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 		&apiResponse,
 		0,
 	)
-	mciIdList := apiResponse.Data
+	infraIdList := apiResponse.Data
 
 	// Log response body
-	log.Debug().Msgf("API Response Body: %+v", mciIdList)
+	log.Debug().Msgf("API Response Body: %+v", infraIdList)
 
 	result.EndTime = time.Now()
 	result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1082,30 +1082,30 @@ func runListMciIdsTest(client *resty.Client, config TestConfig, displayName stri
 	return result
 }
 
-// runGetMciTest performs Test 5: GET /beetle/migration/ns/{nsId}/mci/{mciId}
-func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName string) (TestResults, bool) {
-	if mciId == "" {
-		fmt.Println("⚠️  Test 5 skipped: No MCI ID available")
+// runGetInfraTest performs Test 5: GET /beetle/migration/ns/{nsId}/infra/{infraId}
+func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayName string) (TestResults, bool) {
+	if infraId == "" {
+		fmt.Println("⚠️  Test 5 skipped: No Infra ID available")
 		return TestResults{
-			TestName: fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
+			TestName: fmt.Sprintf("GET /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 			Success:  false,
 			Skipped:  true,
-			Error:    "MCI ID not available from previous tests",
+			Error:    "Infra ID not available from previous tests",
 		}, false
 	}
 
-	fmt.Printf("\n--- Test 5: GET /beetle/migration/ns/%s/mci/%s ---\n", config.Beetle.NamespaceID, mciId)
+	fmt.Printf("\n--- Test 5: GET /beetle/migration/ns/%s/infra/%s ---\n", config.Beetle.NamespaceID, infraId)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
+		TestName:  fmt.Sprintf("GET /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci/%s", config.Beetle.Endpoint, config.Beetle.NamespaceID, mciId)
+	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
@@ -1148,14 +1148,14 @@ func runGetMciTest(client *resty.Client, config TestConfig, mciId, displayName s
 	return result, true
 }
 
-// cleanupMci performs cleanup by deleting MCI when migration fails
-func cleanupMci(client *resty.Client, config TestConfig, mciId, displayName string) {
-	if mciId == "" {
-		log.Warn().Msg("Cleanup skipped: No MCI ID available")
+// cleanupInfra performs cleanup by deleting infra when migration fails
+func cleanupInfra(client *resty.Client, config TestConfig, infraId, displayName string) {
+	if infraId == "" {
+		log.Warn().Msg("Cleanup skipped: No Infra ID available")
 		return
 	}
 
-	log.Info().Str("mciId", mciId).Str("csp", displayName).Msg("Starting cleanup: Deleting failed MCI")
+	log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Starting cleanup: Deleting failed infra")
 
 	// Retry logic for internal cleanup
 	const maxCleanupRetries = 2
@@ -1163,12 +1163,12 @@ func cleanupMci(client *resty.Client, config TestConfig, mciId, displayName stri
 
 	for attempt := 1; attempt <= maxCleanupRetries; attempt++ {
 		if attempt > 1 {
-			log.Info().Str("mciId", mciId).Int("attempt", attempt).Msg("🔄 Retrying internal cleanup...")
+			log.Info().Str("infraId", infraId).Int("attempt", attempt).Msg("🔄 Retrying internal cleanup...")
 			time.Sleep(cleanupRetryDelay)
 		}
 
 		// Log API call details
-		url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci/%s?option=terminate", config.Beetle.Endpoint, config.Beetle.NamespaceID, mciId)
+		url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s?option=terminate", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 		log.Debug().Msgf("Cleanup API Request URL: %s", url)
 
 		var response map[string]interface{}
@@ -1182,13 +1182,13 @@ func cleanupMci(client *resty.Client, config TestConfig, mciId, displayName stri
 		log.Debug().Msgf("Cleanup Response Body: %+v", response)
 
 		if err == nil && resp.StatusCode() < 400 {
-			log.Info().Str("mciId", mciId).Str("csp", displayName).Msg("Cleanup completed: MCI successfully deleted")
+			log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Cleanup completed: Infra successfully deleted")
 			return
 		}
 
 		// If resource is already gone (404), consider cleanup successful
 		if resp != nil && resp.StatusCode() == http.StatusNotFound {
-			log.Info().Str("mciId", mciId).Str("csp", displayName).Msg("Cleanup skipped: MCI already deleted (404)")
+			log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Cleanup skipped: Infra already deleted (404)")
 			return
 		}
 
@@ -1196,36 +1196,36 @@ func cleanupMci(client *resty.Client, config TestConfig, mciId, displayName stri
 		if resp != nil {
 			statusCode = resp.StatusCode()
 		}
-		log.Warn().Err(err).Str("mciId", mciId).Int("statusCode", statusCode).Int("attempt", attempt).Msg("Cleanup attempt failed")
+		log.Warn().Err(err).Str("infraId", infraId).Int("statusCode", statusCode).Int("attempt", attempt).Msg("Cleanup attempt failed")
 	}
 
-	log.Error().Str("mciId", mciId).Msg("❌ Final cleanup attempt failed")
+	log.Error().Str("infraId", infraId).Msg("❌ Final cleanup attempt failed")
 }
 
-// runDeleteMciTest performs Test 7: DELETE /beetle/migration/ns/{nsId}/mci/{mciId}
-func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayName string) (TestResults, bool) {
-	if mciId == "" {
-		fmt.Println("⚠️  Test 7 skipped: No MCI ID available")
+// runDeleteInfraTest performs Test 7: DELETE /beetle/migration/ns/{nsId}/infra/{infraId}
+func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displayName string) (TestResults, bool) {
+	if infraId == "" {
+		fmt.Println("⚠️  Test 7 skipped: No Infra ID available")
 		return TestResults{
-			TestName: fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
+			TestName: fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 			Success:  false,
 			Skipped:  true,
-			Error:    "MCI ID not available from previous tests",
+			Error:    "Infra ID not available from previous tests",
 		}, false
 	}
 
-	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/mci/%s?option=terminate ---\n", config.Beetle.NamespaceID, mciId)
+	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/infra/%s?option=terminate ---\n", config.Beetle.NamespaceID, infraId)
 
 	// Wait before API call for stability with animation
 	animatedSleep(30*time.Second, "Waiting for a while for the previous task to be completed safely")
 
 	result := TestResults{
-		TestName:  fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/mci/{mciId} (%s)", displayName),
+		TestName:  fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 		StartTime: time.Now(),
 	}
 
 	// Log API call details
-	url := fmt.Sprintf("%s/beetle/migration/ns/%s/mci/%s?option=terminate", config.Beetle.Endpoint, config.Beetle.NamespaceID, mciId)
+	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s?option=terminate", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 	log.Debug().Msgf("API Request URL: %s", url)
 	log.Debug().Msg("API Request Body: none")
 
@@ -1239,7 +1239,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		if attempt > 1 {
-			log.Info().Str("mciId", mciId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying MCI deletion...")
+			log.Info().Str("infraId", infraId).Int("attempt", attempt).Msg("🔄 Retrying infra deletion...")
 			animatedSleep(retryDelay, fmt.Sprintf("Waiting before retry attempt %d/%d", attempt, maxRetries))
 		}
 
@@ -1265,10 +1265,10 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 			result.Response = response
 
 			if attempt > 1 {
-				log.Info().Str("mciId", mciId).Int("attempt", attempt).Msg("✅ MCI deletion succeeded after retry")
+				log.Info().Str("infraId", infraId).Int("attempt", attempt).Msg("✅ Infra deletion succeeded after retry")
 				fmt.Printf("✅ Test 7 passed (after %d attempt(s))\n", attempt)
 			} else {
-				log.Info().Str("mciId", mciId).Msg("✅ MCI deletion succeeded")
+				log.Info().Str("infraId", infraId).Msg("✅ Infra deletion succeeded")
 				fmt.Println("✅ Test 7 passed")
 			}
 			return result, true
@@ -1281,7 +1281,7 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 
 		// If resource is already gone (404), no need to retry
 		if statusCode == http.StatusNotFound {
-			log.Info().Str("mciId", mciId).Msg("✅ MCI deletion skipped: Resource already deleted (404)")
+			log.Info().Str("infraId", infraId).Msg("✅ Infra deletion skipped: Resource already deleted (404)")
 			fmt.Println("✅ Test 7 passed (Resource already gone)")
 
 			result.EndTime = time.Now()
@@ -1293,9 +1293,9 @@ func runDeleteMciTest(client *resty.Client, config TestConfig, mciId, displayNam
 		}
 
 		if attempt < maxRetries {
-			log.Warn().Err(err).Str("mciId", mciId).Int("statusCode", statusCode).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ MCI deletion attempt failed, will retry")
+			log.Warn().Err(err).Str("infraId", infraId).Int("statusCode", statusCode).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ Infra deletion attempt failed, will retry")
 		} else {
-			log.Error().Err(err).Str("mciId", mciId).Int("statusCode", statusCode).Int("maxRetries", maxRetries).Msg("❌ MCI deletion failed after all retries")
+			log.Error().Err(err).Str("infraId", infraId).Int("statusCode", statusCode).Int("maxRetries", maxRetries).Msg("❌ Infra deletion failed after all retries")
 		}
 	}
 
@@ -1627,23 +1627,23 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		var endpoint string
 		switch i {
 		case 0:
-			endpoint = "`POST /beetle/recommendation/vmInfra`"
+			endpoint = "`POST /beetle/recommendation/infra`"
 		case 1:
-			endpoint = fmt.Sprintf("`POST /beetle/migration/ns/%s/mci`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`POST /beetle/migration/ns/%s/infra`", report.NamespaceID)
 		case 2:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/mci`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra`", report.NamespaceID)
 		case 3:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/mci?option=id`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra?option=id`", report.NamespaceID)
 		case 4:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		case 5:
 			endpoint = "Remote Command Accessibility Check"
 		case 6:
-			endpoint = fmt.Sprintf("`GET /beetle/summary/target/ns/%s/mci/{{mciId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/summary/target/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		case 7:
-			endpoint = fmt.Sprintf("`POST /beetle/report/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`POST /beetle/report/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		case 8:
-			endpoint = fmt.Sprintf("`DELETE /beetle/migration/ns/%s/mci/{{mciId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`DELETE /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		default:
 			endpoint = ""
 		}
@@ -1706,7 +1706,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// API request information
 	sb.WriteString("#### 1.1 API Request Information\n\n")
-	sb.WriteString("- **API Endpoint**: `POST /beetle/recommendation/vmInfra`\n")
+	sb.WriteString("- **API Endpoint**: `POST /beetle/recommendation/infra`\n")
 	sb.WriteString("- **Purpose**: Get infrastructure recommendations for migration\n")
 	sb.WriteString("- **Required Parameters**: `desiredCsp` and `desiredRegion` in request body\n\n")
 
@@ -1757,7 +1757,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// API request information
 	sb.WriteString("#### 2.1 API Request Information\n\n")
-	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/migration/ns/%s/infra`\n", report.NamespaceID))
 	sb.WriteString("- **Purpose**: Create and migrate infrastructure based on recommendation\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 	sb.WriteString("- **Request Body**: Uses the response from the previous recommendation step\n\n")
@@ -1795,13 +1795,13 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 3: List MCIs
-	sb.WriteString("### Test Case 3: Get a list of MCIs\n\n")
+	// Test Case 3: List Infras
+	sb.WriteString("### Test Case 3: Get a list of infras\n\n")
 
 	// API request information
 	sb.WriteString("#### 3.1 API Request Information\n\n")
-	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci`\n", report.NamespaceID))
-	sb.WriteString("- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Retrieve all migrated cloud infrastructure instances\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 	sb.WriteString("- **Request Body**: None (GET request)\n\n")
 
@@ -1809,7 +1809,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("#### 3.2 API Response Information\n\n")
 	if report.ListMCIResponse != nil {
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
-		sb.WriteString("- **Response**: MCI list retrieved successfully\n\n")
+		sb.WriteString("- **Response**: Infra list retrieved successfully\n\n")
 		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("```json\n")
 		listJSON, _ := json.MarshalIndent(report.ListMCIResponse, "", "  ")
@@ -1820,7 +1820,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Error**: No response received\n\n")
 		// Add detailed error information if available
 		if len(report.TestResults) > 2 {
-			result := report.TestResults[2] // Third test is list MCIs
+			result := report.TestResults[2] // Third test is list infras
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -1832,13 +1832,13 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 4: List MCI IDs
-	sb.WriteString("### Test Case 4: Get a list of MCI IDs\n\n")
+	// Test Case 4: List Infra IDs
+	sb.WriteString("### Test Case 4: Get a list of infra IDs\n\n")
 
 	// API request information
 	sb.WriteString("#### 4.1 API Request Information\n\n")
-	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci?option=id`\n", report.NamespaceID))
-	sb.WriteString("- **Purpose**: Retrieve MCI IDs only (lightweight response)\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra?option=id`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Retrieve infra IDs only (lightweight response)\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 	sb.WriteString("- **Query Parameter**: `option=id`\n")
 	sb.WriteString("- **Request Body**: None (GET request)\n\n")
@@ -1847,7 +1847,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("#### 4.2 API Response Information\n\n")
 	if report.ListMCIIDsResponse != nil {
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
-		sb.WriteString("- **Response**: MCI IDs retrieved successfully\n\n")
+		sb.WriteString("- **Response**: Infra IDs retrieved successfully\n\n")
 		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("```json\n")
 		idsJSON, _ := json.MarshalIndent(report.ListMCIIDsResponse, "", "  ")
@@ -1858,7 +1858,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Error**: No response received\n\n")
 		// Add detailed error information if available
 		if len(report.TestResults) > 3 {
-			result := report.TestResults[3] // Fourth test is list MCI IDs
+			result := report.TestResults[3] // Fourth test is list infra IDs
 			if result.ErrorMessage != "" {
 				sb.WriteString("**Error Message**:\n\n```\n")
 				sb.WriteString(result.ErrorMessage)
@@ -1872,20 +1872,20 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 5: Get specific MCI (if available)
 	if report.GetMCIResponse != nil {
-		sb.WriteString("### Test Case 5: Get a specific MCI\n\n")
+		sb.WriteString("### Test Case 5: Get a specific infra\n\n")
 
 		// API request information
 		sb.WriteString("#### 5.1 API Request Information\n\n")
-		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
-		sb.WriteString("- **Purpose**: Retrieve detailed information for a specific MCI\n")
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
+		sb.WriteString("- **Purpose**: Retrieve detailed information for a specific infra\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
-		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The specific MCI identifier\n")
+		sb.WriteString("- **Path Parameter**: `{{infraId}}` - The specific infra identifier\n")
 		sb.WriteString("- **Request Body**: None (GET request)\n\n")
 
 		// API response information
 		sb.WriteString("#### 5.2 API Response Information\n\n")
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
-		sb.WriteString("- **Response**: MCI details retrieved successfully\n\n")
+		sb.WriteString("- **Response**: Infra details retrieved successfully\n\n")
 		sb.WriteString("**Response Body**:\n\n")
 		sb.WriteString("<details>\n")
 		sb.WriteString("  <summary> <ins>Click to see the response body </ins> </summary>\n\n")
@@ -2117,10 +2117,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API request information
 		sb.WriteString("#### 7.1 API Request Information\n\n")
-		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/summary/target/ns/%s/mci/{{mciId}}?format=md`\n", report.NamespaceID))
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/summary/target/ns/%s/infra/{{infraId}}?format=md`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Get a summary of the migrated target infrastructure in Markdown format\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
-		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The MCI identifier\n")
+		sb.WriteString("- **Path Parameter**: `{{infraId}}` - The infra identifier\n")
 		sb.WriteString("- **Query Parameter**: `format=md`\n\n")
 
 		// API response information
@@ -2152,10 +2152,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API request information
 		sb.WriteString("#### 8.1 API Request Information\n\n")
-		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/report/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/report/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Generate a comprehensive migration report matching source to target\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
-		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The MCI identifier\n\n")
+		sb.WriteString("- **Path Parameter**: `{{infraId}}` - The infra identifier\n\n")
 
 		// API response information
 		sb.WriteString("#### 8.2 API Response Information\n\n")
@@ -2186,10 +2186,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 		// API request information
 		sb.WriteString("#### 9.1 API Request Information\n\n")
-		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/mci/{{mciId}}`\n", report.NamespaceID))
+		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Delete the migrated infrastructure and clean up resources\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
-		sb.WriteString("- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete\n")
+		sb.WriteString("- **Path Parameter**: `{{infraId}}` - The infra identifier to delete\n")
 		sb.WriteString("- **Query Parameter**: `option=terminate` (terminates all resources)\n")
 		sb.WriteString("- **Request Body**: None (DELETE request)\n\n")
 
@@ -2350,10 +2350,10 @@ func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraMo
 	return result
 }
 
-// runTargetSummaryTest performs Target Summary: GET /beetle/summary/target/ns/{nsId}/mci/{mciId}
-func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspName, displayName string) TestResults {
+// runTargetSummaryTest performs Target Summary: GET /beetle/summary/target/ns/{nsId}/infra/{infraId}
+func runTargetSummaryTest(client *resty.Client, config TestConfig, infraId, cspName, displayName string) TestResults {
 	result := TestResults{
-		TestName:  "Target Summary: GET /beetle/summary/target/ns/{nsId}/mci/{mciId}",
+		TestName:  "Target Summary: GET /beetle/summary/target/ns/{nsId}/infra/{infraId}",
 		StartTime: time.Now(),
 	}
 
@@ -2364,8 +2364,8 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 	log.Info().Msgf("\n--- Target Infrastructure Summary for %s ---", displayName)
 
 	// Make API call with markdown format
-	url := fmt.Sprintf("%s/beetle/summary/target/ns/%s/mci/%s?format=md",
-		config.Beetle.Endpoint, config.Beetle.NamespaceID, mciId)
+	url := fmt.Sprintf("%s/beetle/summary/target/ns/%s/infra/%s?format=md",
+		config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 	result.RequestURL = url
 
 	resp, err := client.R().
@@ -2442,10 +2442,10 @@ func runTargetSummaryTest(client *resty.Client, config TestConfig, mciId, cspNam
 	return result
 }
 
-// runMigrationReportTest performs Migration Report: POST /beetle/report/migration/ns/{nsId}/mci/{mciId}
-func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfraModel onpremmodel.OnpremInfra, mciId, cspName, displayName string) TestResults {
+// runMigrationReportTest performs Migration Report: POST /beetle/report/migration/ns/{nsId}/infra/{infraId}
+func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfraModel onpremmodel.OnpremInfra, infraId, cspName, displayName string) TestResults {
 	result := TestResults{
-		TestName:  "Migration Report: POST /beetle/report/migration/ns/{nsId}/mci/{mciId}",
+		TestName:  "Migration Report: POST /beetle/report/migration/ns/{nsId}/infra/{infraId}",
 		StartTime: time.Now(),
 	}
 
@@ -2461,8 +2461,8 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 	}
 
 	// Make API call
-	url := fmt.Sprintf("%s/beetle/report/migration/ns/%s/mci/%s",
-		config.Beetle.Endpoint, config.Beetle.NamespaceID, mciId)
+	url := fmt.Sprintf("%s/beetle/report/migration/ns/%s/infra/%s",
+		config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 	result.RequestURL = url
 
 	resp, err := client.R().
@@ -2541,7 +2541,7 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 }
 
 // runRemoteCommandTest performs Test 6: Remote Command to check accessibility of migrated VM
-func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displayName string) TestResults {
+func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, displayName string) TestResults {
 	log.Info().Msg("\n--- Test 6: Remote Command Accessibility Check ---")
 
 	// Wait before test for stability with animation
@@ -2563,7 +2563,7 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, mciId, displa
 
 	tbCli := tbclient.NewDefaultClient()
 	// tbSess := tbCli.NewSession() // or tbclient.NewSession()
-	accessInfo, err := tbCli.NewSession().ReadInfraAccessInfo(config.Beetle.NamespaceID, mciId, "accessinfo", "showSshKey")
+	accessInfo, err := tbCli.NewSession().ReadInfraAccessInfo(config.Beetle.NamespaceID, infraId, "accessinfo", "showSshKey")
 	if err != nil {
 		populateErrorInfo(&result, err, 0, "ReadMciAccessInfo", nil)
 		log.Error().Err(err).Msg("Failed to get MCI access info")

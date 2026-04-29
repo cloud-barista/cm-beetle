@@ -103,19 +103,19 @@ func IsValidCspAndRegion(csp string, region string) (bool, error) {
 }
 
 // RecommendVmInfraWithDefaults an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedVmInfraDynamicList, error) {
+func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfraDynamicList, error) {
 
 	// var emptyResp RecommendedVmInfraInfoList
-	var recommendedVmInfraInfoList cloudmodel.RecommendedVmInfraDynamicList
+	var recommendedVmInfraInfoList cloudmodel.RecommendedInfraDynamicList
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
 	var defaultSpecsLimit int = GetDefaultSpecsLimit()
 
 	// Initialize the response body
-	recommendedVmInfraInfoList = cloudmodel.RecommendedVmInfraDynamicList{
-		Description:       "This is a list of recommended target infrastructures. Please review and use them.",
-		Count:             0,
-		TargetVmInfraList: []cloudmodel.RecommendedVmInfraDynamic{},
+	recommendedVmInfraInfoList = cloudmodel.RecommendedInfraDynamicList{
+		Description:     "This is a list of recommended target infrastructures. Please review and use them.",
+		Count:           0,
+		TargetInfraList: []cloudmodel.RecommendedInfraDynamic{},
 	}
 
 	// // Set VM info
@@ -192,14 +192,14 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// log.Debug().Msgf("transposed recommended VM specs and OS images: %+v", transposed)
 
 	// Build response body which includes multiple recommended infrastructures
-	recommenedVmInfraInfoList := []cloudmodel.RecommendedVmInfraDynamic{}
+	recommenedVmInfraInfoList := []cloudmodel.RecommendedInfraDynamic{}
 
 	for i, vmInfoList := range transposed {
 
-		tempVmInfraInfo := cloudmodel.RecommendedVmInfraDynamic{
+		tempVmInfraInfo := cloudmodel.RecommendedInfraDynamic{
 			Status:      string(NothingRecommended),
 			Description: "This is a recommended target infrastructure.",
-			TargetVmInfra: cloudmodel.InfraDynamicReq{
+			TargetInfra: cloudmodel.InfraDynamicReq{
 				Name:        fmt.Sprintf("migrated-%02d", i),
 				Description: "a recommended multi-cloud infrastructure",
 				NodeGroups:  []cloudmodel.CreateNodeGroupDynamicReq{},
@@ -218,10 +218,10 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				NodeGroupSize:    1,                                                         // TBD
 				NodeUserPassword: "",                                                        // TBD
 			}
-			tempVmInfraInfo.TargetVmInfra.NodeGroups = append(tempVmInfraInfo.TargetVmInfra.NodeGroups, tempCreateNodegroupReq)
+			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}
 
-		status := checkOverallSubGroupStatus(tempVmInfraInfo.TargetVmInfra.NodeGroups)
+		status := checkOverallSubGroupStatus(tempVmInfraInfo.TargetInfra.NodeGroups)
 		tempVmInfraInfo.Status = status
 		if status == string(NothingRecommended) {
 			tempVmInfraInfo.Description = "Could not find approprate VMs."
@@ -235,7 +235,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	}
 
 	// Assign the target infrastructure list to the response
-	recommendedVmInfraInfoList.TargetVmInfraList = recommenedVmInfraInfoList
+	recommendedVmInfraInfoList.TargetInfraList = recommenedVmInfraInfoList
 	recommendedVmInfraInfoList.Count = len(recommenedVmInfraInfoList)
 
 	log.Trace().Msgf("the recommended infra info: %+v", recommendedVmInfraInfoList)
@@ -244,24 +244,24 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 }
 
 // RecommendVmInfra an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedVmInfra, error) {
+func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
 
 	// var emptyResp RecommendedVmInfra
-	var recommendedVmInfra cloudmodel.RecommendedVmInfra
+	var recommendedVmInfra cloudmodel.RecommendedInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
 	var limitSpecs int = GetDefaultSpecsLimit()
 	var limitImages int = GetDefaultImagesLimit()
 
 	// Initialize the response body
-	recommendedVmInfra = cloudmodel.RecommendedVmInfra{
+	recommendedVmInfra = cloudmodel.RecommendedInfra{
 		Description: "This is a list of recommended target infrastructures. Please review and use them.",
 		Status:      "",
 		TargetCloud: cloudmodel.CloudProperty{
 			Csp:    desiredCsp,
 			Region: desiredRegion,
 		},
-		TargetVmInfra: cloudmodel.InfraReq{
+		TargetInfra: cloudmodel.InfraReq{
 			Name:        "infra101",
 			Description: "a recommended multi-cloud infrastructure",
 			NodeGroups:  []cloudmodel.CreateNodeGroupReq{},
@@ -497,9 +497,9 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	/*
 	 * [Output]
 	 */
-	recommendedVmInfra.TargetVmInfra.NodeGroups = recommendedNodegroupList
-	recommendedVmInfra.TargetVmSpecList = recommendedVmSpecList
-	recommendedVmInfra.TargetVmOsImageList = recommendedVmOsImageList
+	recommendedVmInfra.TargetInfra.NodeGroups = recommendedNodegroupList
+	recommendedVmInfra.TargetSpecList = recommendedVmSpecList
+	recommendedVmInfra.TargetOsImageList = recommendedVmOsImageList
 	recommendedVmInfra.TargetSecurityGroupList = recommendedSecurityGroupList
 
 	log.Trace().Msgf("the recommended infra info: %+v", recommendedVmInfra)
@@ -508,7 +508,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 }
 
 // RecommendVmInfraCandidates an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64, nameSeed string) ([]cloudmodel.RecommendedVmInfra, error) {
+func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64, nameSeed string) ([]cloudmodel.RecommendedInfra, error) {
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
 	// * this function estimates, recommends or just generates vNets, subnets, SSH key pair, and security groups
@@ -516,7 +516,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// * All those are corresponding to the source servers.
 
 	// var emptyResp RecommendedVmInfra
-	var recommendedVmInfraCandidates []cloudmodel.RecommendedVmInfra
+	var recommendedVmInfraCandidates []cloudmodel.RecommendedInfra
 
 	// TODO: To be updated, a user will input the desired number of recommended VMs
 	var limitSpecs int = GetDefaultSpecsLimit()
@@ -526,7 +526,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	region := strings.ToLower(desiredRegion)
 
 	// Initialize the response body
-	skeletonVmInfra := cloudmodel.RecommendedVmInfra{
+	skeletonVmInfra := cloudmodel.RecommendedInfra{
 		NameSeed:    nameSeed,
 		Description: "This is a recommended target infrastructures and resources. Please review and use them.",
 		Status:      "",
@@ -534,7 +534,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Csp:    csp,
 			Region: region,
 		},
-		TargetVmInfra: cloudmodel.InfraReq{
+		TargetInfra: cloudmodel.InfraReq{
 			Name:       "infra101",
 			NodeGroups: []cloudmodel.CreateNodeGroupReq{},
 			// Description: "Recommended VMs comprising the multi-cloud infrastructure",
@@ -888,11 +888,11 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 
 		// Create a candidate infrastructure based on skeleton and current tempNodeGroupList
 		candidateInfra := skeletonVmInfra
-		candidateInfra.TargetVmInfra.NodeGroups = tempNodeGroupList
-		candidateInfra.TargetVmSpecList = deduplicatedVmSpecList
-		candidateInfra.TargetVmOsImageList = deduplicatedVmOsImageList
+		candidateInfra.TargetInfra.NodeGroups = tempNodeGroupList
+		candidateInfra.TargetSpecList = deduplicatedVmSpecList
+		candidateInfra.TargetOsImageList = deduplicatedVmOsImageList
 		candidateInfra.TargetSecurityGroupList = deduplicatedSecurityGroupList
-		candidateInfra.TargetVmInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
+		candidateInfra.TargetInfra.Description = "Recommended VMs comprising multi-cloud infrastructure"
 
 		// Calculate overall match rate with detailed information
 		overallStatus, overallStatusDesc, infraMatchRateSummary := calculateCandidateMatchRateWithDetails(csp, tempNodeGroupList, srcInfra, deduplicatedVmSpecList, deduplicatedVmOsImageList, minMatchRate)

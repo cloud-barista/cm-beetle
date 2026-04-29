@@ -31,15 +31,15 @@ Before testing CSP-Region pairs, the CLI performs:
 
 Each CSP-Region pair executes the following sequential operations:
 
-1. `POST /beetle/recommendation/vmInfra` - Infrastructure recommendation (returns multiple candidates, uses first one)
-2. `POST /beetle/migration/ns/{nsId}/mci` - Infrastructure migration
-3. `GET /beetle/migration/ns/{nsId}/mci` - List MCIs
-4. `GET /beetle/migration/ns/{nsId}/mci?option=id` - List MCI IDs
-5. `GET /beetle/migration/ns/{nsId}/mci/{mciId}` - Get specific MCI
+1. `POST /beetle/recommendation/infra` - Infrastructure recommendation (returns multiple candidates, uses first one)
+2. `POST /beetle/migration/ns/{nsId}/infra` - Infrastructure migration
+3. `GET /beetle/migration/ns/{nsId}/infra` - List infras
+4. `GET /beetle/migration/ns/{nsId}/infra?option=id` - List infra IDs
+5. `GET /beetle/migration/ns/{nsId}/infra/{infraId}` - Get specific infra
 6. **Remote Command Test** - SSH connectivity and accessibility check for migrated VMs
-7. **Target Infrastructure Summary**: `GET /beetle/summary/target/ns/{nsId}/mci/{mciId}` - Generate summary of migrated infrastructure
-8. **Migration Report**: `POST /beetle/report/migration/ns/{nsId}/mci/{mciId}` - Comprehensive migration analysis report
-9. `DELETE /beetle/migration/ns/{nsId}/mci/{mciId}?option=terminate` - Delete MCI
+7. **Target Infrastructure Summary**: `GET /beetle/summary/target/ns/{nsId}/infra/{infraId}` - Generate summary of migrated infrastructure
+8. **Migration Report**: `POST /beetle/report/migration/ns/{nsId}/infra/{infraId}` - Comprehensive migration analysis report
+9. `DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate` - Delete infra
 
 **Note**: If any test fails, remaining tests for that CSP-Region pair are skipped.
 
@@ -147,19 +147,19 @@ SOURCE INFRASTRUCTURE SUMMARY
 Testing CSP-Region Pair 1/5: AWS-Seoul
 ============================================================
 
---- Test 1: POST /beetle/recommendation/vmInfra ---
+--- Test 1: POST /beetle/recommendation/infra ---
 ✅ Test 1 passed (Duration: 541ms)
 
---- Test 2: POST /beetle/migration/ns/mig01/mci ---
+--- Test 2: POST /beetle/migration/ns/mig01/infra ---
 ✅ Test 2 passed (Duration: 37.999s)
 
---- Test 3: GET /beetle/migration/ns/mig01/mci ---
+--- Test 3: GET /beetle/migration/ns/mig01/infra ---
 ✅ Test 3 passed (Duration: 125ms)
 
---- Test 4: GET /beetle/migration/ns/mig01/mci?option=id ---
+--- Test 4: GET /beetle/migration/ns/mig01/infra?option=id ---
 ✅ Test 4 passed (Duration: 98ms)
 
---- Test 5: GET /beetle/migration/ns/mig01/mci/{mciId} ---
+--- Test 5: GET /beetle/migration/ns/mig01/infra/{infraId} ---
 ✅ Test 5 passed (Duration: 142ms)
 
 --- Test 6: Remote Command Accessibility Check ---
@@ -173,7 +173,7 @@ Testing CSP-Region Pair 1/5: AWS-Seoul
 --- Migration Report ---
 ✅ Migration report generated successfully
 
---- Test 7: DELETE /beetle/migration/ns/mig01/mci/{mciId} ---
+--- Test 7: DELETE /beetle/migration/ns/mig01/infra/{infraId} ---
 ✅ Test 7 passed (Duration: 25.3s)
 
 ============================================================
@@ -196,8 +196,8 @@ Individual Markdown reports are generated in `testresult/`:
 - `beetle-test-results-gcp.md` - GCP test results
 - `beetle-test-results-alibaba.md` - Alibaba Cloud test results
 - `beetle-test-results-ncp.md` - NCP test results
-- `target-infra-summary-{csp}-{mciId}.md` - Target infrastructure summaries (per CSP)
-- `migration-report-{csp}-{mciId}.md` - Migration reports (per CSP)
+- `target-infra-summary-{csp}-{infraId}.md` - Target infrastructure summaries (per CSP)
+- `migration-report-{csp}-{infraId}.md` - Migration reports (per CSP)
 
 ## Custom Configuration
 

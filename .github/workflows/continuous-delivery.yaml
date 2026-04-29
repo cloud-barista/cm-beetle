@@ -26,6 +26,7 @@ on:
       - "LICENSE"
       - "CODEOWNERS"
       - "deepdiffgo/**"
+      - "imdl/**"
       # - '.all-contributorsrc'
       # - 'assets/**'
       # - 'src/testclient/scripts/**'

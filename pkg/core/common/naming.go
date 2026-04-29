@@ -36,7 +36,7 @@ func ComposeName(baseName, seed string) string {
 // ApplyNameSeed applies the late binding naming strategy.
 // It returns a NEW RecommendedVmInfra object with prefixed names,
 // while keeping the original seed in the NameSeed field.
-func ApplyNameSeed(infra cloudmodel.RecommendedVmInfra) cloudmodel.RecommendedVmInfra {
+func ApplyNameSeed(infra cloudmodel.RecommendedInfra) cloudmodel.RecommendedInfra {
 	if infra.NameSeed == "" {
 		return infra
 	}
@@ -63,19 +63,19 @@ func ApplyNameSeed(infra cloudmodel.RecommendedVmInfra) cloudmodel.RecommendedVm
 	}
 
 	// 4. Update Infra and NodeGroups
-	result.TargetVmInfra.Name = ComposeName(infra.TargetVmInfra.Name, seed)
-	for i, ng := range infra.TargetVmInfra.NodeGroups {
-		result.TargetVmInfra.NodeGroups[i].Name = ComposeName(ng.Name, seed)
-		result.TargetVmInfra.NodeGroups[i].VNetId = ComposeName(ng.VNetId, seed)
-		result.TargetVmInfra.NodeGroups[i].SubnetId = ComposeName(ng.SubnetId, seed)
-		result.TargetVmInfra.NodeGroups[i].SshKeyId = ComposeName(ng.SshKeyId, seed)
+	result.TargetInfra.Name = ComposeName(infra.TargetInfra.Name, seed)
+	for i, ng := range infra.TargetInfra.NodeGroups {
+		result.TargetInfra.NodeGroups[i].Name = ComposeName(ng.Name, seed)
+		result.TargetInfra.NodeGroups[i].VNetId = ComposeName(ng.VNetId, seed)
+		result.TargetInfra.NodeGroups[i].SubnetId = ComposeName(ng.SubnetId, seed)
+		result.TargetInfra.NodeGroups[i].SshKeyId = ComposeName(ng.SshKeyId, seed)
 
 		// Update SecurityGroupIds
 		newSgIds := make([]string, len(ng.SecurityGroupIds))
 		for j, sgId := range ng.SecurityGroupIds {
 			newSgIds[j] = ComposeName(sgId, seed)
 		}
-		result.TargetVmInfra.NodeGroups[i].SecurityGroupIds = newSgIds
+		result.TargetInfra.NodeGroups[i].SecurityGroupIds = newSgIds
 	}
 
 	return result
@@ -88,7 +88,7 @@ const (
 	ResourceTypeSubnet        = "subnet"
 	ResourceTypeSshKey        = "sshKey"
 	ResourceTypeSecurityGroup = "securityGroup"
-	ResourceTypeMci           = "mci"
+	ResourceTypeInfra         = "infra"
 )
 
 // PropagateNameChange updates a specific resource's name in the model and propagates
@@ -100,7 +100,7 @@ const (
 //   - resourceType: One of "vNet", "subnet", "sshKey", "securityGroup", "mci"
 //   - oldName: The current name of the resource to rename
 //   - newName: The new name to assign to the resource
-func PropagateNameChange(infra cloudmodel.RecommendedVmInfra, resourceType, oldName, newName string) cloudmodel.RecommendedVmInfra {
+func PropagateNameChange(infra cloudmodel.RecommendedInfra, resourceType, oldName, newName string) cloudmodel.RecommendedInfra {
 	result := infra // Copy by value
 
 	switch resourceType {
@@ -116,9 +116,9 @@ func PropagateNameChange(infra cloudmodel.RecommendedVmInfra, resourceType, oldN
 			}
 		}
 		// 3. Propagate to NodeGroups
-		for i := range result.TargetVmInfra.NodeGroups {
-			if result.TargetVmInfra.NodeGroups[i].VNetId == oldName {
-				result.TargetVmInfra.NodeGroups[i].VNetId = newName
+		for i := range result.TargetInfra.NodeGroups {
+			if result.TargetInfra.NodeGroups[i].VNetId == oldName {
+				result.TargetInfra.NodeGroups[i].VNetId = newName
 			}
 		}
 
@@ -130,9 +130,9 @@ func PropagateNameChange(infra cloudmodel.RecommendedVmInfra, resourceType, oldN
 			}
 		}
 		// 2. Propagate to NodeGroups
-		for i := range result.TargetVmInfra.NodeGroups {
-			if result.TargetVmInfra.NodeGroups[i].SubnetId == oldName {
-				result.TargetVmInfra.NodeGroups[i].SubnetId = newName
+		for i := range result.TargetInfra.NodeGroups {
+			if result.TargetInfra.NodeGroups[i].SubnetId == oldName {
+				result.TargetInfra.NodeGroups[i].SubnetId = newName
 			}
 		}
 
@@ -142,9 +142,9 @@ func PropagateNameChange(infra cloudmodel.RecommendedVmInfra, resourceType, oldN
 			result.TargetSshKey.Name = newName
 		}
 		// 2. Propagate to NodeGroups
-		for i := range result.TargetVmInfra.NodeGroups {
-			if result.TargetVmInfra.NodeGroups[i].SshKeyId == oldName {
-				result.TargetVmInfra.NodeGroups[i].SshKeyId = newName
+		for i := range result.TargetInfra.NodeGroups {
+			if result.TargetInfra.NodeGroups[i].SshKeyId == oldName {
+				result.TargetInfra.NodeGroups[i].SshKeyId = newName
 			}
 		}
 
@@ -156,18 +156,18 @@ func PropagateNameChange(infra cloudmodel.RecommendedVmInfra, resourceType, oldN
 			}
 		}
 		// 2. Propagate to SubGroup SecurityGroupIds
-		for i, ng := range result.TargetVmInfra.NodeGroups {
+		for i, ng := range result.TargetInfra.NodeGroups {
 			for j, sgId := range ng.SecurityGroupIds {
 				if sgId == oldName {
-					result.TargetVmInfra.NodeGroups[i].SecurityGroupIds[j] = newName
+					result.TargetInfra.NodeGroups[i].SecurityGroupIds[j] = newName
 				}
 			}
 		}
 
-	case ResourceTypeMci:
-		// Rename the MCI itself (no child dependencies on MCI name)
-		if result.TargetVmInfra.Name == oldName {
-			result.TargetVmInfra.Name = newName
+	case ResourceTypeInfra:
+		// Rename the Infra itself (no child dependencies on Infra name)
+		if result.TargetInfra.Name == oldName {
+			result.TargetInfra.Name = newName
 		}
 	}
 
@@ -194,7 +194,7 @@ func IsValidName(name string) (bool, string) {
 }
 
 // ValidateComposedNames checks all resource names and referential integrity.
-func ValidateComposedNames(infra cloudmodel.RecommendedVmInfra) (bool, string) {
+func ValidateComposedNames(infra cloudmodel.RecommendedInfra) (bool, string) {
 	seed := infra.NameSeed
 
 	// 1. Validate name formats
@@ -223,10 +223,10 @@ func ValidateComposedNames(infra cloudmodel.RecommendedVmInfra) (bool, string) {
 	}
 
 	// Check Infra and NodeGroups
-	if ok, detail := IsValidName(ComposeName(infra.TargetVmInfra.Name, seed)); !ok {
-		return false, fmt.Sprintf("Infra name [%s]: %s", infra.TargetVmInfra.Name, detail)
+	if ok, detail := IsValidName(ComposeName(infra.TargetInfra.Name, seed)); !ok {
+		return false, fmt.Sprintf("Infra name [%s]: %s", infra.TargetInfra.Name, detail)
 	}
-	for _, ng := range infra.TargetVmInfra.NodeGroups {
+	for _, ng := range infra.TargetInfra.NodeGroups {
 		if ok, detail := IsValidName(ComposeName(ng.Name, seed)); !ok {
 			return false, fmt.Sprintf("NodeGroup/VM name [%s]: %s", ng.Name, detail)
 		}
@@ -242,7 +242,7 @@ func ValidateComposedNames(infra cloudmodel.RecommendedVmInfra) (bool, string) {
 
 // ValidateReferentialIntegrity verifies that all internal references (IDs)
 // in the model point to resources that exist within the same model.
-func ValidateReferentialIntegrity(infra cloudmodel.RecommendedVmInfra) (bool, string) {
+func ValidateReferentialIntegrity(infra cloudmodel.RecommendedInfra) (bool, string) {
 	vnetName := infra.TargetVNet.Name
 	sshKeyName := infra.TargetSshKey.Name
 
@@ -263,7 +263,7 @@ func ValidateReferentialIntegrity(infra cloudmodel.RecommendedVmInfra) (bool, st
 	}
 
 	// Check Infra NodeGroups references
-	for _, ng := range infra.TargetVmInfra.NodeGroups {
+	for _, ng := range infra.TargetInfra.NodeGroups {
 		if ng.VNetId != vnetName {
 			return false, fmt.Sprintf("NodeGroup [%s] refers to non-existent VNet [%s]", ng.Name, ng.VNetId)
 		}

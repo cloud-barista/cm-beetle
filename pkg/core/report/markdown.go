@@ -73,8 +73,8 @@ func writeExecutiveSummary(md *strings.Builder, summary *ExecutiveSummary, metad
 	md.WriteString(fmt.Sprintf("**Target Region:** %s\n\n", summary.TargetRegion))
 
 	// Metadata Information
-	md.WriteString(fmt.Sprintf("**Namespace:** %s | **MCI ID:** %s\n\n",
-		metadata.Namespace, metadata.MciID))
+	md.WriteString(fmt.Sprintf("**Namespace:** %s | **Infra ID:** %s\n\n",
+		metadata.Namespace, metadata.InfraID))
 
 	// Migration Status
 	md.WriteString(fmt.Sprintf("**Migration Status:** %s\n\n", summary.MigrationStatus))
