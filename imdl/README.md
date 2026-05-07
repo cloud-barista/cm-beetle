@@ -4,20 +4,36 @@
 
 This directory contains **infrastructure models** for computing infra migration. These models were originally part of the `cm-model` repository but have been internalized to reduce external dependencies and improve maintainability.
 
+### Property Similarity and Sharing Feasibility Analysis
+
+| Resource       | Similarity |   Shared   | Key Reason                                                                                                                |
+| -------------- | :--------: | :--------: | ------------------------------------------------------------------------------------------------------------------------- |
+| VNet           |    Low     |     ❌     | Source: multiple `CidrBlocks []string` + gateway list; Target: single CIDR + `SubnetInfoList` + `ConnectionName`          |
+| Subnet         |  Very Low  |     ❌     | Source has no independent subnet model; target `SubnetReq` is a child of `VNetReq`                                        |
+| Security Group |   Medium   |     ❌     | Source: separate `SrcCIDR`/`DstCIDR` + `Action` (allow/deny); Target: single `CIDR`, deny rules unsupported               |
+| SSH Key        |    None    |     ❌     | No SSH key model on the source side; target is create/register-only                                                       |
+| Spec           |    Low     |     ❌     | Source: physical core count (`Cpus × Threads`), GHz, vendor string; Target: logical vCPU count, TB Spec ID                |
+| Image          |    Low     |     ❌     | Source: `PrettyName`, `VersionCodename`; Target: `CspImageName`, `CspImageId`, `OSPlatform`                               |
+| Node (VM)      |  Very Low  |     ❌     | Source: direct hardware description; Target: Spec/Image/VNet/SG/SshKey ID reference system                                |
+| Object Storage |    High    | Properties | Property types (`CORSRule`, etc.) are shared; top-level models (`SourceObjectStorage`/`TargetObjectStorage`) are separate |
+
 ## Directory Structure
 
 ```
 imdl/
 ├── go.mod                    # Module definition (github.com/cloud-barista/cm-beetle/imdl)
 ├── README.md                 # This file
-├── cloud-model/              # Cloud infrastructure models
+├── cloud-model/              # Cloud infrastructure models (source)
 │   ├── model.go              # Recommended cloud infrastructure models
 │   ├── copied-tb-model.go    # CB-Tumblebug models (synchronized with specific TB versions)
 │   └── vm-infra-info.go      # VM infrastructure information models
-└── on-premise-model/         # On-premise infrastructure models
-    ├── model.go              # Main on-premise infrastructure models
-    ├── server.go             # Server hardware and OS models
-    └── network.go            # Network-related models
+├── on-premise-model/         # On-premise infrastructure models (source)
+│   ├── model.go              # Main on-premise infrastructure models
+│   ├── server.go             # Server hardware and OS models
+│   └── network.go            # Network-related models
+└── storage-model/            # Object storage models (source + target)
+    ├── object-storage.go     # Property building-block structs (BucketFeatureProperty, CORSRule, …)
+    └── model.go              # Top-level models (SourceObjectStorage, TargetObjectStorage, RecommendedObjectStorage)
 ```
 
 ## Model Categories
@@ -52,14 +68,26 @@ imdl/
 - Network models: `NetworkInterfaceProperty`, `RouteProperty`, `FirewallRuleProperty`
 - `OsProperty`: Operating system information
 
+### 3. Storage Models (`storage-model/`)
+
+**Purpose**: Model object storage buckets for both source (as observed) and target (to provision). Core property types are shared between source and target; top-level models are separate.
+
+**Key Types**:
+
+- `SourceObjectStorage`: Source bucket state — composes feature, usage, and metadata properties
+- `TargetObjectStorage`: Target bucket spec — composes `BucketSpecProperty`; derived after CSP feature-support validation
+- `RecommendedObjectStorage`: Recommendation result and direct input to the migration API
+- `CORSRule`: Shared property type composed into both source and target structs
+
 ## Import Usage
 
 Import these models in your code using:
 
 ```go
 import (
-    cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
-    onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+    cloudmodel    "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+    onpremmodel   "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
+    storagemodel  "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 )
 ```
 
