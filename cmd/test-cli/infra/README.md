@@ -48,13 +48,13 @@ Each CSP-Region pair executes the following sequential operations:
 ### 1. Build
 
 ```bash
-make test-cli-build
+make test-infra-build
 ```
 
 ### 2. Run
 
 ```bash
-make test-cli
+make test-infra
 ```
 
 ### 3. Check Results
@@ -115,17 +115,17 @@ make test-cli
 
 ```bash
 # Build and run all tests
-make test-cli-build
-make test-cli
+make test-infra-build
+make test-infra
 
 # Show help
-make test-cli-help
+make test-infra-help
 
 # Direct execution
-cd cmd/test-cli
-./test-cli
-./test-cli -verbose
-./test-cli -config my-config.json
+cd cmd/test-cli/infra
+./test-infra
+./test-infra -verbose
+./test-infra -config my-config.json
 ```
 
 ### Options
@@ -244,7 +244,7 @@ Create custom config file:
 ```bash
 go mod tidy
 make clean
-make test-cli-build
+make test-infra-build
 ```
 
 ### Connection Issues
@@ -267,10 +267,10 @@ cat testdata/config-multi-csp-and-region-pair.json
 ## Directory Structure
 
 ```
-cmd/test-cli/
+cmd/test-cli/infra/
 ├── main.go                                    # Main CLI code
 ├── README.md                                  # This file
-├── test-cli                                   # Built binary
+├── test-infra                                 # Built binary
 ├── testdata/
 │   ├── config-multi-csp-and-region-pair.json # Main config
 │   └── recommendation-request.json            # Test data

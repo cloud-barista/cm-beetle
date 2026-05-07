@@ -42,3 +42,4 @@ type CloudProperty struct {
 	Csp    string `json:"csp"    example:"aws"`            // Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba)
 	Region string `json:"region" example:"ap-northeast-2"` // Region identifier
 }
+

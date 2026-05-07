@@ -38,7 +38,7 @@ import (
 // @Description
 // @Description **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
 // @Description
-// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md
+// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-target-aws.md
 // @Description
 // @Description **Download Behavior:**
 // @Description - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
@@ -165,7 +165,7 @@ type GenerateSourceInfraSummaryRequest struct {
 // @Description
 // @Description **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
 // @Description
-// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-source.md
+// @Description **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-source.md
 // @Description
 // @Description **Download Behavior:**
 // @Description - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)

@@ -1,0 +1,73 @@
+{
+  "nameSeed": "my",
+  "sourceObjectStorages": [
+    {
+      "bucketName": "source-bucket-01",
+      "versioningEnabled": false,
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "https://example.com",
+            "https://app.example.com"
+          ],
+          "allowedMethod": [
+            "GET",
+            "PUT",
+            "POST",
+            "DELETE"
+          ],
+          "allowedHeader": [
+            "*"
+          ],
+          "exposeHeader": [
+            "ETag",
+            "x-amz-request-id"
+          ],
+          "maxAgeSeconds": 3600
+        }
+      ],
+      "encryptionEnabled": false,
+      "isPublic": false,
+      "totalSizeBytes": 10737418240,
+      "objectCount": 1000,
+      "accessFrequency": "frequent",
+      "tags": {
+        "env": "production",
+        "team": "platform"
+      }
+    },
+    {
+      "bucketName": "source-bucket-02",
+      "versioningEnabled": true,
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "*"
+          ],
+          "allowedMethod": [
+            "GET"
+          ],
+          "allowedHeader": [
+            "Content-Type",
+            "Authorization"
+          ],
+          "exposeHeader": [
+            "ETag"
+          ],
+          "maxAgeSeconds": 86400
+        }
+      ],
+      "encryptionEnabled": true,
+      "isPublic": false,
+      "totalSizeBytes": 1073741824,
+      "objectCount": 100,
+      "accessFrequency": "infrequent",
+      "tags": {
+        "env": "staging",
+        "team": "data"
+      }
+    }
+  ]
+}

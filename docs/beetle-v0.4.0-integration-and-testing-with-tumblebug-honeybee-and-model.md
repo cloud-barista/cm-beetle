@@ -1884,22 +1884,22 @@ Testing was performed by `test-cli`.
 > [!NOTE]
 > Please note that computing infra migration may fail depending on the VM specifications and image combination.
 
-- 🟢 [Test result for AWS](../cmd/test-cli/testresult/beetle-test-results-aws.md)
-- 🟢 [Test result for Azure](../cmd/test-cli/testresult/beetle-test-results-azure.md)
+- 🟢 [Test result for AWS](../cmd/test-cli/infra/testresult/beetle-test-results-aws.md)
+- 🟢 [Test result for Azure](../cmd/test-cli/infra/testresult/beetle-test-results-azure.md)
   - ⚠️ Note: Not recommended to use a large number of vCPUs to avoid exceeding approved Total Regional Cores quota
   - ⚠️ Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - ⚠️ Note: Some VM specs (e.g., Standard_B4ms) may require a minimum root disk size (e.g., 34GB)
-- 🟢 [Test result for GCP](../cmd/test-cli/testresult/beetle-test-results-gcp.md)
+- 🟢 [Test result for GCP](../cmd/test-cli/infra/testresult/beetle-test-results-gcp.md)
   - ⚠️ Note: May not be recommended, if your image and specifications require high memory (e.g. 255GiB)/(ok: 32GiB, 64GiB)
   - ⚠️ Note: Unable to create a vNet/Subnet if the quota is full. However, the error message was `Subnet ID not found`.
-- 🟢 [Test result for NCP](../cmd/test-cli/testresult/beetle-test-results-ncp.md)
+- 🟢 [Test result for NCP](../cmd/test-cli/infra/testresult/beetle-test-results-ncp.md)
   - ⚠️ Note: Deadline exceeded when deleting MCI if the image and spec are configured improperly (may not be compatible)
   - ⚠️ Note: May not be recommended if the image and spec are suitable for high memory (i.e., 255GiB)
     - Default Quota of High Memory M-g3 is 0.
 
 **Test failed**
 
-- 🔴 [Test result for Alibaba](../cmd/test-cli/testresult/beetle-test-results-alibaba.md)
+- 🔴 [Test result for Alibaba](../cmd/test-cli/infra/testresult/beetle-test-results-alibaba.md)
   - ⚠️ Note: Sometimes no result with request image
   - ⚠️ Note: Set the root disk type "Type1" (i.e., cloud_essd)
 

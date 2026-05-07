@@ -1,3 +1,17 @@
+/*
+Copyright 2019 The Cloud-Barista Authors.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Package controller has handlers and their request/response bodies for migration APIs
 package controller
 
 import (
@@ -5,35 +19,25 @@ import (
 	"net/http"
 	"strings"
 
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
-	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
 
-func GenerateConnectionName(csp, region string) (string, error) {
-
-	connectionName := fmt.Sprintf("%s-%s", csp, region)
-
-	tbSess := tbclient.NewSession()
-	_, err := tbSess.GetConnConfig(connectionName)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get connection config")
-		return "", err
-	}
-
-	return connectionName, nil
-}
-
 // ============================================================================
-// Migration Request/Response Models
+// Request Models
 // ============================================================================
 
 // MigrateObjectStorageRequest represents a request for object storage migration
 type MigrateObjectStorageRequest struct {
-	ObjectStorageInfo
+	storagemodel.RecommendedObjectStorage
 }
+
+// ============================================================================
+// Object Storage Migration API
+// ============================================================================
 
 // MigrateObjectStorage godoc
 // @ID MigrateObjectStorage
@@ -44,6 +48,10 @@ type MigrateObjectStorageRequest struct {
 // @Description - This API creates object storages (buckets) in the target cloud within the specified namespace
 // @Description - Input should be the output from RecommendObjectStorage API
 // @Description - Connection name is automatically generated from CSP and region in the request body
+// @Description
+// @Description [Note] `nameSeed` enables dynamic naming via **Late Binding**.
+// @Description - If `nameSeed` is set (e.g., `my`), bucket names are prefixed at migration time: `my-os-01`.
+// @Description - If `nameSeed` is empty, bucket names are used as-is from the recommendation result.
 // @Description
 // @Description [Examples]
 // @Description * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
@@ -59,102 +67,35 @@ type MigrateObjectStorageRequest struct {
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during object storage creation"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [post]
 func MigrateObjectStorage(c echo.Context) error {
-	// Get path parameter
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
 	}
 
-	// [Input]
-	// Extract request body
 	var req MigrateObjectStorageRequest
 	if err := c.Bind(&req); err != nil {
 		log.Error().Err(err).Msg("Failed to bind request")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	// Validate required parameters
 	if req.TargetCloud.Csp == "" || req.TargetCloud.Region == "" {
 		log.Warn().Msg("CSP and region are required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("CSP and region required"))
 	}
 
-	// Validate target object storages
 	if len(req.TargetObjectStorages) == 0 {
 		log.Warn().Msg("At least one target object storage must be provided")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one target bucket required"))
 	}
 
-	// Generate and validate connection name
-	connName, err := GenerateConnectionName(req.TargetCloud.Csp, req.TargetCloud.Region)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to generate or validate connection name")
-		errorMsg := fmt.Sprintf("Invalid cloud configuration: %s %s", req.TargetCloud.Csp, req.TargetCloud.Region)
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(errorMsg))
-	}
-
-	log.Info().
-		Str("csp", req.TargetCloud.Csp).
-		Str("region", req.TargetCloud.Region).
-		Str("connName", connName).
-		Int("targetBuckets", len(req.TargetObjectStorages)).
-		Msg("Starting object storage migration")
-
-	// [Process]
-	// Initialize Tumblebug session
-	// tbSess := tbclient.NewSession()
-
-	// Create each object storage (bucket)
-	for i, target := range req.TargetObjectStorages {
-		log.Debug().
-			Int("index", i+1).
-			Int("total", len(req.TargetObjectStorages)).
-			Str("sourceBucket", target.SourceBucketName).
-			Str("targetBucket", target.BucketName).
-			Msg("Creating object storage")
-
-		// Create object storage (bucket)
-		req := tbmodel.ObjectStorageCreateRequest{
-			BucketName:     target.BucketName,
-			ConnectionName: connName,
-			Description:    "Created by CM-Beetle",
+	if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage); err != nil {
+		log.Error().Err(err).Msg("Object storage migration failed")
+		if strings.Contains(err.Error(), "invalid cloud configuration") {
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 		}
-		_, err := tbclient.NewSession().CreateObjectStorage(nsId, req)
-		if err != nil {
-			log.Error().
-				Err(err).
-				Str("bucketName", target.BucketName).
-				Msg("Failed to create object storage")
-			errorMsg := fmt.Sprintf("Failed to create obejct storage '%s'", target.BucketName)
-			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
-		}
-
-		log.Info().
-			Str("sourceBucket", target.SourceBucketName).
-			Str("targetBucket", target.BucketName).
-			Msg("Successfully created object storage")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
-
-	// TODO: Configure versioning for each bucket if versioningEnabled is true
-	// - Iterate through req.TargetObjectStorages
-	// - For each bucket where target.VersioningEnabled == true:
-	//   - Call Tumblebug API to enable versioning on the bucket
-	//   - Handle errors appropriately (decide whether to fail or continue)
-
-	// TODO: Configure CORS settings for each bucket if corsEnabled is true
-	// - Iterate through req.TargetObjectStorages
-	// - For each bucket where target.CORSEnabled == true:
-	//   - Extract CORS rules from target.CORSRules
-	//   - Call Tumblebug API to configure CORS on the bucket
-	//   - Pass allowedOrigins, allowedMethods, allowedHeaders, exposeHeaders, maxAgeSeconds
-	//   - Handle errors appropriately (decide whether to fail or continue)
-
-	log.Info().
-		Str("csp", req.TargetCloud.Csp).
-		Str("region", req.TargetCloud.Region).
-		Int("totalBuckets", len(req.TargetObjectStorages)).
-		Msg("Object storage migration completed successfully")
 
 	return c.NoContent(http.StatusCreated)
 }
@@ -172,37 +113,22 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbclient.ObjectStorageListResponse] "Successfully retrieved object storage list"
+// @Success 200 {object} model.ApiResponse[migration.MigratedObjectStorageListResponse] "Successfully retrieved object storage list"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [get]
 func ListObjectStorages(c echo.Context) error {
-	// Get path parameter
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
 	}
 
-	log.Info().
-		Str("nsId", nsId).
-		Msg("Listing object storages")
-
-	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
-
-	// List object storages
-	result, err := tbSess.ListObjectStorages(nsId, "", "", "")
+	result, err := migration.ListObjectStorages(nsId)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Failed to list object storages: %v", err)
-		log.Error().Err(err).Msg(errorMsg)
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
+		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storages")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list object storages: %v", err)))
 	}
-
-	log.Info().
-		Str("nsId", nsId).
-		Int("bucketCount", len(result.ObjectStorage)).
-		Msg("Successfully listed object storages")
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
@@ -217,13 +143,12 @@ func ListObjectStorages(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param osId path string true "Object Storage ID (bucket ID)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbmodel.ObjectStorageInfo] "Successfully retrieved object storage details"
+// @Success 200 {object} model.ApiResponse[migration.MigratedObjectStorageInfo] "Successfully retrieved object storage details"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during get operation"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [get]
 func GetObjectStorage(c echo.Context) error {
-	// Get path parameters
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
@@ -236,35 +161,14 @@ func GetObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Msg("Getting object storage details")
-
-	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
-
-	// Get object storage details
-	result, err := tbSess.GetObjectStorage(nsId, osId)
+	result, err := migration.GetObjectStorage(nsId, osId)
 	if err != nil {
-		log.Error().Err(err).
-			Str("osId", osId).
-			Msg("Failed to get object storage")
-
-		// Check if error is due to not found
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to get object storage")
 		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
-			errorMsg := fmt.Sprintf("Object storage '%s' not found", osId)
-			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(errorMsg))
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
 		}
-
-		errorMsg := fmt.Sprintf("Failed to get object storage '%s': %v", osId, err)
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get object storage '%s': %v", osId, err)))
 	}
-
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Msg("Successfully retrieved object storage details")
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
@@ -288,7 +192,6 @@ func GetObjectStorage(c echo.Context) error {
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during existence check"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [head]
 func ExistObjectStorage(c echo.Context) error {
-	// Get path parameters
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
@@ -301,41 +204,17 @@ func ExistObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Msg("Checking object storage existence")
-
-	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
-
-	// Check object storage existence
-	exists, err := tbSess.ExistObjectStorage(nsId, osId)
+	exists, err := migration.ExistObjectStorage(nsId, osId)
 	if err != nil {
-		log.Error().Err(err).
-			Str("osId", osId).
-			Msg("Failed to check object storage existence")
-
-		// Check if error is due to not found
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to check object storage existence")
 		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
-			msg := fmt.Sprintf("Object storage '%s' not found", osId)
-			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
 		}
-
-		errorMsg := fmt.Sprintf("Failed to check object storage '%s' existence: %v", osId, err)
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to check object storage '%s' existence: %v", osId, err)))
 	}
 
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Bool("exists", exists).
-		Msg("Successfully checked object storage existence")
-
 	if !exists {
-		msg := fmt.Sprintf("Object storage '%s' not found", osId)
-		log.Info().Msg(msg)
-		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
+		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -360,7 +239,6 @@ func ExistObjectStorage(c echo.Context) error {
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during deletion"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [delete]
 func DeleteObjectStorage(c echo.Context) error {
-	// Get path parameters
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
@@ -373,35 +251,10 @@ func DeleteObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Msg("Deleting object storage")
-
-	// Initialize Tumblebug session
-	tbSess := tbclient.NewSession()
-
-	// Delete object storage
-	err := tbSess.DeleteObjectStorage(nsId, osId)
-	if err != nil {
-		log.Error().Err(err).
-			Str("osId", osId).
-			Msg("Failed to delete object storage")
-
-		// Check if error is due to not found
-		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
-			msg := fmt.Sprintf("Object storage '%s' not found", osId)
-			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(msg))
-		}
-
-		errorMsg := fmt.Sprintf("Failed to delete object storage '%s': %v", osId, err)
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(errorMsg))
+	if err := migration.DeleteObjectStorage(nsId, osId); err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to delete object storage")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
-
-	log.Info().
-		Str("nsId", nsId).
-		Str("osId", osId).
-		Msg("Successfully deleted object storage")
 
 	return c.NoContent(http.StatusNoContent)
 }

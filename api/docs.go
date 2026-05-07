@@ -279,7 +279,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved object storage list",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-tbclient_ObjectStorageListResponse"
+                            "$ref": "#/definitions/model.ApiResponse-migration_MigratedObjectStorageListResponse"
                         }
                     },
                     "400": {
@@ -297,7 +297,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` is set (e.g., ` + "`" + `my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is empty, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -394,7 +394,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved object storage details",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-model_ObjectStorageInfo"
+                            "$ref": "#/definitions/model.ApiResponse-migration_MigratedObjectStorageInfo"
                         }
                     },
                     "400": {
@@ -2077,7 +2077,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/objectStorage": {
             "post": {
-                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Warning] the recommended bucket name may be globally unique.\n- Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.\n- Suppose that the existing bucket name is unique enough.\n- Generate a suffix based on the existing bucket name.\n- e.g., \"my-bucket\" -\u003e SHA256 hash -\u003e base64 URL-safe encoding (6 bytes) -\u003e lowercase -\u003e \"my-bucket-{suffix}\"",
+                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Note] The recommended bucket name uses a default pattern (` + "`" + `mig-bucket-01` + "`" + `, ` + "`" + `mig-bucket-02` + "`" + `, ...).\n- Bucket names must be globally unique across all accounts in the target cloud provider.\n- CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.\n- The ` + "`" + `bucketName` + "`" + ` field in the recommendation result represents the intended name, not the final cloud resource name.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- Set ` + "`" + `nameSeed` + "`" + ` (e.g., ` + "`" + `my` + "`" + `) to prefix bucket names at migration time: ` + "`" + `my-os-01` + "`" + `.\n- The recommendation result stores base names only; the prefix is applied when ` + "`" + `MigrateObjectStorage` + "`" + ` is called.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -2105,7 +2105,12 @@ const docTemplate = `{
                             "azure",
                             "gcp",
                             "alibaba",
-                            "ncp"
+                            "tencent",
+                            "ibm",
+                            "openstack",
+                            "ncp",
+                            "nhn",
+                            "kt"
                         ],
                         "type": "string",
                         "default": "aws",
@@ -2131,7 +2136,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully recommended object storage",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_ObjectStorageInfo"
+                            "$ref": "#/definitions/model.ApiResponse-storagemodel_RecommendedObjectStorage"
                         }
                     },
                     "400": {
@@ -2735,7 +2740,7 @@ const docTemplate = `{
         },
         "/summary/source": {
             "post": {
-                "description": "Generate a comprehensive source infrastructure summary from on-premise data in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[SourceInfraSummary] with Content-Type: application/json\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-source.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
+                "description": "Generate a comprehensive source infrastructure summary from on-premise data in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[SourceInfraSummary] with Content-Type: application/json\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-source.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2823,7 +2828,7 @@ const docTemplate = `{
         },
         "/summary/target/ns/{nsId}/infra/{infraId}": {
             "get": {
-                "description": "Generate a comprehensive target infrastructure summary in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[TargetInfraSummary] with Content-Type: application/json\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
+                "description": "Generate a comprehensive target infrastructure summary in multiple formats based on 'format' query parameter:\n\n**Response Format by 'format' Parameter:**\n- ` + "`" + `format=md` + "`" + ` (default): Returns markdown string with Content-Type: text/markdown; charset=utf-8\n- ` + "`" + `format=html` + "`" + `: Returns HTML string with Content-Type: text/html; charset=utf-8\n- ` + "`" + `format=json` + "`" + `: Returns ApiResponse[TargetInfraSummary] with Content-Type: application/json\n\n**Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.\n\n**Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-target-aws.md\n\n**Download Behavior:**\n- ` + "`" + `download=false` + "`" + ` (default): Content displayed inline (viewable in browser/Swagger UI)\n- ` + "`" + `download=true` + "`" + `: Content downloaded as file (Content-Disposition: attachment)",
                 "consumes": [
                     "application/json"
                 ],
@@ -4970,47 +4975,6 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.CORSRule": {
-            "type": "object",
-            "required": [
-                "allowedMethods",
-                "allowedOrigins"
-            ],
-            "properties": {
-                "allowedHeaders": {
-                    "description": "Allowed headers (e.g., [\"*\"])",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allowedMethods": {
-                    "description": "Allowed HTTP methods (e.g., [\"GET\", \"PUT\", \"POST\"])",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "allowedOrigins": {
-                    "description": "Allowed origins (e.g., [\"*\"], [\"https://example.com\"])",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "exposeHeaders": {
-                    "description": "Headers to expose (e.g., [\"ETag\"])",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "maxAgeSeconds": {
-                    "description": "Preflight request cache time in seconds",
-                    "type": "integer"
-                }
-            }
-        },
         "controller.GenerateMigrationReportRequest": {
             "type": "object",
             "required": [
@@ -5395,38 +5359,31 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "nameSeed": {
+                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {
+                    "description": "e.g., \"recommended\", \"partial\", \"failed\"",
                     "type": "string"
                 },
                 "targetCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                    "$ref": "#/definitions/storagemodel.CloudProperty"
                 },
                 "targetObjectStorages": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
+                        "$ref": "#/definitions/storagemodel.TargetObjectStorage"
                     }
-                }
-            }
-        },
-        "controller.ObjectStorageInfo": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
                 },
-                "status": {
-                    "type": "string"
-                },
-                "targetCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "targetObjectStorages": {
+                "warnings": {
+                    "description": "CSP feature-support warnings",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.TargetObjectStorageProperty"
+                        "type": "string"
                     }
                 }
             }
@@ -5483,100 +5440,19 @@ const docTemplate = `{
             ],
             "properties": {
                 "desiredCloud": {
-                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                    "$ref": "#/definitions/storagemodel.CloudProperty"
+                },
+                "nameSeed": {
+                    "description": "Base string for bucket name prefix (e.g., 'my' -\u003e 'my-os-01'); applied at migration time",
+                    "type": "string",
+                    "example": "my"
                 },
                 "sourceObjectStorages": {
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "$ref": "#/definitions/controller.SourceObjectStorageProperty"
+                        "$ref": "#/definitions/storagemodel.SourceObjectStorage"
                     }
-                }
-            }
-        },
-        "controller.SourceObjectStorageProperty": {
-            "type": "object",
-            "required": [
-                "bucketName"
-            ],
-            "properties": {
-                "accessFrequency": {
-                    "description": "Access pattern (critical for storage class selection)",
-                    "type": "string"
-                },
-                "bucketName": {
-                    "description": "Basic identification",
-                    "type": "string"
-                },
-                "corsEnabled": {
-                    "description": "Whether CORS is enabled",
-                    "type": "boolean"
-                },
-                "corsRules": {
-                    "description": "CORS rules configuration",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.CORSRule"
-                    }
-                },
-                "creationDate": {
-                    "description": "Creation date (RFC3339)",
-                    "type": "string"
-                },
-                "encryptionEnabled": {
-                    "description": "Security settings",
-                    "type": "boolean"
-                },
-                "isPublic": {
-                    "description": "Whether bucket has public access",
-                    "type": "boolean"
-                },
-                "objectCount": {
-                    "description": "Total number of objects",
-                    "type": "integer"
-                },
-                "tags": {
-                    "description": "Metadata",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "totalSizeBytes": {
-                    "description": "Capacity information (for cost estimation and recommendations)",
-                    "type": "integer"
-                },
-                "versioningEnabled": {
-                    "description": "Feature settings",
-                    "type": "boolean"
-                }
-            }
-        },
-        "controller.TargetObjectStorageProperty": {
-            "type": "object",
-            "properties": {
-                "bucketName": {
-                    "description": "Recommended target bucket name with deterministic suffix",
-                    "type": "string"
-                },
-                "corsEnabled": {
-                    "description": "Whether CORS is configured",
-                    "type": "boolean"
-                },
-                "corsRules": {
-                    "description": "CORS rules configuration",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.CORSRule"
-                    }
-                },
-                "sourceBucketName": {
-                    "description": "Source bucket name for referencing",
-                    "type": "string"
-                },
-                "versioningEnabled": {
-                    "description": "Whether to enable versioning",
-                    "type": "boolean"
                 }
             }
         },
@@ -5584,6 +5460,46 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {
                 "type": "string"
+            }
+        },
+        "migration.MigratedObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "connectionName": {
+                    "description": "Connection identifier (format: \"{csp}-{region}\")",
+                    "type": "string"
+                },
+                "creationDate": {
+                    "description": "Bucket creation date (RFC 3339)",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Bucket ID (unique identifier within the namespace)",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Bucket name in the target cloud",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Current status (e.g., \"Available\")",
+                    "type": "string"
+                }
+            }
+        },
+        "migration.MigratedObjectStorageListResponse": {
+            "type": "object",
+            "properties": {
+                "objectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.MigratedObjectStorageInfo"
+                    }
+                }
             }
         },
         "model.ApiResponse-any": {
@@ -5916,34 +5832,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-controller_ObjectStorageInfo": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/controller.ObjectStorageInfo"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
         "model.ApiResponse-controller_RecommendInfraWithDefaultsResponse": {
             "type": "object",
             "properties": {
@@ -5980,6 +5868,62 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/map_string_string"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-migration_MigratedObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.MigratedObjectStorageInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-migration_MigratedObjectStorageListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.MigratedObjectStorageListResponse"
                         }
                     ]
                 },
@@ -6084,14 +6028,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-model_ObjectStorageInfo": {
+        "model.ApiResponse-storagemodel_RecommendedObjectStorage": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.ObjectStorageInfo"
+                            "$ref": "#/definitions/storagemodel.RecommendedObjectStorage"
                         }
                     ]
                 },
@@ -6172,34 +6116,6 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/summary.TargetInfraSummary"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-tbclient_ObjectStorageListResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/tbclient.ObjectStorageListResponse"
                         }
                     ]
                 },
@@ -6737,115 +6653,6 @@ const docTemplate = `{
                 "Windows",
                 "PlatformNA"
             ]
-        },
-        "model.Object": {
-            "type": "object",
-            "properties": {
-                "eTag": {
-                    "type": "string",
-                    "example": "9b2cf535f27731c974343645a3985328"
-                },
-                "key": {
-                    "type": "string",
-                    "example": "test-object.txt"
-                },
-                "lastModified": {
-                    "type": "string",
-                    "example": "2025-09-04T04:18:06Z"
-                },
-                "size": {
-                    "type": "integer",
-                    "example": 1024
-                },
-                "storageClass": {
-                    "type": "string",
-                    "example": "STANDARD"
-                }
-            }
-        },
-        "model.ObjectStorageInfo": {
-            "type": "object",
-            "properties": {
-                "conditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Condition"
-                    }
-                },
-                "connectionConfig": {
-                    "$ref": "#/definitions/model.ConnConfig"
-                },
-                "connectionName": {
-                    "description": "Variables for management of Object Storage resource in CB-Tumblebug",
-                    "type": "string"
-                },
-                "contents": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Object"
-                    }
-                },
-                "creationDate": {
-                    "type": "string",
-                    "example": "2025-09-04T04:18:06Z"
-                },
-                "cspResourceId": {
-                    "description": "CspResourceId is resource identifier managed by CSP",
-                    "type": "string",
-                    "example": ""
-                },
-                "cspResourceName": {
-                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
-                    "type": "string",
-                    "example": ""
-                },
-                "description": {
-                    "type": "string",
-                    "example": "this object storage is managed by CB-Tumblebug"
-                },
-                "id": {
-                    "description": "Id is unique identifier for the object",
-                    "type": "string",
-                    "example": "globally-unique-bucket-name-12345"
-                },
-                "isTruncated": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "marker": {
-                    "type": "string",
-                    "example": ""
-                },
-                "maxKeys": {
-                    "type": "integer",
-                    "example": 1000
-                },
-                "name": {
-                    "description": "Name is human-readable string to represent the object",
-                    "type": "string",
-                    "example": "globally-unique-bucket-name-12345"
-                },
-                "prefix": {
-                    "type": "string",
-                    "example": ""
-                },
-                "resourceType": {
-                    "description": "ResourceType is the type of this resource",
-                    "type": "string",
-                    "example": "ObjectStorage"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "systemMessage": {
-                    "type": "string"
-                },
-                "uid": {
-                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
-                    "type": "string",
-                    "example": "wef12awefadf1221edcf"
-                }
-            }
         },
         "model.RegionDetail": {
             "type": "object",
@@ -7815,6 +7622,181 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.VNetInfo"
                     }
+                }
+            }
+        },
+        "storagemodel.CORSRule": {
+            "type": "object",
+            "required": [
+                "allowedMethod",
+                "allowedOrigin"
+            ],
+            "properties": {
+                "allowedHeader": {
+                    "description": "Allowed headers (e.g., [\"*\"], [\"Content-Type\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedMethod": {
+                    "description": "Allowed HTTP methods (e.g., [\"GET\", \"PUT\", \"POST\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "allowedOrigin": {
+                    "description": "Allowed origins (e.g., [\"*\"], [\"https://example.com\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "exposeHeader": {
+                    "description": "Headers exposed to the browser (e.g., [\"ETag\"])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "maxAgeSeconds": {
+                    "description": "Preflight response cache duration in seconds",
+                    "type": "integer"
+                }
+            }
+        },
+        "storagemodel.CloudProperty": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "description": "Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba)",
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "description": "Region identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                }
+            }
+        },
+        "storagemodel.RecommendedObjectStorage": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "nameSeed": {
+                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "e.g., \"recommended\", \"partial\", \"failed\"",
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/storagemodel.CloudProperty"
+                },
+                "targetObjectStorages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.TargetObjectStorage"
+                    }
+                },
+                "warnings": {
+                    "description": "CSP feature-support warnings",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "storagemodel.SourceObjectStorage": {
+            "type": "object",
+            "required": [
+                "bucketName"
+            ],
+            "properties": {
+                "accessFrequency": {
+                    "description": "Access pattern: \"frequent\" | \"infrequent\" | \"archive\"",
+                    "type": "string"
+                },
+                "bucketName": {
+                    "description": "Source bucket name",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether CORS is configured",
+                    "type": "boolean"
+                },
+                "corsRule": {
+                    "description": "Active CORS rules",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.CORSRule"
+                    }
+                },
+                "creationDate": {
+                    "description": "Bucket creation date (RFC 3339)",
+                    "type": "string"
+                },
+                "encryptionEnabled": {
+                    "description": "Whether server-side encryption is enabled",
+                    "type": "boolean"
+                },
+                "isPublic": {
+                    "description": "Whether the bucket allows public access",
+                    "type": "boolean"
+                },
+                "objectCount": {
+                    "description": "Total number of objects",
+                    "type": "integer"
+                },
+                "tags": {
+                    "description": "Key-value tags",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "totalSizeBytes": {
+                    "description": "Total stored data in bytes",
+                    "type": "integer"
+                },
+                "versioningEnabled": {
+                    "description": "Whether versioning is enabled",
+                    "type": "boolean"
+                }
+            }
+        },
+        "storagemodel.TargetObjectStorage": {
+            "type": "object",
+            "properties": {
+                "bucketName": {
+                    "description": "Globally unique target bucket name",
+                    "type": "string"
+                },
+                "corsEnabled": {
+                    "description": "Whether to configure CORS",
+                    "type": "boolean"
+                },
+                "corsRule": {
+                    "description": "CORS rules to apply",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.CORSRule"
+                    }
+                },
+                "sourceBucketName": {
+                    "description": "Originating source bucket name",
+                    "type": "string"
+                },
+                "versioningEnabled": {
+                    "description": "Whether to enable versioning",
+                    "type": "boolean"
                 }
             }
         },
@@ -9098,17 +9080,6 @@ const docTemplate = `{
                 "summaryVersion": {
                     "type": "string",
                     "example": "1.0"
-                }
-            }
-        },
-        "tbclient.ObjectStorageListResponse": {
-            "type": "object",
-            "properties": {
-                "objectStorage": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.ObjectStorageInfo"
-                    }
                 }
             }
         },
