@@ -1489,35 +1489,6 @@ definitions:
         example: Any message
         type: string
     type: object
-  controller.CORSRule:
-    properties:
-      allowedHeaders:
-        description: Allowed headers (e.g., ["*"])
-        items:
-          type: string
-        type: array
-      allowedMethods:
-        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
-        items:
-          type: string
-        type: array
-      allowedOrigins:
-        description: Allowed origins (e.g., ["*"], ["https://example.com"])
-        items:
-          type: string
-        type: array
-      exposeHeaders:
-        description: Headers to expose (e.g., ["ETag"])
-        items:
-          type: string
-        type: array
-      maxAgeSeconds:
-        description: Preflight request cache time in seconds
-        type: integer
-    required:
-    - allowedMethods
-    - allowedOrigins
-    type: object
   controller.GenerateMigrationReportRequest:
     properties:
       onpremiseInfraModel:
@@ -1837,27 +1808,25 @@ definitions:
   controller.MigrateObjectStorageRequest:
     properties:
       description:
+        description: Human-readable summary
+        type: string
+      nameSeed:
+        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
+          applied at migration time
         type: string
       status:
+        description: e.g., "recommended", "partial", "failed"
         type: string
       targetCloud:
-        $ref: '#/definitions/cloudmodel.CloudProperty'
+        $ref: '#/definitions/storagemodel.CloudProperty'
       targetObjectStorages:
         items:
-          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+          $ref: '#/definitions/storagemodel.TargetObjectStorage'
         type: array
-    type: object
-  controller.ObjectStorageInfo:
-    properties:
-      description:
-        type: string
-      status:
-        type: string
-      targetCloud:
-        $ref: '#/definitions/cloudmodel.CloudProperty'
-      targetObjectStorages:
+      warnings:
+        description: CSP feature-support warnings
         items:
-          $ref: '#/definitions/controller.TargetObjectStorageProperty'
+          type: string
         type: array
     type: object
   controller.RecommendInfraRequest:
@@ -1892,81 +1861,52 @@ definitions:
   controller.RecommendObjectStorageRequest:
     properties:
       desiredCloud:
-        $ref: '#/definitions/cloudmodel.CloudProperty'
+        $ref: '#/definitions/storagemodel.CloudProperty'
+      nameSeed:
+        description: Base string for bucket name prefix (e.g., 'my' -> 'my-os-01');
+          applied at migration time
+        example: my
+        type: string
       sourceObjectStorages:
         items:
-          $ref: '#/definitions/controller.SourceObjectStorageProperty'
+          $ref: '#/definitions/storagemodel.SourceObjectStorage'
         minItems: 1
         type: array
     required:
     - desiredCloud
     - sourceObjectStorages
     type: object
-  controller.SourceObjectStorageProperty:
-    properties:
-      accessFrequency:
-        description: Access pattern (critical for storage class selection)
-        type: string
-      bucketName:
-        description: Basic identification
-        type: string
-      corsEnabled:
-        description: Whether CORS is enabled
-        type: boolean
-      corsRules:
-        description: CORS rules configuration
-        items:
-          $ref: '#/definitions/controller.CORSRule'
-        type: array
-      creationDate:
-        description: Creation date (RFC3339)
-        type: string
-      encryptionEnabled:
-        description: Security settings
-        type: boolean
-      isPublic:
-        description: Whether bucket has public access
-        type: boolean
-      objectCount:
-        description: Total number of objects
-        type: integer
-      tags:
-        additionalProperties:
-          type: string
-        description: Metadata
-        type: object
-      totalSizeBytes:
-        description: Capacity information (for cost estimation and recommendations)
-        type: integer
-      versioningEnabled:
-        description: Feature settings
-        type: boolean
-    required:
-    - bucketName
-    type: object
-  controller.TargetObjectStorageProperty:
-    properties:
-      bucketName:
-        description: Recommended target bucket name with deterministic suffix
-        type: string
-      corsEnabled:
-        description: Whether CORS is configured
-        type: boolean
-      corsRules:
-        description: CORS rules configuration
-        items:
-          $ref: '#/definitions/controller.CORSRule'
-        type: array
-      sourceBucketName:
-        description: Source bucket name for referencing
-        type: string
-      versioningEnabled:
-        description: Whether to enable versioning
-        type: boolean
-    type: object
   map_string_string:
     additionalProperties:
       type: string
+    type: object
+  migration.MigratedObjectStorageInfo:
+    properties:
+      connectionName:
+        description: 'Connection identifier (format: "{csp}-{region}")'
+        type: string
+      creationDate:
+        description: Bucket creation date (RFC 3339)
+        type: string
+      description:
+        description: Description
+        type: string
+      id:
+        description: Bucket ID (unique identifier within the namespace)
+        type: string
+      name:
+        description: Bucket name in the target cloud
+        type: string
+      status:
+        description: Current status (e.g., "Available")
+        type: string
+    type: object
+  migration.MigratedObjectStorageListResponse:
+    properties:
+      objectStorages:
+        items:
+          $ref: '#/definitions/migration.MigratedObjectStorageInfo'
+        type: array
     type: object
   model.ApiResponse-any:
     properties:
@@ -2195,25 +2135,6 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-controller_ObjectStorageInfo:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/controller.ObjectStorageInfo'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
   model.ApiResponse-controller_RecommendInfraWithDefaultsResponse:
     properties:
       data:
@@ -2238,6 +2159,44 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/map_string_string'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-migration_MigratedObjectStorageInfo:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/migration.MigratedObjectStorageInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-migration_MigratedObjectStorageListResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/migration.MigratedObjectStorageListResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2309,11 +2268,11 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-model_ObjectStorageInfo:
+  model.ApiResponse-storagemodel_RecommendedObjectStorage:
     properties:
       data:
         allOf:
-        - $ref: '#/definitions/model.ObjectStorageInfo'
+        - $ref: '#/definitions/storagemodel.RecommendedObjectStorage'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2370,25 +2329,6 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/summary.TargetInfraSummary'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-tbclient_ObjectStorageListResponse:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/tbclient.ObjectStorageListResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2801,88 +2741,6 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
-  model.Object:
-    properties:
-      eTag:
-        example: 9b2cf535f27731c974343645a3985328
-        type: string
-      key:
-        example: test-object.txt
-        type: string
-      lastModified:
-        example: "2025-09-04T04:18:06Z"
-        type: string
-      size:
-        example: 1024
-        type: integer
-      storageClass:
-        example: STANDARD
-        type: string
-    type: object
-  model.ObjectStorageInfo:
-    properties:
-      conditions:
-        items:
-          $ref: '#/definitions/model.Condition'
-        type: array
-      connectionConfig:
-        $ref: '#/definitions/model.ConnConfig'
-      connectionName:
-        description: Variables for management of Object Storage resource in CB-Tumblebug
-        type: string
-      contents:
-        items:
-          $ref: '#/definitions/model.Object'
-        type: array
-      creationDate:
-        example: "2025-09-04T04:18:06Z"
-        type: string
-      cspResourceId:
-        description: CspResourceId is resource identifier managed by CSP
-        example: ""
-        type: string
-      cspResourceName:
-        description: CspResourceName is name assigned to the CSP resource. This name
-          is internally used to handle the resource.
-        example: ""
-        type: string
-      description:
-        example: this object storage is managed by CB-Tumblebug
-        type: string
-      id:
-        description: Id is unique identifier for the object
-        example: globally-unique-bucket-name-12345
-        type: string
-      isTruncated:
-        example: false
-        type: boolean
-      marker:
-        example: ""
-        type: string
-      maxKeys:
-        example: 1000
-        type: integer
-      name:
-        description: Name is human-readable string to represent the object
-        example: globally-unique-bucket-name-12345
-        type: string
-      prefix:
-        example: ""
-        type: string
-      resourceType:
-        description: ResourceType is the type of this resource
-        example: ObjectStorage
-        type: string
-      status:
-        type: string
-      systemMessage:
-        type: string
-      uid:
-        description: Uid is universally unique identifier for the object, used for
-          labelSelector
-        example: wef12awefadf1221edcf
-        type: string
-    type: object
   model.RegionDetail:
     properties:
       description:
@@ -3581,6 +3439,132 @@ definitions:
         items:
           $ref: '#/definitions/model.VNetInfo'
         type: array
+    type: object
+  storagemodel.CORSRule:
+    properties:
+      allowedHeader:
+        description: Allowed headers (e.g., ["*"], ["Content-Type"])
+        items:
+          type: string
+        type: array
+      allowedMethod:
+        description: Allowed HTTP methods (e.g., ["GET", "PUT", "POST"])
+        items:
+          type: string
+        type: array
+      allowedOrigin:
+        description: Allowed origins (e.g., ["*"], ["https://example.com"])
+        items:
+          type: string
+        type: array
+      exposeHeader:
+        description: Headers exposed to the browser (e.g., ["ETag"])
+        items:
+          type: string
+        type: array
+      maxAgeSeconds:
+        description: Preflight response cache duration in seconds
+        type: integer
+    required:
+    - allowedMethod
+    - allowedOrigin
+    type: object
+  storagemodel.CloudProperty:
+    properties:
+      csp:
+        description: Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba)
+        example: aws
+        type: string
+      region:
+        description: Region identifier
+        example: ap-northeast-2
+        type: string
+    type: object
+  storagemodel.RecommendedObjectStorage:
+    properties:
+      description:
+        description: Human-readable summary
+        type: string
+      nameSeed:
+        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
+          applied at migration time
+        type: string
+      status:
+        description: e.g., "recommended", "partial", "failed"
+        type: string
+      targetCloud:
+        $ref: '#/definitions/storagemodel.CloudProperty'
+      targetObjectStorages:
+        items:
+          $ref: '#/definitions/storagemodel.TargetObjectStorage'
+        type: array
+      warnings:
+        description: CSP feature-support warnings
+        items:
+          type: string
+        type: array
+    type: object
+  storagemodel.SourceObjectStorage:
+    properties:
+      accessFrequency:
+        description: 'Access pattern: "frequent" | "infrequent" | "archive"'
+        type: string
+      bucketName:
+        description: Source bucket name
+        type: string
+      corsEnabled:
+        description: Whether CORS is configured
+        type: boolean
+      corsRule:
+        description: Active CORS rules
+        items:
+          $ref: '#/definitions/storagemodel.CORSRule'
+        type: array
+      creationDate:
+        description: Bucket creation date (RFC 3339)
+        type: string
+      encryptionEnabled:
+        description: Whether server-side encryption is enabled
+        type: boolean
+      isPublic:
+        description: Whether the bucket allows public access
+        type: boolean
+      objectCount:
+        description: Total number of objects
+        type: integer
+      tags:
+        additionalProperties:
+          type: string
+        description: Key-value tags
+        type: object
+      totalSizeBytes:
+        description: Total stored data in bytes
+        type: integer
+      versioningEnabled:
+        description: Whether versioning is enabled
+        type: boolean
+    required:
+    - bucketName
+    type: object
+  storagemodel.TargetObjectStorage:
+    properties:
+      bucketName:
+        description: Globally unique target bucket name
+        type: string
+      corsEnabled:
+        description: Whether to configure CORS
+        type: boolean
+      corsRule:
+        description: CORS rules to apply
+        items:
+          $ref: '#/definitions/storagemodel.CORSRule'
+        type: array
+      sourceBucketName:
+        description: Originating source bucket name
+        type: string
+      versioningEnabled:
+        description: Whether to enable versioning
+        type: boolean
     type: object
   summary.SourceCPUInfo:
     properties:
@@ -4489,13 +4473,6 @@ definitions:
         example: "1.0"
         type: string
     type: object
-  tbclient.ObjectStorageListResponse:
-    properties:
-      objectStorage:
-        items:
-          $ref: '#/definitions/model.ObjectStorageInfo'
-        type: array
-    type: object
   transx.AuthConfig:
     properties:
       authType:
@@ -5041,7 +5018,7 @@ paths:
         "200":
           description: Successfully retrieved object storage list
           schema:
-            $ref: '#/definitions/model.ApiResponse-tbclient_ObjectStorageListResponse'
+            $ref: '#/definitions/model.ApiResponse-migration_MigratedObjectStorageListResponse'
         "400":
           description: Invalid request parameters
           schema:
@@ -5063,6 +5040,10 @@ paths:
         - This API creates object storages (buckets) in the target cloud within the specified namespace
         - Input should be the output from RecommendObjectStorage API
         - Connection name is automatically generated from CSP and region in the request body
+
+        [Note] `nameSeed` enables dynamic naming via **Late Binding**.
+        - If `nameSeed` is set (e.g., `my`), bucket names are prefixed at migration time: `my-os-01`.
+        - If `nameSeed` is empty, bucket names are used as-is from the recommendation result.
 
         [Examples]
         * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
@@ -5177,7 +5158,7 @@ paths:
         "200":
           description: Successfully retrieved object storage details
           schema:
-            $ref: '#/definitions/model.ApiResponse-model_ObjectStorageInfo'
+            $ref: '#/definitions/model.ApiResponse-migration_MigratedObjectStorageInfo'
         "400":
           description: Invalid request parameters
           schema:
@@ -6349,7 +6330,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: |-
+      description: |
         Recommend an appropriate object storage for cloud migration
 
         [Note] `desiredCsp` and `desiredRegion` are required.
@@ -6357,11 +6338,14 @@ paths:
 
         - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
 
-        [Warning] the recommended bucket name may be globally unique.
-        - Beetle supports adding a suffix based on the existing bucket name to ensure uniqueness.
-        - Suppose that the existing bucket name is unique enough.
-        - Generate a suffix based on the existing bucket name.
-        - e.g., "my-bucket" -> SHA256 hash -> base64 URL-safe encoding (6 bytes) -> lowercase -> "my-bucket-{suffix}"
+        [Note] The recommended bucket name uses a default pattern (`mig-bucket-01`, `mig-bucket-02`, ...).
+        - Bucket names must be globally unique across all accounts in the target cloud provider.
+        - CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.
+        - The `bucketName` field in the recommendation result represents the intended name, not the final cloud resource name.
+
+        [Note] `nameSeed` enables dynamic naming via **Late Binding**.
+        - Set `nameSeed` (e.g., `my`) to prefix bucket names at migration time: `my-os-01`.
+        - The recommendation result stores base names only; the prefix is applied when `MigrateObjectStorage` is called.
       operationId: RecommendObjectStorage
       parameters:
       - description: Specify the your object storage to be migrated
@@ -6377,7 +6361,12 @@ paths:
         - azure
         - gcp
         - alibaba
+        - tencent
+        - ibm
+        - openstack
         - ncp
+        - nhn
+        - kt
         in: query
         name: desiredCsp
         type: string
@@ -6397,7 +6386,7 @@ paths:
         "200":
           description: Successfully recommended object storage
           schema:
-            $ref: '#/definitions/model.ApiResponse-controller_ObjectStorageInfo'
+            $ref: '#/definitions/model.ApiResponse-storagemodel_RecommendedObjectStorage'
         "400":
           description: Invalid request parameters
           schema:
@@ -6892,7 +6881,7 @@ paths:
 
         **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
 
-        **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-source.md
+        **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-source.md
 
         **Download Behavior:**
         - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)
@@ -6971,7 +6960,7 @@ paths:
 
         **Note:** API documentation shows JSON schema for reference, but actual default response is markdown format.
 
-        **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/testresult/beetle-summary-target-aws.md
+        **Markdown example**: https://github.com/cloud-barista/cm-beetle/blob/main/cmd/test-cli/infra/testresult/beetle-summary-target-aws.md
 
         **Download Behavior:**
         - `download=false` (default): Content displayed inline (viewable in browser/Swagger UI)

@@ -28,50 +28,17 @@ import (
 // * All object storage models are imported from cb-tumblebug packages
 // * to ensure consistency and reuse of Tumblebug data structures.
 
-// ObjectStorageFeatureSupport represents feature support information for object storage
-// TODO: Replace with tbmodel.ObjectStorageFeatureSupport when available in the Tumblebug version
-type ObjectStorageFeatureSupport struct {
-	CORS       bool `json:"cors" example:"true"`
-	Versioning bool `json:"versioning" example:"true"`
-}
 
-// ObjectStorageSupportResponse represents CSP support information for object storage features
-// TODO: Replace with tbmodel.ObjectStorageSupportResponse when available in the Tumblebug version
-type ObjectStorageSupportResponse struct {
-	ResourceType string                                 `json:"resourceType" example:"objectStorage"`
-	Supports     map[string]ObjectStorageFeatureSupport `json:"supports"`
-}
-
-// ObjectStorageVersioning represents versioning configuration for object storage
-// TODO: Replace with tbmodel.ObjectStorageVersioning when available in the Tumblebug version
-type ObjectStorageVersioning struct {
-	Status string `json:"status" example:"Enabled"` // Enabled, Suspended
-}
-
-// LocationConstraint represents the location constraint of a bucket
-// TODO: Replace with tbmodel.LocationConstraint when available in the Tumblebug version
-type LocationConstraint struct {
-	Location string `json:"location" example:"ap-northeast-2"`
-}
-
-// ObjectStorageListResponse represents the list response for object storages
-// TODO: Replace with tbmodel.ObjectStorageListResponse when available in the Tumblebug version
-// Note: The old ObjectStorageListResponse (with Owner/Buckets) has been renamed to ObjectStorageListBucketsResponse
-//
-//	for backward compatibility. This is the new structure that returns an array of ObjectStorageInfo.
-type ObjectStorageListResponse struct {
-	ObjectStorage []tbmodel.ObjectStorageInfo `json:"objectStorage"`
-}
 
 // ============================================================================
 // Object Storage Management APIs
 // ============================================================================
 
 // ListObjectStorages retrieves the list of all object storages (buckets) in a namespace
-func (s *Session) ListObjectStorages(nsId string, option string, filterKey string, filterVal string) (ObjectStorageListResponse, error) {
+func (s *Session) ListObjectStorages(nsId string, option string, filterKey string, filterVal string) (tbmodel.ObjectStorageListResponse, error) {
 	log.Debug().Msgf("Listing object storages in namespace: %s", nsId)
 
-	var resBody ObjectStorageListResponse
+	var resBody tbmodel.ObjectStorageListResponse
 	req := s.SetResult(&resBody)
 
 	// Add optional query parameters
@@ -89,13 +56,13 @@ func (s *Session) ListObjectStorages(nsId string, option string, filterKey strin
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to list object storages")
-		return ObjectStorageListResponse{}, err
+		return tbmodel.ObjectStorageListResponse{}, err
 	}
 
 	if resp.IsError() {
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to list object storages")
-		return ObjectStorageListResponse{}, err
+		return tbmodel.ObjectStorageListResponse{}, err
 	}
 
 	log.Debug().Msgf("Listed %d object storages successfully", len(resBody.ObjectStorage))
@@ -266,23 +233,23 @@ func (s *Session) DeleteObjectStorageCORS(nsId string, osId string) error {
 // ============================================================================
 
 // GetObjectStorageVersioning retrieves the versioning configuration of an object storage (bucket)
-func (s *Session) GetObjectStorageVersioning(nsId string, osId string) (ObjectStorageVersioning, error) {
+func (s *Session) GetObjectStorageVersioning(nsId string, osId string) (tbmodel.ObjectStorageGetVersioningResponse, error) {
 	log.Debug().Msgf("Retrieving versioning configuration for object storage: %s in namespace: %s", osId, nsId)
 
-	var resBody ObjectStorageVersioning
+	var resBody tbmodel.ObjectStorageGetVersioningResponse
 	resp, err := s.
 		SetResult(&resBody).
 		Get(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/versioning", nsId, osId))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to retrieve versioning configuration for object storage: %s", osId)
-		return ObjectStorageVersioning{}, err
+		return tbmodel.ObjectStorageGetVersioningResponse{}, err
 	}
 
 	if resp.IsError() {
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve versioning configuration for object storage: %s", osId)
-		return ObjectStorageVersioning{}, err
+		return tbmodel.ObjectStorageGetVersioningResponse{}, err
 	}
 
 	log.Debug().Msgf("Retrieved versioning configuration for object storage (%s) successfully", osId)
@@ -317,23 +284,23 @@ func (s *Session) SetObjectStorageVersioning(nsId string, osId string, req tbmod
 // ============================================================================
 
 // GetObjectStorageLocation retrieves the location of an object storage (bucket)
-func (s *Session) GetObjectStorageLocation(nsId string, osId string) (LocationConstraint, error) {
+func (s *Session) GetObjectStorageLocation(nsId string, osId string) (tbmodel.ObjectStorageLocationResponse, error) {
 	log.Debug().Msgf("Retrieving location of object storage: %s in namespace: %s", osId, nsId)
 
-	var resBody LocationConstraint
+	var resBody tbmodel.ObjectStorageLocationResponse
 	resp, err := s.
 		SetResult(&resBody).
 		Get(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/location", nsId, osId))
 
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to retrieve location of object storage: %s", osId)
-		return LocationConstraint{}, err
+		return tbmodel.ObjectStorageLocationResponse{}, err
 	}
 
 	if resp.IsError() {
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve location of object storage: %s", osId)
-		return LocationConstraint{}, err
+		return tbmodel.ObjectStorageLocationResponse{}, err
 	}
 
 	log.Debug().Msgf("Retrieved location of object storage (%s) successfully", osId)
@@ -346,10 +313,10 @@ func (s *Session) GetObjectStorageLocation(nsId string, osId string) (LocationCo
 
 // GetObjectStorageSupport retrieves CSP support information for object storage features
 // If cspType is empty, returns support information for all CSPs
-func (s *Session) GetObjectStorageSupport(cspType string) (ObjectStorageSupportResponse, error) {
+func (s *Session) GetObjectStorageSupport(cspType string) (tbmodel.ObjectStorageSupportResponse, error) {
 	log.Debug().Msgf("Retrieving object storage support information for CSP: %s", cspType)
 
-	var resBody ObjectStorageSupportResponse
+	var resBody tbmodel.ObjectStorageSupportResponse
 	req := s.SetResult(&resBody)
 
 	// Add optional CSP type query parameter
@@ -361,13 +328,13 @@ func (s *Session) GetObjectStorageSupport(cspType string) (ObjectStorageSupportR
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to retrieve object storage support information")
-		return ObjectStorageSupportResponse{}, err
+		return tbmodel.ObjectStorageSupportResponse{}, err
 	}
 
 	if resp.IsError() {
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to retrieve object storage support information")
-		return ObjectStorageSupportResponse{}, err
+		return tbmodel.ObjectStorageSupportResponse{}, err
 	}
 
 	log.Debug().Msgf("Retrieved object storage support information successfully")

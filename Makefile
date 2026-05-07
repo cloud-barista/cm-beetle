@@ -98,21 +98,43 @@ clean: ## Remove previous build
 	@rm -f coverage.out
 	@rm -f api/docs.go api/swagger.*
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
-	@cd cmd/test-cli && $(GO) clean
+	@cd cmd/test-cli/infra && $(GO) clean && rm -f test-infra
+	@cd cmd/test-cli/object-storage && $(GO) clean && rm -f test-os
 	@echo "Cleaned!"
 
-test-cli-build: ## Build the test CLI binary
-	@echo "Building test CLI binary..."
-	@$(GO) build -o cmd/test-cli/test-cli ./cmd/test-cli/main.go
-	@echo "Test CLI build finished!"
+test-infra-build: ## Build the infra migration test CLI binary
+	@echo "Building infra migration test CLI binary..."
+	@$(GO) build -o cmd/test-cli/infra/test-infra ./cmd/test-cli/infra/main.go
+	@echo "Infra test CLI build finished!"
 
-test-cli: test-cli-build ## Run the test CLI for all CSP-Region pairs
-	@echo "Running test CLI for all CSP-Region pairs..."
-	@cd cmd/test-cli && ./test-cli -config testdata/test-config.yaml
+test-infra: test-infra-build ## Run the infra migration test CLI for all CSP-Region pairs
+	@echo "Running infra migration test CLI for all CSP-Region pairs..."
+	@if [ ! -f cmd/test-cli/infra/testdata/test-config.yaml ]; then \
+		cp cmd/test-cli/infra/testdata/template-test-config.yaml cmd/test-cli/infra/testdata/test-config.yaml; \
+		echo "Created testdata/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/infra && ./test-infra -config testdata/test-config.yaml
 
-test-cli-help: ## Show test CLI help
-	@echo "Test CLI Help:"
-	@cd cmd/test-cli && ./test-cli -h || true
+test-infra-help: ## Show infra migration test CLI help
+	@echo "Infra Migration Test CLI Help:"
+	@cd cmd/test-cli/infra && ./test-infra -h || true
+
+test-os-build: ## Build the object storage migration test CLI binary
+	@echo "Building object storage migration test CLI binary..."
+	@$(GO) build -o cmd/test-cli/object-storage/test-os ./cmd/test-cli/object-storage/main.go
+	@echo "Object storage test CLI build finished!"
+
+test-os: test-os-build ## Run the object storage migration test CLI for all CSP-Region pairs
+	@echo "Running object storage migration test CLI for all CSP-Region pairs..."
+	@if [ ! -f cmd/test-cli/object-storage/testdata/test-config.yaml ]; then \
+		cp cmd/test-cli/object-storage/testdata/template-test-config.yaml cmd/test-cli/object-storage/testdata/test-config.yaml; \
+		echo "Created testdata/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/object-storage && ./test-os -config testdata/test-config.yaml
+
+test-os-help: ## Show object storage migration test CLI help
+	@echo "Object Storage Migration Test CLI Help:"
+	@cd cmd/test-cli/object-storage && ./test-os -h || true
 
 prepare-volumes: ## Create bind-mount directories with correct ownership
 	@echo "Preparing container-volume directories in deployments/docker-compose/data/..."

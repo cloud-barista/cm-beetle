@@ -31,8 +31,12 @@ cmd/cm-beetle/cm-beetle
 # Test Files & Artifacts
 *.test
 *.out
-cmd/test-cli/test-cli
-cmd/test-cli/testdata/auth-config.json
+cmd/test-cli/infra/test-infra
+cmd/test-cli/infra/testdata/auth-config.json
+cmd/test-cli/infra/testdata/test-config.yaml
+cmd/test-cli/object-storage/test-os
+cmd/test-cli/object-storage/testdata/auth-config.json
+cmd/test-cli/object-storage/testdata/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*
