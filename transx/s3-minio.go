@@ -43,27 +43,27 @@ func NewMinioProvider(config *MinioConfig, bucket string) (*MinioProvider, error
 }
 
 // GeneratePresignedURL generates a presigned URL for S3 operations.
-func (p *MinioProvider) GeneratePresignedURL(action, key string) (string, error) {
+func (p *MinioProvider) GeneratePresignedURL(action, key string) (PresignedURLResult, error) {
 	ctx := context.Background()
 	expires := 1 * time.Hour // Default expiration
 
 	switch action {
 	case "upload":
-		url, err := p.client.PresignedPutObject(ctx, p.bucket, key, expires)
+		u, err := p.client.PresignedPutObject(ctx, p.bucket, key, expires)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate presigned PUT URL: %w", err)
+			return PresignedURLResult{}, fmt.Errorf("failed to generate presigned PUT URL: %w", err)
 		}
-		return url.String(), nil
+		return PresignedURLResult{URL: u.String()}, nil
 
 	case "download":
-		url, err := p.client.PresignedGetObject(ctx, p.bucket, key, expires, nil)
+		u, err := p.client.PresignedGetObject(ctx, p.bucket, key, expires, nil)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate presigned GET URL: %w", err)
+			return PresignedURLResult{}, fmt.Errorf("failed to generate presigned GET URL: %w", err)
 		}
-		return url.String(), nil
+		return PresignedURLResult{URL: u.String()}, nil
 
 	default:
-		return "", fmt.Errorf("unsupported action: %s (use 'upload' or 'download')", action)
+		return PresignedURLResult{}, fmt.Errorf("unsupported action: %s (use 'upload' or 'download')", action)
 	}
 }
 
