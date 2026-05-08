@@ -98,43 +98,41 @@ clean: ## Remove previous build
 	@rm -f coverage.out
 	@rm -f api/docs.go api/swagger.*
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
-	@cd cmd/test-cli/infra && $(GO) clean && rm -f test-infra
-	@cd cmd/test-cli/object-storage && $(GO) clean && rm -f test-os
+	@cd cmd/test-cli/infra && $(GO) clean
+	@cd cmd/test-cli/object-storage && $(GO) clean
+	@cd cmd/test-cli/data && $(GO) clean
 	@echo "Cleaned!"
 
-test-infra-build: ## Build the infra migration test CLI binary
-	@echo "Building infra migration test CLI binary..."
-	@$(GO) build -o cmd/test-cli/infra/test-infra ./cmd/test-cli/infra/main.go
-	@echo "Infra test CLI build finished!"
-
-test-infra: test-infra-build ## Run the infra migration test CLI for all CSP-Region pairs
-	@echo "Running infra migration test CLI for all CSP-Region pairs..."
-	@if [ ! -f cmd/test-cli/infra/testdata/test-config.yaml ]; then \
-		cp cmd/test-cli/infra/testdata/template-test-config.yaml cmd/test-cli/infra/testdata/test-config.yaml; \
-		echo "Created testdata/test-config.yaml from template. Edit it before running."; \
+test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
+	@echo "Running infra migration test CLI..."
+	@if [ ! -f cmd/test-cli/infra/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/infra/testconf/template-test-config.yaml cmd/test-cli/infra/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
-	@cd cmd/test-cli/infra && ./test-infra -config testdata/test-config.yaml
+	@cd cmd/test-cli/infra && $(GO) run main.go -config testconf/test-config.yaml
 
-test-infra-help: ## Show infra migration test CLI help
-	@echo "Infra Migration Test CLI Help:"
-	@cd cmd/test-cli/infra && ./test-infra -h || true
-
-test-os-build: ## Build the object storage migration test CLI binary
-	@echo "Building object storage migration test CLI binary..."
-	@$(GO) build -o cmd/test-cli/object-storage/test-os ./cmd/test-cli/object-storage/main.go
-	@echo "Object storage test CLI build finished!"
-
-test-os: test-os-build ## Run the object storage migration test CLI for all CSP-Region pairs
-	@echo "Running object storage migration test CLI for all CSP-Region pairs..."
-	@if [ ! -f cmd/test-cli/object-storage/testdata/test-config.yaml ]; then \
-		cp cmd/test-cli/object-storage/testdata/template-test-config.yaml cmd/test-cli/object-storage/testdata/test-config.yaml; \
-		echo "Created testdata/test-config.yaml from template. Edit it before running."; \
+test-os: ## Run the object storage migration test CLI for all CSP-Region pairs
+	@echo "Running object storage migration test CLI..."
+	@if [ ! -f cmd/test-cli/object-storage/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/object-storage/testconf/template-test-config.yaml cmd/test-cli/object-storage/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
-	@cd cmd/test-cli/object-storage && ./test-os -config testdata/test-config.yaml
+	@cd cmd/test-cli/object-storage && $(GO) run main.go -config testconf/test-config.yaml
 
-test-os-help: ## Show object storage migration test CLI help
-	@echo "Object Storage Migration Test CLI Help:"
-	@cd cmd/test-cli/object-storage && ./test-os -h || true
+test-data: ## Run the data migration test CLI for all CSP-Region pairs
+	@echo "Running data migration test CLI..."
+	@if [ ! -f cmd/test-cli/data/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/data/testconf/template-test-config.yaml cmd/test-cli/data/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/data && $(GO) run main.go -config testconf/test-config.yaml
+
+test-data-clean: ## Clean up data migration test artifacts
+	@echo "Cleaning data migration test artifacts..."
+	@rm -rf cmd/test-cli/data/dummydata
+	@rm -rf cmd/test-cli/data/test-result
+	@rm -rf cmd/test-cli/data/log
+	@echo "Cleaned!"
 
 prepare-volumes: ## Create bind-mount directories with correct ownership
 	@echo "Preparing container-volume directories in deployments/docker-compose/data/..."

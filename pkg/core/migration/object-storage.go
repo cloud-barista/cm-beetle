@@ -229,10 +229,11 @@ func ExistObjectStorage(nsId, osId string) (bool, error) {
 }
 
 // DeleteObjectStorage deletes a specific object storage. Treats 404 as already deleted (idempotent).
-func DeleteObjectStorage(nsId, osId string) error {
-	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Deleting object storage")
+// option controls deletion behavior: "" (standard), "empty" (empty first), "force" (force with contents), "reconcile" (metadata only).
+func DeleteObjectStorage(nsId, osId, option string) error {
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Deleting object storage")
 
-	err := tbclient.NewSession().DeleteObjectStorage(nsId, osId)
+	err := tbclient.NewSession().DeleteObjectStorage(nsId, osId, option)
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage not found; treating as already deleted")
@@ -242,6 +243,72 @@ func DeleteObjectStorage(nsId, osId string) error {
 		return fmt.Errorf("failed to delete object storage '%s': %w", osId, err)
 	}
 
-	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage deleted")
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Object storage deleted")
+	return nil
+}
+
+// ListObjectStorageObjects returns the list of objects stored in a specific object storage bucket.
+func ListObjectStorageObjects(nsId, osId string) (StorageObjectListResponse, error) {
+	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Listing objects in object storage")
+
+	result, err := tbclient.NewSession().ListObjectStorageObjects(nsId, osId)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to list objects in object storage")
+		return StorageObjectListResponse{}, err
+	}
+
+	objects := make([]StorageObjectInfo, 0, len(result.Objects))
+	for _, obj := range result.Objects {
+		objects = append(objects, StorageObjectInfo{
+			Key:          obj.Key,
+			Size:         obj.Size,
+			LastModified: obj.LastModified,
+			ETag:         obj.ETag,
+			StorageClass: obj.StorageClass,
+		})
+	}
+
+	resp := StorageObjectListResponse{
+		OsId:    osId,
+		Count:   len(objects),
+		Objects: objects,
+	}
+
+	log.Info().Str("nsId", nsId).Str("osId", osId).Int("count", resp.Count).Msg("Objects listed")
+	return resp, nil
+}
+
+// GetStorageObject retrieves metadata of a specific object from an object storage bucket.
+func GetStorageObject(nsId, osId, objectKey string) (StorageObjectMetadata, error) {
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Getting object metadata")
+
+	obj, err := tbclient.NewSession().GetStorageObject(nsId, osId, objectKey)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to get object metadata")
+		return StorageObjectMetadata{}, err
+	}
+
+	metadata := StorageObjectMetadata{
+		Key:          obj.Key,
+		Size:         obj.Size,
+		LastModified: obj.LastModified,
+		ETag:         obj.ETag,
+		StorageClass: obj.StorageClass,
+	}
+
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Object metadata retrieved")
+	return metadata, nil
+}
+
+// DeleteStorageObject deletes a specific object from an object storage bucket.
+func DeleteStorageObject(nsId, osId, objectKey string) error {
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Deleting object from object storage")
+
+	if err := tbclient.NewSession().DeleteStorageObject(nsId, osId, objectKey); err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to delete object")
+		return err
+	}
+
+	log.Info().Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Object deleted")
 	return nil
 }
