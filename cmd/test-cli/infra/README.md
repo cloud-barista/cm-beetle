@@ -70,13 +70,13 @@ make test-infra
 
 ### Main Config
 
-`testdata/config-multi-csp-and-region-pair.json`:
+`testconf/config-multi-csp-and-region-pair.json`:
 
 ```json
 {
   "beetleUrl": "http://localhost:8056",
   "namespaceId": "mig01",
-  "authConfigFile": "testdata/auth-config.json",
+  "authConfigFile": "testconf/auth-config.json",
   "desiredCspRegionPairs": [
     { "csp": "aws", "region": "ap-northeast-2", "name": "AWS-Seoul" },
     { "csp": "azure", "region": "koreacentral", "name": "Azure-Korea" },
@@ -84,13 +84,13 @@ make test-infra
     { "csp": "alibaba", "region": "ap-northeast-2", "name": "Alibaba-Seoul" },
     { "csp": "ncp", "region": "kr", "name": "NCP-Korea" }
   ],
-  "requestBodyFile": "testdata/recommendation-request.json"
+  "requestBodyFile": "testconf/recommendation-request.json"
 }
 ```
 
 ### Authentication Config
 
-`testdata/auth-config.json` (excluded from version control):
+`testconf/auth-config.json` (excluded from version control):
 
 ```json
 {
@@ -99,15 +99,15 @@ make test-infra
 }
 ```
 
-**Note**: Copy `testdata/template-auth-config.json` to `testdata/auth-config.json` and update with your credentials.
+**Note**: Copy `testconf/template-auth-config.json` to `testconf/auth-config.json` and update with your credentials.
 
 ### Test Data
 
-`testdata/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
+`testconf/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
 
 ### Test Data
 
-`testdata/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
+`testconf/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
 
 ## Usage
 
@@ -130,7 +130,7 @@ cd cmd/test-cli/infra
 
 ### Options
 
-- `-config`: Configuration file path (default: `testdata/config-multi-csp-and-region-pair.json`)
+- `-config`: Configuration file path (default: `testconf/config-multi-csp-and-region-pair.json`)
 - `-verbose`: Enable detailed output
 
 ## Test Results
@@ -213,7 +213,7 @@ Create custom config file:
     { "csp": "aws", "region": "ap-northeast-2" },
     { "csp": "azure", "region": "koreacentral" }
   ],
-  "requestBodyFile": "testdata/recommendation-request.json"
+  "requestBodyFile": "testconf/recommendation-request.json"
 }
 ```
 
@@ -223,7 +223,7 @@ Create custom config file:
 {
   "beetleUrl": "http://my-server:8080",
   "namespaceId": "my-namespace",
-  "authConfigFile": "testdata/my-auth-config.json",
+  "authConfigFile": "testconf/my-auth-config.json",
   "desiredCspRegionPairs": [...]
 }
 ```
@@ -234,7 +234,7 @@ Create custom config file:
 2. Configured namespace in CM-Beetle
 3. CSP credentials configured for each cloud provider
 4. Network connectivity to CM-Beetle and cloud providers
-5. **Authentication setup**: Copy `testdata/template-auth-config.json` to `testdata/auth-config.json` and configure credentials
+5. **Authentication setup**: Copy `testconf/template-auth-config.json` to `testconf/auth-config.json` and configure credentials
 6. **SSH access**: Ensure VMs can be accessed via SSH for Test 6 (Remote Command Test)
 
 ## Troubleshooting
@@ -254,7 +254,7 @@ make test-infra-build
 curl http://localhost:8056/beetle/readyz
 
 # Verify config
-cat testdata/config-multi-csp-and-region-pair.json
+cat testconf/config-multi-csp-and-region-pair.json
 ```
 
 ### Test Failures
@@ -271,7 +271,7 @@ cmd/test-cli/infra/
 ├── main.go                                    # Main CLI code
 ├── README.md                                  # This file
 ├── test-infra                                 # Built binary
-├── testdata/
+├── testconf/
 │   ├── config-multi-csp-and-region-pair.json # Main config
 │   └── recommendation-request.json            # Test data
 ├── testresult/                                # Test reports

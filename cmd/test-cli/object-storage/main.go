@@ -131,8 +131,7 @@ type objectStorageListData struct {
 // ============================================================================
 
 var (
-	configFile = flag.String("config", "testdata/test-config.yaml", "Path to YAML config file")
-	verbose    = flag.Bool("verbose", false, "Enable verbose (debug) output")
+	configFile = flag.String("config", "testconf/test-config.yaml", "Path to YAML config file")
 )
 
 func init() {

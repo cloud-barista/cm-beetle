@@ -1,0 +1,92 @@
+test:
+  set:
+    mode: sequential # parallel or sequential
+
+  source:
+    csp: aws
+    region: ap-northeast-2 # Seoul (source staging bucket)
+    nameSeed: src01         # Prefix for source OS naming (default: target nameSeed + "s")
+
+  upload:
+    filter:
+      include:
+        - "**/*.txt"   # Include text files
+        - "**/*.json"  # Include JSON files
+        - "**/*.csv"   # Include CSV files
+      exclude:
+        - "**/*.log"   # Exclude log files
+
+  # Target Object Storage test cases
+  cases:
+    - csp: aws
+      region: ap-northeast-2 # Seoul
+      name: AWS-Seoul
+      execute: true
+
+    - csp: azure
+      region: koreasouth # Busan
+      name: Azure-Busan
+      execute: false
+
+    - csp: gcp
+      region: asia-northeast3 # Seoul
+      name: GCP-Seoul
+      execute: false
+
+    - csp: alibaba
+      region: ap-northeast-2 # Seoul
+      name: Alibaba-Seoul
+      execute: false
+
+    - csp: tencent
+      region: ap-seoul # Seoul
+      name: Tencent-Seoul
+      execute: false
+
+    - csp: ibm
+      region: au-syd # Sydney
+      name: IBM-Sydney
+      execute: false
+
+    - csp: openstack
+      region: regionone # Daejeon
+      name: OpenStack-Daejeon
+      execute: false
+
+    - csp: ncp
+      region: kr # Seoul
+      name: NCP-Seoul
+      execute: false
+
+    - csp: nhn
+      region: kr1 # Pangyo
+      name: NHN-Pangyo
+      execute: false
+
+    - csp: kt
+      region: kr1 # Seoul
+      name: KT-Seoul
+      execute: false
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: mig01
+  authConfigFile: testconf/auth-config.json
+  osCreationReqFile: testconf/object-storage-creation-req.json # JSON file with bucket specs for direct OS creation (no recommendation)
+
+tumblebug:
+  endpoint: http://localhost:1323/tumblebug       # Used by test CLI (host) for direct transx calls
+  serverEndpoint: http://cb-tumblebug:1323/tumblebug # Used inside migration request body (CM-Beetle server → Docker network)
+  auth:
+    username: default
+    password: default
+
+testData:
+  baseDir: ./dummydata
+  cleanup: false # Set true to remove dummydata after test
+
+migration:
+  nameSeed: data01               # Prefix for target object storage naming
+  poll:
+    intervalSec: 10 # Polling interval for async migration/upload status
+    timeoutSec: 600 # Maximum wait time for completion (10 minutes)
