@@ -71,7 +71,7 @@ func NewTumblebugProvider(config *TumblebugConfig) (*TumblebugProvider, error) {
 }
 
 // GeneratePresignedURL generates a presigned URL via CB-Tumblebug API.
-// Uses the new endpoint: GET /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}
+// Uses the new unified endpoint: POST /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}/presignedUrl
 // Query parameters:
 //   - operation: "upload" or "download"
 //   - expires: expiration time in seconds (default: 3600)
@@ -79,11 +79,11 @@ func (p *TumblebugProvider) GeneratePresignedURL(action, key string) (string, er
 	// URL encode the object key to handle special characters and paths
 	encodedKey := url.PathEscape(key)
 
-	// GET /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}?operation=xxx&expires=xxx
-	apiURL := fmt.Sprintf("%s/ns/%s/resources/objectStorage/%s/object/%s?operation=%s&expires=%d",
+	// POST /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}/presignedUrl?operation=xxx&expires=xxx
+	apiURL := fmt.Sprintf("%s/ns/%s/resources/objectStorage/%s/object/%s/presignedUrl?operation=%s&expires=%d",
 		p.endpoint, p.nsId, p.osId, encodedKey, action, p.expires)
 
-	req, err := http.NewRequest("GET", apiURL, nil)
+	req, err := http.NewRequest("POST", apiURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
@@ -178,8 +178,9 @@ func (p *TumblebugProvider) GetBucket() string {
 }
 
 // Response types for Tumblebug API
+// Based on: POST /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}/presignedUrl
 type tumblebugPresignedURLResponse struct {
-	PresignedURL string `json:"presignedUrl"`
+	PresignedURL string `json:"presignedUrl"` // Tumblebug uses camelCase
 	ExpiresAt    string `json:"expiresAt,omitempty"`
 }
 
