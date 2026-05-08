@@ -72,7 +72,7 @@ func NewSpiderProvider(config *SpiderConfig, bucket string) (*SpiderProvider, er
 // Uses the CB-Spider special feature endpoints:
 //   - GET /s3/presigned/download/{BucketName}/{ObjectKey} for download
 //   - GET /s3/presigned/upload/{BucketName}/{ObjectKey} for upload
-func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error) {
+func (p *SpiderProvider) GeneratePresignedURL(action, key string) (PresignedURLResult, error) {
 	var apiURL string
 
 	// URL encode the object key to handle special characters and paths
@@ -88,12 +88,12 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error
 		apiURL = fmt.Sprintf("%s/s3/presigned/download/%s/%s?ConnectionName=%s&expires=%d",
 			p.endpoint, p.bucket, encodedKey, url.QueryEscape(p.connectionName), p.expires)
 	default:
-		return "", fmt.Errorf("unsupported action: %s (use 'upload' or 'download')", action)
+		return PresignedURLResult{}, fmt.Errorf("unsupported action: %s (use 'upload' or 'download')", action)
 	}
 
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Accept", "application/xml")
 
@@ -107,26 +107,26 @@ func (p *SpiderProvider) GeneratePresignedURL(action, key string) (string, error
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("spider API request failed: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("spider API request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("spider API returned status %d: %s", resp.StatusCode, string(body))
+		return PresignedURLResult{}, fmt.Errorf("spider API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	presignedURL := extractPresignedURL(string(body))
 	if presignedURL == "" {
-		return "", fmt.Errorf("failed to extract presigned URL from response: %s", string(body))
+		return PresignedURLResult{}, fmt.Errorf("failed to extract presigned URL from response: %s", string(body))
 	}
 
-	return presignedURL, nil
+	return PresignedURLResult{URL: presignedURL}, nil
 }
 
 // ListObjects lists objects via CB-Spider S3 API.

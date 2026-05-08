@@ -75,7 +75,7 @@ func NewTumblebugProvider(config *TumblebugConfig) (*TumblebugProvider, error) {
 // Query parameters:
 //   - operation: "upload" or "download"
 //   - expires: expiration time in seconds (default: 3600)
-func (p *TumblebugProvider) GeneratePresignedURL(action, key string) (string, error) {
+func (p *TumblebugProvider) GeneratePresignedURL(action, key string) (PresignedURLResult, error) {
 	// URL encode the object key to handle special characters and paths
 	encodedKey := url.PathEscape(key)
 
@@ -85,7 +85,7 @@ func (p *TumblebugProvider) GeneratePresignedURL(action, key string) (string, er
 
 	req, err := http.NewRequest("POST", apiURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Apply authentication
@@ -98,25 +98,28 @@ func (p *TumblebugProvider) GeneratePresignedURL(action, key string) (string, er
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("tumblebug API request failed: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("tumblebug API request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("tumblebug API returned status %d: %s", resp.StatusCode, string(body))
+		return PresignedURLResult{}, fmt.Errorf("tumblebug API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var response tumblebugPresignedURLResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
+		return PresignedURLResult{}, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if response.PresignedURL == "" {
-		return "", fmt.Errorf("empty presigned URL in response")
+		return PresignedURLResult{}, fmt.Errorf("empty presigned URL in response")
 	}
 
-	return response.PresignedURL, nil
+	return PresignedURLResult{
+		URL:             response.PresignedURL,
+		RequiredHeaders: response.RequiredHeaders,
+	}, nil
 }
 
 // ListObjects lists objects via CB-Tumblebug API.
@@ -179,9 +182,12 @@ func (p *TumblebugProvider) GetBucket() string {
 
 // Response types for Tumblebug API
 // Based on: POST /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}/presignedUrl
+// Mirrors Tumblebug's ObjectStoragePresignedUrlResponse.
 type tumblebugPresignedURLResponse struct {
-	PresignedURL string `json:"presignedUrl"` // Tumblebug uses camelCase
-	ExpiresAt    string `json:"expiresAt,omitempty"`
+	Expires         int64             `json:"expires"`
+	Method          string            `json:"method"`
+	PresignedURL    string            `json:"presignedURL"`              // uppercase URL to match Tumblebug
+	RequiredHeaders map[string]string `json:"requiredHeaders,omitempty"` // CSP-specific headers (e.g. Azure)
 }
 
 type tumblebugListResponse struct {

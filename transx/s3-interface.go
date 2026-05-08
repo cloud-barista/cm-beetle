@@ -9,12 +9,18 @@ import (
 	"strings"
 )
 
+// PresignedURLResult holds a presigned URL and any additional headers required for the request.
+type PresignedURLResult struct {
+	URL             string
+	RequiredHeaders map[string]string // CSP-specific headers (e.g. x-ms-blob-type for Azure)
+}
+
 // S3Provider defines the interface for S3-compatible object storage operations.
 type S3Provider interface {
 	// GeneratePresignedURL generates a presigned URL for upload or download.
 	// action: "upload" or "download"
 	// key: object key (file path within bucket)
-	GeneratePresignedURL(action, key string) (string, error)
+	GeneratePresignedURL(action, key string) (PresignedURLResult, error)
 
 	// ListObjects lists objects with the given prefix.
 	ListObjects(prefix string) ([]ObjectInfo, error)

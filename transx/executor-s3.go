@@ -117,7 +117,7 @@ func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) er
 
 // uploadFile uploads a single file using presigned URL.
 func (e *S3Executor) uploadFile(localPath, s3Key string) error {
-	presignedURL, err := e.Provider.GeneratePresignedURL("upload", s3Key)
+	result, err := e.Provider.GeneratePresignedURL("upload", s3Key)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
@@ -133,11 +133,16 @@ func (e *S3Executor) uploadFile(localPath, s3Key string) error {
 		return fmt.Errorf("failed to stat file: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPut, presignedURL, file)
+	req, err := http.NewRequest(http.MethodPut, result.URL, file)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 	req.ContentLength = stat.Size()
+
+	// Apply CSP-specific headers provided by Tumblebug (e.g. x-ms-blob-type for Azure).
+	for k, v := range result.RequiredHeaders {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -155,12 +160,12 @@ func (e *S3Executor) uploadFile(localPath, s3Key string) error {
 
 // downloadFile downloads a single file using presigned URL.
 func (e *S3Executor) downloadFile(s3Key, localPath string) error {
-	presignedURL, err := e.Provider.GeneratePresignedURL("download", s3Key)
+	result, err := e.Provider.GeneratePresignedURL("download", s3Key)
 	if err != nil {
 		return fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
 
-	resp, err := http.Get(presignedURL)
+	resp, err := http.Get(result.URL)
 	if err != nil {
 		return fmt.Errorf("download request failed: %w", err)
 	}
@@ -215,6 +220,9 @@ func (e *S3Executor) listLocalFiles(path string, filter *FilterOption) ([]string
 }
 
 // matchesFilter checks if a path matches the filter patterns.
+// Supports glob patterns including globstar (**) prefix (e.g. "**/*.txt").
+// When a pattern starts with "**/" the remaining suffix is matched against
+// every component of the path so that nested files are included correctly.
 func (e *S3Executor) matchesFilter(path string, filter *FilterOption) bool {
 	if filter == nil {
 		return true
@@ -222,7 +230,7 @@ func (e *S3Executor) matchesFilter(path string, filter *FilterOption) bool {
 
 	// Check exclude patterns first
 	for _, pattern := range filter.Exclude {
-		if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+		if globMatch(pattern, path) {
 			return false
 		}
 	}
@@ -230,7 +238,7 @@ func (e *S3Executor) matchesFilter(path string, filter *FilterOption) bool {
 	// If include patterns exist, path must match at least one
 	if len(filter.Include) > 0 {
 		for _, pattern := range filter.Include {
-			if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+			if globMatch(pattern, path) {
 				return true
 			}
 		}
@@ -238,6 +246,28 @@ func (e *S3Executor) matchesFilter(path string, filter *FilterOption) bool {
 	}
 
 	return true
+}
+
+// globMatch matches a path against a glob pattern.
+// It handles the globstar prefix "**/" by matching the trailing pattern
+// against every path component (base name), enabling patterns like "**/*.txt"
+// to match files at any depth.
+func globMatch(pattern, path string) bool {
+	const globstarPrefix = "**/"
+	if strings.HasPrefix(pattern, globstarPrefix) {
+		// Match the suffix pattern against the file's base name so that
+		// "**/*.txt" matches "dir/sub/file.txt".
+		suffix := pattern[len(globstarPrefix):]
+		matched, _ := filepath.Match(suffix, filepath.Base(path))
+		return matched
+	}
+	// No globstar: match against the base name for simple patterns like "*.txt",
+	// or against the full path for explicit sub-path patterns.
+	if matched, _ := filepath.Match(pattern, filepath.Base(path)); matched {
+		return matched
+	}
+	matched, _ := filepath.Match(pattern, path)
+	return matched
 }
 
 // isDirectory checks if the path is a directory.
