@@ -556,3 +556,58 @@ No need to specify which fields are encrypted - the server knows from the intern
 | **Large Data Support** | Hybrid encryption handles data of any size                |
 | **Transport Security** | Always use HTTPS in production                            |
 | **Key Storage**        | In-memory only (keys don't survive restart)               |
+
+## Version Management and Tagging
+
+This module is independently versioned using Git tags with the `transx/` prefix (e.g., `transx/v0.1.0`).
+
+### Releasing a New Version
+
+After your changes to `transx/` have been merged into `upstream/main`, create and push the version tag:
+
+```bash
+# 1) Fetch latest upstream and verify merge
+git fetch upstream
+git log upstream/main --oneline -5
+
+# 2) Check recent transx tags to determine next version
+git tag -l "transx/*" --sort=-v:refname | head -5
+
+# 3) Set next version manually based on the list above
+export NEXT_TRANSX_TAG=  # Update this value (e.g., export NEXT_TRANSX_TAG="transx/v0.1.0")
+echo "Next transx tag: $NEXT_TRANSX_TAG"
+
+# 4) Tag the merge result on upstream/main
+git tag -a $NEXT_TRANSX_TAG upstream/main -m "transx: release ${NEXT_TRANSX_TAG#transx/}"
+# Optional (safer if upstream/main has moved):
+# git tag -a $NEXT_TRANSX_TAG <merge_commit_sha> -m "transx: release ${NEXT_TRANSX_TAG#transx/}"
+
+# 5) Push tag to upstream
+git push upstream $NEXT_TRANSX_TAG
+
+# 6) Verify tag
+git show $NEXT_TRANSX_TAG
+```
+
+> **Note:** Tag `upstream/main` (the merge result), not your old branch commit hash. If another PR is merged before you tag, use the exact merge commit SHA instead of `upstream/main`. Using `$NEXT_TRANSX_TAG` environment variable ensures consistency across all commands.
+
+### Updating CM-Beetle Dependency
+
+After creating and pushing the tag, update the main CM-Beetle project to use the new version:
+
+```bash
+# 1) Start a new branch for CM-Beetle update
+git fetch upstream
+# Optional (skip this if working in an existing branch):
+# git checkout upstream/main -b feat-beetle-use-${NEXT_TRANSX_TAG#transx/}
+
+# 2) Update dependency to the latest version
+go get -u github.com/cloud-barista/cm-beetle/transx
+# Or specify exact version (use $NEXT_TRANSX_TAG from previous step):
+# go get github.com/cloud-barista/cm-beetle/transx@${NEXT_TRANSX_TAG#transx/}
+go mod tidy
+
+# 3) Then follow standard development workflow: verify, test, commit, push, and open PR
+```
+
+For detailed instructions on the complete workflow, see [docs/module-import-guide.md](../docs/module-import-guide.md).
