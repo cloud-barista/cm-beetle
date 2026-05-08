@@ -78,6 +78,13 @@ func (e *S3Executor) upload(localPath, s3Path string, filter *FilterOption) erro
 
 // download transfers S3 objects to local filesystem.
 func (e *S3Executor) download(s3Path, localPath string, filter *FilterOption) error {
+	// Ensure local destination directory exists before downloading any files.
+	// This is required so that the staging path is always present for subsequent
+	// pipeline steps even when the source bucket is empty.
+	if err := os.MkdirAll(localPath, 0755); err != nil {
+		return fmt.Errorf("failed to create local directory: %w", err)
+	}
+
 	// Parse bucket and key from s3Path (e.g., "bucket-name/prefix/")
 	_, keyPrefix := ParseBucketAndKey(s3Path)
 
