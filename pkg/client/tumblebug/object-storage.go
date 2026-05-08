@@ -28,8 +28,6 @@ import (
 // * All object storage models are imported from cb-tumblebug packages
 // * to ensure consistency and reuse of Tumblebug data structures.
 
-
-
 // ============================================================================
 // Object Storage Management APIs
 // ============================================================================
@@ -135,9 +133,18 @@ func (s *Session) ExistObjectStorage(nsId string, osId string) (bool, error) {
 	return exists, nil
 }
 
-// DeleteObjectStorage deletes an object storage (bucket)
-func (s *Session) DeleteObjectStorage(nsId string, osId string) error {
-	log.Debug().Msgf("Deleting object storage: %s in namespace: %s", osId, nsId)
+// DeleteObjectStorage deletes an object storage (bucket).
+// option controls the deletion behavior (mutually exclusive):
+//   - ""        : Standard delete — fails if the bucket is not empty.
+//   - "empty"   : Empty the bucket first, then delete.
+//   - "force"   : Force-delete with all contents (passed to Spider as force=true).
+//   - "reconcile": Remove only Tumblebug metadata without calling the CSP delete API.
+func (s *Session) DeleteObjectStorage(nsId string, osId string, option string) error {
+	log.Debug().Msgf("Deleting object storage: %s in namespace: %s (option=%s)", osId, nsId, option)
+
+	if option != "" {
+		s.SetQueryParam("option", option)
+	}
 
 	resp, err := s.Delete(fmt.Sprintf("/ns/%s/resources/objectStorage/%s", nsId, osId))
 
@@ -152,7 +159,83 @@ func (s *Session) DeleteObjectStorage(nsId string, osId string) error {
 		return err
 	}
 
-	log.Debug().Msgf("Object storage (%s) deleted successfully", osId)
+	log.Debug().Msgf("Object storage (%s) deleted successfully (option=%s)", osId, option)
+	return nil
+}
+
+// ListObjectStorageObjects lists objects in a specific object storage bucket.
+func (s *Session) ListObjectStorageObjects(nsId string, osId string) (tbmodel.ObjectStorageListObjectsResponse, error) {
+	log.Debug().Msgf("Listing objects in object storage: %s in namespace: %s", osId, nsId)
+
+	var resBody tbmodel.ObjectStorageListObjectsResponse
+	resp, err := s.
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object", nsId, osId))
+
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to list objects in object storage: %s", osId)
+		return tbmodel.ObjectStorageListObjectsResponse{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to list objects in object storage: %s", osId)
+		return tbmodel.ObjectStorageListObjectsResponse{}, err
+	}
+
+	log.Debug().Msgf("Listed %d objects in object storage (%s) successfully", len(resBody.Objects), osId)
+	return resBody, nil
+}
+
+// GetStorageObject retrieves metadata of a specific object in an object storage bucket.
+func (s *Session) GetStorageObject(nsId, osId, objectKey string) (tbmodel.Object, error) {
+	log.Debug().Msgf("Getting object metadata: %s in object storage: %s, namespace: %s", objectKey, osId, nsId)
+
+	var resBody tbmodel.Object
+	resp, err := s.
+		SetResult(&resBody).
+		Head(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, objectKey))
+
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get object metadata: %s", objectKey)
+		return tbmodel.Object{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to get object metadata: %s", objectKey)
+		return tbmodel.Object{}, err
+	}
+
+	// TB HEAD returns metadata in response headers, not in the body.
+	header := resp.Header()
+	resBody.Key = objectKey
+	resBody.ETag = header.Get("ETag")
+	resBody.LastModified = header.Get("Last-Modified")
+
+	log.Debug().Msgf("Object metadata retrieved for: %s", objectKey)
+	return resBody, nil
+}
+
+// DeleteStorageObject deletes a specific object from an object storage bucket.
+func (s *Session) DeleteStorageObject(nsId, osId, objectKey string) error {
+	log.Debug().Msgf("Deleting object: %s from object storage: %s, namespace: %s", objectKey, osId, nsId)
+
+	resp, err := s.
+		Delete(fmt.Sprintf("/ns/%s/resources/objectStorage/%s/object/%s", nsId, osId, objectKey))
+
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to delete object: %s", objectKey)
+		return err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msgf("Failed to delete object: %s", objectKey)
+		return err
+	}
+
+	log.Debug().Msgf("Object (%s) deleted successfully from object storage (%s)", objectKey, osId)
 	return nil
 }
 

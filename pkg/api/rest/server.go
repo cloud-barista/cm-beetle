@@ -391,6 +391,9 @@ func RunServer(port string) {
 	gMigrationMiddleware.POST("/ns/:nsId/objectStorage", controller.MigrateObjectStorage)
 	gMigrationMiddleware.GET("/ns/:nsId/objectStorage", controller.ListObjectStorages)
 	gMigrationMiddleware.GET("/ns/:nsId/objectStorage/:osId", controller.GetObjectStorage)
+	gMigrationMiddleware.GET("/ns/:nsId/objectStorage/:osId/object", controller.ListObjectStorageObjects)
+	gMigrationMiddleware.HEAD("/ns/:nsId/objectStorage/:osId/object/:objectKey", controller.GetStorageObject)
+	gMigrationMiddleware.DELETE("/ns/:nsId/objectStorage/:osId/object/:objectKey", controller.DeleteStorageObject)
 	gMigrationMiddleware.HEAD("/ns/:nsId/objectStorage/:osId", controller.ExistObjectStorage)
 	gMigrationMiddleware.DELETE("/ns/:nsId/objectStorage/:osId", controller.DeleteObjectStorage)
 

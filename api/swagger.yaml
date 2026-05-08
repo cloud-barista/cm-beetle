@@ -1908,6 +1908,56 @@ definitions:
           $ref: '#/definitions/migration.MigratedObjectStorageInfo'
         type: array
     type: object
+  migration.StorageObjectInfo:
+    properties:
+      eTag:
+        description: Entity tag (content hash)
+        type: string
+      key:
+        description: Object key (relative path within the bucket)
+        type: string
+      lastModified:
+        description: Last modified timestamp (RFC 3339)
+        type: string
+      size:
+        description: Size in bytes
+        type: integer
+      storageClass:
+        description: Storage class (e.g., STANDARD)
+        type: string
+    type: object
+  migration.StorageObjectListResponse:
+    properties:
+      count:
+        description: Total number of objects
+        type: integer
+      objects:
+        description: List of objects
+        items:
+          $ref: '#/definitions/migration.StorageObjectInfo'
+        type: array
+      osId:
+        description: Object storage ID
+        type: string
+    type: object
+  migration.StorageObjectMetadata:
+    properties:
+      eTag:
+        description: Entity tag (content hash)
+        type: string
+      key:
+        description: Object key
+        type: string
+      lastModified:
+        description: Last modified timestamp
+        type: string
+      size:
+        description: Size in bytes
+        type: integer
+      storageClass:
+        description: Storage class
+        type: string
+    type: object
   model.ApiResponse-any:
     properties:
       data:
@@ -2197,6 +2247,44 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/migration.MigratedObjectStorageListResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-migration_StorageObjectListResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/migration.StorageObjectListResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-migration_StorageObjectMetadata:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/migration.StorageObjectMetadata'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -5088,10 +5176,13 @@ paths:
       consumes:
       - application/json
       description: |-
-        Delete a specific object storage (bucket)
+        Delete a specific object storage (bucket).
 
-        [Note]
-        - The bucket must be empty before deletion
+        Deletion behavior is controlled by the `option` query parameter (mutually exclusive):
+        - (none): Standard delete — fails if the bucket is not empty.
+        - `empty`: Empty the bucket first, then delete.
+        - `force`: Force-delete with all contents (passed to Spider as force=true).
+        - `reconcile`: Remove only Tumblebug metadata without calling the CSP delete API.
       operationId: DeleteObjectStorage
       parameters:
       - default: mig01
@@ -5104,6 +5195,14 @@ paths:
         in: path
         name: osId
         required: true
+        type: string
+      - description: Delete option
+        enum:
+        - empty
+        - force
+        - reconcile
+        in: query
+        name: option
         type: string
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
@@ -5218,6 +5317,155 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Check object storage (bucket) existence
+      tags:
+      - '[Migration] Managed middleware (preview)'
+  /migration/middleware/ns/{nsId}/objectStorage/{osId}/object:
+    get:
+      consumes:
+      - application/json
+      description: List all objects stored in a specific object storage bucket by
+        proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object
+      operationId: ListObjectStorageObjects
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved object list
+          schema:
+            $ref: '#/definitions/model.ApiResponse-migration_StorageObjectListResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Object storage not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during list operation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: List objects in an object storage bucket
+      tags:
+      - '[Migration] Managed middleware (preview)'
+  /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey}:
+    delete:
+      consumes:
+      - application/json
+      description: |-
+        Delete a specific object from an object storage bucket
+        by proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
+        Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+      operationId: DeleteStorageObject
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
+        required: true
+        type: string
+      - description: Object key (URL-encode slashes if needed)
+        in: path
+        name: objectKey
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Object deleted
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Delete an object from an object storage bucket
+      tags:
+      - '[Migration] Managed middleware (preview)'
+    head:
+      consumes:
+      - application/json
+      description: |-
+        Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object
+        by proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
+        Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+      operationId: GetStorageObject
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Object Storage ID (bucket ID)
+        in: path
+        name: osId
+        required: true
+        type: string
+      - description: Object key (URL-encode slashes if needed)
+        in: path
+        name: objectKey
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object metadata retrieved
+          schema:
+            $ref: '#/definitions/model.ApiResponse-migration_StorageObjectMetadata'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get metadata of an object in an object storage bucket
       tags:
       - '[Migration] Managed middleware (preview)'
   /migration/ns/{nsId}/infra:

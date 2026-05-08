@@ -418,7 +418,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific object storage (bucket)\n\n[Note]\n- The bucket must be empty before deletion",
+                "description": "Delete a specific object storage (bucket).\n\nDeletion behavior is controlled by the ` + "`" + `option` + "`" + ` query parameter (mutually exclusive):\n- (none): Standard delete — fails if the bucket is not empty.\n- ` + "`" + `empty` + "`" + `: Empty the bucket first, then delete.\n- ` + "`" + `force` + "`" + `: Force-delete with all contents (passed to Spider as force=true).\n- ` + "`" + `reconcile` + "`" + `: Remove only Tumblebug metadata without calling the CSP delete API.",
                 "consumes": [
                     "application/json"
                 ],
@@ -445,6 +445,17 @@ const docTemplate = `{
                         "name": "osId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "empty",
+                            "force",
+                            "reconcile"
+                        ],
+                        "type": "string",
+                        "description": "Delete option",
+                        "name": "option",
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -531,6 +542,210 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during existence check",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/objectStorage/{osId}/object": {
+            "get": {
+                "description": "List all objects stored in a specific object storage bucket by proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "List objects in an object storage bucket",
+                "operationId": "ListObjectStorageObjects",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved object list",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-migration_StorageObjectListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Object storage not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during list operation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey}": {
+            "delete": {
+                "description": "Delete a specific object from an object storage bucket\nby proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.\nNote: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Delete an object from an object storage bucket",
+                "operationId": "DeleteStorageObject",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object key (URL-encode slashes if needed)",
+                        "name": "objectKey",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Object deleted"
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "head": {
+                "description": "Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object\nby proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.\nNote: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed middleware (preview)"
+                ],
+                "summary": "Get metadata of an object in an object storage bucket",
+                "operationId": "GetStorageObject",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object Storage ID (bucket ID)",
+                        "name": "osId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object key (URL-encode slashes if needed)",
+                        "name": "objectKey",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object metadata retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-migration_StorageObjectMetadata"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Object not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -5502,6 +5717,76 @@ const docTemplate = `{
                 }
             }
         },
+        "migration.StorageObjectInfo": {
+            "type": "object",
+            "properties": {
+                "eTag": {
+                    "description": "Entity tag (content hash)",
+                    "type": "string"
+                },
+                "key": {
+                    "description": "Object key (relative path within the bucket)",
+                    "type": "string"
+                },
+                "lastModified": {
+                    "description": "Last modified timestamp (RFC 3339)",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "Size in bytes",
+                    "type": "integer"
+                },
+                "storageClass": {
+                    "description": "Storage class (e.g., STANDARD)",
+                    "type": "string"
+                }
+            }
+        },
+        "migration.StorageObjectListResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Total number of objects",
+                    "type": "integer"
+                },
+                "objects": {
+                    "description": "List of objects",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/migration.StorageObjectInfo"
+                    }
+                },
+                "osId": {
+                    "description": "Object storage ID",
+                    "type": "string"
+                }
+            }
+        },
+        "migration.StorageObjectMetadata": {
+            "type": "object",
+            "properties": {
+                "eTag": {
+                    "description": "Entity tag (content hash)",
+                    "type": "string"
+                },
+                "key": {
+                    "description": "Object key",
+                    "type": "string"
+                },
+                "lastModified": {
+                    "description": "Last modified timestamp",
+                    "type": "string"
+                },
+                "size": {
+                    "description": "Size in bytes",
+                    "type": "integer"
+                },
+                "storageClass": {
+                    "description": "Storage class",
+                    "type": "string"
+                }
+            }
+        },
         "model.ApiResponse-any": {
             "type": "object",
             "properties": {
@@ -5924,6 +6209,62 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/migration.MigratedObjectStorageListResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-migration_StorageObjectListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.StorageObjectListResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-migration_StorageObjectMetadata": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/migration.StorageObjectMetadata"
                         }
                     ]
                 },

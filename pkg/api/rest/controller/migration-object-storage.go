@@ -223,15 +223,19 @@ func ExistObjectStorage(c echo.Context) error {
 // DeleteObjectStorage godoc
 // @ID DeleteObjectStorage
 // @Summary Delete object storage (bucket)
-// @Description Delete a specific object storage (bucket)
+// @Description Delete a specific object storage (bucket).
 // @Description
-// @Description [Note]
-// @Description - The bucket must be empty before deletion
+// @Description Deletion behavior is controlled by the `option` query parameter (mutually exclusive):
+// @Description - (none): Standard delete — fails if the bucket is not empty.
+// @Description - `empty`: Empty the bucket first, then delete.
+// @Description - `force`: Force-delete with all contents (passed to Spider as force=true).
+// @Description - `reconcile`: Remove only Tumblebug metadata without calling the CSP delete API.
 // @Tags [Migration] Managed middleware (preview)
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param osId path string true "Object Storage ID (bucket ID)"
+// @Param option query string false "Delete option" Enums(empty, force, reconcile)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 204 "Object storage deleted successfully"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
@@ -251,9 +255,150 @@ func DeleteObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
 	}
 
-	if err := migration.DeleteObjectStorage(nsId, osId); err != nil {
-		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to delete object storage")
+	option := c.QueryParam("option") // "", "empty", "force", "reconcile"
+
+	if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Failed to delete object storage")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// ListObjectStorageObjects godoc
+// @ID ListObjectStorageObjects
+// @Summary List objects in an object storage bucket
+// @Description List all objects stored in a specific object storage bucket by proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object
+// @Tags [Migration] Managed middleware (preview)
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param osId path string true "Object Storage ID (bucket ID)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[migration.StorageObjectListResponse] "Successfully retrieved object list"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
+// @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object [get]
+func ListObjectStorageObjects(c echo.Context) error {
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		log.Warn().Msg("nsId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
+	}
+
+	osId := c.Param("osId")
+	if osId == "" {
+		log.Warn().Msg("osId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
+	}
+
+	result, err := migration.ListObjectStorageObjects(nsId, osId)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to list objects in object storage")
+		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
+		}
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list objects in '%s': %v", osId, err)))
+	}
+
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(result, fmt.Sprintf("Listed %d object(s) in '%s'", result.Count, osId)))
+}
+
+// GetStorageObject godoc
+// @ID GetStorageObject
+// @Summary Get metadata of an object in an object storage bucket
+// @Description Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object
+// @Description by proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
+// @Description Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+// @Tags [Migration] Managed middleware (preview)
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param osId path string true "Object Storage ID (bucket ID)"
+// @Param objectKey path string true "Object key (URL-encode slashes if needed)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[migration.StorageObjectMetadata] "Object metadata retrieved"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey} [head]
+func GetStorageObject(c echo.Context) error {
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		log.Warn().Msg("nsId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
+	}
+
+	osId := c.Param("osId")
+	if osId == "" {
+		log.Warn().Msg("osId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
+	}
+
+	objectKey := c.Param("objectKey")
+	if objectKey == "" {
+		log.Warn().Msg("objectKey is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("objectKey required"))
+	}
+
+	result, err := migration.GetStorageObject(nsId, osId, objectKey)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to get object metadata")
+		errLower := strings.ToLower(err.Error())
+		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object '%s' not found in '%s'", objectKey, osId)))
+		}
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get metadata for '%s': %v", objectKey, err)))
+	}
+
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(result, fmt.Sprintf("Metadata retrieved for '%s'", objectKey)))
+}
+
+// DeleteStorageObject godoc
+// @ID DeleteStorageObject
+// @Summary Delete an object from an object storage bucket
+// @Description Delete a specific object from an object storage bucket
+// @Description by proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
+// @Description Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
+// @Tags [Migration] Managed middleware (preview)
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param osId path string true "Object Storage ID (bucket ID)"
+// @Param objectKey path string true "Object key (URL-encode slashes if needed)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 204 "Object deleted"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 404 {object} model.ApiResponse[any] "Object not found"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey} [delete]
+func DeleteStorageObject(c echo.Context) error {
+	nsId := c.Param("nsId")
+	if nsId == "" {
+		log.Warn().Msg("nsId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
+	}
+
+	osId := c.Param("osId")
+	if osId == "" {
+		log.Warn().Msg("osId is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("osId required"))
+	}
+
+	objectKey := c.Param("objectKey")
+	if objectKey == "" {
+		log.Warn().Msg("objectKey is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("objectKey required"))
+	}
+
+	if err := migration.DeleteStorageObject(nsId, osId, objectKey); err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to delete object")
+		errLower := strings.ToLower(err.Error())
+		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {
+			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object '%s' not found in '%s'", objectKey, osId)))
+		}
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to delete '%s': %v", objectKey, err)))
 	}
 
 	return c.NoContent(http.StatusNoContent)
