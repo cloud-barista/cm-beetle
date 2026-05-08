@@ -1,0 +1,10 @@
+{
+  "targetObjectStorages": [
+    {
+      "sourceBucketName": "test-source",
+      "bucketName": "cm-beetle-test-bucket",
+      "versioningEnabled": false,
+      "corsEnabled": false
+    }
+  ]
+}

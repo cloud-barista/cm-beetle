@@ -119,8 +119,7 @@ type TestSuite struct {
 }
 
 var (
-	configFile = flag.String("config", "testdata/test-config.yaml", "Path to config file")
-	verbose    = flag.Bool("verbose", false, "Enable verbose output")
+	configFile = flag.String("config", "testconf/test-config.yaml", "Path to config file")
 )
 
 func init() {

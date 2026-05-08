@@ -38,5 +38,5 @@ test:
 beetle:
   endpoint: http://localhost:8056
   namespaceId: mig01
-  authConfigFile: testdata/auth-config.json
-  requestBodyFile: testdata/recommendation-request.json
+  authConfigFile: testconf/auth-config.json
+  requestBodyFile: testconf/recommendation-request.json
