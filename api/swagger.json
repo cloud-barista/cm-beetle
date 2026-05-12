@@ -4444,9 +4444,6 @@
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5215,9 +5212,6 @@
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5569,10 +5563,6 @@
             "properties": {
                 "description": {
                     "description": "Human-readable summary",
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {
@@ -8067,10 +8057,6 @@
             "properties": {
                 "description": {
                     "description": "Human-readable summary",
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {

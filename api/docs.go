@@ -4450,9 +4450,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5221,9 +5218,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5575,10 +5569,6 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "description": "Human-readable summary",
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {
@@ -8073,10 +8063,6 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "description": "Human-readable summary",
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {

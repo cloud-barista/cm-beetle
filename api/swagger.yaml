@@ -974,8 +974,6 @@ definitions:
     properties:
       description:
         type: string
-      nameSeed:
-        type: string
       status:
         type: string
       targetCloud:
@@ -1509,8 +1507,6 @@ definitions:
     properties:
       description:
         type: string
-      nameSeed:
-        type: string
       status:
         type: string
       targetCloud:
@@ -1809,10 +1805,6 @@ definitions:
     properties:
       description:
         description: Human-readable summary
-        type: string
-      nameSeed:
-        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
-          applied at migration time
         type: string
       status:
         description: e.g., "recommended", "partial", "failed"
@@ -3605,10 +3597,6 @@ definitions:
     properties:
       description:
         description: Human-readable summary
-        type: string
-      nameSeed:
-        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
-          applied at migration time
         type: string
       status:
         description: e.g., "recommended", "partial", "failed"
