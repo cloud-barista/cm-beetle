@@ -36,7 +36,7 @@ func RecommendVNet(csp string, region string, srcInfra onpremmodel.OnpremInfra) 
 		srcNetworks = srcInfra.Network.IPv4Networks.CidrBlocks
 	} else if len(srcInfra.Network.IPv4Networks.DefaultGateways) != 0 {
 		// * Note: To estimate the network address space of the source computing infrastructure,
-		// * Source networks are derived by combining the default gateway and network interface information of each server.
+		// * Source networks are derived by combining the default gateway and network interface information of each node.
 		srcNetworks, err = deriveSourceNetworksFromDefaultGateways(srcInfra)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to derive CIDR blocks from default gateways")
@@ -246,18 +246,18 @@ func deriveSourceNetworksFromDefaultGateways(srcInfra onpremmodel.OnpremInfra) (
 	}
 
 	var sourceNetworks []string
-	// 1. Find the server that has the same "machine ID" as the gateway
+	// 1. Find the node that has the same "machine ID" as the gateway
 	for _, gateway := range srcInfra.Network.IPv4Networks.DefaultGateways {
-		for _, server := range srcInfra.Servers {
-			if server.MachineId == gateway.MachineId {
+		for _, node := range srcInfra.Nodes {
+			if node.MachineId == gateway.MachineId {
 
 				// 2. Find the network interface that has the same network "name" as the gateway
-				for _, nic := range server.Interfaces {
+				for _, nic := range node.Interfaces {
 					if nic.Name == gateway.InterfaceName {
 
 						// 3. Get "prefix length" from the network interface
 						if nic.IPv4CidrBlocks == nil && len(nic.IPv4CidrBlocks) == 0 {
-							log.Warn().Msgf("no IPv4 CIDR blocks found in the network interface %s of the server %s", nic.Name, server.MachineId)
+							log.Warn().Msgf("no IPv4 CIDR blocks found in the network interface %s of the node %s", nic.Name, node.MachineId)
 							continue
 						}
 

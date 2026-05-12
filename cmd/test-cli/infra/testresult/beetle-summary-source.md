@@ -1,8 +1,8 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2026-04-29 11:17:52
+**Generated At:** 2026-05-12 04:14:28
 
-**Infrastructure Name:** infra-3-servers
+**Infrastructure Name:** infra-3-nodes
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Infrastructure Name | infra-3-servers |
+| Infrastructure Name | infra-3-nodes |
 | Total Servers | 3 |
 | Total CPU Cores | 4 |
 | Total Memory (GB) | 26 |
@@ -307,5 +307,5 @@ Equivalent vCPUs = CPUs × CPU Threads
 - Calculation: 2 CPUs × 2 Threads = **4 vCPUs**
 - Target VM Spec: Select a VM with **4 vCPUs** (e.g., AWS t3.xlarge)
 
-This calculation ensures that the target VM has sufficient processing capacity equivalent to the source server.
+This calculation ensures that the target VM has sufficient processing capacity equivalent to the source node.
 

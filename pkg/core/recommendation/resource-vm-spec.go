@@ -24,8 +24,8 @@ func GetDefaultSpecsLimit() int {
 	return defaultSpecsLimit
 }
 
-// RecommendVmSpecsForImage recommends appropriate VM specs for the server and image
-func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.ServerProperty, limit int, image cloudmodel.ImageInfo) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
+// RecommendVmSpecsForImage recommends appropriate VM specs for the node and image
+func RecommendVmSpecsForImage(csp string, region string, node onpremmodel.NodeProperty, limit int, image cloudmodel.ImageInfo) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
 
 	if limit <= 0 {
 		err := fmt.Errorf("invalid 'limit' value: %d, set default: %d", limit, defaultSpecsLimit)
@@ -33,7 +33,7 @@ func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.Serv
 		limit = defaultSpecsLimit
 	}
 
-	vmSpecList, length, err = RecommendVmSpecs(csp, region, server, limit)
+	vmSpecList, length, err = RecommendVmSpecs(csp, region, node, limit)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend VM specs")
 		return nil, 0, err
@@ -63,8 +63,8 @@ func RecommendVmSpecsForImage(csp string, region string, server onpremmodel.Serv
 	return compatibleSpecs, len(compatibleSpecs), nil
 }
 
-// RecommendVmSpecs recommends appropriate VM specs for the given server
-func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
+// RecommendVmSpecs recommends appropriate VM specs for the given node
+func RecommendVmSpecs(csp string, region string, node onpremmodel.NodeProperty, limit int) (vmSpecList []cloudmodel.SpecInfo, length int, err error) {
 
 	// Constants
 	const (
@@ -122,23 +122,23 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		}
 	}`
 
-	// Extract server specifications from source computing envrionment
+	// Extract node specifications from source computing envrionment
 	// * Note: vcpus = cpus * cpuThreads
-	cpus := server.CPU.Cpus
-	threads := server.CPU.Threads
+	cpus := node.CPU.Cpus
+	threads := node.CPU.Threads
 	if threads == 0 {
 		threads = 1 // Default to 1 thread if not specified
 	}
 
 	vcpusCalculated := uint32(cpus * threads)
-	memory := uint32(server.Memory.TotalSize)
+	memory := uint32(node.Memory.TotalSize)
 
 	// Set provider and region names
 	providerName := strings.ToLower(csp)
 	regionName := strings.ToLower(region)
 
 	// Set architecture (default: "x86_64")
-	architecture := server.CPU.Architecture
+	architecture := node.CPU.Architecture
 	if architecture == "" || architecture == "amd64" {
 		architecture = defaultArchitecture
 	}
@@ -161,7 +161,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		vcpusMin, vcpusMax, memoryMin, memoryMax = calculateOptimalRange(vcpusCalculated, memory, rangeWeight)
 
 		log.Debug().
-			Str("machineId", server.MachineId).
+			Str("machineId", node.MachineId).
 			Int("rangeWeight", rangeWeight).
 			Uint32("originalCpu*Threads", vcpusCalculated).
 			Uint32("originalMemory", memory).
@@ -171,7 +171,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 			Str("provider", providerName).
 			Str("region", regionName).
 			Str("architecture", architecture).
-			Msgf("Calculating VM spec recommendations for machine: %s (attempt %d/%d)", server.MachineId, rangeWeight, maxRangeWeight)
+			Msgf("Calculating VM spec recommendations for machine: %s (attempt %d/%d)", node.MachineId, rangeWeight, maxRangeWeight)
 
 		// Create a plan to search proper VM specs with calculated parameters
 		planToSearchProperVm := fmt.Sprintf(planTemplate,
@@ -180,19 +180,19 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 			providerName, regionName, architecture,
 			limit,
 		)
-		log.Debug().Msgf("Deployment plan for machine %s: %s", server.MachineId, planToSearchProperVm)
+		log.Debug().Msgf("Deployment plan for machine %s: %s", node.MachineId, planToSearchProperVm)
 
 		// Call Tumblebug API to get recommended VM specs
 		var err error
 		vmSpecInfoList, err = tbclient.NewSession().InfraRecommendSpec(planToSearchProperVm)
 		if err != nil {
 			log.Error().Err(err).
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Str("provider", providerName).
 				Str("region", regionName).
 				Int("rangeWeight", rangeWeight).
 				Msg("Failed to get VM spec recommendations from Tumblebug")
-			return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", server.MachineId, err)
+			return emptyResp, -1, fmt.Errorf("failed to get VM spec recommendations for machine %s: %w", node.MachineId, err)
 		}
 
 		// Filter specs with valid cost
@@ -210,7 +210,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		// NCP-specific filtering for KVM hypervisor
 		if strings.Contains(strings.ToLower(csp), "ncp") {
 			log.Debug().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Int("rangeWeight", rangeWeight).
 				Msg("Filtering VM specs for KVM hypervisor (NCP)")
 
@@ -227,13 +227,13 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 			if len(kvmVmSpecs) > 0 {
 				vmSpecInfoList = kvmVmSpecs
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Int("kvmSpecs", len(kvmVmSpecs)).
 					Int("rangeWeight", rangeWeight).
 					Msg("Filtered to KVM-compatible specs for NCP")
 			} else {
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Int("rangeWeight", rangeWeight).
 					Msg("No KVM-compatible specs found for NCP at this rangeWeight, will retry with increased range")
 				// Continue to retry with increased rangeWeight
@@ -244,29 +244,29 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 		// Check if any VM specs were found
 		if len(vmSpecInfoList) > 0 {
 			log.Info().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Int("specsFound", len(vmSpecInfoList)).
 				Int("rangeWeight", rangeWeight).
 				Uint32("vcpusCalculated", vcpusCalculated).
 				Uint32("memory", memory).
-				Msgf("Found %d VM spec recommendations for machine: %s with rangeWeight: %d", len(vmSpecInfoList), server.MachineId, rangeWeight)
+				Msgf("Found %d VM spec recommendations for machine: %s with rangeWeight: %d", len(vmSpecInfoList), node.MachineId, rangeWeight)
 			break // Exit loop if specs found
 		}
 
 		log.Warn().
-			Str("machineId", server.MachineId).
+			Str("machineId", node.MachineId).
 			Int("rangeWeight", rangeWeight).
 			Int("maxRangeWeight", maxRangeWeight).
-			Msgf("No VM specs found for machine %s with rangeWeight %d, retrying with increased range...", server.MachineId, rangeWeight)
+			Msgf("No VM specs found for machine %s with rangeWeight %d, retrying with increased range...", node.MachineId, rangeWeight)
 	}
 
 	// Final check after all retry attempts
 	numOfVmSpecs := len(vmSpecInfoList)
 	if numOfVmSpecs == 0 {
 		err := fmt.Errorf("no VM specs recommended for machine %s after %d attempts (vcpusCalculated: %d, memory: %d GiB)",
-			server.MachineId, maxRangeWeight, vcpusCalculated, memory)
+			node.MachineId, maxRangeWeight, vcpusCalculated, memory)
 		log.Warn().Err(err).
-			Str("machineId", server.MachineId).
+			Str("machineId", node.MachineId).
 			Uint32("vcpusCalculated", vcpusCalculated).
 			Uint32("memory", memory).
 			Msg("No VM specifications found")
@@ -282,7 +282,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	}
 
 	log.Debug().
-		Str("machineId", server.MachineId).
+		Str("machineId", node.MachineId).
 		Int("finalSpecCount", finalSpecCount).
 		Msg("Finalized VM spec recommendations")
 
@@ -290,9 +290,9 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	convertedVmSpecList, err := modelconv.ConvertWithValidation[[]tbmodel.SpecInfo, []cloudmodel.SpecInfo](vmSpecInfoList)
 	if err != nil {
 		log.Error().Err(err).
-			Str("machineId", server.MachineId).
+			Str("machineId", node.MachineId).
 			Msg("Failed to convert VM spec list model")
-		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list model for machine %s: %w", server.MachineId, err)
+		return emptyResp, -1, fmt.Errorf("failed to convert VM spec list model for machine %s: %w", node.MachineId, err)
 	}
 
 	// Sort specs by proximity with cost consideration
@@ -306,9 +306,9 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 	// }
 
 	log.Info().
-		Str("machineId", server.MachineId).
+		Str("machineId", node.MachineId).
 		Int("recommendedSpecs", len(convertedVmSpecList)).
-		Msgf("Successfully recommended %d VM specifications for machine: %s", len(convertedVmSpecList), server.MachineId)
+		Msgf("Successfully recommended %d VM specifications for machine: %s", len(convertedVmSpecList), node.MachineId)
 
 	return convertedVmSpecList, numOfVmSpecs, nil
 }
@@ -316,7 +316,7 @@ func RecommendVmSpecs(csp string, region string, server onpremmodel.ServerProper
 // Sort VM specs by proximity to the desired resource allocation with cost consideration
 func sortByProximityWithCost(vcpus, memory uint32, vmSpecs []cloudmodel.SpecInfo) {
 
-	// Derive server's spec type (i.e. compute intensive type, memory intensive type, general purpose type)
+	// Derive node's spec type (i.e. compute intensive type, memory intensive type, general purpose type)
 	machineType := deriveMachineType(vcpus, memory)
 
 	log.Debug().Msgf("Sorting VM specs for machine type: %s (vcpus: %d, memory: %d GiB)", machineType, vcpus, memory)

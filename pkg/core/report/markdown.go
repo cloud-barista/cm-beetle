@@ -311,7 +311,7 @@ func writeVmMigrationStatus(md *strings.Builder, report *MigrationReport) {
 		sourceServers = len(report.SourceDetails.ComputeResources.Servers)
 	}
 
-	md.WriteString(fmt.Sprintf("**Summary:** %d VM(s) have been successfully created in the target cloud, migrated from %d source server(s) in the on-premise infrastructure.\n\n", targetVMs, sourceServers))
+	md.WriteString(fmt.Sprintf("**Summary:** %d VM(s) have been successfully created in the target cloud, migrated from %d source node(s) in the on-premise infrastructure.\n\n", targetVMs, sourceServers))
 
 	md.WriteString("| No. | Migrated VM | Source Server |\n")
 	md.WriteString("|-----|-------------|---------------|\n")
@@ -325,7 +325,7 @@ func writeVmMigrationStatus(md *strings.Builder, report *MigrationReport) {
 			vmInfo := fmt.Sprintf("**VM Name:** %s<br>**VM ID:** %s<br>**Label(sourceMachineId):** %s",
 				vm.Name, vm.CspVmId, sourceMachineId)
 
-			// Get source server info
+			// Get source node info
 			sourceInfo := extractSourceServerInfoDetailed(vm.Name, report.SourceDetails)
 
 			md.WriteString(fmt.Sprintf("| %d | %s | %s |\n", i+1, vmInfo, sourceInfo))
@@ -457,7 +457,7 @@ func writeSecurityGroupStatus(md *strings.Builder, report *MigrationReport) {
 func writeNetworkStatus(md *strings.Builder, report *MigrationReport) {
 	md.WriteString("## 🌐 VPC(VNet) and Subnets\n\n")
 
-	md.WriteString("**Summary:** Virtual Private Cloud (VPC) and subnet infrastructure have been created based on the source server network information.\n\n")
+	md.WriteString("**Summary:** Virtual Private Cloud (VPC) and subnet infrastructure have been created based on the source node network information.\n\n")
 
 	// VPC/VNet Table
 	md.WriteString("### VPC(VNet)\n\n")
@@ -504,13 +504,13 @@ func writeNetworkStatus(md *strings.Builder, report *MigrationReport) {
 		serverCount := len(report.SourceDetails.ComputeResources.Servers)
 		md.WriteString(fmt.Sprintf("### Network Details by Server (%d servers)\n\n", serverCount))
 
-		for idx, server := range report.SourceDetails.ComputeResources.Servers {
-			md.WriteString(fmt.Sprintf("#### %d. %s\n\n", idx+1, server.Hostname))
+		for idx, node := range report.SourceDetails.ComputeResources.Servers {
+			md.WriteString(fmt.Sprintf("#### %d. %s\n\n", idx+1, node.Hostname))
 
 			// Active Interfaces - Only show interfaces with IP or in 'up' state
-			if len(server.Interfaces) > 0 {
+			if len(node.Interfaces) > 0 {
 				activeInterfaces := []summary.SourceInterfaceInfo{}
-				for _, iface := range server.Interfaces {
+				for _, iface := range node.Interfaces {
 					// Show only interfaces with IP addresses or in 'up' state
 					if len(iface.IPv4CidrBlocks) > 0 || iface.State == "up" {
 						activeInterfaces = append(activeInterfaces, iface)
@@ -539,9 +539,9 @@ func writeNetworkStatus(md *strings.Builder, report *MigrationReport) {
 			}
 
 			// Main Routes - Only show IPv4 default route and main routes
-			if len(server.RoutingTable) > 0 {
+			if len(node.RoutingTable) > 0 {
 				mainRoutes := []summary.SourceRoutingTableRow{}
-				for _, route := range server.RoutingTable {
+				for _, route := range node.RoutingTable {
 					// Show only IPv4 routes (exclude IPv6) and important routes
 					if !strings.Contains(route.Destination, ":") {
 						// Include default route (0.0.0.0/0) and /24 or smaller networks
@@ -619,7 +619,7 @@ func extractSourceMachineId(vmName string) string {
 	return "N/A"
 }
 
-// extractSourceServerInfoDetailed extracts detailed source server information
+// extractSourceServerInfoDetailed extracts detailed source node information
 func extractSourceServerInfoDetailed(vmName string, sourceDetails *summary.SourceInfraSummary) string {
 	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
 		return "**Hostname:** N/A<br>**Machine ID:** N/A"
@@ -628,10 +628,10 @@ func extractSourceServerInfoDetailed(vmName string, sourceDetails *summary.Sourc
 	// Extract machine ID from VM name (format: "migrated-{MachineId}")
 	machineID := extractSourceMachineId(vmName)
 
-	// Match source server by machine ID field directly
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
-			return fmt.Sprintf("**Hostname:** %s<br>**Machine ID:** %s", server.Hostname, server.MachineId)
+	// Match source node by machine ID field directly
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
+			return fmt.Sprintf("**Hostname:** %s<br>**Machine ID:** %s", node.Hostname, node.MachineId)
 		}
 	}
 
@@ -648,13 +648,13 @@ func extractSourceServerInfo(vmName string, sourceDetails *summary.SourceInfraSu
 	machineID := extractSourceMachineId(vmName)
 
 	// Match by machine ID field
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
-			return fmt.Sprintf("%s<br>%s", server.Hostname, server.MachineId)
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
+			return fmt.Sprintf("%s<br>%s", node.Hostname, node.MachineId)
 		}
 	}
 
-	return fmt.Sprintf("Source server<br>%s", machineID)
+	return fmt.Sprintf("Source node<br>%s", machineID)
 }
 
 func extractSourceSpecInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
@@ -666,10 +666,10 @@ func extractSourceSpecInfo(vmName string, sourceDetails *summary.SourceInfraSumm
 	machineID := extractSourceMachineId(vmName)
 
 	// Match by machine ID field
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
 			return fmt.Sprintf("%d CPUs, %d Threads<br>%d GB RAM, %d GB Disk",
-				server.CPU.CPUs, server.CPU.Threads, server.Memory.TotalGB, server.Disk.TotalGB)
+				node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
 		}
 	}
 
@@ -685,9 +685,9 @@ func extractSourceOSInfo(vmName string, sourceDetails *summary.SourceInfraSummar
 	machineID := extractSourceMachineId(vmName)
 
 	// Match by machine ID field
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
-			return fmt.Sprintf("%s %s", server.OS.Name, server.OS.Version)
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
+			return fmt.Sprintf("%s %s", node.OS.Name, node.OS.Version)
 		}
 	}
 
@@ -703,10 +703,10 @@ func extractSourceOSInfoDetailed(vmName string, sourceDetails *summary.SourceInf
 	machineID := extractSourceMachineId(vmName)
 
 	// Match by machine ID field
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
 			return fmt.Sprintf("**PrettyName:** %s<br>**Name:** %s<br>**Version:** %s",
-				server.OS.PrettyName, server.OS.Name, server.OS.Version)
+				node.OS.PrettyName, node.OS.Name, node.OS.Version)
 		}
 	}
 
@@ -721,7 +721,7 @@ func formatVmSpecInfo(vm summary.SummaryVmInfo) string {
 		vm.Spec.Name, vm.Spec.VCpus, vm.Spec.MemoryGiB, rootDiskGB)
 }
 
-// formatSourceServerSpecInfo formats source server spec information for display
+// formatSourceServerSpecInfo formats source node spec information for display
 func formatSourceServerSpecInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
 	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
 		return "**CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A"
@@ -731,10 +731,10 @@ func formatSourceServerSpecInfo(vmName string, sourceDetails *summary.SourceInfr
 	machineID := extractSourceMachineId(vmName)
 
 	// Match by machine ID field
-	for _, server := range sourceDetails.ComputeResources.Servers {
-		if server.MachineId == machineID {
+	for _, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId == machineID {
 			return fmt.Sprintf("**CPUs:** %d<br>**Threads:** %d<br>**Memory:** %d GB<br>**Root Disk:** %d GB",
-				server.CPU.CPUs, server.CPU.Threads, server.Memory.TotalGB, server.Disk.TotalGB)
+				node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
 		}
 	}
 

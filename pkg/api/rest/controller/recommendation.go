@@ -285,7 +285,7 @@ func RecommendK8sControlPlane(c echo.Context) error {
 	}
 
 	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one server required"))
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one cluster required"))
 	}
 
 	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
@@ -338,7 +338,7 @@ func RecommendK8sNodeGroup(c echo.Context) error {
 	}
 
 	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one server required"))
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one cluster required"))
 	}
 
 	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)

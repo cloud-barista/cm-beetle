@@ -65,7 +65,7 @@ func GenerateSourceMarkdownSummary(summary *SourceInfraSummary) string {
 	md.WriteString("- Source Server: 2 CPUs, 2 Threads per CPU\n")
 	md.WriteString("- Calculation: 2 CPUs × 2 Threads = **4 vCPUs**\n")
 	md.WriteString("- Target VM Spec: Select a VM with **4 vCPUs** (e.g., AWS t3.xlarge)\n\n")
-	md.WriteString("This calculation ensures that the target VM has sufficient processing capacity equivalent to the source server.\n\n")
+	md.WriteString("This calculation ensures that the target VM has sufficient processing capacity equivalent to the source node.\n\n")
 
 	return md.String()
 }
@@ -92,46 +92,46 @@ func generateSourceComputeResourcesMarkdown(resources *SourceSummaryComputeResou
 
 	md.WriteString(fmt.Sprintf("### Servers (%d)\n\n", len(resources.Servers)))
 
-	for i, server := range resources.Servers {
-		md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, server.Hostname))
+	for i, node := range resources.Servers {
+		md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, node.Hostname))
 
 		// Server details table
 		md.WriteString("| Component | Details |\n")
 		md.WriteString("|-----------|----------|\n")
 
 		// CPU with detailed info
-		md.WriteString(fmt.Sprintf("| CPU | %s |\n", server.CPU.Model))
-		md.WriteString(fmt.Sprintf("| **CPU CPUs** | %d |\n", server.CPU.CPUs))
-		md.WriteString(fmt.Sprintf("| CPU Cores | %d |\n", server.CPU.Cores))
-		md.WriteString(fmt.Sprintf("| **CPU Threads** | %d |\n", server.CPU.Threads))
+		md.WriteString(fmt.Sprintf("| CPU | %s |\n", node.CPU.Model))
+		md.WriteString(fmt.Sprintf("| **CPU CPUs** | %d |\n", node.CPU.CPUs))
+		md.WriteString(fmt.Sprintf("| CPU Cores | %d |\n", node.CPU.Cores))
+		md.WriteString(fmt.Sprintf("| **CPU Threads** | %d |\n", node.CPU.Threads))
 		// Calculate equivalent vCPUs for cloud migration
-		equivalentVCPUs := server.CPU.CPUs * server.CPU.Threads
+		equivalentVCPUs := node.CPU.CPUs * node.CPU.Threads
 		md.WriteString(fmt.Sprintf("| **Equivalent vCPUs** | %d (CPUs × Threads) |\n", equivalentVCPUs))
-		if server.CPU.MaxSpeed > 0 {
-			md.WriteString(fmt.Sprintf("| CPU Speed | %.2f GHz |\n", server.CPU.MaxSpeed))
+		if node.CPU.MaxSpeed > 0 {
+			md.WriteString(fmt.Sprintf("| CPU Speed | %.2f GHz |\n", node.CPU.MaxSpeed))
 		}
-		if server.CPU.Architecture != "" {
-			md.WriteString(fmt.Sprintf("| Architecture | %s |\n", server.CPU.Architecture))
+		if node.CPU.Architecture != "" {
+			md.WriteString(fmt.Sprintf("| Architecture | %s |\n", node.CPU.Architecture))
 		}
 
 		// Memory
-		md.WriteString(fmt.Sprintf("| **Memory** | %d GB", server.Memory.TotalGB))
-		if server.Memory.Type != "" {
-			md.WriteString(fmt.Sprintf(" (%s)", server.Memory.Type))
+		md.WriteString(fmt.Sprintf("| **Memory** | %d GB", node.Memory.TotalGB))
+		if node.Memory.Type != "" {
+			md.WriteString(fmt.Sprintf(" (%s)", node.Memory.Type))
 		}
 		md.WriteString(" |\n")
 
 		// Root Disk
-		if server.Disk.TotalGB > 0 {
-			md.WriteString(fmt.Sprintf("| **Root Disk** | %d GB (%s) |\n", server.Disk.TotalGB, server.Disk.Type))
+		if node.Disk.TotalGB > 0 {
+			md.WriteString(fmt.Sprintf("| **Root Disk** | %d GB (%s) |\n", node.Disk.TotalGB, node.Disk.Type))
 		}
 
 		// OS
-		md.WriteString(fmt.Sprintf("| **OS** | %s %s |\n", server.OS.Name, server.OS.Version))
+		md.WriteString(fmt.Sprintf("| **OS** | %s %s |\n", node.OS.Name, node.OS.Version))
 
 		// Network brief
-		if server.Network.IPAddress != "" {
-			md.WriteString(fmt.Sprintf("| **Primary IP** | %s |\n", server.Network.IPAddress))
+		if node.Network.IPAddress != "" {
+			md.WriteString(fmt.Sprintf("| **Primary IP** | %s |\n", node.Network.IPAddress))
 		}
 
 		md.WriteString("\n")
@@ -178,19 +178,19 @@ func generateSourceNetworkResourcesMarkdown(resources *SourceSummaryNetworkResou
 	return md.String()
 }
 
-// generateSourceServerNetworkDetailsMarkdown generates markdown for server network interfaces and routing
+// generateSourceServerNetworkDetailsMarkdown generates markdown for node network interfaces and routing
 func generateSourceServerNetworkDetailsMarkdown(resources *SourceSummaryComputeResources) string {
 	var md strings.Builder
 
 	md.WriteString(fmt.Sprintf("### Network Details by Server (%d servers)\n\n", len(resources.Servers)))
 
-	for i, server := range resources.Servers {
-		md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, server.Hostname))
+	for i, node := range resources.Servers {
+		md.WriteString(fmt.Sprintf("#### %d. %s\n\n", i+1, node.Hostname))
 
 		// Network Interfaces - Only show active interfaces with IP
-		if len(server.Interfaces) > 0 {
+		if len(node.Interfaces) > 0 {
 			activeInterfaces := []SourceInterfaceInfo{}
-			for _, iface := range server.Interfaces {
+			for _, iface := range node.Interfaces {
 				// Show only interfaces with IP addresses or in 'up' state
 				if len(iface.IPv4CidrBlocks) > 0 || iface.State == "up" {
 					activeInterfaces = append(activeInterfaces, iface)
@@ -220,9 +220,9 @@ func generateSourceServerNetworkDetailsMarkdown(resources *SourceSummaryComputeR
 		}
 
 		// Routing Table - Only show IPv4 default route and main routes
-		if len(server.RoutingTable) > 0 {
+		if len(node.RoutingTable) > 0 {
 			mainRoutes := []SourceRoutingTableRow{}
-			for _, route := range server.RoutingTable {
+			for _, route := range node.RoutingTable {
 				// Show only IPv4 routes (exclude IPv6) and important routes
 				if !strings.Contains(route.Destination, ":") {
 					// Include default route (0.0.0.0/0) and /24 or smaller networks
@@ -261,7 +261,7 @@ func generateSourceServerNetworkDetailsMarkdown(resources *SourceSummaryComputeR
 func generateSourceStorageResourcesMarkdown(resources *SourceSummaryStorageResources) string {
 	var md strings.Builder
 
-	// Storage by server (먼저 출력)
+	// Storage by node (먼저 출력)
 	if len(resources.ByServer) > 0 {
 		md.WriteString(fmt.Sprintf("### Storage by Server (%d servers)\n\n", len(resources.ByServer)))
 		md.WriteString("| Hostname | RootDisk (GB) | Type |\n")

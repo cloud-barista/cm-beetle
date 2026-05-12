@@ -141,7 +141,7 @@ func RecommendSecurityGroups(c echo.Context) error {
 	}
 
 	// [Process]
-	ret, err := recommendation.RecommendSecurityGroups(desiredProvider, desiredRegion, req.OnpremiseInfraModel.Servers)
+	ret, err := recommendation.RecommendSecurityGroups(desiredProvider, desiredRegion, req.OnpremiseInfraModel.Nodes)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to recommend security groups")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Security group recommendation failed"))
@@ -211,15 +211,15 @@ func RecommendVmSpecs(c echo.Context) error {
 	// }
 
 	// Handle targetMachineId filtering if provided
-	var serversToProcess []onpremmodel.ServerProperty
+	var nodesToProcess []onpremmodel.NodeProperty
 	if targetMachineId != "" {
 		// Validate by finding the machine ID in the request body
-		targetMachine := onpremmodel.ServerProperty{}
+		targetMachine := onpremmodel.NodeProperty{}
 		found := false
-		for _, server := range req.OnpremiseInfraModel.Servers {
-			if server.MachineId == targetMachineId {
+		for _, node := range req.OnpremiseInfraModel.Nodes {
+			if node.MachineId == targetMachineId {
 				found = true
-				targetMachine = server
+				targetMachine = node
 				break
 			}
 		}
@@ -228,29 +228,29 @@ func RecommendVmSpecs(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(fmt.Sprintf("Machine ID '%s' not found", targetMachineId)))
 		}
 		// Process only the target machine
-		serversToProcess = []onpremmodel.ServerProperty{targetMachine}
+		nodesToProcess = []onpremmodel.NodeProperty{targetMachine}
 		log.Info().Msgf("Processing VM specs for target machine: %s", targetMachineId)
 	} else {
-		// Process all servers in the infrastructure
-		serversToProcess = req.OnpremiseInfraModel.Servers
-		log.Info().Msgf("Processing VM specs for all servers (%d total)", len(serversToProcess))
+		// Process all nodes in the infrastructure
+		nodesToProcess = req.OnpremiseInfraModel.Nodes
+		log.Info().Msgf("Processing VM specs for all nodes (%d total)", len(nodesToProcess))
 	}
 
 	// [Process]
 	recommendedVmSpecList := cloudmodel.RecommendedSpecList{}
-	for i, server := range serversToProcess {
+	for i, node := range nodesToProcess {
 
 		specsLimit := recommendation.GetDefaultSpecsLimit()
-		// Recommend VM specs for the server
-		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, server, specsLimit)
+		// Recommend VM specs for the node
+		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, node, specsLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {
 			log.Error().Err(err).Msg("failed to recommend VM specs")
 
 			temp := cloudmodel.RecommendedSpec{
-				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:   fmt.Sprintf("failed to recommend VM specs for server %d: %s", i+1, server.MachineId),
+				SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+				Description:   fmt.Sprintf("failed to recommend VM specs for node %d: %s", i+1, node.MachineId),
 				Status:        string(recommendation.NothingRecommended),
 				TargetSpec:    cloudmodel.SpecInfo{},
 			}
@@ -259,11 +259,11 @@ func RecommendVmSpecs(c echo.Context) error {
 		}
 		log.Trace().Msgf("specList: %v, count: %d", specList, count)
 		if count == 0 {
-			log.Warn().Msgf("no VM specs recommended for server: %s", server.MachineId)
+			log.Warn().Msgf("no VM specs recommended for node: %s", node.MachineId)
 
 			temp := cloudmodel.RecommendedSpec{
-				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:   fmt.Sprintf("no VM specs recommended for server %d: %s", i+1, server.MachineId),
+				SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+				Description:   fmt.Sprintf("no VM specs recommended for node %d: %s", i+1, node.MachineId),
 				Status:        string(recommendation.NothingRecommended),
 				TargetSpec:    cloudmodel.SpecInfo{},
 			}
@@ -284,18 +284,18 @@ func RecommendVmSpecs(c echo.Context) error {
 				}
 			}
 
-			// If the spec already exists, append the server to the existing list
+			// If the spec already exists, append the node to the existing list
 			// Otherwise, create a new entry
 			if exists {
 				recommendedVmSpecList.RecommendedSpecList[idx].SourceServers = append(
 					recommendedVmSpecList.RecommendedSpecList[idx].SourceServers,
-					server.MachineId, // Set MachineId to identify the source server
+					node.MachineId, // Set MachineId to identify the source node
 				)
 			} else {
 				temp := cloudmodel.RecommendedSpec{
 					Status:        string(recommendation.FullyRecommended),
-					SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-					Description:   fmt.Sprintf("Recommended VM spec for server %d: %s", i+1, server.MachineId),
+					SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+					Description:   fmt.Sprintf("Recommended VM spec for node %d: %s", i+1, node.MachineId),
 					TargetSpec:    spec,
 				}
 				recommendedVmSpecList.RecommendedSpecList = append(recommendedVmSpecList.RecommendedSpecList, temp)
@@ -318,14 +318,14 @@ func RecommendVmSpecs(c echo.Context) error {
 		if targetMachineId != "" {
 			recommendedVmSpecList.Description = fmt.Sprintf("Recommended VM spec(s) for machine '%s'", targetMachineId)
 		} else {
-			recommendedVmSpecList.Description = fmt.Sprintf("Recommended VM spec(s) for %d server(s)", len(serversToProcess))
+			recommendedVmSpecList.Description = fmt.Sprintf("Recommended VM spec(s) for %d node(s)", len(nodesToProcess))
 		}
 	case recommendedVmSpecList.Count:
 		recommendedVmSpecList.Status = string(recommendation.NothingRecommended)
 		if targetMachineId != "" {
 			recommendedVmSpecList.Description = fmt.Sprintf("No VM specs available for machine '%s'", targetMachineId)
 		} else {
-			recommendedVmSpecList.Description = "No VM specs available for any server"
+			recommendedVmSpecList.Description = "No VM specs available for any node"
 		}
 	default:
 		recommendedVmSpecList.Status = string(recommendation.PartiallyRecommended)
@@ -395,10 +395,10 @@ func RecommendVmOsImages(c echo.Context) error {
 
 	// [Process]
 	recommendedOsImageList := cloudmodel.RecommendedOsImageList{}
-	for i, server := range req.OnpremiseInfraModel.Servers {
+	for i, node := range req.OnpremiseInfraModel.Nodes {
 
 		imagesLimit := recommendation.GetDefaultImagesLimit()
-		vmOsImageList, err := recommendation.RecommendVmOsImages(desiredProvider, desiredRegion, server, imagesLimit)
+		vmOsImageList, err := recommendation.RecommendVmOsImages(desiredProvider, desiredRegion, node, imagesLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {
@@ -406,8 +406,8 @@ func RecommendVmOsImages(c echo.Context) error {
 
 			temp := cloudmodel.RecommendedOsImage{
 				Status:        string(recommendation.NothingRecommended),
-				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:   fmt.Sprintf("Failed to recommend VM OS images for server %d: %s", i+1, server.MachineId),
+				SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+				Description:   fmt.Sprintf("Failed to recommend VM OS images for node %d: %s", i+1, node.MachineId),
 				TargetOsImage: cloudmodel.ImageInfo{},
 			}
 			recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
@@ -415,12 +415,12 @@ func RecommendVmOsImages(c echo.Context) error {
 		}
 
 		if len(vmOsImageList) == 0 {
-			log.Warn().Msgf("no VM OS images recommended for server: %s", server.MachineId)
+			log.Warn().Msgf("no VM OS images recommended for node: %s", node.MachineId)
 
 			temp := cloudmodel.RecommendedOsImage{
 				Status:        string(recommendation.NothingRecommended),
-				SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-				Description:   fmt.Sprintf("No VM OS images recommended for server %d: %s", i+1, server.MachineId),
+				SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+				Description:   fmt.Sprintf("No VM OS images recommended for node %d: %s", i+1, node.MachineId),
 				TargetOsImage: cloudmodel.ImageInfo{},
 			}
 			recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
@@ -439,18 +439,18 @@ func RecommendVmOsImages(c echo.Context) error {
 					break
 				}
 			}
-			// If the OS image already exists, append the server to the existing list
+			// If the OS image already exists, append the node to the existing list
 			// Otherwise, create a new entry
 			if exists {
 				recommendedOsImageList.RecommendedOsImageList[idx].SourceServers = append(
 					recommendedOsImageList.RecommendedOsImageList[idx].SourceServers,
-					server.MachineId, // Set MachineId to identify the source server
+					node.MachineId, // Set MachineId to identify the source node
 				)
 			} else {
 				temp := cloudmodel.RecommendedOsImage{
 					Status:        string(recommendation.FullyRecommended),
-					SourceServers: []string{server.MachineId}, // Set MachineId to identify the source server
-					Description:   fmt.Sprintf("Recommended VM OS image for server %d: %s", i+1, server.MachineId),
+					SourceServers: []string{node.MachineId}, // Set MachineId to identify the source node
+					Description:   fmt.Sprintf("Recommended VM OS image for node %d: %s", i+1, node.MachineId),
 					TargetOsImage: vmOsImage,
 				}
 				recommendedOsImageList.RecommendedOsImageList = append(recommendedOsImageList.RecommendedOsImageList, temp)
@@ -470,10 +470,10 @@ func RecommendVmOsImages(c echo.Context) error {
 	switch countFailed {
 	case 0:
 		recommendedOsImageList.Status = string(recommendation.FullyRecommended)
-		recommendedOsImageList.Description = fmt.Sprintf("Recommended OS image(s) for %d server(s)", len(req.OnpremiseInfraModel.Servers))
+		recommendedOsImageList.Description = fmt.Sprintf("Recommended OS image(s) for %d node(s)", len(req.OnpremiseInfraModel.Nodes))
 	case recommendedOsImageList.Count:
 		recommendedOsImageList.Status = string(recommendation.NothingRecommended)
-		recommendedOsImageList.Description = "No OS images available for any server"
+		recommendedOsImageList.Description = "No OS images available for any node"
 	default:
 		recommendedOsImageList.Status = string(recommendation.PartiallyRecommended)
 		recommendedOsImageList.Description = fmt.Sprintf(

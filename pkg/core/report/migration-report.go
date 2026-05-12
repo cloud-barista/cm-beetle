@@ -30,7 +30,7 @@ func GenerateMigrationReport(nsId, infraId string, sourceInfra onpremmodel.Onpre
 	log.Info().Msgf("Generating migration report (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Step 1: Generate source infrastructure summary
-	sourceInfraName := fmt.Sprintf("infra-%d-servers", len(sourceInfra.Servers))
+	sourceInfraName := fmt.Sprintf("infra-%d-servers", len(sourceInfra.Nodes))
 	sourceSummary, err := summary.GenerateSourceInfraSummary(sourceInfraName, sourceInfra)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to generate source infrastructure summary")
@@ -132,37 +132,37 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 
 	// Match source servers to target VMs
 	mappingID := 1
-	for _, sourceServer := range sourceSummary.ComputeResources.Servers {
-		// Try to find matching VM by machine ID (now directly from source server data)
-		machineID := sourceServer.MachineId
+	for _, sourceNode := range sourceSummary.ComputeResources.Servers {
+		// Try to find matching VM by machine ID (now directly from source node data)
+		machineID := sourceNode.MachineId
 		targetVM, found := vmByMachineID[machineID]
 
 		if !found {
 			// Try alternative matching strategies
-			log.Warn().Msgf("No matching target VM found for source server: %s (MachineId: %s)", sourceServer.Hostname, machineID)
+			log.Warn().Msgf("No matching target VM found for source node: %s (MachineId: %s)", sourceNode.Hostname, machineID)
 			continue
 		}
 
-		// Build source server brief
+		// Build source node brief
 		sourceFirewallRules := 0
 		for _, serverFirewall := range sourceSummary.SecurityResources.ServerFirewalls {
-			if serverFirewall.Hostname == sourceServer.Hostname {
+			if serverFirewall.Hostname == sourceNode.Hostname {
 				sourceFirewallRules = len(serverFirewall.FirewallRules)
 				break
 			}
 		}
 
 		sourceBrief := SourceServerBrief{
-			Hostname:      sourceServer.Hostname,
+			Hostname:      sourceNode.Hostname,
 			MachineID:     machineID,
-			CPUModel:      sourceServer.CPU.Model,
-			CPUs:          sourceServer.CPU.CPUs,
-			CPUThreads:    sourceServer.CPU.Threads,
-			MemoryGB:      sourceServer.Memory.TotalGB,
-			DiskGB:        sourceServer.Disk.TotalGB,
-			DiskType:      sourceServer.Disk.Type,
-			OSName:        fmt.Sprintf("%s %s", sourceServer.OS.Name, sourceServer.OS.Version),
-			PrimaryIP:     sourceServer.Network.IPAddress,
+			CPUModel:      sourceNode.CPU.Model,
+			CPUs:          sourceNode.CPU.CPUs,
+			CPUThreads:    sourceNode.CPU.Threads,
+			MemoryGB:      sourceNode.Memory.TotalGB,
+			DiskGB:        sourceNode.Disk.TotalGB,
+			DiskType:      sourceNode.Disk.Type,
+			OSName:        fmt.Sprintf("%s %s", sourceNode.OS.Name, sourceNode.OS.Version),
+			PrimaryIP:     sourceNode.Network.IPAddress,
 			FirewallRules: sourceFirewallRules,
 		}
 
@@ -183,7 +183,7 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 		}
 
 		// Analyze resource changes
-		resourceChanges := analyzeResourceChanges(sourceServer, targetVM)
+		resourceChanges := analyzeResourceChanges(sourceNode, targetVM)
 
 		// Calculate cost for this VM
 		costPerMonth := 0.0
@@ -211,44 +211,44 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 }
 
 // analyzeResourceChanges analyzes changes between source and target resources
-func analyzeResourceChanges(sourceServer summary.SourceServerInfo, targetVM summary.SummaryVmInfo) ResourceChangeAnalysis {
+func analyzeResourceChanges(sourceNode summary.SourceServerInfo, targetVM summary.SummaryVmInfo) ResourceChangeAnalysis {
 	// CPU Change
 	cpuChange := ResourceChange{
 		ResourceType: "CPU",
-		SourceValue:  fmt.Sprintf("%d cores", sourceServer.CPU.Cores),
+		SourceValue:  fmt.Sprintf("%d cores", sourceNode.CPU.Cores),
 		TargetValue:  fmt.Sprintf("%d vCPU", targetVM.Spec.VCpus),
-		ChangeType:   determineChangeType(float64(sourceServer.CPU.Cores), float64(targetVM.Spec.VCpus)),
-		ChangeRatio:  float64(targetVM.Spec.VCpus) / float64(sourceServer.CPU.Cores),
-		Description:  fmt.Sprintf("%+d cores (%.1fx)", targetVM.Spec.VCpus-sourceServer.CPU.Cores, float64(targetVM.Spec.VCpus)/float64(sourceServer.CPU.Cores)),
+		ChangeType:   determineChangeType(float64(sourceNode.CPU.Cores), float64(targetVM.Spec.VCpus)),
+		ChangeRatio:  float64(targetVM.Spec.VCpus) / float64(sourceNode.CPU.Cores),
+		Description:  fmt.Sprintf("%+d cores (%.1fx)", targetVM.Spec.VCpus-sourceNode.CPU.Cores, float64(targetVM.Spec.VCpus)/float64(sourceNode.CPU.Cores)),
 	}
 
 	// Memory Change
 	memoryChange := ResourceChange{
 		ResourceType: "Memory",
-		SourceValue:  fmt.Sprintf("%d GB", sourceServer.Memory.TotalGB),
+		SourceValue:  fmt.Sprintf("%d GB", sourceNode.Memory.TotalGB),
 		TargetValue:  fmt.Sprintf("%.1f GB", targetVM.Spec.MemoryGiB),
-		ChangeType:   determineChangeType(float64(sourceServer.Memory.TotalGB), float64(targetVM.Spec.MemoryGiB)),
-		ChangeRatio:  float64(targetVM.Spec.MemoryGiB) / float64(sourceServer.Memory.TotalGB),
+		ChangeType:   determineChangeType(float64(sourceNode.Memory.TotalGB), float64(targetVM.Spec.MemoryGiB)),
+		ChangeRatio:  float64(targetVM.Spec.MemoryGiB) / float64(sourceNode.Memory.TotalGB),
 		Description:  "Same",
 	}
-	if sourceServer.Memory.TotalGB != int(targetVM.Spec.MemoryGiB) {
-		memoryChange.Description = fmt.Sprintf("%+.1f GB", float64(targetVM.Spec.MemoryGiB)-float64(sourceServer.Memory.TotalGB))
+	if sourceNode.Memory.TotalGB != int(targetVM.Spec.MemoryGiB) {
+		memoryChange.Description = fmt.Sprintf("%+.1f GB", float64(targetVM.Spec.MemoryGiB)-float64(sourceNode.Memory.TotalGB))
 	}
 
 	// Storage Change
 	rootDiskGB := 50 // Default assumption
 	storageChange := ResourceChange{
 		ResourceType: "Storage",
-		SourceValue:  fmt.Sprintf("%d GB %s", sourceServer.Disk.TotalGB, sourceServer.Disk.Type),
+		SourceValue:  fmt.Sprintf("%d GB %s", sourceNode.Disk.TotalGB, sourceNode.Disk.Type),
 		TargetValue:  fmt.Sprintf("%d GB (root disk)", rootDiskGB),
-		ChangeType:   determineChangeType(float64(sourceServer.Disk.TotalGB), float64(rootDiskGB)),
-		ChangeRatio:  float64(rootDiskGB) / float64(sourceServer.Disk.TotalGB),
-		Description:  fmt.Sprintf("%+d GB (root disk only)", rootDiskGB-sourceServer.Disk.TotalGB),
+		ChangeType:   determineChangeType(float64(sourceNode.Disk.TotalGB), float64(rootDiskGB)),
+		ChangeRatio:  float64(rootDiskGB) / float64(sourceNode.Disk.TotalGB),
+		Description:  fmt.Sprintf("%+d GB (root disk only)", rootDiskGB-sourceNode.Disk.TotalGB),
 	}
 
 	// Network Change
 	networkChange := NetworkChange{
-		SourceIP:        sourceServer.Network.IPAddress,
+		SourceIP:        sourceNode.Network.IPAddress,
 		TargetPrivateIP: targetVM.Misc.PrivateIp,
 		TargetPublicIP:  targetVM.Misc.PublicIp,
 		ChangeType:      "Public IP Added",
@@ -314,15 +314,15 @@ func buildNetworkAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumma
 
 	// Build IP mappings
 	var ipMappings []IPMapping
-	for _, server := range sourceSummary.ComputeResources.Servers {
-		machineID := server.MachineId
+	for _, node := range sourceSummary.ComputeResources.Servers {
+		machineID := node.MachineId
 
 		// Find matching target VM
 		for _, vm := range targetSummary.ComputeResources.Vms {
 			if strings.Contains(vm.Name, machineID) {
 				mapping := IPMapping{
-					SourceIP:        server.Network.IPAddress,
-					SourceHostname:  server.Hostname,
+					SourceIP:        node.Network.IPAddress,
+					SourceHostname:  node.Hostname,
 					TargetPrivateIP: vm.Misc.PrivateIp,
 					TargetPublicIP:  vm.Misc.PublicIp,
 				}
@@ -389,7 +389,7 @@ func buildSecurityAnalysis(sourceSummary *summary.SourceInfraSummary, targetSumm
 		}
 	}
 
-	summary := fmt.Sprintf("Converted %d server firewall configurations to cloud-native security groups", len(conversions))
+	summary := fmt.Sprintf("Converted %d node firewall configurations to cloud-native security groups", len(conversions))
 
 	return SecurityMigrationAnalysis{
 		Conversions: conversions,
@@ -527,7 +527,7 @@ func extractSourceMachineID(vmName string) string {
 	return ""
 }
 
-// extractMachineIDFromHostname attempts to extract machine ID from source server
+// extractMachineIDFromHostname attempts to extract machine ID from source node
 // This is a placeholder - actual implementation depends on source data structure
 func extractMachineIDFromHostname(hostname string) string {
 	// In real implementation, this would look up machine ID from source data

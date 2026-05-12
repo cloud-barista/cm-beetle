@@ -1,4 +1,7 @@
 {
-  "basicAuthUsername": "your-api-username",
-  "basicAuthPassword": "your-api-password"
+  "beetleApiUsername": "your-beetle-api-username",
+  "beetleApiPassword": "your-beetle-api-password",
+  "tumblebugApiUsername": "your-tumblebug-username",
+  "tumblebugApiPassword": "your-tumblebug-password",
+  "tumblebugEndpoint": "http://localhost:1323"
 }

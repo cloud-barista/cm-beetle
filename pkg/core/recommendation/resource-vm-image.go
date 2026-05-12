@@ -26,7 +26,7 @@ func GetDefaultImagesLimit() int {
 }
 
 // RecommendVmOsImagesForSpec recommends an appropriate VM OS images (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImagesForSpec(csp string, region string, server onpremmodel.ServerProperty, limit int, spec cloudmodel.SpecInfo) ([]cloudmodel.ImageInfo, error) {
+func RecommendVmOsImagesForSpec(csp string, region string, node onpremmodel.NodeProperty, limit int, spec cloudmodel.SpecInfo) ([]cloudmodel.ImageInfo, error) {
 
 	var emptyRes = []cloudmodel.ImageInfo{}
 
@@ -36,8 +36,8 @@ func RecommendVmOsImagesForSpec(csp string, region string, server onpremmodel.Se
 		limit = defaultImagesLimit
 	}
 
-	// Get all recommended OS images for the server
-	imageList, err := RecommendVmOsImages(csp, region, server, limit)
+	// Get all recommended OS images for the node
+	imageList, err := RecommendVmOsImages(csp, region, node, limit)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to recommend VM OS images")
 		return emptyRes, err
@@ -70,18 +70,18 @@ func RecommendVmOsImagesForSpec(csp string, region string, server onpremmodel.Se
 }
 
 // RecommendVmOsImage recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.ImageInfo, error) {
+func RecommendVmOsImage(csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.ImageInfo, error) {
 
 	var emptyRes cloudmodel.ImageInfo
 
-	imageList, err := RecommendVmOsImages(csp, region, server, 20)
+	imageList, err := RecommendVmOsImages(csp, region, node, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return emptyRes, err
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Find the best VM OS image
@@ -93,16 +93,16 @@ func RecommendVmOsImage(csp string, region string, server onpremmodel.ServerProp
 }
 
 // RecommendVmOsImageId recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerProperty) (string, error) {
+func RecommendVmOsImageId(csp string, region string, node onpremmodel.NodeProperty) (string, error) {
 
-	imageList, err := RecommendVmOsImages(csp, region, server, 20)
+	imageList, err := RecommendVmOsImages(csp, region, node, 20)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to recommend VM OS images")
 		return "", err
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	vmOsImageId := FindBestVmOsImageNameUsedInCsp(csp, keywords, kwDelimiters, imageList, imgDelimiters)
@@ -113,7 +113,7 @@ func RecommendVmOsImageId(csp string, region string, server onpremmodel.ServerPr
 }
 
 // RecommendVmOsImages recommends an appropriate VM OS image (e.g., Ubuntu 22.04) for the given VM spec
-func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerProperty, limit int) ([]cloudmodel.ImageInfo, error) {
+func RecommendVmOsImages(csp string, region string, node onpremmodel.NodeProperty, limit int) ([]cloudmodel.ImageInfo, error) {
 
 	var emptyRes = []cloudmodel.ImageInfo{}
 	var vmOsImageInfoList = []cloudmodel.ImageInfo{}
@@ -154,10 +154,10 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	falseValue := false
 	trueValue := true
 
-	osType := server.OS.ID + " " + server.OS.VersionID
-	// if server.OS.ID == "debian" {
+	osType := node.OS.ID + " " + node.OS.VersionID
+	// if node.OS.ID == "debian" {
 	// 	log.Warn().Msg("Tumblebug currently does not support 'versionID' for debian images; using only 'debian' as OSType")
-	// 	osType = server.OS.ID // TODO: Check Tumblebug API to append 'versionID' for debian when debian images are available in CSPs
+	// 	osType = node.OS.ID // TODO: Check Tumblebug API to append 'versionID' for debian when debian images are available in CSPs
 	// }
 
 	// Try first search with OS ID + Version ID
@@ -168,7 +168,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		// IsKubernetesImage:      &falseValue, // The only image in the Azure (ubuntu 22.04) is both for K8s nodes and gerneral VMs.
 		IncludeBasicImageOnly: &trueValue,
 		MaxResults:            &limit,
-		OSArchitecture:        tbmodel.OSArchitecture(server.CPU.Architecture),
+		OSArchitecture:        tbmodel.OSArchitecture(node.CPU.Architecture),
 		OSType:                osType,
 		ProviderName:          csp,
 		RegionName:            region,
@@ -197,10 +197,10 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 
 	// If no images found after filtering, retry with OS ID only (without version)
 	if len(filteredImages) == 0 {
-		log.Warn().Msgf("No images found with osType '%s', retrying with OS ID only: '%s'", osType, server.OS.ID)
+		log.Warn().Msgf("No images found with osType '%s', retrying with OS ID only: '%s'", osType, node.OS.ID)
 
 		// Update search request to use OS ID only
-		searchImageReq.OSType = server.OS.ID
+		searchImageReq.OSType = node.OS.ID
 
 		log.Debug().Msgf("Retry searchImageReq: %+v", searchImageReq)
 
@@ -222,12 +222,12 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		}
 
 		if len(filteredImages) > 0 {
-			log.Info().Msgf("Found %d images after retrying with OS ID only: '%s'", len(filteredImages), server.OS.ID)
+			log.Info().Msgf("Found %d images after retrying with OS ID only: '%s'", len(filteredImages), node.OS.ID)
 		}
 	}
 
 	if len(filteredImages) == 0 {
-		err := fmt.Errorf("no VM OS images found for the given server even though retrying with OS ID only")
+		err := fmt.Errorf("no VM OS images found for the given node even though retrying with OS ID only")
 		return emptyRes, err
 	}
 
@@ -250,7 +250,7 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 	}
 
 	// Set keywords and delimiters to calculate text similarity
-	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
 	log.Debug().Msg("keywords for the VM OS image recommendation: " + keywords)
 
 	// Select VM OS image via LevenshteinDistance-based text similarity
@@ -272,18 +272,18 @@ func RecommendVmOsImages(csp string, region string, server onpremmodel.ServerPro
 		vmOsImageInfoList = vmOsImageInfoList[:limit]
 	}
 
-	log.Debug().Msgf("Found %d VM OS images for the given server: %s", len(vmOsImageInfoList), server.MachineId)
+	log.Debug().Msgf("Found %d VM OS images for the given node: %s", len(vmOsImageInfoList), node.MachineId)
 
 	return vmOsImageInfoList, nil
 }
 
-func SetKeywordsAndDelimeters(server onpremmodel.ServerProperty) (string, []string, []string) {
+func SetKeywordsAndDelimeters(node onpremmodel.NodeProperty) (string, []string, []string) {
 	keywords := fmt.Sprintf("%s %s %s %s %s",
-		server.OS.ID,
-		server.OS.VersionID,
-		server.OS.VersionCodename,
-		server.CPU.Architecture,
-		server.RootDisk.Type)
+		node.OS.ID,
+		node.OS.VersionID,
+		node.OS.VersionCodename,
+		node.CPU.Architecture,
+		node.RootDisk.Type)
 
 	kwDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
 	imgDelimiters := []string{" ", "-", ",", "(", ")", "[", "]", "/"}
