@@ -108,6 +108,7 @@ type MigrateInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param nameSeed query string false "Optional prefix for all resource names (e.g., 'blue' → 'blue-infra101', 'blue-vnet-01'). Applied at migration time."
 // @Param infraInfo body MigrateInfraRequest true "Specify the information for the targeted multi-cloud infrastructure"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 201 {object} model.ApiResponse[MigrateInfraResponse] "Successfully migrated to the multi-cloud infrastructure"
@@ -134,8 +135,13 @@ func MigrateInfra(c echo.Context) error {
 	log.Debug().Msgf("req.RecommendedVmInfra: %+v", req.RecommendedInfra)
 
 	// [Process]
-	// Apply NameSeed (Late Binding) before migration
-	infraToMigrate := common.ApplyNameSeed(req.RecommendedInfra)
+	// Apply NameSeed (Late Binding) from query param before migration.
+	// Query param takes precedence; if empty, no prefix is applied.
+	nameSeed := c.QueryParam("nameSeed")
+	if ok, detail := common.IsValidNameSeed(nameSeed); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid nameSeed: "+detail))
+	}
+	infraToMigrate := common.ApplyNameSeed(req.RecommendedInfra, nameSeed)
 
 	// Validate names and referential integrity
 	if ok, detail := common.ValidateComposedNames(infraToMigrate); !ok {

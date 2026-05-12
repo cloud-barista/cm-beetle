@@ -596,10 +596,9 @@ git show $NEXT_TRANSX_TAG
 After creating and pushing the tag, update the main CM-Beetle project to use the new version:
 
 ```bash
-# 1) Start a new branch for CM-Beetle update
+# 1) Start a new branch from the latest upstream/main
 git fetch upstream
-# Optional (skip this if working in an existing branch):
-# git checkout upstream/main -b feat-beetle-use-${NEXT_TRANSX_TAG#transx/}
+git checkout upstream/main -b update-transx-${NEXT_TRANSX_TAG#transx/}
 
 # 2) Update dependency to the latest version
 go get -u github.com/cloud-barista/cm-beetle/transx
