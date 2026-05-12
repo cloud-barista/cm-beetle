@@ -292,7 +292,7 @@ func runTestCase(idx int, tc TestCase, cfg TestConfig, osRequest OsRequest, name
 
 	// Test 2: Migrate (create buckets)
 	if !stopTesting {
-		result2 := runMigrateTest(client, cfg, recommendation, name)
+		result2 := runMigrateTest(client, cfg, recommendation, nameSeed, name)
 		record(result2)
 		if result2.Success {
 			report.MigrationResponse = result2.Response
@@ -387,7 +387,6 @@ func runRecommendTest(
 	}
 
 	reqBody := controller.RecommendObjectStorageRequest{
-		NameSeed: nameSeed,
 		DesiredCloud: storagemodel.CloudProperty{
 			Csp:    tc.Csp,
 			Region: tc.Region,
@@ -429,7 +428,7 @@ func runRecommendTest(
 // runMigrateTest calls POST /beetle/migration/middleware/ns/{nsId}/objectStorage.
 func runMigrateTest(
 	client *resty.Client, cfg TestConfig,
-	recommendation storagemodel.RecommendedObjectStorage, name string,
+	recommendation storagemodel.RecommendedObjectStorage, nameSeed, name string,
 ) TestResults {
 	const testLabel = "Test 2: POST /migration/middleware/ns/{nsId}/objectStorage"
 	log.Info().Msgf("\n--- %s (%s) ---", testLabel, name)
@@ -452,6 +451,7 @@ func runMigrateTest(
 
 	resp, err := client.R().
 		SetBody(reqBody).
+		SetQueryParam("nameSeed", nameSeed).
 		Post(url)
 
 	result.EndTime = time.Now()

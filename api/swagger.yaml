@@ -974,8 +974,6 @@ definitions:
     properties:
       description:
         type: string
-      nameSeed:
-        type: string
       status:
         type: string
       targetCloud:
@@ -1509,8 +1507,6 @@ definitions:
     properties:
       description:
         type: string
-      nameSeed:
-        type: string
       status:
         type: string
       targetCloud:
@@ -1810,10 +1806,6 @@ definitions:
       description:
         description: Human-readable summary
         type: string
-      nameSeed:
-        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
-          applied at migration time
-        type: string
       status:
         description: e.g., "recommended", "partial", "failed"
         type: string
@@ -1833,10 +1825,6 @@ definitions:
     properties:
       desiredCspAndRegionPair:
         $ref: '#/definitions/cloudmodel.CloudProperty'
-      nameSeed:
-        description: Base string for resource name prefix (e.g., 'my' -> 'my-vnet-01')
-        example: my
-        type: string
       onpremiseInfraModel:
         $ref: '#/definitions/onpremisemodel.OnpremInfra'
     type: object
@@ -1862,11 +1850,6 @@ definitions:
     properties:
       desiredCloud:
         $ref: '#/definitions/storagemodel.CloudProperty'
-      nameSeed:
-        description: Base string for bucket name prefix (e.g., 'my' -> 'my-os-01');
-          applied at migration time
-        example: my
-        type: string
       sourceObjectStorages:
         items:
           $ref: '#/definitions/storagemodel.SourceObjectStorage'
@@ -3606,10 +3589,6 @@ definitions:
       description:
         description: Human-readable summary
         type: string
-      nameSeed:
-        description: Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01');
-          applied at migration time
-        type: string
       status:
         description: e.g., "recommended", "partial", "failed"
         type: string
@@ -5163,8 +5142,8 @@ paths:
         - Connection name is automatically generated from CSP and region in the request body
 
         [Note] `nameSeed` enables dynamic naming via **Late Binding**.
-        - If `nameSeed` is set (e.g., `my`), bucket names are prefixed at migration time: `my-os-01`.
-        - If `nameSeed` is empty, bucket names are used as-is from the recommendation result.
+        - If `nameSeed` query param is set (e.g., `?nameSeed=my`), bucket names are prefixed at migration time: `my-os-01`.
+        - If `nameSeed` is omitted, bucket names are used as-is from the recommendation result.
 
         [Examples]
         * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
@@ -5175,6 +5154,11 @@ paths:
         in: path
         name: nsId
         required: true
+        type: string
+      - description: Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied
+          at migration time.
+        in: query
+        name: nameSeed
         type: string
       - description: Object storage migration request (use RecommendObjectStorage
           response)
@@ -5555,6 +5539,11 @@ paths:
         in: path
         name: nsId
         required: true
+        type: string
+      - description: Optional prefix for all resource names (e.g., 'blue' → 'blue-infra101',
+          'blue-vnet-01'). Applied at migration time.
+        in: query
+        name: nameSeed
         type: string
       - description: Specify the information for the targeted multi-cloud infrastructure
         in: body
@@ -6254,8 +6243,8 @@ paths:
         - `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds
         - `infra` : Rename Infra (no child propagation)
 
-        After propagation, names are validated with NameSeed applied (pre-flight check).
-        The returned model uses **base names only** (NameSeed is applied at migration time).
+        After propagation, names are validated for referential integrity.
+        The returned model uses **base names only** (NameSeed is applied at migration time via query param).
 
         See also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)
       operationId: AlignNames
@@ -6303,6 +6292,41 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Propagate a resource name change to all dependent child resources
+      tags:
+      - '[Infrastructure] Resource Naming'
+  /naming/preview:
+    post:
+      consumes:
+      - application/json
+      description: |
+        Applies the `nameSeed` prefix to all resource names in the model and returns the result.
+        No resources are created — this is a dry-run to verify final names before migration.
+
+        Example: if `nameSeed=blue` and `VNetName=vnet-01`, the preview returns `blue-vnet-01`.
+      operationId: PreviewInfra
+      parameters:
+      - description: Prefix to apply to all resource names (e.g., 'blue' → 'blue-vnet-01')
+        in: query
+        name: nameSeed
+        type: string
+      - description: The recommendation model (base names)
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Model with NameSeed applied to all names
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedInfra'
+        "400":
+          description: Invalid request format
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Preview resource names with NameSeed applied
       tags:
       - '[Infrastructure] Resource Naming'
   /naming/validation:
@@ -6387,8 +6411,6 @@ paths:
 
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
-
-        **[Optional] `nameSeed`** is a base string used to prefix resource names (e.g., 'my' -> 'my-vnet-01').
       operationId: RecommendVmInfraCandidates
       parameters:
       - description: Specify the source infrastructure to be migrated
@@ -6624,9 +6646,7 @@ paths:
         - CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.
         - The `bucketName` field in the recommendation result represents the intended name, not the final cloud resource name.
 
-        [Note] `nameSeed` enables dynamic naming via **Late Binding**.
-        - Set `nameSeed` (e.g., `my`) to prefix bucket names at migration time: `my-os-01`.
-        - The recommendation result stores base names only; the prefix is applied when `MigrateObjectStorage` is called.
+        [Note] To apply a naming prefix, use the `nameSeed` query parameter on the migration API (`POST /migration/.../objectStorage?nameSeed=xxx`).
       operationId: RecommendObjectStorage
       parameters:
       - description: Specify the your object storage to be migrated

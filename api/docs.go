@@ -297,7 +297,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` is set (e.g., ` + "`" + `my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is empty, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is omitted, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -317,6 +317,12 @@ const docTemplate = `{
                         "name": "nsId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied at migration time.",
+                        "name": "nameSeed",
+                        "in": "query"
                     },
                     {
                         "description": "Object storage migration request (use RecommendObjectStorage response)",
@@ -834,6 +840,12 @@ const docTemplate = `{
                         "name": "nsId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional prefix for all resource names (e.g., 'blue' → 'blue-infra101', 'blue-vnet-01'). Applied at migration time.",
+                        "name": "nameSeed",
+                        "in": "query"
                     },
                     {
                         "description": "Specify the information for the targeted multi-cloud infrastructure",
@@ -1830,7 +1842,7 @@ const docTemplate = `{
         },
         "/naming/alignment": {
             "post": {
-                "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- ` + "`" + `vNet` + "`" + ` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- ` + "`" + `subnet` + "`" + ` : Rename Subnet → propagates to SubGroup.SubnetId\n- ` + "`" + `sshKey` + "`" + ` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- ` + "`" + `securityGroup` + "`" + ` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- ` + "`" + `infra` + "`" + ` : Rename Infra (no child propagation)\n\nAfter propagation, names are validated with NameSeed applied (pre-flight check).\nThe returned model uses **base names only** (NameSeed is applied at migration time).\n\nSee also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)\n",
+                "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- ` + "`" + `vNet` + "`" + ` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- ` + "`" + `subnet` + "`" + ` : Rename Subnet → propagates to SubGroup.SubnetId\n- ` + "`" + `sshKey` + "`" + ` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- ` + "`" + `securityGroup` + "`" + ` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- ` + "`" + `infra` + "`" + ` : Rename Infra (no child propagation)\n\nAfter propagation, names are validated for referential integrity.\nThe returned model uses **base names only** (NameSeed is applied at migration time via query param).\n\nSee also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1896,6 +1908,53 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid request or referential integrity failure",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/naming/preview": {
+            "post": {
+                "description": "Applies the ` + "`" + `nameSeed` + "`" + ` prefix to all resource names in the model and returns the result.\nNo resources are created — this is a dry-run to verify final names before migration.\n\nExample: if ` + "`" + `nameSeed=blue` + "`" + ` and ` + "`" + `VNetName=vnet-01` + "`" + `, the preview returns ` + "`" + `blue-vnet-01` + "`" + `.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Infrastructure] Resource Naming"
+                ],
+                "summary": "Preview resource names with NameSeed applied",
+                "operationId": "PreviewInfra",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prefix to apply to all resource names (e.g., 'blue' → 'blue-vnet-01')",
+                        "name": "nameSeed",
+                        "in": "query"
+                    },
+                    {
+                        "description": "The recommendation model (base names)",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cloudmodel.RecommendedInfra"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Model with NameSeed applied to all names",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1990,7 +2049,7 @@ const docTemplate = `{
         },
         "/recommendation/infra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Optional] ` + "`" + `nameSeed` + "`" + `** is a base string used to prefix resource names (e.g., 'my' -\u003e 'my-vnet-01').\n",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -2292,7 +2351,7 @@ const docTemplate = `{
         },
         "/recommendation/middleware/objectStorage": {
             "post": {
-                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Note] The recommended bucket name uses a default pattern (` + "`" + `mig-bucket-01` + "`" + `, ` + "`" + `mig-bucket-02` + "`" + `, ...).\n- Bucket names must be globally unique across all accounts in the target cloud provider.\n- CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.\n- The ` + "`" + `bucketName` + "`" + ` field in the recommendation result represents the intended name, not the final cloud resource name.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- Set ` + "`" + `nameSeed` + "`" + ` (e.g., ` + "`" + `my` + "`" + `) to prefix bucket names at migration time: ` + "`" + `my-os-01` + "`" + `.\n- The recommendation result stores base names only; the prefix is applied when ` + "`" + `MigrateObjectStorage` + "`" + ` is called.\n",
+                "description": "Recommend an appropriate object storage for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n[Note] The recommended bucket name uses a default pattern (` + "`" + `mig-bucket-01` + "`" + `, ` + "`" + `mig-bucket-02` + "`" + `, ...).\n- Bucket names must be globally unique across all accounts in the target cloud provider.\n- CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.\n- The ` + "`" + `bucketName` + "`" + ` field in the recommendation result represents the intended name, not the final cloud resource name.\n\n[Note] To apply a naming prefix, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API (` + "`" + `POST /migration/.../objectStorage?nameSeed=xxx` + "`" + `).\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -4450,9 +4509,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5221,9 +5277,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "nameSeed": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -5577,10 +5630,6 @@ const docTemplate = `{
                     "description": "Human-readable summary",
                     "type": "string"
                 },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
-                    "type": "string"
-                },
                 "status": {
                     "description": "e.g., \"recommended\", \"partial\", \"failed\"",
                     "type": "string"
@@ -5608,11 +5657,6 @@ const docTemplate = `{
             "properties": {
                 "desiredCspAndRegionPair": {
                     "$ref": "#/definitions/cloudmodel.CloudProperty"
-                },
-                "nameSeed": {
-                    "description": "Base string for resource name prefix (e.g., 'my' -\u003e 'my-vnet-01')",
-                    "type": "string",
-                    "example": "my"
                 },
                 "onpremiseInfraModel": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
@@ -5656,11 +5700,6 @@ const docTemplate = `{
             "properties": {
                 "desiredCloud": {
                     "$ref": "#/definitions/storagemodel.CloudProperty"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'my' -\u003e 'my-os-01'); applied at migration time",
-                    "type": "string",
-                    "example": "my"
                 },
                 "sourceObjectStorages": {
                     "type": "array",
@@ -8073,10 +8112,6 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "description": "Human-readable summary",
-                    "type": "string"
-                },
-                "nameSeed": {
-                    "description": "Base string for bucket name prefix (e.g., 'mig01' -\u003e 'mig01-mig-bucket-01'); applied at migration time",
                     "type": "string"
                 },
                 "status": {

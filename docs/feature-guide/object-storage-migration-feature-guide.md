@@ -86,7 +86,6 @@ graph LR
 
 ```json
 {
-  "nameSeed": "string (optional)",
   "desiredCloud": {
     "csp": "string (required if not in query)",
     "region": "string (required if not in query)"
@@ -117,7 +116,6 @@ graph LR
   "success": true,
   "message": "Recommended N object storage(s) for CSP REGION",
   "data": {
-    "nameSeed": "string",
     "status": "success|partial",
     "description": "string",
     "warnings": ["string"],
@@ -148,7 +146,6 @@ graph LR
 curl -X POST "http://localhost:8056/api/v1/recommendation/middleware/objectStorage?desiredCsp=aws&desiredRegion=ap-northeast-2" \
   -H "Content-Type: application/json" \
   -d '{
-    "nameSeed": "myapp",
     "sourceObjectStorages": [
       {
         "bucketName": "production-data",
@@ -174,7 +171,6 @@ curl -X POST "http://localhost:8056/api/v1/recommendation/middleware/objectStora
   "success": true,
   "message": "Recommended 1 object storage(s) for aws ap-northeast-2",
   "data": {
-    "nameSeed": "myapp",
     "status": "success",
     "description": "Successfully recommended 1 object storage configuration(s)",
     "warnings": [],
@@ -202,7 +198,7 @@ curl -X POST "http://localhost:8056/api/v1/recommendation/middleware/objectStora
 }
 ```
 
-**Note:** With `nameSeed: "myapp"`, the final bucket name becomes `myapp-os-01` during migration (Late Binding).
+**Note:** To prefix the final bucket name at migration time (Late Binding), use `?nameSeed=myapp` query param on the migration API: `POST /migration/.../objectStorage?nameSeed=myapp` → bucket becomes `myapp-os-01`.
 
 #### Example 2: Azure - Limited Feature Support
 
@@ -394,13 +390,13 @@ graph TB
 | Parameter | Type   | Location | Required | Description                                      |
 | --------- | ------ | -------- | -------- | ------------------------------------------------ |
 | nsId      | string | path     | Yes      | Namespace ID (e.g., mig01)                       |
+| nameSeed  | string | query    | No       | Prefix for bucket names (e.g., `?nameSeed=prod`) |
 | request   | JSON   | body     | Yes      | Recommendation result (RecommendedObjectStorage) |
 
 **Request Body Schema:**
 
 ```json
 {
-  "nameSeed": "string (optional)",
   "targetCloud": {
     "csp": "string (required)",
     "region": "string (required)"
@@ -437,10 +433,9 @@ graph TB
 **Request:**
 
 ```bash
-curl -X POST "http://localhost:8056/api/v1/migration/middleware/ns/mig01/objectStorage" \
+curl -X POST "http://localhost:8056/api/v1/migration/middleware/ns/mig01/objectStorage?nameSeed=prod" \
   -H "Content-Type: application/json" \
   -d '{
-    "nameSeed": "prod",
     "targetCloud": {
       "csp": "aws",
       "region": "ap-northeast-2"
@@ -623,12 +618,12 @@ sequenceDiagram
 2. **Review Recommendation**
    - Check `warnings` array for disabled features
    - Review `targetObjectStorages` configurations
-   - Adjust `nameSeed` if needed
+   - Set `nameSeed` query param if needed (e.g., `?nameSeed=prod`)
 
 3. **Execute Migration**
 
    ```bash
-   curl -X POST "http://localhost:8056/api/v1/migration/middleware/ns/mig01/objectStorage" \
+   curl -X POST "http://localhost:8056/api/v1/migration/middleware/ns/mig01/objectStorage?nameSeed=prod" \
      -H "Content-Type: application/json" \
      -d @recommendation.json
    ```
@@ -728,9 +723,9 @@ if versioningEnabled {
    - Scale up after validation
 
 4. **Use nameSeed for environment isolation**
-   - Development: `nameSeed: "dev"`
-   - Staging: `nameSeed: "staging"`
-   - Production: `nameSeed: "prod"`
+   - Development: `?nameSeed=dev`
+   - Staging: `?nameSeed=staging`
+   - Production: `?nameSeed=prod`
 
 5. **Handle migration errors gracefully**
    - If one bucket fails, migration stops
@@ -749,6 +744,7 @@ if versioningEnabled {
 ### Late Binding with NameSeed
 
 **Late Binding** allows you to apply a naming prefix at migration time rather than recommendation time.
+The `nameSeed` is passed as a **query parameter** on the migration API — not in the request body.
 
 **Benefits:**
 
@@ -758,11 +754,10 @@ if versioningEnabled {
 
 **How It Works:**
 
-1. **Recommendation Phase:**
+1. **Recommendation Phase** — returns base names (no nameSeed in body):
 
    ```json
    {
-     "nameSeed": "myapp",
      "targetObjectStorages": [
        { "bucketName": "os-01" },
        { "bucketName": "os-02" }
@@ -770,16 +765,13 @@ if versioningEnabled {
    }
    ```
 
-2. **Migration Phase:**
-   ```json
-   {
-     "nameSeed": "prod",
-     "targetObjectStorages": [
-       { "bucketName": "os-01" }, // Becomes: prod-os-01
-       { "bucketName": "os-02" } // Becomes: prod-os-02
-     ]
-   }
+2. **Migration Phase** — pass `?nameSeed=prod` as query param:
+
+   ```bash
+   POST /migration/.../objectStorage?nameSeed=prod
    ```
+
+   Result: `os-01` → `prod-os-01`, `os-02` → `prod-os-02`
 
 **Use Cases:**
 
@@ -787,28 +779,23 @@ if versioningEnabled {
 
   ```bash
   # Dev environment
-  curl ... -d '{"nameSeed": "dev", ...}'
-  # Result: dev-os-01, dev-os-02
+  curl ... "?nameSeed=dev" -d '{"targetObjectStorages": [{"bucketName": "os-01"}]}'
+  # Result: dev-os-01
 
   # Staging environment
-  curl ... -d '{"nameSeed": "staging", ...}'
-  # Result: staging-os-01, staging-os-02
+  curl ... "?nameSeed=staging" -d '...'
+  # Result: staging-os-01
 
   # Production environment
-  curl ... -d '{"nameSeed": "prod", ...}'
-  # Result: prod-os-01, prod-os-02
+  curl ... "?nameSeed=prod" -d '...'
+  # Result: prod-os-01
   ```
 
 - **Team-Based Isolation:**
 
   ```bash
-  # Team A
-  curl ... -d '{"nameSeed": "team-a", ...}'
-  # Result: team-a-os-01
-
-  # Team B
-  curl ... -d '{"nameSeed": "team-b", ...}'
-  # Result: team-b-os-01
+  curl ... "?nameSeed=team-a" ...   # Result: team-a-os-01
+  curl ... "?nameSeed=team-b" ...   # Result: team-b-os-01
   ```
 
 **Naming Pattern:**
@@ -819,6 +806,9 @@ nameSeed-bucketName
 ├── With nameSeed "myapp": "myapp-os-01"
 └── With nameSeed "prod": "prod-os-01"
 ```
+
+> [!TIP]
+> Use `POST /naming/preview?nameSeed=prod` to dry-run the naming before migration.
 
 ### Feature Support Validation
 

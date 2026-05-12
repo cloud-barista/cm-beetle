@@ -37,8 +37,8 @@ import (
 // @Description - `securityGroup` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds
 // @Description - `infra` : Rename Infra (no child propagation)
 // @Description
-// @Description After propagation, names are validated with NameSeed applied (pre-flight check).
-// @Description The returned model uses **base names only** (NameSeed is applied at migration time).
+// @Description After propagation, names are validated for referential integrity.
+// @Description The returned model uses **base names only** (NameSeed is applied at migration time via query param).
 // @Description
 // @Description See also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)
 // @Description
@@ -70,15 +70,12 @@ func AlignNames(c echo.Context) error {
 	// 1. Propagate the name change from parent to child resources
 	propagated := common.PropagateNameChange(*req, resourceType, oldName, newName)
 
-	// 2. Pre-flight validation with NameSeed
-	// Apply NameSeed temporarily to validate that names + seed will be valid at migration time.
-	// The unseeded base-name model is returned so users can still inspect/modify names before migration.
-	seeded := common.ApplyNameSeed(propagated)
-	if ok, detail := common.ValidateComposedNames(seeded); !ok {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Referential integrity or name validation failed (with NameSeed applied): "+detail))
+	// 2. Validate referential integrity (base names only; NameSeed applied at migration time)
+	if ok, detail := common.ValidateReferentialIntegrity(propagated); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Referential integrity validation failed: "+detail))
 	}
 
-	// 3. Return the unseeded model (NameSeed is applied at migration time - Late Binding)
+	// 3. Return the base-name model
 	return c.JSON(http.StatusOK, model.SuccessResponse(propagated))
 }
 
@@ -109,4 +106,33 @@ func ValidateNames(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponse[any](nil))
+}
+
+// PreviewInfra godoc
+// @ID PreviewInfra
+// @Summary Preview resource names with NameSeed applied
+// @Description Applies the `nameSeed` prefix to all resource names in the model and returns the result.
+// @Description No resources are created — this is a dry-run to verify final names before migration.
+// @Description
+// @Description Example: if `nameSeed=blue` and `VNetName=vnet-01`, the preview returns `blue-vnet-01`.
+// @Description
+// @Tags [Infrastructure] Resource Naming
+// @Accept  json
+// @Produce  json
+// @Param nameSeed query string false "Prefix to apply to all resource names (e.g., 'blue' → 'blue-vnet-01')"
+// @Param UserInfra body cloudmodel.RecommendedInfra true "The recommendation model (base names)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedInfra] "Model with NameSeed applied to all names"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request format"
+// @Router /naming/preview [post]
+func PreviewInfra(c echo.Context) error {
+	nameSeed := c.QueryParam("nameSeed")
+	if ok, detail := common.IsValidNameSeed(nameSeed); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid nameSeed: "+detail))
+	}
+	req := &cloudmodel.RecommendedInfra{}
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+	previewed := common.ApplyNameSeed(*req, nameSeed)
+	return c.JSON(http.StatusOK, model.SuccessResponse(previewed))
 }

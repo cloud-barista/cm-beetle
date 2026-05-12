@@ -10,10 +10,9 @@ to all dependent child resources within a `RecommendedVmInfra` model.
 When a parent resource (e.g., VNet) is renamed, child resources that reference it (e.g., Security Groups, SubGroups)
 must also be updated to maintain internal consistency. The Align Names API automates this propagation.
 
-CM-Beetle also uses a **Late Binding** strategy for final resource names:
+CM-Beetle uses a **Late Binding** strategy: the recommendation model holds base names (e.g., `vnet-01`), and a `nameSeed` prefix is applied at migration time via the `?nameSeed=` query parameter.
 
-- Recommendation returns **base names** (e.g., `vnet-01`) that are easy to inspect and modify.
-- Migration applies a `NameSeed` prefix (e.g., `mig01-vnet-01`) at the very last moment before resource creation.
+> For the full NameSeed concept, rules, and workflow, see [NameSeed: Late Binding for Resource Names](feature-guide/naming-nameseed.md).
 
 > [!NOTE]
 > **One resource at a time.** Each rename specifies exactly one `oldName` → `newName`.
@@ -22,35 +21,7 @@ CM-Beetle also uses a **Late Binding** strategy for final resource names:
 
 ---
 
-## 1. Dynamic Resource Naming (NameSeed)
-
-Set the `nameSeed` field in your request to distinguish resources across parallel test runs:
-
-```json
-{
-  "nameSeed": "mig01",
-  ...
-}
-```
-
-### Naming Rules (`cloud-resource` compliant)
-
-- Length: **3–63 characters**
-- Allowed: **alphanumeric characters and hyphens**
-- Must **start** with an alphanumeric character
-
-### Late Binding Workflow
-
-| Step                   | API                          | Naming Behavior                                                                                       |
-| ---------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1. Recommend           | `POST /recommendation/infra` | Returns **base names** (e.g., `vnet-01`). <br>Pre-flight validates `seed + name` without applying it. |
-| 2. Align (optional)    | `POST /naming/alignment`     | Rename a resource and propagate to child references.                                                  |
-| 3. Validate (optional) | `POST /naming/validation`    | Verify internal reference consistency.                                                                |
-| 4. Migrate             | `POST /migration/.../infra`  | Applies `NameSeed` → `{seed}-{name}` and creates resources.                                           |
-
----
-
-## 2. Resource Name Alignment API
+## 1. Resource Name Alignment API
 
 If you manually rename a resource in the model, use this API to propagate the change to all dependent child resources.
 
@@ -86,7 +57,24 @@ Verify the internal consistency of a model without making changes.
 
 ---
 
-## 4. Example Usage
+## 4. Preview API
+
+Dry-run: apply a NameSeed to every resource name in the model and inspect the result before migration.
+
+**Endpoint**: `POST /beetle/naming/preview`
+
+| Query Parameter | Type     | Required | Description                                                    |
+| --------------- | -------- | -------- | -------------------------------------------------------------- |
+| `nameSeed`      | `string` | No       | Prefix to apply to all resource names (e.g., `blue`)          |
+
+**Body**: `RecommendedVmInfra` JSON  
+**Function**: Returns the model with `{nameSeed}-` prepended to every resource name. No resources are created.
+
+> Example: `nameSeed=blue` + base name `vnet-01` → `blue-vnet-01`.
+
+---
+
+## 5. Example Usage
 
 > [!TIP]
 > The credentials below (`default:default`) are **development-only** defaults.  
@@ -192,3 +180,25 @@ curl -u default:default -s -X POST \
   "targetVmInfra": { "subGroups": [{ "securityGroupIds": ["my-sg-01"] }] }
 }
 ```
+
+### Example 4: Preview Names with NameSeed
+
+```bash
+curl -u default:default -s -X POST \
+  "http://localhost:8056/beetle/naming/preview?nameSeed=blue" \
+  -H "Content-Type: application/json" \
+  -d "$BODY"
+```
+
+**Verified response (key fields):**
+
+```json
+{
+  "targetVNet": { "name": "blue-vnet-01" },
+  "targetSecurityGroupList": [{ "name": "blue-sg-01" }],
+  "targetSshKey": { "name": "blue-sshkey-01" },
+  "targetVmInfra": { "name": "blue-mci-01" }
+}
+```
+
+> This is a dry-run. Pass the same model and `?nameSeed=blue` to `POST /migration/.../infra?nameSeed=blue` when ready to create resources.

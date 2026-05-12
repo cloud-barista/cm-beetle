@@ -59,9 +59,9 @@ func toMigratedObjectStorageInfo(src tbmodel.ObjectStorageInfo) MigratedObjectSt
 // ============================================================================
 
 // CreateObjectStorage migrates object storages to the target cloud.
-// It applies late-binding via NameSeed, creates each bucket, then configures
+// It applies late-binding via the seed parameter, creates each bucket, then configures
 // versioning and CORS according to CSP support information.
-func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage) error {
+func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage, seed string) error {
 	log.Info().
 		Str("nsId", nsId).
 		Str("csp", req.TargetCloud.Csp).
@@ -75,10 +75,10 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage)
 		return fmt.Errorf("invalid cloud configuration (%s %s): %w", req.TargetCloud.Csp, req.TargetCloud.Region, err)
 	}
 
-	// Apply NameSeed (Late Binding)
-	if req.NameSeed != "" {
+	// Apply NameSeed (Late Binding) from migration query param
+	if seed != "" {
 		for i := range req.TargetObjectStorages {
-			req.TargetObjectStorages[i].BucketName = common.ComposeName(req.TargetObjectStorages[i].BucketName, req.NameSeed)
+			req.TargetObjectStorages[i].BucketName = common.ComposeName(req.TargetObjectStorages[i].BucketName, seed)
 		}
 	}
 

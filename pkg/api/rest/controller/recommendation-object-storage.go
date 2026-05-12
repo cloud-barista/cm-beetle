@@ -17,7 +17,6 @@ import (
 
 // RecommendObjectStorageRequest represents a request for object storage migration recommendations
 type RecommendObjectStorageRequest struct {
-	NameSeed             string                             `json:"nameSeed,omitempty" example:"my"` // Base string for bucket name prefix (e.g., 'my' -> 'my-os-01'); applied at migration time
 	DesiredCloud         storagemodel.CloudProperty         `json:"desiredCloud" validate:"required"`
 	SourceObjectStorages []storagemodel.SourceObjectStorage `json:"sourceObjectStorages" validate:"required,min=1"`
 }
@@ -37,9 +36,7 @@ type RecommendObjectStorageRequest struct {
 // @Description - CB-Tumblebug internally generates a uid and uses it as the actual bucket name in the cloud.
 // @Description - The `bucketName` field in the recommendation result represents the intended name, not the final cloud resource name.
 // @Description
-// @Description [Note] `nameSeed` enables dynamic naming via **Late Binding**.
-// @Description - Set `nameSeed` (e.g., `my`) to prefix bucket names at migration time: `my-os-01`.
-// @Description - The recommendation result stores base names only; the prefix is applied when `MigrateObjectStorage` is called.
+// @Description [Note] To apply a naming prefix, use the `nameSeed` query parameter on the migration API (`POST /migration/.../objectStorage?nameSeed=xxx`).
 // @Description
 // @Tags [Recommendation] Managed middleware (preview)
 // @Accept json
@@ -166,7 +163,6 @@ func RecommendObjectStorage(c echo.Context) error {
 
 	// Build response
 	objectStorageInfo := storagemodel.RecommendedObjectStorage{
-		NameSeed:             req.NameSeed,
 		Status:               status,
 		Description:          fmt.Sprintf("Successfully recommended %d object storage configuration(s)", len(targetObjectStorages)),
 		Warnings:             warnings,

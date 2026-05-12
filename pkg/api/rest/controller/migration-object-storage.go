@@ -21,6 +21,7 @@ import (
 
 	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -50,8 +51,8 @@ type MigrateObjectStorageRequest struct {
 // @Description - Connection name is automatically generated from CSP and region in the request body
 // @Description
 // @Description [Note] `nameSeed` enables dynamic naming via **Late Binding**.
-// @Description - If `nameSeed` is set (e.g., `my`), bucket names are prefixed at migration time: `my-os-01`.
-// @Description - If `nameSeed` is empty, bucket names are used as-is from the recommendation result.
+// @Description - If `nameSeed` query param is set (e.g., `?nameSeed=my`), bucket names are prefixed at migration time: `my-os-01`.
+// @Description - If `nameSeed` is omitted, bucket names are used as-is from the recommendation result.
 // @Description
 // @Description [Examples]
 // @Description * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
@@ -60,6 +61,7 @@ type MigrateObjectStorageRequest struct {
 // @Accept json
 // @Produce	json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param nameSeed query string false "Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied at migration time."
 // @Param request body MigrateObjectStorageRequest true "Object storage migration request (use RecommendObjectStorage response)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 201 "Created - Object storages created successfully"
@@ -89,7 +91,12 @@ func MigrateObjectStorage(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one target bucket required"))
 	}
 
-	if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage); err != nil {
+	nameSeed := c.QueryParam("nameSeed")
+	if ok, detail := common.IsValidNameSeed(nameSeed); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid nameSeed: "+detail))
+	}
+
+	if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed); err != nil {
 		log.Error().Err(err).Msg("Object storage migration failed")
 		if strings.Contains(err.Error(), "invalid cloud configuration") {
 			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))

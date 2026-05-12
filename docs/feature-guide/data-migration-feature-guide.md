@@ -451,7 +451,7 @@ A typical end-to-end workflow combining Object Storage infrastructure migration 
 6. DELETE /migration/middleware/ns/{nsId}/objectStorage/{osId} → cleanup
 ```
 
-See the [Object Storage Feature Guide](object-storage-feature-guide.md) for bucket recommendation and management details.
+See the [Object Storage Feature Guide](object-storage-migration-feature-guide.md) for bucket recommendation and management details.
 
 ---
 

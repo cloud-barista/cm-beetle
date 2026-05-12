@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.0+ (1655425)
-- cm-model: v0.0.20
-- CB-Tumblebug: v0.12.3
-- CB-Spider: v0.12.11
-- CB-MapUI: v0.12.16
+- CM-Beetle: imdl/v0.1.5
+- cm-model: unknown
+- CB-Tumblebug: vunknown
+- CB-Spider: vunknown
+- CB-MapUI: vunknown
 - Target CSP: NCP
 - Target Region: kr
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: March 25, 2026
-- Test Time: 21:39:50 KST
-- Test Execution: 2026-03-25 21:39:50 KST
+- Test Date: May 12, 2026
+- Test Time: 18:44:02 KST
+- Test Execution: 2026-05-12 18:44:02 KST
 
 ### Scenario
 
@@ -40,23 +40,23 @@
 
 ### Test Results Summary
 
-| Test | Step (Endpoint / Description)                          | Status      | Duration  | Details |
-| ---- | ------------------------------------------------------ | ----------- | --------- | ------- |
-| 1    | `POST /beetle/recommendation/vmInfra`                  | ✅ **PASS** | 1.388s    | Pass    |
-| 2    | `POST /beetle/migration/ns/mig01/mci`                  | ✅ **PASS** | 8m6.559s  | Pass    |
-| 3    | `GET /beetle/migration/ns/mig01/mci`                   | ✅ **PASS** | 519ms     | Pass    |
-| 4    | `GET /beetle/migration/ns/mig01/mci?option=id`         | ✅ **PASS** | 6ms       | Pass    |
-| 5    | `GET /beetle/migration/ns/mig01/mci/{{mciId}}`         | ✅ **PASS** | 791ms     | Pass    |
-| 6    | Remote Command Accessibility Check                     | ✅ **PASS** | 0s        | Pass    |
-| 7    | `GET /beetle/summary/target/ns/mig01/mci/{{mciId}}`    | ✅ **PASS** | 8.075s    | Pass    |
-| 8    | `POST /beetle/report/migration/ns/mig01/mci/{{mciId}}` | ✅ **PASS** | 7.481s    | Pass    |
-| 9    | `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`      | ✅ **PASS** | 2m26.192s | Pass    |
+| Test | Step (Endpoint / Description) | Status | Duration | Details |
+|------|-------------------------------|--------|----------|----------|
+| 1 | `POST /beetle/recommendation/infra` | ✅ **PASS** | 381ms | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 7m16.002s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 41ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 4ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 14ms | Pass |
+| 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.915s | Pass |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.379s | Pass |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 2m14.42s | Pass |
 
 **Overall Result**: 9/9 tests passed ✅
 
-**Total Duration**: 12m4.506834195s
+**Total Duration**: 10m55.069505288s
 
-_Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using CM-Beetle automated test CLI_
+*Test executed on May 12, 2026 at 18:44:02 KST (2026-05-12 18:44:02 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -69,7 +69,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 #### 1.1 API Request Information
 
-- **API Endpoint**: `POST /beetle/recommendation/vmInfra`
+- **API Endpoint**: `POST /beetle/recommendation/infra`
 - **Purpose**: Get infrastructure recommendations for migration
 - **Required Parameters**: `desiredCsp` and `desiredRegion` in request body
 
@@ -80,7 +80,6 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 ```json
 {
-  "nameSeed": "mig-3",
   "desiredCspAndRegionPair": {
     "csp": "ncp",
     "region": "kr"
@@ -108,7 +107,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       },
       "ipv6Networks": {}
     },
-    "servers": [
+    "nodes": [
       {
         "hostname": "ip-10-0-1-30",
         "machineId": "ec268ed7-821e-9d73-e79f-961262161624",
@@ -134,16 +133,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
           {
             "name": "ens5",
             "macAddress": "02:6f:de:fc:71:b1",
-            "ipv4CidrBlocks": ["10.0.1.30/24"],
-            "ipv6CidrBlocks": ["fe80::6f:deff:fefc:71b1/64"],
+            "ipv4CidrBlocks": [
+              "10.0.1.30/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::6f:deff:fefc:71b1/64"
+            ],
             "mtu": 9001,
             "state": "up"
           }
@@ -689,16 +696,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
           {
             "name": "ens5",
             "macAddress": "02:08:96:7d:f4:17",
-            "ipv4CidrBlocks": ["10.0.1.221/24"],
-            "ipv6CidrBlocks": ["fe80::8:96ff:fe7d:f417/64"],
+            "ipv4CidrBlocks": [
+              "10.0.1.221/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::8:96ff:fe7d:f417/64"
+            ],
             "mtu": 9001,
             "state": "up"
           }
@@ -1298,16 +1313,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "interfaces": [
           {
             "name": "lo",
-            "ipv4CidrBlocks": ["127.0.0.1/8"],
-            "ipv6CidrBlocks": ["::1/128"],
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
             "mtu": 65536,
             "state": "up"
           },
           {
             "name": "ens5",
             "macAddress": "02:bf:6e:6c:6e:31",
-            "ipv4CidrBlocks": ["10.0.1.138/24"],
-            "ipv6CidrBlocks": ["fe80::bf:6eff:fe6c:6e31/64"],
+            "ipv4CidrBlocks": [
+              "10.0.1.138/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::bf:6eff:fe6c:6e31/64"
+            ],
             "mtu": 9001,
             "state": "up"
           }
@@ -1922,23 +1945,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
   "success": true,
   "data": [
     {
-      "nameSeed": "mig-3",
       "status": "partially-matched",
       "description": "Candidate #1 | partially-matched | Overall Match Rate: Min=50.0% Max=100.0% Avg=86.1% | VMs: 3 total, 0 matched, 3 acceptable",
       "targetCloud": {
         "csp": "ncp",
         "region": "kr"
       },
-      "targetVmInfra": {
-        "name": "mci101",
+      "targetInfra": {
+        "name": "infra101",
         "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "Recommended VMs comprising multi-cloud infrastructure",
-        "subGroups": [
+        "nodeGroups": [
           {
-            "name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
-            "subGroupSize": 1,
+            "name": "vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
             },
@@ -1946,16 +1968,18 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "connectionName": "ncp-kr",
             "specId": "ncp+kr+ci2-g3",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-01"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-01"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-            "subGroupSize": 1,
+            "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
             },
@@ -1963,27 +1987,31 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "connectionName": "ncp-kr",
             "specId": "ncp+kr+s4-g3a",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-02"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-02"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "subGroupSize": 1,
+            "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
             },
             "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s2-g3",
+            "specId": "ncp+kr+s2-g3a",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-03"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-03"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           }
@@ -2000,7 +2028,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "cidrBlock": "10.0.0.0/21",
         "subnetInfoList": [
           {
-            "name": "mig-3-subnet-01",
+            "name": "subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
             "description": "a recommended subnet for migration"
           }
@@ -2018,10 +2046,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "publicKey": "",
         "privateKey": ""
       },
-      "targetVmSpecList": [
+      "targetSpecList": [
         {
           "id": "ncp+kr+ci2-g3",
-          "uid": "d66sfmtdi7idhnuqkbag",
+          "uid": "d7k8jh5q1uu3ogmsvp00",
           "cspSpecName": "ci2-g3",
           "name": "ncp+kr+ci2-g3",
           "namespace": "system",
@@ -2030,7 +2058,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 2,
           "memoryGiB": 4,
@@ -2110,7 +2138,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "id": "ncp+kr+s4-g3a",
-          "uid": "d66sfmtdi7idhnuqkc70",
+          "uid": "d7k8jh5q1uu3ogmsvptg",
           "cspSpecName": "s4-g3a",
           "name": "ncp+kr+s4-g3a",
           "namespace": "system",
@@ -2119,7 +2147,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 4,
           "memoryGiB": 16,
@@ -2198,17 +2226,17 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           ]
         },
         {
-          "id": "ncp+kr+s2-g3",
-          "uid": "d66sfmtdi7idhnuqkcc0",
-          "cspSpecName": "s2-g3",
-          "name": "ncp+kr+s2-g3",
+          "id": "ncp+kr+s2-g3a",
+          "uid": "d7k8jh5q1uu3ogmsvp90",
+          "cspSpecName": "s2-g3a",
+          "name": "ncp+kr+s2-g3a",
           "namespace": "system",
           "connectionName": "ncp-kr",
           "providerName": "ncp",
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 2,
           "memoryGiB": 8,
@@ -2230,7 +2258,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "details": [
             {
               "key": "ServerSpecCode",
-              "value": "s2-g3"
+              "value": "s2-g3a"
             },
             {
               "key": "GenerationCode",
@@ -2274,7 +2302,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C002.M008.G003"
+              "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
             },
             {
               "key": "ServerSpecDescription",
@@ -2282,26 +2310,28 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
             }
           ]
         }
       ],
-      "targetVmOsImageList": [
+      "targetOsImageList": [
         {
           "resourceType": "image",
           "namespace": "system",
           "providerName": "ncp",
           "cspImageName": "23214590",
-          "regionList": ["kr"],
+          "regionList": [
+            "kr"
+          ],
           "id": "23214590",
-          "uid": "d66sfoddi7idhnuqkp6g",
+          "uid": "d7k8jndq1uu3ogmt0uo0",
           "name": "23214590",
-          "sourceVmUid": "",
+          "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2026.02.12 12:30:25 Thu",
+          "fetchedTime": "2026.04.22 08:42:05 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -2382,9 +2412,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       ],
       "targetSecurityGroupList": [
         {
-          "name": "mig-3-sg-01",
+          "name": "sg-01",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
           "firewallRules": [
             {
@@ -2469,9 +2499,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "cspResourceId": ""
         },
         {
-          "name": "mig-3-sg-02",
+          "name": "sg-02",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "firewallRules": [
             {
@@ -2586,9 +2616,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "cspResourceId": ""
         },
         {
-          "name": "mig-3-sg-03",
+          "name": "sg-03",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "firewallRules": [
             {
@@ -2705,23 +2735,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       ]
     },
     {
-      "nameSeed": "mig-3",
       "status": "partially-matched",
       "description": "Candidate #2 | partially-matched | Overall Match Rate: Min=25.0% Max=100.0% Avg=83.3% | VMs: 3 total, 0 matched, 3 acceptable",
       "targetCloud": {
         "csp": "ncp",
         "region": "kr"
       },
-      "targetVmInfra": {
-        "name": "mci101",
+      "targetInfra": {
+        "name": "infra101",
         "installMonAgent": "",
         "label": null,
         "systemLabel": "",
         "description": "Recommended VMs comprising multi-cloud infrastructure",
-        "subGroups": [
+        "nodeGroups": [
           {
-            "name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
-            "subGroupSize": 1,
+            "name": "vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
             },
@@ -2729,16 +2758,18 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "connectionName": "ncp-kr",
             "specId": "ncp+kr+s2-g3a",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-01"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-01"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-            "subGroupSize": 1,
+            "name": "vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
             },
@@ -2746,27 +2777,31 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "connectionName": "ncp-kr",
             "specId": "ncp+kr+s4-g3",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-02"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-02"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           },
           {
-            "name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "subGroupSize": 1,
+            "name": "vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "nodeGroupSize": 1,
             "label": {
               "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
             },
             "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s2-g3a",
+            "specId": "ncp+kr+s2-g3",
             "imageId": "23214590",
-            "vNetId": "mig-3-vnet-01",
-            "subnetId": "mig-3-subnet-01",
-            "securityGroupIds": ["mig-3-sg-03"],
-            "sshKeyId": "mig-3-sshkey-01",
+            "vNetId": "vnet-01",
+            "subnetId": "subnet-01",
+            "securityGroupIds": [
+              "sg-03"
+            ],
+            "sshKeyId": "sshkey-01",
             "rootDiskSize": 50,
             "dataDiskIds": null
           }
@@ -2783,7 +2818,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "cidrBlock": "10.0.0.0/21",
         "subnetInfoList": [
           {
-            "name": "mig-3-subnet-01",
+            "name": "subnet-01",
             "ipv4_CIDR": "10.0.1.0/24",
             "description": "a recommended subnet for migration"
           }
@@ -2801,10 +2836,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "publicKey": "",
         "privateKey": ""
       },
-      "targetVmSpecList": [
+      "targetSpecList": [
         {
           "id": "ncp+kr+ci2-g3",
-          "uid": "d66sfmtdi7idhnuqkbag",
+          "uid": "d7k8jh5q1uu3ogmsvp00",
           "cspSpecName": "ci2-g3",
           "name": "ncp+kr+ci2-g3",
           "namespace": "system",
@@ -2813,7 +2848,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 2,
           "memoryGiB": 4,
@@ -2893,7 +2928,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "id": "ncp+kr+s4-g3a",
-          "uid": "d66sfmtdi7idhnuqkc70",
+          "uid": "d7k8jh5q1uu3ogmsvptg",
           "cspSpecName": "s4-g3a",
           "name": "ncp+kr+s4-g3a",
           "namespace": "system",
@@ -2902,7 +2937,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 4,
           "memoryGiB": 16,
@@ -2981,97 +3016,8 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           ]
         },
         {
-          "id": "ncp+kr+s2-g3",
-          "uid": "d66sfmtdi7idhnuqkcc0",
-          "cspSpecName": "s2-g3",
-          "name": "ncp+kr+s2-g3",
-          "namespace": "system",
-          "connectionName": "ncp-kr",
-          "providerName": "ncp",
-          "regionName": "kr",
-          "regionLatitude": 37.4754,
-          "regionLongitude": 126.8831,
-          "infraType": "vm",
-          "architecture": "x86_64",
-          "vCPU": 2,
-          "memoryGiB": 8,
-          "diskSizeGB": -1,
-          "costPerHour": 0.0848,
-          "evaluationScore01": -1,
-          "evaluationScore02": -1,
-          "evaluationScore03": -1,
-          "evaluationScore04": -1,
-          "evaluationScore05": -1,
-          "evaluationScore06": -1,
-          "evaluationScore07": -1,
-          "evaluationScore08": -1,
-          "evaluationScore09": -1,
-          "evaluationScore10": -1,
-          "rootDiskType": "default",
-          "rootDiskSize": 0,
-          "systemLabel": "from-assets",
-          "details": [
-            {
-              "key": "ServerSpecCode",
-              "value": "s2-g3"
-            },
-            {
-              "key": "GenerationCode",
-              "value": "G3"
-            },
-            {
-              "key": "CpuCount",
-              "value": "2"
-            },
-            {
-              "key": "MemorySize",
-              "value": "8589934592"
-            },
-            {
-              "key": "HypervisorType",
-              "value": "{code:KVM,codeName:KVM}"
-            },
-            {
-              "key": "CpuArchitectureType",
-              "value": "{code:X86_64,codeName:x86 64bit}"
-            },
-            {
-              "key": "BlockStorageMaxCount",
-              "value": "20"
-            },
-            {
-              "key": "BlockStorageMaxIops",
-              "value": "4725"
-            },
-            {
-              "key": "BlockStorageMaxThroughput",
-              "value": "84934656"
-            },
-            {
-              "key": "NetworkPerformance",
-              "value": "1000000000"
-            },
-            {
-              "key": "NetworkInterfaceMaxCount",
-              "value": "3"
-            },
-            {
-              "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C002.M008.G003"
-            },
-            {
-              "key": "ServerSpecDescription",
-              "value": "vCPU 2EA, Memory 8GB"
-            },
-            {
-              "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
-            }
-          ]
-        },
-        {
           "id": "ncp+kr+s2-g3a",
-          "uid": "d66sfmtdi7idhnuqkaug",
+          "uid": "d7k8jh5q1uu3ogmsvp90",
           "cspSpecName": "s2-g3a",
           "name": "ncp+kr+s2-g3a",
           "namespace": "system",
@@ -3080,7 +3026,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 2,
           "memoryGiB": 8,
@@ -3160,7 +3106,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "id": "ncp+kr+s4-g3",
-          "uid": "d66sfmtdi7idhnuqkc10",
+          "uid": "d7k8jh5q1uu3ogmsvpbg",
           "cspSpecName": "s4-g3",
           "name": "ncp+kr+s4-g3",
           "namespace": "system",
@@ -3169,7 +3115,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "regionName": "kr",
           "regionLatitude": 37.4754,
           "regionLongitude": 126.8831,
-          "infraType": "vm",
+          "infraType": "node",
           "architecture": "x86_64",
           "vCPU": 4,
           "memoryGiB": 16,
@@ -3246,23 +3192,114 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
               "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
             }
           ]
+        },
+        {
+          "id": "ncp+kr+s2-g3",
+          "uid": "d7k8jh5q1uu3ogmsvovg",
+          "cspSpecName": "s2-g3",
+          "name": "ncp+kr+s2-g3",
+          "namespace": "system",
+          "connectionName": "ncp-kr",
+          "providerName": "ncp",
+          "regionName": "kr",
+          "regionLatitude": 37.4754,
+          "regionLongitude": 126.8831,
+          "infraType": "node",
+          "architecture": "x86_64",
+          "vCPU": 2,
+          "memoryGiB": 8,
+          "diskSizeGB": -1,
+          "costPerHour": 0.0848,
+          "evaluationScore01": -1,
+          "evaluationScore02": -1,
+          "evaluationScore03": -1,
+          "evaluationScore04": -1,
+          "evaluationScore05": -1,
+          "evaluationScore06": -1,
+          "evaluationScore07": -1,
+          "evaluationScore08": -1,
+          "evaluationScore09": -1,
+          "evaluationScore10": -1,
+          "rootDiskType": "default",
+          "rootDiskSize": 0,
+          "systemLabel": "from-assets",
+          "details": [
+            {
+              "key": "ServerSpecCode",
+              "value": "s2-g3"
+            },
+            {
+              "key": "GenerationCode",
+              "value": "G3"
+            },
+            {
+              "key": "CpuCount",
+              "value": "2"
+            },
+            {
+              "key": "MemorySize",
+              "value": "8589934592"
+            },
+            {
+              "key": "HypervisorType",
+              "value": "{code:KVM,codeName:KVM}"
+            },
+            {
+              "key": "CpuArchitectureType",
+              "value": "{code:X86_64,codeName:x86 64bit}"
+            },
+            {
+              "key": "BlockStorageMaxCount",
+              "value": "20"
+            },
+            {
+              "key": "BlockStorageMaxIops",
+              "value": "4725"
+            },
+            {
+              "key": "BlockStorageMaxThroughput",
+              "value": "84934656"
+            },
+            {
+              "key": "NetworkPerformance",
+              "value": "1000000000"
+            },
+            {
+              "key": "NetworkInterfaceMaxCount",
+              "value": "3"
+            },
+            {
+              "key": "ServerProductCode",
+              "value": "SVR.VSVR.STAND.C002.M008.G003"
+            },
+            {
+              "key": "ServerSpecDescription",
+              "value": "vCPU 2EA, Memory 8GB"
+            },
+            {
+              "key": "CorrespondingImageIds",
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+            }
+          ]
         }
       ],
-      "targetVmOsImageList": [
+      "targetOsImageList": [
         {
           "resourceType": "image",
           "namespace": "system",
           "providerName": "ncp",
           "cspImageName": "23214590",
-          "regionList": ["kr"],
+          "regionList": [
+            "kr"
+          ],
           "id": "23214590",
-          "uid": "d66sfoddi7idhnuqkp6g",
+          "uid": "d7k8jndq1uu3ogmt0uo0",
           "name": "23214590",
-          "sourceVmUid": "",
+          "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2026.02.12 12:30:25 Thu",
+          "fetchedTime": "2026.04.22 08:42:05 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -3343,9 +3380,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       ],
       "targetSecurityGroupList": [
         {
-          "name": "mig-3-sg-01",
+          "name": "sg-01",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec268ed7-821e-9d73-e79f-961262161624",
           "firewallRules": [
             {
@@ -3430,9 +3467,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "cspResourceId": ""
         },
         {
-          "name": "mig-3-sg-02",
+          "name": "sg-02",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "firewallRules": [
             {
@@ -3547,9 +3584,9 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "cspResourceId": ""
         },
         {
-          "name": "mig-3-sg-03",
+          "name": "sg-03",
           "connectionName": "ncp-kr",
-          "vNetId": "mig-3-vnet-01",
+          "vNetId": "vnet-01",
           "description": "Recommended security group for ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "firewallRules": [
             {
@@ -3675,7 +3712,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 #### 2.1 API Request Information
 
-- **API Endpoint**: `POST /beetle/migration/ns/mig01/mci`
+- **API Endpoint**: `POST /beetle/migration/ns/mig01/infra`
 - **Purpose**: Create and migrate infrastructure based on recommendation
 - **Namespace ID**: `mig01`
 - **Request Body**: Uses the response from the previous recommendation step
@@ -3692,10 +3729,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 ```json
 {
-  "resourceType": "mci",
-  "id": "mig-3-mci101",
-  "uid": "d71tgk7693a119qk81r0",
-  "name": "mig-3-mci101",
+  "resourceType": "infra",
+  "id": "my04-infra101",
+  "uid": "tbd81fe7e6aji65qtg7si0",
+  "name": "my04-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
     "countTotal": 3,
@@ -3717,25 +3754,25 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
   "configureCloudAdaptiveNetwork": "",
   "label": {
     "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
-    "sys.id": "mig-3-mci101",
-    "sys.labelType": "mci",
+    "sys.id": "my04-infra101",
+    "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "mig-3-mci101",
+    "sys.name": "my04-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "d71tgk7693a119qk81r0"
+    "sys.uid": "tbd81fe7e6aji65qtg7si0"
   },
   "systemLabel": "",
   "systemMessage": null,
   "description": "Recommended VMs comprising multi-cloud infrastructure",
-  "vm": [
+  "node": [
     {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d71tgk7693a119qk81s0",
-      "cspResourceName": "d71tgk7693a119qk81s0",
-      "cspResourceId": "134455079",
-      "name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "subGroupId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
+      "resourceType": "node",
+      "id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "tbd81fe7m6aji65qtg7sj0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+      "cspResourceId": "138234481",
+      "name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -3747,232 +3784,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:51",
+      "createdTime": "2026-05-12 09:51:22",
       "label": {
-        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624"
+        "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-05-12 09:51:22",
+        "sys.cspResourceId": "138234481",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+        "sys.id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sj0",
+        "sys.vNetId": "my04-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
       "region": {
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "49.50.136.154",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.7",
-      "privateDNS": "",
-      "rootDiskType": "HDD",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/vda",
-      "connectionName": "ncp-kr",
-      "connectionConfig": {
-        "configName": "ncp-kr",
-        "providerName": "ncp",
-        "driverName": "ncp-driver-v1.0.so",
-        "credentialName": "ncp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncp-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": ["KR-1", "KR-2"]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "ncp+kr+ci2-g3",
-      "cspSpecName": "ci2-g3",
-      "spec": {
-        "cspSpecName": "ci2-g3",
-        "vCPU": 2,
-        "memoryGiB": 4,
-        "costPerHour": 0.073
-      },
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "23214590",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-      },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
-      "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-01"],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:58Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "134455079"
-        },
-        {
-          "key": "ServerName",
-          "value": "d71tgk7693a119qk81s0"
-        },
-        {
-          "key": "CpuCount",
-          "value": "2"
-        },
-        {
-          "key": "MemorySize",
-          "value": "4294967296"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2026-03-25T21:43:06+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2026-03-25T21:45:40+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.CPU.C002.M004.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "135959"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "293642"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "5545097"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "166173"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:CPU,codeName:CPU-Intensive}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "ci2-g3"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d71tgk7693a119qk81u0",
-      "cspResourceName": "d71tgk7693a119qk81u0",
-      "cspResourceId": "134455087",
-      "name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "subGroupId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:52",
-      "label": {
-        "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
-      },
-      "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-      "region": {
-        "region": "KR",
-        "zone": "KR-1"
-      },
-      "publicIP": "110.165.17.215",
+      "publicIP": "101.79.19.173",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.8",
@@ -4001,18 +3836,21 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncp+kr+s2-g3",
-      "cspSpecName": "s2-g3",
+      "specId": "ncp+kr+ci2-g3",
+      "cspSpecName": "ci2-g3",
       "spec": {
-        "cspSpecName": "s2-g3",
+        "cspSpecName": "ci2-g3",
         "vCPU": 2,
-        "memoryGiB": 8,
-        "costPerHour": 0.0848
+        "memoryGiB": 4,
+        "costPerHour": 0.073
       },
       "imageId": "23214590",
       "cspImageName": "23214590",
@@ -4023,21 +3861,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-03"],
+      "securityGroupIds": [
+        "my04-sg-01"
+      ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:58Z"
+        "firstUsedAt": "2026-05-12T09:51:28Z"
       },
       "commandStatus": [
         {
@@ -4045,22 +3885,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "134455087"
+          "value": "138234481"
         },
         {
           "key": "ServerName",
-          "value": "d71tgk7693a119qk81u0"
+          "value": "tbd81fe7m6aji65qtg7sj0"
         },
         {
           "key": "CpuCount",
@@ -4068,7 +3908,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "MemorySize",
-          "value": "8589934592"
+          "value": "4294967296"
         },
         {
           "key": "PlatformType",
@@ -4076,7 +3916,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
+          "value": "tbd81fd3e6aji65qtg7seg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4092,11 +3932,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "CreateDate",
-          "value": "2026-03-25T21:43:07+0900"
+          "value": "2026-05-12T18:47:18+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-03-25T21:45:38+0900"
+          "value": "2026-05-12T18:49:31+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4104,7 +3944,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C002.M008.G003"
+          "value": "SVR.VSVR.CPU.C002.M004.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -4120,19 +3960,254 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "VpcNo",
-          "value": "135959"
+          "value": "138792"
         },
         {
           "key": "SubnetNo",
-          "value": "293642"
+          "value": "300131"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5545098"
+          "value": "5678079"
         },
         {
           "key": "InitScriptNo",
-          "value": "166174"
+          "value": "170941"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:CPU,codeName:CPU-Intensive}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "ci2-g3"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "uid": "tbd81fe7m6aji65qtg7sl0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+      "cspResourceId": "138234474",
+      "name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-05-12 09:51:10",
+      "label": {
+        "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-05-12 09:51:10",
+        "sys.cspResourceId": "138234474",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+        "sys.id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sl0",
+        "sys.vNetId": "my04-vnet-01"
+      },
+      "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
+      "region": {
+        "region": "KR",
+        "zone": "KR-1"
+      },
+      "publicIP": "101.79.20.23",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.7",
+      "privateDNS": "",
+      "rootDiskType": "HDD",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/vda",
+      "connectionName": "ncp-kr",
+      "connectionConfig": {
+        "configName": "ncp-kr",
+        "providerName": "ncp",
+        "driverName": "ncp-driver-v1.0.so",
+        "credentialName": "ncp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncp-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncp+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "spec": {
+        "cspSpecName": "s2-g3a",
+        "vCPU": 2,
+        "memoryGiB": 8,
+        "costPerHour": 0.0848
+      },
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "23214590",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+      },
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
+      "networkInterface": "eth0",
+      "securityGroupIds": [
+        "my04-sg-03"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+        "firstUsedAt": "2026-05-12T09:51:28Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "138234474"
+        },
+        {
+          "key": "ServerName",
+          "value": "tbd81fe7m6aji65qtg7sl0"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "tbd81fd3e6aji65qtg7seg"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2026-05-12T18:47:18+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2026-05-12T18:49:31+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "138792"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "300131"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "5678078"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "170940"
         },
         {
           "key": "ServerInstanceType",
@@ -4156,18 +4231,18 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "ServerSpecCode",
-          "value": "s2-g3"
+          "value": "s2-g3a"
         }
       ]
     },
     {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d71tgk7693a119qk81t0",
-      "cspResourceName": "d71tgk7693a119qk81t0",
-      "cspResourceId": "134455073",
-      "name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "subGroupId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "resourceType": "node",
+      "id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "uid": "tbd81fe7m6aji65qtg7sk0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+      "cspResourceId": "138234467",
+      "name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -4179,16 +4254,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:16",
+      "createdTime": "2026-05-12 09:50:58",
       "label": {
-        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+        "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-05-12 09:50:58",
+        "sys.cspResourceId": "138234467",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+        "sys.id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sk0",
+        "sys.vNetId": "my04-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
       "region": {
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "223.130.140.135",
+      "publicIP": "101.79.19.56",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
@@ -4217,7 +4306,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
@@ -4239,21 +4331,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-02"],
+      "securityGroupIds": [
+        "my04-sg-02"
+      ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:57Z"
+        "firstUsedAt": "2026-05-12T09:51:27Z"
       },
       "commandStatus": [
         {
@@ -4261,22 +4355,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "134455073"
+          "value": "138234467"
         },
         {
           "key": "ServerName",
-          "value": "d71tgk7693a119qk81t0"
+          "value": "tbd81fe7m6aji65qtg7sk0"
         },
         {
           "key": "CpuCount",
@@ -4292,7 +4386,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
+          "value": "tbd81fd3e6aji65qtg7seg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4308,11 +4402,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "CreateDate",
-          "value": "2026-03-25T21:43:05+0900"
+          "value": "2026-05-12T18:47:18+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-03-25T21:45:17+0900"
+          "value": "2026-05-12T18:49:23+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4336,19 +4430,19 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "VpcNo",
-          "value": "135959"
+          "value": "138792"
         },
         {
           "key": "SubnetNo",
-          "value": "293642"
+          "value": "300131"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5545096"
+          "value": "5678077"
         },
         {
           "key": "InitScriptNo",
-          "value": "166172"
+          "value": "170939"
         },
         {
           "key": "ServerInstanceType",
@@ -4377,22 +4471,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       ]
     }
   ],
-  "newVmList": null,
+  "newNodeList": null,
   "postCommand": {
     "userName": "cb-user",
-    "command": ["uname -a"]
+    "command": [
+      "uname -a"
+    ]
   },
   "postCommandResult": {
     "results": [
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "223.130.140.135",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "nodeIp": "101.79.19.56",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4400,14 +4496,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "err": null
       },
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "49.50.136.154",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "nodeIp": "101.79.20.23",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4415,14 +4511,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "err": null
       },
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "110.165.17.215",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "101.79.19.173",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4436,35 +4532,35 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 </details>
 
-### Test Case 3: Get a list of MCIs
+### Test Case 3: Get a list of infras
 
 #### 3.1 API Request Information
 
-- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci`
-- **Purpose**: Retrieve all Multi-Cloud Infrastructure instances
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/infra`
+- **Purpose**: Retrieve all migrated cloud infrastructure instances
 - **Namespace ID**: `mig01`
 - **Request Body**: None (GET request)
 
 #### 3.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Response**: MCI list retrieved successfully
+- **Response**: Infra list retrieved successfully
 
 **Response Body**:
 
 ```json
 {
-  "mci": [
+  "infra": [
     {
-      "resourceType": "mci",
-      "id": "mig-2-mci101",
-      "uid": "d71tiu7693a119qk820g",
-      "name": "mig-2-mci101",
-      "status": "Creating:3 (R:0/3)",
+      "resourceType": "infra",
+      "id": "my03-infra101",
+      "uid": "tbd81ffbe6aji65qtg7sng",
+      "name": "my03-infra101",
+      "status": "Running:3 (R:3/3)",
       "statusCount": {
         "countTotal": 3,
-        "countCreating": 3,
-        "countRunning": 0,
+        "countCreating": 0,
+        "countRunning": 3,
         "countFailed": 0,
         "countSuspended": 0,
         "countRebooting": 0,
@@ -4475,54 +4571,74 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "countRegistering": 0,
         "countUndefined": 0
       },
-      "targetStatus": "Running",
-      "targetAction": "Create",
+      "targetStatus": "None",
+      "targetAction": "None",
       "installMonAgent": "",
       "configureCloudAdaptiveNetwork": "",
       "label": {
         "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
-        "sys.id": "mig-2-mci101",
-        "sys.labelType": "mci",
+        "sys.id": "my03-infra101",
+        "sys.labelType": "infra",
         "sys.manager": "cb-tumblebug",
-        "sys.name": "mig-2-mci101",
+        "sys.name": "my03-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "d71tiu7693a119qk820g"
+        "sys.uid": "tbd81ffbe6aji65qtg7sng"
       },
       "systemLabel": "",
       "systemMessage": null,
       "description": "Recommended VMs comprising multi-cloud infrastructure",
-      "vm": [
+      "node": [
         {
-          "resourceType": "vm",
-          "id": "mig-2-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "d71tiu7693a119qk821g",
-          "name": "mig-2-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "subGroupId": "mig-2-vm-ec268ed7-821e-9d73-e79f-961262161624",
+          "resourceType": "node",
+          "id": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbd81ffbm6aji65qtg7sog",
+          "cspResourceName": "tbd81ffbm6aji65qtg7sog",
+          "cspResourceId": "tbd81ffbm6aji65qtg7sog",
+          "name": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Creating",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "",
-          "label": null,
+          "createdTime": "2026-05-12 09:50:21",
+          "label": {
+            "keypair": "tbd81fd466aji65qtg7sfg",
+            "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-05-12 09:50:21",
+            "sys.cspResourceId": "tbd81ffbm6aji65qtg7sog",
+            "sys.cspResourceName": "tbd81ffbm6aji65qtg7sog",
+            "sys.id": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my03-subnet-01",
+            "sys.uid": "tbd81ffbm6aji65qtg7sog",
+            "sys.vNetId": "my03-vnet-01"
+          },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
           "region": {
-            "region": ""
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
           },
-          "publicIP": "",
-          "sshPort": 0,
+          "publicIP": "34.158.204.63",
+          "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "",
+          "privateIP": "10.0.1.2",
           "privateDNS": "",
-          "rootDiskType": "",
+          "rootDiskType": "pd-standard",
           "rootDiskSize": 50,
-          "RootDeviceName": "",
+          "RootDeviceName": "persistent-disk-0",
           "connectionName": "gcp-asia-northeast3",
           "connectionConfig": {
             "configName": "gcp-asia-northeast3",
@@ -4553,55 +4669,221 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "gcp+asia-northeast3+e2-small",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260210",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
+          "specId": "gcp+asia-northeast3+e2-highcpu-2",
+          "cspSpecName": "e2-highcpu-2",
+          "spec": {
+            "cspSpecName": "e2-highcpu-2",
+            "vCPU": 2,
+            "memoryGiB": 1.953125,
+            "costPerHour": 0.063531
           },
-          "vNetId": "mig-2-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-2-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-2-sg-01"],
+          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21"
+          },
+          "vNetId": "my03-vnet-01",
+          "cspVNetId": "tbd81fcrm6aji65qtg7rtg",
+          "subnetId": "my03-subnet-01",
+          "cspSubnetId": "tbd81fcrm6aji65qtg7ru0",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-sg-01"
+          ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-2-sshkey-01",
-          "cspSshKeyId": ""
+          "sshKeyId": "my03-sshkey-01",
+          "cspSshKeyId": "tbd81fd466aji65qtg7sfg",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBDWs1O67lTqjywhyfSy0DUdVXjKbOCkG2p+cNK0kF3Advcia+KV9kocOB0cYy3lgsP7ab6KX69IQiCQSz6gxnVg=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:ydA9WCTdI4uR0AvkDzBhqUY7arK9CdwHq1KBOsfkJvk",
+            "firstUsedAt": "2026-05-12T09:50:38Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-05-12T09:50:38Z",
+              "completedTime": "2026-05-12T09:50:41Z",
+              "elapsedTime": 3,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbd81ffbm6aji65qtg7sog 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "CanIpForward",
+              "value": "false"
+            },
+            {
+              "key": "CpuPlatform",
+              "value": "Intel Broadwell"
+            },
+            {
+              "key": "CreationTimestamp",
+              "value": "2026-05-12T02:49:40.967-07:00"
+            },
+            {
+              "key": "DeletionProtection",
+              "value": "false"
+            },
+            {
+              "key": "Description",
+              "value": "compute sample instance"
+            },
+            {
+              "key": "Disks",
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:50,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbd81ffbm6aji65qtg7sog,type:PERSISTENT}"
+            },
+            {
+              "key": "Fingerprint",
+              "value": "Ze1M2KRQWjk="
+            },
+            {
+              "key": "Id",
+              "value": "1593969242543180123"
+            },
+            {
+              "key": "Kind",
+              "value": "compute#instance"
+            },
+            {
+              "key": "LabelFingerprint",
+              "value": "iFKnnqnIM2k="
+            },
+            {
+              "key": "Labels",
+              "value": "{keypair:tbd81fd466aji65qtg7sfg}"
+            },
+            {
+              "key": "LastStartTimestamp",
+              "value": "2026-05-12T02:49:48.192-07:00"
+            },
+            {
+              "key": "MachineType",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/machineTypes/e2-highcpu-2"
+            },
+            {
+              "key": "Metadata",
+              "value": "{fingerprint:DhKU-Pa8YKE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCyVsgErpu0gFPitLeNhIXp/RVCVF0Hy5WpW2MIOXS19f40s0vp1Ulwyl9rTgZU4u0+QPr0kT5atZVuDirnjctHAhd4M+Qh2pU0W2VgB1Cl/nQ/E+ch5stLZ1p/CREIUOq7H/Il89tbIys11DdULFC8cuj7xMDcmNiU4lRcqRl3ZcUz5v6pIpPa1ap39m+VECADtDYRXWRUTYA64UmgkfsRlqN+B9uCQC3C4plaAlKAgpN6D16g65S+eN64M02UnJgf5LpvlhQphg3VkTtG1tl8yCCztqOjL+ofqIGCuxAaRZpLzs37DVFRNOJhYx+iQjU4raRSAazv89o+Q2ksLq/sLvkDuR4HUm5utPFwC6nluv9w7T2b5Zx2p1A38H8GTSKhJ9x1kDwV8iSPfuI+sqFqiaNlUI9aC3I1V26pLTk9CA8nwWiJdEXB9gJeYT4Yhan8DVIPtXVE5sd2o6DIJnKuACxsrlbkR2eY/OQEnv/jUX8PdVz6i86Xvi0Qo5yopXR9reQ6kfHSmbbuwyXMwP31M2h7QZfDR6hqndH1XSv4scbErfwmu7bh/rhtATxnLIfLjkA/KSszMEZ7i2xMp70bg2YrE52tio2pSRgvfnXvLyOn5YPy36hV8TAxcNoGydlHoN+HxnwCAcwP0qWP1MFYaHoipC1J59HZEmS1ha0/4Q== cb-user}],kind:compute#metadata}"
+            },
+            {
+              "key": "Name",
+              "value": "tbd81ffbm6aji65qtg7sog"
+            },
+            {
+              "key": "NetworkInterfaces",
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.158.204.63,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:sB9z5QTR24w=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbd81fcrm6aji65qtg7rtg,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tbd81fcrm6aji65qtg7ru0}"
+            },
+            {
+              "key": "ResourceStatus",
+              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
+            },
+            {
+              "key": "SatisfiesPzi",
+              "value": "true"
+            },
+            {
+              "key": "SatisfiesPzs",
+              "value": "false"
+            },
+            {
+              "key": "Scheduling",
+              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
+            },
+            {
+              "key": "SelfLink",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbd81ffbm6aji65qtg7sog"
+            },
+            {
+              "key": "ServiceAccounts",
+              "value": "{email:MASKED_EMAIL,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
+            },
+            {
+              "key": "ShieldedInstanceConfig",
+              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
+            },
+            {
+              "key": "ShieldedInstanceIntegrityPolicy",
+              "value": "{updateAutoLearnPolicy:true}"
+            },
+            {
+              "key": "StartRestricted",
+              "value": "false"
+            },
+            {
+              "key": "Status",
+              "value": "RUNNING"
+            },
+            {
+              "key": "Tags",
+              "value": "{fingerprint:wF4QnTxJsgg=,items:[tbd81fd466aji65qtg7sg0]}"
+            },
+            {
+              "key": "Zone",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a"
+            }
+          ]
         },
         {
-          "resourceType": "vm",
-          "id": "mig-2-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "d71tiu7693a119qk823g",
-          "name": "mig-2-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "subGroupId": "mig-2-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+          "resourceType": "node",
+          "id": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "uid": "tbd81ffbm6aji65qtg7sqg",
+          "cspResourceName": "tbd81ffbm6aji65qtg7sqg",
+          "cspResourceId": "tbd81ffbm6aji65qtg7sqg",
+          "name": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "nodeGroupId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Creating",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "",
-          "label": null,
+          "createdTime": "2026-05-12 09:50:23",
+          "label": {
+            "keypair": "tbd81fd466aji65qtg7sfg",
+            "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-05-12 09:50:23",
+            "sys.cspResourceId": "tbd81ffbm6aji65qtg7sqg",
+            "sys.cspResourceName": "tbd81ffbm6aji65qtg7sqg",
+            "sys.id": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.subnetId": "my03-subnet-01",
+            "sys.uid": "tbd81ffbm6aji65qtg7sqg",
+            "sys.vNetId": "my03-vnet-01"
+          },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
           "region": {
-            "region": ""
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
           },
-          "publicIP": "",
-          "sshPort": 0,
+          "publicIP": "34.50.35.103",
+          "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "",
+          "privateIP": "10.0.1.4",
           "privateDNS": "",
-          "rootDiskType": "",
+          "rootDiskType": "pd-standard",
           "rootDiskSize": 50,
-          "RootDeviceName": "",
+          "RootDeviceName": "persistent-disk-0",
           "connectionName": "gcp-asia-northeast3",
           "connectionConfig": {
             "configName": "gcp-asia-northeast3",
@@ -4633,54 +4915,220 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "verified": true
           },
           "specId": "gcp+asia-northeast3+e2-standard-2",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260210",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
+          "cspSpecName": "e2-standard-2",
+          "spec": {
+            "cspSpecName": "e2-standard-2",
+            "vCPU": 2,
+            "memoryGiB": 7.8125,
+            "costPerHour": 0.085966
           },
-          "vNetId": "mig-2-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-2-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-2-sg-03"],
+          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21"
+          },
+          "vNetId": "my03-vnet-01",
+          "cspVNetId": "tbd81fcrm6aji65qtg7rtg",
+          "subnetId": "my03-subnet-01",
+          "cspSubnetId": "tbd81fcrm6aji65qtg7ru0",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-sg-03"
+          ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-2-sshkey-01",
-          "cspSshKeyId": ""
+          "sshKeyId": "my03-sshkey-01",
+          "cspSshKeyId": "tbd81fd466aji65qtg7sfg",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMrtQtDUiUdG1oCzNSF23wNYT9yks/U+HQFM4H8KtWmOJGvHechJow2MM8+ls8Mj14sRKYWxH0DNMkkqnSjkCuA=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:ojW1rp6jU49KfmomGDmh3nQeYrjbF3VL5yVCcZ+c6e4",
+            "firstUsedAt": "2026-05-12T09:50:40Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-05-12T09:50:38Z",
+              "completedTime": "2026-05-12T09:50:42Z",
+              "elapsedTime": 4,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbd81ffbm6aji65qtg7sqg 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "CanIpForward",
+              "value": "false"
+            },
+            {
+              "key": "CpuPlatform",
+              "value": "Intel Broadwell"
+            },
+            {
+              "key": "CreationTimestamp",
+              "value": "2026-05-12T02:49:42.582-07:00"
+            },
+            {
+              "key": "DeletionProtection",
+              "value": "false"
+            },
+            {
+              "key": "Description",
+              "value": "compute sample instance"
+            },
+            {
+              "key": "Disks",
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:50,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbd81ffbm6aji65qtg7sqg,type:PERSISTENT}"
+            },
+            {
+              "key": "Fingerprint",
+              "value": "RwAIYtShgo4="
+            },
+            {
+              "key": "Id",
+              "value": "7260017217573439834"
+            },
+            {
+              "key": "Kind",
+              "value": "compute#instance"
+            },
+            {
+              "key": "LabelFingerprint",
+              "value": "iFKnnqnIM2k="
+            },
+            {
+              "key": "Labels",
+              "value": "{keypair:tbd81fd466aji65qtg7sfg}"
+            },
+            {
+              "key": "LastStartTimestamp",
+              "value": "2026-05-12T02:49:49.584-07:00"
+            },
+            {
+              "key": "MachineType",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/machineTypes/e2-standard-2"
+            },
+            {
+              "key": "Metadata",
+              "value": "{fingerprint:DhKU-Pa8YKE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCyVsgErpu0gFPitLeNhIXp/RVCVF0Hy5WpW2MIOXS19f40s0vp1Ulwyl9rTgZU4u0+QPr0kT5atZVuDirnjctHAhd4M+Qh2pU0W2VgB1Cl/nQ/E+ch5stLZ1p/CREIUOq7H/Il89tbIys11DdULFC8cuj7xMDcmNiU4lRcqRl3ZcUz5v6pIpPa1ap39m+VECADtDYRXWRUTYA64UmgkfsRlqN+B9uCQC3C4plaAlKAgpN6D16g65S+eN64M02UnJgf5LpvlhQphg3VkTtG1tl8yCCztqOjL+ofqIGCuxAaRZpLzs37DVFRNOJhYx+iQjU4raRSAazv89o+Q2ksLq/sLvkDuR4HUm5utPFwC6nluv9w7T2b5Zx2p1A38H8GTSKhJ9x1kDwV8iSPfuI+sqFqiaNlUI9aC3I1V26pLTk9CA8nwWiJdEXB9gJeYT4Yhan8DVIPtXVE5sd2o6DIJnKuACxsrlbkR2eY/OQEnv/jUX8PdVz6i86Xvi0Qo5yopXR9reQ6kfHSmbbuwyXMwP31M2h7QZfDR6hqndH1XSv4scbErfwmu7bh/rhtATxnLIfLjkA/KSszMEZ7i2xMp70bg2YrE52tio2pSRgvfnXvLyOn5YPy36hV8TAxcNoGydlHoN+HxnwCAcwP0qWP1MFYaHoipC1J59HZEmS1ha0/4Q== cb-user}],kind:compute#metadata}"
+            },
+            {
+              "key": "Name",
+              "value": "tbd81ffbm6aji65qtg7sqg"
+            },
+            {
+              "key": "NetworkInterfaces",
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.50.35.103,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:lFDLiG6yO5c=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbd81fcrm6aji65qtg7rtg,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tbd81fcrm6aji65qtg7ru0}"
+            },
+            {
+              "key": "ResourceStatus",
+              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
+            },
+            {
+              "key": "SatisfiesPzi",
+              "value": "true"
+            },
+            {
+              "key": "SatisfiesPzs",
+              "value": "false"
+            },
+            {
+              "key": "Scheduling",
+              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
+            },
+            {
+              "key": "SelfLink",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbd81ffbm6aji65qtg7sqg"
+            },
+            {
+              "key": "ServiceAccounts",
+              "value": "{email:MASKED_EMAIL,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
+            },
+            {
+              "key": "ShieldedInstanceConfig",
+              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
+            },
+            {
+              "key": "ShieldedInstanceIntegrityPolicy",
+              "value": "{updateAutoLearnPolicy:true}"
+            },
+            {
+              "key": "StartRestricted",
+              "value": "false"
+            },
+            {
+              "key": "Status",
+              "value": "RUNNING"
+            },
+            {
+              "key": "Tags",
+              "value": "{fingerprint:__A_yY_oPbY=,items:[tbd81feh66aji65qtg7sn0]}"
+            },
+            {
+              "key": "Zone",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a"
+            }
+          ]
         },
         {
-          "resourceType": "vm",
-          "id": "mig-2-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "d71tiu7693a119qk822g",
-          "name": "mig-2-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "subGroupId": "mig-2-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+          "resourceType": "node",
+          "id": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "uid": "tbd81ffbm6aji65qtg7spg",
+          "cspResourceName": "tbd81ffbm6aji65qtg7spg",
+          "cspResourceId": "tbd81ffbm6aji65qtg7spg",
+          "name": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "nodeGroupId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
             "display": "South Korea (Seoul)",
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Creating",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "",
-          "label": null,
+          "createdTime": "2026-05-12 09:50:29",
+          "label": {
+            "keypair": "tbd81fd466aji65qtg7sfg",
+            "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.connectionName": "gcp-asia-northeast3",
+            "sys.createdTime": "2026-05-12 09:50:29",
+            "sys.cspResourceId": "tbd81ffbm6aji65qtg7spg",
+            "sys.cspResourceName": "tbd81ffbm6aji65qtg7spg",
+            "sys.id": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.infraId": "my03-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.subnetId": "my03-subnet-01",
+            "sys.uid": "tbd81ffbm6aji65qtg7spg",
+            "sys.vNetId": "my03-vnet-01"
+          },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
           "region": {
-            "region": ""
+            "region": "asia-northeast3",
+            "zone": "asia-northeast3-a"
           },
-          "publicIP": "",
-          "sshPort": 0,
+          "publicIP": "34.64.171.230",
+          "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "",
+          "privateIP": "10.0.1.3",
           "privateDNS": "",
-          "rootDiskType": "",
+          "rootDiskType": "pd-standard",
           "rootDiskSize": 50,
-          "RootDeviceName": "",
+          "RootDeviceName": "persistent-disk-0",
           "connectionName": "gcp-asia-northeast3",
           "connectionConfig": {
             "configName": "gcp-asia-northeast3",
@@ -4712,38 +5160,232 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "verified": true
           },
           "specId": "gcp+asia-northeast3+e2-standard-4",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260210",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
+          "cspSpecName": "e2-standard-4",
+          "spec": {
+            "cspSpecName": "e2-standard-4",
+            "vCPU": 4,
+            "memoryGiB": 15.625,
+            "costPerHour": 0.171931
           },
-          "vNetId": "mig-2-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-2-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-2-sg-02"],
+          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21"
+          },
+          "vNetId": "my03-vnet-01",
+          "cspVNetId": "tbd81fcrm6aji65qtg7rtg",
+          "subnetId": "my03-subnet-01",
+          "cspSubnetId": "tbd81fcrm6aji65qtg7ru0",
+          "networkInterface": "nic0",
+          "securityGroupIds": [
+            "my03-sg-02"
+          ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-2-sshkey-01",
-          "cspSshKeyId": ""
+          "sshKeyId": "my03-sshkey-01",
+          "cspSshKeyId": "tbd81fd466aji65qtg7sfg",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBA/tQZO3ieBWPUMFX+hYHM27DS/eAoZostdcDvydt+4hTFJL9NwBs2DC2MUshKS1C57DGaLeOSnC5fzHdoMFkEQ=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:AbCogiVk5uz+GX63WbpqC+BrJ6788SV+zEOMIcHYaVk",
+            "firstUsedAt": "2026-05-12T09:50:40Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-05-12T09:50:38Z",
+              "completedTime": "2026-05-12T09:50:41Z",
+              "elapsedTime": 3,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbd81ffbm6aji65qtg7spg 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "CanIpForward",
+              "value": "false"
+            },
+            {
+              "key": "CpuPlatform",
+              "value": "Intel Broadwell"
+            },
+            {
+              "key": "CreationTimestamp",
+              "value": "2026-05-12T02:49:42.308-07:00"
+            },
+            {
+              "key": "DeletionProtection",
+              "value": "false"
+            },
+            {
+              "key": "Description",
+              "value": "compute sample instance"
+            },
+            {
+              "key": "Disks",
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:50,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbd81ffbm6aji65qtg7spg,type:PERSISTENT}"
+            },
+            {
+              "key": "Fingerprint",
+              "value": "cE_0TgthpVs="
+            },
+            {
+              "key": "Id",
+              "value": "8588388900726065497"
+            },
+            {
+              "key": "Kind",
+              "value": "compute#instance"
+            },
+            {
+              "key": "LabelFingerprint",
+              "value": "iFKnnqnIM2k="
+            },
+            {
+              "key": "Labels",
+              "value": "{keypair:tbd81fd466aji65qtg7sfg}"
+            },
+            {
+              "key": "LastStartTimestamp",
+              "value": "2026-05-12T02:49:53.483-07:00"
+            },
+            {
+              "key": "MachineType",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/machineTypes/e2-standard-4"
+            },
+            {
+              "key": "Metadata",
+              "value": "{fingerprint:DhKU-Pa8YKE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCyVsgErpu0gFPitLeNhIXp/RVCVF0Hy5WpW2MIOXS19f40s0vp1Ulwyl9rTgZU4u0+QPr0kT5atZVuDirnjctHAhd4M+Qh2pU0W2VgB1Cl/nQ/E+ch5stLZ1p/CREIUOq7H/Il89tbIys11DdULFC8cuj7xMDcmNiU4lRcqRl3ZcUz5v6pIpPa1ap39m+VECADtDYRXWRUTYA64UmgkfsRlqN+B9uCQC3C4plaAlKAgpN6D16g65S+eN64M02UnJgf5LpvlhQphg3VkTtG1tl8yCCztqOjL+ofqIGCuxAaRZpLzs37DVFRNOJhYx+iQjU4raRSAazv89o+Q2ksLq/sLvkDuR4HUm5utPFwC6nluv9w7T2b5Zx2p1A38H8GTSKhJ9x1kDwV8iSPfuI+sqFqiaNlUI9aC3I1V26pLTk9CA8nwWiJdEXB9gJeYT4Yhan8DVIPtXVE5sd2o6DIJnKuACxsrlbkR2eY/OQEnv/jUX8PdVz6i86Xvi0Qo5yopXR9reQ6kfHSmbbuwyXMwP31M2h7QZfDR6hqndH1XSv4scbErfwmu7bh/rhtATxnLIfLjkA/KSszMEZ7i2xMp70bg2YrE52tio2pSRgvfnXvLyOn5YPy36hV8TAxcNoGydlHoN+HxnwCAcwP0qWP1MFYaHoipC1J59HZEmS1ha0/4Q== cb-user}],kind:compute#metadata}"
+            },
+            {
+              "key": "Name",
+              "value": "tbd81ffbm6aji65qtg7spg"
+            },
+            {
+              "key": "NetworkInterfaces",
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.171.230,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:N1qJzSGLvnY=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbd81fcrm6aji65qtg7rtg,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tbd81fcrm6aji65qtg7ru0}"
+            },
+            {
+              "key": "ResourceStatus",
+              "value": "{effectiveInstanceMetadata:{vmDnsSettingMetadataValue:ZonalOnly}}"
+            },
+            {
+              "key": "SatisfiesPzi",
+              "value": "true"
+            },
+            {
+              "key": "SatisfiesPzs",
+              "value": "false"
+            },
+            {
+              "key": "Scheduling",
+              "value": "{automaticRestart:true,onHostMaintenance:MIGRATE,provisioningModel:STANDARD}"
+            },
+            {
+              "key": "SelfLink",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbd81ffbm6aji65qtg7spg"
+            },
+            {
+              "key": "ServiceAccounts",
+              "value": "{email:MASKED_EMAIL,scopes:[https://www.googleapis.com/auth/devstorage.full_control,https://www.googleapis.com/auth/compute]}"
+            },
+            {
+              "key": "ShieldedInstanceConfig",
+              "value": "{enableIntegrityMonitoring:true,enableVtpm:true}"
+            },
+            {
+              "key": "ShieldedInstanceIntegrityPolicy",
+              "value": "{updateAutoLearnPolicy:true}"
+            },
+            {
+              "key": "StartRestricted",
+              "value": "false"
+            },
+            {
+              "key": "Status",
+              "value": "RUNNING"
+            },
+            {
+              "key": "Tags",
+              "value": "{fingerprint:Y3tH5grMsBg=,items:[tbd81fdnm6aji65qtg7sh0]}"
+            },
+            {
+              "key": "Zone",
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a"
+            }
+          ]
         }
       ],
-      "newVmList": null,
+      "newNodeList": null,
       "postCommand": {
         "userName": "cb-user",
-        "command": ["uname -a"]
+        "command": [
+          "uname -a"
+        ]
       },
       "postCommandResult": {
-        "results": null
+        "results": [
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "34.158.204.63",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tbd81ffbm6aji65qtg7sog 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "nodeIp": "34.64.171.230",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tbd81ffbm6aji65qtg7spg 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "infraId": "my03-infra101",
+            "nodeId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "nodeIp": "34.50.35.103",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tbd81ffbm6aji65qtg7sqg 6.8.0-1053-gcp #56~22.04.1-Ubuntu SMP Mon Mar 23 20:16:54 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          }
+        ]
       }
     },
     {
-      "resourceType": "mci",
-      "id": "mig-3-mci101",
-      "uid": "d71tgk7693a119qk81r0",
-      "name": "mig-3-mci101",
+      "resourceType": "infra",
+      "id": "my04-infra101",
+      "uid": "tbd81fe7e6aji65qtg7si0",
+      "name": "my04-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
         "countTotal": 3,
@@ -4765,25 +5407,25 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       "configureCloudAdaptiveNetwork": "",
       "label": {
         "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
-        "sys.id": "mig-3-mci101",
-        "sys.labelType": "mci",
+        "sys.id": "my04-infra101",
+        "sys.labelType": "infra",
         "sys.manager": "cb-tumblebug",
-        "sys.name": "mig-3-mci101",
+        "sys.name": "my04-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "d71tgk7693a119qk81r0"
+        "sys.uid": "tbd81fe7e6aji65qtg7si0"
       },
       "systemLabel": "",
       "systemMessage": null,
       "description": "Recommended VMs comprising multi-cloud infrastructure",
-      "vm": [
+      "node": [
         {
-          "resourceType": "vm",
-          "id": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "d71tgk7693a119qk81s0",
-          "cspResourceName": "d71tgk7693a119qk81s0",
-          "cspResourceId": "134455079",
-          "name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "subGroupId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
+          "resourceType": "node",
+          "id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tbd81fe7m6aji65qtg7sj0",
+          "cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+          "cspResourceId": "138234481",
+          "name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
             "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
             "latitude": 37.4754,
@@ -4795,260 +5437,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-03-25 12:47:51",
+          "createdTime": "2026-05-12 09:51:22",
           "label": {
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-03-25 12:47:51",
-            "sys.cspResourceId": "134455079",
-            "sys.cspResourceName": "d71tgk7693a119qk81s0",
-            "sys.id": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "sys.labelType": "vm",
+            "sys.createdTime": "2026-05-12 09:51:22",
+            "sys.cspResourceId": "138234481",
+            "sys.cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+            "sys.id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
             "sys.manager": "cb-tumblebug",
-            "sys.mciId": "mig-3-mci101",
-            "sys.name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
-            "sys.subnetId": "mig-3-subnet-01",
-            "sys.uid": "d71tgk7693a119qk81s0",
-            "sys.vNetId": "mig-3-vnet-01"
+            "sys.nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my04-subnet-01",
+            "sys.uid": "tbd81fe7m6aji65qtg7sj0",
+            "sys.vNetId": "my04-vnet-01"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
           "region": {
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "49.50.136.154",
-          "sshPort": 22,
-          "publicDNS": "",
-          "privateIP": "10.0.1.7",
-          "privateDNS": "",
-          "rootDiskType": "HDD",
-          "rootDiskSize": 50,
-          "RootDeviceName": "/dev/vda",
-          "connectionName": "ncp-kr",
-          "connectionConfig": {
-            "configName": "ncp-kr",
-            "providerName": "ncp",
-            "driverName": "ncp-driver-v1.0.so",
-            "credentialName": "ncp",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "ncp-kr",
-            "regionZoneInfo": {
-              "assignedRegion": "KR",
-              "assignedZone": "KR-1"
-            },
-            "regionDetail": {
-              "regionId": "KR",
-              "regionName": "kr",
-              "description": "Korea 1",
-              "location": {
-                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-                "latitude": 37.4754,
-                "longitude": 126.8831
-              },
-              "zones": ["KR-1", "KR-2"]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "ncp+kr+ci2-g3",
-          "cspSpecName": "ci2-g3",
-          "spec": {
-            "cspSpecName": "ci2-g3",
-            "vCPU": 2,
-            "memoryGiB": 4,
-            "costPerHour": 0.073
-          },
-          "imageId": "23214590",
-          "cspImageName": "23214590",
-          "image": {
-            "resourceType": "image",
-            "cspImageName": "23214590",
-            "osType": "Ubuntu 22.04",
-            "osArchitecture": "x86_64",
-            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-          },
-          "vNetId": "mig-3-vnet-01",
-          "cspVNetId": "135959",
-          "subnetId": "mig-3-subnet-01",
-          "cspSubnetId": "293642",
-          "networkInterface": "eth0",
-          "securityGroupIds": ["mig-3-sg-01"],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-3-sshkey-01",
-          "cspSshKeyId": "d71tfgv693a119qk81hg",
-          "vmUserName": "cb-user",
-          "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-            "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-03-25T12:47:58Z"
-          },
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2026-03-25T12:47:57Z",
-              "completedTime": "2026-03-25T12:47:58Z",
-              "elapsedTime": 1,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "ServerInstanceNo",
-              "value": "134455079"
-            },
-            {
-              "key": "ServerName",
-              "value": "d71tgk7693a119qk81s0"
-            },
-            {
-              "key": "CpuCount",
-              "value": "2"
-            },
-            {
-              "key": "MemorySize",
-              "value": "4294967296"
-            },
-            {
-              "key": "PlatformType",
-              "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-            },
-            {
-              "key": "LoginKeyName",
-              "value": "d71tfgv693a119qk81hg"
-            },
-            {
-              "key": "ServerInstanceStatus",
-              "value": "{code:RUN,codeName:서버 RUN 상태}"
-            },
-            {
-              "key": "ServerInstanceOperation",
-              "value": "{code:NULL,codeName:서버 NULL OP}"
-            },
-            {
-              "key": "ServerInstanceStatusName",
-              "value": "running"
-            },
-            {
-              "key": "CreateDate",
-              "value": "2026-03-25T21:43:06+0900"
-            },
-            {
-              "key": "Uptime",
-              "value": "2026-03-25T21:45:40+0900"
-            },
-            {
-              "key": "ServerImageProductCode",
-              "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-            },
-            {
-              "key": "ServerProductCode",
-              "value": "SVR.VSVR.CPU.C002.M004.G003"
-            },
-            {
-              "key": "IsProtectServerTermination",
-              "value": "false"
-            },
-            {
-              "key": "ZoneCode",
-              "value": "KR-1"
-            },
-            {
-              "key": "RegionCode",
-              "value": "KR"
-            },
-            {
-              "key": "VpcNo",
-              "value": "135959"
-            },
-            {
-              "key": "SubnetNo",
-              "value": "293642"
-            },
-            {
-              "key": "NetworkInterfaceNoList",
-              "value": "5545097"
-            },
-            {
-              "key": "InitScriptNo",
-              "value": "166173"
-            },
-            {
-              "key": "ServerInstanceType",
-              "value": "{code:CPU,codeName:CPU-Intensive}"
-            },
-            {
-              "key": "BaseBlockStorageDiskType",
-              "value": "{code:NET,codeName:네트웍 스토리지}"
-            },
-            {
-              "key": "BaseBlockStorageDiskDetailType",
-              "value": "{code:SSD,codeName:SSD}"
-            },
-            {
-              "key": "HypervisorType",
-              "value": "{code:KVM,codeName:KVM}"
-            },
-            {
-              "key": "ServerImageNo",
-              "value": "23214590"
-            },
-            {
-              "key": "ServerSpecCode",
-              "value": "ci2-g3"
-            }
-          ]
-        },
-        {
-          "resourceType": "vm",
-          "id": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "d71tgk7693a119qk81u0",
-          "cspResourceName": "d71tgk7693a119qk81u0",
-          "cspResourceId": "134455087",
-          "name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "subGroupId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2026-03-25 12:47:52",
-          "label": {
-            "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-03-25 12:47:52",
-            "sys.cspResourceId": "134455087",
-            "sys.cspResourceName": "d71tgk7693a119qk81u0",
-            "sys.id": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "sys.labelType": "vm",
-            "sys.manager": "cb-tumblebug",
-            "sys.mciId": "mig-3-mci101",
-            "sys.name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "sys.namespace": "mig01",
-            "sys.subGroupId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "sys.subnetId": "mig-3-subnet-01",
-            "sys.uid": "d71tgk7693a119qk81u0",
-            "sys.vNetId": "mig-3-vnet-01"
-          },
-          "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-          "region": {
-            "region": "KR",
-            "zone": "KR-1"
-          },
-          "publicIP": "110.165.17.215",
+          "publicIP": "101.79.19.173",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.8",
@@ -5077,18 +5489,21 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
                 "latitude": 37.4754,
                 "longitude": 126.8831
               },
-              "zones": ["KR-1", "KR-2"]
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
             },
             "regionRepresentative": true,
             "verified": true
           },
-          "specId": "ncp+kr+s2-g3",
-          "cspSpecName": "s2-g3",
+          "specId": "ncp+kr+ci2-g3",
+          "cspSpecName": "ci2-g3",
           "spec": {
-            "cspSpecName": "s2-g3",
+            "cspSpecName": "ci2-g3",
             "vCPU": 2,
-            "memoryGiB": 8,
-            "costPerHour": 0.0848
+            "memoryGiB": 4,
+            "costPerHour": 0.073
           },
           "imageId": "23214590",
           "cspImageName": "23214590",
@@ -5099,21 +5514,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "osArchitecture": "x86_64",
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
-          "vNetId": "mig-3-vnet-01",
-          "cspVNetId": "135959",
-          "subnetId": "mig-3-subnet-01",
-          "cspSubnetId": "293642",
+          "vNetId": "my04-vnet-01",
+          "cspVNetId": "138792",
+          "subnetId": "my04-subnet-01",
+          "cspSubnetId": "300131",
           "networkInterface": "eth0",
-          "securityGroupIds": ["mig-3-sg-03"],
+          "securityGroupIds": [
+            "my04-sg-01"
+          ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-3-sshkey-01",
-          "cspSshKeyId": "d71tfgv693a119qk81hg",
-          "vmUserName": "cb-user",
+          "sshKeyId": "my04-sshkey-01",
+          "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+          "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-03-25T12:47:58Z"
+            "firstUsedAt": "2026-05-12T09:51:28Z"
           },
           "commandStatus": [
             {
@@ -5121,22 +5538,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-03-25T12:47:57Z",
-              "completedTime": "2026-03-25T12:47:58Z",
+              "startedTime": "2026-05-12T09:51:27Z",
+              "completedTime": "2026-05-12T09:51:28Z",
               "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "134455087"
+              "value": "138234481"
             },
             {
               "key": "ServerName",
-              "value": "d71tgk7693a119qk81u0"
+              "value": "tbd81fe7m6aji65qtg7sj0"
             },
             {
               "key": "CpuCount",
@@ -5144,7 +5561,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "MemorySize",
-              "value": "8589934592"
+              "value": "4294967296"
             },
             {
               "key": "PlatformType",
@@ -5152,7 +5569,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "LoginKeyName",
-              "value": "d71tfgv693a119qk81hg"
+              "value": "tbd81fd3e6aji65qtg7seg"
             },
             {
               "key": "ServerInstanceStatus",
@@ -5168,11 +5585,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "CreateDate",
-              "value": "2026-03-25T21:43:07+0900"
+              "value": "2026-05-12T18:47:18+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-03-25T21:45:38+0900"
+              "value": "2026-05-12T18:49:31+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -5180,7 +5597,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C002.M008.G003"
+              "value": "SVR.VSVR.CPU.C002.M004.G003"
             },
             {
               "key": "IsProtectServerTermination",
@@ -5196,19 +5613,254 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "VpcNo",
-              "value": "135959"
+              "value": "138792"
             },
             {
               "key": "SubnetNo",
-              "value": "293642"
+              "value": "300131"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5545098"
+              "value": "5678079"
             },
             {
               "key": "InitScriptNo",
-              "value": "166174"
+              "value": "170941"
+            },
+            {
+              "key": "ServerInstanceType",
+              "value": "{code:CPU,codeName:CPU-Intensive}"
+            },
+            {
+              "key": "BaseBlockStorageDiskType",
+              "value": "{code:NET,codeName:네트웍 스토리지}"
+            },
+            {
+              "key": "BaseBlockStorageDiskDetailType",
+              "value": "{code:SSD,codeName:SSD}"
+            },
+            {
+              "key": "HypervisorType",
+              "value": "{code:KVM,codeName:KVM}"
+            },
+            {
+              "key": "ServerImageNo",
+              "value": "23214590"
+            },
+            {
+              "key": "ServerSpecCode",
+              "value": "ci2-g3"
+            }
+          ]
+        },
+        {
+          "resourceType": "node",
+          "id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "uid": "tbd81fe7m6aji65qtg7sl0",
+          "cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+          "cspResourceId": "138234474",
+          "name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "",
+          "createdTime": "2026-05-12 09:51:10",
+          "label": {
+            "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.connectionName": "ncp-kr",
+            "sys.createdTime": "2026-05-12 09:51:10",
+            "sys.cspResourceId": "138234474",
+            "sys.cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+            "sys.id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.subnetId": "my04-subnet-01",
+            "sys.uid": "tbd81fe7m6aji65qtg7sl0",
+            "sys.vNetId": "my04-vnet-01"
+          },
+          "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
+          "region": {
+            "region": "KR",
+            "zone": "KR-1"
+          },
+          "publicIP": "101.79.20.23",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.7",
+          "privateDNS": "",
+          "rootDiskType": "HDD",
+          "rootDiskSize": 50,
+          "RootDeviceName": "/dev/vda",
+          "connectionName": "ncp-kr",
+          "connectionConfig": {
+            "configName": "ncp-kr",
+            "providerName": "ncp",
+            "driverName": "ncp-driver-v1.0.so",
+            "credentialName": "ncp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ncp-kr",
+            "regionZoneInfo": {
+              "assignedRegion": "KR",
+              "assignedZone": "KR-1"
+            },
+            "regionDetail": {
+              "regionId": "KR",
+              "regionName": "kr",
+              "description": "Korea 1",
+              "location": {
+                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+                "latitude": 37.4754,
+                "longitude": 126.8831
+              },
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ncp+kr+s2-g3a",
+          "cspSpecName": "s2-g3a",
+          "spec": {
+            "cspSpecName": "s2-g3a",
+            "vCPU": 2,
+            "memoryGiB": 8,
+            "costPerHour": 0.0848
+          },
+          "imageId": "23214590",
+          "cspImageName": "23214590",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "23214590",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+          },
+          "vNetId": "my04-vnet-01",
+          "cspVNetId": "138792",
+          "subnetId": "my04-subnet-01",
+          "cspSubnetId": "300131",
+          "networkInterface": "eth0",
+          "securityGroupIds": [
+            "my04-sg-03"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my04-sshkey-01",
+          "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+            "firstUsedAt": "2026-05-12T09:51:28Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-05-12T09:51:27Z",
+              "completedTime": "2026-05-12T09:51:28Z",
+              "elapsedTime": 1,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "ServerInstanceNo",
+              "value": "138234474"
+            },
+            {
+              "key": "ServerName",
+              "value": "tbd81fe7m6aji65qtg7sl0"
+            },
+            {
+              "key": "CpuCount",
+              "value": "2"
+            },
+            {
+              "key": "MemorySize",
+              "value": "8589934592"
+            },
+            {
+              "key": "PlatformType",
+              "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+            },
+            {
+              "key": "LoginKeyName",
+              "value": "tbd81fd3e6aji65qtg7seg"
+            },
+            {
+              "key": "ServerInstanceStatus",
+              "value": "{code:RUN,codeName:서버 RUN 상태}"
+            },
+            {
+              "key": "ServerInstanceOperation",
+              "value": "{code:NULL,codeName:서버 NULL OP}"
+            },
+            {
+              "key": "ServerInstanceStatusName",
+              "value": "running"
+            },
+            {
+              "key": "CreateDate",
+              "value": "2026-05-12T18:47:18+0900"
+            },
+            {
+              "key": "Uptime",
+              "value": "2026-05-12T18:49:31+0900"
+            },
+            {
+              "key": "ServerImageProductCode",
+              "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+            },
+            {
+              "key": "ServerProductCode",
+              "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+            },
+            {
+              "key": "IsProtectServerTermination",
+              "value": "false"
+            },
+            {
+              "key": "ZoneCode",
+              "value": "KR-1"
+            },
+            {
+              "key": "RegionCode",
+              "value": "KR"
+            },
+            {
+              "key": "VpcNo",
+              "value": "138792"
+            },
+            {
+              "key": "SubnetNo",
+              "value": "300131"
+            },
+            {
+              "key": "NetworkInterfaceNoList",
+              "value": "5678078"
+            },
+            {
+              "key": "InitScriptNo",
+              "value": "170940"
             },
             {
               "key": "ServerInstanceType",
@@ -5232,18 +5884,18 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "ServerSpecCode",
-              "value": "s2-g3"
+              "value": "s2-g3a"
             }
           ]
         },
         {
-          "resourceType": "vm",
-          "id": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "d71tgk7693a119qk81t0",
-          "cspResourceName": "d71tgk7693a119qk81t0",
-          "cspResourceId": "134455073",
-          "name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "subGroupId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+          "resourceType": "node",
+          "id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "uid": "tbd81fe7m6aji65qtg7sk0",
+          "cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+          "cspResourceId": "138234467",
+          "name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
             "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
             "latitude": 37.4754,
@@ -5255,30 +5907,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-03-25 12:47:16",
+          "createdTime": "2026-05-12 09:50:58",
           "label": {
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-03-25 12:47:16",
-            "sys.cspResourceId": "134455073",
-            "sys.cspResourceName": "d71tgk7693a119qk81t0",
-            "sys.id": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "sys.labelType": "vm",
+            "sys.createdTime": "2026-05-12 09:50:58",
+            "sys.cspResourceId": "138234467",
+            "sys.cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+            "sys.id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.infraId": "my04-infra101",
+            "sys.labelType": "node",
             "sys.manager": "cb-tumblebug",
-            "sys.mciId": "mig-3-mci101",
-            "sys.name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.namespace": "mig01",
-            "sys.subGroupId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-            "sys.subnetId": "mig-3-subnet-01",
-            "sys.uid": "d71tgk7693a119qk81t0",
-            "sys.vNetId": "mig-3-vnet-01"
+            "sys.nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.subnetId": "my04-subnet-01",
+            "sys.uid": "tbd81fe7m6aji65qtg7sk0",
+            "sys.vNetId": "my04-vnet-01"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
           "region": {
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "223.130.140.135",
+          "publicIP": "101.79.19.56",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.6",
@@ -5307,7 +5959,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
                 "latitude": 37.4754,
                 "longitude": 126.8831
               },
-              "zones": ["KR-1", "KR-2"]
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
             },
             "regionRepresentative": true,
             "verified": true
@@ -5329,21 +5984,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "osArchitecture": "x86_64",
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
-          "vNetId": "mig-3-vnet-01",
-          "cspVNetId": "135959",
-          "subnetId": "mig-3-subnet-01",
-          "cspSubnetId": "293642",
+          "vNetId": "my04-vnet-01",
+          "cspVNetId": "138792",
+          "subnetId": "my04-subnet-01",
+          "cspSubnetId": "300131",
           "networkInterface": "eth0",
-          "securityGroupIds": ["mig-3-sg-02"],
+          "securityGroupIds": [
+            "my04-sg-02"
+          ],
           "dataDiskIds": null,
-          "sshKeyId": "mig-3-sshkey-01",
-          "cspSshKeyId": "d71tfgv693a119qk81hg",
-          "vmUserName": "cb-user",
+          "sshKeyId": "my04-sshkey-01",
+          "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+          "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-03-25T12:47:57Z"
+            "firstUsedAt": "2026-05-12T09:51:27Z"
           },
           "commandStatus": [
             {
@@ -5351,22 +6008,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-03-25T12:47:57Z",
-              "completedTime": "2026-03-25T12:47:58Z",
+              "startedTime": "2026-05-12T09:51:27Z",
+              "completedTime": "2026-05-12T09:51:28Z",
               "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "134455073"
+              "value": "138234467"
             },
             {
               "key": "ServerName",
-              "value": "d71tgk7693a119qk81t0"
+              "value": "tbd81fe7m6aji65qtg7sk0"
             },
             {
               "key": "CpuCount",
@@ -5382,7 +6039,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "LoginKeyName",
-              "value": "d71tfgv693a119qk81hg"
+              "value": "tbd81fd3e6aji65qtg7seg"
             },
             {
               "key": "ServerInstanceStatus",
@@ -5398,11 +6055,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "CreateDate",
-              "value": "2026-03-25T21:43:05+0900"
+              "value": "2026-05-12T18:47:18+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-03-25T21:45:17+0900"
+              "value": "2026-05-12T18:49:23+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -5426,19 +6083,19 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             },
             {
               "key": "VpcNo",
-              "value": "135959"
+              "value": "138792"
             },
             {
               "key": "SubnetNo",
-              "value": "293642"
+              "value": "300131"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5545096"
+              "value": "5678077"
             },
             {
               "key": "InitScriptNo",
-              "value": "166172"
+              "value": "170939"
             },
             {
               "key": "ServerInstanceType",
@@ -5467,22 +6124,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           ]
         }
       ],
-      "newVmList": null,
+      "newNodeList": null,
       "postCommand": {
         "userName": "cb-user",
-        "command": ["uname -a"]
+        "command": [
+          "uname -a"
+        ]
       },
       "postCommandResult": {
         "results": [
           {
-            "mciId": "mig-3-mci101",
-            "vmId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "vmIp": "223.130.140.135",
+            "infraId": "my04-infra101",
+            "nodeId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "nodeIp": "101.79.19.56",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5490,14 +6149,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "err": null
           },
           {
-            "mciId": "mig-3-mci101",
-            "vmId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "vmIp": "49.50.136.154",
+            "infraId": "my04-infra101",
+            "nodeId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "nodeIp": "101.79.20.23",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5505,14 +6164,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "err": null
           },
           {
-            "mciId": "mig-3-mci101",
-            "vmId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "vmIp": "110.165.17.215",
+            "infraId": "my04-infra101",
+            "nodeId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "101.79.19.173",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5521,289 +6180,17 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           }
         ]
       }
-    },
-    {
-      "resourceType": "mci",
-      "id": "mig-4-mci101",
-      "uid": "d71t5hv693a119p8fcag",
-      "name": "mig-4-mci101",
-      "status": "Failed:3 (R:0/3)",
-      "statusCount": {
-        "countTotal": 3,
-        "countCreating": 0,
-        "countRunning": 0,
-        "countFailed": 3,
-        "countSuspended": 0,
-        "countRebooting": 0,
-        "countTerminated": 0,
-        "countSuspending": 0,
-        "countResuming": 0,
-        "countTerminating": 0,
-        "countRegistering": 0,
-        "countUndefined": 0
-      },
-      "targetStatus": "None",
-      "targetAction": "None",
-      "installMonAgent": "",
-      "configureCloudAdaptiveNetwork": "",
-      "label": {
-        "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
-        "sys.id": "mig-4-mci101",
-        "sys.labelType": "mci",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "mig-4-mci101",
-        "sys.namespace": "mig01",
-        "sys.uid": "d71t5hv693a119p8fcag"
-      },
-      "systemLabel": "",
-      "systemMessage": null,
-      "description": "Recommended VMs comprising multi-cloud infrastructure",
-      "vm": [
-        {
-          "resourceType": "vm",
-          "id": "mig-4-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "d71t5hv693a119p8fcbg",
-          "name": "mig-4-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "subGroupId": "mig-4-vm-ec268ed7-821e-9d73-e79f-961262161624",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "status": "Failed",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
-          "systemMessage": "no result with request image IID(NameId/SystemId) : ubuntu_22_04_x64_20G_alibase_20260119.vhd/ubuntu_22_04_x64_20G_alibase_20260119.vhd (from cb-spider:1024/spider/vm (500 Internal Server Error))",
-          "createdTime": "",
-          "label": null,
-          "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-          "region": {
-            "region": ""
-          },
-          "publicIP": "",
-          "sshPort": 0,
-          "publicDNS": "",
-          "privateIP": "",
-          "privateDNS": "",
-          "rootDiskType": "TYPE1",
-          "rootDiskSize": 50,
-          "RootDeviceName": "",
-          "connectionName": "alibaba-ap-northeast-2",
-          "connectionConfig": {
-            "configName": "alibaba-ap-northeast-2",
-            "providerName": "alibaba",
-            "driverName": "alibaba-driver-v1.0.so",
-            "credentialName": "alibaba",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "alibaba-ap-northeast-2",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-northeast-2",
-              "assignedZone": "ap-northeast-2a"
-            },
-            "regionDetail": {
-              "regionId": "ap-northeast-2",
-              "regionName": "ap-northeast-2",
-              "description": "South Korea (Seoul)",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.36,
-                "longitude": 126.78
-              },
-              "zones": ["ap-northeast-2a", "ap-northeast-2b"]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m1.large",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "ubuntu_22_04_x64_20G_alibase_20260119.vhd",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
-          },
-          "vNetId": "mig-4-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-4-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-4-sg-01"],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-4-sshkey-01",
-          "cspSshKeyId": ""
-        },
-        {
-          "resourceType": "vm",
-          "id": "mig-4-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "d71t5hv693a119p8fcdg",
-          "name": "mig-4-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "subGroupId": "mig-4-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "status": "Failed",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
-          "systemMessage": "no result with request image IID(NameId/SystemId) : ubuntu_22_04_x64_20G_alibase_20260119.vhd/ubuntu_22_04_x64_20G_alibase_20260119.vhd (from cb-spider:1024/spider/vm (500 Internal Server Error))",
-          "createdTime": "",
-          "label": null,
-          "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-          "region": {
-            "region": ""
-          },
-          "publicIP": "",
-          "sshPort": 0,
-          "publicDNS": "",
-          "privateIP": "",
-          "privateDNS": "",
-          "rootDiskType": "TYPE1",
-          "rootDiskSize": 50,
-          "RootDeviceName": "",
-          "connectionName": "alibaba-ap-northeast-2",
-          "connectionConfig": {
-            "configName": "alibaba-ap-northeast-2",
-            "providerName": "alibaba",
-            "driverName": "alibaba-driver-v1.0.so",
-            "credentialName": "alibaba",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "alibaba-ap-northeast-2",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-northeast-2",
-              "assignedZone": "ap-northeast-2a"
-            },
-            "regionDetail": {
-              "regionId": "ap-northeast-2",
-              "regionName": "ap-northeast-2",
-              "description": "South Korea (Seoul)",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.36,
-                "longitude": 126.78
-              },
-              "zones": ["ap-northeast-2a", "ap-northeast-2b"]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.large",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "ubuntu_22_04_x64_20G_alibase_20260119.vhd",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
-          },
-          "vNetId": "mig-4-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-4-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-4-sg-03"],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-4-sshkey-01",
-          "cspSshKeyId": ""
-        },
-        {
-          "resourceType": "vm",
-          "id": "mig-4-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "d71t5hv693a119p8fccg",
-          "name": "mig-4-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "subGroupId": "mig-4-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-          "location": {
-            "display": "South Korea (Seoul)",
-            "latitude": 37.36,
-            "longitude": 126.78
-          },
-          "status": "Failed",
-          "targetStatus": "Running",
-          "targetAction": "Create",
-          "monAgentStatus": "",
-          "networkAgentStatus": "",
-          "systemMessage": "no result with request image IID(NameId/SystemId) : ubuntu_22_04_x64_20G_alibase_20260119.vhd/ubuntu_22_04_x64_20G_alibase_20260119.vhd (from cb-spider:1024/spider/vm (500 Internal Server Error))",
-          "createdTime": "",
-          "label": null,
-          "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-          "region": {
-            "region": ""
-          },
-          "publicIP": "",
-          "sshPort": 0,
-          "publicDNS": "",
-          "privateIP": "",
-          "privateDNS": "",
-          "rootDiskType": "TYPE1",
-          "rootDiskSize": 50,
-          "RootDeviceName": "",
-          "connectionName": "alibaba-ap-northeast-2",
-          "connectionConfig": {
-            "configName": "alibaba-ap-northeast-2",
-            "providerName": "alibaba",
-            "driverName": "alibaba-driver-v1.0.so",
-            "credentialName": "alibaba",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "alibaba-ap-northeast-2",
-            "regionZoneInfo": {
-              "assignedRegion": "ap-northeast-2",
-              "assignedZone": "ap-northeast-2a"
-            },
-            "regionDetail": {
-              "regionId": "ap-northeast-2",
-              "regionName": "ap-northeast-2",
-              "description": "South Korea (Seoul)",
-              "location": {
-                "display": "South Korea (Seoul)",
-                "latitude": 37.36,
-                "longitude": 126.78
-              },
-              "zones": ["ap-northeast-2a", "ap-northeast-2b"]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "alibaba+ap-northeast-2+ecs.t6-c1m4.xlarge",
-          "cspSpecName": "",
-          "spec": {},
-          "imageId": "ubuntu_22_04_x64_20G_alibase_20260119.vhd",
-          "cspImageName": "",
-          "image": {
-            "osType": ""
-          },
-          "vNetId": "mig-4-vnet-01",
-          "cspVNetId": "",
-          "subnetId": "mig-4-subnet-01",
-          "cspSubnetId": "",
-          "networkInterface": "",
-          "securityGroupIds": ["mig-4-sg-02"],
-          "dataDiskIds": null,
-          "sshKeyId": "mig-4-sshkey-01",
-          "cspSshKeyId": ""
-        }
-      ],
-      "newVmList": null,
-      "postCommand": {
-        "userName": "cb-user",
-        "command": ["uname -a"]
-      },
-      "postCommandResult": {
-        "results": null
-      }
     }
   ]
 }
 ```
 
-### Test Case 4: Get a list of MCI IDs
+### Test Case 4: Get a list of infra IDs
 
 #### 4.1 API Request Information
 
-- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci?option=id`
-- **Purpose**: Retrieve MCI IDs only (lightweight response)
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/infra?option=id`
+- **Purpose**: Retrieve infra IDs only (lightweight response)
 - **Namespace ID**: `mig01`
 - **Query Parameter**: `option=id`
 - **Request Body**: None (GET request)
@@ -5811,30 +6198,33 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 #### 4.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Response**: MCI IDs retrieved successfully
+- **Response**: Infra IDs retrieved successfully
 
 **Response Body**:
 
 ```json
 {
-  "idList": ["mig-2-mci101", "mig-3-mci101", "mig-4-mci101"]
+  "idList": [
+    "my03-infra101",
+    "my04-infra101"
+  ]
 }
 ```
 
-### Test Case 5: Get a specific MCI
+### Test Case 5: Get a specific infra
 
 #### 5.1 API Request Information
 
-- **API Endpoint**: `GET /beetle/migration/ns/mig01/mci/{{mciId}}`
-- **Purpose**: Retrieve detailed information for a specific MCI
+- **API Endpoint**: `GET /beetle/migration/ns/mig01/infra/{{infraId}}`
+- **Purpose**: Retrieve detailed information for a specific infra
 - **Namespace ID**: `mig01`
-- **Path Parameter**: `{{mciId}}` - The specific MCI identifier
+- **Path Parameter**: `{{infraId}}` - The specific infra identifier
 - **Request Body**: None (GET request)
 
 #### 5.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Response**: MCI details retrieved successfully
+- **Response**: Infra details retrieved successfully
 
 **Response Body**:
 
@@ -5843,10 +6233,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 ```json
 {
-  "resourceType": "mci",
-  "id": "mig-3-mci101",
-  "uid": "d71tgk7693a119qk81r0",
-  "name": "mig-3-mci101",
+  "resourceType": "infra",
+  "id": "my04-infra101",
+  "uid": "tbd81fe7e6aji65qtg7si0",
+  "name": "my04-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
     "countTotal": 3,
@@ -5868,25 +6258,25 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
   "configureCloudAdaptiveNetwork": "",
   "label": {
     "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
-    "sys.id": "mig-3-mci101",
-    "sys.labelType": "mci",
+    "sys.id": "my04-infra101",
+    "sys.labelType": "infra",
     "sys.manager": "cb-tumblebug",
-    "sys.name": "mig-3-mci101",
+    "sys.name": "my04-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "d71tgk7693a119qk81r0"
+    "sys.uid": "tbd81fe7e6aji65qtg7si0"
   },
   "systemLabel": "",
   "systemMessage": null,
   "description": "Recommended VMs comprising multi-cloud infrastructure",
-  "vm": [
+  "node": [
     {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "d71tgk7693a119qk81s0",
-      "cspResourceName": "d71tgk7693a119qk81s0",
-      "cspResourceId": "134455079",
-      "name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "subGroupId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
+      "resourceType": "node",
+      "id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "uid": "tbd81fe7m6aji65qtg7sj0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+      "cspResourceId": "138234481",
+      "name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -5898,260 +6288,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:51",
+      "createdTime": "2026-05-12 09:51:22",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-03-25 12:47:51",
-        "sys.cspResourceId": "134455079",
-        "sys.cspResourceName": "d71tgk7693a119qk81s0",
-        "sys.id": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "sys.labelType": "vm",
+        "sys.createdTime": "2026-05-12 09:51:22",
+        "sys.cspResourceId": "138234481",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sj0",
+        "sys.id": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
         "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mig-3-mci101",
-        "sys.name": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "sys.name": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
-        "sys.subnetId": "mig-3-subnet-01",
-        "sys.uid": "d71tgk7693a119qk81s0",
-        "sys.vNetId": "mig-3-vnet-01"
+        "sys.nodeGroupId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sj0",
+        "sys.vNetId": "my04-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
       "region": {
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "49.50.136.154",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.7",
-      "privateDNS": "",
-      "rootDiskType": "HDD",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/vda",
-      "connectionName": "ncp-kr",
-      "connectionConfig": {
-        "configName": "ncp-kr",
-        "providerName": "ncp",
-        "driverName": "ncp-driver-v1.0.so",
-        "credentialName": "ncp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncp-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": ["KR-1", "KR-2"]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "ncp+kr+ci2-g3",
-      "cspSpecName": "ci2-g3",
-      "spec": {
-        "cspSpecName": "ci2-g3",
-        "vCPU": 2,
-        "memoryGiB": 4,
-        "costPerHour": 0.073
-      },
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "23214590",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-      },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
-      "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-01"],
-      "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:58Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
-          "elapsedTime": 1,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "134455079"
-        },
-        {
-          "key": "ServerName",
-          "value": "d71tgk7693a119qk81s0"
-        },
-        {
-          "key": "CpuCount",
-          "value": "2"
-        },
-        {
-          "key": "MemorySize",
-          "value": "4294967296"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2026-03-25T21:43:06+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2026-03-25T21:45:40+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.CPU.C002.M004.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "135959"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "293642"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "5545097"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "166173"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:CPU,codeName:CPU-Intensive}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "ci2-g3"
-        }
-      ]
-    },
-    {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "d71tgk7693a119qk81u0",
-      "cspResourceName": "d71tgk7693a119qk81u0",
-      "cspResourceId": "134455087",
-      "name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "subGroupId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:52",
-      "label": {
-        "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-03-25 12:47:52",
-        "sys.cspResourceId": "134455087",
-        "sys.cspResourceName": "d71tgk7693a119qk81u0",
-        "sys.id": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "sys.labelType": "vm",
-        "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mig-3-mci101",
-        "sys.name": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "sys.namespace": "mig01",
-        "sys.subGroupId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.subnetId": "mig-3-subnet-01",
-        "sys.uid": "d71tgk7693a119qk81u0",
-        "sys.vNetId": "mig-3-vnet-01"
-      },
-      "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
-      "region": {
-        "region": "KR",
-        "zone": "KR-1"
-      },
-      "publicIP": "110.165.17.215",
+      "publicIP": "101.79.19.173",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.8",
@@ -6180,18 +6340,21 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
       },
-      "specId": "ncp+kr+s2-g3",
-      "cspSpecName": "s2-g3",
+      "specId": "ncp+kr+ci2-g3",
+      "cspSpecName": "ci2-g3",
       "spec": {
-        "cspSpecName": "s2-g3",
+        "cspSpecName": "ci2-g3",
         "vCPU": 2,
-        "memoryGiB": 8,
-        "costPerHour": 0.0848
+        "memoryGiB": 4,
+        "costPerHour": 0.073
       },
       "imageId": "23214590",
       "cspImageName": "23214590",
@@ -6202,21 +6365,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-03"],
+      "securityGroupIds": [
+        "my04-sg-01"
+      ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:58Z"
+        "firstUsedAt": "2026-05-12T09:51:28Z"
       },
       "commandStatus": [
         {
@@ -6224,22 +6389,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "134455087"
+          "value": "138234481"
         },
         {
           "key": "ServerName",
-          "value": "d71tgk7693a119qk81u0"
+          "value": "tbd81fe7m6aji65qtg7sj0"
         },
         {
           "key": "CpuCount",
@@ -6247,7 +6412,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "MemorySize",
-          "value": "8589934592"
+          "value": "4294967296"
         },
         {
           "key": "PlatformType",
@@ -6255,7 +6420,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
+          "value": "tbd81fd3e6aji65qtg7seg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -6271,11 +6436,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "CreateDate",
-          "value": "2026-03-25T21:43:07+0900"
+          "value": "2026-05-12T18:47:18+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-03-25T21:45:38+0900"
+          "value": "2026-05-12T18:49:31+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -6283,7 +6448,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C002.M008.G003"
+          "value": "SVR.VSVR.CPU.C002.M004.G003"
         },
         {
           "key": "IsProtectServerTermination",
@@ -6299,19 +6464,254 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "VpcNo",
-          "value": "135959"
+          "value": "138792"
         },
         {
           "key": "SubnetNo",
-          "value": "293642"
+          "value": "300131"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5545098"
+          "value": "5678079"
         },
         {
           "key": "InitScriptNo",
-          "value": "166174"
+          "value": "170941"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:CPU,codeName:CPU-Intensive}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "ci2-g3"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "uid": "tbd81fe7m6aji65qtg7sl0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+      "cspResourceId": "138234474",
+      "name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-05-12 09:51:10",
+      "label": {
+        "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-05-12 09:51:10",
+        "sys.cspResourceId": "138234474",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sl0",
+        "sys.id": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sl0",
+        "sys.vNetId": "my04-vnet-01"
+      },
+      "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
+      "region": {
+        "region": "KR",
+        "zone": "KR-1"
+      },
+      "publicIP": "101.79.20.23",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.7",
+      "privateDNS": "",
+      "rootDiskType": "HDD",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/vda",
+      "connectionName": "ncp-kr",
+      "connectionConfig": {
+        "configName": "ncp-kr",
+        "providerName": "ncp",
+        "driverName": "ncp-driver-v1.0.so",
+        "credentialName": "ncp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncp-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncp+kr+s2-g3a",
+      "cspSpecName": "s2-g3a",
+      "spec": {
+        "cspSpecName": "s2-g3a",
+        "vCPU": 2,
+        "memoryGiB": 8,
+        "costPerHour": 0.0848
+      },
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "23214590",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+      },
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
+      "networkInterface": "eth0",
+      "securityGroupIds": [
+        "my04-sg-03"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+        "firstUsedAt": "2026-05-12T09:51:28Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
+          "elapsedTime": 1,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "138234474"
+        },
+        {
+          "key": "ServerName",
+          "value": "tbd81fe7m6aji65qtg7sl0"
+        },
+        {
+          "key": "CpuCount",
+          "value": "2"
+        },
+        {
+          "key": "MemorySize",
+          "value": "8589934592"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "tbd81fd3e6aji65qtg7seg"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2026-05-12T18:47:18+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2026-05-12T18:49:31+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "138792"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "300131"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "5678078"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "170940"
         },
         {
           "key": "ServerInstanceType",
@@ -6335,18 +6735,18 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "ServerSpecCode",
-          "value": "s2-g3"
+          "value": "s2-g3a"
         }
       ]
     },
     {
-      "resourceType": "vm",
-      "id": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "d71tgk7693a119qk81t0",
-      "cspResourceName": "d71tgk7693a119qk81t0",
-      "cspResourceId": "134455073",
-      "name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "subGroupId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "resourceType": "node",
+      "id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "uid": "tbd81fe7m6aji65qtg7sk0",
+      "cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+      "cspResourceId": "138234467",
+      "name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
         "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
         "latitude": 37.4754,
@@ -6358,30 +6758,30 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-03-25 12:47:16",
+      "createdTime": "2026-05-12 09:50:58",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-03-25 12:47:16",
-        "sys.cspResourceId": "134455073",
-        "sys.cspResourceName": "d71tgk7693a119qk81t0",
-        "sys.id": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "sys.labelType": "vm",
+        "sys.createdTime": "2026-05-12 09:50:58",
+        "sys.cspResourceId": "138234467",
+        "sys.cspResourceName": "tbd81fe7m6aji65qtg7sk0",
+        "sys.id": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.infraId": "my04-infra101",
+        "sys.labelType": "node",
         "sys.manager": "cb-tumblebug",
-        "sys.mciId": "mig-3-mci101",
-        "sys.name": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "sys.name": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.namespace": "mig01",
-        "sys.subGroupId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
-        "sys.subnetId": "mig-3-subnet-01",
-        "sys.uid": "d71tgk7693a119qk81t0",
-        "sys.vNetId": "mig-3-vnet-01"
+        "sys.nodeGroupId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+        "sys.subnetId": "my04-subnet-01",
+        "sys.uid": "tbd81fe7m6aji65qtg7sk0",
+        "sys.vNetId": "my04-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
       "region": {
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "223.130.140.135",
+      "publicIP": "101.79.19.56",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
@@ -6410,7 +6810,10 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
             "latitude": 37.4754,
             "longitude": 126.8831
           },
-          "zones": ["KR-1", "KR-2"]
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
         },
         "regionRepresentative": true,
         "verified": true
@@ -6432,21 +6835,23 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "osArchitecture": "x86_64",
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
-      "vNetId": "mig-3-vnet-01",
-      "cspVNetId": "135959",
-      "subnetId": "mig-3-subnet-01",
-      "cspSubnetId": "293642",
+      "vNetId": "my04-vnet-01",
+      "cspVNetId": "138792",
+      "subnetId": "my04-subnet-01",
+      "cspSubnetId": "300131",
       "networkInterface": "eth0",
-      "securityGroupIds": ["mig-3-sg-02"],
+      "securityGroupIds": [
+        "my04-sg-02"
+      ],
       "dataDiskIds": null,
-      "sshKeyId": "mig-3-sshkey-01",
-      "cspSshKeyId": "d71tfgv693a119qk81hg",
-      "vmUserName": "cb-user",
+      "sshKeyId": "my04-sshkey-01",
+      "cspSshKeyId": "tbd81fd3e6aji65qtg7seg",
+      "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-03-25T12:47:57Z"
+        "firstUsedAt": "2026-05-12T09:51:27Z"
       },
       "commandStatus": [
         {
@@ -6454,22 +6859,22 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-03-25T12:47:57Z",
-          "completedTime": "2026-03-25T12:47:58Z",
+          "startedTime": "2026-05-12T09:51:27Z",
+          "completedTime": "2026-05-12T09:51:28Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "134455073"
+          "value": "138234467"
         },
         {
           "key": "ServerName",
-          "value": "d71tgk7693a119qk81t0"
+          "value": "tbd81fe7m6aji65qtg7sk0"
         },
         {
           "key": "CpuCount",
@@ -6485,7 +6890,7 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "LoginKeyName",
-          "value": "d71tfgv693a119qk81hg"
+          "value": "tbd81fd3e6aji65qtg7seg"
         },
         {
           "key": "ServerInstanceStatus",
@@ -6501,11 +6906,11 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "CreateDate",
-          "value": "2026-03-25T21:43:05+0900"
+          "value": "2026-05-12T18:47:18+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-03-25T21:45:17+0900"
+          "value": "2026-05-12T18:49:23+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -6529,19 +6934,19 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         },
         {
           "key": "VpcNo",
-          "value": "135959"
+          "value": "138792"
         },
         {
           "key": "SubnetNo",
-          "value": "293642"
+          "value": "300131"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5545096"
+          "value": "5678077"
         },
         {
           "key": "InitScriptNo",
-          "value": "166172"
+          "value": "170939"
         },
         {
           "key": "ServerInstanceType",
@@ -6570,22 +6975,24 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
       ]
     }
   ],
-  "newVmList": null,
+  "newNodeList": null,
   "postCommand": {
     "userName": "cb-user",
-    "command": ["uname -a"]
+    "command": [
+      "uname -a"
+    ]
   },
   "postCommandResult": {
     "results": [
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "vmIp": "223.130.140.135",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+        "nodeIp": "101.79.19.56",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6593,14 +7000,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "err": null
       },
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "vmIp": "49.50.136.154",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "nodeIp": "101.79.20.23",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6608,14 +7015,14 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
         "err": null
       },
       {
-        "mciId": "mig-3-mci101",
-        "vmId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "vmIp": "110.165.17.215",
+        "infraId": "my04-infra101",
+        "nodeId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "101.79.19.173",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -6671,38 +7078,38 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d71tgk7693a119qk81s0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "49.50.136.154",
+      "nodeGroup": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624",
+      "nodeId": "my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+      "output": "Linux tbd81fe7m6aji65qtg7sj0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "101.79.19.173",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "testOrder": 1,
-      "userName": "cb-user",
-      "vmId": "mig-3-vm-ec268ed7-821e-9d73-e79f-961262161624-1"
+      "userName": "cb-user"
     },
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d71tgk7693a119qk81u0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "110.165.17.215",
+      "nodeGroup": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+      "nodeId": "my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+      "output": "Linux tbd81fe7m6aji65qtg7sl0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "101.79.20.23",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "testOrder": 2,
-      "userName": "cb-user",
-      "vmId": "mig-3-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1"
+      "userName": "cb-user"
     },
     {
       "attempts": 1,
       "command": "uname -a",
-      "output": "Linux d71tgk7693a119qk81t0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "223.130.140.135",
+      "nodeGroup": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+      "nodeId": "my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+      "output": "Linux tbd81fe7m6aji65qtg7sk0 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "101.79.19.56",
       "sshTest": "successful",
       "status": "success",
-      "subGroup": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "testOrder": 3,
-      "userName": "cb-user",
-      "vmId": "mig-3-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1"
+      "userName": "cb-user"
     }
   ]
 }
@@ -6710,18 +7117,522 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 </details>
 
-### Test Case 7: Delete the migrated computing infra
+### Test Case 7: Target Infrastructure Summary
 
 #### 7.1 API Request Information
 
-- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/mci/{{mciId}}`
+- **API Endpoint**: `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}?format=md`
+- **Purpose**: Get a summary of the migrated target infrastructure in Markdown format
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{infraId}}` - The infra identifier
+- **Query Parameter**: `format=md`
+
+#### 7.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+
+**Target Infrastructure Summary**:
+
+# Target Cloud Infrastructure Summary
+
+**Generated At:** 2026-05-12 09:52:07
+
+**Namespace:** mig01
+
+**Infra Name:** my04-infra101
+
+---
+
+## Overview
+
+| Property | Value |
+|----------|-------|
+| **Infra Name** | my04-infra101 |
+| **Description** | Recommended VMs comprising multi-cloud infrastructure |
+| **Status** | Running:3 (R:3/3) |
+| **Target Cloud** | NCP |
+| **Target Region** | KR |
+| **Total VMs** | 3 |
+| **Running VMs** | 3 |
+| **Stopped VMs** | 0 |
+| **Monitoring Agent** |  |
+
+## Compute Resources
+
+### VM Specifications
+
+| Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
+|------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
+| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
+| s2-g3a | 2 | 8.0 | - | x86_64 | default | $0.0848 | 1 |
+| s4-g3a | 4 | 16.0 | - | x86_64 | default | $0.1747 | 1 |
+
+### VM Images
+
+| Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
+|------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
+| 23214590 | ubuntu-22.04-base (Hypervisor:KVM) | Ubuntu 22.04 | Linux/UNIX | x86_64 | Common BlockStorage 1 | 10 GB | 3 |
+
+### Virtual Machines
+
+| VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
+|---------|-----------|--------|-------------------------|-------|------|
+| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 138234481 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.19.173<br>**Private IP:** 10.0.1.8<br>**SGs:** my04-sg-01<br>**SSH:** my04-sshkey-01 |
+| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 138234474 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.20.23<br>**Private IP:** 10.0.1.7<br>**SGs:** my04-sg-03<br>**SSH:** my04-sshkey-01 |
+| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 138234467 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.19.56<br>**Private IP:** 10.0.1.6<br>**SGs:** my04-sg-02<br>**SSH:** my04-sshkey-01 |
+
+
+## Network Resources
+
+### Virtual Networks (VPC/VNet)
+
+#### VNet: my04-vnet-01
+
+| Property | Value |
+|----------|-------|
+| **Name** | my04-vnet-01 |
+| **CSP VNet ID** | 138792 |
+| **CIDR Block** | 10.0.0.0/21 |
+| **Connection** | ncp-kr |
+| **Subnet Count** | 1 |
+
+**Subnets:**
+
+| Name | CSP Subnet ID | CIDR Block | Zone |
+|------|---------------|------------|------|
+| my04-subnet-01 | 300131 | 10.0.1.0/24 | KR-1 |
+
+
+## Security Resources
+
+### SSH Keys
+
+| Name | CSP SSH Key ID | Username | Fingerprint |
+|------|----------------|----------|-------------|
+| my04-sshkey-01 | tbd81fd3e6aji65qtg7seg | cb-user |  |
+
+### Security Groups
+
+#### Security Group: my04-sg-01
+
+| Property | Value |
+|----------|-------|
+| **Name** | my04-sg-01 |
+| **CSP Security Group ID** | 352888 |
+| **VNet** | my04-vnet-01 |
+| **Rule Count** | 15 rules |
+
+**Security Group Rules:**
+
+| Direction | Protocol | Port Range | CIDR |
+|-----------|----------|------------|------|
+| inbound | UDP | 1-65535 | 0.0.0.0/0 |
+| inbound | TCP | 1-65535 | 0.0.0.0/0 |
+| inbound | UDP | 9113 | 10.0.0.0/16 |
+| inbound | TCP | 9113 | 10.0.0.0/16 |
+| inbound | TCP | 8080 | 0.0.0.0/0 |
+| inbound | TCP | 443 | 0.0.0.0/0 |
+| inbound | TCP | 80 | 0.0.0.0/0 |
+| inbound | TCP | 22 | 0.0.0.0/0 |
+| inbound | UDP | 1900 | 0.0.0.0/0 |
+| inbound | UDP | 5353 | 0.0.0.0/0 |
+| inbound | UDP | 68 | 0.0.0.0/0 |
+| inbound | ICMP |  | 0.0.0.0/0 |
+| outbound | ICMP |  | 0.0.0.0/0 |
+| outbound | UDP | 1-65535 | 0.0.0.0/0 |
+| outbound | TCP | 1-65535 | 0.0.0.0/0 |
+
+#### Security Group: my04-sg-02
+
+| Property | Value |
+|----------|-------|
+| **Name** | my04-sg-02 |
+| **CSP Security Group ID** | 352889 |
+| **VNet** | my04-vnet-01 |
+| **Rule Count** | 20 rules |
+
+**Security Group Rules:**
+
+| Direction | Protocol | Port Range | CIDR |
+|-----------|----------|------------|------|
+| inbound | UDP | 1-65535 | 0.0.0.0/0 |
+| inbound | TCP | 1-65535 | 0.0.0.0/0 |
+| inbound | UDP | 9100 | 10.0.0.0/16 |
+| inbound | TCP | 9100 | 10.0.0.0/16 |
+| inbound | UDP | 32803 | 10.0.0.0/16 |
+| inbound | TCP | 32803 | 10.0.0.0/16 |
+| inbound | UDP | 20048 | 10.0.0.0/16 |
+| inbound | TCP | 20048 | 10.0.0.0/16 |
+| inbound | UDP | 111 | 0.0.0.0/0 |
+| inbound | TCP | 111 | 0.0.0.0/0 |
+| inbound | UDP | 2049 | 0.0.0.0/0 |
+| inbound | TCP | 2049 | 0.0.0.0/0 |
+| inbound | TCP | 22 | 0.0.0.0/0 |
+| inbound | UDP | 1900 | 0.0.0.0/0 |
+| inbound | UDP | 5353 | 0.0.0.0/0 |
+| inbound | UDP | 68 | 0.0.0.0/0 |
+| inbound | ICMP |  | 0.0.0.0/0 |
+| outbound | ICMP |  | 0.0.0.0/0 |
+| outbound | UDP | 1-65535 | 0.0.0.0/0 |
+| outbound | TCP | 1-65535 | 0.0.0.0/0 |
+
+#### Security Group: my04-sg-03
+
+| Property | Value |
+|----------|-------|
+| **Name** | my04-sg-03 |
+| **CSP Security Group ID** | 352890 |
+| **VNet** | my04-vnet-01 |
+| **Rule Count** | 20 rules |
+
+**Security Group Rules:**
+
+| Direction | Protocol | Port Range | CIDR |
+|-----------|----------|------------|------|
+| inbound | UDP | 1-65535 | 0.0.0.0/0 |
+| inbound | TCP | 1-65535 | 0.0.0.0/0 |
+| inbound | UDP | 9104 | 10.0.0.0/16 |
+| inbound | TCP | 9104 | 10.0.0.0/16 |
+| inbound | UDP | 4444 | 10.0.0.0/16 |
+| inbound | TCP | 4444 | 10.0.0.0/16 |
+| inbound | UDP | 4568 | 10.0.0.0/16 |
+| inbound | TCP | 4568 | 10.0.0.0/16 |
+| inbound | UDP | 4567 | 10.0.0.0/16 |
+| inbound | TCP | 4567 | 10.0.0.0/16 |
+| inbound | UDP | 3306 | 10.0.0.0/16 |
+| inbound | TCP | 3306 | 10.0.0.0/16 |
+| inbound | TCP | 22 | 0.0.0.0/0 |
+| inbound | UDP | 1900 | 0.0.0.0/0 |
+| inbound | UDP | 5353 | 0.0.0.0/0 |
+| inbound | UDP | 68 | 0.0.0.0/0 |
+| inbound | ICMP |  | 0.0.0.0/0 |
+| outbound | ICMP |  | 0.0.0.0/0 |
+| outbound | UDP | 1-65535 | 0.0.0.0/0 |
+| outbound | TCP | 1-65535 | 0.0.0.0/0 |
+
+
+## Cost Estimation
+
+### Total Cost Summary
+
+| Period | Cost (USD) |
+|--------|------------|
+| **Per Hour** | $0.3325 |
+| **Per Day** | $7.98 |
+| **Per Month (30 days)** | $239.40 |
+
+### Cost by Region
+
+| CSP | Region | VM Count | Cost/Hour (USD) | Cost/Month (USD) |
+|-----|--------|----------|-----------------|------------------|
+| NCP | KR | 3 | $0.3325 | $239.40 |
+
+### Cost by Virtual Machine
+
+| VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
+|---------|------|-----------------|------------------|
+| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730 | $52.56 |
+| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3a | $0.0848 | $61.06 |
+| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747 | $125.78 |
+
+
+
+
+### Test Case 8: Migration Report
+
+#### 8.1 API Request Information
+
+- **API Endpoint**: `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}`
+- **Purpose**: Generate a comprehensive migration report matching source to target
+- **Namespace ID**: `mig01`
+- **Path Parameter**: `{{infraId}}` - The infra identifier
+
+#### 8.2 API Response Information
+
+- **Status**: ✅ **SUCCESS**
+
+**Migration Report**:
+
+# 🚀 Infrastructure Migration Report
+
+This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
+
+*Report generated: 2026-05-12 09:52:13*
+
+---
+
+## 📊 Migration Summary
+
+**Target Cloud:** NCP
+
+**Target Region:** KR
+
+**Namespace:** mig01 | **Infra ID:** my04-infra101
+
+**Migration Status:** Completed
+
+**Total Servers:** 3
+
+**Migrated Servers:** 3
+
+**💰 Estimated Monthly Cost:** $239.40 USD
+
+---
+
+## 📦 Migrated Resources Overview
+
+Summary of key infrastructure resources created or configured in the target cloud:
+
+| # | Resource Type | Count | Status | Details |
+|---|---------------|-------|--------|----------|
+| 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
+| 2 | **VM Spec** | 3 | ✅ Selected | s4-g3a, ci2-g3, s2-g3a |
+| 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
+| 4 | **VNet (VPC)** | 1 | ✅ Created | my04-vnet-01, CIDR: 10.0.0.0/21 |
+| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my04-vnet-01) |
+| 6 | **Security Group** | 3 security groups | ✅ Created | Total 55 rules in 3 sgs |
+| 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
+
+---
+
+## 💻 Virtual Machines (VMs)
+
+**Summary:** 3 VM(s) have been successfully created in the target cloud, migrated from 3 source node(s) in the on-premise infrastructure.
+
+| No. | Migrated VM | Source Server |
+|-----|-------------|---------------|
+| 1 | **VM Name:** my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 138234481<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 138234474<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 138234467<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+
+---
+
+## ⚙️ VM Specs
+
+**Summary:** 3 VM specification(s) have been selected and used for the migrated VMs.
+
+| No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
+|-----|-------------|---------|---------------|--------------------|
+| 1 | my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** ci2-g3<br>**vCPUs:** 2<br>**Memory:** 4.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 2 | my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** s2-g3a<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 3 | my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** s4-g3a<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+
+---
+
+## 💿 VM OS Images
+
+**Summary:** 1 OS image(s) have been selected and used for the migrated VMs.
+
+| No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
+|-----|-------------|------------------|---------------|-----------|
+| 1 | my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** 23214590<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu-22.04-base (Hypervisor:KVM) | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 2 | my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** 23214590<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu-22.04-base (Hypervisor:KVM) | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 3 | my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** 23214590<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** ubuntu-22.04-base (Hypervisor:KVM) | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+
+---
+
+## 🔒 Security Groups
+
+**Summary:** 3 security group(s) with 55 security rule(s) have been created and configured for the migrated VMs.
+
+### Security Group: my04-sg-01
+
+**CSP ID:** 352888 | **VNet:** my04-vnet-01 | **Rules:** 15
+
+**Assigned VMs:**
+
+- **VM:** my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec268ed7-821e-9d73-e79f
+
+**Security Rules:**
+
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 2 | inbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 3 | inbound | UDP | 9113 | 10.0.0.0/16 | inbound udp 9113 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9113 | 10.0.0.0/16 | inbound tcp 9113 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | TCP | 8080 | 0.0.0.0/0 | inbound tcp 8080 | Migrated from source |
+| 6 | inbound | TCP | 443 | 0.0.0.0/0 | inbound tcp 443 | Migrated from source |
+| 7 | inbound | TCP | 80 | 0.0.0.0/0 | inbound tcp 80 | Migrated from source |
+| 8 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 9 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 10 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 11 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 12 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 13 | outbound | ICMP |  | 0.0.0.0/0 | - | Created by system |
+| 14 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 15 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+
+### Security Group: my04-sg-02
+
+**CSP ID:** 352889 | **VNet:** my04-vnet-01 | **Rules:** 20
+
+**Assigned VMs:**
+
+- **VM:** my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec2d32b5-98fb-5a96-7913
+
+**Security Rules:**
+
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 2 | inbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 3 | inbound | UDP | 9100 | 10.0.0.0/16 | inbound udp 9100 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9100 | 10.0.0.0/16 | inbound tcp 9100 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | UDP | 32803 | 10.0.0.0/16 | inbound udp 32803 from 10.0.0.0/16 | Migrated from source |
+| 6 | inbound | TCP | 32803 | 10.0.0.0/16 | inbound tcp 32803 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | UDP | 20048 | 10.0.0.0/16 | inbound udp 20048 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | TCP | 20048 | 10.0.0.0/16 | inbound tcp 20048 from 10.0.0.0/16 | Migrated from source |
+| 9 | inbound | UDP | 111 | 0.0.0.0/0 | inbound udp 111 | Migrated from source |
+| 10 | inbound | TCP | 111 | 0.0.0.0/0 | inbound tcp 111 | Migrated from source |
+| 11 | inbound | UDP | 2049 | 0.0.0.0/0 | inbound udp 2049 | Migrated from source |
+| 12 | inbound | TCP | 2049 | 0.0.0.0/0 | inbound tcp 2049 | Migrated from source |
+| 13 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 14 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 15 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 16 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 17 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 18 | outbound | ICMP |  | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 20 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+
+### Security Group: my04-sg-03
+
+**CSP ID:** 352890 | **VNet:** my04-vnet-01 | **Rules:** 20
+
+**Assigned VMs:**
+
+- **VM:** my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
+  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec288dd0-c6fa-8a49-2f60
+
+**Security Rules:**
+
+| No. | Direction | Protocol | Port | CIDR | Source Firewall Rule | Note |
+|-----|-----------|----------|------|------|----------------------|------|
+| 1 | inbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 2 | inbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 3 | inbound | UDP | 9104 | 10.0.0.0/16 | inbound udp 9104 from 10.0.0.0/16 | Migrated from source |
+| 4 | inbound | TCP | 9104 | 10.0.0.0/16 | inbound tcp 9104 from 10.0.0.0/16 | Migrated from source |
+| 5 | inbound | UDP | 4444 | 10.0.0.0/16 | inbound udp 4444 from 10.0.0.0/16 | Migrated from source |
+| 6 | inbound | TCP | 4444 | 10.0.0.0/16 | inbound tcp 4444 from 10.0.0.0/16 | Migrated from source |
+| 7 | inbound | UDP | 4568 | 10.0.0.0/16 | inbound udp 4568 from 10.0.0.0/16 | Migrated from source |
+| 8 | inbound | TCP | 4568 | 10.0.0.0/16 | inbound tcp 4568 from 10.0.0.0/16 | Migrated from source |
+| 9 | inbound | UDP | 4567 | 10.0.0.0/16 | inbound udp 4567 from 10.0.0.0/16 | Migrated from source |
+| 10 | inbound | TCP | 4567 | 10.0.0.0/16 | inbound tcp 4567 from 10.0.0.0/16 | Migrated from source |
+| 11 | inbound | UDP | 3306 | 10.0.0.0/16 | inbound udp 3306 from 10.0.0.0/16 | Migrated from source |
+| 12 | inbound | TCP | 3306 | 10.0.0.0/16 | inbound tcp 3306 from 10.0.0.0/16 | Migrated from source |
+| 13 | inbound | TCP | 22 | 0.0.0.0/0 | inbound tcp 22 | Migrated from source |
+| 14 | inbound | UDP | 1900 | 0.0.0.0/0 | inbound udp 1900 | Migrated from source |
+| 15 | inbound | UDP | 5353 | 0.0.0.0/0 | inbound udp 5353 | Migrated from source |
+| 16 | inbound | UDP | 68 | 0.0.0.0/0 | inbound udp 68 | Migrated from source |
+| 17 | inbound | ICMP |  | 0.0.0.0/0 | inbound icmp * | Migrated from source |
+| 18 | outbound | ICMP |  | 0.0.0.0/0 | - | Created by system |
+| 19 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+| 20 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
+
+---
+
+## 🌐 VPC(VNet) and Subnets
+
+**Summary:** Virtual Private Cloud (VPC) and subnet infrastructure have been created based on the source node network information.
+
+### VPC(VNet)
+
+| No. | VPC(VNet) | CIDR Block |
+|-----|-----------|------------|
+| 1 | **Name:** my04-vnet-01<br>**ID:** 138792 | 10.0.0.0/21 |
+
+### Subnets
+
+| No. | Subnet | CIDR Block | Associated VPC(VNet) |
+|-----|--------|------------|----------------------|
+| 1 | **Name:** my04-subnet-01<br>**ID:** 300131 | 10.0.1.0/24 | my04-vnet-01 |
+
+### Source Network Information
+
+**CIDR:** 10.0.1.0/24 | **Gateway:** 10.0.1.1 | **Connected Servers:** 3
+
+### Network Details by Server (3 servers)
+
+#### 1. ip-10-0-1-30
+
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
+
+#### 2. ip-10-0-1-221
+
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
+
+#### 3. ip-10-0-1-138
+
+**Active Interfaces:**
+
+| Interface | IP Address | State |
+|-----------|------------|-------|
+| lo | 127.0.0.1/8 | up |
+
+---
+
+## 🔑 SSH Keys
+
+**Summary:** 1 SSH key(s) have been created for secure access to the migrated VMs.
+
+> **Note:** Due to security constraints and operational efficiency, it is challenging to transfer existing SSH keys from the source infrastructure. Therefore, new SSH key(s) have been generated and are commonly used across all migrated VMs. This approach ensures secure access while simplifying key management in the cloud environment.
+
+| No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
+|-----|--------------|------------|-------------|-------|
+| 1 | my04-sshkey-01 | tbd81fd3e6aji65qtg7seg |  | Used by all 3 VMs |
+
+---
+
+## 💰 Cost Summary
+
+### Total Estimated Costs
+
+| Period | Cost (USD) |
+|--------|------------|
+| Hourly | $0.3325 |
+| Daily | $7.98 |
+| Monthly | $239.40 |
+| Yearly | $2872.80 |
+
+### Cost Breakdown by Component
+
+| Component | Spec | Monthly Cost | Percentage |
+|-----------|------|--------------|------------|
+| ip-10-0-1-30 (migrated) | ci2-g3 | $52.56 | 22.0% |
+| ip-10-0-1-221 (migrated) | s4-g3a | $125.78 | 52.5% |
+| ip-10-0-1-138 (migrated) | s2-g3a | $61.06 | 25.5% |
+
+---
+
+
+---
+
+*Report generated by CM-Beetle*
+
+
+### Test Case 9: Delete the migrated computing infra
+
+#### 9.1 API Request Information
+
+- **API Endpoint**: `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}`
 - **Purpose**: Delete the migrated infrastructure and clean up resources
 - **Namespace ID**: `mig01`
-- **Path Parameter**: `{{mciId}}` - The MCI identifier to delete
+- **Path Parameter**: `{{infraId}}` - The infra identifier to delete
 - **Query Parameter**: `option=terminate` (terminates all resources)
 - **Request Body**: None (DELETE request)
 
-#### 7.2 API Response Information
+#### 9.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
 - **Response**: Infrastructure deletion completed successfully
@@ -6730,7 +7641,8 @@ _Test executed on March 25, 2026 at 21:39:50 KST (2026-03-25 21:39:50 KST) using
 
 ```json
 {
-  "message": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: mig-3-mci101)",
+  "message": "Successfully deleted the infrastructure and resources (nsId: mig01, infraId: my04-infra101)",
   "success": true
 }
 ```
+

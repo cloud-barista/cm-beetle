@@ -298,6 +298,7 @@ func RunServer(port string) {
 	gNaming := gBeetle.Group("/naming")
 	gNaming.POST("/alignment", controller.AlignNames)
 	gNaming.POST("/validation", controller.ValidateNames)
+	gNaming.POST("/preview", controller.PreviewInfra)
 
 	// Recommendation APIs for K8s Cluster (new endpoints)
 	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)

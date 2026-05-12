@@ -15,7 +15,6 @@ package common
 
 import (
 	"fmt"
-	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 )
@@ -26,22 +25,17 @@ func ComposeName(baseName, seed string) string {
 	if seed == "" {
 		return baseName
 	}
-	// If baseName already starts with the seed, return it as is (idempotency)
-	if strings.HasPrefix(baseName, seed+"-") {
-		return baseName
-	}
 	return fmt.Sprintf("%s-%s", seed, baseName)
 }
 
-// ApplyNameSeed applies the late binding naming strategy.
-// It returns a NEW RecommendedVmInfra object with prefixed names,
-// while keeping the original seed in the NameSeed field.
-func ApplyNameSeed(infra cloudmodel.RecommendedInfra) cloudmodel.RecommendedInfra {
-	if infra.NameSeed == "" {
+// ApplyNameSeed applies the late-binding naming strategy using the given seed.
+// It returns a NEW RecommendedInfra object with all resource names prefixed by seed.
+// If seed is empty, the original infra is returned unchanged.
+func ApplyNameSeed(infra cloudmodel.RecommendedInfra, seed string) cloudmodel.RecommendedInfra {
+	if seed == "" {
 		return infra
 	}
 
-	seed := infra.NameSeed
 	result := infra // Copy by value
 
 	// 1. Update VNet and Subnets
@@ -193,41 +187,61 @@ func IsValidName(name string) (bool, string) {
 	return true, ""
 }
 
-// ValidateComposedNames checks all resource names and referential integrity.
-func ValidateComposedNames(infra cloudmodel.RecommendedInfra) (bool, string) {
-	seed := infra.NameSeed
+// IsValidNameSeed checks if the nameSeed query param is acceptable.
+// Rules: 1-20 characters, alphanumeric and hyphens only, starts with alphanumeric.
+// An empty string is valid (means no seed is applied).
+func IsValidNameSeed(seed string) (bool, string) {
+	if seed == "" {
+		return true, ""
+	}
+	if len(seed) > 20 {
+		return false, "nameSeed must be 20 characters or fewer"
+	}
+	for i, r := range seed {
+		if i == 0 && !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+			return false, "nameSeed must start with an alphanumeric character"
+		}
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-') {
+			return false, "nameSeed contains invalid characters (only alphanumeric and hyphens allowed)"
+		}
+	}
+	return true, ""
+}
 
-	// 1. Validate name formats
+// ValidateComposedNames checks all resource names and referential integrity.
+// This function expects names to already have NameSeed applied (if any).
+func ValidateComposedNames(infra cloudmodel.RecommendedInfra) (bool, string) {
+	// 1. Validate name formats (names are validated as-is; seed should be applied before calling this)
 	// Check VNet
-	if ok, detail := IsValidName(ComposeName(infra.TargetVNet.Name, seed)); !ok {
+	if ok, detail := IsValidName(infra.TargetVNet.Name); !ok {
 		return false, fmt.Sprintf("VNet name [%s]: %s", infra.TargetVNet.Name, detail)
 	}
 
 	// Check Subnets
 	for _, subnet := range infra.TargetVNet.SubnetInfoList {
-		if ok, detail := IsValidName(ComposeName(subnet.Name, seed)); !ok {
+		if ok, detail := IsValidName(subnet.Name); !ok {
 			return false, fmt.Sprintf("Subnet name [%s]: %s", subnet.Name, detail)
 		}
 	}
 
 	// Check SSH Key
-	if ok, detail := IsValidName(ComposeName(infra.TargetSshKey.Name, seed)); !ok {
+	if ok, detail := IsValidName(infra.TargetSshKey.Name); !ok {
 		return false, fmt.Sprintf("SSH Key name [%s]: %s", infra.TargetSshKey.Name, detail)
 	}
 
 	// Check Security Groups
 	for _, sg := range infra.TargetSecurityGroupList {
-		if ok, detail := IsValidName(ComposeName(sg.Name, seed)); !ok {
+		if ok, detail := IsValidName(sg.Name); !ok {
 			return false, fmt.Sprintf("Security Group name [%s]: %s", sg.Name, detail)
 		}
 	}
 
 	// Check Infra and NodeGroups
-	if ok, detail := IsValidName(ComposeName(infra.TargetInfra.Name, seed)); !ok {
+	if ok, detail := IsValidName(infra.TargetInfra.Name); !ok {
 		return false, fmt.Sprintf("Infra name [%s]: %s", infra.TargetInfra.Name, detail)
 	}
 	for _, ng := range infra.TargetInfra.NodeGroups {
-		if ok, detail := IsValidName(ComposeName(ng.Name, seed)); !ok {
+		if ok, detail := IsValidName(ng.Name); !ok {
 			return false, fmt.Sprintf("NodeGroup/VM name [%s]: %s", ng.Name, detail)
 		}
 	}

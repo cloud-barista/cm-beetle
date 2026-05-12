@@ -600,7 +600,6 @@ func runCreateOSFromFileStep(
 
 	reqBody := controller.MigrateObjectStorageRequest{
 		RecommendedObjectStorage: storagemodel.RecommendedObjectStorage{
-			NameSeed:             nameSeed,
 			Status:               "recommended",
 			Description:          "Direct creation (no recommendation step)",
 			TargetCloud:          storagemodel.CloudProperty{Csp: tc.Csp, Region: tc.Region},
@@ -617,6 +616,7 @@ func runCreateOSFromFileStep(
 
 	resp, err := client.R().
 		SetBody(reqBody).
+		SetQueryParam("nameSeed", nameSeed).
 		Post(url)
 
 	result.EndTime = time.Now()

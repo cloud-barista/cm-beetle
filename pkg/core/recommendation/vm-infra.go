@@ -213,10 +213,10 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				SpecId:           nodegroupInfo.vmSpecId,
 				Description:      "a recommended virtual machine",
 				Name:             fmt.Sprintf("migrated-%s", srcInfra.Nodes[j].MachineId), // Set MachineId to identify the source node
-				RootDiskSize:     0,                                                         // TBD
-				RootDiskType:     "",                                                        // TBD
-				NodeGroupSize:    1,                                                         // TBD
-				NodeUserPassword: "",                                                        // TBD
+				RootDiskSize:     0,                                                       // TBD
+				RootDiskType:     "",                                                      // TBD
+				NodeGroupSize:    1,                                                       // TBD
+				NodeUserPassword: "",                                                      // TBD
 			}
 			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}
@@ -472,7 +472,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
-			Name:             fmt.Sprintf("migrated-%s", node.MachineId),         // Set MachineId to identify the source node
+			Name:             fmt.Sprintf("migrated-%s", node.MachineId),           // Set MachineId to identify the source node
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
 			RootDiskSize:     50,                                                   // Set 50 GB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -508,7 +508,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 }
 
 // RecommendVmInfraCandidates an appropriate multi-cloud infrastructure (MCI) for cloud migration
-func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64, nameSeed string) ([]cloudmodel.RecommendedInfra, error) {
+func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfra onpremmodel.OnpremInfra, limit int, minMatchRate float64) ([]cloudmodel.RecommendedInfra, error) {
 
 	// * To recommend multiple infra candidates (i.e., multiple VM spec and OS image combinations),
 	// * this function estimates, recommends or just generates vNets, subnets, SSH key pair, and security groups
@@ -527,7 +527,6 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 
 	// Initialize the response body
 	skeletonVmInfra := cloudmodel.RecommendedInfra{
-		NameSeed:    nameSeed,
 		Description: "This is a recommended target infrastructures and resources. Please review and use them.",
 		Status:      "",
 		TargetCloud: cloudmodel.CloudProperty{
@@ -597,7 +596,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
-			Name:             fmt.Sprintf("vm-%s", node.MachineId),            // Set MachineId to identify the source node
+			Name:             fmt.Sprintf("vm-%s", node.MachineId),              // Set MachineId to identify the source node
 			RootDiskType:     "",                                                // Set "" or default to use CSP's default
 			RootDiskSize:     50,                                                // Set 50 GB as a default value
 			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID

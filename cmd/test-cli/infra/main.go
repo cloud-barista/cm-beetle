@@ -80,11 +80,11 @@ type TestCase struct {
 
 // AuthConfig holds authentication configuration
 type AuthConfig struct {
-	BeetleApiUsername     string `json:"beetleApiUsername"`
-	BeetleApiPassword     string `json:"beetleApiPassword"`
-	TumblebugApiUsername  string `json:"tumblebugApiUsername"`
-	TumblebugApiPassword  string `json:"tumblebugApiPassword"`
-	TumblebugEndpoint     string `json:"tumblebugEndpoint"`
+	BeetleApiUsername    string `json:"beetleApiUsername"`
+	BeetleApiPassword    string `json:"beetleApiPassword"`
+	TumblebugApiUsername string `json:"tumblebugApiUsername"`
+	TumblebugApiPassword string `json:"tumblebugApiPassword"`
+	TumblebugEndpoint    string `json:"tumblebugEndpoint"`
 }
 
 // TestResults holds test execution results
@@ -371,7 +371,6 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 
 	// Create RecommendVmInfraRequest for this CSP-Region pair
 	recommendRequest := controller.RecommendInfraRequest{
-		NameSeed: nameSeed,
 		DesiredCspAndRegionPair: cloudmodel.CloudProperty{
 			Csp:    cspPair.Csp,
 			Region: cspPair.Region,
@@ -441,7 +440,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		migrationRequest := controller.MigrateInfraRequest{
 			RecommendedInfra: recommendationApiResponse.Data[0],
 		}
-		result2 = runMigrationTest(client, config, migrationRequest, displayName)
+		result2 = runMigrationTest(client, config, migrationRequest, nameSeed, displayName)
 		if structuredResponse, err := convertMapToMigrateInfraResponse(result2.Response); err == nil {
 			cspReport.MigrationResponse = structuredResponse
 			if structuredResponse.Id != "" {
@@ -909,7 +908,7 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 }
 
 // runMigrationTest performs Test 2: POST /beetle/migration/ns/{nsId}/infra
-func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestBody controller.MigrateInfraRequest, displayName string) TestResults {
+func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestBody controller.MigrateInfraRequest, nameSeed, displayName string) TestResults {
 	fmt.Printf("\n--- Test 2: POST /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability (migration needs more time) with spinner
@@ -924,6 +923,9 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 
 	// Log API call details
 	url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	if nameSeed != "" {
+		url += "?nameSeed=" + nameSeed
+	}
 	log.Debug().Msgf("API Request URL: %s", url)
 
 	// Log request body
