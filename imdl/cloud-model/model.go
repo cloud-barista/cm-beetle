@@ -7,7 +7,6 @@ type RecommendedInfraModel struct {
 
 // RecommendedInfra represents the recommended virtual machine infrastructure information.
 type RecommendedInfra struct {
-	NameSeed                string             `json:"nameSeed"`
 	Status                  string             `json:"status"`
 	Description             string             `json:"description"`
 	TargetCloud             CloudProperty      `json:"targetCloud"`

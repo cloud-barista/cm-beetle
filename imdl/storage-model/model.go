@@ -12,7 +12,6 @@ type SourceObjectStorageModel struct {
 
 // RecommendedObjectStorage is the recommendation result and direct input to the migration API.
 type RecommendedObjectStorage struct {
-	NameSeed             string                `json:"nameSeed,omitempty"`  // Base string for bucket name prefix (e.g., 'mig01' -> 'mig01-mig-bucket-01'); applied at migration time
 	Status               string                `json:"status"`             // e.g., "recommended", "partial", "failed"
 	Description          string                `json:"description"`        // Human-readable summary
 	Warnings             []string              `json:"warnings,omitempty"` // CSP feature-support warnings
