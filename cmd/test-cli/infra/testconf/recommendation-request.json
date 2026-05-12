@@ -27,7 +27,7 @@
       },
       "ipv6Networks": {}
     },
-    "servers": [
+    "nodes": [
       {
         "cpu": {
           "architecture": "x86_64",

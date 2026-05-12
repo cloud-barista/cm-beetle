@@ -80,8 +80,11 @@ type TestCase struct {
 
 // AuthConfig holds authentication configuration
 type AuthConfig struct {
-	BasicAuthUsername string `json:"basicAuthUsername"`
-	BasicAuthPassword string `json:"basicAuthPassword"`
+	BeetleApiUsername     string `json:"beetleApiUsername"`
+	BeetleApiPassword     string `json:"beetleApiPassword"`
+	TumblebugApiUsername  string `json:"tumblebugApiUsername"`
+	TumblebugApiPassword  string `json:"tumblebugApiPassword"`
+	TumblebugEndpoint     string `json:"tumblebugEndpoint"`
 }
 
 // TestResults holds test execution results
@@ -269,9 +272,9 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to load auth config")
 	}
 
-	if authConfig.BasicAuthUsername != "" && authConfig.BasicAuthPassword != "" {
+	if authConfig.BeetleApiUsername != "" && authConfig.BeetleApiPassword != "" {
 		log.Info().Msg("🔐 Setting up Basic Authentication...")
-		client.SetBasicAuth(authConfig.BasicAuthUsername, authConfig.BasicAuthPassword)
+		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
 		log.Info().Msg("✅ Basic Auth configured")
 	}
 
@@ -352,8 +355,8 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	client := resty.New()
 	client.SetTimeout(45 * time.Minute)
 	client.SetBaseURL(config.Beetle.Endpoint)
-	if authConfig.BasicAuthUsername != "" && authConfig.BasicAuthPassword != "" {
-		client.SetBasicAuth(authConfig.BasicAuthUsername, authConfig.BasicAuthPassword)
+	if authConfig.BeetleApiUsername != "" && authConfig.BeetleApiPassword != "" {
+		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
 	}
 
 	log.Info().Msgf("%s", "\n"+strings.Repeat("=", 60)+"\n")
@@ -565,7 +568,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	 * Test 6: Remote Command Accessibility Check
 	 */
 	if !stopTesting {
-		result6 := runRemoteCommandTest(client, config, infraId, displayName)
+		result6 := runRemoteCommandTest(client, config, infraId, displayName, authConfig)
 		recordResult(result6)
 		if !result6.Success {
 			stopTesting = true
@@ -2540,7 +2543,7 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 }
 
 // runRemoteCommandTest performs Test 6: Remote Command to check accessibility of migrated VM
-func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, displayName string) TestResults {
+func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, displayName string, authConfig AuthConfig) TestResults {
 	log.Info().Msg("\n--- Test 6: Remote Command Accessibility Check ---")
 
 	// Wait before test for stability with animation
@@ -2560,7 +2563,15 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 	// Step 1: Get MCI Access Info
 	log.Info().Msg("Step 1: Getting MCI access information...")
 
-	tbCli := tbclient.NewDefaultClient()
+	tbEndpoint := authConfig.TumblebugEndpoint
+	if tbEndpoint == "" {
+		tbEndpoint = config.Beetle.Endpoint // fallback: not ideal, but avoids empty URL
+	}
+	tbCli := tbclient.NewClient(tbclient.ApiConfig{
+		RestUrl:  tbEndpoint + "/tumblebug",
+		Username: authConfig.TumblebugApiUsername,
+		Password: authConfig.TumblebugApiPassword,
+	})
 	// tbSess := tbCli.NewSession() // or tbclient.NewSession()
 	accessInfo, err := tbCli.NewSession().ReadInfraAccessInfo(config.Beetle.NamespaceID, infraId, "accessinfo", "showSshKey")
 	if err != nil {

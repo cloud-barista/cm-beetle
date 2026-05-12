@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func RecommendSecurityGroup(csp string, region string, server onpremmodel.ServerProperty) (cloudmodel.SecurityGroupReq, error) {
+func RecommendSecurityGroup(csp string, region string, node onpremmodel.NodeProperty) (cloudmodel.SecurityGroupReq, error) {
 
 	var emptyRes = cloudmodel.SecurityGroupReq{}
 	var recommendedSecurityGroup = cloudmodel.SecurityGroupReq{}
@@ -21,7 +21,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 		return emptyRes, err
 	}
 
-	firewallRules := server.FirewallTable
+	firewallRules := node.FirewallTable
 	log.Debug().Msgf("firewallRules: %+v", firewallRules)
 
 	// Default rules
@@ -33,18 +33,18 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	// 	FromPort:   "0",
 	// 	ToPort:     "0",
 
-	// [Process] Recommend the security group based on server.FirewallTable
+	// [Process] Recommend the security group based on node.FirewallTable
 	// Create security group recommendations
 	var sgRules []cloudmodel.FirewallRuleReq
 	var firewallRulesPtr *[]cloudmodel.FirewallRuleReq
 
-	// Generate security group rules based on server firewall configuration
+	// Generate security group rules based on node firewall configuration
 	if len(firewallRules) == 0 {
-		log.Warn().Msg("No firewall rules provided from server.FirewallTable - security group will be created without predefined rules")
+		log.Warn().Msg("No firewall rules provided from node.FirewallTable - security group will be created without predefined rules")
 		// Note: SSH access rule will be added during migration phase if needed
 		firewallRulesPtr = nil // Use nil to indicate no rules defined
 	} else {
-		log.Info().Msgf("Generating security group rules based on %d firewall rules from server configuration", len(firewallRules))
+		log.Info().Msgf("Generating security group rules based on %d firewall rules from node configuration", len(firewallRules))
 		sgRules = generateSecurityGroupRules(firewallRules)
 		firewallRulesPtr = &sgRules // Point to the generated rules
 	}
@@ -57,7 +57,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 		Name:           "INSERT_YOUR_SECURITY_GROUP_NAME",
 		VNetId:         "INSERT_YOUR_VNET_ID",
 		ConnectionName: fmt.Sprintf("%s-%s", csp, region),
-		Description:    fmt.Sprintf("Recommended security group for %s", server.MachineId), // Set MachineId to identify the source server
+		Description:    fmt.Sprintf("Recommended security group for %s", node.MachineId), // Set MachineId to identify the source node
 		FirewallRules:  firewallRulesPtr,
 	}
 
@@ -66,7 +66,7 @@ func RecommendSecurityGroup(csp string, region string, server onpremmodel.Server
 	return recommendedSecurityGroup, nil
 }
 
-func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.ServerProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
+func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.NodeProperty) (cloudmodel.RecommendedSecurityGroupList, error) {
 
 	var emptyRet = cloudmodel.RecommendedSecurityGroupList{}
 	var recommendedSecurityGroupList = cloudmodel.RecommendedSecurityGroupList{}
@@ -78,16 +78,16 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 		return emptyRet, err
 	}
 
-	// [Process] Recommend the security group for each server
+	// [Process] Recommend the security group for each node
 	var tempRecSgList []cloudmodel.SecurityGroupReq
 	var targetSecurityGroupList []cloudmodel.RecommendedSecurityGroup
 
-	for _, server := range servers {
-		// Recommend a security group for the server
-		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, server)
+	for _, node := range servers {
+		// Recommend a security group for the node
+		recommendedTargetSg, err := RecommendSecurityGroup(csp, region, node)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to recommend security group for server: %+v", server)
-			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", server.MachineId) // Set MachineId to identify the source server
+			log.Error().Err(err).Msgf("failed to recommend security group for node: %+v", node)
+			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", node.MachineId) // Set MachineId to identify the source node
 			recommendedTargetSg.FirewallRules = nil                                                                      // No rules if recommendation fails
 		}
 
@@ -102,7 +102,7 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 
 			// Create a temporary recommended security group
 			tempRecommendedSecurityGroup := cloudmodel.RecommendedSecurityGroup{
-				SourceServers:       []string{server.MachineId}, // Set MachineId to identify the source server
+				SourceServers:       []string{node.MachineId}, // Set MachineId to identify the source node
 				Description:         "Recommended security group",
 				TargetSecurityGroup: recommendedTargetSg,
 			}
@@ -118,7 +118,7 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 			targetSecurityGroupList = append(targetSecurityGroupList, tempRecommendedSecurityGroup)
 		} else {
 			// Just append the MachineId to the existing security group
-			targetSecurityGroupList[idx].SourceServers = append(targetSecurityGroupList[idx].SourceServers, server.MachineId)
+			targetSecurityGroupList[idx].SourceServers = append(targetSecurityGroupList[idx].SourceServers, node.MachineId)
 		}
 	}
 
@@ -140,7 +140,7 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.Se
 		recommendedSecurityGroupList.Description = "Unable to recommend any security groups for the servers in the source infrastructure"
 	default:
 		recommendedSecurityGroupList.Status = string(PartiallyRecommended)
-		recommendedSecurityGroupList.Description = fmt.Sprintf("Partially recommended security groups: %d of %d server groups have recommendations",
+		recommendedSecurityGroupList.Description = fmt.Sprintf("Partially recommended security groups: %d of %d node groups have recommendations",
 			recommendedSecurityGroupList.Count-countFailed, recommendedSecurityGroupList.Count)
 	}
 

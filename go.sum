@@ -80,6 +80,8 @@ github.com/cloud-barista/cb-tumblebug v0.12.9 h1:d1m2sdmVAw9u1bXL920aRKs5UBTx5G8
 github.com/cloud-barista/cb-tumblebug v0.12.9/go.mod h1:MUMXO9BWx5AJpZl/yapk5W44EIG5Po19hgnE1Rt/g5k=
 github.com/cloud-barista/cm-beetle/imdl v0.1.3 h1:0Hj71pVdMLZABXQl+7rfGor2cy0alpMMWuNGyjGmHVw=
 github.com/cloud-barista/cm-beetle/imdl v0.1.3/go.mod h1:RfpzPB67XRW5TDGs5f4Cv/W/zJ3c+eU8eV291oj+ns0=
+github.com/cloud-barista/cm-beetle/imdl v0.1.4 h1:Gp6SNDLKg2s2CD7BnS4N5tRtZJjChTd8u+B5dPjDzqM=
+github.com/cloud-barista/cm-beetle/imdl v0.1.4/go.mod h1:RfpzPB67XRW5TDGs5f4Cv/W/zJ3c+eU8eV291oj+ns0=
 github.com/cloud-barista/cm-beetle/transx v0.1.2 h1:EK/JqOUBhvNyWY/RhTVV/J4+TQ+p8Lc62IqRf9C7fE4=
 github.com/cloud-barista/cm-beetle/transx v0.1.2/go.mod h1:GivjSMvBpXko4vZGSHO4RqqLLDI6kYu/ZdxLCyhHG/g=
 github.com/cloud-barista/cm-beetle/transx v0.1.3 h1:g8ZhHOuj/1zphRV+xA7mdVE73RWhjBcnMb3Ckckzk4c=

@@ -216,8 +216,8 @@ func GenerateSourceInfraSummary(c echo.Context) error {
 	// [Process]
 	// Use a default infrastructure name if not provided
 	infraName := "on-premise-infra"
-	if len(req.OnpremiseInfraModel.Servers) > 0 {
-		infraName = fmt.Sprintf("infra-%d-servers", len(req.OnpremiseInfraModel.Servers))
+	if len(req.OnpremiseInfraModel.Nodes) > 0 {
+		infraName = fmt.Sprintf("infra-%d-nodes", len(req.OnpremiseInfraModel.Nodes))
 	}
 
 	log.Info().Msgf("Generating source infrastructure summary (infraName: %s, format: %s, download: %s)", infraName, format, download)

@@ -92,16 +92,16 @@ func GenerateMigrationReport(c echo.Context) error {
 	}
 
 	// Validate source infrastructure
-	if len(req.OnpremiseInfraModel.Servers) == 0 {
-		log.Warn().Msg("Source infrastructure must contain at least one server")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source server required"))
+	if len(req.OnpremiseInfraModel.Nodes) == 0 {
+		log.Warn().Msg("Source infrastructure must contain at least one node")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source node required"))
 	}
 
 	// Generate migration report
 	log.Info().
 		Str("nsId", nsId).
 		Str("infraId", infraId).
-		Int("sourceServers", len(req.OnpremiseInfraModel.Servers)).
+		Int("sourceNodes", len(req.OnpremiseInfraModel.Nodes)).
 		Str("format", format).
 		Str("download", download).
 		Msg("Generating migration report")

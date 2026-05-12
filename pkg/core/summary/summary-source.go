@@ -66,7 +66,7 @@ func GenerateSourceInfraSummary(infraName string, infraData onpremmodel.OnpremIn
 
 // buildSourceInfraOverview builds the overview section from on-premise infrastructure data
 func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInfra) SourceSummaryInfraOverview {
-	totalServerCount := len(infraData.Servers)
+	totalServerCount := len(infraData.Nodes)
 	totalCPUCores := 0
 	totalMemoryGB := 0
 	totalDiskGB := 0
@@ -78,18 +78,18 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 	}
 
 	// Calculate totals from servers
-	for _, server := range infraData.Servers {
+	for _, node := range infraData.Nodes {
 		// CPU cores (uint32 to int conversion)
-		totalCPUCores += int(server.CPU.Cores)
+		totalCPUCores += int(node.CPU.Cores)
 
 		// Memory in GB
-		totalMemoryGB += int(server.Memory.TotalSize)
+		totalMemoryGB += int(node.Memory.TotalSize)
 
 		// Root disk size
-		totalDiskGB += int(server.RootDisk.TotalSize)
+		totalDiskGB += int(node.RootDisk.TotalSize)
 
 		// Data disks
-		for _, disk := range server.DataDisks {
+		for _, disk := range node.DataDisks {
 			totalDiskGB += int(disk.TotalSize)
 		}
 	}
@@ -104,46 +104,46 @@ func buildSourceInfraOverview(infraName string, infraData *onpremmodel.OnpremInf
 	}
 }
 
-// collectSourceComputeResources collects server information from on-premise data
+// collectSourceComputeResources collects node information from on-premise data
 func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSummaryComputeResources {
 	var servers []SourceServerInfo
 
-	for _, server := range infraData.Servers {
+	for _, node := range infraData.Nodes {
 		// CPU information
 		cpuInfo := SourceCPUInfo{
-			Cores:        int(server.CPU.Cores),
-			Model:        server.CPU.Model,
-			MaxSpeed:     float64(server.CPU.MaxSpeed),
-			Vendor:       server.CPU.Vendor,
-			CPUs:         int(server.CPU.Cpus),
-			Threads:      int(server.CPU.Threads),
-			Architecture: server.CPU.Architecture,
+			Cores:        int(node.CPU.Cores),
+			Model:        node.CPU.Model,
+			MaxSpeed:     float64(node.CPU.MaxSpeed),
+			Vendor:       node.CPU.Vendor,
+			CPUs:         int(node.CPU.Cpus),
+			Threads:      int(node.CPU.Threads),
+			Architecture: node.CPU.Architecture,
 		}
 
 		// Memory information
 		memoryInfo := SourceMemoryInfo{
-			Type:    server.Memory.Type,
-			TotalGB: int(server.Memory.TotalSize),
+			Type:    node.Memory.Type,
+			TotalGB: int(node.Memory.TotalSize),
 		}
 
 		// Root disk information
 		diskInfo := SourceDiskInfo{
-			Label:   server.RootDisk.Label,
-			Type:    server.RootDisk.Type,
-			TotalGB: int(server.RootDisk.TotalSize),
+			Label:   node.RootDisk.Label,
+			Type:    node.RootDisk.Type,
+			TotalGB: int(node.RootDisk.TotalSize),
 		}
 
 		// OS information
 		osInfo := SourceOSInfo{
-			PrettyName:   server.OS.PrettyName,
-			Name:         server.OS.Name,
-			Version:      server.OS.Version,
-			Architecture: server.CPU.Architecture,
+			PrettyName:   node.OS.PrettyName,
+			Name:         node.OS.Name,
+			Version:      node.OS.Version,
+			Architecture: node.CPU.Architecture,
 		}
 
 		// Network brief (use first active network interface if available)
 		networkBrief := SourceNetworkBrief{}
-		for _, iface := range server.Interfaces {
+		for _, iface := range node.Interfaces {
 			// Skip loopback and virtual interfaces for brief
 			if iface.Name != "lo" && len(iface.IPv4CidrBlocks) > 0 {
 				networkBrief.IPAddress = iface.IPv4CidrBlocks[0]
@@ -155,7 +155,7 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 		// Collect main network interfaces (lo, eth0, eno*, br-ex, etc.)
 		var interfaces []SourceInterfaceInfo
-		for _, iface := range server.Interfaces {
+		for _, iface := range node.Interfaces {
 			// Filter main interfaces
 			if isMainInterface(iface.Name) {
 				ipAddress := ""
@@ -177,7 +177,7 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 		// Collect routing table entries for main interfaces
 		var routingTable []SourceRoutingTableRow
-		for _, route := range server.RoutingTable {
+		for _, route := range node.RoutingTable {
 			// Include routes for main interfaces
 			if isMainInterface(route.Interface) {
 				routingTable = append(routingTable, SourceRoutingTableRow{
@@ -191,14 +191,14 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 		}
 
 		serverInfo := SourceServerInfo{
-			Hostname:     server.Hostname,
-			MachineId:    server.MachineId,
+			Hostname:     node.Hostname,
+			MachineId:    node.MachineId,
 			CPU:          cpuInfo,
 			Memory:       memoryInfo,
 			Disk:         diskInfo,
 			OS:           osInfo,
-			RootDiskType: server.RootDisk.Type,
-			RootDiskSize: int(server.RootDisk.TotalSize),
+			RootDiskType: node.RootDisk.Type,
+			RootDiskSize: int(node.RootDisk.TotalSize),
 			Network:      networkBrief,
 			Interfaces:   interfaces,
 			RoutingTable: routingTable,
@@ -281,9 +281,9 @@ func collectSourceNetworkResources(infraData *onpremmodel.OnpremInfra) SourceSum
 	// Count servers per network by matching their interface IPs to network CIDRs
 	for cidr := range networkMap {
 		serverCount := 0
-		for _, server := range infraData.Servers {
+		for _, node := range infraData.Nodes {
 			serverInNetwork := false
-			for _, iface := range server.Interfaces {
+			for _, iface := range node.Interfaces {
 				for _, ipCidr := range iface.IPv4CidrBlocks {
 					// Simple check: if IP CIDR contains network CIDR prefix
 					if strings.Contains(ipCidr, strings.Split(cidr, "/")[0][:strings.LastIndex(strings.Split(cidr, "/")[0], ".")]) {
@@ -327,12 +327,12 @@ func calculateSourceStorageResources(infraData *onpremmodel.OnpremInfra) SourceS
 	storageByTypeMap := make(map[string]*SourceStorageByType)
 	var storageByServer []SourceStorageByServer
 
-	for _, server := range infraData.Servers {
+	for _, node := range infraData.Nodes {
 		serverTotalGB := 0
 
 		// Root disk
-		rootDiskSize := int(server.RootDisk.TotalSize)
-		rootDiskType := server.RootDisk.Type
+		rootDiskSize := int(node.RootDisk.TotalSize)
+		rootDiskType := node.RootDisk.Type
 		serverTotalGB += rootDiskSize
 		totalGB += rootDiskSize
 
@@ -347,7 +347,7 @@ func calculateSourceStorageResources(infraData *onpremmodel.OnpremInfra) SourceS
 		storageByTypeMap[rootDiskType].TotalGB += rootDiskSize
 
 		// Data disks
-		for _, disk := range server.DataDisks {
+		for _, disk := range node.DataDisks {
 			diskSize := int(disk.TotalSize)
 			diskType := disk.Type
 			serverTotalGB += diskSize
@@ -363,10 +363,10 @@ func calculateSourceStorageResources(infraData *onpremmodel.OnpremInfra) SourceS
 			storageByTypeMap[diskType].TotalGB += diskSize
 		}
 
-		// Add server storage summary
+		// Add node storage summary
 		if serverTotalGB > 0 {
 			storageByServer = append(storageByServer, SourceStorageByServer{
-				Hostname: server.Hostname,
+				Hostname: node.Hostname,
 				TotalGB:  serverTotalGB,
 				Type:     rootDiskType,
 			})
@@ -397,11 +397,11 @@ func calculateSourceStorageResources(infraData *onpremmodel.OnpremInfra) SourceS
 func collectSourceSecurityResources(infraData *onpremmodel.OnpremInfra) SourceSummarySecurityResources {
 	var serverFirewalls []SourceServerFirewall
 
-	for _, server := range infraData.Servers {
+	for _, node := range infraData.Nodes {
 		var firewallRules []SourceFirewallRule
 
 		// Collect firewall rules if they exist
-		for _, rule := range server.FirewallTable {
+		for _, rule := range node.FirewallTable {
 			firewallRules = append(firewallRules, SourceFirewallRule{
 				SrcCIDR:   rule.SrcCIDR,
 				SrcPorts:  rule.SrcPorts,
@@ -413,9 +413,9 @@ func collectSourceSecurityResources(infraData *onpremmodel.OnpremInfra) SourceSu
 			})
 		}
 
-		// Add server to list (even if no firewall rules)
+		// Add node to list (even if no firewall rules)
 		serverFirewalls = append(serverFirewalls, SourceServerFirewall{
-			Hostname:      server.Hostname,
+			Hostname:      node.Hostname,
 			FirewallRules: firewallRules,
 		})
 	}

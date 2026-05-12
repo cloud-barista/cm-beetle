@@ -7601,6 +7601,39 @@
                 }
             }
         },
+        "onpremisemodel.K8sClusterProperty": {
+            "type": "object",
+            "required": [
+                "name",
+                "version"
+            ],
+            "properties": {
+                "cniPlugin": {
+                    "description": "[Reference] CNI plugin name (e.g., \"calico\", \"flannel\", \"cilium\")",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "[Required] Cluster name",
+                    "type": "string"
+                },
+                "nodePortRange": {
+                    "description": "[Reference] NodePort range (e.g., \"30000-32767\")",
+                    "type": "string"
+                },
+                "podCIDR": {
+                    "description": "[Reference] Pod network CIDR (e.g., \"10.244.0.0/16\")",
+                    "type": "string"
+                },
+                "serviceCIDR": {
+                    "description": "[Reference] Service network CIDR (e.g., \"10.96.0.0/12\")",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "[Required] Kubernetes version (e.g., \"1.29.3\")",
+                    "type": "string"
+                }
+            }
+        },
         "onpremisemodel.MemoryProperty": {
             "type": "object",
             "required": [
@@ -7698,19 +7731,80 @@
                 }
             }
         },
+        "onpremisemodel.NodeProperty": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
+                },
+                "dataDisks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                    }
+                },
+                "firewallTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
+                    }
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "interfaces": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
+                    }
+                },
+                "machineId": {
+                    "description": "Unique identifier for the node (e.g., UUID)",
+                    "type": "string"
+                },
+                "memory": {
+                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
+                },
+                "os": {
+                    "$ref": "#/definitions/onpremisemodel.OsProperty"
+                },
+                "role": {
+                    "description": "Node role (e.g., \"control-plane\", \"worker\", \"standalone\")",
+                    "type": "string",
+                    "example": "control-plane"
+                },
+                "rootDisk": {
+                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
+                },
+                "routingTable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
+                    }
+                }
+            }
+        },
         "onpremisemodel.OnpremInfra": {
             "type": "object",
             "required": [
-                "servers"
+                "nodes"
             ],
             "properties": {
+                "k8sCluster": {
+                    "description": "TODO: Extend to a general ClusterProperty if other orchestrators (e.g., OpenShift, Rancher) are needed.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/onpremisemodel.K8sClusterProperty"
+                        }
+                    ]
+                },
                 "network": {
                     "$ref": "#/definitions/onpremisemodel.NetworkProperty"
                 },
-                "servers": {
+                "nodes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/onpremisemodel.ServerProperty"
+                        "$ref": "#/definitions/onpremisemodel.NodeProperty"
                     }
                 }
             }
@@ -7787,54 +7881,6 @@
                 "source": {
                     "description": "Optionally stores the source address (used for policy-based routing)",
                     "type": "string"
-                }
-            }
-        },
-        "onpremisemodel.ServerProperty": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "$ref": "#/definitions/onpremisemodel.CpuProperty"
-                },
-                "dataDisks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                    }
-                },
-                "firewallTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.FirewallRuleProperty"
-                    }
-                },
-                "hostname": {
-                    "type": "string"
-                },
-                "interfaces": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.NetworkInterfaceProperty"
-                    }
-                },
-                "machineId": {
-                    "description": "Unique identifier for the server (e.g., UUID)",
-                    "type": "string"
-                },
-                "memory": {
-                    "$ref": "#/definitions/onpremisemodel.MemoryProperty"
-                },
-                "os": {
-                    "$ref": "#/definitions/onpremisemodel.OsProperty"
-                },
-                "rootDisk": {
-                    "$ref": "#/definitions/onpremisemodel.DiskProperty"
-                },
-                "routingTable": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/onpremisemodel.RouteProperty"
-                    }
                 }
             }
         },

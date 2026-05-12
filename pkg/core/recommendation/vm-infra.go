@@ -124,7 +124,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// 	CommonImage:    "", // Lookup and set an appropriate VM OS image
 	// 	CommonSpec:     "", // Lookup and set an appropriate VM spec
 	// 	Description:    "a recommended virtual machine",
-	// 	Name:           fmt.Sprintf("migrated-%s", server.MachineId),
+	// 	Name:           fmt.Sprintf("migrated-%s", node.MachineId),
 	// 	RootDiskSize:   "", // TBD
 	// 	RootDiskType:   "", // TBD
 	// 	SubGroupSize:   "",
@@ -142,21 +142,21 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	recommendedVmInfoList := [][]RecommendedVmInfo{}
 
 	// Recommand VM specs and OS images for servers in the source computing infrastructure
-	for _, server := range srcInfra.Servers {
+	for _, node := range srcInfra.Nodes {
 
-		// Lookup the appropriate VM specs for the server
-		vmSpecList, _, err := RecommendVmSpecs(desiredCsp, desiredRegion, server, defaultSpecsLimit)
+		// Lookup the appropriate VM specs for the node
+		vmSpecList, _, err := RecommendVmSpecs(desiredCsp, desiredRegion, node, defaultSpecsLimit)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 			continue
 		}
 
-		// Lookup the appropriate VM OS images for the server
+		// Lookup the appropriate VM OS images for the node
 		vmOsImageIdList := []string{}
 		for range vmSpecList {
-			osImgId, err := RecommendVmOsImageId(desiredCsp, desiredRegion, server)
+			osImgId, err := RecommendVmOsImageId(desiredCsp, desiredRegion, node)
 			if err != nil {
-				log.Warn().Msgf("failed to recommend VM OS image for server %s: %v", server.MachineId, err)
+				log.Warn().Msgf("failed to recommend VM OS image for node %s: %v", node.MachineId, err)
 				vmOsImageIdList = append(vmOsImageIdList, "")
 			} else {
 				vmOsImageIdList = append(vmOsImageIdList, osImgId)
@@ -177,7 +177,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	// Debug log
 	// log.Debug().Msgf("the number of recommended VM specs and OS images: %d", len(recommendedVmInfoList))
 	// for i, vmInfoList := range recommendedVmInfoList {
-	// 	log.Debug().Msgf("the number of recommended VM specs and OS images for server %d: %d", i, len(vmInfoList))
+	// 	log.Debug().Msgf("the number of recommended VM specs and OS images for node %d: %d", i, len(vmInfoList))
 	// }
 	// log.Debug().Msgf("recommended VM specs and OS images: %+v", recommendedVmInfoList)
 
@@ -185,7 +185,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	 * [Output]
 	 */
 
-	// Transpose the matrix to change from "VM recommendations per server" to "servers per VM recommendation".
+	// Transpose the matrix to change from "VM recommendations per node" to "servers per VM recommendation".
 	// Before: [Server1's VM recommendations, Server2's VM recommendations, ...]
 	// After: [Recommendation1 for all servers, Recommendation2 for all servers, ...]
 	transposed := transposeMatrix(recommendedVmInfoList)
@@ -212,7 +212,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				ImageId:          nodegroupInfo.vmOsImageId,
 				SpecId:           nodegroupInfo.vmSpecId,
 				Description:      "a recommended virtual machine",
-				Name:             fmt.Sprintf("migrated-%s", srcInfra.Servers[j].MachineId), // Set MachineId to identify the source server
+				Name:             fmt.Sprintf("migrated-%s", srcInfra.Nodes[j].MachineId), // Set MachineId to identify the source node
 				RootDiskSize:     0,                                                         // TBD
 				RootDiskType:     "",                                                        // TBD
 				NodeGroupSize:    1,                                                         // TBD
@@ -312,29 +312,29 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 	var recommendedVmOsImageList = []cloudmodel.ImageInfo{}
 	var recommendedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
 
-	for i, server := range srcInfra.Servers {
+	for i, node := range srcInfra.Nodes {
 
 		/*
 		 * Recommend VM specs, OS images, and security groups
 		 */
 
-		// Lookup the appropriate VM specs for the server
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, server, limitSpecs)
+		// Lookup the appropriate VM specs for the node
+		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, node, limitSpecs)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
 
-		// Lookup the appropriate VM OS images for the server
-		// recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, server)
-		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, server, limitImages)
+		// Lookup the appropriate VM OS images for the node
+		// recommendedVmOsImageInfo, err := RecommendVmOsImage(csp, region, node)
+		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, node, limitImages)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM OS images for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend VM OS images for node %s: %v", node.MachineId, err)
 		}
 
-		// Generete security group from the server's firewall rules (or firewall table)
-		recommendedSg, err := RecommendSecurityGroup(csp, region, server)
+		// Generete security group from the node's firewall rules (or firewall table)
+		recommendedSg, err := RecommendSecurityGroup(csp, region, node)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend security group for node %s: %v", node.MachineId, err)
 		}
 
 		lenSpecList := len(recommendedVmSpecInfoList)
@@ -354,14 +354,14 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
-			log.Warn().Msgf("no recommended VM specs or OS images found for server %s", server.MachineId)
+			log.Warn().Msgf("no recommended VM specs or OS images found for node %s", node.MachineId)
 		} else {
 
 			// * Note: (opinion) Find multiple compatible pairs and use them as needed in the later process
 			// Find compatible spec and image pair
 			tempSelectedVmSpec, tempSelectedVmOsImage, err := FindCompatibleSpecAndImage(recommendedVmSpecInfoList, recommendedVmOsImageInfoList, csp)
 			if err != nil {
-				log.Warn().Msgf("failed to find compatible spec-image pair for server %s: %v", server.MachineId, err)
+				log.Warn().Msgf("failed to find compatible spec-image pair for node %s: %v", node.MachineId, err)
 				// Use fallback selection (first spec, first image)
 			} else {
 				selectedVmSpec = tempSelectedVmSpec
@@ -369,28 +369,28 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 
 				// Log CPU comparison
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Str("specCspName", selectedVmSpec.CspSpecName).
 					Str("specId", selectedVmSpec.Id).
-					Uint32("originalCPUs", server.CPU.Cpus).
+					Uint32("originalCPUs", node.CPU.Cpus).
 					Uint32("recommendedVCPU", uint32(selectedVmSpec.VCPU)).
 					Msg("CPU comparison")
 
 				// Log Memory comparison
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Str("specCspName", selectedVmSpec.CspSpecName).
 					Str("specId", selectedVmSpec.Id).
-					Uint32("originalMemoryGB", uint32(server.Memory.TotalSize)).
+					Uint32("originalMemoryGB", uint32(node.Memory.TotalSize)).
 					Float32("recommendedMemoryGiB", selectedVmSpec.MemoryGiB).
 					Msg("Memory comparison")
 
 				// Log OS comparison
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Str("imageCspName", selectedVmOsImage.CspImageName).
 					Str("imageId", selectedVmOsImage.Id).
-					Str("originalOS", server.OS.Name+" "+server.OS.Version).
+					Str("originalOS", node.OS.Name+" "+node.OS.Version).
 					Str("recommendedOSImage", selectedVmOsImage.CspImageName).
 					Msg("OS comparison")
 			}
@@ -436,7 +436,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			// If the security group does not exist, set a name to indicate a dependency between resources.
 			recommendedSg.Name = fmt.Sprintf("mig-sg-%02d", len(recommendedSecurityGroupList)+1)
 			recommendedSg.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
-			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", server.MachineId) // Set MachineId to identify the source server
+			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", node.MachineId) // Set MachineId to identify the source node
 
 			// * Set name to indicate a dependency between resources.
 			recommendedSg.VNetId = recommendedVmInfra.TargetVNet.Name // Set the vNet ID to the security group
@@ -450,7 +450,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		/*
 		 * Recommend VM by specifying the recommended VM specs, OS images, and security groups
 		 */
-		// TODO: Select a subnet by the server's network information (for now, select the first one)
+		// TODO: Select a subnet by the node's network information (for now, select the first one)
 
 		// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
 		// Note: "TYPE1" for RootDiskType is the first in the list
@@ -466,13 +466,13 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// * Set names to indicate a dependency between resources.
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
+			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			SpecId:           selectedVmSpec.Id,
 			ImageId:          selectedVmOsImage.Id,
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
-			Name:             fmt.Sprintf("migrated-%s", server.MachineId),         // Set MachineId to identify the source server
+			Name:             fmt.Sprintf("migrated-%s", node.MachineId),         // Set MachineId to identify the source node
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
 			RootDiskSize:     50,                                                   // Set 50 GB as a default value
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -480,7 +480,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			NodeUserPassword: "",                                                   // TBD
 			NodeGroupSize:    1,                                                    // TBD
 			Label: map[string]string{
-				"sourceMachineId": server.MachineId,
+				"sourceMachineId": node.MachineId,
 			},
 		}
 
@@ -577,7 +577,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// 3. Generate a skeleton of NodeGroup List for VMs
 	var skeletonNodegroupList = []cloudmodel.CreateNodeGroupReq{}
 
-	// TODO: Select a subnet by the server's network information (for now, select the first one)
+	// TODO: Select a subnet by the node's network information (for now, select the first one)
 	// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
 	// Note: "TYPE1" for RootDiskType is the first in the list
 	// - AWS: ["standard", "gp2", "gp3"],
@@ -590,14 +590,14 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// - KT: ["HDD", "SSD"]
 
 	// * Set names to indicate a dependency between resources.
-	for i, server := range srcInfra.Servers {
+	for i, node := range srcInfra.Nodes {
 		// * Set names to indicate a dependency between resources.
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, server.MachineId), // Set MachineId to identify the source server
+			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
-			Name:             fmt.Sprintf("vm-%s", server.MachineId),            // Set MachineId to identify the source server
+			Name:             fmt.Sprintf("vm-%s", node.MachineId),            // Set MachineId to identify the source node
 			RootDiskType:     "",                                                // Set "" or default to use CSP's default
 			RootDiskSize:     50,                                                // Set 50 GB as a default value
 			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
@@ -605,7 +605,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			NodeUserPassword: "",                                                // TBD
 			NodeGroupSize:    1,                                                 // Default: 1
 			Label: map[string]string{
-				"sourceMachineId": server.MachineId,
+				"sourceMachineId": node.MachineId,
 			},
 		}
 
@@ -622,12 +622,12 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// 4. Recommend security groups with removing duplicates,
 	// and set the recommended security groups to the skeleton NodeGroup List
 	var deduplicatedSecurityGroupList = []cloudmodel.SecurityGroupReq{}
-	for i, server := range srcInfra.Servers {
+	for i, node := range srcInfra.Nodes {
 
-		// Generete security group from the server's firewall rules (or firewall table)
-		recommendedSg, err := RecommendSecurityGroup(csp, region, server)
+		// Generete security group from the node's firewall rules (or firewall table)
+		recommendedSg, err := RecommendSecurityGroup(csp, region, node)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend security group for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend security group for node %s: %v", node.MachineId, err)
 		}
 
 		// Check duplicates and append the recommended security groups
@@ -636,7 +636,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// If the security group does not exist, set a name to indicate a dependency between resources.
 			recommendedSg.Name = fmt.Sprintf("sg-%02d", len(deduplicatedSecurityGroupList)+1)
 			recommendedSg.ConnectionName = fmt.Sprintf("%s-%s", csp, region)
-			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", server.MachineId) // Set MachineId to identify the source server
+			recommendedSg.Description = fmt.Sprintf("Recommended security group for %s", node.MachineId) // Set MachineId to identify the source node
 
 			// * Set name to indicate a dependency between resources.
 			recommendedSg.VNetId = skeletonVmInfra.TargetVNet.Name // Set the vNet ID to the security group
@@ -657,21 +657,21 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 
 	// 5. Recommend the compatible pairs of VM specs and OS images with removing duplicates,
 	// Note: Don't need to register specs and OS images.
-	var compatiblePairsForEachServer = make([][]CompatibleSpecImagePair, len(srcInfra.Servers))
+	var compatiblePairsForEachServer = make([][]CompatibleSpecImagePair, len(srcInfra.Nodes))
 
 	// Find compatible pairs of VM specs and OS images for servers
-	for i, server := range srcInfra.Servers {
+	for i, node := range srcInfra.Nodes {
 
-		// Lookup the appropriate VM specs for the server
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, server, limitSpecs)
+		// Lookup the appropriate VM specs for the node
+		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, node, limitSpecs)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM specs for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
 
-		// Lookup the appropriate VM OS images for the server
-		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, server, limitImages)
+		// Lookup the appropriate VM OS images for the node
+		recommendedVmOsImageInfoList, err := RecommendVmOsImages(csp, region, node, limitImages)
 		if err != nil {
-			log.Warn().Msgf("failed to recommend VM OS images for server %s: %v", server.MachineId, err)
+			log.Warn().Msgf("failed to recommend VM OS images for node %s: %v", node.MachineId, err)
 		}
 
 		lenSpecList := len(recommendedVmSpecInfoList)
@@ -689,7 +689,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		}
 
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
-			log.Warn().Msgf("no recommended VM specs or OS images found for server %s", server.MachineId)
+			log.Warn().Msgf("no recommended VM specs or OS images found for node %s", node.MachineId)
 		} else {
 			// Find compatible VM spec and image pairs
 			compatiblePairsForEachServer[i], err = FindCompatibleVmSpecAndImagePairs(recommendedVmSpecInfoList, recommendedVmOsImageInfoList, csp)
@@ -702,22 +702,22 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// }
 
 			if err != nil {
-				log.Warn().Msgf("failed to find compatible spec-image pair for server %s: %v", server.MachineId, err)
+				log.Warn().Msgf("failed to find compatible spec-image pair for node %s: %v", node.MachineId, err)
 				// Use fallback selection (first spec, first image)
 			} else {
-				// Log details about found compatible pairs for this server
+				// Log details about found compatible pairs for this node
 				log.Debug().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Int("serverIndex", i).
 					Int("compatiblePairsCount", len(compatiblePairsForEachServer[i])).
-					Msg("Found compatible pairs for server")
+					Msg("Found compatible pairs for node")
 
 				// Log first few pairs for debugging
 				loggingLimit := 3
 				for pairIdx := 0; pairIdx < len(compatiblePairsForEachServer[i]) && pairIdx < loggingLimit; pairIdx++ {
 					pair := compatiblePairsForEachServer[i][pairIdx]
 					log.Debug().
-						Str("machineId", server.MachineId).
+						Str("machineId", node.MachineId).
 						Int("pairIndex", pairIdx).
 						Str("specId", pair.Spec.Id).
 						Str("specName", pair.Spec.CspSpecName).
@@ -751,8 +751,8 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		Msg("Determined actual candidate limit")
 
 	// Generate multiple infrastructure candidates based on Pareto efficiency principles.
-	// For each source server, compatible spec-image pairs are ranked by match rate
-	// (CPU, Memory, Image similarity to the original server).
+	// For each source node, compatible spec-image pairs are ranked by match rate
+	// (CPU, Memory, Image similarity to the original node).
 	// - Candidate 0: Best match pairs (highest similarity to source servers)
 	// - Candidate i: i-th ranked pairs (alternative solutions with different characteristics)
 	// This provides a Pareto frontier of solutions exploring performance-availability trade-offs.
@@ -768,38 +768,38 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
 
-		// For each server, select the i-th compatible pair of VM spec and OS image
-		for j, server := range srcInfra.Servers {
+		// For each node, select the i-th compatible pair of VM spec and OS image
+		for j, node := range srcInfra.Nodes {
 
-			// Select compatible pairs for the j-th server
+			// Select compatible pairs for the j-th node
 			compatiblePairs := compatiblePairsForEachServer[j]
 			if len(compatiblePairs) == 0 {
-				log.Warn().Msgf("no compatible VM spec and OS image pairs found for server %s", server.MachineId)
+				log.Warn().Msgf("no compatible VM spec and OS image pairs found for node %s", node.MachineId)
 				continue
 			}
 
 			// Pareto optimal selection: Select the i-th ranked pair for this candidate.
-			// Pairs are ranked by match rate to the source server (CPU, Memory, Image similarity).
+			// Pairs are ranked by match rate to the source node (CPU, Memory, Image similarity).
 			// This explores alternative solutions in the multi-dimensional space.
 
-			// If the i-th pair exists, select it; otherwise skip this server for this candidate
+			// If the i-th pair exists, select it; otherwise skip this node for this candidate
 			var pair CompatibleSpecImagePair
 			if i < len(compatiblePairs) {
 				pair = compatiblePairs[i]
 			} else {
-				log.Warn().Msgf("candidate %d: server %s has only %d pairs available, skipping this server for this candidate", i+1, server.MachineId, len(compatiblePairs))
+				log.Warn().Msgf("candidate %d: node %s has only %d pairs available, skipping this node for this candidate", i+1, node.MachineId, len(compatiblePairs))
 				continue
 			}
 
 			selectedVmSpec = pair.Spec
 			selectedVmOsImage = pair.Image
 
-			// Calculate match rate vector for this server-VM pair
-			matchRateVec := calculateMatchRateVector(csp, server, selectedVmSpec, selectedVmOsImage)
+			// Calculate match rate vector for this node-VM pair
+			matchRateVec := calculateMatchRateVector(csp, node, selectedVmSpec, selectedVmOsImage)
 
 			// Log candidate and spec selection details with match rate
 			log.Debug().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Int("candidateIndex", i).
 				Int("serverIndex", j).
 				Int("pairIndex", i).
@@ -815,28 +815,28 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 
 			// Log CPU comparison
 			log.Debug().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Str("specCspName", selectedVmSpec.CspSpecName).
 				Str("specId", selectedVmSpec.Id).
-				Uint32("originalCPUs", server.CPU.Cpus).
+				Uint32("originalCPUs", node.CPU.Cpus).
 				Uint32("recommendedVCPU", uint32(selectedVmSpec.VCPU)).
 				Msg("CPU comparison")
 
 			// Log Memory comparison
 			log.Trace().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Str("specCspName", selectedVmSpec.CspSpecName).
 				Str("specId", selectedVmSpec.Id).
-				Uint32("originalMemoryGB", uint32(server.Memory.TotalSize)).
+				Uint32("originalMemoryGB", uint32(node.Memory.TotalSize)).
 				Float32("recommendedMemoryGiB", selectedVmSpec.MemoryGiB).
 				Msg("Memory comparison")
 
 			// Log OS comparison
 			log.Trace().
-				Str("machineId", server.MachineId).
+				Str("machineId", node.MachineId).
 				Str("imageCspName", selectedVmOsImage.CspImageName).
 				Str("imageId", selectedVmOsImage.Id).
-				Str("originalOS", server.OS.Name+" "+server.OS.Version).
+				Str("originalOS", node.OS.Name+" "+node.OS.Version).
 				Str("recommendedOSImage", selectedVmOsImage.CspImageName).
 				Msg("OS comparison")
 
@@ -848,7 +848,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// Format: "Recommended VM for {serverId} | Match Rate: CPU={x}% Memory={y}% Image={z}% (Min={min}% Avg={avg}%)"
 			tempNodeGroupList[j].Description = fmt.Sprintf(
 				"Recommended VM for %s | Match Rate: CPU=%.1f%% Memory=%.1f%% Image=%.1f%%",
-				server.MachineId,
+				node.MachineId,
 				matchRateVec.CPU,
 				matchRateVec.Memory,
 				matchRateVec.Image,
@@ -952,7 +952,7 @@ func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []clou
 
 	for j, nodeGroup := range tempNodeGroupList {
 		if nodeGroup.SpecId != "" && nodeGroup.ImageId != "" {
-			server := srcInfra.Servers[j]
+			node := srcInfra.Nodes[j]
 
 			// Find the spec and image from deduplicated lists
 			var selectedSpec cloudmodel.SpecInfo
@@ -974,7 +974,7 @@ func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []clou
 
 			if selectedSpec.Id != "" && selectedImage.Id != "" {
 				// Calculate match rate vector
-				matchRateVec := calculateMatchRateVector(csp, server, selectedSpec, selectedImage)
+				matchRateVec := calculateMatchRateVector(csp, node, selectedSpec, selectedImage)
 				validServerCount++
 
 				vmMinMatchRate := matchRateVec.MinMatchRate()
@@ -1000,7 +1000,7 @@ func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []clou
 				}
 
 				log.Trace().
-					Str("machineId", server.MachineId).
+					Str("machineId", node.MachineId).
 					Float64("cpuMatchRate", matchRateVec.CPU).
 					Float64("memoryMatchRate", matchRateVec.Memory).
 					Float64("imageMatchRate", matchRateVec.Image).
@@ -1009,7 +1009,7 @@ func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []clou
 					Float64("vmAvgMatchRate", vmAvgMatchRate).
 					Str("specId", selectedSpec.Id).
 					Str("imageId", selectedImage.Id).
-					Msg("Individual server match rate assessment")
+					Msg("Individual node match rate assessment")
 			}
 		}
 	}
@@ -1063,15 +1063,15 @@ func calculateCandidateMatchRateWithDetails(csp string, tempNodeGroupList []clou
 // calculateMatchRateVector calculates multi-dimensional match rate scores without weights
 // Returns: MatchRateVector with independent CPU, Memory, and Image match rate scores (0-100%)
 // Rationale: Each dimension is evaluated independently, making the system extensible and transparent
-func calculateMatchRateVector(csp string, server onpremmodel.ServerProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) MatchRateVector {
-	// Log server and VM specifications for comparison
+func calculateMatchRateVector(csp string, node onpremmodel.NodeProperty, vmSpec cloudmodel.SpecInfo, vmImage cloudmodel.ImageInfo) MatchRateVector {
+	// Log node and VM specifications for comparison
 	log.Debug().
-		Str("machineId", server.MachineId).
-		Uint32("serverCPUs", server.CPU.Cpus).
-		Uint32("serverThreads", server.CPU.Threads).
-		Uint32("serverMemoryGB", uint32(server.Memory.TotalSize)).
-		Str("serverArchitecture", server.CPU.Architecture).
-		Str("serverOS", fmt.Sprintf("%s %s %s", server.OS.Name, server.OS.Version, server.OS.VersionCodename)).
+		Str("machineId", node.MachineId).
+		Uint32("serverCPUs", node.CPU.Cpus).
+		Uint32("serverThreads", node.CPU.Threads).
+		Uint32("serverMemoryGB", uint32(node.Memory.TotalSize)).
+		Str("serverArchitecture", node.CPU.Architecture).
+		Str("serverOS", fmt.Sprintf("%s %s %s", node.OS.Name, node.OS.Version, node.OS.VersionCodename)).
 		Uint32("vmSpecVCPU", uint32(vmSpec.VCPU)).
 		Float32("vmSpecMemoryGiB", vmSpec.MemoryGiB).
 		Str("vmSpecName", vmSpec.CspSpecName).
@@ -1081,24 +1081,24 @@ func calculateMatchRateVector(csp string, server onpremmodel.ServerProperty, vmS
 
 	// 1. Calculate CPU match rate using relative error (scale-independent)
 	// Server: vCPUs = CPUs * Threads (fallback to 1 thread if not specified)
-	serverThreads := server.CPU.Threads
+	serverThreads := node.CPU.Threads
 	if serverThreads == 0 {
 		serverThreads = 1 // Default to 1 thread per CPU if not specified
 	}
-	serverVCPUs := float64(server.CPU.Cpus * serverThreads)
+	serverVCPUs := float64(node.CPU.Cpus * serverThreads)
 	vmSpecVCPUs := float64(vmSpec.VCPU)
 
 	// Relative error: min(a,b) / max(a,b) gives 0-100% match (100% = perfect match)
 	cpuMatchRate := calculateRelativeMatch(serverVCPUs, vmSpecVCPUs)
 
 	// 2. Calculate Memory match rate using relative error (scale-independent)
-	serverMemoryGB := float64(server.Memory.TotalSize)
+	serverMemoryGB := float64(node.Memory.TotalSize)
 	vmSpecMemoryGiB := float64(vmSpec.MemoryGiB)
 
 	memoryMatchRate := calculateRelativeMatch(serverMemoryGB, vmSpecMemoryGiB)
 
 	// 3. Calculate image similarity match rate
-	imageMatchRate := calculateImageMatchRateScore(csp, server, vmImage)
+	imageMatchRate := calculateImageMatchRateScore(csp, node, vmImage)
 	imageMatchRate = imageMatchRate * 100.0 // Convert to percentage (0-100%)
 
 	// Create match rate vector
@@ -1109,7 +1109,7 @@ func calculateMatchRateVector(csp string, server onpremmodel.ServerProperty, vmS
 	}
 
 	log.Debug().
-		Str("machineId", server.MachineId).
+		Str("machineId", node.MachineId).
 		Float64("cpuMatchRate", cpuMatchRate).
 		Float64("memoryMatchRate", memoryMatchRate).
 		Float64("imageMatchRate", imageMatchRate).
@@ -1145,9 +1145,9 @@ func calculateRelativeMatch(serverValue, vmValue float64) float64 {
 }
 
 // calculateImageMatchRateScore calculates image match rate score based on OS similarity
-func calculateImageMatchRateScore(csp string, server onpremmodel.ServerProperty, vmImage cloudmodel.ImageInfo) float64 {
+func calculateImageMatchRateScore(csp string, node onpremmodel.NodeProperty, vmImage cloudmodel.ImageInfo) float64 {
 	// Set keywords and delimiters similar to existing image recommendation logic
-	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(server)
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
 
 	// Create image keywords for similarity calculation
 	vmImgKeywords := fmt.Sprintf("%s %s %s %s",
@@ -1158,12 +1158,12 @@ func calculateImageMatchRateScore(csp string, server onpremmodel.ServerProperty,
 	)
 
 	log.Debug().
-		Str("machineId", server.MachineId).
-		Str("osId", server.OS.ID).
-		Str("osVersionId", server.OS.VersionID).
-		Str("osVersionCodename", server.OS.VersionCodename).
-		Str("cpuArchitecture", server.CPU.Architecture).
-		Str("rootDiskType", server.RootDisk.Type).
+		Str("machineId", node.MachineId).
+		Str("osId", node.OS.ID).
+		Str("osVersionId", node.OS.VersionID).
+		Str("osVersionCodename", node.OS.VersionCodename).
+		Str("cpuArchitecture", node.CPU.Architecture).
+		Str("rootDiskType", node.RootDisk.Type).
 		Str("vmImageOSType", vmImage.OSType).
 		Str("vmImageOSArchitecture", string(vmImage.OSArchitecture)).
 		Str("vmImageOSDiskType", vmImage.OSDiskType).
@@ -1177,7 +1177,7 @@ func calculateImageMatchRateScore(csp string, server onpremmodel.ServerProperty,
 	priority := compat.GetImagePriority(csp, vmImage)
 	if priority > 5 {
 		log.Trace().
-			Str("machineId", server.MachineId).
+			Str("machineId", node.MachineId).
 			Str("imageName", vmImage.CspImageName).
 			Int("priority", priority).
 			Msg("Applying penalty to low-priority image score")
@@ -1185,7 +1185,7 @@ func calculateImageMatchRateScore(csp string, server onpremmodel.ServerProperty,
 	}
 
 	log.Debug().
-		Str("machineId", server.MachineId).
+		Str("machineId", node.MachineId).
 		Str("serverKeywords", keywords).
 		Str("imageKeywords", vmImgKeywords).
 		Float64("similarity", similarityScore).

@@ -3281,6 +3281,30 @@ definitions:
         description: Unique identifier for the machine (e.g., UUID)
         type: string
     type: object
+  onpremisemodel.K8sClusterProperty:
+    properties:
+      cniPlugin:
+        description: '[Reference] CNI plugin name (e.g., "calico", "flannel", "cilium")'
+        type: string
+      name:
+        description: '[Required] Cluster name'
+        type: string
+      nodePortRange:
+        description: '[Reference] NodePort range (e.g., "30000-32767")'
+        type: string
+      podCIDR:
+        description: '[Reference] Pod network CIDR (e.g., "10.244.0.0/16")'
+        type: string
+      serviceCIDR:
+        description: '[Reference] Service network CIDR (e.g., "10.96.0.0/12")'
+        type: string
+      version:
+        description: '[Required] Kubernetes version (e.g., "1.29.3")'
+        type: string
+    required:
+    - name
+    - version
+    type: object
   onpremisemodel.MemoryProperty:
     properties:
       available:
@@ -3348,16 +3372,57 @@ definitions:
         - $ref: '#/definitions/onpremisemodel.NetworkDetail'
         description: TBD
     type: object
+  onpremisemodel.NodeProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the node (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      role:
+        description: Node role (e.g., "control-plane", "worker", "standalone")
+        example: control-plane
+        type: string
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
   onpremisemodel.OnpremInfra:
     properties:
+      k8sCluster:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.K8sClusterProperty'
+        description: 'TODO: Extend to a general ClusterProperty if other orchestrators
+          (e.g., OpenShift, Rancher) are needed.'
       network:
         $ref: '#/definitions/onpremisemodel.NetworkProperty'
-      servers:
+      nodes:
         items:
-          $ref: '#/definitions/onpremisemodel.ServerProperty'
+          $ref: '#/definitions/onpremisemodel.NodeProperty'
         type: array
     required:
-    - servers
+    - nodes
     type: object
   onpremisemodel.OsProperty:
     properties:
@@ -3413,38 +3478,6 @@ definitions:
       source:
         description: Optionally stores the source address (used for policy-based routing)
         type: string
-    type: object
-  onpremisemodel.ServerProperty:
-    properties:
-      cpu:
-        $ref: '#/definitions/onpremisemodel.CpuProperty'
-      dataDisks:
-        items:
-          $ref: '#/definitions/onpremisemodel.DiskProperty'
-        type: array
-      firewallTable:
-        items:
-          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
-        type: array
-      hostname:
-        type: string
-      interfaces:
-        items:
-          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
-        type: array
-      machineId:
-        description: Unique identifier for the server (e.g., UUID)
-        type: string
-      memory:
-        $ref: '#/definitions/onpremisemodel.MemoryProperty'
-      os:
-        $ref: '#/definitions/onpremisemodel.OsProperty'
-      rootDisk:
-        $ref: '#/definitions/onpremisemodel.DiskProperty'
-      routingTable:
-        items:
-          $ref: '#/definitions/onpremisemodel.RouteProperty'
-        type: array
     type: object
   recommendation.Kubernetes:
     properties:

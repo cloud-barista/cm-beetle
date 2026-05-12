@@ -1,203 +1,193 @@
-# CM-Beetle Test CLI
+# CM-Beetle Infra Test CLI
 
-Automated testing tool for CM-Beetle APIs across multiple cloud service providers.
+Automated end-to-end testing tool for CM-Beetle infrastructure recommendation and migration APIs.
 
 ## Overview
 
-This CLI automates testing of CM-Beetle's infrastructure recommendation and migration APIs across multiple CSP environments.
+This CLI automates testing of CM-Beetle's infrastructure recommendation and migration APIs across multiple CSP-Region pairs.
 
 ### Features
 
-- **Multi-CSP Support**: Test across AWS, Azure, GCP, Alibaba Cloud, and NCP simultaneously
-- **Complete Workflow**: End-to-end testing from recommendation to migration to cleanup
-- **Comprehensive Testing**: 7 API tests + 2 report generations + 1 cleanup operation per CSP-Region pair
-- **SSH Connectivity Test**: Verify actual accessibility of migrated VMs
-- **Automated Reports**: Generate detailed Markdown test reports for each CSP
-- **Infrastructure Summaries**: Source and target infrastructure analysis
-- **Migration Reports**: Detailed comparison and migration analysis
-- **Real Data**: Uses actual on-premise infrastructure data for realistic testing
-- **Error Handling**: Skips remaining tests if early test fails to prevent cascading issues
+- **Multi-CSP Support**: Test across AWS, Azure, GCP, Alibaba Cloud, NCP, and more
+- **Parallel / Sequential Execution**: Configurable via `test.set.mode` in `testconf/test-config.yaml`
+- **Complete Workflow**: End-to-end from recommendation → migration → SSH connectivity check → cleanup
+- **SSH Connectivity Test**: Verify actual accessibility of all migrated VMs via Tumblebug access info
+- **Automated Reports**: Generate detailed Markdown test reports per CSP-Region pair
+- **Infrastructure Summaries**: Source (on-premise) and target (cloud) infrastructure analysis
+- **Migration Reports**: Detailed source-to-target comparison report
+- **Error Handling**: Skips remaining tests if an early test fails to prevent cascading failures
 
 ### Test Workflow
 
-#### Initial Setup
+#### Initial Step (Before CSP-Region Pair Tests)
 
-Before testing CSP-Region pairs, the CLI performs:
+- **CM-Beetle Readiness Check**: `GET /beetle/readyz` — Verify CM-Beetle is available
+- **Source Infrastructure Summary**: `POST /beetle/summary/source` — Summarize the on-premise source infrastructure
 
-- **CM-Beetle Readiness Check**: `GET /beetle/readyz` - Verify service availability
-- **Source Infrastructure Summary**: `POST /beetle/summary/source` - Generate summary of on-premise infrastructure
+#### Per CSP-Region Pair (9 Tests)
 
-#### Per CSP-Region Pair Tests
+| #   | API / Description                                                                              |
+| --- | ---------------------------------------------------------------------------------------------- |
+| 1   | `POST /beetle/recommendation/infra` — Recommend target infrastructure (uses first candidate)   |
+| 2   | `POST /beetle/migration/ns/{nsId}/infra` — Migrate infrastructure                              |
+| 3   | `GET /beetle/migration/ns/{nsId}/infra` — List all infras                                      |
+| 4   | `GET /beetle/migration/ns/{nsId}/infra?option=id` — List infra IDs                             |
+| 5   | `GET /beetle/migration/ns/{nsId}/infra/{infraId}` — Get specific infra                         |
+| 6   | Remote Command Test — SSH connectivity check for all migrated VMs                              |
+| 7   | `GET /beetle/summary/target/ns/{nsId}/infra/{infraId}` — Target infrastructure summary         |
+| 8   | `POST /beetle/report/migration/ns/{nsId}/infra/{infraId}` — Migration report                   |
+| 9   | `DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate` — Delete infra (cleanup) |
 
-Each CSP-Region pair executes the following sequential operations:
-
-1. `POST /beetle/recommendation/infra` - Infrastructure recommendation (returns multiple candidates, uses first one)
-2. `POST /beetle/migration/ns/{nsId}/infra` - Infrastructure migration
-3. `GET /beetle/migration/ns/{nsId}/infra` - List infras
-4. `GET /beetle/migration/ns/{nsId}/infra?option=id` - List infra IDs
-5. `GET /beetle/migration/ns/{nsId}/infra/{infraId}` - Get specific infra
-6. **Remote Command Test** - SSH connectivity and accessibility check for migrated VMs
-7. **Target Infrastructure Summary**: `GET /beetle/summary/target/ns/{nsId}/infra/{infraId}` - Generate summary of migrated infrastructure
-8. **Migration Report**: `POST /beetle/report/migration/ns/{nsId}/infra/{infraId}` - Comprehensive migration analysis report
-9. `DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate` - Delete infra
-
-**Note**: If any test fails, remaining tests for that CSP-Region pair are skipped.
+> If any test from 1–8 fails, subsequent tests for that CSP-Region pair are skipped. Test 9 (cleanup) always runs when an `infraId` is available.
 
 ## Quick Start
 
-### 1. Build
+### 1. Configure
 
 ```bash
-make test-infra-build
+# Copy templates (done automatically by make test-infra if not present)
+cp testconf/template-test-config.yaml testconf/test-config.yaml
+cp testconf/template-auth-config.json testconf/auth-config.json
 ```
+
+Edit `testconf/test-config.yaml` to select target CSP-Region pairs and set the Beetle endpoint.
+
+Edit `testconf/auth-config.json` to set API credentials.
 
 ### 2. Run
 
 ```bash
+# From the repository root
 make test-infra
 ```
 
 ### 3. Check Results
 
-- Console: Real-time progress and summary
-- Files: `testresult/beetle-test-results-{csp}.md`
+- Console: Real-time progress and final summary
+- Files: `cmd/test-cli/infra/testresult/beetle-test-results-{csp}.md`
 
 ## Configuration
 
-### Main Config
+### Test Config
 
-## Configuration
+`testconf/test-config.yaml`:
 
-### Main Config
+```yaml
+test:
+  set:
+    mode: parallel # parallel or sequential
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: true
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: false
+    # ... more CSP-Region pairs
 
-`testconf/config-multi-csp-and-region-pair.json`:
-
-```json
-{
-  "beetleUrl": "http://localhost:8056",
-  "namespaceId": "mig01",
-  "authConfigFile": "testconf/auth-config.json",
-  "desiredCspRegionPairs": [
-    { "csp": "aws", "region": "ap-northeast-2", "name": "AWS-Seoul" },
-    { "csp": "azure", "region": "koreacentral", "name": "Azure-Korea" },
-    { "csp": "gcp", "region": "asia-northeast3", "name": "GCP-Seoul" },
-    { "csp": "alibaba", "region": "ap-northeast-2", "name": "Alibaba-Seoul" },
-    { "csp": "ncp", "region": "kr", "name": "NCP-Korea" }
-  ],
-  "requestBodyFile": "testconf/recommendation-request.json"
-}
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: mig01
+  authConfigFile: testconf/auth-config.json
+  requestBodyFile: testconf/recommendation-request.json
 ```
 
 ### Authentication Config
 
-`testconf/auth-config.json` (excluded from version control):
+`testconf/auth-config.json` (copy from `testconf/template-auth-config.json` and fill in credentials):
 
 ```json
 {
-  "basicAuthUsername": "your-username",
-  "basicAuthPassword": "your-password"
+  "beetleApiUsername": "your-beetle-api-username",
+  "beetleApiPassword": "your-beetle-api-password",
+  "tumblebugApiUsername": "your-tumblebug-username",
+  "tumblebugApiPassword": "your-tumblebug-password",
+  "tumblebugEndpoint": "http://localhost:1323"
 }
 ```
 
-**Note**: Copy `testconf/template-auth-config.json` to `testconf/auth-config.json` and update with your credentials.
+| Field                                           | Description                                                      |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `beetleApiUsername` / `beetleApiPassword`       | Credentials for CM-Beetle REST API (Basic Auth)                  |
+| `tumblebugApiUsername` / `tumblebugApiPassword` | Credentials for CB-Tumblebug REST API (used in Test 6 SSH check) |
+| `tumblebugEndpoint`                             | CB-Tumblebug base URL                                            |
 
-### Test Data
+### Request Body (On-Premise Infra Model)
 
-`testconf/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
+`testconf/recommendation-request.json` — On-premise infrastructure data used as the source for recommendation and migration tests.
 
-### Test Data
-
-`testconf/recommendation-request.json` - Contains actual on-premise infrastructure data for testing.
-
-## Usage
-
-### Basic Commands
+## CLI Options
 
 ```bash
-# Build and run all tests
-make test-infra-build
-make test-infra
-
-# Show help
-make test-infra-help
-
-# Direct execution
 cd cmd/test-cli/infra
-./test-infra
-./test-infra -verbose
-./test-infra -config my-config.json
+go run main.go -config testconf/test-config.yaml
 ```
 
-### Options
-
-- `-config`: Configuration file path (default: `testconf/config-multi-csp-and-region-pair.json`)
-- `-verbose`: Enable detailed output
+| Option    | Default                     | Description                     |
+| --------- | --------------------------- | ------------------------------- |
+| `-config` | `testconf/test-config.yaml` | Path to test configuration file |
 
 ## Test Results
 
-### Console Output
+### Console Output Example
 
 ```
 ============================================================
 SOURCE INFRASTRUCTURE SUMMARY
 ============================================================
-✅ Source summary generated successfully
 
 ============================================================
-Testing CSP-Region Pair 1/5: AWS-Seoul
+Testing CSP-Region Pair 1/1: AWS-Seoul
 ============================================================
 
 --- Test 1: POST /beetle/recommendation/infra ---
-✅ Test 1 passed (Duration: 541ms)
+✅ Test 1 passed
 
 --- Test 2: POST /beetle/migration/ns/mig01/infra ---
-✅ Test 2 passed (Duration: 37.999s)
+✅ Test 2 passed
 
 --- Test 3: GET /beetle/migration/ns/mig01/infra ---
-✅ Test 3 passed (Duration: 125ms)
+✅ Test 3 passed
 
 --- Test 4: GET /beetle/migration/ns/mig01/infra?option=id ---
-✅ Test 4 passed (Duration: 98ms)
+✅ Test 4 passed
 
 --- Test 5: GET /beetle/migration/ns/mig01/infra/{infraId} ---
-✅ Test 5 passed (Duration: 142ms)
+✅ Test 5 passed
 
 --- Test 6: Remote Command Accessibility Check ---
-✅ Test 6 passed (Duration: 3.2s)
-   - VM web-server-01: ✅ Connected successfully
-   - VM was-server-01: ✅ Connected successfully
+✅ Test 6 passed
 
---- Target Infrastructure Summary ---
-✅ Target summary generated successfully
+--- Test 7: Target Infrastructure Summary ---
+✅ Test 7 passed
 
---- Migration Report ---
-✅ Migration report generated successfully
+--- Test 8: Migration Report ---
+✅ Test 8 passed
 
---- Test 7: DELETE /beetle/migration/ns/mig01/infra/{infraId} ---
-✅ Test 7 passed (Duration: 25.3s)
+--- Test 9: DELETE /beetle/migration/ns/mig01/infra/{infraId} ---
+✅ Test 9 passed
 
 ============================================================
 OVERALL TEST SUMMARY
 ============================================================
-Total CSP-Region Pairs: 5
-Successful Pairs: 4/5
-Total Tests: 35
-Passed Tests: 28/35
-Overall Time: 3m45s
+Total CSP-Region Pairs: 1
+Successful Pairs: 1
+Total Tests: 9
+Passed Tests: 9
 ```
 
-### Detailed Reports
+### Generated Report Files
 
-Individual Markdown reports are generated in `testresult/`:
+All files are saved under `testresult/` (relative to `cmd/test-cli/infra/`):
 
-- `source-infra-summary.md` - On-premise infrastructure summary
-- `beetle-test-results-aws.md` - AWS test results
-- `beetle-test-results-azure.md` - Azure test results
-- `beetle-test-results-gcp.md` - GCP test results
-- `beetle-test-results-alibaba.md` - Alibaba Cloud test results
-- `beetle-test-results-ncp.md` - NCP test results
-- `target-infra-summary-{csp}-{infraId}.md` - Target infrastructure summaries (per CSP)
-- `migration-report-{csp}-{infraId}.md` - Migration reports (per CSP)
+| File                                   | Description                                   |
+| -------------------------------------- | --------------------------------------------- |
+| `beetle-summary-source.md`             | Source (on-premise) infrastructure summary    |
+| `beetle-test-results-{csp}.md`         | Full test results per CSP-Region pair         |
+| `beetle-summary-target-{csp}.md`       | Target (cloud) infrastructure summary per CSP |
+| `beetle-report-mig-source-to-{csp}.md` | Migration report per CSP                      |
 
 ## Custom Configuration
 
