@@ -1,8 +1,11 @@
 package onpremisemodel
 
-type ServerProperty struct {
+// NodeProperty represents a node in the on-premise infrastructure.
+// The node includes a physical server, virtual machine (VM), and Kubernetes node.
+type NodeProperty struct {
 	Hostname      string                     `json:"hostname"`
-	MachineId     string                     `json:"machineId"` // Unique identifier for the server (e.g., UUID)
+	MachineId     string                     `json:"machineId"`                              // Unique identifier for the node (e.g., UUID)
+	Role          string                     `json:"role,omitempty" example:"control-plane"` // Node role (e.g., "control-plane", "worker", "standalone")
 	CPU           CpuProperty                `json:"cpu"`
 	Memory        MemoryProperty             `json:"memory"`
 	RootDisk      DiskProperty               `json:"rootDisk"`
