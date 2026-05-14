@@ -13,7 +13,7 @@ go 1.26.2
 // replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.12.9
+	github.com/cloud-barista/cb-tumblebug v0.12.10
 	github.com/cloud-barista/cm-beetle/imdl v0.1.5
 	github.com/cloud-barista/cm-beetle/transx v0.1.3
 	github.com/fsnotify/fsnotify v1.9.0

@@ -15,12 +15,10 @@ Usage:
 """
 
 import argparse
-
 # import json
 import os
 import subprocess
 import sys
-
 # import sys
 import time
 from getpass import getpass
@@ -503,6 +501,8 @@ def main():
         success_count = 0
         skip_count = 0
         fail_count = 0
+        registered_providers = set()
+
         # Track admin provider registrations to build admin placeholders only.
         admin_registered = set()
 
@@ -515,6 +515,7 @@ def main():
                     success_count += 1
                     if holder == "admin":
                         admin_registered.add(provider_name)
+                    registered_providers.add(f"{holder}/{provider_name}")
                 elif status == "skip":
                     print(f"  {Fore.YELLOW}SKIP{Style.RESET_ALL} {provider_name:12s}  ({message})")
                     skip_count += 1
@@ -523,15 +524,16 @@ def main():
                     fail_count += 1
             print()
 
-        # Register placeholder secrets for CSPs not in the credential file.
+        # Register placeholder secrets for CSPs not in the 'admin' credential set.
+        # This ensures basic 'tofu plan' works without full credentials.
         placeholder_count = register_placeholder_secrets(admin_registered)
 
         print()
-        placeholder_msg = f", {Fore.CYAN}{placeholder_count} placeholders{Style.RESET_ALL}" if placeholder_count > 0 else ""
         print(
             f"Results: {Fore.GREEN}{success_count} registered{Style.RESET_ALL}, "
             f"{Fore.YELLOW}{skip_count} skipped{Style.RESET_ALL}, "
-            f"{Fore.RED}{fail_count} failed{Style.RESET_ALL}{placeholder_msg}"
+            f"{Fore.RED}{fail_count} failed{Style.RESET_ALL}"
+            + (f", {Fore.CYAN}{placeholder_count} placeholders{Style.RESET_ALL}" if placeholder_count > 0 else "")
         )
 
         if fail_count > 0:

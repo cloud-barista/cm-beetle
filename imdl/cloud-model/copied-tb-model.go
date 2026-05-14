@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.9 (commit: 01de7bdea9e54b4000831e683916d2f24c163925)
-// * Synchronized: 2026-04-28 (Major rename: MCI→Infra, VM→Node, SubGroup→NodeGroup; Breaking change for cm-beetle integration)
+// * Version: CB-Tumblebug v0.12.10 (commit: bdb2a448399c0dea8ea7623e91d95f87ca44666d)
+// * Synchronized: 2026-05-14 (No struct changes; only object storage and VPN enhancements in upstream)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
