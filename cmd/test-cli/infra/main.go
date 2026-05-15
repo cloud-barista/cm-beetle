@@ -2680,17 +2680,19 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 			// Determine username (priority: vmInfo.VmUserName > default "cb-user")
 			sshUserName := userName
 
-			// Perform SSH connectivity test with retry logic
-			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity...")
+			// Perform SSH connectivity test with retry logic.
+			// Retries every 10s for up to 3 minutes to handle cloud-init startup
+			// (e.g., IBM Cloud VPC takes 1-3 minutes to set up the SSH user after VM creation).
+			log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Str("user", sshUserName).Msg("🔍 Testing SSH connectivity (up to 3 min)...")
 
-			const maxRetries = 3
-			const retryDelay = 3 * time.Second
+			const maxRetries = 19 // 1 immediate + 18 retries × 10s = 3 minutes total
+			const retryDelay = 10 * time.Second
+			const logProgressEvery = 6 // surface progress at Info every ~1 minute (6 × 10s)
 			var sshResult string
 			var lastErr error
 
 			for attempt := 1; attempt <= maxRetries; attempt++ {
 				if attempt > 1 {
-					log.Info().Str("nodeId", nodeId).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("🔄 Retrying SSH connection...")
 					time.Sleep(retryDelay)
 				}
 
@@ -2709,8 +2711,17 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 						log.Info().Str("nodeId", nodeId).Str("ip", publicIP).Msg("✅ SSH connectivity test passed")
 					}
 					break
+				}
+				// Log at Info every ~1 minute; suppress intermediate attempts to reduce noise
+				elapsed := time.Duration(attempt-1) * retryDelay
+				if (attempt-1)%logProgressEvery == 0 {
+					log.Info().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
+						Str("elapsed", elapsed.String()).Int("attempt", attempt).Int("maxRetries", maxRetries).
+						Msg("🔄 SSH not ready, retrying...")
 				} else {
-					log.Warn().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).Int("attempt", attempt).Int("maxRetries", maxRetries).Msg("⚠️ SSH connection attempt failed")
+					log.Debug().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
+						Int("attempt", attempt).Int("maxRetries", maxRetries).
+						Msg("SSH attempt failed")
 				}
 			}
 
