@@ -67,7 +67,7 @@ func isSupportedCSP(csp string) bool {
 		"gcp":     true,
 		"alibaba": true,
 		// "tencent": true,
-		// "ibm":   true,
+		"ibm": true,
 		"ncp": true,
 		// "nhn": true,
 		// "kt": true,
@@ -75,6 +75,52 @@ func isSupportedCSP(csp string) bool {
 	}
 
 	return supportedCSPs[csp]
+}
+
+// getCspMinRootDiskSizeGB returns the CSP-specific safe minimum root disk size in GB.
+// Values are conservative to prevent VM creation failures near the lower bound.
+//
+// Notes: IBM/NCP use fixed sizes (API ignores the field); Azure derives size from the image.
+// Ref: https://github.com/cloud-barista/cb-spider/wiki/API-and-features-of-VM-rootfs-volume-configuration
+//
+// TODO: Replace hardcoded values with dynamic lookup via CB-Spider's GET /cloudos/metainfo/{CloudOSName}
+// (returns RootDiskSize as a string enum list). Consider caching at startup to avoid per-request overhead.
+// Ref: https://github.com/cloud-barista/cb-spider/blob/master/cloud-driver-libs/cloudos_meta.yaml
+func getCspMinRootDiskSizeGB(csp string) int {
+	switch strings.ToLower(csp) {
+	case "ibm":
+		// Fixed at 100 GB by default; root disk size is not configurable via API.
+		// (Custom user images support 10~250 GB, but the standard fixed value is 100 GB.)
+		return 100
+	case "ncp", "ncpvpc":
+		// Fixed at 50 GB for Linux; root disk size cannot be changed via API or console.
+		return 50
+	case "tencent":
+		// Minimum per cloudos_meta.yaml: CLOUD_PREMIUM|50 GB, CLOUD_SSD|50 GB.
+		return 50
+	case "kt", "ktvpc":
+		// Minimum per cloudos_meta.yaml: HDD|50 GB, SSD|50 GB.
+		return 50
+	case "alibaba":
+		// Minimum per cloudos_meta.yaml: cloud_essd|20 GB, cloud_efficiency|20 GB.
+		// Using 40 GB as a conservative safe floor to avoid errors near the lower bound.
+		return 40
+	case "azure":
+		// Root disk size depends on the selected image and is not configurable via API.
+		// CB-Spider's Azure driver ignores this field; 30 GB serves as a safe fallback floor.
+		return 30
+	case "nhn":
+		// Minimum per cloudos_meta.yaml: General_HDD|20 GB, General_SSD|20 GB.
+		return 20
+	case "ktclassic":
+		// Minimum per cloudos_meta.yaml: HDD|20 GB, SSD|20 GB.
+		return 20
+	case "aws", "gcp":
+		// AWS: gp2/gp3 practical OS minimum ~8 GB. GCP: pd-standard minimum 10 GB.
+		return 10
+	default:
+		return 50 // Conservative safe default for unknown or future CSPs
+	}
 }
 
 func IsValidCspAndRegion(csp string, region string) (bool, error) {
@@ -464,6 +510,9 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// - KT: ["HDD", "SSD"]
 
 		// * Set names to indicate a dependency between resources.
+		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
+		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
+		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
@@ -474,7 +523,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", node.MachineId),           // Set MachineId to identify the source node
 			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
-			RootDiskSize:     50,                                                   // Set 50 GB as a default value
+			RootDiskSize:     rootDiskSize,                                         // max(source disk size, CSP minimum) to keep costs low
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			NodeUserName:     "",                                                   // TBD: Set the VM user name if needed
 			NodeUserPassword: "",                                                   // TBD
@@ -591,6 +640,9 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// * Set names to indicate a dependency between resources.
 	for i, node := range srcInfra.Nodes {
 		// * Set names to indicate a dependency between resources.
+		// Use the source disk size as the base, with a CSP-specific minimum floor to avoid
+		// over-provisioning and keep costs low (e.g., AWS/GCP support as low as 10 GB).
+		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
@@ -598,7 +650,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			Name:             fmt.Sprintf("vm-%s", node.MachineId),              // Set MachineId to identify the source node
 			RootDiskType:     "",                                                // Set "" or default to use CSP's default
-			RootDiskSize:     50,                                                // Set 50 GB as a default value
+			RootDiskSize:     rootDiskSize,                                      // max(source disk size, CSP minimum) to keep costs low
 			SshKeyId:         skeletonVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			NodeUserName:     "",                                                // TBD: Set the VM user name if needed
 			NodeUserPassword: "",                                                // TBD
