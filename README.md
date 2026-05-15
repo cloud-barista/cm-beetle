@@ -12,6 +12,60 @@ Computing Infrastructure Migration framework (codename: cm-beetle) is going to s
 - migration execution and control from source to target computing infrastructure, and
 - recommendation of optimal configuration of target cloud infrastructure.
 
+## Migration Support Status Summary
+
+The tables below show recommendation and migration support by target CSP and resource type.
+
+<details>
+<summary>Legend</summary>
+
+| Icon | Meaning                                    |
+| :--: | ------------------------------------------ |
+|  ✅  | Fully supported                            |
+|  ⚠️  | Supported with known issues or limitations |
+|  🚧  | In progress                                |
+|  📅  | Planned                                    |
+|  ❌  | Not available                              |
+|  —   | Not planned                                |
+
+> **(CSP)** — Low priority or not pursued this year.
+
+</details>
+
+| Resource        | AWS | Azure | GCP | Alibaba | Tencent | IBM | OpenStack | NCP | NHN | KT  |
+| --------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
+| VNet            | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| Virtual Machine | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| K8s Cluster     | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
+| K8s Node Image  | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
+| Object Storage  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |
+| NLB             | 🚧  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |    📅     | 🚧  | 📅  | 📅  |
+| DBMS            | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    📅     | 📅  | 📅  | 📅  |
+
+**Data Migration · Incubating**
+
+Data migration transfers data between storage endpoints regardless of which CSP hosts them.
+
+| Source                         | Destination                    | Supported |
+| ------------------------------ | ------------------------------ | :-------: |
+| Filesystem (SSH/rsync)         | Filesystem (SSH/rsync)         |    ✅     |
+| Filesystem (SSH/rsync)         | Object Storage (S3-compatible) |    ✅     |
+| Object Storage (S3-compatible) | Object Storage (S3-compatible) |    ✅     |
+| Object Storage (S3-compatible) | Filesystem (SSH/rsync)         |    ✅     |
+
+### Feature Guides
+
+- [VM Infrastructure](docs/feature-guide/vm-infrastructure.md)
+- [Kubernetes Infrastructure](docs/feature-guide/kubernetes-infrastructure.md)
+- [Managed Middleware](docs/feature-guide/managed-middleware.md)
+- [Object Storage Migration](docs/feature-guide/object-storage-migration-feature-guide.md)
+- [Data Migration](docs/feature-guide/data-migration-feature-guide.md)
+
 ## Execution and development environment
 
 - Operating system (OS):
