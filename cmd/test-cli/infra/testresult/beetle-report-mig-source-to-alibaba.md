@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-05-18 07:24:00*
+*Report generated: 2026-05-18 08:03:27*
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | ecs.e-c1m1.large, ecs.e-c1m4.large, ecs.e-c1m4.xlarge |
+| 2 | **VM Spec** | 3 | ✅ Selected | ecs.e-c1m4.large, ecs.e-c1m4.xlarge, ecs.e-c1m1.large |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my04-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my04-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-mj7bmodw2wgq0m2c1yd7<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-mj7iivd2028xy3i16lty<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-mj76s1u22n44umn80wav<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-mj7ctm2infbmnn6vq0ex<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-mj70qfjkj53k1lfmwem5<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-mj7bmodw2wgq13tm2g8j<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my04-sg-01
 
-**CSP ID:** sg-mj7fxe8c2piizwjczdu5 | **VNet:** my04-vnet-01 | **Rules:** 14
+**CSP ID:** sg-mj75hai0hn9b26o6u0lu | **VNet:** my04-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my04-sg-02
 
-**CSP ID:** sg-mj78vtpurhkjr0732i14 | **VNet:** my04-vnet-01 | **Rules:** 19
+**CSP ID:** sg-mj71whg4s0wud8qlexce | **VNet:** my04-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my04-sg-03
 
-**CSP ID:** sg-mj7c5bpxi1r8ykqrnnst | **VNet:** my04-vnet-01 | **Rules:** 19
+**CSP ID:** sg-mj78vtpurhkjrhyd2zt7 | **VNet:** my04-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my04-vnet-01<br>**ID:** vpc-mj7q8zrkwhesk9h7ilc0b | 10.0.0.0/21 |
+| 1 | **Name:** my04-vnet-01<br>**ID:** vpc-mj7kupnhl8vcko5nzmtjs | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my04-subnet-01<br>**ID:** vsw-mj7utyh2dolpsrw3t0oad | 10.0.1.0/24 | my04-vnet-01 |
+| 1 | **Name:** my04-subnet-01<br>**ID:** vsw-mj7noc100izqdsv9ei3ge | 10.0.1.0/24 | my04-vnet-01 |
 
 ### Source Network Information
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my04-sshkey-01 | tbd85bsfmpr9ha6oh6f2bg | 43e8a23c72ccaeab23668003ce328889 | Used by all 3 VMs |
+| 1 | my04-sshkey-01 | tbd85ceuupr9ha6omvqisg | c69cc213139d883941a8c2a7d9b26ed1 | Used by all 3 VMs |
 
 ---
 
