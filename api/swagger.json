@@ -814,7 +814,7 @@
                 }
             },
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2043,7 +2043,7 @@
         },
         "/recommendation/infra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n",
+                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: `desiredCsp`, `desiredRegion`]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: `limit`]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: `minMatchRate`]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: `status`]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.\n- Pass the recommendation response as-is to the migration API to ensure the resolved image is used.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -2129,7 +2129,7 @@
         },
         "/recommendation/infraWithDefaults": {
             "post": {
-                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.",
+                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n**[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.",
                 "consumes": [
                     "application/json"
                 ],

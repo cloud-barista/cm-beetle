@@ -104,6 +104,11 @@ type MigrateInfraResponse struct {
 // @ID MigrateInfra
 // @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults
 // @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+// @Description
+// @Description **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
+// @Description - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+// @Description - **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).
+// @Description - Recommended: pass the recommendation API response as-is to use the latest resolved image.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json

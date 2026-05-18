@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/rs/zerolog/log"
 )
 

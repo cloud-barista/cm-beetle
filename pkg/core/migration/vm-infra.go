@@ -149,6 +149,33 @@ func CreateVMInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (
 	}
 	log.Info().Msgf("the target infrastructure model is valid (nsId: %s)", nsId)
 
+	// Preflight: resolve the latest CSP image and confirm available system disk per nodegroup.
+	log.Info().Msgf("running preflight check for all nodegroups (nsId: %s)", nsId)
+	for i := range targetInfraModel.TargetInfra.NodeGroups {
+		ng := &targetInfraModel.TargetInfra.NodeGroups[i]
+		precheck, reviewErr := recommendation.PreflightCheckCspProvisioning(
+			ng.SpecId, ng.ImageId, ng.CspImageName, ng.RootDiskType,
+		)
+		if reviewErr != nil {
+			log.Warn().Err(reviewErr).Msgf("preflight check failed for nodegroup %s (specId: %s, imageId: %s); proceeding with cached image",
+				ng.Name, ng.SpecId, ng.ImageId)
+			continue
+		}
+		if !precheck.IsAvailable {
+			return emptyRet, fmt.Errorf("image %s is not available for nodegroup %s (specId: %s); aborting migration",
+				ng.ImageId, ng.Name, ng.SpecId)
+		}
+		if precheck.ResolvedCspImageName != ng.CspImageName {
+			log.Info().Msgf("nodegroup %s: CspImageName resolved from %q to %q", ng.Name, ng.CspImageName, precheck.ResolvedCspImageName)
+			ng.CspImageName = precheck.ResolvedCspImageName
+		}
+		if precheck.SuggestedSystemDisk != "" && ng.RootDiskType != precheck.SuggestedSystemDisk {
+			log.Info().Msgf("nodegroup %s: RootDiskType updated from %q to suggested %q", ng.Name, ng.RootDiskType, precheck.SuggestedSystemDisk)
+			ng.RootDiskType = precheck.SuggestedSystemDisk
+		}
+	}
+	log.Info().Msgf("spec-image pair preflight check passed (nsId: %s)", nsId)
+
 	// Initialize Tumblebug session
 	// tbSess := tbclient.NewSession()
 

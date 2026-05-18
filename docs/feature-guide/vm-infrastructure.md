@@ -12,7 +12,7 @@ This document covers recommendation and migration support for VM infrastructure 
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
 | VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
 | OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| Virtual Machine | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
+| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
 
 ## Supported Operations
 
@@ -23,6 +23,5 @@ This document covers recommendation and migration support for VM infrastructure 
 
 ## Roadmap
 
-- ⚠️ **Alibaba VM**: supported with known issues/limitations
 - 🚧 **In progress**: IBM — all resources
 - 📅 **Planned**: Tencent, OpenStack

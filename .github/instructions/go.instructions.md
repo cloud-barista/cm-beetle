@@ -22,6 +22,13 @@ applyTo: "**/*.go"
 
 - **Viper:** Use `viper` for configuration management.
 
+## Comments
+
+- Write comments as a **single concise sentence** whenever possible.
+- State **what** the function does, not how or why (implementation details belong in code).
+- Avoid multi-line godoc blocks with bullet-point return-value descriptions; prefer named return values or inline comments instead.
+- Do not repeat the function name verbatim at the start of the comment.
+
 ## Import Conventions
 
 ```go

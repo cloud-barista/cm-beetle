@@ -51,7 +51,7 @@ services:
       # - BEETLE_TUMBLEBUG_API_PASSWORD=default
     healthcheck:
       # for CM-Beetle
-      test: [ "CMD", "curl", "-f", "http://localhost:8056/beetle/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8056/beetle/readyz"]
       <<: *default-healthcheck
     restart: unless-stopped
 
@@ -120,7 +120,7 @@ services:
       - VAULT_TOKEN=${VAULT_TOKEN:-}
     healthcheck:
       # for CB-Tumblebug
-      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
       <<: *default-healthcheck
     restart: unless-stopped
 
@@ -166,7 +166,7 @@ services:
       - simple
     healthcheck:
       # for etcd
-      test: [ "CMD", "/usr/local/bin/etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379" ]
+      test: ["CMD", "/usr/local/bin/etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
       <<: *default-healthcheck
     restart: unless-stopped
 
@@ -187,7 +187,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tumblebug}
       - POSTGRES_DB=${POSTGRES_DB:-tumblebug}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -224,7 +224,7 @@ services:
       - SPIDER_BACKUP_ENABLED=false
     healthcheck:
       # for CB-Spider
-      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
       <<: *default-healthcheck
     restart: unless-stopped
 
@@ -272,7 +272,7 @@ services:
     #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
     #     - MCP_LOG_LEVEL=INFO
 
-    # MC-Terrarium 
+    # MC-Terrarium
     # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
     # CSP credentials are managed by OpenBao (no more env_file injection).
   mc-terrarium:
@@ -324,7 +324,7 @@ services:
       - VAULT_ADDR=http://openbao:8200
       - VAULT_TOKEN=${VAULT_TOKEN:-}
     healthcheck:
-      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8055/terrarium/readyz" ]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8055/terrarium/readyz"]
       <<: *default-healthcheck
     depends_on:
       openbao:
@@ -361,7 +361,7 @@ services:
       - BAO_ADDR=http://0.0.0.0:8200 # BAO_ADDR is for binding listener inside container
       - SKIP_SETCAP=true
     # Fix bind-mount ownership (host UID 1000 → container openbao UID 100)
-    entrypoint: [ "sh", "-c" ]
+    entrypoint: ["sh", "-c"]
     command:
       - |
         chown -R openbao:openbao /openbao/data || { echo "ERROR: chown failed on /openbao/data"; exit 1; }
@@ -386,7 +386,7 @@ services:
       # 'bao status' exit codes:
       #   0 = unsealed, 1 = sealed but running, 2 = uninitialized (first run)
       # All three mean the OpenBao process is up and accepting API calls.
-      test: [ "CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]" ]
+      test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
       interval: 10s
       timeout: 5s
       retries: 3

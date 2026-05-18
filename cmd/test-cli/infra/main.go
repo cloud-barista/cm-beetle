@@ -2712,7 +2712,21 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 					}
 					break
 				}
-				// Log at Info every ~1 minute; suppress intermediate attempts to reduce noise
+
+				// Authentication failures are not transient - retrying won't help.
+				// Only connectivity failures (connection refused, timeout) benefit from retrying.
+				errMsg := lastErr.Error()
+				if strings.Contains(errMsg, "unable to authenticate") ||
+					strings.Contains(errMsg, "no supported methods remain") ||
+					strings.Contains(errMsg, "permission denied") {
+					log.Warn().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
+						Int("attempt", attempt).
+						Msg("SSH authentication failed (key mismatch or user not set up) — skipping retries")
+					break
+				}
+
+				// Transient connectivity failure — keep retrying.
+				// Log at Info every ~1 minute; suppress intermediate attempts to reduce noise.
 				elapsed := time.Duration(attempt-1) * retryDelay
 				if (attempt-1)%logProgressEvery == 0 {
 					log.Info().Err(lastErr).Str("nodeId", nodeId).Str("ip", publicIP).
