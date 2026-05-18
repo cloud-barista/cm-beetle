@@ -55,6 +55,10 @@ type RecommendInfraWithDefaultsResponse struct {
 // @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+// @Description
+// @Description **[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.
+// @Description - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+// @Description - **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.
 // @Tags [Recommendation] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -146,6 +150,11 @@ type RecommendInfraResponse struct {
 // @Description
 // @Description **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
 // @Description - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
+// @Description
+// @Description **[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.
+// @Description - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+// @Description - **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.
+// @Description - Pass the recommendation response as-is to the migration API to ensure the resolved image is used.
 // @Description
 // @Tags [Recommendation] Infrastructure
 // @Accept  json

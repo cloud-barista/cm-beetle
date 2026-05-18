@@ -399,6 +399,8 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
+		resolvedCspImageName := "" // set only when review resolves a newer image than the DB value
+		suggestedSystemDisk := "" // set when specImagePairReview confirms an available disk type
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
 			log.Warn().Msgf("no recommended VM specs or OS images found for node %s", node.MachineId)
 		} else {
@@ -412,6 +414,26 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			} else {
 				selectedVmSpec = tempSelectedVmSpec
 				selectedVmOsImage = tempSelectedVmOsImage
+
+				// Resolve the latest CSP image name and confirm available system disk.
+				precheck, reviewErr := PreflightCheckCspProvisioning(
+					selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
+				)
+				if reviewErr != nil {
+					log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", node.MachineId)
+				} else if !precheck.IsAvailable {
+					log.Warn().Msgf("image %s may be unavailable for node %s; using cached image", selectedVmOsImage.Id, node.MachineId)
+				} else {
+					if precheck.SuggestedSystemDisk != "" {
+						log.Debug().Msgf("using suggested system disk for node %s: %s", node.MachineId, precheck.SuggestedSystemDisk)
+						suggestedSystemDisk = precheck.SuggestedSystemDisk
+					}
+					if precheck.ResolvedCspImageName != selectedVmOsImage.CspImageName {
+						log.Info().Msgf("image resolved to latest for node %s: %s -> %s", node.MachineId, selectedVmOsImage.CspImageName, precheck.ResolvedCspImageName)
+						selectedVmOsImage.CspImageName = precheck.ResolvedCspImageName
+						resolvedCspImageName = precheck.ResolvedCspImageName
+					}
+				}
 
 				// Log CPU comparison
 				log.Debug().
@@ -518,11 +540,12 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			SpecId:           selectedVmSpec.Id,
 			ImageId:          selectedVmOsImage.Id,
+			CspImageName:     resolvedCspImageName,  // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
 			Name:             fmt.Sprintf("migrated-%s", node.MachineId),           // Set MachineId to identify the source node
-			RootDiskType:     "",                                                   // Set "" or default to use CSP's default
+			RootDiskType:     suggestedSystemDisk,                                  // Confirmed-available disk type from specImagePairReview; empty → CSP default
 			RootDiskSize:     rootDiskSize,                                         // max(source disk size, CSP minimum) to keep costs low
 			SshKeyId:         recommendedVmInfra.TargetSshKey.Name,                 // Set the SSH key ID
 			NodeUserName:     "",                                                   // TBD: Set the VM user name if needed
@@ -531,12 +554,6 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Label: map[string]string{
 				"sourceMachineId": node.MachineId,
 			},
-		}
-
-		// ! Set the root disk type for Alibaba Cloud
-		if csp == "alibaba" && tempCreateNodeGroupReq.RootDiskType == "" {
-			log.Warn().Msg("set the root disk type to 'cloud_essd' for Alibaba Cloud")
-			tempCreateNodeGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
 		}
 
 		// Append the VM request to the list
@@ -658,12 +675,6 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			Label: map[string]string{
 				"sourceMachineId": node.MachineId,
 			},
-		}
-
-		// ! Set the root disk type for Alibaba Cloud
-		if csp == "alibaba" && tempCreateNodeGroupReq.RootDiskType == "" {
-			log.Warn().Msg("set the root disk type to 'cloud_essd' for Alibaba Cloud")
-			tempCreateNodeGroupReq.RootDiskType = "TYPE1" // "cloud_essd"
 		}
 
 		// Append the VM request to the list
@@ -894,6 +905,23 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 			// * Set the selected spec and image IDs to the corresponding NodeGroup
 			tempNodeGroupList[j].SpecId = selectedVmSpec.Id
 			tempNodeGroupList[j].ImageId = selectedVmOsImage.Id
+
+			// Resolve the latest CSP image name and confirm available system disk.
+			precheck, reviewErr := PreflightCheckCspProvisioning(
+				selectedVmSpec.Id, selectedVmOsImage.Id, selectedVmOsImage.CspImageName, "",
+			)
+			if reviewErr != nil {
+				log.Warn().Err(reviewErr).Msgf("preflight check failed for node %s; using cached image", node.MachineId)
+			} else {
+				if precheck.SuggestedSystemDisk != "" {
+					log.Debug().Msgf("using suggested system disk for node %s: %s", node.MachineId, precheck.SuggestedSystemDisk)
+					tempNodeGroupList[j].RootDiskType = precheck.SuggestedSystemDisk
+				}
+				if precheck.ResolvedCspImageName != selectedVmOsImage.CspImageName {
+					log.Info().Msgf("image resolved to latest for node %s: %s -> %s", node.MachineId, selectedVmOsImage.CspImageName, precheck.ResolvedCspImageName)
+					tempNodeGroupList[j].CspImageName = precheck.ResolvedCspImageName
+				}
+			}
 
 			// * Include match rate vector in NodeGroup description for transparency
 			// Format: "Recommended VM for {serverId} | Match Rate: CPU={x}% Memory={y}% Image={z}% (Min={min}% Avg={avg}%)"

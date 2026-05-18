@@ -84,3 +84,33 @@ func (s *Session) SearchVmOsImage(nsId string, searchImageReq tbmodel.SearchImag
 
 	return resBody, nil
 }
+
+// ReviewSpecImagePair calls POST /specImagePairReview to validate a spec-image pair
+// and resolve the latest CSP image name (e.g., Alibaba ImageFamily resolution).
+func (s *Session) ReviewSpecImagePair(req tbmodel.SpecImagePairReviewReq) (tbmodel.SpecImagePairReviewResult, error) {
+	log.Debug().Msgf("Reviewing spec-image pair (specId: %s, imageId: %s)", req.SpecId, req.ImageId)
+
+	var emptyRet = tbmodel.SpecImagePairReviewResult{}
+
+	resBody := tbmodel.SpecImagePairReviewResult{}
+
+	resp, err := s.
+		SetBody(req).
+		SetResult(&resBody).
+		Post("/specImagePairReview")
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to review spec-image pair")
+		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+
+	log.Debug().Msgf("Spec-image pair review completed (status: %s, imageAvailable: %t, resolvedCspImageName: %s)",
+		resBody.Status, resBody.ImageValidation.IsAvailable, resBody.ImageValidation.CspResourceId)
+
+	return resBody, nil
+}
+
+

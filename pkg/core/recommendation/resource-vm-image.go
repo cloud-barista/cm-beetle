@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
+	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/compat"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/cloud-barista/cm-beetle/pkg/similarity"
-	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
-	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,7 +25,7 @@ func GetDefaultImagesLimit() int {
 	return defaultImagesLimit
 }
 
-// RecommendVmOsImagesForSpec recommends an appropriate VM OS images (e.g., Ubuntu 22.04) for the given VM spec
+// RecommendVmOsImagesForSpec recommends appropriate VM OS images for the given VM spec.
 func RecommendVmOsImagesForSpec(csp string, region string, node onpremmodel.NodeProperty, limit int, spec cloudmodel.SpecInfo) ([]cloudmodel.ImageInfo, error) {
 
 	var emptyRes = []cloudmodel.ImageInfo{}

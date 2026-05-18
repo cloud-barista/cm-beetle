@@ -40,7 +40,7 @@ The tables below show recommendation and migration support by target CSP and res
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
 | VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
 | VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| Virtual Machine | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
 | K8s Cluster     | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
 | K8s Node Image  | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
 | Object Storage  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |

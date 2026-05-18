@@ -5530,8 +5530,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
-        with defaults.
+      description: |-
+        Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+
+        **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
+        - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+        - **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).
+        - Recommended: pass the recommendation API response as-is to use the latest resolved image.
       operationId: MigrateInfra
       parameters:
       - default: mig01
@@ -6411,6 +6416,11 @@ paths:
 
         **[Response Field: `description`]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts
         - Example: "Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable"
+
+        **[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.
+        - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+        - **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.
+        - Pass the recommendation response as-is to the migration API to ensure the resolved image is used.
       operationId: RecommendVmInfraCandidates
       parameters:
       - description: Specify the source infrastructure to be migrated
@@ -6478,6 +6488,10 @@ paths:
         - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
 
         - If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.
+
+        **[Response Field: `nodeGroups[].cspImageName`]** Set only when the spec-image review resolved a newer image than the DB cache.
+        - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+        - **Empty**: TumbleBug uses `imageId` for the standard DB lookup path.
       operationId: RecommendVMInfraWithDefaults
       parameters:
       - description: Specify the source infrastructure to be migrated

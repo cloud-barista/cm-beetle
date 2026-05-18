@@ -5,6 +5,14 @@ applyTo: "imdl/**/copied-tb-model.go"
 
 # CB-Tumblebug Model Synchronization Rules
 
+## File Ownership and Modification Policy
+
+`imdl/**/copied-tb-model.go` is a **read-only mirror** of CB-Tumblebug source structs.
+
+- **Do NOT directly modify** this file.
+- Changes must be made only via the `/sync-tb` prompt or by the user directly.
+- If a change seems necessary (e.g., a comment, field, or tag), **propose the change as a suggestion** (describe what to change and why) rather than editing the file.
+
 ## Version Management Protocols
 
 ### Target Version Specification
