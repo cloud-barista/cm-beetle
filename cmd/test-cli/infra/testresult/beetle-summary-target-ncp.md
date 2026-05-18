@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-05-12 09:52:07
+**Generated At:** 2026-05-18 08:11:39
 
 **Namespace:** mig01
 
-**Infra Name:** my04-infra101
+**Infra Name:** my08-infra101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Infra Name** | my04-infra101 |
+| **Infra Name** | my08-infra101 |
 | **Description** | Recommended VMs comprising multi-cloud infrastructure |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | NCP |
@@ -42,21 +42,21 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 138234481 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.19.173<br>**Private IP:** 10.0.1.8<br>**SGs:** my04-sg-01<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 138234474 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.20.23<br>**Private IP:** 10.0.1.7<br>**SGs:** my04-sg-03<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 138234467 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 101.79.19.56<br>**Private IP:** 10.0.1.6<br>**SGs:** my04-sg-02<br>**SSH:** my04-sshkey-01 |
+| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 138993641 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.156.82<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 138993649 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.20.97<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 138993635 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.16.239<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
 
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: my04-vnet-01
+#### VNet: my08-vnet-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-vnet-01 |
-| **CSP VNet ID** | 138792 |
+| **Name** | my08-vnet-01 |
+| **CSP VNet ID** | 139135 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my04-subnet-01 | 300131 | 10.0.1.0/24 | KR-1 |
+| my08-subnet-01 | 300855 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -74,17 +74,17 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my04-sshkey-01 | tbd81fd3e6aji65qtg7seg | cb-user |  |
+| my08-sshkey-01 | tbd85cg56pr9ha6omvqjj0 | cb-user |  |
 
 ### Security Groups
 
-#### Security Group: my04-sg-01
+#### Security Group: my08-sg-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-01 |
-| **CSP Security Group ID** | 352888 |
-| **VNet** | my04-vnet-01 |
+| **Name** | my08-sg-01 |
+| **CSP Security Group ID** | 353896 |
+| **VNet** | my08-vnet-01 |
 | **Rule Count** | 15 rules |
 
 **Security Group Rules:**
@@ -107,13 +107,13 @@
 | outbound | UDP | 1-65535 | 0.0.0.0/0 |
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 
-#### Security Group: my04-sg-02
+#### Security Group: my08-sg-02
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-02 |
-| **CSP Security Group ID** | 352889 |
-| **VNet** | my04-vnet-01 |
+| **Name** | my08-sg-02 |
+| **CSP Security Group ID** | 353897 |
+| **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
 **Security Group Rules:**
@@ -141,13 +141,13 @@
 | outbound | UDP | 1-65535 | 0.0.0.0/0 |
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 
-#### Security Group: my04-sg-03
+#### Security Group: my08-sg-03
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-03 |
-| **CSP Security Group ID** | 352890 |
-| **VNet** | my04-vnet-01 |
+| **Name** | my08-sg-03 |
+| **CSP Security Group ID** | 353898 |
+| **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
 **Security Group Rules:**
@@ -196,8 +196,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730 | $52.56 |
-| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3a | $0.0848 | $61.06 |
-| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747 | $125.78 |
+| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ci2-g3 | $0.0730 | $52.56 |
+| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | s2-g3a | $0.0848 | $61.06 |
+| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | s4-g3a | $0.1747 | $125.78 |
 
 
