@@ -34,13 +34,13 @@ The tables below show recommendation and migration support by target CSP and res
 
 | Resource        | AWS | Azure | GCP | Alibaba | Tencent | IBM | OpenStack | NCP | NHN | KT  |
 | --------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :-------: | :-: | :-: | :-: |
-| VNet            | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
-| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |    📅     | ✅  |  —  |  —  |
+| VNet            | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | K8s Cluster     | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
 | K8s Node Image  | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
 | Object Storage  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |

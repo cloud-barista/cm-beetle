@@ -6,13 +6,13 @@ This document covers recommendation and migration support for VM infrastructure 
 
 | Resource        | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | (NHN) | (KT) |
 | --------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :---: | :--: |
-| VNet            | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
-| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | 🚧  |     📅      | ✅  |   —   |  —   |
+| VNet            | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 
 ## Supported Operations
 
@@ -23,5 +23,4 @@ This document covers recommendation and migration support for VM infrastructure 
 
 ## Roadmap
 
-- 🚧 **In progress**: IBM — all resources
-- 📅 **Planned**: Tencent, OpenStack
+-  **Planned**: Tencent, OpenStack
