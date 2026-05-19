@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -118,6 +119,7 @@ type TestSuite struct {
 	FailedCspPairs  int                    `json:"failedCspPairs"`
 	SkippedCspPairs int                    `json:"skippedCspPairs"`
 	OverallTime     time.Duration          `json:"overallTime"`
+	CspReports      []*CSPTestReport       // Full reports for overall summary
 	mu              sync.Mutex             // Mutex for concurrent updates
 }
 
@@ -337,6 +339,11 @@ func main() {
 	// Calculate overall statistics
 	suite.OverallTime = time.Since(startTime)
 
+	// Generate overall test summary markdown before final summary (which may os.Exit)
+	if err := generateOverallSummaryMarkdown(suite, startTime); err != nil {
+		log.Warn().Err(err).Msg("Failed to generate overall summary markdown")
+	}
+
 	// Print final summary
 	printFinalSummary(suite)
 }
@@ -359,10 +366,8 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
 	}
 
-	log.Info().Msgf("%s", "\n"+strings.Repeat("=", 60)+"\n")
-	log.Info().Msgf("Testing CSP-Region Pair %d/%d: %s", i+1, len(config.Test.Cases), displayName)
+	printTestCaseBanner(i+1, len(config.Test.Cases), displayName, cspPair.Csp, cspPair.Region)
 	log.Info().Str("csp", cspPair.Csp).Str("region", cspPair.Region).Msg("Starting CSP-Region pair test")
-	log.Info().Msgf("%s", strings.Repeat("=", 60)+"\n")
 
 	pairStartTime := time.Now()
 	pairPassed := 0
@@ -654,10 +659,26 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		suite.FailedCspPairs++
 	}
 	suite.CspResults[displayName] = cspReport.Summary
+	suite.CspReports = append(suite.CspReports, cspReport)
 	suite.mu.Unlock()
 
 	log.Info().Msgf("\n--- Summary for %s ---", displayName)
 	log.Info().Int("passed", pairPassed).Int("total", suite.TotalTests).Msgf("Tests Passed: %d/%d", pairPassed, suite.TotalTests)
+}
+
+// printTestCaseBanner prints a prominent visual banner to mark the start of each CSP-Region test.
+func printTestCaseBanner(index, total int, displayName, csp, region string) {
+	const innerWidth = 76
+	hline := strings.Repeat("═", innerWidth+2)
+	line1 := fmt.Sprintf("[%d/%d] %s", index, total, displayName)
+	line2 := fmt.Sprintf("CSP: %s  |  Region: %s", csp, region)
+	if len(line1) > innerWidth {
+		line1 = line1[:innerWidth]
+	}
+	if len(line2) > innerWidth {
+		line2 = line2[:innerWidth]
+	}
+	fmt.Printf("\n╔%s╗\n║ %-*s ║\n║ %-*s ║\n╚%s╝\n\n", hline, innerWidth, line1, innerWidth, line2, hline)
 }
 
 func printFinalSummary(suite *TestSuite) {
@@ -1449,11 +1470,11 @@ func getBeetleVersion() string {
 
 // getVersionFromDockerCompose extracts version from docker-compose.yaml for a given service
 func getVersionFromDockerCompose(serviceName string) string {
-	dockerComposePath := "../../deployments/docker-compose/docker-compose.yaml"
+	// From cmd/test-cli/infra/, three levels up reaches the repo root
+	dockerComposePath := "../../../deployments/docker-compose/docker-compose.yaml"
 
-	// Try absolute path first
+	// Fall back to repo-root-relative path when CWD is the repo root
 	if _, err := os.Stat(dockerComposePath); os.IsNotExist(err) {
-		// Try relative to repo root
 		dockerComposePath = "deployments/docker-compose/docker-compose.yaml"
 	}
 
@@ -1474,30 +1495,41 @@ func getVersionFromDockerCompose(serviceName string) string {
 	return "unknown"
 }
 
-// getCmModelVersionFromGoMod extracts cm-model version from go.mod
-func getCmModelVersionFromGoMod() string {
-	goModPath := "../../go.mod"
+// getImdlVersion returns the version of the imdl module from its git tags (format: imdl/vX.Y.Z).
+func getImdlVersion() string {
+	commitHash := getGitHash()
 
-	// Try absolute path first
-	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
-		// Try relative to repo root
-		goModPath = "go.mod"
+	// Check if we are exactly on an imdl tag
+	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match", "--match", "imdl/v*")
+	if exactTag, err := cmdExact.Output(); err == nil {
+		return strings.TrimPrefix(strings.TrimSpace(string(exactTag)), "imdl/")
 	}
 
-	content, err := os.ReadFile(goModPath)
-	if err != nil {
+	// Get the latest imdl tag (we are ahead of it)
+	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0", "--match", "imdl/v*")
+	if tag, err := cmdTag.Output(); err == nil {
+		tagStr := strings.TrimPrefix(strings.TrimSpace(string(tag)), "imdl/")
+		if tagStr != "" {
+			if commitHash != "unknown" {
+				return fmt.Sprintf("%s+ (%s)", tagStr, commitHash)
+			}
+			return fmt.Sprintf("%s+", tagStr)
+		}
+	}
+
+	// No imdl tags available
+	if commitHash != "unknown" {
+		return fmt.Sprintf("main (%s)", commitHash)
+	}
+	return "main (unknown)"
+}
+
+// formatServiceVersion returns "v{version}" or "unknown" when version is not available.
+func formatServiceVersion(version string) string {
+	if version == "unknown" {
 		return "unknown"
 	}
-
-	// Pattern to match: github.com/cloud-barista/cm-model version
-	pattern := `github\.com/cloud-barista/cm-model\s+(v[\d\.]+)`
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(string(content))
-
-	if len(matches) >= 2 {
-		return matches[1]
-	}
-	return "unknown"
+	return "v" + version
 }
 
 // generateMarkdownReport generates a markdown report for a specific CSP
@@ -1581,10 +1613,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("## Environment and scenario\n\n")
 	sb.WriteString("### Environment\n\n")
 	sb.WriteString(fmt.Sprintf("- CM-Beetle: %s\n", getBeetleVersion()))
-	sb.WriteString(fmt.Sprintf("- cm-model: %s\n", getCmModelVersionFromGoMod()))
-	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: v%s\n", getVersionFromDockerCompose("cb-tumblebug")))
-	sb.WriteString(fmt.Sprintf("- CB-Spider: v%s\n", getVersionFromDockerCompose("cb-spider")))
-	sb.WriteString(fmt.Sprintf("- CB-MapUI: v%s\n", getVersionFromDockerCompose("cb-mapui")))
+	sb.WriteString(fmt.Sprintf("- imdl: %s\n", getImdlVersion()))
+	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-tumblebug"))))
+	sb.WriteString(fmt.Sprintf("- CB-Spider: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-spider"))))
+	sb.WriteString(fmt.Sprintf("- CB-MapUI: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-mapui"))))
 	sb.WriteString(fmt.Sprintf("- Target CSP: %s\n", strings.ToUpper(report.CSP)))
 	sb.WriteString(fmt.Sprintf("- Target Region: %s\n", report.Region))
 	sb.WriteString(fmt.Sprintf("- CM-Beetle URL: %s\n", report.BeetleURL))
@@ -2246,6 +2278,175 @@ func generateMarkdownContent(report *CSPTestReport) string {
 			}
 		}
 	}
+
+	return sb.String()
+}
+
+// generateOverallSummaryMarkdown creates a markdown summary of all CSP-Region pair test results.
+func generateOverallSummaryMarkdown(suite *TestSuite, startTime time.Time) error {
+	execDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	testResultDir := filepath.Join(execDir, "testresult")
+	if err := os.MkdirAll(testResultDir, 0755); err != nil {
+		return fmt.Errorf("failed to create testresult directory: %w", err)
+	}
+
+	filename := filepath.Join(testResultDir, "beetle-test-summary-all.md")
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create summary file: %w", err)
+	}
+	defer file.Close()
+
+	content := buildOverallSummaryContent(suite, startTime)
+	content = maskSensitiveInfo(content)
+
+	if _, err := file.WriteString(content); err != nil {
+		return fmt.Errorf("failed to write summary content: %w", err)
+	}
+
+	fmt.Printf("📝 Overall test summary saved to: %s\n", filename)
+	return nil
+}
+
+// buildOverallSummaryContent builds the markdown content for the overall test suite summary.
+func buildOverallSummaryContent(suite *TestSuite, startTime time.Time) string {
+	var sb strings.Builder
+
+	sb.WriteString("# CM-Beetle Test Suite Summary\n\n")
+	sb.WriteString("> [!NOTE]\n")
+	sb.WriteString("> This document summarizes all CM-Beetle integration tests from a single test run.\n\n")
+
+	// Test run information
+	sb.WriteString("## Test Run Information\n\n")
+	sb.WriteString(fmt.Sprintf("- **Date**: %s\n", startTime.Format("January 2, 2006")))
+	sb.WriteString(fmt.Sprintf("- **Start Time**: %s\n", startTime.Format("15:04:05 MST")))
+	sb.WriteString(fmt.Sprintf("- **Total Duration**: %v\n", suite.OverallTime.Truncate(time.Millisecond)))
+	sb.WriteString(fmt.Sprintf("- **Execution Mode**: %s\n", suite.Config.Test.Set.Mode))
+	sb.WriteString(fmt.Sprintf("- **CM-Beetle**: %s\n", getBeetleVersion()))
+	sb.WriteString(fmt.Sprintf("- **CB-Tumblebug**: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-tumblebug"))))
+	sb.WriteString(fmt.Sprintf("- **CB-Spider**: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-spider"))))
+	sb.WriteString("\n")
+
+	// Overall stats
+	overallStatus := "✅ All Passed"
+	if suite.FailedCspPairs > 0 {
+		overallStatus = "❌ Some Failed"
+	}
+
+	sb.WriteString("## Overall Results\n\n")
+	sb.WriteString(fmt.Sprintf("**Status**: %s\n\n", overallStatus))
+	sb.WriteString("| Metric | Count |\n")
+	sb.WriteString("|--------|-------|\n")
+	sb.WriteString(fmt.Sprintf("| Total CSP-Region Pairs | %d |\n", suite.TotalCspPairs))
+	sb.WriteString(fmt.Sprintf("| Passed Pairs | %d |\n", suite.PassedCspPairs))
+	sb.WriteString(fmt.Sprintf("| Failed Pairs | %d |\n", suite.FailedCspPairs))
+	if suite.SkippedCspPairs > 0 {
+		sb.WriteString(fmt.Sprintf("| Skipped Pairs | %d |\n", suite.SkippedCspPairs))
+	}
+	sb.WriteString(fmt.Sprintf("| Total API Tests | %d |\n", suite.TotalTests*suite.TotalCspPairs))
+	sb.WriteString(fmt.Sprintf("| Passed API Tests | %d |\n", suite.PassedTests))
+	sb.WriteString(fmt.Sprintf("| Failed API Tests | %d |\n", suite.FailedTests))
+	if suite.SkippedTests > 0 {
+		sb.WriteString(fmt.Sprintf("| Skipped API Tests | %d |\n", suite.SkippedTests))
+	}
+	sb.WriteString("\n")
+
+	// Sort reports by start time for consistent ordering
+	reports := make([]*CSPTestReport, len(suite.CspReports))
+	copy(reports, suite.CspReports)
+	sort.Slice(reports, func(i, j int) bool {
+		return reports[i].TestDateTime.Before(reports[j].TestDateTime)
+	})
+
+	// Per-pair summary table
+	sb.WriteString("## Per CSP-Region Pair Results\n\n")
+	sb.WriteString("| # | Display Name | CSP | Region | Status | Duration | Passed | Failed | Skipped |\n")
+	sb.WriteString("|---|--------------|-----|--------|--------|----------|--------|--------|--------|\n")
+
+	for i, report := range reports {
+		passedCount, failedCount, skippedCount := 0, 0, 0
+		for _, r := range report.TestResults {
+			switch {
+			case r.Success:
+				passedCount++
+			case r.Skipped:
+				skippedCount++
+			default:
+				failedCount++
+			}
+		}
+		status := "✅ PASS"
+		if failedCount > 0 {
+			status = "❌ FAIL"
+		}
+		total := len(report.TestResults)
+		sb.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s | %v | %d/%d | %d/%d | %d/%d |\n",
+			i+1, report.DisplayName, strings.ToUpper(report.CSP), report.Region,
+			status, report.Summary.Duration.Truncate(time.Millisecond),
+			passedCount, total, failedCount, total, skippedCount, total))
+	}
+	sb.WriteString("\n")
+
+	// Detailed breakdown per pair
+	sb.WriteString("## Detailed Results Per CSP-Region Pair\n\n")
+
+	for i, report := range reports {
+		hasFailed := false
+		for _, r := range report.TestResults {
+			if !r.Success && !r.Skipped {
+				hasFailed = true
+				break
+			}
+		}
+		status := "✅ PASS"
+		if hasFailed {
+			status = "❌ FAIL"
+		}
+
+		sb.WriteString(fmt.Sprintf("### %d. %s (%s, %s) — %s\n\n",
+			i+1, report.DisplayName, strings.ToUpper(report.CSP), report.Region, status))
+		sb.WriteString(fmt.Sprintf("- **Start Time**: %s\n", report.TestDateTime.Format("2006-01-02 15:04:05 MST")))
+		sb.WriteString(fmt.Sprintf("- **Duration**: %v\n", report.Summary.Duration.Truncate(time.Millisecond)))
+		sb.WriteString(fmt.Sprintf("- **Namespace**: %s\n\n", report.NamespaceID))
+
+		endpointNames := []string{
+			"`POST /beetle/recommendation/infra`",
+			fmt.Sprintf("`POST /beetle/migration/ns/%s/infra`", report.NamespaceID),
+			fmt.Sprintf("`GET /beetle/migration/ns/%s/infra`", report.NamespaceID),
+			fmt.Sprintf("`GET /beetle/migration/ns/%s/infra?option=id`", report.NamespaceID),
+			fmt.Sprintf("`GET /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID),
+			"Remote SSH Accessibility",
+			fmt.Sprintf("`GET /beetle/summary/target/ns/%s/infra/{{infraId}}`", report.NamespaceID),
+			fmt.Sprintf("`POST /beetle/report/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID),
+			fmt.Sprintf("`DELETE /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID),
+		}
+
+		sb.WriteString("| Step | Endpoint / Description | Status | Duration |\n")
+		sb.WriteString("|------|------------------------|--------|----------|\n")
+		for j, r := range report.TestResults {
+			testStatus := "✅ PASS"
+			if r.Skipped {
+				testStatus = "⏭️ SKIP"
+			} else if !r.Success {
+				testStatus = "❌ FAIL"
+			}
+			endpoint := r.TestName
+			if j < len(endpointNames) {
+				endpoint = endpointNames[j]
+			}
+			sb.WriteString(fmt.Sprintf("| %d | %s | %s | %v |\n",
+				j+1, endpoint, testStatus, r.Duration.Truncate(time.Millisecond)))
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString("---\n\n")
+	sb.WriteString(fmt.Sprintf("*Generated by CM-Beetle Test CLI on %s*\n",
+		startTime.Format("2006-01-02 15:04:05 MST")))
 
 	return sb.String()
 }
