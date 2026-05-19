@@ -102,8 +102,7 @@ func getCspMinRootDiskSizeGB(csp string) int {
 		// Minimum per cloudos_meta.yaml: HDD|50 GB, SSD|50 GB.
 		return 50
 	case "alibaba":
-		// Minimum per cloudos_meta.yaml: cloud_essd|20 GB, cloud_efficiency|20 GB.
-		// Using 40 GB as a conservative safe floor to avoid errors near the lower bound.
+		// Minimum: cloud_essd|20 GB, cloud_efficiency|20 GB; cloud_auto requires 40 GB.
 		return 40
 	case "azure":
 		// Root disk size depends on the selected image and is not configurable via API.
@@ -525,7 +524,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		// - AWS: ["standard", "gp2", "gp3"],
 		// - Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"],
 		// - GCP: [ "pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"],
-		// - ALIBABA: ["cloud_essd", "cloud_efficiency", "cloud", "cloud_ssd"],
+		// - ALIBABA: ["cloud_auto", "cloud_essd", "cloud_efficiency", "cloud", "cloud_ssd"],
 		// - TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 		// - NCP: ["HDD"]
 		// - NHN: ["General_HDD", "General_SSD"]
@@ -648,7 +647,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	// - AWS: ["standard", "gp2", "gp3"],
 	// - Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"],
 	// - GCP: [ "pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"],
-	// - ALIBABA: ["cloud_essd", "cloud_efficiency", "cloud", "cloud_ssd"],
+	// - ALIBABA: ["cloud_auto", "cloud_essd", "cloud_efficiency", "cloud", "cloud_ssd"],
 	// - TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	// - NCP: ["HDD"]
 	// - NHN: ["General_HDD", "General_SSD"]
