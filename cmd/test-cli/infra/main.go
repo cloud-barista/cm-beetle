@@ -584,7 +584,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	/*
 	 * Test 7: Target Infrastructure Summary
 	 */
-	if infraId != "" {
+	if !stopTesting && infraId != "" {
 		resultTargetSummary := runTargetSummaryTest(client, config, infraId, cspPair.Csp, displayName)
 		recordResult(resultTargetSummary)
 	} else {
@@ -605,7 +605,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	/*
 	 * Test 8: Migration Report
 	 */
-	if infraId != "" {
+	if !stopTesting && infraId != "" {
 		resultMigrationReport := runMigrationReportTest(client, config, onpremInfraModel, infraId, cspPair.Csp, displayName)
 		recordResult(resultMigrationReport)
 	} else {
@@ -979,7 +979,11 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 	} else if strings.Contains(strings.ToLower(vmInfraInfo.Status), "failed") {
 		result.Success = false
 		result.Error = fmt.Errorf("failed to migrate infra (MCI status: %s)", vmInfraInfo.Status).Error()
-		result.StatusCode = 0
+		result.StatusCode = 200
+		responseMap := make(map[string]interface{})
+		jsonBytes, _ := json.Marshal(apiResponse)
+		json.Unmarshal(jsonBytes, &responseMap)
+		result.Response = responseMap
 		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
 	} else {
 		result.Success = true
@@ -1171,60 +1175,6 @@ func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayNa
 	}
 
 	return result, true
-}
-
-// cleanupInfra performs cleanup by deleting infra when migration fails
-func cleanupInfra(client *resty.Client, config TestConfig, infraId, displayName string) {
-	if infraId == "" {
-		log.Warn().Msg("Cleanup skipped: No Infra ID available")
-		return
-	}
-
-	log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Starting cleanup: Deleting failed infra")
-
-	// Retry logic for internal cleanup
-	const maxCleanupRetries = 2
-	const cleanupRetryDelay = 10 * time.Second
-
-	for attempt := 1; attempt <= maxCleanupRetries; attempt++ {
-		if attempt > 1 {
-			log.Info().Str("infraId", infraId).Int("attempt", attempt).Msg("🔄 Retrying internal cleanup...")
-			time.Sleep(cleanupRetryDelay)
-		}
-
-		// Log API call details
-		url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s?option=terminate", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
-		log.Debug().Msgf("Cleanup API Request URL: %s", url)
-
-		var response map[string]interface{}
-		resp, err := client.R().
-			SetResult(&response).
-			SetError(&response).
-			Delete(url)
-
-		// Log response details
-		log.Debug().Msgf("Cleanup HTTP Status: %s", resp.Status())
-		log.Debug().Msgf("Cleanup Response Body: %+v", response)
-
-		if err == nil && resp.StatusCode() < 400 {
-			log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Cleanup completed: Infra successfully deleted")
-			return
-		}
-
-		// If resource is already gone (404), consider cleanup successful
-		if resp != nil && resp.StatusCode() == http.StatusNotFound {
-			log.Info().Str("infraId", infraId).Str("csp", displayName).Msg("Cleanup skipped: Infra already deleted (404)")
-			return
-		}
-
-		statusCode := 0
-		if resp != nil {
-			statusCode = resp.StatusCode()
-		}
-		log.Warn().Err(err).Str("infraId", infraId).Int("statusCode", statusCode).Int("attempt", attempt).Msg("Cleanup attempt failed")
-	}
-
-	log.Error().Str("infraId", infraId).Msg("❌ Final cleanup attempt failed")
 }
 
 // runDeleteInfraTest performs Test 7: DELETE /beetle/migration/ns/{nsId}/infra/{infraId}
