@@ -59,9 +59,9 @@ services:
   cb-tumblebug:
     image: cloudbaristaorg/cb-tumblebug:0.12.10
     container_name: cb-tumblebug
-    # build:
-    #   context: ${PROJECT_ROOT}/../cb-tumblebug
-    #   dockerfile: Dockerfile
+    build:
+      context: ${PROJECT_ROOT}/../cb-tumblebug
+      dockerfile: Dockerfile
     networks:
       - cloud-barista
     ports:
@@ -195,8 +195,8 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.12.18
-    # image: cloudbaristaorg/cb-spider:0.12.17
+    image: cloudbaristaorg/cb-spider:0.12.22
+    #image: cloudbaristaorg/cb-spider:0.12.18
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
