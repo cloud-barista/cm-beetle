@@ -41,8 +41,8 @@ The tables below show recommendation and migration support by target CSP and res
 | VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
-| K8s Cluster     | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
-| K8s Node Image  | 🚧  |  🚧   | 🚧  |   🚧    |   🚧    | 🚧  |    ❌     |  —  |  —  | ❌  |
+| K8s Cluster     | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
+| K8s Node Image  | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
 | Object Storage  | ✅  |  ✅   | ✅  |   ✅    |   ✅    | ✅  |    ✅     | ✅  | ✅  | ✅  |
 | NLB             | 🚧  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |    📅     | 🚧  | 📅  | 📅  |
 | DBMS            | 📅  |  📅   | 📅  |   📅    |   📅    | 📅  |    📅     | 📅  | 📅  | 📅  |
