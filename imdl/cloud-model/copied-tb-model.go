@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.10 (commit: bdb2a448399c0dea8ea7623e91d95f87ca44666d)
-// * Synchronized: 2026-05-14 (No struct changes; only object storage and VPN enhancements in upstream)
+// * Version: CB-Tumblebug v0.12.13 (commit: 555a29bd3c806401eba00d1d2a7074984e18538e)
+// * Synchronized: 2026-06-02 (Minor formatting and omitempty tag changes for NodeInfo fields)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -433,10 +433,10 @@ type NodeInfo struct {
 	ConnectionConfig ConnConfig   `json:"connectionConfig"`
 	SpecId           string       `json:"specId"`
 	CspSpecName      string       `json:"cspSpecName"`
-	Spec             SpecSummary  `json:"spec,omitempty"`
+	Spec             SpecSummary  `json:"spec"`
 	ImageId          string       `json:"imageId"`
 	CspImageName     string       `json:"cspImageName"`
-	Image            ImageSummary `json:"image,omitempty"`
+	Image            ImageSummary `json:"image"`
 	VNetId           string       `json:"vNetId"`
 	CspVNetId        string       `json:"cspVNetId"`
 	SubnetId         string       `json:"subnetId"`
