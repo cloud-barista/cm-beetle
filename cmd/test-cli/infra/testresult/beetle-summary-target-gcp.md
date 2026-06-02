@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-05-18 08:09:08
+**Generated At:** 2026-06-02 12:05:56
 
 **Namespace:** mig01
 
@@ -28,23 +28,23 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| e2-standard-2 | 2 | 7.8 | - | x86_64 |  | $0.0860 | 1 |
 | e2-standard-4 | 4 | 15.6 | - | x86_64 |  | $0.1719 | 1 |
 | e2-highcpu-2 | 2 | 2.0 | - | x86_64 |  | $0.0635 | 1 |
+| e2-standard-2 | 2 | 7.8 | - | x86_64 |  | $0.0860 | 1 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260421 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 3 |
+| https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260520 | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20 | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 10 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | tbd85chgupr9ha6omvqjrg | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 34.47.88.87<br>**Private IP:** 10.0.1.2<br>**SGs:** my03-sg-01<br>**SSH:** my03-sshkey-01 |
-| my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | tbd85chgupr9ha6omvqjtg | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 34.64.234.91<br>**Private IP:** 10.0.1.4<br>**SGs:** my03-sg-03<br>**SSH:** my03-sshkey-01 |
-| my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | tbd85chgupr9ha6omvqjsg | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-04-21) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 34.64.135.175<br>**Private IP:** 10.0.1.3<br>**SGs:** my03-sg-02<br>**SSH:** my03-sshkey-01 |
+| my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | tb5aad3lmo0gt6dfk9uj | Running | 2 vCPU, 2.0 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 34.158.221.135<br>**Private IP:** 10.0.1.2<br>**SGs:** my03-sg-01<br>**SSH:** my03-sshkey-01 |
+| my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | tb25cler8rpicfonum0j | Running | 2 vCPU, 7.8 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 34.64.204.98<br>**Private IP:** 10.0.1.3<br>**SGs:** my03-sg-03<br>**SSH:** my03-sshkey-01 |
+| my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | tbk09te5ihs839lat9rh | Running | 4 vCPU, 15.6 GiB | Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20 (Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-20) | **VNet:** my03-vnet-01<br>**Subnet:** my03-subnet-01<br>**Public IP:** 8.230.18.51<br>**Private IP:** 10.0.1.4<br>**SGs:** my03-sg-02<br>**SSH:** my03-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-vnet-01 |
-| **CSP VNet ID** | tbd85cevepr9ha6omvqj20 |
+| **CSP VNet ID** | tbf2lc0iranl4gr0qrj1 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | gcp-asia-northeast3 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my03-subnet-01 | tbd85cevepr9ha6omvqj2g | 10.0.1.0/24 |  |
+| my03-subnet-01 | tbbbfhl31q35cvclvii0 | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my03-sshkey-01 | tbd85cf76pr9ha6omvqjgg |  |  |
+| my03-sshkey-01 | tb6kf3c8jjcig0aqofjm |  |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-sg-01 |
-| **CSP Security Group ID** | tbd85cf7epr9ha6omvqjh0 |
+| **CSP Security Group ID** | tbn194eshutbrfcgotga |
 | **VNet** | my03-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-sg-02 |
-| **CSP Security Group ID** | tbd85cfrepr9ha6omvqjhg |
+| **CSP Security Group ID** | tbd6ae36tqdum3bvi8od |
 | **VNet** | my03-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my03-sg-03 |
-| **CSP Security Group ID** | tbd85cgkmpr9ha6omvqjkg |
+| **CSP Security Group ID** | tbol4toon26c949hihp0 |
 | **VNet** | my03-vnet-01 |
 | **Rule Count** | 19 rules |
 
