@@ -101,6 +101,11 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param option query string false "Option" Enums(id)
+// @Param filterKey query string false "Field key for filtering (ex: cspResourceName)"
+// @Param filterVal query string false "Field value for filtering (ex: default-alibaba-ap-northeast-1-vpc)"
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} JSONResult{[DEFAULT]=tbresource.RestGetAllVNetResponse,[ID]=tbmodel.IdList} "Different return structures by the given option param"
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -124,6 +129,8 @@ func ListMigratedVNets(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.VNetInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -146,9 +153,12 @@ func GetMigratedVNet(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Param vNetReq body tbmodel.VNetReq true "Virtual Network creation request"
-// @Success 200 {object} tbmodel.VNetInfo
-// @Failure 400 {object} tbmodel.SimpleMsg
+// @Success 201 {object} tbmodel.VNetInfo
+// @Failure 404 {object} tbmodel.SimpleMsg
+// @Failure 409 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/vNet [post]
 func CreateVNet(c echo.Context) error {
@@ -164,13 +174,15 @@ func CreateVNet(c echo.Context) error {
 // DeleteMigratedVNet godoc
 // @ID DeleteMigratedVNet
 // @Summary Delete a migrated virtual network
-// @Description Delete a specific migrated virtual network in the namespace
+// @Description Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), reconcile (sync metadata with CSP state), force (force-delete on CSP)
 // @Tags [Migration] Resources for VM infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param vNetId path string true "Virtual Network ID" default(mig-vnet-01)
-// @Param action query string false "Action" Enums(withsubnets,refine,force) default(withsubnets)
+// @Param action query string false "Action" Enums(withsubnets,reconcile,force) default(withsubnets)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/vNet/{vNetId} [delete]
@@ -179,6 +191,30 @@ func DeleteMigratedVNet(c echo.Context) error {
 	sourcePattern := "/migration/ns/*/resources/vNet/*"
 	// First * is used as $1(nsId), second * as $2(vNetId)
 	targetPattern := "/ns/$1/resources/vNet/$2"
+
+	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
+	return proxyHandler(c)
+}
+
+// DeleteMigratedVNets godoc
+// @ID DeleteMigratedVNets
+// @Summary Delete multiple migrated virtual networks
+// @Description Delete multiple migrated virtual networks in the namespace
+// @Tags [Migration] Resources for VM infrastructure
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param match query string false "Delete resources containing matched ID-substring only" default()
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
+// @Success 200 {object} tbmodel.ResourceDeleteResults
+// @Failure 404 {object} tbmodel.SimpleMsg
+// @Router /migration/ns/{nsId}/resources/vNet [delete]
+func DeleteMigratedVNets(c echo.Context) error {
+	// Source path pattern with * to capture nsId
+	sourcePattern := "/migration/ns/*/resources/vNet"
+	// Target path pattern using $1 for captured nsId
+	targetPattern := "/ns/$1/resources/vNet"
 
 	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
 	return proxyHandler(c)
@@ -196,6 +232,8 @@ func DeleteMigratedVNet(c echo.Context) error {
 // @Param option query string false "Option" Enums(id)
 // @Param filterKey query string false "Field key for filtering (ex: systemLabel)"
 // @Param filterVal query string false "Field value for filtering (ex: Registered from CSP resource)"
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} JSONResult{[DEFAULT]=tbresource.RestGetAllSshKeyResponse,[ID]=tbmodel.IdList} "Different return structures by the given option param"
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -219,6 +257,8 @@ func ListMigratedSSHKeys(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sshKeyId path string true "SSH Key ID" default(mig-sshkey-01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SshKeyInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -241,7 +281,9 @@ func GetMigratedSSHKey(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param option query string false "Option: [required params for register] connectionName, name, cspKeyId" Enums(register)
+// @Param option query string false "Option: [required params for register] connectionName, name, cspResourceId, fingerprint, username, publicKey, privateKey" Enums(register)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Param sshKeyReq body tbmodel.SshKeyReq true "Details for an SSH key object"
 // @Success 200 {object} tbmodel.SshKeyInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
@@ -266,6 +308,8 @@ func CreateMigratedSSHKey(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sshKeyId path string true "SSH Key ID" default(mig-sshkey-01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -275,6 +319,30 @@ func DeleteMigratedSSHKey(c echo.Context) error {
 	sourcePattern := "/migration/ns/*/resources/sshKey/*"
 	// First * is used as $1(nsId), second * as $2(sshKeyId)
 	targetPattern := "/ns/$1/resources/sshKey/$2"
+
+	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
+	return proxyHandler(c)
+}
+
+// DeleteMigratedSSHKeys godoc
+// @ID DeleteMigratedSSHKeys
+// @Summary Delete multiple migrated SSH keys
+// @Description Delete multiple migrated SSH keys in the namespace
+// @Tags [Migration] Resources for VM infrastructure
+// @Accept json
+// @Produce json
+// @Param nsId path string true "Namespace ID" default(mig01)
+// @Param match query string false "Delete resources containing matched ID-substring only" default()
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
+// @Success 200 {object} tbmodel.ResourceDeleteResults
+// @Failure 404 {object} tbmodel.SimpleMsg
+// @Router /migration/ns/{nsId}/resources/sshKey [delete]
+func DeleteMigratedSSHKeys(c echo.Context) error {
+	// Source path pattern with * to capture nsId
+	sourcePattern := "/migration/ns/*/resources/sshKey"
+	// Target path pattern using $1 for captured nsId
+	targetPattern := "/ns/$1/resources/sshKey"
 
 	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
 	return proxyHandler(c)
@@ -292,6 +360,8 @@ func DeleteMigratedSSHKey(c echo.Context) error {
 // @Param option query string false "Option" Enums(id)
 // @Param filterKey query string false "Field key for filtering (ex: systemLabel)"
 // @Param filterVal query string false "Field value for filtering (ex: Registered from CSP resource)"
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} JSONResult{[DEFAULT]=tbresource.RestGetAllSecurityGroupResponse,[ID]=tbmodel.IdList} "Different return structures by the given option param"
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -315,6 +385,8 @@ func ListMigratedSecurityGroups(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sgId path string true "Security Group ID" default(mig-sg-01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SecurityGroupInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -338,6 +410,8 @@ func GetMigratedSecurityGroup(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param option query string false "Option: [required params for register] connectionName, name, vNetId, cspResourceId" Enums(register)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Param securityGroupReq body tbmodel.SecurityGroupReq true "Details for an securityGroup object"
 // @Success 200 {object} tbmodel.SecurityGroupInfo
 // @Failure 404 {object} tbmodel.SimpleMsg
@@ -362,6 +436,8 @@ func CreateMigratedSecurityGroup(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param sgId path string true "Security Group ID" default(mig-sg-01)
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
 // @Success 200 {object} tbmodel.SimpleMsg
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Failure 500 {object} tbmodel.SimpleMsg
@@ -385,7 +461,9 @@ func DeleteMigratedSecurityGroup(c echo.Context) error {
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param match query string false "Delete resources containing matched ID-substring only" default()
-// @Success 200 {object} tbmodel.IdList
+// @Param x-request-id header string false "Custom request ID for tracking"
+// @Param x-credential-holder header string false "Credential holder ID for selecting which credentials to use (default: system default holder)"
+// @Success 200 {object} tbmodel.ResourceDeleteResults
 // @Failure 404 {object} tbmodel.SimpleMsg
 // @Router /migration/ns/{nsId}/resources/securityGroup [delete]
 func DeleteMigratedSecurityGroups(c echo.Context) error {

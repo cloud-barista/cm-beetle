@@ -1112,6 +1112,18 @@ const docTemplate = `{
                         "description": "Field value for filtering (ex: Registered from CSP resource)",
                         "name": "filterVal",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1182,6 +1194,18 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
+                    },
+                    {
                         "description": "Details for an securityGroup object",
                         "name": "securityGroupReq",
                         "in": "body",
@@ -1240,13 +1264,25 @@ const docTemplate = `{
                         "description": "Delete resources containing matched ID-substring only",
                         "name": "match",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.IdList"
+                            "$ref": "#/definitions/model.ResourceDeleteResults"
                         }
                     },
                     "404": {
@@ -1288,6 +1324,18 @@ const docTemplate = `{
                         "name": "sgId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1340,6 +1388,18 @@ const docTemplate = `{
                         "name": "sgId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1407,6 +1467,18 @@ const docTemplate = `{
                         "description": "Field value for filtering (ex: Registered from CSP resource)",
                         "name": "filterVal",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1472,9 +1544,21 @@ const docTemplate = `{
                             "register"
                         ],
                         "type": "string",
-                        "description": "Option: [required params for register] connectionName, name, cspKeyId",
+                        "description": "Option: [required params for register] connectionName, name, cspResourceId, fingerprint, username, publicKey, privateKey",
                         "name": "option",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     },
                     {
                         "description": "Details for an SSH key object",
@@ -1501,6 +1585,63 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete multiple migrated SSH keys in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete multiple migrated SSH keys",
+                "operationId": "DeleteMigratedSSHKeys",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "Delete resources containing matched ID-substring only",
+                        "name": "match",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ResourceDeleteResults"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.SimpleMsg"
                         }
@@ -1538,6 +1679,18 @@ const docTemplate = `{
                         "name": "sshKeyId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1590,6 +1743,18 @@ const docTemplate = `{
                         "name": "sshKeyId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1636,6 +1801,39 @@ const docTemplate = `{
                         "name": "nsId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "id"
+                        ],
+                        "type": "string",
+                        "description": "Option",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field key for filtering (ex: cspResourceName)",
+                        "name": "filterKey",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field value for filtering (ex: default-alibaba-ap-northeast-1-vpc)",
+                        "name": "filterVal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1697,6 +1895,18 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
+                    },
+                    {
                         "description": "Virtual Network creation request",
                         "name": "vNetReq",
                         "in": "body",
@@ -1707,20 +1917,83 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/model.VNetInfo"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/model.SimpleMsg"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SimpleMsg"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete multiple migrated virtual networks in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Resources for VM infrastructure"
+                ],
+                "summary": "Delete multiple migrated virtual networks",
+                "operationId": "DeleteMigratedVNets",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "",
+                        "description": "Delete resources containing matched ID-substring only",
+                        "name": "match",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ResourceDeleteResults"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/model.SimpleMsg"
                         }
@@ -1758,6 +2031,18 @@ const docTemplate = `{
                         "name": "vNetId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1782,7 +2067,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific migrated virtual network in the namespace",
+                "description": "Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), reconcile (sync metadata with CSP state), force (force-delete on CSP)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1814,7 +2099,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "withsubnets",
-                            "refine",
+                            "reconcile",
                             "force"
                         ],
                         "type": "string",
@@ -1822,6 +2107,18 @@ const docTemplate = `{
                         "description": "Action",
                         "name": "action",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Custom request ID for tracking",
+                        "name": "x-request-id",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Credential holder ID for selecting which credentials to use (default: system default holder)",
+                        "name": "x-credential-holder",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -7068,6 +7365,58 @@ const docTemplate = `{
                 },
                 "assignedZone": {
                     "type": "string"
+                }
+            }
+        },
+        "model.ResourceDeleteResult": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Descriptive message (error detail on failure, empty on success)",
+                    "type": "string",
+                    "example": "Cannot delete resource because it is still referenced by ..."
+                },
+                "resourceId": {
+                    "description": "Resource ID",
+                    "type": "string",
+                    "example": "default-shared-aws-ap-northeast-2"
+                },
+                "resourceType": {
+                    "description": "Resource type (e.g., \"securityGroup\", \"sshKey\", \"vNet\")",
+                    "type": "string",
+                    "example": "securityGroup"
+                },
+                "success": {
+                    "description": "Whether the deletion was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ResourceDeleteResults": {
+            "type": "object",
+            "properties": {
+                "failedCount": {
+                    "description": "Number of failed deletions",
+                    "type": "integer",
+                    "example": 2
+                },
+                "results": {
+                    "description": "Individual results per resource",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ResourceDeleteResult"
+                    }
+                },
+                "successCount": {
+                    "description": "Number of successfully deleted resources",
+                    "type": "integer",
+                    "example": 8
+                },
+                "total": {
+                    "description": "Total number of resources processed",
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
