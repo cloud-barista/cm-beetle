@@ -2,7 +2,7 @@
 applyTo: "transx/**"
 ---
 
-# TransX Library Instructions
+# `transx` Library Instructions
 
 This directory (`transx/`) contains the **Data Migration Library**.
 It is a self-contained Go module with its own `go.mod`.
