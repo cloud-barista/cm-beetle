@@ -57,11 +57,11 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.10
+    image: cloudbaristaorg/cb-tumblebug:0.12.13
     container_name: cb-tumblebug
-    build:
-      context: ${PROJECT_ROOT}/../cb-tumblebug
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${PROJECT_ROOT}/../cb-tumblebug
+    #   dockerfile: Dockerfile
     networks:
       - cloud-barista
     ports:
@@ -86,8 +86,6 @@ services:
       # # Use public IP if you want to access the API Dashboard from outside of localhost
       # - TB_SELF_ENDPOINT=xxx.xxx.xxx.xxx:1323
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
-      - TB_SPIDER_USERNAME=${SP_API_USERNAME:?Please set SP_API_USERNAME}
-      - TB_SPIDER_PASSWORD=${SP_API_PASSWORD:?Please set SP_API_PASSWORD}
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
       - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
@@ -98,6 +96,8 @@ services:
       - TB_POSTGRES_DATABASE=${POSTGRES_DB:-tumblebug}
       - TB_POSTGRES_USER=${POSTGRES_USER:-tumblebug}
       - TB_POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tumblebug}
+      - TB_SPIDER_USERNAME=${SP_API_USERNAME:?Please set SP_API_USERNAME}
+      - TB_SPIDER_PASSWORD=${SP_API_PASSWORD:?Please set SP_API_PASSWORD}
       - TB_TERRARIUM_API_USERNAME=${TERRARIUM_API_USERNAME:?Please set TERRARIUM_API_USERNAME}
       - TB_TERRARIUM_API_PASSWORD=${TERRARIUM_API_PASSWORD:?Please set TERRARIUM_API_PASSWORD}
       # - TB_ALLOW_ORIGINS=*
@@ -127,7 +127,7 @@ services:
   # CB-Tumblebug ETCD
   # This is used for storing CB-Tumblebug metadata.
   cb-tumblebug-etcd:
-    image: gcr.io/etcd-development/etcd:v3.5.21
+    image: gcr.io/etcd-development/etcd:v3.6.11
     container_name: cb-tumblebug-etcd
     networks:
       - cloud-barista
@@ -182,6 +182,7 @@ services:
     #   - 5432:5432 # Uncomment for direct DB access from host
     volumes:
       - ./data/cb-tumblebug-container/meta_db/postgres:/var/lib/postgresql/data
+    command: postgres -c max_connections=500
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-tumblebug}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tumblebug}
@@ -195,8 +196,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.12.24
-    #image: cloudbaristaorg/cb-spider:0.12.18
+    image: cloudbaristaorg/cb-spider:0.12.26
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -209,17 +209,14 @@ services:
     volumes:
       - ./data/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./data/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
-      # Note: cb-spider 0.12.8+ Docker image excludes cloud-driver-libs/ (static mode optimization).
-      # This directory is maintained in assets/spider/ and must be updated when upgrading cb-spider.
-      - ./cb-tumblebug/assets/spider/:/root/go/src/github.com/cloud-barista/cb-spider/cloud-driver-libs/
     environment:
-      - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       - SPIDER_USERNAME=${SP_API_USERNAME:?Please set SP_API_USERNAME}
       - SPIDER_PASSWORD=${SP_API_PASSWORD:?Please set SP_API_PASSWORD}
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
+      - PLUGIN_SW=OFF
       - ADMINWEB=OFF
       - SPIDER_BACKUP_ENABLED=false
     healthcheck:
@@ -231,7 +228,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.31
+    image: cloudbaristaorg/cb-mapui:0.12.34
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui
@@ -250,31 +247,35 @@ services:
     #   start_period: 10s
     restart: unless-stopped
 
-    # TB-MCP (Tumblebug Model Context Protocol Server)
-    # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
-    # cb-tumblebug-mcp-server:
-    #   build:
-    #     context: ./cb-tumblebug/interface/mcp
-    #     dockerfile: Dockerfile
-    #   container_name: cb-tumblebug-mcp-server
-    #   networks:
-    #     - cloud-barista
-    #   ports:
-    #     - "8000:8000"
-    #   environment:
-    #     # TB-MCP Configuration
-    #     - TUMBLEBUG_API_BASE_URL=http://cb-tumblebug:1323/tumblebug
-    #     - TUMBLEBUG_USERNAME=default
-    #     - TUMBLEBUG_PASSWORD=default
-    #     - PYTHONUNBUFFERED=1
-    #     - MCP_SERVER_HOST=0.0.0.0
-    #     - MCP_SERVER_PORT=8000
-    #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
-    #     - MCP_LOG_LEVEL=INFO
+  # TB-MCP (Tumblebug Model Context Protocol Server)
+  # This provides MCP interface for CB-Tumblebug to work with AI assistants like Claude
+  # cb-tumblebug-mcp-server:
+  #   build:
+  #     context: ${PROJECT_ROOT}/../cb-tumblebug/src/interface/mcp
+  #     dockerfile: Dockerfile
+  #   container_name: cb-tumblebug-mcp-server
+  #   networks:
+  #     - cloud-barista
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     cb-tumblebug:
+  #       condition: service_healthy
+  #   environment:
+  #     # TB-MCP Configuration
+  #     - TUMBLEBUG_API_BASE_URL=http://cb-tumblebug:1323/tumblebug
+  #     - TUMBLEBUG_USERNAME=${TB_API_USERNAME:?Please set TB_API_USERNAME}
+  #     - TUMBLEBUG_PASSWORD=${TB_API_PASSWORD:?Please set TB_API_PASSWORD}
+  #     - PYTHONUNBUFFERED=1
+  #     - MCP_SERVER_HOST=0.0.0.0
+  #     - MCP_SERVER_PORT=8000
+  #     # Logging Configuration (INFO, DEBUG, WARNING, ERROR)
+  #     - MCP_LOG_LEVEL=INFO
+  #   restart: unless-stopped
 
-    # MC-Terrarium
-    # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
-    # CSP credentials are managed by OpenBao (no more env_file injection).
+  # MC-Terrarium
+  # Resource extensions (AWS-to-site VPN) for CB-Tumblebug using OpenTofu.
+  # CSP credentials are managed by OpenBao (no more env_file injection).
   mc-terrarium:
     image: cloudbaristaorg/mc-terrarium:0.1.4
     container_name: mc-terrarium
