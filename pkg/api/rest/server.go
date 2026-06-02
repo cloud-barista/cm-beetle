@@ -359,6 +359,7 @@ func RunServer(port string) {
 	gMigration.POST("/ns/:nsId/resources/vNet", controller.CreateVNet)
 	gMigration.GET("/ns/:nsId/resources/vNet/:vNetId", controller.GetMigratedVNet)
 	gMigration.DELETE("/ns/:nsId/resources/vNet/:vNetId", controller.DeleteMigratedVNet)
+	gMigration.DELETE("/ns/:nsId/resources/vNet", controller.DeleteMigratedVNets)
 
 	// APIs for the security group resources
 	gMigration.GET("/ns/:nsId/resources/securityGroup", controller.ListMigratedSecurityGroups)
@@ -372,6 +373,7 @@ func RunServer(port string) {
 	gMigration.POST("/ns/:nsId/resources/sshKey", controller.CreateMigratedSSHKey)
 	gMigration.GET("/ns/:nsId/resources/sshKey/:sshKeyId", controller.GetMigratedSSHKey)
 	gMigration.DELETE("/ns/:nsId/resources/sshKey/:sshKeyId", controller.DeleteMigratedSSHKey)
+	gMigration.DELETE("/ns/:nsId/resources/sshKey", controller.DeleteMigratedSSHKeys)
 
 	// APIs for data migration
 	// - GET /data/encryptionKey: Get one-time public key for encrypting sensitive fields

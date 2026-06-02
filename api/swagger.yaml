@@ -2836,6 +2836,45 @@ definitions:
       assignedZone:
         type: string
     type: object
+  model.ResourceDeleteResult:
+    properties:
+      message:
+        description: Descriptive message (error detail on failure, empty on success)
+        example: Cannot delete resource because it is still referenced by ...
+        type: string
+      resourceId:
+        description: Resource ID
+        example: default-shared-aws-ap-northeast-2
+        type: string
+      resourceType:
+        description: Resource type (e.g., "securityGroup", "sshKey", "vNet")
+        example: securityGroup
+        type: string
+      success:
+        description: Whether the deletion was successful
+        example: true
+        type: boolean
+    type: object
+  model.ResourceDeleteResults:
+    properties:
+      failedCount:
+        description: Number of failed deletions
+        example: 2
+        type: integer
+      results:
+        description: Individual results per resource
+        items:
+          $ref: '#/definitions/model.ResourceDeleteResult'
+        type: array
+      successCount:
+        description: Number of successfully deleted resources
+        example: 8
+        type: integer
+      total:
+        description: Total number of resources processed
+        example: 10
+        type: integer
+    type: object
   model.SecurityGroupInfo:
     properties:
       associatedObjectList:
@@ -5732,13 +5771,22 @@ paths:
         in: query
         name: match
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.IdList'
+            $ref: '#/definitions/model.ResourceDeleteResults'
         "404":
           description: Not Found
           schema:
@@ -5771,6 +5819,15 @@ paths:
       - description: 'Field value for filtering (ex: Registered from CSP resource)'
         in: query
         name: filterVal
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       produces:
       - application/json
@@ -5816,6 +5873,15 @@ paths:
         in: query
         name: option
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       - description: Details for an securityGroup object
         in: body
         name: securityGroupReq
@@ -5859,6 +5925,15 @@ paths:
         name: sgId
         required: true
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       produces:
       - application/json
       responses:
@@ -5895,6 +5970,15 @@ paths:
         name: sgId
         required: true
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       produces:
       - application/json
       responses:
@@ -5914,6 +5998,46 @@ paths:
       tags:
       - '[Migration] Resources for VM infrastructure'
   /migration/ns/{nsId}/resources/sshKey:
+    delete:
+      consumes:
+      - application/json
+      description: Delete multiple migrated SSH keys in the namespace
+      operationId: DeleteMigratedSSHKeys
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - default: ""
+        description: Delete resources containing matched ID-substring only
+        in: query
+        name: match
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ResourceDeleteResults'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Delete multiple migrated SSH keys
+      tags:
+      - '[Migration] Resources for VM infrastructure'
     get:
       consumes:
       - application/json
@@ -5939,6 +6063,15 @@ paths:
       - description: 'Field value for filtering (ex: Registered from CSP resource)'
         in: query
         name: filterVal
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       produces:
       - application/json
@@ -5978,11 +6111,20 @@ paths:
         required: true
         type: string
       - description: 'Option: [required params for register] connectionName, name,
-          cspKeyId'
+          cspResourceId, fingerprint, username, publicKey, privateKey'
         enum:
         - register
         in: query
         name: option
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       - description: Details for an SSH key object
         in: body
@@ -6027,6 +6169,15 @@ paths:
         name: sshKeyId
         required: true
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       produces:
       - application/json
       responses:
@@ -6063,6 +6214,15 @@ paths:
         name: sshKeyId
         required: true
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       produces:
       - application/json
       responses:
@@ -6082,6 +6242,46 @@ paths:
       tags:
       - '[Migration] Resources for VM infrastructure'
   /migration/ns/{nsId}/resources/vNet:
+    delete:
+      consumes:
+      - application/json
+      description: Delete multiple migrated virtual networks in the namespace
+      operationId: DeleteMigratedVNets
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - default: ""
+        description: Delete resources containing matched ID-substring only
+        in: query
+        name: match
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ResourceDeleteResults'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+      summary: Delete multiple migrated virtual networks
+      tags:
+      - '[Migration] Resources for VM infrastructure'
     get:
       consumes:
       - application/json
@@ -6093,6 +6293,29 @@ paths:
         in: path
         name: nsId
         required: true
+        type: string
+      - description: Option
+        enum:
+        - id
+        in: query
+        name: option
+        type: string
+      - description: 'Field key for filtering (ex: cspResourceName)'
+        in: query
+        name: filterKey
+        type: string
+      - description: 'Field value for filtering (ex: default-alibaba-ap-northeast-1-vpc)'
+        in: query
+        name: filterVal
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       produces:
       - application/json
@@ -6131,6 +6354,15 @@ paths:
         name: nsId
         required: true
         type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
+        type: string
       - description: Virtual Network creation request
         in: body
         name: vNetReq
@@ -6140,12 +6372,16 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/model.VNetInfo'
-        "400":
-          description: Bad Request
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SimpleMsg'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/model.SimpleMsg'
         "500":
@@ -6159,7 +6395,9 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a specific migrated virtual network in the namespace
+      description: 'Delete a specific migrated virtual network in the namespace. Action
+        options: withsubnets (delete with subnets), reconcile (sync metadata with
+        CSP state), force (force-delete on CSP)'
       operationId: DeleteMigratedVNet
       parameters:
       - default: mig01
@@ -6178,10 +6416,19 @@ paths:
         description: Action
         enum:
         - withsubnets
-        - refine
+        - reconcile
         - force
         in: query
         name: action
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       produces:
       - application/json
@@ -6214,6 +6461,15 @@ paths:
         in: path
         name: vNetId
         required: true
+        type: string
+      - description: Custom request ID for tracking
+        in: header
+        name: x-request-id
+        type: string
+      - description: 'Credential holder ID for selecting which credentials to use
+          (default: system default holder)'
+        in: header
+        name: x-credential-holder
         type: string
       produces:
       - application/json
