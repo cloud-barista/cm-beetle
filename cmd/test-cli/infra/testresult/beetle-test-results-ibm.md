@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: imdl/v0.1.5+ (d392141)
-- imdl: v0.1.5+ (d392141)
-- CB-Tumblebug: v0.12.10
-- CB-Spider: v0.12.22
-- CB-MapUI: v0.12.31
+- CM-Beetle: imdl/v0.1.5+ (4987539)
+- imdl: v0.1.5+ (4987539)
+- CB-Tumblebug: v0.12.13
+- CB-Spider: v0.12.26
+- CB-MapUI: v0.12.34
 - Target CSP: IBM
 - Target Region: au-syd
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: May 19, 2026
-- Test Time: 11:01:43 KST
-- Test Execution: 2026-05-19 11:01:43 KST
+- Test Date: June 2, 2026
+- Test Time: 20:57:10 KST
+- Test Execution: 2026-06-02 20:57:10 KST
 
 ### Scenario
 
@@ -42,21 +42,21 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ **PASS** | 21.961s | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 2m55.879s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 16ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 8ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 90ms | Pass |
+| 1 | `POST /beetle/recommendation/infra` | ✅ **PASS** | 15.53s | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 2m54.786s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 38ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 7ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 26ms | Pass |
 | 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.378s | Pass |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.361s | Pass |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 1m30.323s | Pass |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.345s | Pass |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.3s | Pass |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 1m22.808s | Pass |
 
 **Overall Result**: 9/9 tests passed ✅
 
-**Total Duration**: 6m25.781293149s
+**Total Duration**: 6m8.262026084s
 
-*Test executed on May 19, 2026 at 11:01:43 KST (2026-05-19 11:01:43 KST) using CM-Beetle automated test CLI*
+*Test executed on June 2, 2026 at 20:57:10 KST (2026-06-02 20:57:10 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -1967,7 +1967,7 @@
             "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+nxf-2x2",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -1986,7 +1986,7 @@
             "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+bxf-4x16",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -2005,7 +2005,7 @@
             "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+bxf-2x8",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -2049,7 +2049,7 @@
       "targetSpecList": [
         {
           "id": "ibm+au-syd+nxf-2x2",
-          "uid": "d7k8jbtq1uu3ogmsijag",
+          "uid": "tb7jggfvq658ffi7hanf",
           "cspSpecName": "nxf-2x2",
           "name": "ibm+au-syd+nxf-2x2",
           "namespace": "system",
@@ -2078,6 +2078,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:2000}"
@@ -2109,6 +2113,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:1,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -2151,18 +2159,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[10,25,50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bxf-4x16",
-          "uid": "d7k8jbtq1uu3ogmsih9g",
+          "uid": "tbtp8i585ail9mh3jnod",
           "cspSpecName": "bxf-4x16",
           "name": "ibm+au-syd+bxf-4x16",
           "namespace": "system",
@@ -2191,6 +2215,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:8000}"
@@ -2222,6 +2250,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:1,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -2264,18 +2296,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:4}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bxf-2x8",
-          "uid": "d7k8jbtq1uu3ogmsih8g",
+          "uid": "tbu5hc2ke8pnt5ssgcbo",
           "cspSpecName": "bxf-2x8",
           "name": "ibm+au-syd+bxf-2x8",
           "namespace": "system",
@@ -2304,6 +2352,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:4000}"
@@ -2335,6 +2387,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:1,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -2377,12 +2433,28 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         }
@@ -2392,18 +2464,18 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "ibm",
-          "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "regionList": [
             "au-syd"
           ],
-          "id": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-          "uid": "d7k8jplq1uu3ogmtlqig",
-          "name": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "id": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+          "uid": "tbtrt2lnuipiuftrap37",
+          "name": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ibm-au-syd",
           "infraType": "",
-          "fetchedTime": "2026.04.22 08:42:14 Wed",
+          "fetchedTime": "2026.05.27 06:32:55 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -2417,16 +2489,20 @@
           "imageStatus": "Available",
           "details": [
             {
+              "key": "AllowedUse",
+              "value": "{api_version:2024-11-28,bare_metal_server:true,instance:true}"
+            },
+            {
               "key": "CatalogOffering",
               "value": "{managed:false}"
             },
             {
               "key": "CreatedAt",
-              "value": "2026-03-18T06:11:00.000Z"
+              "value": "2026-05-19T23:51:58.000Z"
             },
             {
               "key": "CRN",
-              "value": "crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "Encryption",
@@ -2434,31 +2510,31 @@
             },
             {
               "key": "File",
-              "value": "{checksums:{sha256:547886323915c92d71ca8b197142ceb9fa3e81fa75148614221b5cb56f0c7f0e},size:1}"
+              "value": "{checksums:{sha256:05ab42b9bb4881c3944fc5452b46a275bb94a6366831b1a874fa708585c4ecb1},size:1}"
             },
             {
               "key": "Href",
-              "value": "https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "ID",
-              "value": "r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "MinimumProvisionedSize",
-              "value": "100"
+              "value": "10"
             },
             {
               "key": "Name",
-              "value": "ibm-ubuntu-22-04-5-minimal-amd64-13"
+              "value": "ibm-ubuntu-22-04-5-minimal-amd64-15"
             },
             {
               "key": "OperatingSystem",
               "value": "{allow_user_image_creation:true,architecture:amd64,dedicated_host_only:false,display_name:Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64),family:Ubuntu Linux,href:https://au-syd.iaas.cloud.ibm.com/v1/operating_systems/ubuntu-22-04-amd64,name:ubuntu-22-04-amd64,user_data_format:cloud_init,vendor:Canonical,version:22.04 LTS Jammy Jellyfish Minimal Install}"
             },
             {
-              "key": "OwnerType",
-              "value": "provider"
+              "key": "Remote",
+              "value": "{account:{id:811f8abfbd32425597dc7ba40da98fa6,resource_type:account}}"
             },
             {
               "key": "ResourceGroup",
@@ -2833,7 +2909,7 @@
             "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+nxf-2x1",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -2852,7 +2928,7 @@
             "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+bx2-4x16",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -2871,7 +2947,7 @@
             "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
             "connectionName": "ibm-au-syd",
             "specId": "ibm+au-syd+bx2-2x8",
-            "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "vNetId": "vnet-01",
             "subnetId": "subnet-01",
             "securityGroupIds": [
@@ -2915,7 +2991,7 @@
       "targetSpecList": [
         {
           "id": "ibm+au-syd+nxf-2x2",
-          "uid": "d7k8jbtq1uu3ogmsijag",
+          "uid": "tb7jggfvq658ffi7hanf",
           "cspSpecName": "nxf-2x2",
           "name": "ibm+au-syd+nxf-2x2",
           "namespace": "system",
@@ -2944,6 +3020,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:2000}"
@@ -2977,6 +3057,10 @@
               "value": "{max:1,min:1,type:range}"
             },
             {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
+            },
+            {
               "key": "NetworkInterfaceCount",
               "value": "{max:1,min:1,type:range}"
             },
@@ -3017,18 +3101,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[10,25,50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bxf-4x16",
-          "uid": "d7k8jbtq1uu3ogmsih9g",
+          "uid": "tbtp8i585ail9mh3jnod",
           "cspSpecName": "bxf-4x16",
           "name": "ibm+au-syd+bxf-4x16",
           "namespace": "system",
@@ -3057,6 +3157,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:8000}"
@@ -3090,6 +3194,10 @@
               "value": "{max:1,min:1,type:range}"
             },
             {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
+            },
+            {
               "key": "NetworkInterfaceCount",
               "value": "{max:1,min:1,type:range}"
             },
@@ -3130,18 +3238,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:4}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bxf-2x8",
-          "uid": "d7k8jbtq1uu3ogmsih8g",
+          "uid": "tbu5hc2ke8pnt5ssgcbo",
           "cspSpecName": "bxf-2x8",
           "name": "ibm+au-syd+bxf-2x8",
           "namespace": "system",
@@ -3170,6 +3294,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:4000}"
@@ -3201,6 +3329,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:1,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -3243,18 +3375,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+nxf-2x1",
-          "uid": "d7k8jbtq1uu3ogmsijb0",
+          "uid": "tbm961b7uek2fdn6h3to",
           "cspSpecName": "nxf-2x1",
           "name": "ibm+au-syd+nxf-2x1",
           "namespace": "system",
@@ -3283,6 +3431,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard,spot]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:2000}"
@@ -3314,6 +3466,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:1,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -3356,18 +3512,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:200}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
-              "value": "{type:dependent,value:null}"
+              "value": "{type:dependent}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[10,25,50,100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:pooled,type:enum,values:[weighted,pooled]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bx2-4x16",
-          "uid": "d7k8jbtq1uu3ogmsiha0",
+          "uid": "tbgdlsg7fs0qf1nr53pr",
           "cspSpecName": "bx2-4x16",
           "name": "ibm+au-syd+bx2-4x16",
           "namespace": "system",
@@ -3396,6 +3568,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:8000}"
@@ -3427,6 +3603,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:5,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -3469,18 +3649,34 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:100}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:4}"
             },
             {
               "key": "VcpuManufacturer",
               "value": "{type:fixed,value:intel}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:weighted,type:enum,values:[weighted]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         },
         {
           "id": "ibm+au-syd+bx2-2x8",
-          "uid": "d7k8jbtq1uu3ogmsih80",
+          "uid": "tb4036nluqjoeocg0vnh",
           "cspSpecName": "bx2-2x8",
           "name": "ibm+au-syd+bx2-2x8",
           "namespace": "system",
@@ -3509,6 +3705,10 @@
           "rootDiskSize": -1,
           "systemLabel": "auto-gen",
           "details": [
+            {
+              "key": "AvailabilityClass",
+              "value": "{default:standard,type:enum,values:[standard]}"
+            },
             {
               "key": "Bandwidth",
               "value": "{type:fixed,value:4000}"
@@ -3540,6 +3740,10 @@
             {
               "key": "NetworkAttachmentCount",
               "value": "{max:5,min:1,type:range}"
+            },
+            {
+              "key": "NetworkBandwidthMode",
+              "value": "{type:fixed,value:divided}"
             },
             {
               "key": "NetworkInterfaceCount",
@@ -3582,12 +3786,28 @@
               "value": "{type:fixed,value:amd64}"
             },
             {
+              "key": "VcpuBurstLimit",
+              "value": "{type:fixed,value:100}"
+            },
+            {
               "key": "VcpuCount",
               "value": "{type:fixed,value:2}"
             },
             {
               "key": "VcpuManufacturer",
               "value": "{type:fixed,value:intel}"
+            },
+            {
+              "key": "VcpuPercentage",
+              "value": "{default:100,type:enum,values:[100]}"
+            },
+            {
+              "key": "VolumeBandwidthQosModes",
+              "value": "{default:weighted,type:enum,values:[weighted]}"
+            },
+            {
+              "key": "Zones",
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-1,name:au-syd-1}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-2,name:au-syd-2}; {href:https://au-syd.iaas.cloud.ibm.com/v1/regions/au-syd/au-syd-3,name:au-syd-3}"
             }
           ]
         }
@@ -3597,18 +3817,18 @@
           "resourceType": "image",
           "namespace": "system",
           "providerName": "ibm",
-          "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "regionList": [
             "au-syd"
           ],
-          "id": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-          "uid": "d7k8jplq1uu3ogmtlqig",
-          "name": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "id": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+          "uid": "tbtrt2lnuipiuftrap37",
+          "name": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ibm-au-syd",
           "infraType": "",
-          "fetchedTime": "2026.04.22 08:42:14 Wed",
+          "fetchedTime": "2026.05.27 06:32:55 Wed",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -3622,16 +3842,20 @@
           "imageStatus": "Available",
           "details": [
             {
+              "key": "AllowedUse",
+              "value": "{api_version:2024-11-28,bare_metal_server:true,instance:true}"
+            },
+            {
               "key": "CatalogOffering",
               "value": "{managed:false}"
             },
             {
               "key": "CreatedAt",
-              "value": "2026-03-18T06:11:00.000Z"
+              "value": "2026-05-19T23:51:58.000Z"
             },
             {
               "key": "CRN",
-              "value": "crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "Encryption",
@@ -3639,31 +3863,31 @@
             },
             {
               "key": "File",
-              "value": "{checksums:{sha256:547886323915c92d71ca8b197142ceb9fa3e81fa75148614221b5cb56f0c7f0e},size:1}"
+              "value": "{checksums:{sha256:05ab42b9bb4881c3944fc5452b46a275bb94a6366831b1a874fa708585c4ecb1},size:1}"
             },
             {
               "key": "Href",
-              "value": "https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "ID",
-              "value": "r026-3e2370e7-648b-4c31-9305-f09265b49632"
+              "value": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d"
             },
             {
               "key": "MinimumProvisionedSize",
-              "value": "100"
+              "value": "10"
             },
             {
               "key": "Name",
-              "value": "ibm-ubuntu-22-04-5-minimal-amd64-13"
+              "value": "ibm-ubuntu-22-04-5-minimal-amd64-15"
             },
             {
               "key": "OperatingSystem",
               "value": "{allow_user_image_creation:true,architecture:amd64,dedicated_host_only:false,display_name:Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64),family:Ubuntu Linux,href:https://au-syd.iaas.cloud.ibm.com/v1/operating_systems/ubuntu-22-04-amd64,name:ubuntu-22-04-amd64,user_data_format:cloud_init,vendor:Canonical,version:22.04 LTS Jammy Jellyfish Minimal Install}"
             },
             {
-              "key": "OwnerType",
-              "value": "provider"
+              "key": "Remote",
+              "value": "{account:{id:811f8abfbd32425597dc7ba40da98fa6,resource_type:account}}"
             },
             {
               "key": "ResourceGroup",
@@ -4044,7 +4268,7 @@
 {
   "resourceType": "infra",
   "id": "my06-infra101",
-  "uid": "tb77vdum8fsgk0k3mmmq",
+  "uid": "tbb155e34rt94il69ph3",
   "name": "my06-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -4072,7 +4296,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my06-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tb77vdum8fsgk0k3mmmq"
+    "sys.uid": "tbb155e34rt94il69ph3"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -4081,9 +4305,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tbgohfsamsafahcqbms3",
-      "cspResourceName": "tbgohfsamsafahcqbms3",
-      "cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
+      "uid": "tbt7k7116g5o02ekkgfm",
+      "cspResourceName": "tbt7k7116g5o02ekkgfm",
+      "cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
       "name": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -4097,13 +4321,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:33",
+      "createdTime": "2026-06-02 11:59:56",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:33",
-        "sys.cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
-        "sys.cspResourceName": "tbgohfsamsafahcqbms3",
+        "sys.createdTime": "2026-06-02 11:59:56",
+        "sys.cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
+        "sys.cspResourceName": "tbt7k7116g5o02ekkgfm",
         "sys.id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -4112,7 +4336,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbgohfsamsafahcqbms3",
+        "sys.uid": "tbt7k7116g5o02ekkgfm",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -4120,7 +4344,7 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.91.41",
+      "publicIP": "159.23.102.221",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.5",
@@ -4166,38 +4390,45 @@
         "memoryGiB": 2,
         "costPerHour": 0.094
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "fifth-prattler-scant-wands",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "flask-hardship-unfitting-uncapped",
       "securityGroupIds": [
         "my06-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAC8wdkeZ9gSMvTRBE8uUz6TGh+0YMlgOLO+Rh0C626WTd32ms8sDNvgMbaGZpFyUQtaomZR53J9kPjY7csXJAk=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:rhFh2QMNhzSTwiu1H3k4UCkoFE4F6j+Xp8OeEDSWowM",
+        "firstUsedAt": "2026-06-02T12:00:09Z"
+      },
       "commandStatus": [
         {
           "index": 1,
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
-          "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "status": "Completed",
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:13Z",
+          "elapsedTime": 4,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
         }
       ],
       "addtionalDetails": [
@@ -4215,7 +4446,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+          "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -4223,11 +4454,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:58.000Z"
+          "value": "2026-06-02T11:59:23.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "EnableSecureBoot",
@@ -4239,15 +4470,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "ID",
-          "value": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -4263,11 +4494,11 @@
         },
         {
           "key": "Name",
-          "value": "tbgohfsamsafahcqbms3"
+          "value": "tbt7k7116g5o02ekkgfm"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -4275,7 +4506,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -4315,7 +4546,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+          "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -4323,7 +4554,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -4334,9 +4565,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "tbvrc1olv3qvn1eq963r",
-      "cspResourceName": "tbvrc1olv3qvn1eq963r",
-      "cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
+      "uid": "tb1h7ijtv4sdjjt74cq4",
+      "cspResourceName": "tb1h7ijtv4sdjjt74cq4",
+      "cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
       "name": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -4350,13 +4581,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:38",
+      "createdTime": "2026-06-02 12:00:04",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:38",
-        "sys.cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
-        "sys.cspResourceName": "tbvrc1olv3qvn1eq963r",
+        "sys.createdTime": "2026-06-02 12:00:04",
+        "sys.cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
+        "sys.cspResourceName": "tb1h7ijtv4sdjjt74cq4",
         "sys.id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -4365,7 +4596,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbvrc1olv3qvn1eq963r",
+        "sys.uid": "tb1h7ijtv4sdjjt74cq4",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -4373,10 +4604,10 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.91.42",
+      "publicIP": "159.23.98.218",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.4",
+      "privateIP": "10.0.1.6",
       "privateDNS": "",
       "rootDiskType": "general-purpose",
       "rootDiskSize": 100,
@@ -4419,38 +4650,44 @@
         "memoryGiB": 8,
         "costPerHour": 0.117
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "pregame-slab-pebbly-stuffed",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "underling-headband-jawline-dandy",
       "securityGroupIds": [
         "my06-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGPaje4p0cHi3xSR/tidAHCnzFneiJIw0aQiK/EwDvTEXEZR+qsC0LF+tFSFLRUT1u8A6v80/OKlulbvQMXzI6E=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:UUfEs/wSunSjtxc257xEkGRgYJVZi09b3FC0zZFK+oU",
+        "firstUsedAt": "2026-06-02T12:00:12Z"
+      },
       "commandStatus": [
         {
           "index": 1,
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:30Z",
+          "elapsedTime": 21,
           "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
         }
       ],
       "addtionalDetails": [
@@ -4468,7 +4705,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+          "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -4476,11 +4713,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:58.000Z"
+          "value": "2026-06-02T11:59:25.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "EnableSecureBoot",
@@ -4492,15 +4729,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "ID",
-          "value": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -4516,11 +4753,11 @@
         },
         {
           "key": "Name",
-          "value": "tbvrc1olv3qvn1eq963r"
+          "value": "tb1h7ijtv4sdjjt74cq4"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -4528,7 +4765,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -4568,7 +4805,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+          "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -4576,7 +4813,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -4587,9 +4824,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "tbcsjiapgrtftvnunu8g",
-      "cspResourceName": "tbcsjiapgrtftvnunu8g",
-      "cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
+      "uid": "tbfb0c8hrtma9tjabtm6",
+      "cspResourceName": "tbfb0c8hrtma9tjabtm6",
+      "cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
       "name": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
       "nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
@@ -4603,13 +4840,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:34",
+      "createdTime": "2026-06-02 12:00:00",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:34",
-        "sys.cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
-        "sys.cspResourceName": "tbcsjiapgrtftvnunu8g",
+        "sys.createdTime": "2026-06-02 12:00:00",
+        "sys.cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
+        "sys.cspResourceName": "tbfb0c8hrtma9tjabtm6",
         "sys.id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -4618,7 +4855,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbcsjiapgrtftvnunu8g",
+        "sys.uid": "tbfb0c8hrtma9tjabtm6",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -4626,10 +4863,10 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.98.92",
+      "publicIP": "159.23.94.110",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.6",
+      "privateIP": "10.0.1.4",
       "privateDNS": "",
       "rootDiskType": "general-purpose",
       "rootDiskSize": 100,
@@ -4672,32 +4909,32 @@
         "memoryGiB": 16,
         "costPerHour": 0.235
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "charcoal-groggily-tube-thinner",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "cast-handcraft-hulk-scalded",
       "securityGroupIds": [
         "my06-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD19aNuDPdYwRJ0C7cqJjtYB1B4cwXNpSpwjJpSgOeQTkLprtVKo35BNAmDANMDObhESvSFhUirKrHuD5G8hb2I=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZia3tsPEXHAdMl3XqD20BJ7FgY29w9Zh5t4KDDweL4FDYix1xEB8GeagoakJ/0EqA0Pot7pz6z0SxH5pXZxFw=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:aAXzAs0R5JeQmb78jUcnjIMu7gCsfKJLjRi8ixUyMYc",
-        "firstUsedAt": "2026-05-19T02:04:44Z"
+        "fingerprint": "SHA256:AxjNblckKR1i97qPsF9JhDs5lyqT3XRq+W7bi6GEgpc",
+        "firstUsedAt": "2026-06-02T12:00:12Z"
       },
       "commandStatus": [
         {
@@ -4705,11 +4942,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:30Z",
+          "elapsedTime": 21,
           "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
         }
       ],
       "addtionalDetails": [
@@ -4727,7 +4964,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+          "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -4735,11 +4972,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:59.000Z"
+          "value": "2026-06-02T11:59:22.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "EnableSecureBoot",
@@ -4751,15 +4988,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "ID",
-          "value": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -4775,11 +5012,11 @@
         },
         {
           "key": "Name",
-          "value": "tbcsjiapgrtftvnunu8g"
+          "value": "tbfb0c8hrtma9tjabtm6"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -4787,7 +5024,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -4827,7 +5064,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+          "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -4835,7 +5072,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -4856,18 +5093,22 @@
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "159.23.91.41",
+        "nodeIp": "159.23.102.221",
         "command": {
           "0": "uname -a"
         },
-        "stdout": {},
-        "stderr": {},
+        "stdout": {
+          "0": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
         "err": null
       },
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "nodeIp": "159.23.91.42",
+        "nodeIp": "159.23.98.218",
         "command": {
           "0": "uname -a"
         },
@@ -4878,7 +5119,7 @@
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "nodeIp": "159.23.98.92",
+        "nodeIp": "159.23.94.110",
         "command": {
           "0": "uname -a"
         },
@@ -4914,8 +5155,577 @@
   "infra": [
     {
       "resourceType": "infra",
+      "id": "my02-infra101",
+      "uid": "tbv4r5dg0r6ctsgj7tfe",
+      "name": "my02-infra101",
+      "status": "Terminated:3 (R:0/3)",
+      "statusCount": {
+        "countTotal": 3,
+        "countCreating": 0,
+        "countRunning": 0,
+        "countFailed": 0,
+        "countSuspended": 0,
+        "countRebooting": 0,
+        "countTerminated": 3,
+        "countSuspending": 0,
+        "countResuming": 0,
+        "countTerminating": 0,
+        "countRegistering": 0,
+        "countUndefined": 0
+      },
+      "targetStatus": "Terminated",
+      "targetAction": "Terminate",
+      "installMonAgent": "",
+      "configureCloudAdaptiveNetwork": "",
+      "label": {
+        "sys.description": "Recommended VMs comprising multi-cloud infrastructure",
+        "sys.id": "my02-infra101",
+        "sys.labelType": "infra",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my02-infra101",
+        "sys.namespace": "mig01",
+        "sys.uid": "tbv4r5dg0r6ctsgj7tfe"
+      },
+      "systemLabel": "",
+      "systemMessage": null,
+      "description": "Recommended VMs comprising multi-cloud infrastructure",
+      "node": [
+        {
+          "resourceType": "node",
+          "id": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "uid": "tb81h514blbmih6th0ra",
+          "cspResourceName": "tb81h514blbmih6th0ra",
+          "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb81h514blbmih6th0ra",
+          "name": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+          "nodeGroupId": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Terminated",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "terminated VM. No action is acceptable except deletion",
+          "createdTime": "2026-06-02 11:58:51",
+          "label": {
+            "createdBy": "tb81h514blbmih6th0ra",
+            "keypair": "tbmeu2jlibrbjhpqt6ks",
+            "publicip": "tb81h514blbmih6th0ra-51215-PublicIP",
+            "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-06-02 11:58:51",
+            "sys.cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb81h514blbmih6th0ra",
+            "sys.cspResourceName": "tb81h514blbmih6th0ra",
+            "sys.id": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624",
+            "sys.subnetId": "my02-subnet-01",
+            "sys.uid": "tb81h514blbmih6th0ra",
+            "sys.vNetId": "my02-vnet-01"
+          },
+          "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=51.2% Image=100.0%",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "40.89.209.210",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.4",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "RootDeviceName": "Not visible in Azure",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_b2als_v2",
+          "cspSpecName": "Standard_B2als_v2",
+          "spec": {
+            "cspSpecName": "Standard_B2als_v2",
+            "vCPU": 2,
+            "memoryGiB": 3.90625,
+            "costPerHour": 0.0432
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605280",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260"
+          },
+          "vNetId": "my02-vnet-01",
+          "cspVNetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta",
+          "subnetId": "my02-subnet-01",
+          "cspSubnetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta/subnets/tbdk04p2j6rjaddfeilr",
+          "networkInterface": "tb81h514blbmih6th0ra-74785-VNic",
+          "securityGroupIds": [
+            "my02-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-sshkey-01",
+          "cspSshKeyId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbmeu2jlibrbjhpqt6ks",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFW7tvj2HzsClA8X1H26zUY4x8P6NQYpxpab+6eweSK3WB1Z7hjR9loeEmmH+DcvmhMv+MY0Rswn2avB6fUySUc=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:iARQFNvURLH907WgwzHgMJPVSWgoyBhMXtYvYWM/db0",
+            "firstUsedAt": "2026-06-02T11:58:58Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-06-02T11:58:57Z",
+              "completedTime": "2026-06-02T11:59:01Z",
+              "elapsedTime": 4,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tb81h514blbmih6th0ra 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "Location",
+              "value": "koreasouth"
+            },
+            {
+              "key": "Properties",
+              "value": "{hardwareProfile:{vmSize:Standard_B2als_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/tb81h514blbmih6th0ra-74785-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:tb81h514blbmih6th0ra,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCpktoKLh1JaY7GzYG/FsvMS7Gxwj0F8FZzI9Q5KMffkjE6BTyUFuxHPgtyWbGKkZfk48XNdc0Yfiy11Oaol4Z/zUtnZkql9x1p8ktqwvK6RPaZjlxWjG2n4dvidBMsHCdpQjsmj3Zao8xsYG2fovFDgx2CUOeUEpCNp9uY2J54UumH6YLfVXrV2kQfeJkRXRQBlUUw6MObttcVhhNsVlaLxzeqb/sLaHEb5Pa6tO2Fok+VE++/OPAf5nubPirQp+Uo9ld7OhLolUnAfocho0frZSwaGv0VcU1iwpBWl66Kza8lKofk73hQrC3Ppr0eNb4VauY5Rh1sWuHC28C+Ikduc0JzfQ5WOczPDsMvFpylLvxHlMcxYSeEHtnO4/ykKs4duNp5SBIByiJsImpWaDNO44GJP3QdacdghiiLrb++6j7vAA2d/yRJpRrDjQyrMqJLTCYR9PLVmu/jNGx3mBdSareS2TIA0NG70tEvIzuCgNsAhGHOXstLqVbwsf8N6BP0bXx7l+lOTAGLu6/0V25cmutW0ZDkGwty+dUBKx7ocv6IVGZT+G6EUvnpcbGqtcfgG8o+ECZcuEnJGNKrQONYdEDC/WkfcekgpuqD58aS3pxWxb8bdrtQJYT2NQHSfLbtnNqCatVg11nSYvusxPZw13BXmo/5XKRFUCtnxN15qQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,securityProfile:{securityType:Standard},storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202605280,offer:0001-com-ubuntu-server-jammy-daily,publisher:Canonical,sku:22_04-daily-lts-gen2,version:22.04.202605280},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/tb81h514blbmih6th0ra_OsDisk_1_f68013d858ac4524824a70a9db72638e,storageAccountType:Premium_LRS},name:tb81h514blbmih6th0ra_OsDisk_1_f68013d858ac4524824a70a9db72638e,osType:Linux}},timeCreated:2026-06-02T11:58:00.0230074Z,vmId:a194131f-a308-4f9e-bd5f-1954226d1a73}"
+            },
+            {
+              "key": "Tags",
+              "value": "{createdBy:tb81h514blbmih6th0ra,keypair:tbmeu2jlibrbjhpqt6ks,publicip:tb81h514blbmih6th0ra-51215-PublicIP}"
+            },
+            {
+              "key": "Etag",
+              "value": "\\1\\"
+            },
+            {
+              "key": "ID",
+              "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb81h514blbmih6th0ra"
+            },
+            {
+              "key": "Name",
+              "value": "tb81h514blbmih6th0ra"
+            },
+            {
+              "key": "Type",
+              "value": "Microsoft.Compute/virtualMachines"
+            }
+          ]
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "uid": "tbj3l6ut11ch7mvkq2p2",
+          "cspResourceName": "tbj3l6ut11ch7mvkq2p2",
+          "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj3l6ut11ch7mvkq2p2",
+          "name": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+          "nodeGroupId": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Terminated",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "terminated VM. No action is acceptable except deletion",
+          "createdTime": "2026-06-02 11:58:51",
+          "label": {
+            "createdBy": "tbj3l6ut11ch7mvkq2p2",
+            "keypair": "tbmeu2jlibrbjhpqt6ks",
+            "publicip": "tbj3l6ut11ch7mvkq2p2-63146-PublicIP",
+            "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-06-02 11:58:51",
+            "sys.cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj3l6ut11ch7mvkq2p2",
+            "sys.cspResourceName": "tbj3l6ut11ch7mvkq2p2",
+            "sys.id": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.subnetId": "my02-subnet-01",
+            "sys.uid": "tbj3l6ut11ch7mvkq2p2",
+            "sys.vNetId": "my02-vnet-01"
+          },
+          "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "52.231.195.8",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.6",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "RootDeviceName": "Not visible in Azure",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_b2as_v2",
+          "cspSpecName": "Standard_B2as_v2",
+          "spec": {
+            "cspSpecName": "Standard_B2as_v2",
+            "vCPU": 2,
+            "memoryGiB": 7.8125,
+            "costPerHour": 0.0865
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605280",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202605260"
+          },
+          "vNetId": "my02-vnet-01",
+          "cspVNetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta",
+          "subnetId": "my02-subnet-01",
+          "cspSubnetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta/subnets/tbdk04p2j6rjaddfeilr",
+          "networkInterface": "tbj3l6ut11ch7mvkq2p2-3298-VNic",
+          "securityGroupIds": [
+            "my02-sg-03"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-sshkey-01",
+          "cspSshKeyId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbmeu2jlibrbjhpqt6ks",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJtUMh1cIUNrdvxDyS/sX2gg1UlgprQImyTmtt571zIcfmNpvML9//EZjbJhwyEPPk1DSV9P+GsLYIsancoLI2Q=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:vHAecS7HpoCmHLAn96798w3BOcO14c/PF8E2f32n6W4",
+            "firstUsedAt": "2026-06-02T11:59:00Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-06-02T11:58:57Z",
+              "completedTime": "2026-06-02T11:59:03Z",
+              "elapsedTime": 6,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbj3l6ut11ch7mvkq2p2 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "Location",
+              "value": "koreasouth"
+            },
+            {
+              "key": "Properties",
+              "value": "{hardwareProfile:{vmSize:Standard_B2as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/tbj3l6ut11ch7mvkq2p2-3298-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:tbj3l6ut11ch7mvkq2p2,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCpktoKLh1JaY7GzYG/FsvMS7Gxwj0F8FZzI9Q5KMffkjE6BTyUFuxHPgtyWbGKkZfk48XNdc0Yfiy11Oaol4Z/zUtnZkql9x1p8ktqwvK6RPaZjlxWjG2n4dvidBMsHCdpQjsmj3Zao8xsYG2fovFDgx2CUOeUEpCNp9uY2J54UumH6YLfVXrV2kQfeJkRXRQBlUUw6MObttcVhhNsVlaLxzeqb/sLaHEb5Pa6tO2Fok+VE++/OPAf5nubPirQp+Uo9ld7OhLolUnAfocho0frZSwaGv0VcU1iwpBWl66Kza8lKofk73hQrC3Ppr0eNb4VauY5Rh1sWuHC28C+Ikduc0JzfQ5WOczPDsMvFpylLvxHlMcxYSeEHtnO4/ykKs4duNp5SBIByiJsImpWaDNO44GJP3QdacdghiiLrb++6j7vAA2d/yRJpRrDjQyrMqJLTCYR9PLVmu/jNGx3mBdSareS2TIA0NG70tEvIzuCgNsAhGHOXstLqVbwsf8N6BP0bXx7l+lOTAGLu6/0V25cmutW0ZDkGwty+dUBKx7ocv6IVGZT+G6EUvnpcbGqtcfgG8o+ECZcuEnJGNKrQONYdEDC/WkfcekgpuqD58aS3pxWxb8bdrtQJYT2NQHSfLbtnNqCatVg11nSYvusxPZw13BXmo/5XKRFUCtnxN15qQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,securityProfile:{securityType:Standard},storageProfile:{dataDisks:[],diskControllerType:SCSI,imageReference:{exactVersion:22.04.202605280,offer:0001-com-ubuntu-server-jammy-daily,publisher:Canonical,sku:22_04-daily-lts-gen2,version:22.04.202605280},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/tbj3l6ut11ch7mvkq2p2_OsDisk_1_5e8befb085954c5198c00c1288c77c74,storageAccountType:Premium_LRS},name:tbj3l6ut11ch7mvkq2p2_OsDisk_1_5e8befb085954c5198c00c1288c77c74,osType:Linux}},timeCreated:2026-06-02T11:58:02.5923143Z,vmId:26a400ec-766d-4066-a986-31dee1af0a49}"
+            },
+            {
+              "key": "Tags",
+              "value": "{createdBy:tbj3l6ut11ch7mvkq2p2,keypair:tbmeu2jlibrbjhpqt6ks,publicip:tbj3l6ut11ch7mvkq2p2-63146-PublicIP}"
+            },
+            {
+              "key": "Etag",
+              "value": "\\1\\"
+            },
+            {
+              "key": "ID",
+              "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj3l6ut11ch7mvkq2p2"
+            },
+            {
+              "key": "Name",
+              "value": "tbj3l6ut11ch7mvkq2p2"
+            },
+            {
+              "key": "Type",
+              "value": "Microsoft.Compute/virtualMachines"
+            }
+          ]
+        },
+        {
+          "resourceType": "node",
+          "id": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "uid": "tblumcks3qbld4l0rqdu",
+          "cspResourceName": "tblumcks3qbld4l0rqdu",
+          "cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tblumcks3qbld4l0rqdu",
+          "name": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+          "nodeGroupId": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+          "location": {
+            "display": "Korea South",
+            "latitude": 35.1796,
+            "longitude": 129.0756
+          },
+          "status": "Terminated",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "terminated VM. No action is acceptable except deletion",
+          "createdTime": "2026-06-02 11:58:51",
+          "label": {
+            "createdBy": "tblumcks3qbld4l0rqdu",
+            "keypair": "tbmeu2jlibrbjhpqt6ks",
+            "publicip": "tblumcks3qbld4l0rqdu-15505-PublicIP",
+            "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.connectionName": "azure-koreasouth",
+            "sys.createdTime": "2026-06-02 11:58:51",
+            "sys.cspResourceId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tblumcks3qbld4l0rqdu",
+            "sys.cspResourceName": "tblumcks3qbld4l0rqdu",
+            "sys.id": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.infraId": "my02-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+            "sys.subnetId": "my02-subnet-01",
+            "sys.uid": "tblumcks3qbld4l0rqdu",
+            "sys.vNetId": "my02-vnet-01"
+          },
+          "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
+          "region": {
+            "region": "koreasouth"
+          },
+          "publicIP": "20.214.40.12",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.5",
+          "privateDNS": "",
+          "rootDiskType": "PremiumSSD",
+          "rootDiskSize": 30,
+          "RootDeviceName": "Not visible in Azure",
+          "connectionName": "azure-koreasouth",
+          "connectionConfig": {
+            "configName": "azure-koreasouth",
+            "providerName": "azure",
+            "driverName": "azure-driver-v1.0.so",
+            "credentialName": "azure",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "azure-koreasouth",
+            "regionZoneInfo": {
+              "assignedRegion": "koreasouth",
+              "assignedZone": ""
+            },
+            "regionDetail": {
+              "regionId": "koreasouth",
+              "regionName": "koreasouth",
+              "description": "Korea South",
+              "location": {
+                "display": "Korea South",
+                "latitude": 35.1796,
+                "longitude": 129.0756
+              },
+              "zones": []
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "azure+koreasouth+standard_b4as_v2",
+          "cspSpecName": "Standard_B4as_v2",
+          "spec": {
+            "cspSpecName": "Standard_B4as_v2",
+            "vCPU": 4,
+            "memoryGiB": 15.625,
+            "costPerHour": 0.173
+          },
+          "imageId": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202605260",
+          "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202605280",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202605260",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202605260"
+          },
+          "vNetId": "my02-vnet-01",
+          "cspVNetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta",
+          "subnetId": "my02-subnet-01",
+          "cspSubnetId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbaa7lm1qpjpqcm1blta/subnets/tbdk04p2j6rjaddfeilr",
+          "networkInterface": "tblumcks3qbld4l0rqdu-93021-VNic",
+          "securityGroupIds": [
+            "my02-sg-02"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my02-sshkey-01",
+          "cspSshKeyId": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/sshPublicKeys/tbmeu2jlibrbjhpqt6ks",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPTL9uzNQSU1yXWyoHY8FKtgjUxNkaKpGjhn6dtQjVMVJC3cpROCI06y1MwW8elX7OtijS4pmgWxkK29xA0kJ80=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:lVsWJmS92R46BkqahsTpl8eAW8rA6D39KJOZaJA3sj8",
+            "firstUsedAt": "2026-06-02T11:59:00Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-06-02T11:58:57Z",
+              "completedTime": "2026-06-02T11:59:02Z",
+              "elapsedTime": 5,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tblumcks3qbld4l0rqdu 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "Location",
+              "value": "koreasouth"
+            },
+            {
+              "key": "Properties",
+              "value": "{hardwareProfile:{vmSize:Standard_B4as_v2},networkProfile:{networkInterfaces:[{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkInterfaces/tblumcks3qbld4l0rqdu-93021-VNic,properties:{primary:true}}]},osProfile:{adminUsername:cb-user,allowExtensionOperations:true,computerName:tblumcks3qbld4l0rqdu,linuxConfiguration:{disablePasswordAuthentication:true,patchSettings:{assessmentMode:ImageDefault,patchMode:ImageDefault},provisionVMAgent:true,ssh:{publicKeys:[{keyData:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCpktoKLh1JaY7GzYG/FsvMS7Gxwj0F8FZzI9Q5KMffkjE6BTyUFuxHPgtyWbGKkZfk48XNdc0Yfiy11Oaol4Z/zUtnZkql9x1p8ktqwvK6RPaZjlxWjG2n4dvidBMsHCdpQjsmj3Zao8xsYG2fovFDgx2CUOeUEpCNp9uY2J54UumH6YLfVXrV2kQfeJkRXRQBlUUw6MObttcVhhNsVlaLxzeqb/sLaHEb5Pa6tO2Fok+VE++/OPAf5nubPirQp+Uo9ld7OhLolUnAfocho0frZSwaGv0VcU1iwpBWl66Kza8lKofk73hQrC3Ppr0eNb4VauY5Rh1sWuHC28C+Ikduc0JzfQ5WOczPDsMvFpylLvxHlMcxYSeEHtnO4/ykKs4duNp5SBIByiJsImpWaDNO44GJP3QdacdghiiLrb++6j7vAA2d/yRJpRrDjQyrMqJLTCYR9PLVmu/jNGx3mBdSareS2TIA0NG70tEvIzuCgNsAhGHOXstLqVbwsf8N6BP0bXx7l+lOTAGLu6/0V25cmutW0ZDkGwty+dUBKx7ocv6IVGZT+G6EUvnpcbGqtcfgG8o+ECZcuEnJGNKrQONYdEDC/WkfcekgpuqD58aS3pxWxb8bdrtQJYT2NQHSfLbtnNqCatVg11nSYvusxPZw13BXmo/5XKRFUCtnxN15qQ==\\n,path:/home/cb-user/.ssh/authorized_keys}]}},requireGuestProvisionSignal:true,secrets:[]},provisioningState:Succeeded,securityProfile:{securityType:Standard},storageProfile:{dataDisks:[],imageReference:{exactVersion:22.04.202605280,offer:0001-com-ubuntu-server-jammy-daily,publisher:Canonical,sku:22_04-daily-lts,version:22.04.202605280},osDisk:{caching:ReadWrite,createOption:FromImage,deleteOption:Delete,diskSizeGB:30,managedDisk:{id:/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/disks/tblumcks3qbld4l0rqdu_OsDisk_1_9a7cccbd80604b8199a546a33c83bb41,storageAccountType:Premium_LRS},name:tblumcks3qbld4l0rqdu_OsDisk_1_9a7cccbd80604b8199a546a33c83bb41,osType:Linux}},timeCreated:2026-06-02T11:58:00.3944037Z,vmId:bb9a97ea-bbc0-4b18-b394-cb1accf01389}"
+            },
+            {
+              "key": "Tags",
+              "value": "{createdBy:tblumcks3qbld4l0rqdu,keypair:tbmeu2jlibrbjhpqt6ks,publicip:tblumcks3qbld4l0rqdu-15505-PublicIP}"
+            },
+            {
+              "key": "Etag",
+              "value": "\\1\\"
+            },
+            {
+              "key": "ID",
+              "value": "/subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tblumcks3qbld4l0rqdu"
+            },
+            {
+              "key": "Name",
+              "value": "tblumcks3qbld4l0rqdu"
+            },
+            {
+              "key": "Type",
+              "value": "Microsoft.Compute/virtualMachines"
+            }
+          ]
+        }
+      ],
+      "newNodeList": null,
+      "postCommand": {
+        "userName": "cb-user",
+        "command": [
+          "uname -a"
+        ]
+      },
+      "postCommandResult": {
+        "results": [
+          {
+            "infraId": "my02-infra101",
+            "nodeId": "my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "40.89.209.210",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb81h514blbmih6th0ra 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "infraId": "my02-infra101",
+            "nodeId": "my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
+            "nodeIp": "20.214.40.12",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tblumcks3qbld4l0rqdu 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "infraId": "my02-infra101",
+            "nodeId": "my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "nodeIp": "52.231.195.8",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tbj3l6ut11ch7mvkq2p2 6.8.0-1052-azure #58~22.04.1-Ubuntu SMP Thu Mar 26 05:02:21 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          }
+        ]
+      }
+    },
+    {
+      "resourceType": "infra",
       "id": "my06-infra101",
-      "uid": "tb77vdum8fsgk0k3mmmq",
+      "uid": "tbb155e34rt94il69ph3",
       "name": "my06-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -4943,7 +5753,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "my06-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tb77vdum8fsgk0k3mmmq"
+        "sys.uid": "tbb155e34rt94il69ph3"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -4952,9 +5762,9 @@
         {
           "resourceType": "node",
           "id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tbgohfsamsafahcqbms3",
-          "cspResourceName": "tbgohfsamsafahcqbms3",
-          "cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
+          "uid": "tbt7k7116g5o02ekkgfm",
+          "cspResourceName": "tbt7k7116g5o02ekkgfm",
+          "cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
           "name": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
           "nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
@@ -4968,13 +5778,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-05-19 02:04:33",
+          "createdTime": "2026-06-02 11:59:56",
           "label": {
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "ibm-au-syd",
-            "sys.createdTime": "2026-05-19 02:04:33",
-            "sys.cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
-            "sys.cspResourceName": "tbgohfsamsafahcqbms3",
+            "sys.createdTime": "2026-06-02 11:59:56",
+            "sys.cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
+            "sys.cspResourceName": "tbt7k7116g5o02ekkgfm",
             "sys.id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.infraId": "my06-infra101",
             "sys.labelType": "node",
@@ -4983,7 +5793,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
             "sys.subnetId": "my06-subnet-01",
-            "sys.uid": "tbgohfsamsafahcqbms3",
+            "sys.uid": "tbt7k7116g5o02ekkgfm",
             "sys.vNetId": "my06-vnet-01"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -4991,7 +5801,7 @@
             "region": "au-syd",
             "zone": "au-syd-1"
           },
-          "publicIP": "159.23.91.41",
+          "publicIP": "159.23.102.221",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.5",
@@ -5037,38 +5847,45 @@
             "memoryGiB": 2,
             "costPerHour": 0.094
           },
-          "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-          "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+          "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "image": {
             "resourceType": "image",
-            "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
             "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
           },
           "vNetId": "my06-vnet-01",
-          "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+          "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
           "subnetId": "my06-subnet-01",
-          "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-          "networkInterface": "fifth-prattler-scant-wands",
+          "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+          "networkInterface": "flask-hardship-unfitting-uncapped",
           "securityGroupIds": [
             "my06-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my06-sshkey-01",
-          "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+          "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
           "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAC8wdkeZ9gSMvTRBE8uUz6TGh+0YMlgOLO+Rh0C626WTd32ms8sDNvgMbaGZpFyUQtaomZR53J9kPjY7csXJAk=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:rhFh2QMNhzSTwiu1H3k4UCkoFE4F6j+Xp8OeEDSWowM",
+            "firstUsedAt": "2026-06-02T12:00:09Z"
+          },
           "commandStatus": [
             {
               "index": 1,
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
-              "status": "Failed",
-              "startedTime": "2026-05-19T02:04:43Z",
-              "completedTime": "2026-05-19T02:04:53Z",
-              "elapsedTime": 10,
-              "resultSummary": "Command execution failed",
-              "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+              "status": "Completed",
+              "startedTime": "2026-06-02T12:00:09Z",
+              "completedTime": "2026-06-02T12:00:13Z",
+              "elapsedTime": 4,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
             }
           ],
           "addtionalDetails": [
@@ -5086,7 +5903,7 @@
             },
             {
               "key": "BootVolumeAttachment",
-              "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+              "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
             },
             {
               "key": "ConfidentialComputeMode",
@@ -5094,11 +5911,11 @@
             },
             {
               "key": "CreatedAt",
-              "value": "2026-05-19T02:03:58.000Z"
+              "value": "2026-06-02T11:59:23.000Z"
             },
             {
               "key": "CRN",
-              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
             },
             {
               "key": "EnableSecureBoot",
@@ -5110,15 +5927,15 @@
             },
             {
               "key": "Href",
-              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
             },
             {
               "key": "ID",
-              "value": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+              "value": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
             },
             {
               "key": "Image",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
             },
             {
               "key": "LifecycleState",
@@ -5134,11 +5951,11 @@
             },
             {
               "key": "Name",
-              "value": "tbgohfsamsafahcqbms3"
+              "value": "tbt7k7116g5o02ekkgfm"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "NumaCount",
@@ -5146,7 +5963,7 @@
             },
             {
               "key": "PrimaryNetworkInterface",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "Profile",
@@ -5186,7 +6003,7 @@
             },
             {
               "key": "VolumeAttachments",
-              "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+              "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
             },
             {
               "key": "VolumeBandwidthQosMode",
@@ -5194,7 +6011,7 @@
             },
             {
               "key": "VPC",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
             },
             {
               "key": "Zone",
@@ -5205,9 +6022,9 @@
         {
           "resourceType": "node",
           "id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "tbvrc1olv3qvn1eq963r",
-          "cspResourceName": "tbvrc1olv3qvn1eq963r",
-          "cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
+          "uid": "tb1h7ijtv4sdjjt74cq4",
+          "cspResourceName": "tb1h7ijtv4sdjjt74cq4",
+          "cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
           "name": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
           "nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
@@ -5221,13 +6038,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-05-19 02:04:38",
+          "createdTime": "2026-06-02 12:00:04",
           "label": {
             "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "ibm-au-syd",
-            "sys.createdTime": "2026-05-19 02:04:38",
-            "sys.cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
-            "sys.cspResourceName": "tbvrc1olv3qvn1eq963r",
+            "sys.createdTime": "2026-06-02 12:00:04",
+            "sys.cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
+            "sys.cspResourceName": "tb1h7ijtv4sdjjt74cq4",
             "sys.id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.infraId": "my06-infra101",
             "sys.labelType": "node",
@@ -5236,7 +6053,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.subnetId": "my06-subnet-01",
-            "sys.uid": "tbvrc1olv3qvn1eq963r",
+            "sys.uid": "tb1h7ijtv4sdjjt74cq4",
             "sys.vNetId": "my06-vnet-01"
           },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -5244,10 +6061,10 @@
             "region": "au-syd",
             "zone": "au-syd-1"
           },
-          "publicIP": "159.23.91.42",
+          "publicIP": "159.23.98.218",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.4",
+          "privateIP": "10.0.1.6",
           "privateDNS": "",
           "rootDiskType": "general-purpose",
           "rootDiskSize": 100,
@@ -5290,38 +6107,44 @@
             "memoryGiB": 8,
             "costPerHour": 0.117
           },
-          "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-          "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+          "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "image": {
             "resourceType": "image",
-            "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
             "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
           },
           "vNetId": "my06-vnet-01",
-          "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+          "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
           "subnetId": "my06-subnet-01",
-          "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-          "networkInterface": "pregame-slab-pebbly-stuffed",
+          "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+          "networkInterface": "underling-headband-jawline-dandy",
           "securityGroupIds": [
             "my06-sg-03"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my06-sshkey-01",
-          "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+          "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
           "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGPaje4p0cHi3xSR/tidAHCnzFneiJIw0aQiK/EwDvTEXEZR+qsC0LF+tFSFLRUT1u8A6v80/OKlulbvQMXzI6E=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:UUfEs/wSunSjtxc257xEkGRgYJVZi09b3FC0zZFK+oU",
+            "firstUsedAt": "2026-06-02T12:00:12Z"
+          },
           "commandStatus": [
             {
               "index": 1,
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Failed",
-              "startedTime": "2026-05-19T02:04:43Z",
-              "completedTime": "2026-05-19T02:04:53Z",
-              "elapsedTime": 10,
+              "startedTime": "2026-06-02T12:00:09Z",
+              "completedTime": "2026-06-02T12:00:30Z",
+              "elapsedTime": 21,
               "resultSummary": "Command execution failed",
-              "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+              "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
             }
           ],
           "addtionalDetails": [
@@ -5339,7 +6162,7 @@
             },
             {
               "key": "BootVolumeAttachment",
-              "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+              "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
             },
             {
               "key": "ConfidentialComputeMode",
@@ -5347,11 +6170,11 @@
             },
             {
               "key": "CreatedAt",
-              "value": "2026-05-19T02:03:58.000Z"
+              "value": "2026-06-02T11:59:25.000Z"
             },
             {
               "key": "CRN",
-              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
             },
             {
               "key": "EnableSecureBoot",
@@ -5363,15 +6186,15 @@
             },
             {
               "key": "Href",
-              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
             },
             {
               "key": "ID",
-              "value": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+              "value": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
             },
             {
               "key": "Image",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
             },
             {
               "key": "LifecycleState",
@@ -5387,11 +6210,11 @@
             },
             {
               "key": "Name",
-              "value": "tbvrc1olv3qvn1eq963r"
+              "value": "tb1h7ijtv4sdjjt74cq4"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "NumaCount",
@@ -5399,7 +6222,7 @@
             },
             {
               "key": "PrimaryNetworkInterface",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "Profile",
@@ -5439,7 +6262,7 @@
             },
             {
               "key": "VolumeAttachments",
-              "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+              "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
             },
             {
               "key": "VolumeBandwidthQosMode",
@@ -5447,7 +6270,7 @@
             },
             {
               "key": "VPC",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
             },
             {
               "key": "Zone",
@@ -5458,9 +6281,9 @@
         {
           "resourceType": "node",
           "id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "tbcsjiapgrtftvnunu8g",
-          "cspResourceName": "tbcsjiapgrtftvnunu8g",
-          "cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
+          "uid": "tbfb0c8hrtma9tjabtm6",
+          "cspResourceName": "tbfb0c8hrtma9tjabtm6",
+          "cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
           "name": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
           "nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
@@ -5474,13 +6297,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-05-19 02:04:34",
+          "createdTime": "2026-06-02 12:00:00",
           "label": {
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "ibm-au-syd",
-            "sys.createdTime": "2026-05-19 02:04:34",
-            "sys.cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
-            "sys.cspResourceName": "tbcsjiapgrtftvnunu8g",
+            "sys.createdTime": "2026-06-02 12:00:00",
+            "sys.cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
+            "sys.cspResourceName": "tbfb0c8hrtma9tjabtm6",
             "sys.id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.infraId": "my06-infra101",
             "sys.labelType": "node",
@@ -5489,7 +6312,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.subnetId": "my06-subnet-01",
-            "sys.uid": "tbcsjiapgrtftvnunu8g",
+            "sys.uid": "tbfb0c8hrtma9tjabtm6",
             "sys.vNetId": "my06-vnet-01"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -5497,10 +6320,10 @@
             "region": "au-syd",
             "zone": "au-syd-1"
           },
-          "publicIP": "159.23.98.92",
+          "publicIP": "159.23.94.110",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.6",
+          "privateIP": "10.0.1.4",
           "privateDNS": "",
           "rootDiskType": "general-purpose",
           "rootDiskSize": 100,
@@ -5543,32 +6366,32 @@
             "memoryGiB": 16,
             "costPerHour": 0.235
           },
-          "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-          "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+          "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+          "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
           "image": {
             "resourceType": "image",
-            "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+            "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
             "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
           },
           "vNetId": "my06-vnet-01",
-          "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+          "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
           "subnetId": "my06-subnet-01",
-          "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-          "networkInterface": "charcoal-groggily-tube-thinner",
+          "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+          "networkInterface": "cast-handcraft-hulk-scalded",
           "securityGroupIds": [
             "my06-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my06-sshkey-01",
-          "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+          "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD19aNuDPdYwRJ0C7cqJjtYB1B4cwXNpSpwjJpSgOeQTkLprtVKo35BNAmDANMDObhESvSFhUirKrHuD5G8hb2I=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZia3tsPEXHAdMl3XqD20BJ7FgY29w9Zh5t4KDDweL4FDYix1xEB8GeagoakJ/0EqA0Pot7pz6z0SxH5pXZxFw=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:aAXzAs0R5JeQmb78jUcnjIMu7gCsfKJLjRi8ixUyMYc",
-            "firstUsedAt": "2026-05-19T02:04:44Z"
+            "fingerprint": "SHA256:AxjNblckKR1i97qPsF9JhDs5lyqT3XRq+W7bi6GEgpc",
+            "firstUsedAt": "2026-06-02T12:00:12Z"
           },
           "commandStatus": [
             {
@@ -5576,11 +6399,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Failed",
-              "startedTime": "2026-05-19T02:04:43Z",
-              "completedTime": "2026-05-19T02:04:53Z",
-              "elapsedTime": 10,
+              "startedTime": "2026-06-02T12:00:09Z",
+              "completedTime": "2026-06-02T12:00:30Z",
+              "elapsedTime": 21,
               "resultSummary": "Command execution failed",
-              "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+              "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
             }
           ],
           "addtionalDetails": [
@@ -5598,7 +6421,7 @@
             },
             {
               "key": "BootVolumeAttachment",
-              "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+              "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
             },
             {
               "key": "ConfidentialComputeMode",
@@ -5606,11 +6429,11 @@
             },
             {
               "key": "CreatedAt",
-              "value": "2026-05-19T02:03:59.000Z"
+              "value": "2026-06-02T11:59:22.000Z"
             },
             {
               "key": "CRN",
-              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+              "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
             },
             {
               "key": "EnableSecureBoot",
@@ -5622,15 +6445,15 @@
             },
             {
               "key": "Href",
-              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+              "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
             },
             {
               "key": "ID",
-              "value": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+              "value": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
             },
             {
               "key": "Image",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
             },
             {
               "key": "LifecycleState",
@@ -5646,11 +6469,11 @@
             },
             {
               "key": "Name",
-              "value": "tbcsjiapgrtftvnunu8g"
+              "value": "tbfb0c8hrtma9tjabtm6"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "NumaCount",
@@ -5658,7 +6481,7 @@
             },
             {
               "key": "PrimaryNetworkInterface",
-              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+              "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
             },
             {
               "key": "Profile",
@@ -5698,7 +6521,7 @@
             },
             {
               "key": "VolumeAttachments",
-              "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+              "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
             },
             {
               "key": "VolumeBandwidthQosMode",
@@ -5706,7 +6529,7 @@
             },
             {
               "key": "VPC",
-              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+              "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
             },
             {
               "key": "Zone",
@@ -5727,18 +6550,22 @@
           {
             "infraId": "my06-infra101",
             "nodeId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "159.23.91.41",
+            "nodeIp": "159.23.102.221",
             "command": {
               "0": "uname -a"
             },
-            "stdout": {},
-            "stderr": {},
+            "stdout": {
+              "0": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
             "err": null
           },
           {
             "infraId": "my06-infra101",
             "nodeId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "nodeIp": "159.23.91.42",
+            "nodeIp": "159.23.98.218",
             "command": {
               "0": "uname -a"
             },
@@ -5749,7 +6576,7 @@
           {
             "infraId": "my06-infra101",
             "nodeId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "nodeIp": "159.23.98.92",
+            "nodeIp": "159.23.94.110",
             "command": {
               "0": "uname -a"
             },
@@ -5784,6 +6611,7 @@
 ```json
 {
   "idList": [
+    "my02-infra101",
     "my06-infra101"
   ]
 }
@@ -5813,7 +6641,7 @@
 {
   "resourceType": "infra",
   "id": "my06-infra101",
-  "uid": "tb77vdum8fsgk0k3mmmq",
+  "uid": "tbb155e34rt94il69ph3",
   "name": "my06-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -5841,7 +6669,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my06-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tb77vdum8fsgk0k3mmmq"
+    "sys.uid": "tbb155e34rt94il69ph3"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -5850,9 +6678,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tbgohfsamsafahcqbms3",
-      "cspResourceName": "tbgohfsamsafahcqbms3",
-      "cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
+      "uid": "tbt7k7116g5o02ekkgfm",
+      "cspResourceName": "tbt7k7116g5o02ekkgfm",
+      "cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
       "name": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -5866,13 +6694,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:33",
+      "createdTime": "2026-06-02 11:59:56",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:33",
-        "sys.cspResourceId": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f",
-        "sys.cspResourceName": "tbgohfsamsafahcqbms3",
+        "sys.createdTime": "2026-06-02 11:59:56",
+        "sys.cspResourceId": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457",
+        "sys.cspResourceName": "tbt7k7116g5o02ekkgfm",
         "sys.id": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -5881,7 +6709,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbgohfsamsafahcqbms3",
+        "sys.uid": "tbt7k7116g5o02ekkgfm",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -5889,7 +6717,7 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.91.41",
+      "publicIP": "159.23.102.221",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.5",
@@ -5935,38 +6763,45 @@
         "memoryGiB": 2,
         "costPerHour": 0.094
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "fifth-prattler-scant-wands",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "flask-hardship-unfitting-uncapped",
       "securityGroupIds": [
         "my06-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAC8wdkeZ9gSMvTRBE8uUz6TGh+0YMlgOLO+Rh0C626WTd32ms8sDNvgMbaGZpFyUQtaomZR53J9kPjY7csXJAk=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:rhFh2QMNhzSTwiu1H3k4UCkoFE4F6j+Xp8OeEDSWowM",
+        "firstUsedAt": "2026-06-02T12:00:09Z"
+      },
       "commandStatus": [
         {
           "index": 1,
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
-          "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
-          "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "status": "Completed",
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:13Z",
+          "elapsedTime": 4,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
         }
       ],
       "addtionalDetails": [
@@ -5984,7 +6819,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+          "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -5992,11 +6827,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:58.000Z"
+          "value": "2026-06-02T11:59:23.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "EnableSecureBoot",
@@ -6008,15 +6843,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "ID",
-          "value": "02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f"
+          "value": "02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -6032,11 +6867,11 @@
         },
         {
           "key": "Name",
-          "value": "tbgohfsamsafahcqbms3"
+          "value": "tbt7k7116g5o02ekkgfm"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -6044,7 +6879,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/network_interfaces/02h7-5df82744-9eb7-49a3-9313-7780cedd36db,id:02h7-5df82744-9eb7-49a3-9313-7780cedd36db,name:fifth-prattler-scant-wands,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,id:02h7-e70fbc9b-bfa1-4804-baf4-97b261579d69,name:snagged-cattishly-hypnotism-immersion,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/network_interfaces/02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,id:02h7-6b3534ae-f81a-45db-9555-7e3a76415ba3,name:flask-hardship-unfitting-uncapped,primary_ip:{address:10.0.1.5,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,id:02h7-2d482142-2179-4b13-baa5-44bc5c76b85d,name:dig-backlight-sincerity-roulette,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -6084,7 +6919,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320-84cvs},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f/volume_attachments/02h7-1f1d0450-123c-491a-abbd-aa74315c9320,id:02h7-1f1d0450-123c-491a-abbd-aa74315c9320,name:knoll-virtuous-overflow-overcook,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,id:r026-8f4b37ce-3bf7-43bb-83dc-db2440238cb5,name:filterable-petri-carmaker-hardware,resource_type:volume}}"
+          "value": "{device:{id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662-jwbn8},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457/volume_attachments/02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,id:02h7-fb51cdd2-60f4-4e13-92ae-ceeb810b6662,name:garnet-magically-wifi-feisty,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,id:r026-34a55d8f-c6ca-4737-abb3-f7fca0efdcb5,name:fondue-saturate-kettle-utility,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -6092,7 +6927,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -6103,9 +6938,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "tbvrc1olv3qvn1eq963r",
-      "cspResourceName": "tbvrc1olv3qvn1eq963r",
-      "cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
+      "uid": "tb1h7ijtv4sdjjt74cq4",
+      "cspResourceName": "tb1h7ijtv4sdjjt74cq4",
+      "cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
       "name": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -6119,13 +6954,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:38",
+      "createdTime": "2026-06-02 12:00:04",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:38",
-        "sys.cspResourceId": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a",
-        "sys.cspResourceName": "tbvrc1olv3qvn1eq963r",
+        "sys.createdTime": "2026-06-02 12:00:04",
+        "sys.cspResourceId": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4",
+        "sys.cspResourceName": "tb1h7ijtv4sdjjt74cq4",
         "sys.id": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -6134,7 +6969,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbvrc1olv3qvn1eq963r",
+        "sys.uid": "tb1h7ijtv4sdjjt74cq4",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -6142,10 +6977,10 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.91.42",
+      "publicIP": "159.23.98.218",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.4",
+      "privateIP": "10.0.1.6",
       "privateDNS": "",
       "rootDiskType": "general-purpose",
       "rootDiskSize": 100,
@@ -6188,38 +7023,44 @@
         "memoryGiB": 8,
         "costPerHour": 0.117
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "pregame-slab-pebbly-stuffed",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "underling-headband-jawline-dandy",
       "securityGroupIds": [
         "my06-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGPaje4p0cHi3xSR/tidAHCnzFneiJIw0aQiK/EwDvTEXEZR+qsC0LF+tFSFLRUT1u8A6v80/OKlulbvQMXzI6E=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:UUfEs/wSunSjtxc257xEkGRgYJVZi09b3FC0zZFK+oU",
+        "firstUsedAt": "2026-06-02T12:00:12Z"
+      },
       "commandStatus": [
         {
           "index": 1,
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:30Z",
+          "elapsedTime": 21,
           "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
         }
       ],
       "addtionalDetails": [
@@ -6237,7 +7078,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+          "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -6245,11 +7086,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:58.000Z"
+          "value": "2026-06-02T11:59:25.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "EnableSecureBoot",
@@ -6261,15 +7102,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "ID",
-          "value": "02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a"
+          "value": "02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -6285,11 +7126,11 @@
         },
         {
           "key": "Name",
-          "value": "tbvrc1olv3qvn1eq963r"
+          "value": "tb1h7ijtv4sdjjt74cq4"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -6297,7 +7138,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/network_interfaces/02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,id:02h7-2be17642-ef44-4ad0-8d4a-0d44cecec6e2,name:pregame-slab-pebbly-stuffed,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,id:02h7-e64d785e-71d2-49b2-824a-8ca8330802f7,name:deftly-hastily-twelve-shelf,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/network_interfaces/02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,id:02h7-f67cddfa-e676-4345-9ddb-f30c4ffa67af,name:underling-headband-jawline-dandy,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-29641c82-c582-42aa-8330-7dd5b55583c2,id:02h7-29641c82-c582-42aa-8330-7dd5b55583c2,name:cleat-overstate-dislike-settling,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -6337,7 +7178,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3-v8c5g},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a/volume_attachments/02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,id:02h7-85ef0d73-5933-40f5-8c0f-43b8354c67c3,name:dynastic-caterpillar-booting-upstroke,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,id:r026-7f897e01-22ae-415e-8793-0ab4fc7c1c06,name:kept-ribbon-dropdown-bunkhouse,resource_type:volume}}"
+          "value": "{device:{id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69-lc6sz},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4/volume_attachments/02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,id:02h7-18c2d556-6054-4a2c-aa66-cd5c81867f69,name:mocker-steersman-mushroom-stock,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-1d869fd7-f427-491a-a998-230be98d0f8f,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-1d869fd7-f427-491a-a998-230be98d0f8f,id:r026-1d869fd7-f427-491a-a998-230be98d0f8f,name:secluded-hatbox-payphone-lecturer,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -6345,7 +7186,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -6356,9 +7197,9 @@
     {
       "resourceType": "node",
       "id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "tbcsjiapgrtftvnunu8g",
-      "cspResourceName": "tbcsjiapgrtftvnunu8g",
-      "cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
+      "uid": "tbfb0c8hrtma9tjabtm6",
+      "cspResourceName": "tbfb0c8hrtma9tjabtm6",
+      "cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
       "name": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
       "nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
@@ -6372,13 +7213,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-05-19 02:04:34",
+      "createdTime": "2026-06-02 12:00:00",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ibm-au-syd",
-        "sys.createdTime": "2026-05-19 02:04:34",
-        "sys.cspResourceId": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9",
-        "sys.cspResourceName": "tbcsjiapgrtftvnunu8g",
+        "sys.createdTime": "2026-06-02 12:00:00",
+        "sys.cspResourceId": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6",
+        "sys.cspResourceName": "tbfb0c8hrtma9tjabtm6",
         "sys.id": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.infraId": "my06-infra101",
         "sys.labelType": "node",
@@ -6387,7 +7228,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.subnetId": "my06-subnet-01",
-        "sys.uid": "tbcsjiapgrtftvnunu8g",
+        "sys.uid": "tbfb0c8hrtma9tjabtm6",
         "sys.vNetId": "my06-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=100.0%",
@@ -6395,10 +7236,10 @@
         "region": "au-syd",
         "zone": "au-syd-1"
       },
-      "publicIP": "159.23.98.92",
+      "publicIP": "159.23.94.110",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.6",
+      "privateIP": "10.0.1.4",
       "privateDNS": "",
       "rootDiskType": "general-purpose",
       "rootDiskSize": 100,
@@ -6441,32 +7282,32 @@
         "memoryGiB": 16,
         "costPerHour": 0.235
       },
-      "imageId": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
-      "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+      "imageId": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
+      "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
       "image": {
         "resourceType": "image",
-        "cspImageName": "r026-3e2370e7-648b-4c31-9305-f09265b49632",
+        "cspImageName": "r026-c8e249d4-f148-4416-a3c6-555b7a02f67d",
         "osType": "Ubuntu 22.04",
         "osArchitecture": "x86_64",
         "osDistribution": "Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)"
       },
       "vNetId": "my06-vnet-01",
-      "cspVNetId": "r026-a7ef8b86-1f9b-4b44-8720-86429cea400f",
+      "cspVNetId": "r026-5b6a8f03-385e-44ef-b1bc-825c662ed931",
       "subnetId": "my06-subnet-01",
-      "cspSubnetId": "02h7-a0b66e6e-dbca-4527-980a-20e9e6237218",
-      "networkInterface": "charcoal-groggily-tube-thinner",
+      "cspSubnetId": "02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d",
+      "networkInterface": "cast-handcraft-hulk-scalded",
       "securityGroupIds": [
         "my06-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my06-sshkey-01",
-      "cspSshKeyId": "r026-8eebf157-a783-44b5-928d-0483871a4148",
+      "cspSshKeyId": "r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBD19aNuDPdYwRJ0C7cqJjtYB1B4cwXNpSpwjJpSgOeQTkLprtVKo35BNAmDANMDObhESvSFhUirKrHuD5G8hb2I=",
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMZia3tsPEXHAdMl3XqD20BJ7FgY29w9Zh5t4KDDweL4FDYix1xEB8GeagoakJ/0EqA0Pot7pz6z0SxH5pXZxFw=",
         "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:aAXzAs0R5JeQmb78jUcnjIMu7gCsfKJLjRi8ixUyMYc",
-        "firstUsedAt": "2026-05-19T02:04:44Z"
+        "fingerprint": "SHA256:AxjNblckKR1i97qPsF9JhDs5lyqT3XRq+W7bi6GEgpc",
+        "firstUsedAt": "2026-06-02T12:00:12Z"
       },
       "commandStatus": [
         {
@@ -6474,11 +7315,11 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Failed",
-          "startedTime": "2026-05-19T02:04:43Z",
-          "completedTime": "2026-05-19T02:04:53Z",
-          "elapsedTime": 10,
+          "startedTime": "2026-06-02T12:00:09Z",
+          "completedTime": "2026-06-02T12:00:30Z",
+          "elapsedTime": 21,
           "resultSummary": "Command execution failed",
-          "errorMessage": "failed to connect to target host via bastion after 3 attempts: failed to establish SSH connection to bastion host: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"
+          "errorMessage": "failed to establish SSH connection to target host: ssh: handshake failed: EOF"
         }
       ],
       "addtionalDetails": [
@@ -6496,7 +7337,7 @@
         },
         {
           "key": "BootVolumeAttachment",
-          "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+          "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
         },
         {
           "key": "ConfidentialComputeMode",
@@ -6504,11 +7345,11 @@
         },
         {
           "key": "CreatedAt",
-          "value": "2026-05-19T02:03:59.000Z"
+          "value": "2026-06-02T11:59:22.000Z"
         },
         {
           "key": "CRN",
-          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::instance:02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "EnableSecureBoot",
@@ -6520,15 +7361,15 @@
         },
         {
           "key": "Href",
-          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "ID",
-          "value": "02h7_f3d4a783-9b7a-457f-9787-84add44186f9"
+          "value": "02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6"
         },
         {
           "key": "Image",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-3e2370e7-648b-4c31-9305-f09265b49632,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-3e2370e7-648b-4c31-9305-f09265b49632,id:r026-3e2370e7-648b-4c31-9305-f09265b49632,name:ibm-ubuntu-22-04-5-minimal-amd64-13,resource_type:image}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/811f8abfbd32425597dc7ba40da98fa6::image:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,href:https://au-syd.iaas.cloud.ibm.com/v1/images/r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,id:r026-c8e249d4-f148-4416-a3c6-555b7a02f67d,name:ibm-ubuntu-22-04-5-minimal-amd64-15,resource_type:image}"
         },
         {
           "key": "LifecycleState",
@@ -6544,11 +7385,11 @@
         },
         {
           "key": "Name",
-          "value": "tbcsjiapgrtftvnunu8g"
+          "value": "tbfb0c8hrtma9tjabtm6"
         },
         {
           "key": "NetworkInterfaces",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "NumaCount",
@@ -6556,7 +7397,7 @@
         },
         {
           "key": "PrimaryNetworkInterface",
-          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/network_interfaces/02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,id:02h7-ab2b71b6-986e-4c74-8db3-1209839ea8ce,name:charcoal-groggily-tube-thinner,primary_ip:{address:10.0.1.6,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218/reserved_ips/02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,id:02h7-6cb7e9e2-941f-4f28-9da1-6724a578e613,name:cylinder-hastiness-rigged-foster,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,id:02h7-a0b66e6e-dbca-4527-980a-20e9e6237218,name:tbg6dsf041aagmr0ojtg,resource_type:subnet}}"
+          "value": "{href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/network_interfaces/02h7-2d45942c-5b73-4894-9f98-736c8d83526f,id:02h7-2d45942c-5b73-4894-9f98-736c8d83526f,name:cast-handcraft-hulk-scalded,primary_ip:{address:10.0.1.4,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d/reserved_ips/02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,id:02h7-eb5f7396-9c2b-42b7-9fb6-cc21304b10bf,name:festoonery-cardigan-magically-obstinate,resource_type:subnet_reserved_ip},resource_type:network_interface,subnet:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::subnet:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,href:https://au-syd.iaas.cloud.ibm.com/v1/subnets/02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,id:02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d,name:tbif7mdf8fhjkp0ck6ut,resource_type:subnet}}"
         },
         {
           "key": "Profile",
@@ -6596,7 +7437,7 @@
         },
         {
           "key": "VolumeAttachments",
-          "value": "{device:{id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42-kcj8l},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_f3d4a783-9b7a-457f-9787-84add44186f9/volume_attachments/02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,id:02h7-9e0b26ac-e163-452e-a4b6-5ee6e9dd7c42,name:oxymoron-rely-aspire-commotion,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-0b03e033-0b5a-4c2a-ab10-4177171712be,id:r026-0b03e033-0b5a-4c2a-ab10-4177171712be,name:creme-reshape-super-wake,resource_type:volume}}"
+          "value": "{device:{id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199-dpdgt},href:https://au-syd.iaas.cloud.ibm.com/v1/instances/02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6/volume_attachments/02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,id:02h7-fc17086e-3af1-45a6-af02-459cc2b8b199,name:riverside-fang-shampoo-affirm,volume:{crn:crn:v1:bluemix:public:is:au-syd-1:a/ab205347a7c3b57f09dabb32df178bcf::volume:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,href:https://au-syd.iaas.cloud.ibm.com/v1/volumes/r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,id:r026-01f48f90-c0ec-4014-9ac9-cb4b2db80737,name:runway-preshow-deed-truce,resource_type:volume}}"
         },
         {
           "key": "VolumeBandwidthQosMode",
@@ -6604,7 +7445,7 @@
         },
         {
           "key": "VPC",
-          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,id:r026-a7ef8b86-1f9b-4b44-8720-86429cea400f,name:tbqruv517cf8m1599d8a,resource_type:vpc}"
+          "value": "{crn:crn:v1:bluemix:public:is:au-syd:a/ab205347a7c3b57f09dabb32df178bcf::vpc:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,href:https://au-syd.iaas.cloud.ibm.com/v1/vpcs/r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,id:r026-5b6a8f03-385e-44ef-b1bc-825c662ed931,name:tbans8fa21l4pkrjo0a0,resource_type:vpc}"
         },
         {
           "key": "Zone",
@@ -6625,18 +7466,22 @@
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "159.23.91.41",
+        "nodeIp": "159.23.102.221",
         "command": {
           "0": "uname -a"
         },
-        "stdout": {},
-        "stderr": {},
+        "stdout": {
+          "0": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
         "err": null
       },
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "nodeIp": "159.23.91.42",
+        "nodeIp": "159.23.98.218",
         "command": {
           "0": "uname -a"
         },
@@ -6647,7 +7492,7 @@
       {
         "infraId": "my06-infra101",
         "nodeId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "nodeIp": "159.23.98.92",
+        "nodeIp": "159.23.94.110",
         "command": {
           "0": "uname -a"
         },
@@ -6706,8 +7551,8 @@
       "command": "uname -a",
       "nodeGroup": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "nodeId": "my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "output": "Linux tbgohfsamsafahcqbms3 5.15.0-1095-ibm #98-Ubuntu SMP Wed Feb 11 00:14:35 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "159.23.91.41",
+      "output": "Linux tbt7k7116g5o02ekkgfm 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "159.23.102.221",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 1,
@@ -6718,8 +7563,8 @@
       "command": "uname -a",
       "nodeGroup": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "nodeId": "my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "output": "Linux tbvrc1olv3qvn1eq963r 5.15.0-1095-ibm #98-Ubuntu SMP Wed Feb 11 00:14:35 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "159.23.91.42",
+      "output": "Linux tb1h7ijtv4sdjjt74cq4 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "159.23.98.218",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 2,
@@ -6730,8 +7575,8 @@
       "command": "uname -a",
       "nodeGroup": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "nodeId": "my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "output": "Linux tbcsjiapgrtftvnunu8g 5.15.0-1095-ibm #98-Ubuntu SMP Wed Feb 11 00:14:35 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "159.23.98.92",
+      "output": "Linux tbfb0c8hrtma9tjabtm6 5.15.0-1100-ibm #103-Ubuntu SMP Mon Apr 20 14:53:14 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "159.23.94.110",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 3,
@@ -6761,7 +7606,7 @@
 
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-05-19 02:05:43
+**Generated At:** 2026-06-02 12:01:20
 
 **Namespace:** mig01
 
@@ -6797,15 +7642,15 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| r026-3e2370e7-648b-4c31-9305-f09265b49632 | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | - | 3 |
+| r026-c8e249d4-f148-4416-a3c6-555b7a02f67d | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | - | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.91.41<br>**Private IP:** 10.0.1.5<br>**SGs:** my06-sg-01<br>**SSH:** my06-sshkey-01 |
-| my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a | Running | 2 vCPU, 8.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.91.42<br>**Private IP:** 10.0.1.4<br>**SGs:** my06-sg-03<br>**SSH:** my06-sshkey-01 |
-| my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 02h7_f3d4a783-9b7a-457f-9787-84add44186f9 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.98.92<br>**Private IP:** 10.0.1.6<br>**SGs:** my06-sg-02<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457 | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.102.221<br>**Private IP:** 10.0.1.5<br>**SGs:** my06-sg-01<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4 | Running | 2 vCPU, 8.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.98.218<br>**Private IP:** 10.0.1.6<br>**SGs:** my06-sg-03<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.94.110<br>**Private IP:** 10.0.1.4<br>**SGs:** my06-sg-02<br>**SSH:** my06-sshkey-01 |
 
 
 ## Network Resources
@@ -6817,7 +7662,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-vnet-01 |
-| **CSP VNet ID** | r026-a7ef8b86-1f9b-4b44-8720-86429cea400f |
+| **CSP VNet ID** | r026-5b6a8f03-385e-44ef-b1bc-825c662ed931 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ibm-au-syd |
 | **Subnet Count** | 1 |
@@ -6826,7 +7671,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my06-subnet-01 | 02h7-a0b66e6e-dbca-4527-980a-20e9e6237218 | 10.0.1.0/24 | au-syd-1 |
+| my06-subnet-01 | 02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d | 10.0.1.0/24 | au-syd-1 |
 
 
 ## Security Resources
@@ -6835,7 +7680,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my06-sshkey-01 | r026-8eebf157-a783-44b5-928d-0483871a4148 |  | SHA256:sYz80Z4IeGL3THfON6dTQifM2Lera2g8BaoVL37ccOo |
+| my06-sshkey-01 | r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb |  | SHA256:TvBOM01LhEtmxXCF8izGk3MZUyQr9cHun/EEuzIgBLY |
 
 ### Security Groups
 
@@ -6844,7 +7689,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-01 |
-| **CSP Security Group ID** | r026-46eea056-e6af-4b54-89af-d772afbe34a4 |
+| **CSP Security Group ID** | r026-cc7a1860-d3e6-4d83-a31f-753910673746 |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -6872,7 +7717,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-02 |
-| **CSP Security Group ID** | r026-c9a5b2c1-7c4c-4667-9dc0-a9dfe3019693 |
+| **CSP Security Group ID** | r026-09e47208-047d-4485-8bd2-19d7a50feb71 |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -6905,7 +7750,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-03 |
-| **CSP Security Group ID** | r026-7090750f-4896-4245-a120-a41155025729 |
+| **CSP Security Group ID** | r026-6e6f8825-c77d-4255-af1a-3eeeaad54cbc |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -6980,7 +7825,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-05-19 02:05:49*
+*Report generated: 2026-06-02 12:01:25*
 
 ---
 
@@ -7009,7 +7854,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | nxf-2x2, bxf-2x8, bxf-4x16 |
+| 2 | **VM Spec** | 3 | ✅ Selected | bxf-2x8, bxf-4x16, nxf-2x2 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my06-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my06-vnet-01) |
@@ -7024,9 +7869,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_20b28aa2-9b92-44f4-b118-bfb41cde9f8f<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_17da4537-eef8-454d-a76f-d1dd5df99a6a<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_f3d4a783-9b7a-457f-9787-84add44186f9<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_19d7fc00-e7df-4a3c-b2cc-fa3322e13457<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_95a5c89f-123a-4b3a-844f-7df4b78274c4<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_9472bbc0-6de5-4bbe-af5f-cb0b60ba15c6<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
 
 ---
 
@@ -7048,9 +7893,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** r026-3e2370e7-648b-4c31-9305-f09265b49632<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 2 | my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** r026-3e2370e7-648b-4c31-9305-f09265b49632<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 3 | my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** r026-3e2370e7-648b-4c31-9305-f09265b49632<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 1 | my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** r026-c8e249d4-f148-4416-a3c6-555b7a02f67d<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 2 | my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** r026-c8e249d4-f148-4416-a3c6-555b7a02f67d<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 3 | my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** r026-c8e249d4-f148-4416-a3c6-555b7a02f67d<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
 
 ---
 
@@ -7060,7 +7905,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-01
 
-**CSP ID:** r026-46eea056-e6af-4b54-89af-d772afbe34a4 | **VNet:** my06-vnet-01 | **Rules:** 14
+**CSP ID:** r026-cc7a1860-d3e6-4d83-a31f-753910673746 | **VNet:** my06-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -7088,7 +7933,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-02
 
-**CSP ID:** r026-c9a5b2c1-7c4c-4667-9dc0-a9dfe3019693 | **VNet:** my06-vnet-01 | **Rules:** 19
+**CSP ID:** r026-09e47208-047d-4485-8bd2-19d7a50feb71 | **VNet:** my06-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -7121,7 +7966,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-03
 
-**CSP ID:** r026-7090750f-4896-4245-a120-a41155025729 | **VNet:** my06-vnet-01 | **Rules:** 19
+**CSP ID:** r026-6e6f8825-c77d-4255-af1a-3eeeaad54cbc | **VNet:** my06-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -7162,13 +8007,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my06-vnet-01<br>**ID:** r026-a7ef8b86-1f9b-4b44-8720-86429cea400f | 10.0.0.0/21 |
+| 1 | **Name:** my06-vnet-01<br>**ID:** r026-5b6a8f03-385e-44ef-b1bc-825c662ed931 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my06-subnet-01<br>**ID:** 02h7-a0b66e6e-dbca-4527-980a-20e9e6237218 | 10.0.1.0/24 | my06-vnet-01 |
+| 1 | **Name:** my06-subnet-01<br>**ID:** 02h7-3a33398e-c6ca-4655-863a-99dbdad0a91d | 10.0.1.0/24 | my06-vnet-01 |
 
 ### Source Network Information
 
@@ -7210,7 +8055,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my06-sshkey-01 | r026-8eebf157-a783-44b5-928d-0483871a4148 | SHA256:sYz80Z4IeGL3THfON6dTQifM2Lera2g8BaoVL37ccOo | Used by all 3 VMs |
+| 1 | my06-sshkey-01 | r026-19980fa4-1edc-4a64-9b7d-4a3d029ed2cb | SHA256:TvBOM01LhEtmxXCF8izGk3MZUyQr9cHun/EEuzIgBLY | Used by all 3 VMs |
 
 ---
 
