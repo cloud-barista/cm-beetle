@@ -11,7 +11,7 @@ x-default-healthcheck: &default-healthcheck
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.5.0
+    image: cloudbaristaorg/cm-beetle:0.5.1
     container_name: cm-beetle
     build:
       context: ${PROJECT_ROOT}
@@ -42,7 +42,7 @@ services:
       # - BEETLE_LOGFILE_MAXBACKUPS=3
       # - BEETLE_LOGFILE_MAXAGE=30
       # - BEETLE_LOGFILE_COMPRESS=false
-      - BEETLE_LOGLEVEL=debug
+      - BEETLE_LOGLEVEL=info
       # - BEETLE_LOGWRITER=both
       - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000

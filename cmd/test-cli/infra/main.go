@@ -1388,19 +1388,20 @@ func getGitHash() string {
 	return strings.TrimSpace(string(output))
 }
 
-// getBeetleVersion returns the CM-Beetle version from git tags or commit hash
-// Expected format: v0.4.5 (exact tag) or v0.4.5+ (short hash) for commits after tag
+// getBeetleVersion returns the CM-Beetle version from git tags or commit hash.
+// Only beetle release tags (v[0-9]*) are matched to avoid picking up imdl/*, transx/* tags.
+// Expected format: v0.4.5 (exact tag) or v0.4.5+ (short hash) for commits after tag.
 func getBeetleVersion() string {
 	commitHash := getGitHash()
 
-	// Check if we are exactly on a tag
-	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match")
+	// Check if we are exactly on a beetle release tag (v[0-9]*)
+	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match", "--match", "v[0-9]*")
 	if exactTag, err := cmdExact.Output(); err == nil {
 		return strings.TrimSpace(string(exactTag))
 	}
 
-	// Get the latest tag (we are ahead of it)
-	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0")
+	// Get the latest beetle release tag (we are ahead of it)
+	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
 	if tag, err := cmdTag.Output(); err == nil {
 		tagStr := strings.TrimSpace(string(tag))
 		if tagStr != "" {
@@ -1411,7 +1412,7 @@ func getBeetleVersion() string {
 		}
 	}
 
-	// No tags available, fallback to main (hash)
+	// No beetle release tags available, fallback to main (hash)
 	if commitHash != "unknown" {
 		return fmt.Sprintf("main (%s)", commitHash)
 	}

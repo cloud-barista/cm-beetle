@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: imdl/v0.1.3
-- CB-Tumblebug: vunknown
+- CM-Beetle: v0.5.0+ (2aeaf75)
+- CB-Tumblebug: v0.12.13
 - Target CSP: GCP
 - Target Region: asia-northeast3
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: May 7, 2026
-- Test Time: 21:52:12 KST
-- Test Execution: 2026-05-07 21:52:12 KST
+- Test Date: June 4, 2026
+- Test Time: 17:52:07 KST
+- Test Execution: 2026-06-04 17:52:07 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 3ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 28.109s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 5ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.753s | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 3.524s | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 21.045s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 4ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 26.794s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 13ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 1.042s | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 3.44s | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 22.319s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 59.44434243s
+**Total Duration**: 58.619201053s
 
-*Test executed on May 7, 2026 at 21:52:12 KST (2026-05-07 21:52:12 KST) using CM-Beetle automated test CLI*
+*Test executed on June 4, 2026 at 17:52:07 KST (2026-06-04 17:52:07 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -157,7 +157,6 @@
 
 ```json
 {
-  "nameSeed": "my",
   "status": "success",
   "description": "Successfully recommended 2 object storage configuration(s)",
   "targetCloud": {
@@ -238,7 +237,6 @@
 
 ```json
 {
-  "nameSeed": "my",
   "status": "success",
   "description": "Successfully recommended 2 object storage configuration(s)",
   "targetCloud": {
