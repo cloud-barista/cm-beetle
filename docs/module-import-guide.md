@@ -183,7 +183,7 @@ replace github.com/cloud-barista/cm-beetle/transx => ../cm-beetle/transx
 
 | Module         | Module Path                                     | Tag Format Example  |
 | :------------- | :---------------------------------------------- | :------------------ |
-| **Root**       | `github.com/cloud-barista/cm-beetle`            | `v0.5.0`            |
+| **Root**       | `github.com/cloud-barista/cm-beetle`            | `v0.5.1`            |
 | **Analyzer**   | `github.com/cloud-barista/cm-beetle/analyzer`   | `analyzer/v0.1.0`   |
 | **Transx**     | `github.com/cloud-barista/cm-beetle/transx`     | `transx/v0.1.0`     |
 | **Deepdiffgo** | `github.com/cloud-barista/cm-beetle/deepdiffgo` | `deepdiffgo/v0.1.0` |
@@ -226,7 +226,7 @@ Managing multiple tags manually can be tedious. You can automate this process:
 # Run this after all changes are merged into upstream/main
 git fetch upstream
 
-VERSION="v0.5.0"
+VERSION="v0.5.1"
 TAGS=("transx/$VERSION" "analyzer/$VERSION" "deepdiffgo/$VERSION" "$VERSION")
 for TAG in "${TAGS[@]}"; do
   git tag -a "$TAG" upstream/main -m "Release $TAG"
