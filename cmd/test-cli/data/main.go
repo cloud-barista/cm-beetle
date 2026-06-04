@@ -1513,7 +1513,7 @@ func generateMarkdownContent(report *DataTestReport) string {
 	sb.WriteString("## Environment and scenario\n\n")
 	sb.WriteString("### Environment\n\n")
 	sb.WriteString(fmt.Sprintf("- CM-Beetle: %s\n", getBeetleVersion()))
-	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: v%s\n", getVersionFromDockerCompose("cb-tumblebug")))
+	sb.WriteString(fmt.Sprintf("- CB-Tumblebug: %s\n", formatServiceVersion(getVersionFromDockerCompose("cb-tumblebug"))))
 	sb.WriteString(fmt.Sprintf("- Source CSP: %s\n", strings.ToUpper(report.SourceCSP)))
 	sb.WriteString(fmt.Sprintf("- Source Region: %s\n", report.SourceRegion))
 	sb.WriteString(fmt.Sprintf("- Target CSP: %s\n", strings.ToUpper(report.CSP)))
@@ -1833,7 +1833,10 @@ func buildObjectTree(keys []string) string {
 				connector = "└── "
 				childPrefix = prefix + "    "
 			}
-			sb.WriteString(prefix + connector + name + "\n")
+			sb.WriteString(prefix)
+			sb.WriteString(connector)
+			sb.WriteString(name)
+			sb.WriteString("\n")
 			render(node.children[name], childPrefix)
 		}
 	}
@@ -1841,6 +1844,8 @@ func buildObjectTree(keys []string) string {
 	return sb.String()
 }
 
+// getBeetleVersion returns the CM-Beetle version from git tags or commit hash.
+// Only beetle release tags (v[0-9]*) are matched to avoid picking up imdl/*, transx/* tags.
 func getBeetleVersion() string {
 	hash := func() string {
 		out, err := exec.Command("git", "rev-parse", "--short", "HEAD").Output()
@@ -1849,22 +1854,31 @@ func getBeetleVersion() string {
 		}
 		return strings.TrimSpace(string(out))
 	}()
-	if out, err := exec.Command("git", "describe", "--tags", "--exact-match").Output(); err == nil {
+	// Check if we are exactly on a beetle release tag (v[0-9]*)
+	if out, err := exec.Command("git", "describe", "--tags", "--exact-match", "--match", "v[0-9]*").Output(); err == nil {
 		return strings.TrimSpace(string(out))
 	}
-	if out, err := exec.Command("git", "describe", "--tags", "--abbrev=0").Output(); err == nil {
+	// Get the latest beetle release tag (we are ahead of it)
+	if out, err := exec.Command("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*").Output(); err == nil {
 		tag := strings.TrimSpace(string(out))
 		if tag != "" {
-			return fmt.Sprintf("%s+ (%s)", tag, hash)
+			if hash != "unknown" {
+				return fmt.Sprintf("%s+ (%s)", tag, hash)
+			}
+			return fmt.Sprintf("%s+", tag)
 		}
 	}
-	return fmt.Sprintf("main (%s)", hash)
+	// No beetle release tags available, fallback to main (hash)
+	if hash != "unknown" {
+		return fmt.Sprintf("main (%s)", hash)
+	}
+	return "main (unknown)"
 }
 
 // getVersionFromDockerCompose extracts a service image version from docker-compose.yaml.
 func getVersionFromDockerCompose(serviceName string) string {
 	for _, p := range []string{
-		"../../deployments/docker-compose/docker-compose.yaml",
+		"../../../deployments/docker-compose/docker-compose.yaml",
 		"deployments/docker-compose/docker-compose.yaml",
 	} {
 		content, err := os.ReadFile(p)
@@ -1885,6 +1899,14 @@ func getVersionFromDockerCompose(serviceName string) string {
 		}
 	}
 	return "unknown"
+}
+
+// formatServiceVersion returns "v{version}" or "unknown" when version is not available.
+func formatServiceVersion(version string) string {
+	if version == "unknown" {
+		return "unknown"
+	}
+	return "v" + version
 }
 
 // ============================================================================
