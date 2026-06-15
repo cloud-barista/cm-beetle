@@ -59,6 +59,37 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
    md5sum $BEETLE/assets/assets.dump.gz $TB/assets/assets.dump.gz
    ```
 
+## v0.12.15 Sync (2026-06-15)
+
+Based on TB v0.12.15 `4f01927b` (tagged release).
+
+| File                                  | Action                                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Model files (imdl/cloud-model/)**   |                                                                                                                                                        |
+| `copied-tb-model.go`                  | **Updated** — Added `IsBasicGpuImage` field to `ImageInfo` struct; updated example values for `VNetTemplateId` and `SgTemplateId` in `InfraDynamicReq` |
+| **Assets**                            |                                                                                                                                                        |
+| `assets/assets.dump.gz`               | **Updated** — MD5 changed from `9beccbd54b29...` to `77888ce732683fef...` (copied to beetle)                                                           |
+| `assets/cloudimage_ignore.yaml`       | **New** — Cloud image ignore patterns configuration (copied to beetle)                                                                                 |
+| `assets/extractionpatterns.yaml`      | **Updated** — Added `gpuExcludePatterns` section and `basicGpuImageRules` with per-CSP GPU image identification rules (copied to beetle)               |
+| `assets/k8sclusterinfo.yaml`          | **Updated** — IBM Cloud K8s versions updated (added 1.35, updated 1.34, 1.33; removed older versions) (copied to beetle)                               |
+| **Init**                              |                                                                                                                                                        |
+| `init/init.py`                        | **Updated** — Added `k8sCluster` template type detection for K8s multi-cluster dynamic provisioning (copied to beetle)                                 |
+| `init/openbao/`                       | **New** — OpenBao-related initialization files (not copied to beetle - not needed for beetle's deployment)                                             |
+| `init/templates/*.json`               | **Reorganized** — TB renamed templates with resource-type prefixes (e.g., `default-sg.json` → `sg-default.json`). Beetle keeps current template names. |
+| **Scripts**                           |                                                                                                                                                        |
+| `scripts/*`                           | **Many new scripts** — TB added many operational scripts (not copied to beetle - beetle only needs `restore-assets.sh`)                                |
+| **Config**                            |                                                                                                                                                        |
+| `conf/setup.env`, `conf/traefik.yaml` | **New in TB** — TB-specific configuration files (not copied to beetle - not needed for beetle's deployment)                                            |
+
+**Summary of Changes:**
+
+- **Models**: Synchronized `IsBasicGpuImage` field addition and example value updates
+- **Assets**: Updated binary dump, extraction patterns for GPU image detection, K8s cluster info, and added new cloudimage_ignore.yaml (all copied to beetle)
+- **Init**: Updated init.py with K8s cluster template support (copied to beetle)
+- **K8s**: Added K8s cluster template support and version updates
+- **Templates**: TB reorganized template naming (beetle keeps current names for now)
+- **Not Copied**: TB-specific scripts, configs (setup.env, traefik.yaml), openbao init files, and operational scripts not needed for beetle's docker-compose deployment
+
 ## v0.12.13 Sync (2026-06-02)
 
 Based on TB v0.12.13 `555a29bd` (tagged release).

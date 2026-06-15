@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-04 06:45:35
+**Generated At:** 2026-06-15 11:19:35
 
 **Namespace:** mig01
 
@@ -28,23 +28,23 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| ecs.e-c1m1.large | 2 | 2.0 | - | x86_64 |  | $0.0178 | 1 |
 | ecs.e-c1m4.large | 2 | 8.0 | - | x86_64 |  | $0.0791 | 1 |
 | ecs.e-c1m4.xlarge | 4 | 16.0 | - | x86_64 |  | $0.1582 | 1 |
+| ecs.e-c1m1.large | 2 | 2.0 | - | x86_64 |  | $0.0178 | 1 |
 
 ### VM Images
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| ubuntu_22_04_x64_20G_alibase_20260506.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
+| ubuntu_22_04_x64_20G_alibase_20260522.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj790rcu0xt2e8sbeesu | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 8.213.129.94<br>**Private IP:** 10.0.1.153<br>**SGs:** my04-sg-01<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-mj773gh99280ae57ls69 | Running | 2 vCPU, 8.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.241.105<br>**Private IP:** 10.0.1.151<br>**SGs:** my04-sg-03<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-mj7avhpbhcgx9c3wi5mn | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.241.200<br>**Private IP:** 10.0.1.152<br>**SGs:** my04-sg-02<br>**SSH:** my04-sshkey-01 |
+| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj7bjg9mfk18gcmmbb3a | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 43.108.55.7<br>**Private IP:** 10.0.1.57<br>**SGs:** my04-sg-01<br>**SSH:** my04-sshkey-01 |
+| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-mj76hbsqqnozok57s6np | Running | 2 vCPU, 8.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.240.234<br>**Private IP:** 10.0.1.59<br>**SGs:** my04-sg-03<br>**SSH:** my04-sshkey-01 |
+| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-mj76dquvg2a6s2dhbntd | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 43.108.57.132<br>**Private IP:** 10.0.1.58<br>**SGs:** my04-sg-02<br>**SSH:** my04-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-vnet-01 |
-| **CSP VNet ID** | vpc-mj7qwvp4xhlez9x729kjz |
+| **CSP VNet ID** | vpc-mj77zkfg1yuevewpa27eu |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | alibaba-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my04-subnet-01 | vsw-mj7xb9wnkremvoerzfr8v | 10.0.1.0/24 | ap-northeast-2a |
+| my04-subnet-01 | vsw-mj74xxm7oqnx54jioeje2 | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my04-sshkey-01 | tbjmuguoor0kildc818u |  | 2a3771cb2018b5bb22f56206c8c73bea |
+| my04-sshkey-01 | tb6a8tdan2o2a0of03kb |  | 0cdab6d37d11f76c3acbc53a8736b831 |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-sg-01 |
-| **CSP Security Group ID** | sg-mj78ij5g41gcwtih2u3o |
+| **CSP Security Group ID** | sg-mj701s4cu76hzssf3ge8 |
 | **VNet** | my04-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-sg-02 |
-| **CSP Security Group ID** | sg-mj7caxyslyfkfgl1ro9t |
+| **CSP Security Group ID** | sg-mj7bh7ru7jcusanpritk |
 | **VNet** | my04-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my04-sg-03 |
-| **CSP Security Group ID** | sg-mj7bdk0v9eklpn4bds9o |
+| **CSP Security Group ID** | sg-mj72lb0tfkdv88b1yuqg |
 | **VNet** | my04-vnet-01 |
 | **Rule Count** | 19 rules |
 
