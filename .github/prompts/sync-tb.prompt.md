@@ -1,7 +1,7 @@
 ---
 mode: agent
 model: Claude Sonnet 4.5
-description: "Synchronize CB-Tumblebug models in copied-tb-model.go with specified version"
+description: "Synchronize CB-Tumblebug models and docker-compose files with specified version"
 ---
 
 # SyncTB - CB-Tumblebug Model Synchronization
@@ -21,8 +21,11 @@ This prompt will help synchronize CB-Tumblebug models by:
 3. **Git Diff Analysis**: Execute git diff to identify all changed structs between versions
 4. **Struct Dependency Mapping**: Map all existing structs in copied-tb-model.go and their dependencies
 5. **Comprehensive Synchronization**: Update ALL structs that exist in copied-tb-model.go and their dependencies
-6. **Cleanup**: Remove temporary repository and return to original directory
-7. **Validation**: Ensure compilation and proper serialization
+6. **Version Files Update**: Update docker-compose.yaml and go.mod with target version
+7. **Docker-Compose Files Sync**: Compare and update docker-compose related files (assets, config, init scripts)
+8. **SYNC.md Documentation**: Update SYNC.md with detailed change summary for the target version
+9. **Cleanup**: Remove temporary repository and return to original directory
+10. **Validation**: Ensure compilation and proper serialization
 
 ## Synchronization Principles
 
@@ -117,7 +120,7 @@ This prompt will help synchronize CB-Tumblebug models by:
 - **Use `read_file`**: Identify current version (from copied-tb-model.go header)
 - **Use `run_in_terminal`**: Checkout target version: `git checkout ${input:version}`
 
-### 3. Direct Git Diff Execution
+### Step 3: Git Diff Analysis
 
 Execute git diff commands directly:
 
@@ -128,7 +131,7 @@ Execute git diff commands directly:
 - **Pattern Detection**: Look for rename patterns like `type TbStructName` → `type StructName`
 - Focus on files containing models used in copied-tb-model.go
 
-### Step 4: Direct Model Synchronization
+### Step 4: Model Synchronization
 
 Directly apply identified changes to copied-tb-model.go:
 
@@ -140,104 +143,151 @@ Directly apply identified changes to copied-tb-model.go:
 - Update version header with target version and commit hash
 - Preserve cm-model specific documentation enhancements
 
-### Step 5: Cleanup and Validation
+### Step 5: Version Files Update
 
-- **Use `run_in_terminal`**: Remove cloned CB-Tumblebug repository: `rm -rf cb-tumblebug/`
-- **Use `run_in_terminal`**: Return to cm-model directory
+Update version references in docker-compose.yaml and go.mod:
+
+- **Use `run_in_terminal`**: Extract service versions from CB-Tumblebug's docker-compose.yaml:
+
+  ```bash
+  cd /tmp/sync-tb-${input:version}/cb-tumblebug
+
+  # Check if docker-compose.yaml exists
+  if [ -f "docker-compose.yaml" ]; then
+    # Extract cb-spider version
+    SPIDER_VERSION=$(grep -A 1 "cb-spider:" docker-compose.yaml | grep "image:" | sed 's/.*cloudbaristaorg\/cb-spider:\([0-9.]*\).*/\1/')
+
+    # Extract cb-mapui version
+    MAPUI_VERSION=$(grep -A 1 "cb-mapui:" docker-compose.yaml | grep "image:" | sed 's/.*cloudbaristaorg\/cb-mapui:\([0-9.]*\).*/\1/')
+
+    echo "Extracted from TB docker-compose.yaml:"
+    echo "  CB-Spider version: $SPIDER_VERSION"
+    echo "  CB-MapUI version: $MAPUI_VERSION"
+  else
+    echo "Warning: docker-compose.yaml not found in CB-Tumblebug repository"
+    echo "Please check CB-Tumblebug release notes manually for compatible versions"
+  fi
+  ```
+
+- **Use `read_file`**: Read current versions from CM-Beetle's docker-compose.yaml
+
+- **Use `replace_string_in_file`**: Update cb-tumblebug image version:
+
+  ```yaml
+  cb-tumblebug:
+    image: cloudbaristaorg/cb-tumblebug:${input:version}
+  ```
+
+- **Use `replace_string_in_file`**: Update cb-spider image version (if extracted successfully):
+
+  ```yaml
+  cb-spider:
+    image: cloudbaristaorg/cb-spider:$SPIDER_VERSION
+  ```
+
+- **Use `replace_string_in_file`**: Update cb-mapui image version (if extracted successfully):
+
+  ```yaml
+  cb-mapui:
+    image: cloudbaristaorg/cb-mapui:$MAPUI_VERSION
+  ```
+
+- **Use `read_file`**: Read current version from go.mod
+
+- **Use `replace_string_in_file`**: Update cb-tumblebug dependency in go.mod:
+
+  ```go
+  require (
+      github.com/cloud-barista/cb-tumblebug ${input:version}
+  ```
+
+- **Use `run_in_terminal`**: Verify go.mod changes and tidy dependencies:
+
+  ```bash
+  cd /home/ubuntu/dev/cloud-barista/cm-beetle
+  go mod tidy
+  ```
+
+- **Use `get_errors`**: Check for any Go module dependency errors
+
+### Step 6: Docker-Compose Files Synchronization
+
+Compare and synchronize docker-compose deployment files:
+
+- **Use `run_in_terminal`**: Compare assets files:
+
+  ```bash
+  cd /tmp/sync-tb-${input:version}/cb-tumblebug
+  TB_PATH=$(pwd)
+  BEETLE_PATH=/home/ubuntu/dev/cloud-barista/cm-beetle/deployments/docker-compose/cb-tumblebug
+
+  # Check each directory for changes
+  for dir in assets conf init scripts; do
+    diff -qr $BEETLE_PATH/$dir $TB_PATH/$dir 2>&1 | grep "differ\|Only in"
+  done
+
+  # Check MCP files (different path)
+  diff -qr $BEETLE_PATH/interface/mcp $TB_PATH/src/interface/mcp 2>&1 | grep "differ\|Only in"
+  ```
+
+- **Use `run_in_terminal`**: Review specific file differences:
+
+  ```bash
+  # Example: Check cloudimage.csv changes
+  diff -u $BEETLE_PATH/assets/cloudimage.csv $TB_PATH/assets/cloudimage.csv
+  ```
+
+- **File-by-File Analysis**:
+  - `assets/assets.dump.gz`: Compare MD5 checksums
+  - `assets/cloudimage.csv`: Check for new/updated image entries
+  - `assets/k8sclusterinfo.yaml`: Verify K8s version updates
+  - `assets/cloudinfo.yaml`, `cloudspec.csv`: Check for CSP updates
+  - `conf/cloud_conf.yaml`: Review configuration changes
+  - `init/*.py`, `init/*.sh`: Check initialization script updates
+  - `scripts/*.sh`: Verify operational script changes
+
+- **Use `run_in_terminal`**: Copy updated files when needed:
+  ```bash
+  # Example: Update specific files
+  cp $TB_PATH/assets/cloudimage.csv $BEETLE_PATH/assets/
+  cp $TB_PATH/assets/k8sclusterinfo.yaml $BEETLE_PATH/assets/
+  ```
+
+### Step 7: SYNC.md Documentation
+
+Document all docker-compose file changes in SYNC.md:
+
+- **Use `read_file`**: Read current SYNC.md to understand format
+- **Use `replace_string_in_file`** or **`multi_replace_string_in_file`**: Add new version section at the top:
+
+  ```markdown
+  ## v${input:version} Sync (YYYY-MM-DD)
+
+  Based on TB v${input:version} `[commit_short_hash]` (tagged release).
+
+  | File                    | Action                                |
+  | ----------------------- | ------------------------------------- |
+  | `assets/assets.dump.gz` | **Updated** — MD5 changed to `[hash]` |
+  | `assets/cloudimage.csv` | **Updated** — [describe changes]      |
+  | ...                     | ...                                   |
+  ```
+
+- **Change Categories**:
+  - **Updated**: File content changed, copy from TB
+  - **No change**: File identical between versions
+  - **New**: File added in TB, consider adding
+  - **Removed**: File deleted in TB, consider removing
+
+- **Use `get_errors`**: Verify markdown syntax if possible
+
+### Step 8: Cleanup and Validation
+
+- **Use `run_in_terminal`**: Remove cloned CB-Tumblebug repository: `rm -rf /tmp/sync-tb-${input:version}/`
+- **Use `run_in_terminal`**: Return to cm-beetle directory
 - **Use `get_errors`**: Compile and validate synchronized models
+- **Use `run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
 
-## Analysis Steps
-
-### 1. Current State Analysis
-
-- **Use `read_file`** to extract current TB version from [copied-tb-model.go](../../imdl/cloud-model/copied-tb-model.go) header comment
-- **Use `grep_search`** to inventory ALL existing struct definitions in copied-tb-model.go
-- **Use `grep_search`** to map struct dependencies and relationships within copied-tb-model.go
-- **Use `create_directory`** to set up temporary workspace for CB-Tumblebug repository cloning
-
-### 2. Repository Setup and Git Diff Analysis
-
-**Repository Setup:**
-
-- **Use `create_directory`**: Clone CB-Tumblebug repository in a temporary directory: `/tmp/sync-tb-${input:version}/`
-- **Use `run_in_terminal`**: Navigate to cloned repository (`cd /tmp/sync-tb-${input:version}/cb-tumblebug`)
-- **Use `run_in_terminal`**: Checkout target version: `git checkout ${input:version}`
-
-**Comprehensive Git Diff Execution:**
-
-- **Use `run_in_terminal`**: Execute comprehensive diff: `git diff [current_version]..${input:version} -- src/core/model/`
-- **Use `get_terminal_output`**: Capture complete diff output for analysis
-- **Focus**: ALL model files without exclusion:
-  - `src/core/model/mci.go` (MCI-related structs)
-  - `src/core/model/vnet.go` (VNet-related structs)
-  - `src/core/model/sshkey.go` (SSH key structs)
-  - `src/core/model/spec.go` (Specification structs)
-  - `src/core/model/image.go` (Image-related structs)
-  - `src/core/model/securitygroup.go` (Security group structs)
-  - `src/core/model/subnet.go` (Subnet structs)
-  - `src/core/model/common.go` (Common types and constants)
-  - `src/core/model/config.go` (Configuration structs)
-  - All other model files that contain struct changes
-
-### 3. Dependency Chain Impact Analysis
-
-**Phase 1: Existing Struct Inventory**
-
-- **Use `grep_search`**: List ALL struct names currently in copied-tb-model.go: `type.*struct`
-- Create inventory of current structs: TbMciReq, TbVNetReq, TbMciInfo, etc.
-- **Use `semantic_search`**: Map field types and dependencies within each existing struct
-
-**Phase 2: Dependency Chain Mapping**
-
-For each existing struct, identify all struct-type fields:
-
-```bash
-# Example dependency mapping for existing structs:
-# TbMciInfo → MciSshCmdResult (existing) + CreationErrors (potential new dependency)
-# TbMciReq → TbVmReq (existing) + MciCmdReq (existing) + PolicyTypes (potential constants)
-# TbVmInfo → Location (existing) + RegionInfo (existing) + ConnConfig (existing) + KeyValue (existing)
-```
-
-**Phase 3: Git Diff Analysis with Dependency Focus**
-
-- **Use `run_in_terminal`** + **`get_terminal_output`**: Execute git diff for each model file
-- **Priority**: Focus on changes to existing structs first
-- **Dependency Tracing**: For each field change in existing structs, identify if it introduces new struct dependencies
-- **Chain Following**: If a new dependency is found, recursively analyze its dependencies
-
-**Phase 4: Dependency Chain Validation**
-
-```bash
-# For each new struct found in git diff, validate dependency chain:
-# 1. Is this struct referenced by any existing struct? → INCLUDE
-# 2. Is this struct referenced by any already-included dependency struct? → INCLUDE
-# 3. Does this struct have no dependency path to existing structs? → EXCLUDE
-```
-
-**Diff Analysis Process:**
-
-- **Use `get_terminal_output`** to capture complete diff output for each file
-- **Use `grep_search`** to identify specific struct definitions and field patterns
-- Parse diff hunks to identify:
-  - Added lines (prefixed with `+`)
-  - Removed lines (prefixed with `-`)
-  - Context lines for struct identification
-  - Context lines for struct identification
-    **Git Diff Parsing:**
-
-- **Use `grep_search`** to parse git diff output for:
-  - Struct definitions: `type.*struct`
-  - Added lines: lines starting with `+`
-  - Removed lines: lines starting with `-`
-  - Modified struct fields and their types
-
-**Change Classification:**
-
-- Identify changes to structs that exist in copied-tb-model.go
-- Identify new struct dependencies introduced by existing struct changes
-- Identify removed struct dependencies no longer needed
-
-### 4. Dependency-Based Synchronization Process
+## Synchronization Rules
 
 #### A. Mandatory Synchronization Rules
 
@@ -303,7 +353,7 @@ Update the header comment in copied-tb-model.go to include commit hash:
 
 **Note**: Do NOT include individual struct path comments. Focus on clear struct names and descriptions only.
 
-#### D. Complete Field Synchronization
+#### C. Complete Field Synchronization
 
 For EVERY struct that exists in copied-tb-model.go AND appears in git diff:
 
@@ -321,7 +371,7 @@ For EVERY struct that exists in copied-tb-model.go AND appears in git diff:
 12. **Header Update**: Update version header with target version and commit hash
 13. **Documentation**: Preserve clear struct names and descriptions without path references
 
-#### E. Dependency Struct Addition
+#### D. Dependency Struct Addition
 
 For NEW structs referenced by existing structs that appear in git diff:
 
@@ -330,7 +380,7 @@ For NEW structs referenced by existing structs that appear in git diff:
 3. **Proper Placement**: Add in logical order near related structs
 4. **Full Documentation**: Include ALL comments, examples, and validation tags from TB source
 
-#### F. File Operations
+#### E. File Operations
 
 Execute file editing operations using VS Code tools:
 
@@ -342,28 +392,7 @@ Execute file editing operations using VS Code tools:
 - Maintain proper Go syntax and formatting
 - Preserve existing cm-model documentation patterns
 
-### 5. Repository Cleanup
-
-After successful synchronization:
-
-- **Use `run_in_terminal`** to remove the cloned CB-Tumblebug repository
-- **Use `list_dir`** to verify cleanup and directory restoration
-- **Use `read_file`** to validate final changes in copied-tb-model.go
-- Return to original working directory
-
-### 6. Documentation and Version Update
-
-**Header Information Update:**
-
-**CRITICAL: Perform this step even if no other changes were made to the file.**
-
-- [ ] **`run_in_terminal`**: Get target version commit hash: `git rev-parse HEAD`
-- [ ] **`replace_string_in_file`**: Update version header with commit hash and synchronization date
-- [ ] **CRITICAL**: **DO NOT** include individual struct path comments (// \* Path: src/core/model/...)
-- [ ] **CRITICAL**: Focus on clear struct names and descriptions only
-- [ ] **`read_file`**: Verify ALL valuable documentation is preserved during synchronization
-
-### 7. Final Validation Checklist
+## Final Validation Checklist
 
 After synchronization (use appropriate tools for each validation):
 
@@ -385,20 +414,28 @@ After synchronization (use appropriate tools for each validation):
 - [ ] **CRITICAL**: **`read_file`**: Verify ALL Tumblebug-synchronized field comments and examples are preserved
 - [ ] **CRITICAL**: **`grep_search`**: Confirm Path line numbers match actual CB-Tumblebug source file locations
 - [ ] **CRITICAL**: **`read_file`**: Ensure no valuable documentation was unintentionally deleted during synchronization
+- [ ] **`read_file`**: Verify go.mod cb-tumblebug version updated to target version
+- [ ] **`run_in_terminal`**: Confirm `go mod tidy` completed without errors
+- [ ] **`read_file`**: Verify docker-compose.yaml cb-tumblebug image version updated to target version
+- [ ] **`grep_search`**: Verify docker-compose.yaml cb-spider version matches TB's docker-compose.yaml
+- [ ] **`grep_search`**: Verify docker-compose.yaml cb-mapui version matches TB's docker-compose.yaml
 - [ ] **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
-
-### 8. Dependency Analysis Report
-
-**Final Step - Dependency Verification:**
-
-- **Use `run_in_terminal`**: Execute `python3 scripts/analyze_dependencies.py` to generate dependency analysis
-- **Analyze Output**: Review struct relationships and ensure proper dependency chains are maintained
-- **Verify Results**: Confirm no orphaned structs exist and all dependencies are valid
-- **Document Findings**: Include any notable dependency changes in the synchronization summary
+- [ ] **`read_file`**: Verify SYNC.md updated with new version section
+- [ ] **Docker-Compose Files**: Confirm all detected file changes documented in SYNC.md
+- [ ] **`get_errors`**: Check for any broken file references in docker-compose configuration
 
 ## Files to Update
 
 - [copied-tb-model.go](../../imdl/cloud-model/copied-tb-model.go)
+- [go.mod](../../go.mod) - Update cb-tumblebug dependency version
+- [docker-compose.yaml](../../deployments/docker-compose/docker-compose.yaml) - Update cb-tumblebug, cb-spider, cb-mapui image versions
+- [SYNC.md](../../deployments/docker-compose/cb-tumblebug/SYNC.md)
+- Docker-compose deployment files (conditional, based on detected changes):
+  - `deployments/docker-compose/cb-tumblebug/assets/*`
+  - `deployments/docker-compose/cb-tumblebug/conf/*`
+  - `deployments/docker-compose/cb-tumblebug/init/*`
+  - `deployments/docker-compose/cb-tumblebug/scripts/*`
+  - `deployments/docker-compose/cb-tumblebug/interface/mcp/*`
 
 ## Reference Guidelines
 
@@ -424,56 +461,7 @@ Follow the patterns and guidelines defined in:
 - **🚨 CRITICAL SAFEGUARD**: **NEVER DELETE Tumblebug-synchronized field comments** - These contain valuable examples and documentation from CB-Tumblebug source that must be preserved
 - **🚨 CLEAN DOCUMENTATION**: **DO NOT** include "// \* Path:" comments - Focus on clear struct names and descriptions only
 
-### Complete Synchronization Guidelines
-
-- **Existing Struct Rule**: ALL structs in copied-tb-model.go MUST be updated according to git diff
-- **Struct Name Changes**: MUST detect and handle struct renames (especially Tb prefix removal)
-- **Reference Updates**: MUST update all field type references when struct names change
-- **Dependency Chain Rule**: Add new structs ONLY if they have dependency chains to existing structs
-- **No Orphaned Structs**: Do NOT include standalone new structs without dependency paths to existing structs
-- **Full Operations**: Perform CREATE (dependencies only), UPDATE (existing structs), DELETE, RENAME operations as needed
-- **Complete Documentation**: Include ALL field comments, examples, and validation tags from TB source
-
-### Dependency Chain Guidelines
-
-- **Trace Dependencies**: For each new struct in git diff, verify if it's referenced by existing or dependency-connected structs
-- **Name Change Detection**: Check if "new" structs are actually renamed existing structs (e.g., `TbMciReq` → `MciReq`)
-- **Follow Chains**: Include multi-level dependencies: `ExistingStruct → NewStruct1 → NewStruct2 → ...`
-- **Exclude Orphans**: Reject new structs that cannot be traced back to existing structs
-- **Examples of Valid Chains**:
-  - `TbMciInfo (existing, renamed to MciInfo) → MciCreationErrors (existing) → VmCreationError (existing)` ✅
-  - `TbSpecInfo (existing, renamed to SpecInfo) → NewSpecExtension (new)` ✅
-- **Examples of Invalid Chains**:
-  - `ReviewMciDynamicReqInfo (standalone new)` ❌
-  - `ProvisioningLog (standalone new)` ❌
-- **Rename Detection Patterns**:
-  - `TbMciReq` → `MciReq` (Tb prefix removal) ✅
-  - `TbVmDynamicReq` → `CreateSubGroupDynamicReq` (functional rename) ✅
-
-### Tool Usage Best Practices
-
-- **Terminal Operations**: Use `run_in_terminal` for all git commands and `get_terminal_output` for capturing results
-- **File Modifications**: Always use `replace_string_in_file` with sufficient context (3-5 lines before/after)
-- **Validation**: Run `get_errors` after each significant change to catch compilation issues early
-- **Search Operations**: Combine `grep_search` and `semantic_search` for comprehensive code analysis
-- **Safety Checks**: Use `list_dir` and `read_file` to verify operations and cleanup
-
-## Expected Output
-
-1. **Current State Analysis**: Complete inventory of existing structs in copied-tb-model.go
-2. **Repository Setup**: Clone CB-Tumblebug repository to temporary directory `/tmp/sync-tb-${input:version}/`
-3. **Name Change Detection**: Identify struct renames (especially Tb prefix removal patterns)
-4. **Dependency Chain Analysis**: Identify git diff changes and trace dependency chains from existing structs
-5. **Change Classification**: Categorize changes into existing struct updates vs. dependency-connected new structs vs. renamed structs
-6. **Selective Synchronization**: Apply ALL changes to existing structs, handle renames, and add ONLY dependency-connected new structs
-7. **Reference Updates**: Update all field type references when struct names change
-8. **Full Documentation Update**: Update ALL path references and version headers
-9. **Compilation Verification**: Ensure ALL changes compile without errors
-10. **Repository Cleanup**: Removal of temporary CB-Tumblebug repository
-11. **Final Validation**: Confirmation that ALL existing structs are synchronized, renames handled, and dependencies complete
-12. **Dependency Analysis Report**: Detailed dependency analysis showing struct relationships and validation
-
-## Execution Steps
+## Execution Workflow
 
 ### Phase 1: Dependency Chain Analysis
 
@@ -495,15 +483,30 @@ Follow the patterns and guidelines defined in:
 13. **`replace_string_in_file`**: Update version header and ALL source path comments
 14. **`get_errors`**: Validate Go syntax and compilation after each major change
 
-### Phase 3: Dependency Chain Validation
+### Phase 2.5: Version Files Update
 
-15. **`run_in_terminal`** + **`list_dir`**: Remove temporary CB-Tumblebug repository
-16. **`get_errors`** + **`read_file`**: Run final validation in cm-model directory
-17. **`grep_search`**: Verify NO orphaned structs exist - all new structs must connect to existing structs or be renamed existing structs
-18. **Struct Name Consistency Check**: Verify all struct name changes are applied consistently across all field type references
-19. **Dependency Path Review**: Generate summary showing dependency chains for all included new structs and handled renames
-20. **Reference Integrity Check**: Confirm all field type references use updated struct names
-21. **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py` for comprehensive dependency validation
+14.1. **`run_in_terminal`**: Extract cb-spider and cb-mapui versions from TB's docker-compose.yaml
+14.2. **`read_file`**: Read current version from go.mod
+14.3. **`replace_string_in_file`**: Update cb-tumblebug version in go.mod require section
+14.4. **`run_in_terminal`**: Run `go mod tidy` to update dependencies
+14.5. **`read_file`**: Read current versions from CM-Beetle's docker-compose.yaml
+14.6. **`replace_string_in_file`**: Update cb-tumblebug image version in docker-compose.yaml
+14.7. **`replace_string_in_file`**: Update cb-spider image version (using extracted version)
+14.8. **`replace_string_in_file`**: Update cb-mapui image version (using extracted version)
+14.9. **`get_errors`**: Verify no Go module errors after version update
+
+### Phase 3: Docker-Compose Sync & Documentation
+
+15. **`run_in_terminal`**: Compare docker-compose deployment files
+16. **`run_in_terminal`**: Copy updated files when changes detected
+17. **`replace_string_in_file`**: Add new version section to SYNC.md
+
+### Phase 4: Cleanup & Validation
+
+18. **`run_in_terminal`**: Remove temporary CB-Tumblebug repository
+19. **`get_errors`**: Run final compilation validation
+20. **`grep_search`**: Verify NO orphaned structs exist
+21. **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
 
 ## Dependency Analysis Script
 

@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.13 (commit: 555a29bd3c806401eba00d1d2a7074984e18538e)
-// * Synchronized: 2026-06-02 (Minor formatting and omitempty tag changes for NodeInfo fields)
+// * Version: CB-Tumblebug v0.12.15 (commit: 4f01927bb6e5d3f739b1c5a5cf9df1d16bab7230)
+// * Synchronized: 2026-06-15 (Added IsBasicGpuImage field to ImageInfo; updated VNetTemplateId and SgTemplateId example values in InfraDynamicReq)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -127,12 +127,12 @@ type InfraDynamicReq struct {
 	// VNetTemplateId specifies the vNet template ID (from system namespace) to use when
 	// auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
 	// at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
-	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:"default-vnet"`
+	VNetTemplateId string `json:"vNetTemplateId,omitempty" example:"vnet-default"`
 
 	// SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
 	// when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
 	// overridden at the NodeGroup level. If empty, the default all-open behavior is used.
-	SgTemplateId string `json:"sgTemplateId,omitempty" example:"default-sg"`
+	SgTemplateId string `json:"sgTemplateId,omitempty" example:"sg-default"`
 }
 
 // CreateNodeGroupDynamicReq is struct to get requirements to create a new server instance dynamically (with default resource option)
@@ -672,7 +672,8 @@ type ImageInfo struct {
 
 	IsGPUImage        bool `json:"isGPUImage" gorm:"column:is_gpu_image" enum:"true|false" default:"false" description:"Whether the image is GPU-enabled or not."`
 	IsKubernetesImage bool `json:"isKubernetesImage" gorm:"column:is_kubernetes_image" enum:"true|false" default:"false" description:"Whether this image can be used to create K8s nodes. For AWS/GCP, only type identifiers registered in cloudimage.csv are true."`
-	IsBasicImage      bool `json:"isBasicImage" gorm:"column:is_basic_image" enum:"true|false" default:"false" description:"Whether the image is a basic OS image or not."`
+	IsBasicImage      bool `json:"isBasicImage" gorm:"column:is_basic_image" enum:"true|false" default:"false" description:"Whether the image is a basic non-GPU OS image (clean OS install, no pre-installed GPU drivers)."`
+	IsBasicGpuImage   bool `json:"isBasicGpuImage" gorm:"column:is_basic_gpu_image" enum:"true|false" default:"false" description:"Whether the image is a basic GPU image (GPU drivers pre-installed, recommended for GPU workloads). Mutually exclusive with isBasicImage."`
 
 	OSType string `json:"osType" gorm:"column:os_type" example:"ubuntu 22.04" description:"Simplified OS name and version string"`
 

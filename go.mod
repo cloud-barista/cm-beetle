@@ -13,7 +13,7 @@ go 1.26.2
 // replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.12.13
+	github.com/cloud-barista/cb-tumblebug v0.12.15
 	github.com/cloud-barista/cm-beetle/imdl v0.1.6
 	github.com/cloud-barista/cm-beetle/transx v0.1.3
 	github.com/fsnotify/fsnotify v1.9.0
@@ -93,6 +93,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.19.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

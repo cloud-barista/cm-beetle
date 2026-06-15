@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-06-04 06:54:22*
+*Report generated: 2026-06-15 11:28:26*
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | ci2-g3, s2-g3, s4-g3a |
+| 2 | **VM Spec** | 3 | ✅ Selected | ci2-g3, s2-g3a, s4-g3 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my08-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my08-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 140758498<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 140758485<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 140758491<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 141566417<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 141566411<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 141566423<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
 
 ---
 
@@ -59,8 +59,8 @@ Summary of key infrastructure resources created or configured in the target clou
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
 | 1 | my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** ci2-g3<br>**vCPUs:** 2<br>**Memory:** 4.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 2 | my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** s2-g3<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 3 | my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** s4-g3a<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 2 | my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** s2-g3a<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 3 | my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** s4-g3<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-01
 
-**CSP ID:** 356540 | **VNet:** my08-vnet-01 | **Rules:** 15
+**CSP ID:** 358667 | **VNet:** my08-vnet-01 | **Rules:** 15
 
 **Assigned VMs:**
 
@@ -111,7 +111,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-02
 
-**CSP ID:** 356541 | **VNet:** my08-vnet-01 | **Rules:** 20
+**CSP ID:** 358669 | **VNet:** my08-vnet-01 | **Rules:** 20
 
 **Assigned VMs:**
 
@@ -145,7 +145,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-03
 
-**CSP ID:** 356542 | **VNet:** my08-vnet-01 | **Rules:** 20
+**CSP ID:** 358670 | **VNet:** my08-vnet-01 | **Rules:** 20
 
 **Assigned VMs:**
 
@@ -187,13 +187,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my08-vnet-01<br>**ID:** 139950 | 10.0.0.0/21 |
+| 1 | **Name:** my08-vnet-01<br>**ID:** 140565 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my08-subnet-01<br>**ID:** 302792 | 10.0.1.0/24 | my08-vnet-01 |
+| 1 | **Name:** my08-subnet-01<br>**ID:** 304225 | 10.0.1.0/24 | my08-vnet-01 |
 
 ### Source Network Information
 
@@ -235,7 +235,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my08-sshkey-01 | tbiub7bl1kqn2de1jkfh |  | Used by all 3 VMs |
+| 1 | my08-sshkey-01 | tbuv80qm1bkrbc9r1l0m |  | Used by all 3 VMs |
 
 ---
 
@@ -255,8 +255,8 @@ Summary of key infrastructure resources created or configured in the target clou
 | Component | Spec | Monthly Cost | Percentage |
 |-----------|------|--------------|------------|
 | ip-10-0-1-30 (migrated) | ci2-g3 | $52.56 | 22.0% |
-| ip-10-0-1-221 (migrated) | s4-g3a | $125.78 | 52.5% |
-| ip-10-0-1-138 (migrated) | s2-g3 | $61.06 | 25.5% |
+| ip-10-0-1-221 (migrated) | s4-g3 | $125.78 | 52.5% |
+| ip-10-0-1-138 (migrated) | s2-g3a | $61.06 | 25.5% |
 
 ---
 
