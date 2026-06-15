@@ -4015,6 +4015,10 @@ const docTemplate = `{
                     "description": "vm|k8s|kubernetes|container, etc.",
                     "type": "string"
                 },
+                "isBasicGpuImage": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "isBasicImage": {
                     "type": "boolean",
                     "default": false
@@ -4297,7 +4301,7 @@ const docTemplate = `{
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
                     "type": "string",
-                    "example": "default-sg"
+                    "example": "sg-default"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
@@ -4307,7 +4311,7 @@ const docTemplate = `{
                 "vNetTemplateId": {
                     "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all NodeGroups unless overridden\nat the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.",
                     "type": "string",
-                    "example": "default-vnet"
+                    "example": "vnet-default"
                 }
             }
         },
@@ -5788,7 +5792,7 @@ const docTemplate = `{
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
                     "type": "string",
-                    "example": "default-sg"
+                    "example": "sg-default"
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
@@ -5798,7 +5802,7 @@ const docTemplate = `{
                 "vNetTemplateId": {
                     "description": "VNetTemplateId specifies the vNet template ID (from system namespace) to use when\nauto-creating shared vNet resources. Propagates to all NodeGroups unless overridden\nat the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.",
                     "type": "string",
-                    "example": "default-vnet"
+                    "example": "vnet-default"
                 }
             }
         },
@@ -9252,6 +9256,10 @@ const docTemplate = `{
                 "infraType": {
                     "description": "vm|k8s|kubernetes|container, etc.",
                     "type": "string"
+                },
+                "isBasicGpuImage": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "isBasicImage": {
                     "type": "boolean",

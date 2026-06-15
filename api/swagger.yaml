@@ -344,6 +344,9 @@ definitions:
       infraType:
         description: vm|k8s|kubernetes|container, etc.
         type: string
+      isBasicGpuImage:
+        default: false
+        type: boolean
       isBasicImage:
         default: false
         type: boolean
@@ -592,7 +595,7 @@ definitions:
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
           when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
           overridden at the NodeGroup level. If empty, the default all-open behavior is used.
-        example: default-sg
+        example: sg-default
         type: string
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
@@ -604,7 +607,7 @@ definitions:
           VNetTemplateId specifies the vNet template ID (from system namespace) to use when
           auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
           at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
-        example: default-vnet
+        example: vnet-default
         type: string
     required:
     - name
@@ -1695,7 +1698,7 @@ definitions:
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
           when auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless
           overridden at the NodeGroup level. If empty, the default all-open behavior is used.
-        example: default-sg
+        example: sg-default
         type: string
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
@@ -1707,7 +1710,7 @@ definitions:
           VNetTemplateId specifies the vNet template ID (from system namespace) to use when
           auto-creating shared vNet resources. Propagates to all NodeGroups unless overridden
           at the NodeGroup level. If empty, the default hard-coded CIDR behavior is used.
-        example: default-vnet
+        example: vnet-default
         type: string
     required:
     - name
@@ -4184,6 +4187,9 @@ definitions:
       infraType:
         description: vm|k8s|kubernetes|container, etc.
         type: string
+      isBasicGpuImage:
+        default: false
+        type: boolean
       isBasicImage:
         default: false
         type: boolean
