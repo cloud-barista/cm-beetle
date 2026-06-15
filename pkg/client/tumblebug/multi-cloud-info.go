@@ -48,3 +48,30 @@ func (s *Session) ReadRegionInfo(providerName string, regionName string) (tbmode
 	log.Debug().Msgf("Retrieved region (regionId: %s) successfully", tbResp.RegionId)
 	return tbResp, nil
 }
+
+// ReadAvailableK8sVersion fetches available K8s versions for the given provider and region.
+// providerName and regionName must be lowercase (e.g., "aws", "ap-northeast-2").
+func (s *Session) ReadAvailableK8sVersion(providerName, regionName string) ([]tbmodel.K8sClusterVersionDetailAvailable, error) {
+	log.Debug().Str("providerName", providerName).Str("regionName", regionName).Msg("Reading available K8s versions")
+
+	emptyRet := []tbmodel.K8sClusterVersionDetailAvailable{}
+
+	var resBody []tbmodel.K8sClusterVersionDetailAvailable
+
+	resp, err := s.
+		SetQueryParam("providerName", providerName).
+		SetQueryParam("regionName", regionName).
+		SetResult(&resBody).
+		Get("/availableK8sVersion")
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read available K8s versions")
+		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+
+	log.Debug().Msgf("Retrieved %d available K8s versions for %s/%s", len(resBody), providerName, regionName)
+	return resBody, nil
+}

@@ -428,3 +428,74 @@ func FindBestVmOsImageNameUsedInCsp(csp string, keywords string, kwDelimiters []
 
 	return bestVmOsImageNameUsedInCsp
 }
+
+// RecommendK8sOsImage searches for a K8s-compatible OS image matching the given node's OS.
+// Returns "default" if no matching image is found (CSP provides a default K8s node image).
+func RecommendK8sOsImage(csp, region string, node onpremmodel.NodeProperty) (string, error) {
+	const nsId = "system"
+
+	falseValue := false
+	trueValue := true
+
+	osType := node.OS.ID + " " + node.OS.VersionID
+
+	searchReq := tbmodel.SearchImageRequest{
+		IsKubernetesImage:     &trueValue,
+		IncludeBasicImageOnly: &trueValue,
+		MaxResults:            func() *int { v := defaultImagesLimit; return &v }(),
+		OSArchitecture:        tbmodel.OSArchitecture(node.CPU.Architecture),
+		OSType:                osType,
+		ProviderName:          csp,
+		RegionName:            region,
+		IsGPUImage:            &falseValue,
+	}
+
+	log.Debug().Msgf("K8s image search request: %+v", searchReq)
+
+	search := func(req tbmodel.SearchImageRequest) []tbmodel.ImageInfo {
+		res, err := tbclient.NewSession().SearchVmOsImage(nsId, req)
+		if err != nil {
+			log.Warn().Err(err).Msg("K8s image search failed")
+			return nil
+		}
+		var filtered []tbmodel.ImageInfo
+		for _, img := range res.ImageList {
+			if !strings.Contains(strings.ToLower(img.CspImageName), "uefi") {
+				filtered = append(filtered, img)
+			}
+		}
+		return filtered
+	}
+
+	images := search(searchReq)
+
+	// Retry with OS ID only if no images found
+	if len(images) == 0 {
+		log.Warn().Msgf("No K8s images found with osType '%s'; retrying with OS ID only: '%s'", osType, node.OS.ID)
+		searchReq.OSType = node.OS.ID
+		images = search(searchReq)
+	}
+
+	if len(images) == 0 {
+		log.Warn().Str("csp", csp).Str("region", region).Str("os", osType).
+			Msg("No K8s-compatible OS image found; falling back to default")
+		return "default", nil
+	}
+
+	// Convert and pick best match via text similarity (same as VM)
+	imageList, err := modelconv.ConvertWithValidation[[]tbmodel.ImageInfo, []cloudmodel.ImageInfo](images)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to convert K8s image list; falling back to default")
+		return "default", nil
+	}
+
+	keywords, kwDelimiters, imgDelimiters := SetKeywordsAndDelimeters(node)
+	best := FindBestVmOsImageNameUsedInCsp(csp, keywords, kwDelimiters, imageList, imgDelimiters)
+	if best == "" {
+		log.Warn().Msg("No best K8s image match found; falling back to default")
+		return "default", nil
+	}
+
+	log.Debug().Str("imageId", best).Msg("K8s OS image recommendation completed")
+	return best, nil
+}

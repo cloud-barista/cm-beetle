@@ -300,11 +300,12 @@ func RunServer(port string) {
 	gNaming.POST("/validation", controller.ValidateNames)
 	gNaming.POST("/preview", controller.PreviewInfra)
 
-	// Recommendation APIs for K8s Cluster (new endpoints)
+	// Recommendation APIs for K8s infrastructure
+	gRecommendation.POST("/k8sInfraWithDefaults", controller.RecommendK8sInfraWithDefaults)
+
+	// Deprecated: replaced by /k8sInfraWithDefaults
 	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)
 	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)
-
-	// Deprecated: Use /k8sControlPlane and /k8sNodeGroup instead
 
 	// Recommedation APIs for resources for VM infrastructure
 	gRecommendation.POST("/resources/vNet", controller.RecommendVNet)

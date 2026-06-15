@@ -785,3 +785,62 @@ type FirewallRuleReq struct {
 	// CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
 	CIDR string `json:"CIDR" example:"0.0.0.0/0"`
 }
+
+// K8sClusterDynamicReq is struct for requirements to create K8sCluster dynamically (with default resource option).
+// Copied from CB-Tumblebug v0.12.13 src/core/model/k8scluster.go
+type K8sClusterDynamicReq struct {
+	// K8sCluster name if it is not empty.
+	Name string `json:"name" example:"k8scluster01"`
+
+	// K8s Cluster version
+	Version string `json:"version,omitempty" example:"1.29"`
+
+	Label map[string]string `json:"label,omitempty"`
+
+	Description string `json:"description,omitempty" example:"Description"`
+
+	// NodeGroup name if it is not empty
+	NodeGroupName string `json:"nodeGroupName,omitempty" example:"k8sng01"`
+
+	// SpecId is field for id of a spec in common namespace
+	SpecId string `json:"specId" validate:"required" example:"tencent+ap-seoul+S2.MEDIUM4"`
+
+	// ImageId is field for id of a image in common namespace
+	ImageId string `json:"imageId" validate:"required" example:"default"`
+
+	RootDiskType string `json:"rootDiskType,omitempty" example:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"]
+	RootDiskSize int    `json:"rootDiskSize,omitempty" example:"30"`      // Root disk size in GB. 0 = use CSP default.
+
+	OnAutoScaling   string `json:"onAutoScaling,omitempty" default:"true" example:"false"` // Must be explicitly set to "false" to disable; TB default is "true"
+	DesiredNodeSize int    `json:"desiredNodeSize,omitempty" example:"1"`
+	MinNodeSize     int    `json:"minNodeSize,omitempty" example:"1"`
+	MaxNodeSize     int    `json:"maxNodeSize,omitempty" example:"3"` // Must be explicitly set; TB default is 2
+
+	// if ConnectionName is given, the cluster uses the associated credential.
+	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2"`
+}
+
+// K8sNodeGroupDynamicReq is struct for requirements to create K8sNodeGroup dynamically (with default resource option).
+// Copied from CB-Tumblebug v0.12.13 src/core/model/k8scluster.go
+type K8sNodeGroupDynamicReq struct {
+	// K8sNodeGroup name if it is not empty.
+	Name string `json:"name" validate:"required" example:"k8sng01"`
+
+	Label map[string]string `json:"label,omitempty"`
+
+	Description string `json:"description,omitempty" example:"Description"`
+
+	// SpecId is field for id of a spec in common namespace
+	SpecId string `json:"specId" validate:"required" example:"tencent+ap-seoul+S2.MEDIUM4"`
+
+	// ImageId is field for id of a image in common namespace
+	ImageId string `json:"imageId" validate:"required" example:"default"`
+
+	RootDiskType string `json:"rootDiskType,omitempty" example:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"]
+	RootDiskSize int    `json:"rootDiskSize,omitempty" example:"30"`      // Root disk size in GB. 0 = use CSP default.
+
+	OnAutoScaling   string `json:"onAutoScaling,omitempty" default:"true" example:"false"` // Must be explicitly set to "false" to disable; TB default is "true"
+	DesiredNodeSize int    `json:"desiredNodeSize,omitempty" example:"1"`
+	MinNodeSize     int    `json:"minNodeSize,omitempty" example:"1"`
+	MaxNodeSize     int    `json:"maxNodeSize,omitempty" example:"3"` // Must be explicitly set; TB default is 2
+}

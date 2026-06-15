@@ -351,3 +351,78 @@ func RecommendK8sNodeGroup(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
 }
+
+/*
+ * K8s Infrastructure Recommendation With Defaults (K8sClusterDynamic path)
+ */
+
+// RecommendK8sInfraWithDefaultsRequest is the request body for RecommendK8sInfraWithDefaults.
+type RecommendK8sInfraWithDefaultsRequest struct {
+	DesiredCspAndRegionPair cloudmodel.CloudProperty `json:"desiredCspAndRegionPair"`
+	onpremmodel.OnpremInfra
+}
+
+// RecommendK8sInfraWithDefaults godoc
+// @ID RecommendK8sInfraWithDefaults
+// @Summary Recommend K8s infrastructure with defaults for cloud migration
+// @Description Recommend a target managed K8s cluster configuration based on source on-premise K8s infra.
+// @Description Returns K8sClusterDynamicReq (+ additional node groups) ready for cb-tumblebug k8sClusterDynamic API.
+// @Description TB auto-manages vNet/SG/SSHKey — no separate resource recommendation needed.
+// @Tags [Recommendation] K8s Infrastructure
+// @Accept  json
+// @Produce  json
+// @Param UserK8sInfra body RecommendK8sInfraWithDefaultsRequest true "Source on-premise K8s infrastructure"
+// @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedK8sCluster] "The recommended K8s cluster configuration"
+// @Failure 400 {object} model.ApiResponse[any]
+// @Failure 500 {object} model.ApiResponse[any]
+// @Router /recommendation/k8sInfraWithDefaults [post]
+func RecommendK8sInfraWithDefaults(c echo.Context) error {
+
+	desiredCsp := c.QueryParam("desiredCsp")
+	desiredRegion := c.QueryParam("desiredRegion")
+
+	reqt := &RecommendK8sInfraWithDefaultsRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	csp := reqt.DesiredCspAndRegionPair.Csp
+	if csp == "" {
+		csp = desiredCsp
+	}
+	region := reqt.DesiredCspAndRegionPair.Region
+	if region == "" {
+		region = desiredRegion
+	}
+
+	if csp == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
+	}
+	if region == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
+	}
+	if len(reqt.Nodes) == 0 {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one source node required"))
+	}
+	if reqt.K8sCluster == nil {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("K8s cluster info required (k8sCluster field)"))
+	}
+
+	ok, err := recommendation.IsValidCspAndRegion(csp, region)
+	if !ok {
+		log.Error().Err(err).Msg("invalid provider or region")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
+	}
+
+	result, err := recommendation.RecommendK8sInfraWithDefaults(csp, region, reqt.OnpremInfra)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend K8s infrastructure")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s infrastructure recommendation failed"))
+	}
+
+	return c.JSON(http.StatusOK, model.SuccessResponse(result))
+}
