@@ -221,7 +221,7 @@ func resolveK8sVersion(csp, region, sourceVersion string) (string, error) {
 
 // applyK8sMinimums enforces vCPU >= 2 and memoryGiB >= 4 on the given node.
 // Returns a modified copy; the original is unchanged.
-func applyK8sMinimums(node onpremmodel.NodeProperty) onpremmodel.NodeProperty {
+func ensureK8sMinNodeSpecs(node onpremmodel.NodeProperty) onpremmodel.NodeProperty {
 	// minK8sVCPU and minK8sMemGiB are defined in resource-k8s-spec.go (package level).
 
 	threads := node.CPU.Threads
