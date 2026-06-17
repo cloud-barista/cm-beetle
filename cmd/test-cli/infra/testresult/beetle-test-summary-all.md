@@ -6,10 +6,10 @@
 ## Test Run Information
 
 - **Date**: June 17, 2026
-- **Start Time**: 18:49:20 KST
-- **Total Duration**: 19m17.399s
+- **Start Time**: 19:45:06 KST
+- **Total Duration**: 21m37.52s
 - **Execution Mode**: parallel
-- **CM-Beetle**: v0.5.2
+- **CM-Beetle**: v0.5.2+ (8c6611e)
 - **CB-Tumblebug**: v0.12.15
 - **CB-Spider**: v0.12.30
 
@@ -31,123 +31,123 @@
 
 | # | Display Name | CSP | Region | Status | Duration | Passed | Failed | Skipped |
 |---|--------------|-----|--------|--------|----------|--------|--------|--------|
-| 1 | AWS-Seoul | AWS | ap-northeast-2 | ✅ PASS | 2m49.381s | 9/9 | 0/9 | 0/9 |
-| 2 | Azure-Busan | AZURE | koreasouth | ✅ PASS | 5m3.389s | 9/9 | 0/9 | 0/9 |
-| 3 | GCP-Seoul | GCP | asia-northeast3 | ✅ PASS | 19m8.658s | 9/9 | 0/9 | 0/9 |
-| 4 | Alibaba-Seoul | ALIBABA | ap-northeast-2 | ✅ PASS | 2m48.52s | 9/9 | 0/9 | 0/9 |
-| 5 | IBMCloud-Sydney | IBM | au-syd | ✅ PASS | 7m24.91s | 9/9 | 0/9 | 0/9 |
-| 6 | NCP-Seoul | NCP | kr | ✅ PASS | 13m53.858s | 9/9 | 0/9 | 0/9 |
+| 1 | AWS-Seoul | AWS | ap-northeast-2 | ✅ PASS | 2m54.489s | 9/9 | 0/9 | 0/9 |
+| 2 | Azure-Busan | AZURE | koreasouth | ✅ PASS | 4m55.214s | 9/9 | 0/9 | 0/9 |
+| 3 | GCP-Seoul | GCP | asia-northeast3 | ✅ PASS | 21m27.564s | 9/9 | 0/9 | 0/9 |
+| 4 | Alibaba-Seoul | ALIBABA | ap-northeast-2 | ✅ PASS | 2m54.307s | 9/9 | 0/9 | 0/9 |
+| 5 | IBMCloud-Sydney | IBM | au-syd | ✅ PASS | 6m34.943s | 9/9 | 0/9 | 0/9 |
+| 6 | NCP-Seoul | NCP | kr | ✅ PASS | 13m52.484s | 9/9 | 0/9 | 0/9 |
 
 ## Detailed Results Per CSP-Region Pair
 
 ### 1. AWS-Seoul (AWS, ap-northeast-2) — ✅ PASS
 
-- **Start Time**: 2026-06-17 18:49:23 KST
-- **Duration**: 2m49.381s
+- **Start Time**: 2026-06-17 19:45:11 KST
+- **Duration**: 2m54.489s
 - **Namespace**: mig01
 
 | Step | Endpoint / Description | Status | Duration |
 |------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 2.551s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 45.292s |
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 4.035s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 48.927s |
 | 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 44ms |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 6ms |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 14ms |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 155ms |
 | 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.315s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.283s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 47.922s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.277s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.31s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 48.37s |
 
 ### 2. Azure-Busan (AZURE, koreasouth) — ✅ PASS
 
-- **Start Time**: 2026-06-17 18:49:25 KST
-- **Duration**: 5m3.389s
+- **Start Time**: 2026-06-17 19:45:13 KST
+- **Duration**: 4m55.214s
 - **Namespace**: mig01
 
 | Step | Endpoint / Description | Status | Duration |
 |------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 5.404s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 1m45.036s |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 285ms |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 16ms |
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 4.866s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 1m38.524s |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 44ms |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 19ms |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 64ms |
 | 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.281s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.309s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 1m55.171s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.848s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.302s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 1m48.556s |
 
 ### 3. GCP-Seoul (GCP, asia-northeast3) — ✅ PASS
 
-- **Start Time**: 2026-06-17 18:49:27 KST
-- **Duration**: 19m8.658s
+- **Start Time**: 2026-06-17 19:45:16 KST
+- **Duration**: 21m27.564s
 - **Namespace**: mig01
 
 | Step | Endpoint / Description | Status | Duration |
 |------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 12.933s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 8m30.247s |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 40ms |
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 12.107s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 10m2.63s |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 35ms |
 | 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 5ms |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 37ms |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 19ms |
 | 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.278s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.32s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 9m1.853s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.306s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.351s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 9m50.47s |
 
 ### 4. Alibaba-Seoul (ALIBABA, ap-northeast-2) — ✅ PASS
 
-- **Start Time**: 2026-06-17 18:49:28 KST
-- **Duration**: 2m48.52s
+- **Start Time**: 2026-06-17 19:45:15 KST
+- **Duration**: 2m54.307s
 - **Namespace**: mig01
 
 | Step | Endpoint / Description | Status | Duration |
 |------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 4.243s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 1m4.707s |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 36ms |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 16ms |
-| 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.27s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.272s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 27.235s |
-
-### 5. IBMCloud-Sydney (IBM, au-syd) — ✅ PASS
-
-- **Start Time**: 2026-06-17 18:49:29 KST
-- **Duration**: 7m24.91s
-- **Namespace**: mig01
-
-| Step | Endpoint / Description | Status | Duration |
-|------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 22.616s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 3m41.513s |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 21ms |
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 4.549s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 1m8.859s |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 33ms |
 | 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
 | 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 14ms |
 | 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.307s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.27s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 1m39.119s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.426s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.516s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 27.862s |
 
-### 6. NCP-Seoul (NCP, kr) — ✅ PASS
+### 5. IBMCloud-Sydney (IBM, au-syd) — ✅ PASS
 
-- **Start Time**: 2026-06-17 18:49:32 KST
-- **Duration**: 13m53.858s
+- **Start Time**: 2026-06-17 19:45:16 KST
+- **Duration**: 6m34.943s
 - **Namespace**: mig01
 
 | Step | Endpoint / Description | Status | Duration |
 |------|------------------------|--------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 2m26.642s |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 7m47.528s |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 2.7s |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 19ms |
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 17.372s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 3m4.209s |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 94ms |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 5ms |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 20ms |
 | 6 | Remote SSH Accessibility | ✅ PASS | 0s |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.402s |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.398s |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 2m11.983s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.307s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.321s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 1m31.844s |
+
+### 6. NCP-Seoul (NCP, kr) — ✅ PASS
+
+- **Start Time**: 2026-06-17 19:45:18 KST
+- **Duration**: 13m52.484s
+- **Namespace**: mig01
+
+| Step | Endpoint / Description | Status | Duration |
+|------|------------------------|--------|----------|
+| 1 | `POST /beetle/recommendation/infra` | ✅ PASS | 2m25.728s |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ PASS | 7m49.03s |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ PASS | 35ms |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ PASS | 4ms |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 18ms |
+| 6 | Remote SSH Accessibility | ✅ PASS | 0s |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.293s |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 5.303s |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ PASS | 2m12.933s |
 
 ---
 
-*Generated by CM-Beetle Test CLI on 2026-06-17 18:49:20 KST*
+*Generated by CM-Beetle Test CLI on 2026-06-17 19:45:06 KST*

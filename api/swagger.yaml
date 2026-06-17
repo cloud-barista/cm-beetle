@@ -5596,7 +5596,7 @@ paths:
         name: nameSeed
         type: string
       - description: 'Reuse existing resources (VNet, SSH Key, Security Group) if
-          they already exist, instead of creating new ones (default: false)'
+          they already exist, instead of creating new ones (default: true)'
         in: query
         name: useExisting
         type: boolean
