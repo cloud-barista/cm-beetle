@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-15 11:28:21
+**Generated At:** 2026-06-17 09:59:48
 
 **Namespace:** mig01
 
@@ -28,9 +28,9 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
+| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 | s2-g3a | 2 | 8.0 | - | x86_64 | default | $0.0848 | 1 |
 | s4-g3 | 4 | 16.0 | - | x86_64 | default | $0.1747 | 1 |
-| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 
 ### VM Images
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 141566417 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.17.143<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 141566411 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.147.194<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 141566423 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 49.50.130.117<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 141723800 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.21.36<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 141723776 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.151.241<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 141723788 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.129.28<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-vnet-01 |
-| **CSP VNet ID** | 140565 |
+| **CSP VNet ID** | 140721 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my08-subnet-01 | 304225 | 10.0.1.0/24 | KR-1 |
+| my08-subnet-01 | 304609 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my08-sshkey-01 | tbuv80qm1bkrbc9r1l0m | cb-user |  |
+| my08-sshkey-01 | tb3cv6gnqqjtq478bjhf | cb-user |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-01 |
-| **CSP Security Group ID** | 358667 |
+| **CSP Security Group ID** | 359134 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 15 rules |
 
@@ -112,7 +112,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-02 |
-| **CSP Security Group ID** | 358669 |
+| **CSP Security Group ID** | 359135 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -146,7 +146,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-03 |
-| **CSP Security Group ID** | 358670 |
+| **CSP Security Group ID** | 359136 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 

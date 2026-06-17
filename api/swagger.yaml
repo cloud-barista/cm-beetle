@@ -5595,6 +5595,11 @@ paths:
         in: query
         name: nameSeed
         type: string
+      - description: 'Reuse existing resources (VNet, SSH Key, Security Group) if
+          they already exist, instead of creating new ones (default: false)'
+        in: query
+        name: useExisting
+        type: boolean
       - description: Specify the information for the targeted multi-cloud infrastructure
         in: body
         name: infraInfo

@@ -848,6 +848,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "boolean",
+                        "description": "Reuse existing resources (VNet, SSH Key, Security Group) if they already exist, instead of creating new ones (default: false)",
+                        "name": "useExisting",
+                        "in": "query"
+                    },
+                    {
                         "description": "Specify the information for the targeted multi-cloud infrastructure",
                         "name": "infraInfo",
                         "in": "body",
