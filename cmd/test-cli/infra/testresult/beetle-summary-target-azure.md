@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-17 09:51:48
+**Generated At:** 2026-06-17 10:47:32
 
 **Namespace:** mig01
 
@@ -36,15 +36,16 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 | Ubuntu 22.04 | Linux/UNIX | x86_64 | default | - | 3 |
+| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070 | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070 | Ubuntu 22.04 | Linux/UNIX | x86_64 | default | - | 2 |
+| Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 | Ubuntu 22.04 | Linux/UNIX | x86_64 | default | - | 1 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb82kusu0c69k6rr1q4b | Running | 2 vCPU, 3.9 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 52.231.193.124<br>**Private IP:** 10.0.1.6<br>**SGs:** my02-sg-01<br>**SSH:** my02-sshkey-01 |
-| my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbe6m3aautq73s0jlh0g | Running | 2 vCPU, 7.8 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 52.147.125.130<br>**Private IP:** 10.0.1.4<br>**SGs:** my02-sg-03<br>**SSH:** my02-sshkey-01 |
-| my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb82oltq848c8cgnkio9 | Running | 4 vCPU, 15.6 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 52.231.193.126<br>**Private IP:** 10.0.1.5<br>**SGs:** my02-sg-02<br>**SSH:** my02-sshkey-01 |
+| my02-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbrc1c5ene0o6mcb6c64 | Running | 2 vCPU, 3.9 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 20.200.170.43<br>**Private IP:** 10.0.1.6<br>**SGs:** my02-sg-01<br>**SSH:** my02-sshkey-01 |
+| my02-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbj82pstbuudh0ekclti | Running | 2 vCPU, 7.8 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts-gen2:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 20.200.137.64<br>**Private IP:** 10.0.1.4<br>**SGs:** my02-sg-03<br>**SSH:** my02-sshkey-01 |
+| my02-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbft43rqs51uj0konsm8 | Running | 4 vCPU, 15.6 GiB | Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070 (Canonical:0001-com-ubuntu-server-jammy-daily:22_04-daily-lts:22.04.202606070) | **VNet:** my02-vnet-01<br>**Subnet:** my02-subnet-01<br>**Public IP:** 20.200.137.165<br>**Private IP:** 10.0.1.5<br>**SGs:** my02-sg-02<br>**SSH:** my02-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +57,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my02-vnet-01 |
-| **CSP VNet ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbddgqi2dj1183v19vgv |
+| **CSP VNet ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb0fempjec5phq9dudkd |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | azure-koreasouth |
 | **Subnet Count** | 1 |
@@ -65,7 +66,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my02-subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tbddgqi2dj1183v19vgv/subnets/tbe1942dvkiic20jgk94 | 10.0.1.0/24 |  |
+| my02-subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb0fempjec5phq9dudkd/subnets/tbr8j8sn3e94ts3or2st | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +75,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my02-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/tbfraotuatfr3g37ahg9 |  |  |
+| my02-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/tb54ivdklbuh8grq6c95 |  |  |
 
 ### Security Groups
 
@@ -83,7 +84,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my02-sg-01 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tbh3bt0dle94f4ri0ob3 |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb8dghvbl0oiqkesvs4e |
 | **VNet** | my02-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +112,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my02-sg-02 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb7nel4c49853pj7975h |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tbdjq54ih70tn19b41f7 |
 | **VNet** | my02-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +145,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my02-sg-03 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb79a6f4bogclvtcnu5d |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb63r4jmc7dv5vq9vobc |
 | **VNet** | my02-vnet-01 |
 | **Rule Count** | 19 rules |
 
