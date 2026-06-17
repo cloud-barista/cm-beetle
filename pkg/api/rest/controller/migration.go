@@ -114,6 +114,7 @@ type MigrateInfraResponse struct {
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param nameSeed query string false "Optional prefix for all resource names (e.g., 'blue' → 'blue-infra101', 'blue-vnet-01'). Applied at migration time."
+// @Param useExisting query bool false "Reuse existing resources (VNet, SSH Key, Security Group) if they already exist, instead of creating new ones (default: false)"
 // @Param infraInfo body MigrateInfraRequest true "Specify the information for the targeted multi-cloud infrastructure"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Success 201 {object} model.ApiResponse[MigrateInfraResponse] "Successfully migrated to the multi-cloud infrastructure"
@@ -148,13 +149,26 @@ func MigrateInfra(c echo.Context) error {
 	}
 	infraToMigrate := common.ApplyNameSeed(req.RecommendedInfra, nameSeed)
 
+	// Parse useExisting parameter
+	useExistingStr := c.QueryParam("useExisting")
+	useExisting := false
+	if useExistingStr == "true" {
+		useExisting = true
+	}
+
 	// Validate names and referential integrity
 	if ok, detail := common.ValidateComposedNames(infraToMigrate); !ok {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Naming/Reference validation failed: "+detail))
 	}
 
 	// Create the VM infrastructure for migration
-	mciInfo, err := migration.CreateVMInfra(nsId, &infraToMigrate)
+	var mciInfo cloudmodel.VmInfraInfo
+	var err error
+	if useExisting {
+		mciInfo, err = migration.CreateInfraWithExisting(nsId, &infraToMigrate)
+	} else {
+		mciInfo, err = migration.CreateInfra(nsId, &infraToMigrate)
+	}
 
 	log.Debug().Msgf("mciInfo: %+v", mciInfo)
 

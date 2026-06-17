@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-06-15 11:21:59*
+*Report generated: 2026-06-17 09:54:19*
 
 ---
 
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_9c717fa9-619f-4b7c-b822-91e07c1250eb<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_b46d6380-e9d7-4e35-b0ba-dbd061e7d6bc<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_166faa40-e2e5-4bf4-b64c-47336e42a05f<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_7115ae2e-1d0f-49b9-8216-bd0662d688fe<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_909ba01b-556f-45a7-813d-26d2ec7217ce<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_1940ee9e-3a40-4346-ad72-a1952f261506<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-01
 
-**CSP ID:** r026-4bfabbb3-6541-43b2-805b-5fef5dc284f1 | **VNet:** my06-vnet-01 | **Rules:** 14
+**CSP ID:** r026-802d22ee-5e67-4ba1-abef-b881444eae1e | **VNet:** my06-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-02
 
-**CSP ID:** r026-13d66107-4839-490d-b014-1980cb172b81 | **VNet:** my06-vnet-01 | **Rules:** 19
+**CSP ID:** r026-beb9983e-4980-40e3-b67f-ec2f2ebc795a | **VNet:** my06-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my06-sg-03
 
-**CSP ID:** r026-430c2bee-09e8-4eb6-a141-8d150ffbc7ab | **VNet:** my06-vnet-01 | **Rules:** 19
+**CSP ID:** r026-64d541a2-d1b1-49a0-b83b-1864b7c43662 | **VNet:** my06-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my06-vnet-01<br>**ID:** r026-b4e2a562-27d6-4a0d-847d-6762e9d5562e | 10.0.0.0/21 |
+| 1 | **Name:** my06-vnet-01<br>**ID:** r026-4296ad83-e719-4db6-8e83-a52114e43f3f | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my06-subnet-01<br>**ID:** 02h7-ca5f54a7-dc3a-4df9-a6c7-4fd88c844fe0 | 10.0.1.0/24 | my06-vnet-01 |
+| 1 | **Name:** my06-subnet-01<br>**ID:** 02h7-ac2d1fc6-65f6-4328-a3c6-1b0edcd47212 | 10.0.1.0/24 | my06-vnet-01 |
 
 ### Source Network Information
 
@@ -232,7 +232,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my06-sshkey-01 | r026-d09bb3ea-0ed7-47d6-be0b-4f6f7b3f7514 | SHA256:S//fta+773hbGGcgP3Su2lf56ZptWxRszV3sVQqazF4 | Used by all 3 VMs |
+| 1 | my06-sshkey-01 | r026-58e0bc04-54b5-4295-ae1d-586e3c1c9944 | SHA256:b6MAmhZhYgXCctzObey8JcTrFVnZu1wwF7PZcWsUyls | Used by all 3 VMs |
 
 ---
 
