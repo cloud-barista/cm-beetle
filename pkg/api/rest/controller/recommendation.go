@@ -15,6 +15,7 @@ limitations under the License.
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -236,6 +237,128 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	// [Output]
 	// Returns base names only. NameSeed is applied at migration time via query param on the migration API.
 	return c.JSON(http.StatusOK, model.SuccessListResponse(recommendedInfraCandidates))
+}
+
+/*
+ * NLB-aware Infrastructure Recommendation
+ */
+
+// RecommendInfraWithNlbRequest is the request body for POST /recommendation/infraWithNlb.
+type RecommendInfraWithNlbRequest struct {
+	DesiredCsp    string                  `json:"desiredCsp"`    // Target CSP (e.g., "aws")
+	DesiredRegion string                  `json:"desiredRegion"` // Target region (e.g., "ap-northeast-2")
+	SourceInfra   onpremmodel.OnpremInfra `json:"sourceInfra"   validate:"required"`
+}
+
+// RecommendInfraWithNlbCandidates godoc
+// @ID RecommendInfraWithNlbCandidates
+// @Summary (Preview) Recommend infrastructure candidates with NLB for cloud migration
+// @Description Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.
+// @Description
+// @Description The recommendation engine:
+// @Description 1. Correlates NLB backend server IPs with source Node IPs
+// @Description 2. Normalizes backend ports via majority vote when ports differ
+// @Description 3. Assigns NLB-related nodes to shared NodeGroups (N:1), unrelated nodes to individual NodeGroups (1:1)
+// @Description 4. Finds ranked compatible spec-image pairs per NodeGroup (representative node for NLB groups)
+// @Description 5. Generates up to `limit` candidates — candidate i uses the i-th ranked pair per NodeGroup
+// @Description 6. Maps source NLB configuration to target cloud NLB model (same for all candidates)
+// @Description
+// @Description [Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).
+// @Description
+// @Description [Note] The returned `targetInfra.nodeGroups[].name` values are referenced by `targetNlbList[].targetGroup.nodeGroupId`.
+// @Description Use the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.
+// @Tags [Recommendation] Infrastructure
+// @Accept json
+// @Produce json
+// @Param desiredCsp query string false "Target CSP (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
+// @Param desiredRegion query string false "Target region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param limit query int false "Maximum number of candidates to return" default(5)
+// @Param minMatchRate query number false "Minimum match rate (0-100) for highly-matched classification" default(90.0)
+// @Param request body RecommendInfraWithNlbRequest true "Source infra including NLBs (from cm-honeybee)"
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided)"
+// @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "NLB-aware recommendation candidates"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Router /recommendation/infraWithNlb [post]
+func RecommendInfraWithNlbCandidates(c echo.Context) error {
+
+	// [Input]
+	var req RecommendInfraWithNlbRequest
+	if err := c.Bind(&req); err != nil {
+		log.Error().Err(err).Msg("Failed to bind RecommendInfraWithNlbCandidates request")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	// Query params take priority over request body values.
+	if qp := c.QueryParam("desiredCsp"); qp != "" {
+		req.DesiredCsp = qp
+	}
+	if qp := c.QueryParam("desiredRegion"); qp != "" {
+		req.DesiredRegion = qp
+	}
+
+	limit := 5
+	if qp := c.QueryParam("limit"); qp != "" {
+		n, err := strconv.Atoi(qp)
+		if err != nil || n < 1 {
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("limit must be a positive integer"))
+		}
+		limit = n
+	}
+
+	minMatchRate := 90.0
+	if qp := c.QueryParam("minMatchRate"); qp != "" {
+		r, err := strconv.ParseFloat(qp, 64)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("minMatchRate must be a number (0-100)"))
+		}
+		minMatchRate = r
+	}
+
+	if len(req.SourceInfra.Nodes) == 0 {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("sourceInfra.nodes is required"))
+	}
+	if len(req.SourceInfra.NLBs) == 0 {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(
+			"sourceInfra.nlbs is required for infraWithNlb; use /recommendation/infra for NLB-free recommendation"))
+	}
+
+	log.Info().
+		Str("desiredCsp", req.DesiredCsp).
+		Str("desiredRegion", req.DesiredRegion).
+		Int("nodes", len(req.SourceInfra.Nodes)).
+		Int("nlbs", len(req.SourceInfra.NLBs)).
+		Int("limit", limit).
+		Float64("minMatchRate", minMatchRate).
+		Msg("Processing infraWithNlb recommendation request")
+
+	// [Process]
+	candidates, err := recommendation.RecommendInfraWithNlbCandidates(
+		req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("infraWithNlb recommendation failed")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// [Output]
+	nlbCount := 0
+	ngCount := 0
+	if len(candidates) > 0 {
+		nlbCount = len(candidates[0].TargetNlbList)
+		ngCount = len(candidates[0].TargetInfra.NodeGroups)
+	}
+	successMsg := fmt.Sprintf(
+		"%d candidate(s) recommended — each with %d NLB(s) and %d NodeGroup(s)",
+		len(candidates), nlbCount, ngCount)
+
+	log.Info().
+		Int("candidates", len(candidates)).
+		Int("nodeGroups", ngCount).
+		Int("nlbs", nlbCount).
+		Msg("infraWithNlb recommendation completed")
+
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(candidates, successMsg))
 }
 
 /*

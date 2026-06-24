@@ -245,6 +245,264 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/middleware/ns/{nsId}/infra/{infraId}/nlb": {
+            "get": {
+                "description": "Get the list of all NLBs in the specified namespace and infra",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                ],
+                "summary": "List NLBs in a cloud infra",
+                "operationId": "ListNlbs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Infra ID",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "NLB list",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_MigratedNlbInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Migrate NLBs to the target cloud infra based on recommendation results.\n\n[Prerequisites]\n- The target Namespace (nsId) must exist.\n- The target Infra (infraId) must exist and have at least one NodeGroup in Running state.\n- Each ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + ` must reference an existing NodeGroup in the Infra.\n\n[Note] Input should be the ` + "`" + `targetNlbList` + "`" + ` field from the POST /recommendation/infraWithNlb response.\nEnsure ` + "`" + `targetGroup.nodeGroupId` + "`" + ` matches the NodeGroup IDs created during infra migration.\n\n[Note] All NLBs are attempted independently. Partial success is possible.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                ],
+                "summary": "(Preview) Migrate NLBs to a cloud infra",
+                "operationId": "MigrateNlbs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Infra ID (target infra with NodeGroups already created)",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "NLB migration request (use targetNlbList[] from /recommendation/infraWithNlb)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cloudmodel.RecommendedNlb"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "NLBs created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_MigratedNlbResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during NLB creation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}": {
+            "get": {
+                "description": "Get details of a specific NLB",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                ],
+                "summary": "Get NLB details",
+                "operationId": "GetNlb",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Infra ID",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "NLB ID",
+                        "name": "nlbId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "NLB details",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_MigratedNlbInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "NLB not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific NLB from the target infra",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                ],
+                "summary": "Delete an NLB",
+                "operationId": "DeleteNlb",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Infra ID",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "NLB ID",
+                        "name": "nlbId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "NLB deleted (includes 15s settle wait for CSP async cleanup)"
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/migration/middleware/ns/{nsId}/objectStorage": {
             "get": {
                 "description": "Get the list of all object storages (buckets) in the namespace",
@@ -255,7 +513,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "List object storages (buckets)",
                 "operationId": "ListObjectStorages",
@@ -305,7 +563,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Migrate object storages to cloud",
                 "operationId": "MigrateObjectStorage",
@@ -369,7 +627,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Get object storage (bucket) details",
                 "operationId": "GetObjectStorage",
@@ -432,7 +690,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Delete object storage (bucket)",
                 "operationId": "DeleteObjectStorage",
@@ -503,7 +761,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Check object storage (bucket) existence",
                 "operationId": "ExistObjectStorage",
@@ -565,7 +823,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "List objects in an object storage bucket",
                 "operationId": "ListObjectStorageObjects",
@@ -630,7 +888,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Delete an object from an object storage bucket",
                 "operationId": "DeleteStorageObject",
@@ -697,7 +955,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Managed middleware (preview)"
+                    "[Migration] Managed Object Storage"
                 ],
                 "summary": "Get metadata of an object in an object storage bucket",
                 "operationId": "GetStorageObject",
@@ -2503,6 +2761,94 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/infraWithNlb": {
+            "post": {
+                "description": "Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.\n\nThe recommendation engine:\n1. Correlates NLB backend server IPs with source Node IPs\n2. Normalizes backend ports via majority vote when ports differ\n3. Assigns NLB-related nodes to shared NodeGroups (N:1), unrelated nodes to individual NodeGroups (1:1)\n4. Finds ranked compatible spec-image pairs per NodeGroup (representative node for NLB groups)\n5. Generates up to ` + "`" + `limit` + "`" + ` candidates — candidate i uses the i-th ranked pair per NodeGroup\n6. Maps source NLB configuration to target cloud NLB model (same for all candidates)\n\n[Note] ` + "`" + `sourceInfra.nlbs` + "`" + ` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n[Note] The returned ` + "`" + `targetInfra.nodeGroups[].name` + "`" + ` values are referenced by ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + `.\nUse the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "(Preview) Recommend infrastructure candidates with NLB for cloud migration",
+                "operationId": "RecommendInfraWithNlbCandidates",
+                "parameters": [
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Target CSP (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Target region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Maximum number of candidates to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "default": 90,
+                        "description": "Minimum match rate (0-100) for highly-matched classification",
+                        "name": "minMatchRate",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Source infra including NLBs (from cm-honeybee)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendInfraWithNlbRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided)",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "NLB-aware recommendation candidates",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -4553,6 +4899,185 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.MigratedNlbHealth": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "type": "integer"
+                },
+                "result": {
+                    "type": "string"
+                },
+                "threshold": {
+                    "type": "integer"
+                },
+                "timeout": {
+                    "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.MigratedNlbInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "healthChecker": {
+                    "$ref": "#/definitions/cloudmodel.MigratedNlbHealth"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "listener": {
+                    "$ref": "#/definitions/cloudmodel.MigratedNlbListener"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetGroup": {
+                    "$ref": "#/definitions/cloudmodel.MigratedNlbTarget"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.MigratedNlbListener": {
+            "type": "object",
+            "properties": {
+                "dnsName": {
+                    "type": "string"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.MigratedNlbResult": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "nlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.MigratedNlbInfo"
+                    }
+                },
+                "status": {
+                    "description": "\"created\" | \"partial\" | \"failed\"",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.MigratedNlbTarget": {
+            "type": "object",
+            "properties": {
+                "nodeGroupId": {
+                    "type": "string"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "port": {
+                    "type": "string"
+                },
+                "protocol": {
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NlbHealthCheckerReq": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "description": "Health check interval in seconds",
+                    "type": "integer"
+                },
+                "threshold": {
+                    "description": "Unhealthy threshold count",
+                    "type": "integer"
+                },
+                "timeout": {
+                    "description": "Health check timeout in seconds",
+                    "type": "integer"
+                }
+            }
+        },
+        "cloudmodel.NlbListenerReq": {
+            "type": "object",
+            "properties": {
+                "port": {
+                    "description": "\"1\"–\"65535\"",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "TCP | UDP",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NlbReq": {
+            "type": "object",
+            "properties": {
+                "cspResourceId": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "healthChecker": {
+                    "$ref": "#/definitions/cloudmodel.NlbHealthCheckerReq"
+                },
+                "listener": {
+                    "$ref": "#/definitions/cloudmodel.NlbListenerReq"
+                },
+                "scope": {
+                    "description": "REGION | GLOBAL",
+                    "type": "string"
+                },
+                "targetGroup": {
+                    "$ref": "#/definitions/cloudmodel.NlbTargetGroupReq"
+                },
+                "type": {
+                    "description": "PUBLIC | INTERNAL",
+                    "type": "string"
+                }
+            }
+        },
+        "cloudmodel.NlbTargetGroupReq": {
+            "type": "object",
+            "properties": {
+                "nodeGroupId": {
+                    "description": "NodeGroup ID in the target Infra",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Backend port",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "TCP | HTTP | HTTPS",
+                    "type": "string"
+                }
+            }
+        },
         "cloudmodel.NodeCreationError": {
             "type": "object",
             "properties": {
@@ -4825,6 +5350,12 @@ const docTemplate = `{
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
                 "targetOsImageList": {
                     "type": "array",
                     "items": {
@@ -4862,6 +5393,20 @@ const docTemplate = `{
                 },
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraDynamicReq"
+                }
+            }
+        },
+        "cloudmodel.RecommendedNlb": {
+            "type": "object",
+            "required": [
+                "targetNlbList"
+            ],
+            "properties": {
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
                 }
             }
         },
@@ -5593,6 +6138,12 @@ const docTemplate = `{
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
                 "targetOsImageList": {
                     "type": "array",
                     "items": {
@@ -5998,6 +6549,25 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.RecommendInfraWithNlbRequest": {
+            "type": "object",
+            "required": [
+                "sourceInfra"
+            ],
+            "properties": {
+                "desiredCsp": {
+                    "description": "Target CSP (e.g., \"aws\")",
+                    "type": "string"
+                },
+                "desiredRegion": {
+                    "description": "Target region (e.g., \"ap-northeast-2\")",
+                    "type": "string"
+                },
+                "sourceInfra": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
         "controller.RecommendObjectStorageRequest": {
             "type": "object",
             "required": [
@@ -6156,6 +6726,33 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-array_cloudmodel_MigratedNlbInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.MigratedNlbInfo"
+                    }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-array_cloudmodel_RecommendedInfra": {
             "type": "object",
             "properties": {
@@ -6219,6 +6816,62 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/cloudmodel.InfraInfoList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_MigratedNlbInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MigratedNlbInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-cloudmodel_MigratedNlbResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.MigratedNlbResult"
                         }
                     ]
                 },
@@ -8135,6 +8788,116 @@ const docTemplate = `{
                 }
             }
         },
+        "onpremisemodel.NlbBackendProperty": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "description": "\"roundrobin\" | \"leastconn\" | \"source\" (note only)",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Backend section name",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"http\"",
+                    "type": "string"
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NlbServerProperty"
+                    }
+                }
+            }
+        },
+        "onpremisemodel.NlbHealthCheckProperty": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "interval": {
+                    "description": "seconds; default 10",
+                    "type": "integer"
+                },
+                "port": {
+                    "description": "0 = same as server port",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"http\"",
+                    "type": "string"
+                },
+                "threshold": {
+                    "description": "default 3",
+                    "type": "integer"
+                },
+                "timeout": {
+                    "description": "seconds; default 10",
+                    "type": "integer"
+                }
+            }
+        },
+        "onpremisemodel.NlbListenerProperty": {
+            "type": "object",
+            "properties": {
+                "bindAddress": {
+                    "description": "\"*\" = all interfaces (→ PUBLIC), specific IP = INTERNAL",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Listener port (1–65535)",
+                    "type": "integer"
+                },
+                "protocol": {
+                    "description": "\"tcp\" | \"udp\"",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NlbProperty": {
+            "type": "object",
+            "properties": {
+                "backend": {
+                    "$ref": "#/definitions/onpremisemodel.NlbBackendProperty"
+                },
+                "healthCheck": {
+                    "$ref": "#/definitions/onpremisemodel.NlbHealthCheckProperty"
+                },
+                "hostMachineId": {
+                    "description": "MachineId of the node running HAProxy",
+                    "type": "string"
+                },
+                "listener": {
+                    "$ref": "#/definitions/onpremisemodel.NlbListenerProperty"
+                },
+                "software": {
+                    "description": "\"haproxy\"",
+                    "type": "string"
+                }
+            }
+        },
+        "onpremisemodel.NlbServerProperty": {
+            "type": "object",
+            "properties": {
+                "ip": {
+                    "description": "Server IP; used for IP correlation at recommendation time",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Server port",
+                    "type": "integer"
+                },
+                "weight": {
+                    "description": "Traffic weight (reference only)",
+                    "type": "integer"
+                }
+            }
+        },
         "onpremisemodel.NodeProperty": {
             "type": "object",
             "properties": {
@@ -8204,6 +8967,13 @@ const docTemplate = `{
                 },
                 "network": {
                     "$ref": "#/definitions/onpremisemodel.NetworkProperty"
+                },
+                "nlbs": {
+                    "description": "NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.\nPopulated by cm-honeybee when HAProxy is detected on a node.\nUsed exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/onpremisemodel.NlbProperty"
+                    }
                 },
                 "nodes": {
                     "type": "array",

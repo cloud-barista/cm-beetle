@@ -785,6 +785,126 @@ definitions:
       longitude:
         type: number
     type: object
+  cloudmodel.MigratedNlbHealth:
+    properties:
+      interval:
+        type: integer
+      result:
+        type: string
+      threshold:
+        type: integer
+      timeout:
+        type: integer
+    type: object
+  cloudmodel.MigratedNlbInfo:
+    properties:
+      description:
+        type: string
+      healthChecker:
+        $ref: '#/definitions/cloudmodel.MigratedNlbHealth'
+      id:
+        type: string
+      listener:
+        $ref: '#/definitions/cloudmodel.MigratedNlbListener'
+      name:
+        type: string
+      scope:
+        type: string
+      status:
+        type: string
+      targetGroup:
+        $ref: '#/definitions/cloudmodel.MigratedNlbTarget'
+      type:
+        type: string
+    type: object
+  cloudmodel.MigratedNlbListener:
+    properties:
+      dnsName:
+        type: string
+      ip:
+        type: string
+      port:
+        type: string
+      protocol:
+        type: string
+    type: object
+  cloudmodel.MigratedNlbResult:
+    properties:
+      description:
+        type: string
+      nlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.MigratedNlbInfo'
+        type: array
+      status:
+        description: '"created" | "partial" | "failed"'
+        type: string
+    type: object
+  cloudmodel.MigratedNlbTarget:
+    properties:
+      nodeGroupId:
+        type: string
+      nodes:
+        items:
+          type: string
+        type: array
+      port:
+        type: string
+      protocol:
+        type: string
+    type: object
+  cloudmodel.NlbHealthCheckerReq:
+    properties:
+      interval:
+        description: Health check interval in seconds
+        type: integer
+      threshold:
+        description: Unhealthy threshold count
+        type: integer
+      timeout:
+        description: Health check timeout in seconds
+        type: integer
+    type: object
+  cloudmodel.NlbListenerReq:
+    properties:
+      port:
+        description: '"1"–"65535"'
+        type: string
+      protocol:
+        description: TCP | UDP
+        type: string
+    type: object
+  cloudmodel.NlbReq:
+    properties:
+      cspResourceId:
+        type: string
+      description:
+        type: string
+      healthChecker:
+        $ref: '#/definitions/cloudmodel.NlbHealthCheckerReq'
+      listener:
+        $ref: '#/definitions/cloudmodel.NlbListenerReq'
+      scope:
+        description: REGION | GLOBAL
+        type: string
+      targetGroup:
+        $ref: '#/definitions/cloudmodel.NlbTargetGroupReq'
+      type:
+        description: PUBLIC | INTERNAL
+        type: string
+    type: object
+  cloudmodel.NlbTargetGroupReq:
+    properties:
+      nodeGroupId:
+        description: NodeGroup ID in the target Infra
+        type: string
+      port:
+        description: Backend port
+        type: string
+      protocol:
+        description: TCP | HTTP | HTTPS
+        type: string
+    type: object
   cloudmodel.NodeCreationError:
     properties:
       error:
@@ -983,6 +1103,10 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
       targetOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -1008,6 +1132,15 @@ definitions:
         type: string
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraDynamicReq'
+    type: object
+  cloudmodel.RecommendedNlb:
+    properties:
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+    required:
+    - targetNlbList
     type: object
   cloudmodel.RecommendedOsImage:
     properties:
@@ -1516,6 +1649,10 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
       targetOsImageList:
         items:
           $ref: '#/definitions/cloudmodel.ImageInfo'
@@ -1849,6 +1986,19 @@ definitions:
           $ref: '#/definitions/cloudmodel.RecommendedInfraDynamic'
         type: array
     type: object
+  controller.RecommendInfraWithNlbRequest:
+    properties:
+      desiredCsp:
+        description: Target CSP (e.g., "aws")
+        type: string
+      desiredRegion:
+        description: Target region (e.g., "ap-northeast-2")
+        type: string
+      sourceInfra:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    required:
+    - sourceInfra
+    type: object
   controller.RecommendObjectStorageRequest:
     properties:
       desiredCloud:
@@ -1961,6 +2111,26 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-array_cloudmodel_MigratedNlbInfo:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+        items:
+          $ref: '#/definitions/cloudmodel.MigratedNlbInfo'
+        type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-array_cloudmodel_RecommendedInfra:
     properties:
       data:
@@ -2005,6 +2175,44 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/cloudmodel.InfraInfoList'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-cloudmodel_MigratedNlbInfo:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MigratedNlbInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-cloudmodel_MigratedNlbResult:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.MigratedNlbResult'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -3397,6 +3605,83 @@ definitions:
         - $ref: '#/definitions/onpremisemodel.NetworkDetail'
         description: TBD
     type: object
+  onpremisemodel.NlbBackendProperty:
+    properties:
+      balance:
+        description: '"roundrobin" | "leastconn" | "source" (note only)'
+        type: string
+      name:
+        description: Backend section name
+        type: string
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbServerProperty'
+        type: array
+    type: object
+  onpremisemodel.NlbHealthCheckProperty:
+    properties:
+      enabled:
+        type: boolean
+      interval:
+        description: seconds; default 10
+        type: integer
+      port:
+        description: 0 = same as server port
+        type: integer
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      threshold:
+        description: default 3
+        type: integer
+      timeout:
+        description: seconds; default 10
+        type: integer
+    type: object
+  onpremisemodel.NlbListenerProperty:
+    properties:
+      bindAddress:
+        description: '"*" = all interfaces (→ PUBLIC), specific IP = INTERNAL'
+        type: string
+      port:
+        description: Listener port (1–65535)
+        type: integer
+      protocol:
+        description: '"tcp" | "udp"'
+        type: string
+    type: object
+  onpremisemodel.NlbProperty:
+    properties:
+      backend:
+        $ref: '#/definitions/onpremisemodel.NlbBackendProperty'
+      healthCheck:
+        $ref: '#/definitions/onpremisemodel.NlbHealthCheckProperty'
+      hostMachineId:
+        description: MachineId of the node running HAProxy
+        type: string
+      listener:
+        $ref: '#/definitions/onpremisemodel.NlbListenerProperty'
+      software:
+        description: '"haproxy"'
+        type: string
+    type: object
+  onpremisemodel.NlbServerProperty:
+    properties:
+      ip:
+        description: Server IP; used for IP correlation at recommendation time
+        type: string
+      name:
+        type: string
+      port:
+        description: Server port
+        type: integer
+      weight:
+        description: Traffic weight (reference only)
+        type: integer
+    type: object
   onpremisemodel.NodeProperty:
     properties:
       cpu:
@@ -3442,6 +3727,14 @@ definitions:
           (e.g., OpenShift, Rancher) are needed.'
       network:
         $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      nlbs:
+        description: |-
+          NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.
+          Populated by cm-honeybee when HAProxy is detected on a node.
+          Used exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbProperty'
+        type: array
       nodes:
         items:
           $ref: '#/definitions/onpremisemodel.NodeProperty'
@@ -5139,6 +5432,193 @@ paths:
       summary: '[TEST ONLY] Encrypt sensitive fields in data migration model'
       tags:
       - '[Migration] Data (incubating)'
+  /migration/middleware/ns/{nsId}/infra/{infraId}/nlb:
+    get:
+      consumes:
+      - application/json
+      description: Get the list of all NLBs in the specified namespace and infra
+      operationId: ListNlbs
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Infra ID
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: NLB list
+          schema:
+            $ref: '#/definitions/model.ApiResponse-array_cloudmodel_MigratedNlbInfo'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: List NLBs in a cloud infra
+      tags:
+      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Migrate NLBs to the target cloud infra based on recommendation results.
+
+        [Prerequisites]
+        - The target Namespace (nsId) must exist.
+        - The target Infra (infraId) must exist and have at least one NodeGroup in Running state.
+        - Each `targetNlbList[].targetGroup.nodeGroupId` must reference an existing NodeGroup in the Infra.
+
+        [Note] Input should be the `targetNlbList` field from the POST /recommendation/infraWithNlb response.
+        Ensure `targetGroup.nodeGroupId` matches the NodeGroup IDs created during infra migration.
+
+        [Note] All NLBs are attempted independently. Partial success is possible.
+      operationId: MigrateNlbs
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Infra ID (target infra with NodeGroups already created)
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - description: NLB migration request (use targetNlbList[] from /recommendation/infraWithNlb)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/cloudmodel.RecommendedNlb'
+      - description: Unique request ID (auto-generated if not provided)
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: NLBs created successfully
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_MigratedNlbResult'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during NLB creation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (Preview) Migrate NLBs to a cloud infra
+      tags:
+      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+  /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific NLB from the target infra
+      operationId: DeleteNlb
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Infra ID
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - description: NLB ID
+        in: path
+        name: nlbId
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: NLB deleted (includes 15s settle wait for CSP async cleanup)
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Delete an NLB
+      tags:
+      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific NLB
+      operationId: GetNlb
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Infra ID
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - description: NLB ID
+        in: path
+        name: nlbId
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: NLB details
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_MigratedNlbInfo'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: NLB not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get NLB details
+      tags:
+      - '[Migration] Managed Network Load Balancer (NLB) - preview'
   /migration/middleware/ns/{nsId}/objectStorage:
     get:
       consumes:
@@ -5174,7 +5654,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: List object storages (buckets)
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
     post:
       consumes:
       - application/json
@@ -5232,7 +5712,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Migrate object storages to cloud
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
   /migration/middleware/ns/{nsId}/objectStorage/{osId}:
     delete:
       consumes:
@@ -5290,7 +5770,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete object storage (bucket)
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
     get:
       consumes:
       - application/json
@@ -5334,7 +5814,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get object storage (bucket) details
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
     head:
       consumes:
       - application/json
@@ -5380,7 +5860,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Check object storage (bucket) existence
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
   /migration/middleware/ns/{nsId}/objectStorage/{osId}/object:
     get:
       consumes:
@@ -5426,7 +5906,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: List objects in an object storage bucket
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
   /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey}:
     delete:
       consumes:
@@ -5477,7 +5957,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete an object from an object storage bucket
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
     head:
       consumes:
       - application/json
@@ -5529,7 +6009,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get metadata of an object in an object storage bucket
       tags:
-      - '[Migration] Managed middleware (preview)'
+      - '[Migration] Managed Object Storage'
   /migration/ns/{nsId}/infra:
     get:
       consumes:
@@ -6805,6 +7285,81 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
         multi-cloud infrastructure) with defaults for cloud migration
+      tags:
+      - '[Recommendation] Infrastructure'
+  /recommendation/infraWithNlb:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.
+
+        The recommendation engine:
+        1. Correlates NLB backend server IPs with source Node IPs
+        2. Normalizes backend ports via majority vote when ports differ
+        3. Assigns NLB-related nodes to shared NodeGroups (N:1), unrelated nodes to individual NodeGroups (1:1)
+        4. Finds ranked compatible spec-image pairs per NodeGroup (representative node for NLB groups)
+        5. Generates up to `limit` candidates — candidate i uses the i-th ranked pair per NodeGroup
+        6. Maps source NLB configuration to target cloud NLB model (same for all candidates)
+
+        [Note] `sourceInfra.nlbs` must be populated (HAProxy frontend-backend pairs from cm-honeybee).
+
+        [Note] The returned `targetInfra.nodeGroups[].name` values are referenced by `targetNlbList[].targetGroup.nodeGroupId`.
+        Use the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.
+      operationId: RecommendInfraWithNlbCandidates
+      parameters:
+      - default: aws
+        description: Target CSP (e.g., aws, azure, gcp)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        in: query
+        name: desiredCsp
+        type: string
+      - default: ap-northeast-2
+        description: Target region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - default: 5
+        description: Maximum number of candidates to return
+        in: query
+        name: limit
+        type: integer
+      - default: 90
+        description: Minimum match rate (0-100) for highly-matched classification
+        in: query
+        name: minMatchRate
+        type: number
+      - description: Source infra including NLBs (from cm-honeybee)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendInfraWithNlbRequest'
+      - description: Unique request ID (auto-generated if not provided)
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: NLB-aware recommendation candidates
+          schema:
+            $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (Preview) Recommend infrastructure candidates with NLB for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/k8sControlPlane:

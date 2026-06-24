@@ -6,6 +6,8 @@ type RecommendedInfraModel struct {
 }
 
 // RecommendedInfra represents the recommended virtual machine infrastructure information.
+// When NLB-aware recommendation is performed (POST /recommendation/infraWithNlb),
+// TargetNlbList is populated; otherwise it is omitted.
 type RecommendedInfra struct {
 	Status                  string             `json:"status"`
 	Description             string             `json:"description"`
@@ -16,6 +18,21 @@ type RecommendedInfra struct {
 	TargetSpecList          []SpecInfo         `json:"targetSpecList"`
 	TargetOsImageList       []ImageInfo        `json:"targetOsImageList"`
 	TargetSecurityGroupList []SecurityGroupReq `json:"targetSecurityGroupList"`
+	TargetNlbList           []NlbReq           `json:"targetNlbList,omitempty"`
+}
+
+// RecommendedNlb is the request body for POST /migration/middleware/ns/{nsId}/infra/{infraId}/nlb.
+// Use the TargetNlbList field from RecommendedInfra directly as input.
+// Ensure each NlbReq.TargetGroup.NodeGroupId matches an existing NodeGroup in the target Infra.
+type RecommendedNlb struct {
+	TargetNlbList []NlbReq `json:"targetNlbList" validate:"required"`
+}
+
+// MigratedNlbResult is the response returned after NLB migration.
+type MigratedNlbResult struct {
+	Status      string            `json:"status"` // "created" | "partial" | "failed"
+	Description string            `json:"description"`
+	NlbList     []MigratedNlbInfo `json:"nlbList"`
 }
 
 // CloudProperty represents the cloud service provider (CSP) information.

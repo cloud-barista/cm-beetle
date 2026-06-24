@@ -1,0 +1,409 @@
+{
+  "desiredCsp": "aws",
+  "desiredRegion": "ap-northeast-2",
+  "sourceInfra": {
+    "network": {
+      "ipv4Networks": {
+        "defaultGateways": [
+          {
+            "interfaceName": "ens5",
+            "ip": "10.0.1.1",
+            "machineId": "ec268ed7-821e-9d73-e79f-961262161624"
+          },
+          {
+            "interfaceName": "ens5",
+            "ip": "10.0.1.1",
+            "machineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932"
+          },
+          {
+            "interfaceName": "ens5",
+            "ip": "10.0.1.1",
+            "machineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf"
+          }
+        ]
+      },
+      "ipv6Networks": {}
+    },
+    "nodes": [
+      {
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 1,
+          "cpus": 1,
+          "maxSpeed": 2.499,
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "threads": 2,
+          "vendor": "GenuineIntel"
+        },
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "9999",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "outbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "hostname": "ip-10-0-1-30",
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "name": "lo",
+            "state": "up"
+          },
+          {
+            "ipv4CidrBlocks": [
+              "10.0.1.30/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::6f:deff:fefc:71b1/64"
+            ],
+            "macAddress": "02:6f:de:fc:71:b1",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "machineId": "ec268ed7-821e-9d73-e79f-961262161624",
+        "memory": {
+          "available": 1,
+          "totalSize": 2,
+          "type": "DDR4"
+        },
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        },
+        "rootDisk": {
+          "label": "",
+          "totalSize": 8,
+          "type": "SSD"
+        },
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          }
+        ]
+      },
+      {
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 2,
+          "cpus": 1,
+          "maxSpeed": 2.499,
+          "model": "Intel(R) Xeon(R) Platinum 8175M CPU @ 2.50GHz",
+          "threads": 4,
+          "vendor": "GenuineIntel"
+        },
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8086",
+            "protocol": "tcp",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "outbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "hostname": "ip-10-0-1-221",
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "name": "lo",
+            "state": "up"
+          },
+          {
+            "ipv4CidrBlocks": [
+              "10.0.1.221/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::8:96ff:fe7d:f417/64"
+            ],
+            "macAddress": "02:08:96:7d:f4:17",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "machineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
+        "memory": {
+          "available": 15,
+          "totalSize": 16,
+          "type": "DDR4"
+        },
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        },
+        "rootDisk": {
+          "label": "",
+          "totalSize": 30,
+          "type": "SSD"
+        },
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          }
+        ]
+      },
+      {
+        "cpu": {
+          "architecture": "x86_64",
+          "cores": 2,
+          "cpus": 1,
+          "maxSpeed": 2.499,
+          "model": "Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz",
+          "threads": 4,
+          "vendor": "GenuineIntel"
+        },
+        "firewallTable": [
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "22",
+            "protocol": "tcp",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "8086",
+            "protocol": "tcp",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "inbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "10.0.0.0/16",
+            "srcPorts": "*"
+          },
+          {
+            "action": "allow",
+            "direction": "outbound",
+            "dstCIDR": "0.0.0.0/0",
+            "dstPorts": "*",
+            "protocol": "*",
+            "srcCIDR": "0.0.0.0/0",
+            "srcPorts": "*"
+          }
+        ],
+        "hostname": "ip-10-0-1-138",
+        "interfaces": [
+          {
+            "ipv4CidrBlocks": [
+              "127.0.0.1/8"
+            ],
+            "ipv6CidrBlocks": [
+              "::1/128"
+            ],
+            "mtu": 65536,
+            "name": "lo",
+            "state": "up"
+          },
+          {
+            "ipv4CidrBlocks": [
+              "10.0.1.138/24"
+            ],
+            "ipv6CidrBlocks": [
+              "fe80::bf:6eff:fe6c:6e31/64"
+            ],
+            "macAddress": "02:bf:6e:6c:6e:31",
+            "mtu": 9001,
+            "name": "ens5",
+            "state": "up"
+          }
+        ],
+        "machineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "memory": {
+          "available": 7,
+          "totalSize": 8,
+          "type": "DDR4"
+        },
+        "os": {
+          "id": "ubuntu",
+          "idLike": "debian",
+          "name": "Ubuntu",
+          "prettyName": "Ubuntu 22.04.3 LTS",
+          "version": "22.04.3 LTS (Jammy Jellyfish)",
+          "versionCodename": "jammy",
+          "versionId": "22.04"
+        },
+        "rootDisk": {
+          "label": "",
+          "totalSize": 30,
+          "type": "SSD"
+        },
+        "routingTable": [
+          {
+            "destination": "0.0.0.0/0",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          },
+          {
+            "destination": "10.0.1.0/24",
+            "gateway": "10.0.1.1",
+            "interface": "ens5",
+            "linkState": "up",
+            "metric": 100,
+            "protocol": "kernel",
+            "scope": "universe"
+          }
+        ]
+      }
+    ],
+    "nlbs": [
+      {
+        "hostMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
+        "software": "haproxy",
+        "listener": {
+          "bindAddress": "*",
+          "port": 9999,
+          "protocol": "tcp"
+        },
+        "backend": {
+          "name": "influxdb_back",
+          "balance": "roundrobin",
+          "protocol": "tcp",
+          "servers": [
+            {
+              "name": "influx1",
+              "ip": "10.0.1.221",
+              "port": 8086
+            },
+            {
+              "name": "influx2",
+              "ip": "10.0.1.138",
+              "port": 8086
+            }
+          ]
+        },
+        "healthCheck": {
+          "enabled": true,
+          "interval": 10,
+          "timeout": 10,
+          "threshold": 3
+        }
+      }
+    ]
+  }
+}

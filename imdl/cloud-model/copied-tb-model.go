@@ -786,3 +786,74 @@ type FirewallRuleReq struct {
 	// CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
 	CIDR string `json:"CIDR" example:"0.0.0.0/0"`
 }
+
+// ============================================================================
+// NLB types (CB-Tumblebug v0.12.15)
+// ============================================================================
+
+// NlbReq maps to CB-Tumblebug's NLBReq for cloud NLB creation.
+// nsId and infraId are supplied as path parameters at migration time.
+type NlbReq struct {
+	CspResourceId string              `json:"cspResourceId,omitempty"`
+	Description   string              `json:"description,omitempty"`
+	Type          string              `json:"type"`  // PUBLIC | INTERNAL
+	Scope         string              `json:"scope"` // REGION | GLOBAL
+	Listener      NlbListenerReq      `json:"listener"`
+	TargetGroup   NlbTargetGroupReq   `json:"targetGroup"`
+	HealthChecker NlbHealthCheckerReq `json:"healthChecker"`
+}
+
+// NlbListenerReq mirrors CB-Tumblebug's NLBListenerReq.
+type NlbListenerReq struct {
+	Protocol string `json:"protocol"` // TCP | UDP
+	Port     string `json:"port"`     // "1"–"65535"
+}
+
+// NlbTargetGroupReq mirrors CB-Tumblebug's NLBTargetGroupReq.
+type NlbTargetGroupReq struct {
+	Protocol    string `json:"protocol"`    // TCP | HTTP | HTTPS
+	Port        string `json:"port"`        // Backend port
+	NodeGroupId string `json:"nodeGroupId"` // NodeGroup ID in the target Infra
+}
+
+// NlbHealthCheckerReq mirrors CB-Tumblebug's NLBHealthCheckerReq.
+// Note: Tumblebug accepts only interval, threshold, timeout — not protocol or port.
+type NlbHealthCheckerReq struct {
+	Interval  int `json:"interval"`  // Health check interval in seconds
+	Threshold int `json:"threshold"` // Unhealthy threshold count
+	Timeout   int `json:"timeout"`   // Health check timeout in seconds
+}
+
+// MigratedNlbInfo is a subset of Tumblebug's NLBInfo returned after creation.
+type MigratedNlbInfo struct {
+	Id          string              `json:"id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description,omitempty"`
+	Scope       string              `json:"scope"`
+	Type        string              `json:"type"`
+	Listener    MigratedNlbListener `json:"listener"`
+	TargetGroup MigratedNlbTarget   `json:"targetGroup"`
+	HealthCheck MigratedNlbHealth   `json:"healthChecker"`
+	Status      string              `json:"status,omitempty"`
+}
+
+type MigratedNlbListener struct {
+	Protocol string `json:"protocol"`
+	Port     string `json:"port"`
+	IP       string `json:"ip,omitempty"`
+	DNSName  string `json:"dnsName,omitempty"`
+}
+
+type MigratedNlbTarget struct {
+	Protocol    string   `json:"protocol"`
+	Port        string   `json:"port"`
+	NodeGroupId string   `json:"nodeGroupId,omitempty"`
+	Nodes       []string `json:"nodes,omitempty"`
+}
+
+type MigratedNlbHealth struct {
+	Interval  int    `json:"interval"`
+	Threshold int    `json:"threshold"`
+	Timeout   int    `json:"timeout"`
+	Result    string `json:"result,omitempty"`
+}
