@@ -15,8 +15,8 @@ go 1.26.2
 replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
 
 require (
-	github.com/cloud-barista/cb-tumblebug v0.12.15
-	github.com/cloud-barista/cm-beetle/imdl v0.1.6
+	github.com/cloud-barista/cb-tumblebug v0.12.19
+	github.com/cloud-barista/cm-beetle/imdl v0.1.7
 	github.com/cloud-barista/cm-beetle/transx v0.1.3
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-playground/validator/v10 v10.30.2

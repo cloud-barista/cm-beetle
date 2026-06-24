@@ -2,8 +2,8 @@ package cloudmodel
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.15 (commit: 4f01927bb6e5d3f739b1c5a5cf9df1d16bab7230)
-// * Synchronized: 2026-06-15 (Added IsBasicGpuImage field to ImageInfo; updated VNetTemplateId and SgTemplateId example values in InfraDynamicReq)
+// * Version: CB-Tumblebug v0.12.19 (commit: 6b0b110226d4d4fb4f6217db4530d54a868ecb08)
+// * Synchronized: 2026-06-24 (No struct changes for copied types; NLBFeatureSupport/NLBSupportResponse added upstream but not copied as not needed by beetle)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {

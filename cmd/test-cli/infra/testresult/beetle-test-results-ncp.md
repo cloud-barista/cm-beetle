@@ -7,19 +7,19 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.2+ (8c6611e)
-- imdl: v0.1.6+ (8c6611e)
-- CB-Tumblebug: v0.12.15
-- CB-Spider: v0.12.30
-- CB-MapUI: v0.12.39
+- CM-Beetle: v0.5.2+ (1c7e6cd)
+- imdl: v0.1.7
+- CB-Tumblebug: v0.12.19
+- CB-Spider: v0.12.32
+- CB-MapUI: v0.12.43
 - Target CSP: NCP
 - Target Region: kr
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: June 17, 2026
-- Test Time: 19:45:18 KST
-- Test Execution: 2026-06-17 19:45:18 KST
+- Test Date: June 24, 2026
+- Test Time: 18:52:38 KST
+- Test Execution: 2026-06-24 18:52:38 KST
 
 ### Scenario
 
@@ -42,21 +42,21 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/infra` | ✅ **PASS** | 2m25.728s | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 7m49.03s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 35ms | Pass |
+| 1 | `POST /beetle/recommendation/infra` | ✅ **PASS** | 2m14.947s | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 7m33.298s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 1.785s | Pass |
 | 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 4ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 18ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 20ms | Pass |
 | 6 | Remote Command Accessibility Check | ✅ **PASS** | 0s | Pass |
-| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.293s | Pass |
-| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.303s | Pass |
-| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 2m12.933s | Pass |
+| 7 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.271s | Pass |
+| 8 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.272s | Pass |
+| 9 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 2m40.815s | Pass |
 
 **Overall Result**: 9/9 tests passed ✅
 
-**Total Duration**: 13m52.484934992s
+**Total Duration**: 13m54.870589013s
 
-*Test executed on June 17, 2026 at 19:45:18 KST (2026-06-17 19:45:18 KST) using CM-Beetle automated test CLI*
+*Test executed on June 24, 2026 at 18:52:38 KST (2026-06-24 18:52:38 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -3733,7 +3733,7 @@
 {
   "resourceType": "infra",
   "id": "my08-infra101",
-  "uid": "tbrthbuo412bd1m4pkib",
+  "uid": "tbhrf3lne7rc90b3e7jl",
   "name": "my08-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -3761,7 +3761,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my08-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbrthbuo412bd1m4pkib"
+    "sys.uid": "tbhrf3lne7rc90b3e7jl"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3770,9 +3770,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb1207jt5bjv1qojs1iu",
-      "cspResourceName": "tb1207jt5bjv1qojs1iu",
-      "cspResourceId": "141727081",
+      "uid": "tb06c4jm4li058t05mu2",
+      "cspResourceName": "tb06c4jm4li058t05mu2",
+      "cspResourceId": "142258867",
       "name": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -3786,13 +3786,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:38",
+      "createdTime": "2026-06-24 10:01:51",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:38",
-        "sys.cspResourceId": "141727081",
-        "sys.cspResourceName": "tb1207jt5bjv1qojs1iu",
+        "sys.createdTime": "2026-06-24 10:01:51",
+        "sys.cspResourceId": "142258867",
+        "sys.cspResourceName": "tb06c4jm4li058t05mu2",
         "sys.id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -3801,7 +3801,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tb1207jt5bjv1qojs1iu",
+        "sys.uid": "tb06c4jm4li058t05mu2",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
@@ -3809,12 +3809,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.23.3",
+      "publicIP": "110.165.16.234",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -3864,22 +3864,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:54Z"
+        "firstUsedAt": "2026-06-24T10:02:20Z"
       },
       "commandStatus": [
         {
@@ -3887,22 +3887,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:55Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727081"
+          "value": "142258867"
         },
         {
           "key": "ServerName",
-          "value": "tb1207jt5bjv1qojs1iu"
+          "value": "tb06c4jm4li058t05mu2"
         },
         {
           "key": "CpuCount",
@@ -3918,7 +3918,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -3934,11 +3934,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:32+0900"
+          "value": "2026-06-24T18:57:57+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:43+0900"
+          "value": "2026-06-24T19:00:08+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -3962,19 +3962,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752763"
+          "value": "5773844"
         },
         {
           "key": "InitScriptNo",
-          "value": "175144"
+          "value": "176992"
         },
         {
           "key": "ServerInstanceType",
@@ -4005,9 +4005,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "tbhhgijohu9r4cgo8icv",
-      "cspResourceName": "tbhhgijohu9r4cgo8icv",
-      "cspResourceId": "141727075",
+      "uid": "tb0ra4b4onnu9p1406uv",
+      "cspResourceName": "tb0ra4b4onnu9p1406uv",
+      "cspResourceId": "142258890",
       "name": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -4021,13 +4021,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:26",
+      "createdTime": "2026-06-24 10:01:56",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:26",
-        "sys.cspResourceId": "141727075",
-        "sys.cspResourceName": "tbhhgijohu9r4cgo8icv",
+        "sys.createdTime": "2026-06-24 10:01:56",
+        "sys.cspResourceId": "142258890",
+        "sys.cspResourceName": "tb0ra4b4onnu9p1406uv",
         "sys.id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -4036,7 +4036,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tbhhgijohu9r4cgo8icv",
+        "sys.uid": "tb0ra4b4onnu9p1406uv",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -4044,12 +4044,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "223.130.138.173",
+      "publicIP": "101.79.16.82",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.7",
+      "privateIP": "10.0.1.8",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -4099,22 +4099,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:53Z"
+        "firstUsedAt": "2026-06-24T10:02:21Z"
       },
       "commandStatus": [
         {
@@ -4122,22 +4122,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:54Z",
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727075"
+          "value": "142258890"
         },
         {
           "key": "ServerName",
-          "value": "tbhhgijohu9r4cgo8icv"
+          "value": "tb0ra4b4onnu9p1406uv"
         },
         {
           "key": "CpuCount",
@@ -4153,7 +4153,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4169,11 +4169,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:32+0900"
+          "value": "2026-06-24T18:58:00+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:44+0900"
+          "value": "2026-06-24T19:00:11+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4197,19 +4197,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752764"
+          "value": "5773846"
         },
         {
           "key": "InitScriptNo",
-          "value": "175143"
+          "value": "176994"
         },
         {
           "key": "ServerInstanceType",
@@ -4240,9 +4240,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "tb2tjdd66tpis9o3255e",
-      "cspResourceName": "tb2tjdd66tpis9o3255e",
-      "cspResourceId": "141727087",
+      "uid": "tbio4pko2h6pfov5q2d6",
+      "cspResourceName": "tbio4pko2h6pfov5q2d6",
+      "cspResourceId": "142258884",
       "name": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
       "nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
@@ -4256,13 +4256,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:48",
+      "createdTime": "2026-06-24 10:02:15",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:48",
-        "sys.cspResourceId": "141727087",
-        "sys.cspResourceName": "tb2tjdd66tpis9o3255e",
+        "sys.createdTime": "2026-06-24 10:02:15",
+        "sys.cspResourceId": "142258884",
+        "sys.cspResourceName": "tbio4pko2h6pfov5q2d6",
         "sys.id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -4271,7 +4271,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tb2tjdd66tpis9o3255e",
+        "sys.uid": "tbio4pko2h6pfov5q2d6",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -4279,12 +4279,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.23.66",
+      "publicIP": "175.45.194.62",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.8",
+      "privateIP": "10.0.1.7",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -4334,22 +4334,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:54Z"
+        "firstUsedAt": "2026-06-24T10:02:21Z"
       },
       "commandStatus": [
         {
@@ -4357,22 +4357,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:55Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727087"
+          "value": "142258884"
         },
         {
           "key": "ServerName",
-          "value": "tb2tjdd66tpis9o3255e"
+          "value": "tbio4pko2h6pfov5q2d6"
         },
         {
           "key": "CpuCount",
@@ -4388,7 +4388,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -4404,11 +4404,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:34+0900"
+          "value": "2026-06-24T18:57:59+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:51+0900"
+          "value": "2026-06-24T19:00:10+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -4432,19 +4432,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752765"
+          "value": "5773845"
         },
         {
           "key": "InitScriptNo",
-          "value": "175145"
+          "value": "176993"
         },
         {
           "key": "ServerInstanceType",
@@ -4484,13 +4484,13 @@
     "results": [
       {
         "infraId": "my08-infra101",
-        "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "nodeIp": "223.130.138.173",
+        "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "110.165.16.234",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4499,13 +4499,13 @@
       },
       {
         "infraId": "my08-infra101",
-        "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "101.79.23.3",
+        "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "nodeIp": "101.79.16.82",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4515,12 +4515,12 @@
       {
         "infraId": "my08-infra101",
         "nodeId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "nodeIp": "101.79.23.66",
+        "nodeIp": "175.45.194.62",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -4556,25 +4556,25 @@
     {
       "resourceType": "infra",
       "id": "my03-infra101",
-      "uid": "tbh5h4pjh3ui3onmondo",
+      "uid": "tbvk6jb9p0uc6n7jlhf4",
       "name": "my03-infra101",
-      "status": "Running:3 (R:3/3)",
+      "status": "Terminating:3 (R:0/3)",
       "statusCount": {
         "countTotal": 3,
         "countCreating": 0,
-        "countRunning": 3,
+        "countRunning": 0,
         "countFailed": 0,
         "countSuspended": 0,
         "countRebooting": 0,
         "countTerminated": 0,
         "countSuspending": 0,
         "countResuming": 0,
-        "countTerminating": 0,
+        "countTerminating": 3,
         "countRegistering": 0,
         "countUndefined": 0
       },
-      "targetStatus": "None",
-      "targetAction": "None",
+      "targetStatus": "Terminated",
+      "targetAction": "Terminate",
       "installMonAgent": "",
       "configureCloudAdaptiveNetwork": "",
       "label": {
@@ -4584,7 +4584,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "my03-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tbh5h4pjh3ui3onmondo"
+        "sys.uid": "tbvk6jb9p0uc6n7jlhf4"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -4593,9 +4593,9 @@
         {
           "resourceType": "node",
           "id": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tbk92ucg0t6mu1hu1f60",
-          "cspResourceName": "tbk92ucg0t6mu1hu1f60",
-          "cspResourceId": "tbk92ucg0t6mu1hu1f60",
+          "uid": "tbo6uts6d1ehvopasug7",
+          "cspResourceName": "tbo6uts6d1ehvopasug7",
+          "cspResourceId": "tbo6uts6d1ehvopasug7",
           "name": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
           "nodeGroupId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
@@ -4603,20 +4603,20 @@
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
+          "status": "Terminating",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:37",
+          "createdTime": "2026-06-24 10:00:31",
           "label": {
-            "keypair": "tbk354ispcu31nhknhnq",
+            "keypair": "tbqdvm7cpfs9t0fdejsj",
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-06-17 10:54:37",
-            "sys.cspResourceId": "tbk92ucg0t6mu1hu1f60",
-            "sys.cspResourceName": "tbk92ucg0t6mu1hu1f60",
+            "sys.createdTime": "2026-06-24 10:00:31",
+            "sys.cspResourceId": "tbo6uts6d1ehvopasug7",
+            "sys.cspResourceName": "tbo6uts6d1ehvopasug7",
             "sys.id": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.infraId": "my03-infra101",
             "sys.labelType": "node",
@@ -4625,7 +4625,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624",
             "sys.subnetId": "my03-subnet-01",
-            "sys.uid": "tbk92ucg0t6mu1hu1f60",
+            "sys.uid": "tbo6uts6d1ehvopasug7",
             "sys.vNetId": "my03-vnet-01"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
@@ -4633,10 +4633,10 @@
             "region": "asia-northeast3",
             "zone": "asia-northeast3-a"
           },
-          "publicIP": "34.64.232.139",
+          "publicIP": "34.47.113.11",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.3",
+          "privateIP": "10.0.1.4",
           "privateDNS": "",
           "rootDiskType": "pd-standard",
           "rootDiskSize": 10,
@@ -4679,32 +4679,32 @@
             "memoryGiB": 1.953125,
             "costPerHour": 0.063531
           },
-          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260530",
-          "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260530",
+          "imageId": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260530",
+          "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260530",
           "image": {
             "resourceType": "image",
-            "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260530",
+            "cspImageName": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260530",
             "osType": "Ubuntu 22.04",
             "osArchitecture": "x86_64",
-            "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-30"
+            "osDistribution": "Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-05-30"
           },
           "vNetId": "my03-vnet-01",
-          "cspVNetId": "tbc3qg3rqhc6sop3llpu",
+          "cspVNetId": "tbeqt6le87ga1gbubjed",
           "subnetId": "my03-subnet-01",
-          "cspSubnetId": "tb53g82qa4mdsqk6tc4u",
+          "cspSubnetId": "tb8ssq9ivcrnus1quqjd",
           "networkInterface": "nic0",
           "securityGroupIds": [
             "my03-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my03-sshkey-01",
-          "cspSshKeyId": "tbk354ispcu31nhknhnq",
+          "cspSshKeyId": "tbqdvm7cpfs9t0fdejsj",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEoWybVVpt67QWQPlOHnsTnDn/Z8AONJenm5APlZqpWbF27WKysM8P3jYpA0Ft2qHe94OzBJ/OBqS1+bsWj81C8=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIbozskLoyR2lhUME/fPDuLLq+PeRd5DgHJApMLU7ocIPp7nLc2ud2OCUColtYvux20KzMLUemO7JRhlOXzz2rs=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:T3jvpUTgM8L5A8KplCRyvKefkZfOVN9FtXuCE63SPYA",
-            "firstUsedAt": "2026-06-17T10:54:48Z"
+            "fingerprint": "SHA256:evLX9QKgTv6lxnrR0s8kixTMn0hIkWDZMSmyijHhwc0",
+            "firstUsedAt": "2026-06-24T10:00:46Z"
           },
           "commandStatus": [
             {
@@ -4712,11 +4712,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:47Z",
-              "completedTime": "2026-06-17T10:54:49Z",
+              "startedTime": "2026-06-24T10:00:45Z",
+              "completedTime": "2026-06-24T10:00:47Z",
               "elapsedTime": 2,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbk92ucg0t6mu1hu1f60 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tbo6uts6d1ehvopasug7 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -4731,7 +4731,7 @@
             },
             {
               "key": "CreationTimestamp",
-              "value": "2026-06-17T03:53:55.543-07:00"
+              "value": "2026-06-24T02:59:50.433-07:00"
             },
             {
               "key": "DeletionProtection",
@@ -4743,15 +4743,15 @@
             },
             {
               "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbk92ucg0t6mu1hu1f60,type:PERSISTENT}"
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts,https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts-tpu],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbo6uts6d1ehvopasug7,type:PERSISTENT}"
             },
             {
               "key": "Fingerprint",
-              "value": "wPJbJ4wyMg0="
+              "value": "2DiXyz3TUT0="
             },
             {
               "key": "Id",
-              "value": "4131930078481203756"
+              "value": "7976734297339335801"
             },
             {
               "key": "Kind",
@@ -4759,15 +4759,15 @@
             },
             {
               "key": "LabelFingerprint",
-              "value": "kfFxHy0EH3I="
+              "value": "uqs8FBJRjDg="
             },
             {
               "key": "Labels",
-              "value": "{keypair:tbk354ispcu31nhknhnq}"
+              "value": "{keypair:tbqdvm7cpfs9t0fdejsj}"
             },
             {
               "key": "LastStartTimestamp",
-              "value": "2026-06-17T03:54:04.012-07:00"
+              "value": "2026-06-24T02:59:58.740-07:00"
             },
             {
               "key": "MachineType",
@@ -4775,15 +4775,15 @@
             },
             {
               "key": "Metadata",
-              "value": "{fingerprint:cwK23w8m0iw=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDheO81TuaaFxL8XCoqBfXbkWwEyYnxVa/WGYlVFKYrJkna5BVqVztjxZkIebeB2+xnBJHgMtjRHT1IZhqdddu5VYSOTdl2O33xDVXmyx+ff/457cfdQHvngE7fOpcDN+OHg4kPOibjNRad4HNvZ6G2RQv+Y2KX6HyOkcfptNW9ezGGgIdZSezmDEWUJ2JNJaM4+oxEr8hQBRWWpsjcWc+ZcLCqURFqMVYry4fIagiZN1pDChSNaI7abM1lMpEh6j0dL5p0GJua8rVTpKjF3F5oXhwFzXtEchvZXfiNMyTQSTTqc3KFw41KaJkfoBdjyXH/PTWz4+BuDZtDi3Odgq4NIfv3G4+eFBKFy8eDlxSgsNlsDYKC/SgksaScQzGO6x4iL1T+Cr4jf1DGwKABGLHbZVhrHnOegS0RfFkAu5Vsikf7aN3jIL/4oLr9dSUK+W5/7erFzHkL3XmTBI+bILohS12srVKsfQ8DPP1QxDag/qe64cqyIe9zM6NlSUaJG4INgi8IXo1y4dY9hCHnb2sXPYiLMsNI7mTBodL5jgh07DAnTQ2AbDBEmrYr33Z0LoaxJn154vk/NO5foE4B5cuDN+Air9gR7ZNC1+7kz9/QMDfEWHkFdJ86uXnxUlfWU2N6Zf51wYNxdjJngfHcjrXz81q1CJBgi5NbtKwWCJYmeQ== cb-user}],kind:compute#metadata}"
+              "value": "{fingerprint:CCAGuuvtINE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHDk2gaIA9l8rZmB8Wxpb1hn18LZT4G7+qdbqu54eZXJI/03dkKKNRw4PcKLnA5/HTN3tHKk0JSLjMHkoJU+SnqdY1m6pJv5vCzaK60hCDAabwH5vi2Z9gqs+5VmAecKrsDE4/mGLq3qzSmzM9j9Y6fjz+0gt5CNCBFnk2TodLYB5Y6sDwVxuH7Ft/mgz+aFqfMJ9bObCFFA8RuFHhVol/ha+V3MmU4yhwAU7+qZ82uXKfxq5eqTndiVJ9Bw13lEKfW7nPALW1L5LTAcnqsiZSBOHw4eW7nv685r/NFzWbnOzWDipi9hZIFaydXuFEpUafn/J/B/n+I4GOGmaeHIeLc6+g53qpTdOHyAxDpeXZf87C6Lz5SkXoFpBkXoJ6DLMOZUyJhg0uoIpq46jsH2TpJoOlggB1tWoL3Sps4VRT4VdjpEXJ1JN0+jhndbCcaGGqddQoC3ZCg+A+5I9339X3poBMi7UpSFwnok0vXmbz5g53JBqziu0b8FFHEfa0jQOhCXG1UvKUnmvKinYd6Uk044CtDS9N384/c3oNdV2KUDCi7VTL7Pstc6RG9ewTejRVyrUZ4BBSPPzSvR8j8/sR1PgMsC+ZyWTaI9nrOcn0LbQkFWTopZ2sfq06QEA15ZhdjgL2cysZXIIneJ/a+Fg0j1aenFRkdIj/WKhbYp7ufQ== cb-user}],kind:compute#metadata}"
             },
             {
               "key": "Name",
-              "value": "tbk92ucg0t6mu1hu1f60"
+              "value": "tbo6uts6d1ehvopasug7"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.232.139,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:p_18LxHTfiU=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbc3qg3rqhc6sop3llpu,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb53g82qa4mdsqk6tc4u}"
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.47.113.11,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:FWsp5f_nV-Q=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbeqt6le87ga1gbubjed,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb8ssq9ivcrnus1quqjd}"
             },
             {
               "key": "ResourceStatus",
@@ -4803,7 +4803,7 @@
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbk92ucg0t6mu1hu1f60"
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbo6uts6d1ehvopasug7"
             },
             {
               "key": "ServiceAccounts",
@@ -4827,7 +4827,7 @@
             },
             {
               "key": "Tags",
-              "value": "{fingerprint:WYZ8kH1eXLU=,items:[tbl2bhdbafi28b0ittm4]}"
+              "value": "{fingerprint:-yZ67wda7Aw=,items:[tb9e8iv5thhhjrvnuned]}"
             },
             {
               "key": "Zone",
@@ -4838,9 +4838,9 @@
         {
           "resourceType": "node",
           "id": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "tbfthl798onrsjoc60la",
-          "cspResourceName": "tbfthl798onrsjoc60la",
-          "cspResourceId": "tbfthl798onrsjoc60la",
+          "uid": "tb1ujrbucosc9tbr4q62",
+          "cspResourceName": "tb1ujrbucosc9tbr4q62",
+          "cspResourceId": "tb1ujrbucosc9tbr4q62",
           "name": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
           "nodeGroupId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
@@ -4848,20 +4848,20 @@
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
+          "status": "Terminating",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:39",
+          "createdTime": "2026-06-24 10:00:35",
           "label": {
-            "keypair": "tbk354ispcu31nhknhnq",
+            "keypair": "tbqdvm7cpfs9t0fdejsj",
             "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-06-17 10:54:39",
-            "sys.cspResourceId": "tbfthl798onrsjoc60la",
-            "sys.cspResourceName": "tbfthl798onrsjoc60la",
+            "sys.createdTime": "2026-06-24 10:00:35",
+            "sys.cspResourceId": "tb1ujrbucosc9tbr4q62",
+            "sys.cspResourceName": "tb1ujrbucosc9tbr4q62",
             "sys.id": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.infraId": "my03-infra101",
             "sys.labelType": "node",
@@ -4870,7 +4870,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.subnetId": "my03-subnet-01",
-            "sys.uid": "tbfthl798onrsjoc60la",
+            "sys.uid": "tb1ujrbucosc9tbr4q62",
             "sys.vNetId": "my03-vnet-01"
           },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
@@ -4878,10 +4878,10 @@
             "region": "asia-northeast3",
             "zone": "asia-northeast3-a"
           },
-          "publicIP": "34.22.74.68",
+          "publicIP": "34.64.189.70",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.4",
+          "privateIP": "10.0.1.2",
           "privateDNS": "",
           "rootDiskType": "pd-standard",
           "rootDiskSize": 10,
@@ -4934,22 +4934,22 @@
             "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-30"
           },
           "vNetId": "my03-vnet-01",
-          "cspVNetId": "tbc3qg3rqhc6sop3llpu",
+          "cspVNetId": "tbeqt6le87ga1gbubjed",
           "subnetId": "my03-subnet-01",
-          "cspSubnetId": "tb53g82qa4mdsqk6tc4u",
+          "cspSubnetId": "tb8ssq9ivcrnus1quqjd",
           "networkInterface": "nic0",
           "securityGroupIds": [
             "my03-sg-03"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my03-sshkey-01",
-          "cspSshKeyId": "tbk354ispcu31nhknhnq",
+          "cspSshKeyId": "tbqdvm7cpfs9t0fdejsj",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHQ6EiajDRBBzYnEe1S9p7xXUP6WYPRcnCRSIZ8iQdFz7D6sw0Lzk3iNhj1SOxdyyd/x+VU4MMmy+Moq8TukLDE=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBET0bj/SVCXxxatytQUZ53oc90QjPGPO89/fxz0Fj8DulrPdOtQhR/jQSsRD4Q5fyTbq3on7n6sqiKGn4UxG81s=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:NHw4CLsofIQ/7Z0C68tIoqbgz4zxvoTG3lv7xb2tya8",
-            "firstUsedAt": "2026-06-17T10:54:48Z"
+            "fingerprint": "SHA256:8imb1ZHzke4mg1TvtUEjXxgTqmVUtg8mslFrT+f0IBI",
+            "firstUsedAt": "2026-06-24T10:00:46Z"
           },
           "commandStatus": [
             {
@@ -4957,11 +4957,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:47Z",
-              "completedTime": "2026-06-17T10:54:49Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-06-24T10:00:45Z",
+              "completedTime": "2026-06-24T10:00:48Z",
+              "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbfthl798onrsjoc60la 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tb1ujrbucosc9tbr4q62 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -4976,7 +4976,7 @@
             },
             {
               "key": "CreationTimestamp",
-              "value": "2026-06-17T03:53:56.299-07:00"
+              "value": "2026-06-24T02:59:46.937-07:00"
             },
             {
               "key": "DeletionProtection",
@@ -4988,15 +4988,15 @@
             },
             {
               "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tbfthl798onrsjoc60la,type:PERSISTENT}"
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tb1ujrbucosc9tbr4q62,type:PERSISTENT}"
             },
             {
               "key": "Fingerprint",
-              "value": "Lv1LsMd5ZOU="
+              "value": "vFmlVVn1A7Q="
             },
             {
               "key": "Id",
-              "value": "6707494671651684907"
+              "value": "3808995383029666941"
             },
             {
               "key": "Kind",
@@ -5004,15 +5004,15 @@
             },
             {
               "key": "LabelFingerprint",
-              "value": "kfFxHy0EH3I="
+              "value": "uqs8FBJRjDg="
             },
             {
               "key": "Labels",
-              "value": "{keypair:tbk354ispcu31nhknhnq}"
+              "value": "{keypair:tbqdvm7cpfs9t0fdejsj}"
             },
             {
               "key": "LastStartTimestamp",
-              "value": "2026-06-17T03:54:07.400-07:00"
+              "value": "2026-06-24T02:59:56.603-07:00"
             },
             {
               "key": "MachineType",
@@ -5020,15 +5020,15 @@
             },
             {
               "key": "Metadata",
-              "value": "{fingerprint:cwK23w8m0iw=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDheO81TuaaFxL8XCoqBfXbkWwEyYnxVa/WGYlVFKYrJkna5BVqVztjxZkIebeB2+xnBJHgMtjRHT1IZhqdddu5VYSOTdl2O33xDVXmyx+ff/457cfdQHvngE7fOpcDN+OHg4kPOibjNRad4HNvZ6G2RQv+Y2KX6HyOkcfptNW9ezGGgIdZSezmDEWUJ2JNJaM4+oxEr8hQBRWWpsjcWc+ZcLCqURFqMVYry4fIagiZN1pDChSNaI7abM1lMpEh6j0dL5p0GJua8rVTpKjF3F5oXhwFzXtEchvZXfiNMyTQSTTqc3KFw41KaJkfoBdjyXH/PTWz4+BuDZtDi3Odgq4NIfv3G4+eFBKFy8eDlxSgsNlsDYKC/SgksaScQzGO6x4iL1T+Cr4jf1DGwKABGLHbZVhrHnOegS0RfFkAu5Vsikf7aN3jIL/4oLr9dSUK+W5/7erFzHkL3XmTBI+bILohS12srVKsfQ8DPP1QxDag/qe64cqyIe9zM6NlSUaJG4INgi8IXo1y4dY9hCHnb2sXPYiLMsNI7mTBodL5jgh07DAnTQ2AbDBEmrYr33Z0LoaxJn154vk/NO5foE4B5cuDN+Air9gR7ZNC1+7kz9/QMDfEWHkFdJ86uXnxUlfWU2N6Zf51wYNxdjJngfHcjrXz81q1CJBgi5NbtKwWCJYmeQ== cb-user}],kind:compute#metadata}"
+              "value": "{fingerprint:CCAGuuvtINE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHDk2gaIA9l8rZmB8Wxpb1hn18LZT4G7+qdbqu54eZXJI/03dkKKNRw4PcKLnA5/HTN3tHKk0JSLjMHkoJU+SnqdY1m6pJv5vCzaK60hCDAabwH5vi2Z9gqs+5VmAecKrsDE4/mGLq3qzSmzM9j9Y6fjz+0gt5CNCBFnk2TodLYB5Y6sDwVxuH7Ft/mgz+aFqfMJ9bObCFFA8RuFHhVol/ha+V3MmU4yhwAU7+qZ82uXKfxq5eqTndiVJ9Bw13lEKfW7nPALW1L5LTAcnqsiZSBOHw4eW7nv685r/NFzWbnOzWDipi9hZIFaydXuFEpUafn/J/B/n+I4GOGmaeHIeLc6+g53qpTdOHyAxDpeXZf87C6Lz5SkXoFpBkXoJ6DLMOZUyJhg0uoIpq46jsH2TpJoOlggB1tWoL3Sps4VRT4VdjpEXJ1JN0+jhndbCcaGGqddQoC3ZCg+A+5I9339X3poBMi7UpSFwnok0vXmbz5g53JBqziu0b8FFHEfa0jQOhCXG1UvKUnmvKinYd6Uk044CtDS9N384/c3oNdV2KUDCi7VTL7Pstc6RG9ewTejRVyrUZ4BBSPPzSvR8j8/sR1PgMsC+ZyWTaI9nrOcn0LbQkFWTopZ2sfq06QEA15ZhdjgL2cysZXIIneJ/a+Fg0j1aenFRkdIj/WKhbYp7ufQ== cb-user}],kind:compute#metadata}"
             },
             {
               "key": "Name",
-              "value": "tbfthl798onrsjoc60la"
+              "value": "tb1ujrbucosc9tbr4q62"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.22.74.68,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:YMg4ECePnqw=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbc3qg3rqhc6sop3llpu,networkIP:10.0.1.4,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb53g82qa4mdsqk6tc4u}"
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.189.70,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:Y3-H0FGh5DQ=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbeqt6le87ga1gbubjed,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb8ssq9ivcrnus1quqjd}"
             },
             {
               "key": "ResourceStatus",
@@ -5048,7 +5048,7 @@
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tbfthl798onrsjoc60la"
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tb1ujrbucosc9tbr4q62"
             },
             {
               "key": "ServiceAccounts",
@@ -5072,7 +5072,7 @@
             },
             {
               "key": "Tags",
-              "value": "{fingerprint:X6FgD7n1bPs=,items:[tbvtro69a9jdoqpctufm]}"
+              "value": "{fingerprint:2h0qBr0una4=,items:[tb7r72prvjkebonagd4r]}"
             },
             {
               "key": "Zone",
@@ -5083,9 +5083,9 @@
         {
           "resourceType": "node",
           "id": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "tb3p1vpk3otdi4ur46uq",
-          "cspResourceName": "tb3p1vpk3otdi4ur46uq",
-          "cspResourceId": "tb3p1vpk3otdi4ur46uq",
+          "uid": "tb08jprf10qth747uerd",
+          "cspResourceName": "tb08jprf10qth747uerd",
+          "cspResourceId": "tb08jprf10qth747uerd",
           "name": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
           "nodeGroupId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
@@ -5093,20 +5093,20 @@
             "latitude": 37.2,
             "longitude": 127
           },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
+          "status": "Terminating",
+          "targetStatus": "Terminated",
+          "targetAction": "Terminate",
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:37",
+          "createdTime": "2026-06-24 10:00:32",
           "label": {
-            "keypair": "tbk354ispcu31nhknhnq",
+            "keypair": "tbqdvm7cpfs9t0fdejsj",
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "gcp-asia-northeast3",
-            "sys.createdTime": "2026-06-17 10:54:37",
-            "sys.cspResourceId": "tb3p1vpk3otdi4ur46uq",
-            "sys.cspResourceName": "tb3p1vpk3otdi4ur46uq",
+            "sys.createdTime": "2026-06-24 10:00:32",
+            "sys.cspResourceId": "tb08jprf10qth747uerd",
+            "sys.cspResourceName": "tb08jprf10qth747uerd",
             "sys.id": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.infraId": "my03-infra101",
             "sys.labelType": "node",
@@ -5115,7 +5115,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.subnetId": "my03-subnet-01",
-            "sys.uid": "tb3p1vpk3otdi4ur46uq",
+            "sys.uid": "tb08jprf10qth747uerd",
             "sys.vNetId": "my03-vnet-01"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=97.7% Image=100.0%",
@@ -5123,10 +5123,10 @@
             "region": "asia-northeast3",
             "zone": "asia-northeast3-a"
           },
-          "publicIP": "34.64.88.27",
+          "publicIP": "8.230.26.70",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.2",
+          "privateIP": "10.0.1.3",
           "privateDNS": "",
           "rootDiskType": "pd-standard",
           "rootDiskSize": 10,
@@ -5179,22 +5179,22 @@
             "osDistribution": "Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-30"
           },
           "vNetId": "my03-vnet-01",
-          "cspVNetId": "tbc3qg3rqhc6sop3llpu",
+          "cspVNetId": "tbeqt6le87ga1gbubjed",
           "subnetId": "my03-subnet-01",
-          "cspSubnetId": "tb53g82qa4mdsqk6tc4u",
+          "cspSubnetId": "tb8ssq9ivcrnus1quqjd",
           "networkInterface": "nic0",
           "securityGroupIds": [
             "my03-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my03-sshkey-01",
-          "cspSshKeyId": "tbk354ispcu31nhknhnq",
+          "cspSshKeyId": "tbqdvm7cpfs9t0fdejsj",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMMyVsB2ocx6MkYcP263+cymJVKC3GWwk7l1D6RkfH+w3rMj3c5rgSOS1bUuZSjhu8bczMBMZ9zL/bvvGvv7Ows=",
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPlZb0NRtN44kurTS2mbEgApdW01axaDcn6IKR1BDTG+BGGu0/LIARAxN2wRuwD6Izfz4vEj3S/gU3JHmmFasVA=",
             "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:Syvhi8k5NTSKFeFg8j353lkubk0iisJtx5OW++d4bbU",
-            "firstUsedAt": "2026-06-17T10:54:47Z"
+            "fingerprint": "SHA256:KNXB2qvYEWNaxpEF0KDhk1EeieP+tCc0ar4BQjDkzEM",
+            "firstUsedAt": "2026-06-24T10:00:45Z"
           },
           "commandStatus": [
             {
@@ -5202,11 +5202,11 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:47Z",
-              "completedTime": "2026-06-17T10:54:48Z",
-              "elapsedTime": 1,
+              "startedTime": "2026-06-24T10:00:45Z",
+              "completedTime": "2026-06-24T10:00:47Z",
+              "elapsedTime": 2,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb3p1vpk3otdi4ur46uq 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tb08jprf10qth747uerd 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
@@ -5221,7 +5221,7 @@
             },
             {
               "key": "CreationTimestamp",
-              "value": "2026-06-17T03:53:55.240-07:00"
+              "value": "2026-06-24T02:59:47.194-07:00"
             },
             {
               "key": "DeletionProtection",
@@ -5233,15 +5233,15 @@
             },
             {
               "key": "Disks",
-              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tb3p1vpk3otdi4ur46uq,type:PERSISTENT}"
+              "value": "{architecture:X86_64,autoDelete:true,boot:true,deviceName:persistent-disk-0,diskSizeGb:10,guestOsFeatures:[{type:VIRTIO_SCSI_MULTIQUEUE},{type:SEV_CAPABLE},{type:SEV_SNP_CAPABLE},{type:SEV_LIVE_MIGRATABLE},{type:SEV_LIVE_MIGRATABLE_V2},{type:IDPF},{type:TDX_CAPABLE},{type:UEFI_COMPATIBLE},{type:GVNIC}],interface:SCSI,kind:compute#attachedDisk,licenses:[https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/licenses/ubuntu-2204-lts],mode:READ_WRITE,shieldedInstanceInitialState:{dbxs:[{content:2gcDBhMRFQAAAAAAAAAAABENAAAAAvEOndKvSt9o7kmKqTR9N1ZlpzCCDPUCAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwGgggsIMIIFGDCCBACgAwIBAgITMwAAABNryScg3e1ZiAAAAAAAEzANBgkqhkiG9w0BAQsFADCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMB4XDTE2MDEwNjE4MzQxNVoXDTE3MDQwNjE4MzQxNVowgZUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xDTALBgNVBAsTBE1PUFIxMDAuBgNVBAMTJ01pY3Jvc29mdCBXaW5kb3dzIFVFRkkgS2V5IEV4Y2hhbmdlIEtleTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKXiCkZgbboTnVZnS1h_JbnlcVst9wtFK8NQjTpeB9wirml3h-fzi8vzki0hSNBD2Dg49lGEvs4egyowmTsLu1TnBUH1f_Hi8Noa7fKXV6F93qYrTPajx5v9L7NedplWnMEPsRvJrQdrysTZwtoXMLYDhc8bQHI5nlJDfgqrB8JiC4A3vL9i19lkQOTq4PZb5AcVcE0wlG7lR_btoQN0g5B4_7pI2S_9mU1PXr1NBSEl48Kl4cJwO2GyvOVvxQ6wUSFTExmCBKrT3LnPU5lZY68n3MpZ5VY4skhrEt2dyf5bZNzkYTTouxC0n37OrMbGGq3tpv7JDD6E_Rfqua3dXYECAwEAAaOCAXIwggFuMBQGA1UdJQQNMAsGCSsGAQQBgjdPATAdBgNVHQ4EFgQUVsJIppTfox2XYoAJRIlnxAUOy2owUQYDVR0RBEowSKRGMEQxDTALBgNVBAsTBE1PUFIxMzAxBgNVBAUTKjMxNjMxKzJjNDU2Y2JjLTA1NDItNDdkOS05OWU1LWQzOWI4MTVjNTczZTAfBgNVHSMEGDAWgBRi_EPNoD6ky2cS0lvZVax7zLaKXzBTBgNVHR8ETDBKMEigRqBEhkJodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNDb3JLRUtDQTIwMTFfMjAxMS0wNi0yNC5jcmwwYAYIKwYBBQUHAQEEVDBSMFAGCCsGAQUFBzAChkRodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NlcnRzL01pY0NvcktFS0NBMjAxMV8yMDExLTA2LTI0LmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQCGjTFLjxsKmyLESJueg0S2Cp8N7MOq2IALsitZHwfYw2jMhY9b9kmKvIdSqVna1moZ6_zJSOS_JY6HkWZr6dDJe9Lj7xiW_e4qPP-KDrCVb02vBnK4EktVjTdJpyMhxBMdXUcq1eGl6518oCkQ27tu0-WZjaWEVsEY_gpQj0ye2UA4HYUYgJlpT24oJRi7TeQ03Nebb-ZrUkbf9uxl0OVV_mg2R5FDwOc3REoRAgv5jnw6X7ha5hlRCl2cLF27TFrFIRQQT4eSM33eDiitXXpYmD13jqKeHhLVXr07QSwqvKe1o1UYokJngP0pTwoDnt2qRuLnZ71jw732dSPN9B57MIIF6DCCA9CgAwIBAgIKYQrRiAAAAAAAAzANBgkqhkiG9w0BAQsFADCBkTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE7MDkGA1UEAxMyTWljcm9zb2Z0IENvcnBvcmF0aW9uIFRoaXJkIFBhcnR5IE1hcmtldHBsYWNlIFJvb3QwHhcNMTEwNjI0MjA0MTI5WhcNMjYwNjI0MjA1MTI5WjCBgDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1JlZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEqMCgGA1UEAxMhTWljcm9zb2Z0IENvcnBvcmF0aW9uIEtFSyBDQSAyMDExMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxOi1ir-tVyawJsPq5_tXekQCXQcN2krldCrmsA_sbevsf7njWmMyfBEXTw7jC6c4FZOOxvXghLGamyzn9beR1gnh4sAEqKwwHN9I8wZQmmSnUX_IhU-PIIbO_i_hn_-CwO3pzc70U2piOgtDueIl_f4F-dTEFKsR4iOJjXC3pB1N7K7lnPoWwtfBy9ToxC_lme4kiwPsjfKL6sNK-0MREgt-tUeSbNzmBInr9TME6xABKnHl-YMTPP8lCS9odkb_uk--3K1xKliq-w7SeT3km2U7zCkqn_xyWaLrrpLv9jUTgMYC7ORfzJ12ze9jksGveUCEeYd_41Ko6J17B2mPFQIDAQABo4IBTzCCAUswEAYJKwYBBAGCNxUBBAMCAQAwHQYDVR0OBBYEFGL8Q82gPqTLZxLSW9lVrHvMtopfMBkGCSsGAQQBgjcUAgQMHgoAUwB1AGIAQwBBMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH_MB8GA1UdIwQYMBaAFEVmUkPhflgRv9ZOniNVCDs6ImqoMFwGA1UdHwRVMFMwUaBPoE2GS2h0dHA6Ly9jcmwubWljcm9zb2Z0LmNvbS9wa2kvY3JsL3Byb2R1Y3RzL01pY0NvclRoaVBhck1hclJvb18yMDEwLTEwLTA1LmNybDBgBggrBgEFBQcBAQRUMFIwUAYIKwYBBQUHMAKGRGh0dHA6Ly93d3cubWljcm9zb2Z0LmNvbS9wa2kvY2VydHMvTWljQ29yVGhpUGFyTWFyUm9vXzIwMTAtMTAtMDUuY3J0MA0GCSqGSIb3DQEBCwUAA4ICAQDUhIj1FJQYAsoqPPsqkhwM16DR8ehSZqjuorV1epAAqi2kdlrqebe5N2pRexBk9uFk8gJnvveoG3i9us6IWGQM1lfIGaNfBdbbxtBpzkhLMrfrXdIw9cD1uLp4B6Mr_pvbNFaE7ILKrkElcJxr6f6QD9eWH-XnlB-yKgyNS_8oKRB799d8pdF2uQXIee0PkJKcwv7fb35sD3vUwUXdNFGWOQ_lXlbYGAWW9AemQrOgd_0IGfJxVsyfhiOkh8um_Vh-1GlnFZF-gfJ_E-UNi4o8h4Tr4869Q-WtLYSTjmorWnxE-lKqgcgtHLvgUt8AEfiaPcFgsOEztaOI0WUZChrnrHykwYKHTjixLw3FFIdv_Y0uvDm25-bD4OTNJ4TvlELvKYuQRkE7gRtn2PlDWWXLDbz9AJJP9HU7p6kk_FBBQHngLU8Kaid2blLtlml7rw_3hwXQRcKtUxSBH_swBKo3NmHaSmkbNNho7dYCz2yUDNPPbCJ5rbHwvAOiRmCpxAfCIYLx_fLoeTJgv9ispSIUS8rB2EvrfT9XNbLmT3W0sGADIlOukXkd1ptBHxWGVHCy3g01D3ywNHK6l2A78HnrorIcXaIWuIfF6Rv2tZclbzif45H6inmYw2kOt6McIAWX-MoUrgDXxPPAFBB1azSgG7WZYPNcsMVXTjbSMoS_njGCAcQwggHAAgEBMIGYMIGAMQswCQYDVQQGEwJVUzETMBEGA1UECBMKV2FzaGluZ3RvbjEQMA4GA1UEBxMHUmVkbW9uZDEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9uMSowKAYDVQQDEyFNaWNyb3NvZnQgQ29ycG9yYXRpb24gS0VLIENBIDIwMTECEzMAAAATa8knIN3tWYgAAAAAABMwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEggEAhabaxRIJ7nUZ-m__mIG0lII6yD-lxoeI8S83ZKTP8Qx5h5asySWl7420eGhna7zyaVRvVVIhkjOMIfcKr29LgzQpYDqPUc8aYAdGCsZKZGmHCMjEulnq5TDK79GKinzZfb2sAWXEJ68N8oNnY7faBKjHjmmJbAEz8ufE4DijgJ_NBov2xmhTZyNHQ7pB1iCdrEUGObzdJc0Qtmh3CNOEcmH0ukd8sTHE9acBBTFHS8dvreR_sP7dXClZJbJiWAFKvQn3EjCTiYizkZ4I_5xiqjHELht_ORQKN-Hnoqnl4kcRINhZRV7JlgAQDlBJLv3OTjShRO_ZWCdcu7PtwhweiSYWxMFMUJJArKlB-TaTQyiMDgAAAAAAADAAAAC9mvp3WQMyTb1gKPTnj3hLgLTZaTG_DQL9kaYeGdFPHaRS5m2yQIyoYE1BH5Jlnwq9mvp3WQMyTb1gKPTnj3hL9S-Do_qc-9aSD3IoJNvkA0U00luFByRrO5V9rG4bznq9mvp3WQMyTb1gKPTnj3hLxdnYoYbiyC0Jr6oqb38uc4cNPmT3LE4I72d5aoQPD729mvp3WQMyTb1gKPTnj3hLNjOE0U0fLgt4FWJkhMRZrVejGO9DliZgSNBYxaGbv3a9mvp3WQMyTb1gKPTnj3hLGuyEuEtsZaUSIKm-cYGWUjAhDWLW0zxImZxrKVorCga9mvp3WQMyTb1gKPTnj3hL5spo6UFGYprwP2nC-G5r72L5MLN8b7zIeLeN-YwDNOW9mvp3WQMyTb1gKPTnj3hLw6maRg2kZKBXw1htg8719K4ItxA5ee2JMnQt8O1TDGa9mvp3WQMyTb1gKPTnj3hLWPuUGu-VollDs_tfJRCg3z_kTFjJXgq4BIcpdWirl3G9mvp3WQMyTb1gKPTnj3hLU5HDovsRIQKmqh7cJa534Z9dbwnNCe6yUJkiv81Zkuq9mvp3WQMyTb1gKPTnj3hL1iYVfh1qcYvBJKuNony7ZQcsoDp7ayV9vcu9YPZe89G9mvp3WQMyTb1gKPTnj3hL0GPsKPZ-ulPxZC2_ff8zxqMq3YafYBP-Fi4sMvHL5W29mvp3WQMyTb1gKPTnj3hLKcbrUrQ8OqGLLNjtbqhgfO88-uG6_hFldVzy5hSESkS9mvp3WQMyTb1gKPTnj3hLkPvnDmnWM0CNPhcMaDLbstIJ4CclJ9-2PUnSlXKm9Ey9mvp3WQMyTb1gKPTnj3hLB17qBgWJVIugYLL-7RDaPCDH_psXzQJrlOimg7gRUji9mvp3WQMyTb1gKPTnj3hLB-bGqFhkb7HvxnkD_iixFgEfI2f-kua-KzaZnv850J69mvp3WQMyTb1gKPTnj3hLCd9fTlESCOx4uW0S0IEl_bYDho3jn29yknhSWZtlnCa9mvp3WQMyTb1gKPTnj3hLC7tDktqseribMKSsZXUxuXv6qwT5Cw2v5fm265CgY3S9mvp3WQMyTb1gKPTnj3hLDBiTOXYt8zarPdAGpGPfcVo5z7D0kkZcYA5sa9e9iYy9mvp3WQMyTb1gKPTnj3hLDQ2-ym8p7KBvMxp9cuSISxIJf7NImDoqFKDXP08QFA-9mvp3WQMyTb1gKPTnj3hLDcnz-5mWIUjDyoM2MnWNPtT8jQsAB7lbMeZSjyrNW_y9mvp3WQMyTb1gKPTnj3hLEG-s6s_s_U4wO3T0gKCAmOLQgCuTb47HdM4h8xaGaJy9mvp3WQMyTb1gKPTnj3hLF046C1tDxqYHu9NATwU0Hj3POWJnzpT4tQ4uI6nakgy9mvp3WQMyTb1gKPTnj3hLGDM0Kf8FYu2flwM-EUjc7uUtvi5JbVQQtc_WyGTS0Q-9mvp3WQMyTb1gKPTnj3hLK5nPJkIukv42X79Lww0nCGye4Ut6b_9E-y9rkAFpmTm9mvp3WQMyTb1gKPTnj3hLK78sp7jx2R8n7lK2-ypd0Em4WiubUpxdZmIGgQSwVfi9mvp3WQMyTb1gKPTnj3hLLHPZMyW6bcvlidSkxjxbk1VZ75L78FDtUMTiCFIG8X29mvp3WQMyTb1gKPTnj3hLLnCRZ4am93NRH6cYH6sPHXC1V8YyLqkjsqjTuStRr329mvp3WQMyTb1gKPTnj3hLMGYo-lR3MFcoukpGfefQOHpU9WnTdp_OXnXsidKNFZO9mvp3WQMyTb1gKPTnj3hLNgjtuvWtD0GkFKF3er8vr15nAzRnXsOZXmk1gp4MqtK9mvp3WQMyTb1gKPTnj3hLOEHSITaNFYPXXAoC5iFgOU1sTgpnYLb2B7kDYryFWwK9mvp3WQMyTb1gKPTnj3hLP86bn98-8J1UUrD5XuSBwrfwbXQ6c3lxVY5wE2rOPnO9mvp3WQMyTb1gKPTnj3hLQ5fayoOef2MHfLUMkt9DvC0vsqj1nyb8eg5L1Nl1FpK9mvp3WQMyTb1gKPTnj3hLR8wIYSfiBpqG4Dpr7yzUEPjFWm1r2zYhaMMbLOMqWt-9mvp3WQMyTb1gKPTnj3hLUYgx_nOCtRTQPhXGISKLirZUeb0Mv6PFwdD0jZwwYTW9mvp3WQMyTb1gKPTnj3hLWulJ6ohV65PkOdvGW9ouQoUsL99nifoUZzbjw0EPK1y9mvp3WQMyTb1gKPTnj3hLax0TgHjkQYqmjet7s14GYJLPR57rjOTNEufQcsy0L2a9mvp3WQMyTb1gKPTnj3hLbIhUR43VWeKTUbgmwGy4v-8rlK01ODWHctGT-C7RyhG9mvp3WQMyTb1gKPTnj3hLbxQo_3HJ2w7Vrx8ue7_Lq2R8wmXd9bKTzbYm9Qo6eF69mvp3WQMyTb1gKPTnj3hLcfKQb9IiSX5Uo0ZiqySX_MgQIHcP9RNo6ePZv8v9Y3W9mvp3WQMyTb1gKPTnj3hLcms-tlQEajDz-D2bls4D9nDpqAbRcIoDceYtxJ0sI8G9mvp3WQMyTb1gKPTnj3hLcuC9GGfPXZ1WqxWK3zvdvIK_MqjYqh2MXi9t8pQo1ti9mvp3WQMyTb1gKPTnj3hLeCevmTYs-vBxfa3ksb_gQ4rRccFa3cJIt1v4yqRLssW9mvp3WQMyTb1gKPTnj3hLgai5ZbuE04drlCmpVIHMlVMYz6oUEtgIyKM7_TP_8OS9mvp3WQMyTb1gKPTnj3hLgts7zrT2CEPOnZfD0YfNm1lBzT3oEA5YbyvaVjdXX2e9mvp3WQMyTb1gKPTnj3hLiVqXhfYXyh1-1E_BoUcLcfPxIjhi2f-dzDri35IWPa-9mvp3WQMyTb1gKPTnj3hLitZIWfGVtfWNr6qUC2phZ6zWeohuj0aTZBdyIcVZRbm9mvp3WQMyTb1gKPTnj3hLi_Q0tJ4AzPcVAqLNkAhlywHsOz2gPDW-UF_fe9Vj9SG9mvp3WQMyTb1gKPTnj3hLjY6iic_nChwHq3NlyyjuUe3TPPJQbeiI-63WDr-ASBy9mvp3WQMyTb1gKPTnj3hLmZjTY8SRvha9dLoQuU2SkQAWEXNv3KZDo2ZkvA8xWkK9mvp3WQMyTb1gKPTnj3hLnkppFzFhaC5V_ej-9WDriOwf_tyvBAAfZsDK9weytzS9mvp3WQMyTb1gKPTnj3hLprUVHzZV06KvDUcnWXlr5KQgDlSVp9hpdUxISIV0CKe9mvp3WQMyTb1gKPTnj3hLp_MvUI1OsP6tmgh--U7RugrsXeb372_wpiuTvt9dRY29mvp3WQMyTb1gKPTnj3hLrWgm4ZRtJtPq82hciNl9hd47Tcs9DuKugccFYNE8VyC9mvp3WQMyTb1gKPTnj3hLruuuMVEnEnPtlaouZxE57TGphWcwOjMimPg3CanVWqG9mvp3WQMyTb1gKPTnj3hLr-IDCvt9LNoT-fozOgLjT2dRr-wRsBDbzUQf30xAArO9mvp3WQMyTb1gKPTnj3hLtU8e5jZjH61oBY07CTcDGsG5DMsXBio5HMpor9vkDVW9mvp3WQMyTb1gKPTnj3hLuPB42YOiSsQzIWOTiDUUzZMsM68Y591wiEyCNfQnVza9mvp3WQMyTb1gKPTnj3hLuXoIiQWcA1_x1UtttTsRuXZmaNn5VSR8AosoN9egTNm9mvp3WQMyTb1gKPTnj3hLvIemaOgZZkictQjugFGDwZ5qzSTPF3mcoGLS44TaDqe9mvp3WQMyTb1gKPTnj3hLxAm9rEd1rdjbkqoitbcY-4yUoUYsH-mkFrldijOIwvy9mvp3WQMyTb1gKPTnj3hLxhfBqLHuKoEcKLWoG0yD18mLWwwnKB1hAgfr5pLCln-9mvp3WQMyTb1gKPTnj3hLyQ8zZhe45_mDl1QTyZfxC3PrJn_YoQy5472_xmer24u9mvp3WQMyTb1gKPTnj3hLy2uFi0DToJh2WBW1ksFRSklgT6_WCBnaiNenbpd4_ve9mvp3WQMyTb1gKPTnj3hLzjv6vlnWfOisjf1KFvfEPvnCJFE_vGVZV9c1-in1QM69mvp3WQMyTb1gKPTnj3hL2MvrlzX1Zys2fk-WzcdJaWFdFwdK6WxyTULOAhb48_q9mvp3WQMyTb1gKPTnj3hL6Swi6ztWQtZcHsLK8kfSWUc47rt_s4QaRJVvWeKw0fq9mvp3WQMyTb1gKPTnj3hL_d1uPSnqhMd0Pa1KG9vHALX-wbOR-TJAkIasxx3W29i9mvp3WQMyTb1gKPTnj3hL_mOoT3gsydP88sz5_BH70Ddgh4dY0mKF7RJmm9xubQG9mvp3WQMyTb1gKPTnj3hL_s-yMtEumUttSF0scWdyiqVSWYStXKYedRYiHweaFDa9mvp3WQMyTb1gKPTnj3hLyhcdYUqNfhIck5SM0P5V05mB-dEaqW4DRQpBUifCxlu9mvp3WQMyTb1gKPTnj3hLVbmbDeU9vP5IWqnHN88_thbvPZH6tZmqfKsZ7adjtbq9mvp3WQMyTb1gKPTnj3hLd90ZD6MNiP9eOwEaCuYeYgl4DBMLU17Lh-bwiIoLay-9mvp3WQMyTb1gKPTnj3hLyDyxOSKtmfVgdEZ13TfMlNytWh_Lpkcv7jQRcdk56IS9mvp3WQMyTb1gKPTnj3hLOwKHUz4Mw9DsGqgjy_CpQarYchV50cSZgC3Rw6Y2uKm9mvp3WQMyTb1gKPTnj3hLk5ru9PX6UeIzQMPy5JBIzohyUmr991LDp_Oj8ryfYEm9mvp3WQMyTb1gKPTnj3hLZFdb2RJ4mi4UrVb2NB9Sr2v4DPlEAHhZdenwTi1k10W9mvp3WQMyTb1gKPTnj3hLRcfIrnUKz7tI_DdSfWQS3WRNrtiRPM2KJMlNhWln344=,fileType:BIN}]},source:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/disks/tb08jprf10qth747uerd,type:PERSISTENT}"
             },
             {
               "key": "Fingerprint",
-              "value": "S1hEqfNK4NY="
+              "value": "kRAzFrTelfU="
             },
             {
               "key": "Id",
-              "value": "3497621618553766444"
+              "value": "4894336169939440765"
             },
             {
               "key": "Kind",
@@ -5249,15 +5249,15 @@
             },
             {
               "key": "LabelFingerprint",
-              "value": "kfFxHy0EH3I="
+              "value": "uqs8FBJRjDg="
             },
             {
               "key": "Labels",
-              "value": "{keypair:tbk354ispcu31nhknhnq}"
+              "value": "{keypair:tbqdvm7cpfs9t0fdejsj}"
             },
             {
               "key": "LastStartTimestamp",
-              "value": "2026-06-17T03:54:01.516-07:00"
+              "value": "2026-06-24T02:59:58.243-07:00"
             },
             {
               "key": "MachineType",
@@ -5265,15 +5265,15 @@
             },
             {
               "key": "Metadata",
-              "value": "{fingerprint:cwK23w8m0iw=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDheO81TuaaFxL8XCoqBfXbkWwEyYnxVa/WGYlVFKYrJkna5BVqVztjxZkIebeB2+xnBJHgMtjRHT1IZhqdddu5VYSOTdl2O33xDVXmyx+ff/457cfdQHvngE7fOpcDN+OHg4kPOibjNRad4HNvZ6G2RQv+Y2KX6HyOkcfptNW9ezGGgIdZSezmDEWUJ2JNJaM4+oxEr8hQBRWWpsjcWc+ZcLCqURFqMVYry4fIagiZN1pDChSNaI7abM1lMpEh6j0dL5p0GJua8rVTpKjF3F5oXhwFzXtEchvZXfiNMyTQSTTqc3KFw41KaJkfoBdjyXH/PTWz4+BuDZtDi3Odgq4NIfv3G4+eFBKFy8eDlxSgsNlsDYKC/SgksaScQzGO6x4iL1T+Cr4jf1DGwKABGLHbZVhrHnOegS0RfFkAu5Vsikf7aN3jIL/4oLr9dSUK+W5/7erFzHkL3XmTBI+bILohS12srVKsfQ8DPP1QxDag/qe64cqyIe9zM6NlSUaJG4INgi8IXo1y4dY9hCHnb2sXPYiLMsNI7mTBodL5jgh07DAnTQ2AbDBEmrYr33Z0LoaxJn154vk/NO5foE4B5cuDN+Air9gR7ZNC1+7kz9/QMDfEWHkFdJ86uXnxUlfWU2N6Zf51wYNxdjJngfHcjrXz81q1CJBgi5NbtKwWCJYmeQ== cb-user}],kind:compute#metadata}"
+              "value": "{fingerprint:CCAGuuvtINE=,items:[{key:ssh-keys,value:cb-user:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDHDk2gaIA9l8rZmB8Wxpb1hn18LZT4G7+qdbqu54eZXJI/03dkKKNRw4PcKLnA5/HTN3tHKk0JSLjMHkoJU+SnqdY1m6pJv5vCzaK60hCDAabwH5vi2Z9gqs+5VmAecKrsDE4/mGLq3qzSmzM9j9Y6fjz+0gt5CNCBFnk2TodLYB5Y6sDwVxuH7Ft/mgz+aFqfMJ9bObCFFA8RuFHhVol/ha+V3MmU4yhwAU7+qZ82uXKfxq5eqTndiVJ9Bw13lEKfW7nPALW1L5LTAcnqsiZSBOHw4eW7nv685r/NFzWbnOzWDipi9hZIFaydXuFEpUafn/J/B/n+I4GOGmaeHIeLc6+g53qpTdOHyAxDpeXZf87C6Lz5SkXoFpBkXoJ6DLMOZUyJhg0uoIpq46jsH2TpJoOlggB1tWoL3Sps4VRT4VdjpEXJ1JN0+jhndbCcaGGqddQoC3ZCg+A+5I9339X3poBMi7UpSFwnok0vXmbz5g53JBqziu0b8FFHEfa0jQOhCXG1UvKUnmvKinYd6Uk044CtDS9N384/c3oNdV2KUDCi7VTL7Pstc6RG9ewTejRVyrUZ4BBSPPzSvR8j8/sR1PgMsC+ZyWTaI9nrOcn0LbQkFWTopZ2sfq06QEA15ZhdjgL2cysZXIIneJ/a+Fg0j1aenFRkdIj/WKhbYp7ufQ== cb-user}],kind:compute#metadata}"
             },
             {
               "key": "Name",
-              "value": "tb3p1vpk3otdi4ur46uq"
+              "value": "tb08jprf10qth747uerd"
             },
             {
               "key": "NetworkInterfaces",
-              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:34.64.88.27,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:zwphQCxW5HA=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbc3qg3rqhc6sop3llpu,networkIP:10.0.1.2,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb53g82qa4mdsqk6tc4u}"
+              "value": "{accessConfigs:[{kind:compute#accessConfig,name:External NAT,natIP:8.230.26.70,networkTier:PREMIUM,type:ONE_TO_ONE_NAT}],fingerprint:pJK_AtO3bl4=,kind:compute#networkInterface,name:nic0,network:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/networks/tbeqt6le87ga1gbubjed,networkIP:10.0.1.3,stackType:IPV4_ONLY,subnetwork:https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/regions/asia-northeast3/subnetworks/tb8ssq9ivcrnus1quqjd}"
             },
             {
               "key": "ResourceStatus",
@@ -5293,7 +5293,7 @@
             },
             {
               "key": "SelfLink",
-              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tb3p1vpk3otdi4ur46uq"
+              "value": "https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/zones/asia-northeast3-a/instances/tb08jprf10qth747uerd"
             },
             {
               "key": "ServiceAccounts",
@@ -5317,7 +5317,7 @@
             },
             {
               "key": "Tags",
-              "value": "{fingerprint:ZOG8kau5OVQ=,items:[tb95u98m8jar6ntgo1q8]}"
+              "value": "{fingerprint:h6ZfK2fCrII=,items:[tbcjns28gais7smh3fep]}"
             },
             {
               "key": "Zone",
@@ -5338,12 +5338,12 @@
           {
             "infraId": "my03-infra101",
             "nodeId": "my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "nodeIp": "34.64.88.27",
+            "nodeIp": "8.230.26.70",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tb3p1vpk3otdi4ur46uq 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tb08jprf10qth747uerd 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5353,12 +5353,12 @@
           {
             "infraId": "my03-infra101",
             "nodeId": "my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "34.64.232.139",
+            "nodeIp": "34.47.113.11",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tbk92ucg0t6mu1hu1f60 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbo6uts6d1ehvopasug7 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5368,12 +5368,12 @@
           {
             "infraId": "my03-infra101",
             "nodeId": "my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "nodeIp": "34.22.74.68",
+            "nodeIp": "34.64.189.70",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tbfthl798onrsjoc60la 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tb1ujrbucosc9tbr4q62 6.8.0-1060-gcp #63~22.04.1-Ubuntu SMP Wed May 27 08:12:44 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -5386,7 +5386,7 @@
     {
       "resourceType": "infra",
       "id": "my08-infra101",
-      "uid": "tbrthbuo412bd1m4pkib",
+      "uid": "tbhrf3lne7rc90b3e7jl",
       "name": "my08-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -5414,7 +5414,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "my08-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tbrthbuo412bd1m4pkib"
+        "sys.uid": "tbhrf3lne7rc90b3e7jl"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -5423,9 +5423,9 @@
         {
           "resourceType": "node",
           "id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tb1207jt5bjv1qojs1iu",
-          "cspResourceName": "tb1207jt5bjv1qojs1iu",
-          "cspResourceId": "141727081",
+          "uid": "tb06c4jm4li058t05mu2",
+          "cspResourceName": "tb06c4jm4li058t05mu2",
+          "cspResourceId": "142258867",
           "name": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
           "nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
@@ -5439,13 +5439,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:38",
+          "createdTime": "2026-06-24 10:01:51",
           "label": {
             "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-06-17 10:54:38",
-            "sys.cspResourceId": "141727081",
-            "sys.cspResourceName": "tb1207jt5bjv1qojs1iu",
+            "sys.createdTime": "2026-06-24 10:01:51",
+            "sys.cspResourceId": "142258867",
+            "sys.cspResourceName": "tb06c4jm4li058t05mu2",
             "sys.id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.infraId": "my08-infra101",
             "sys.labelType": "node",
@@ -5454,7 +5454,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
             "sys.subnetId": "my08-subnet-01",
-            "sys.uid": "tb1207jt5bjv1qojs1iu",
+            "sys.uid": "tb06c4jm4li058t05mu2",
             "sys.vNetId": "my08-vnet-01"
           },
           "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
@@ -5462,12 +5462,12 @@
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "101.79.23.3",
+          "publicIP": "110.165.16.234",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.6",
           "privateDNS": "",
-          "rootDiskType": "HDD",
+          "rootDiskType": "SSD",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/vda",
           "connectionName": "ncp-kr",
@@ -5517,22 +5517,22 @@
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
           "vNetId": "my08-vnet-01",
-          "cspVNetId": "140722",
+          "cspVNetId": "141410",
           "subnetId": "my08-subnet-01",
-          "cspSubnetId": "304610",
+          "cspSubnetId": "306207",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "my08-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my08-sshkey-01",
-          "cspSshKeyId": "tbe49h9riechidkmo3is",
+          "cspSshKeyId": "tbletu0bbkc5opmf9fck",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-06-17T10:54:54Z"
+            "firstUsedAt": "2026-06-24T10:02:20Z"
           },
           "commandStatus": [
             {
@@ -5540,22 +5540,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:53Z",
-              "completedTime": "2026-06-17T10:54:55Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-06-24T10:02:20Z",
+              "completedTime": "2026-06-24T10:02:21Z",
+              "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "141727081"
+              "value": "142258867"
             },
             {
               "key": "ServerName",
-              "value": "tb1207jt5bjv1qojs1iu"
+              "value": "tb06c4jm4li058t05mu2"
             },
             {
               "key": "CpuCount",
@@ -5571,7 +5571,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "tbe49h9riechidkmo3is"
+              "value": "tbletu0bbkc5opmf9fck"
             },
             {
               "key": "ServerInstanceStatus",
@@ -5587,11 +5587,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2026-06-17T19:50:32+0900"
+              "value": "2026-06-24T18:57:57+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-06-17T19:52:43+0900"
+              "value": "2026-06-24T19:00:08+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -5615,19 +5615,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "140722"
+              "value": "141410"
             },
             {
               "key": "SubnetNo",
-              "value": "304610"
+              "value": "306207"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5752763"
+              "value": "5773844"
             },
             {
               "key": "InitScriptNo",
-              "value": "175144"
+              "value": "176992"
             },
             {
               "key": "ServerInstanceType",
@@ -5658,9 +5658,9 @@
         {
           "resourceType": "node",
           "id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-          "uid": "tbhhgijohu9r4cgo8icv",
-          "cspResourceName": "tbhhgijohu9r4cgo8icv",
-          "cspResourceId": "141727075",
+          "uid": "tb0ra4b4onnu9p1406uv",
+          "cspResourceName": "tb0ra4b4onnu9p1406uv",
+          "cspResourceId": "142258890",
           "name": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
           "nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
           "location": {
@@ -5674,13 +5674,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:26",
+          "createdTime": "2026-06-24 10:01:56",
           "label": {
             "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-06-17 10:54:26",
-            "sys.cspResourceId": "141727075",
-            "sys.cspResourceName": "tbhhgijohu9r4cgo8icv",
+            "sys.createdTime": "2026-06-24 10:01:56",
+            "sys.cspResourceId": "142258890",
+            "sys.cspResourceName": "tb0ra4b4onnu9p1406uv",
             "sys.id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
             "sys.infraId": "my08-infra101",
             "sys.labelType": "node",
@@ -5689,7 +5689,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.subnetId": "my08-subnet-01",
-            "sys.uid": "tbhhgijohu9r4cgo8icv",
+            "sys.uid": "tb0ra4b4onnu9p1406uv",
             "sys.vNetId": "my08-vnet-01"
           },
           "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -5697,12 +5697,12 @@
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "223.130.138.173",
+          "publicIP": "101.79.16.82",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.7",
+          "privateIP": "10.0.1.8",
           "privateDNS": "",
-          "rootDiskType": "HDD",
+          "rootDiskType": "SSD",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/vda",
           "connectionName": "ncp-kr",
@@ -5752,22 +5752,22 @@
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
           "vNetId": "my08-vnet-01",
-          "cspVNetId": "140722",
+          "cspVNetId": "141410",
           "subnetId": "my08-subnet-01",
-          "cspSubnetId": "304610",
+          "cspSubnetId": "306207",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "my08-sg-03"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my08-sshkey-01",
-          "cspSshKeyId": "tbe49h9riechidkmo3is",
+          "cspSshKeyId": "tbletu0bbkc5opmf9fck",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-06-17T10:54:53Z"
+            "firstUsedAt": "2026-06-24T10:02:21Z"
           },
           "commandStatus": [
             {
@@ -5775,22 +5775,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:53Z",
-              "completedTime": "2026-06-17T10:54:54Z",
+              "startedTime": "2026-06-24T10:02:20Z",
+              "completedTime": "2026-06-24T10:02:21Z",
               "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "141727075"
+              "value": "142258890"
             },
             {
               "key": "ServerName",
-              "value": "tbhhgijohu9r4cgo8icv"
+              "value": "tb0ra4b4onnu9p1406uv"
             },
             {
               "key": "CpuCount",
@@ -5806,7 +5806,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "tbe49h9riechidkmo3is"
+              "value": "tbletu0bbkc5opmf9fck"
             },
             {
               "key": "ServerInstanceStatus",
@@ -5822,11 +5822,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2026-06-17T19:50:32+0900"
+              "value": "2026-06-24T18:58:00+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-06-17T19:52:44+0900"
+              "value": "2026-06-24T19:00:11+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -5850,19 +5850,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "140722"
+              "value": "141410"
             },
             {
               "key": "SubnetNo",
-              "value": "304610"
+              "value": "306207"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5752764"
+              "value": "5773846"
             },
             {
               "key": "InitScriptNo",
-              "value": "175143"
+              "value": "176994"
             },
             {
               "key": "ServerInstanceType",
@@ -5893,9 +5893,9 @@
         {
           "resourceType": "node",
           "id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-          "uid": "tb2tjdd66tpis9o3255e",
-          "cspResourceName": "tb2tjdd66tpis9o3255e",
-          "cspResourceId": "141727087",
+          "uid": "tbio4pko2h6pfov5q2d6",
+          "cspResourceName": "tbio4pko2h6pfov5q2d6",
+          "cspResourceId": "142258884",
           "name": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
           "nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
           "location": {
@@ -5909,13 +5909,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-06-17 10:54:48",
+          "createdTime": "2026-06-24 10:02:15",
           "label": {
             "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-06-17 10:54:48",
-            "sys.cspResourceId": "141727087",
-            "sys.cspResourceName": "tb2tjdd66tpis9o3255e",
+            "sys.createdTime": "2026-06-24 10:02:15",
+            "sys.cspResourceId": "142258884",
+            "sys.cspResourceName": "tbio4pko2h6pfov5q2d6",
             "sys.id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
             "sys.infraId": "my08-infra101",
             "sys.labelType": "node",
@@ -5924,7 +5924,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
             "sys.subnetId": "my08-subnet-01",
-            "sys.uid": "tb2tjdd66tpis9o3255e",
+            "sys.uid": "tbio4pko2h6pfov5q2d6",
             "sys.vNetId": "my08-vnet-01"
           },
           "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -5932,12 +5932,12 @@
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "101.79.23.66",
+          "publicIP": "175.45.194.62",
           "sshPort": 22,
           "publicDNS": "",
-          "privateIP": "10.0.1.8",
+          "privateIP": "10.0.1.7",
           "privateDNS": "",
-          "rootDiskType": "HDD",
+          "rootDiskType": "SSD",
           "rootDiskSize": 50,
           "RootDeviceName": "/dev/vda",
           "connectionName": "ncp-kr",
@@ -5987,22 +5987,22 @@
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
           "vNetId": "my08-vnet-01",
-          "cspVNetId": "140722",
+          "cspVNetId": "141410",
           "subnetId": "my08-subnet-01",
-          "cspSubnetId": "304610",
+          "cspSubnetId": "306207",
           "networkInterface": "eth0",
           "securityGroupIds": [
             "my08-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my08-sshkey-01",
-          "cspSshKeyId": "tbe49h9riechidkmo3is",
+          "cspSshKeyId": "tbletu0bbkc5opmf9fck",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-06-17T10:54:54Z"
+            "firstUsedAt": "2026-06-24T10:02:21Z"
           },
           "commandStatus": [
             {
@@ -6010,22 +6010,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-06-17T10:54:53Z",
-              "completedTime": "2026-06-17T10:54:55Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-06-24T10:02:20Z",
+              "completedTime": "2026-06-24T10:02:21Z",
+              "elapsedTime": 1,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "141727087"
+              "value": "142258884"
             },
             {
               "key": "ServerName",
-              "value": "tb2tjdd66tpis9o3255e"
+              "value": "tbio4pko2h6pfov5q2d6"
             },
             {
               "key": "CpuCount",
@@ -6041,7 +6041,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "tbe49h9riechidkmo3is"
+              "value": "tbletu0bbkc5opmf9fck"
             },
             {
               "key": "ServerInstanceStatus",
@@ -6057,11 +6057,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2026-06-17T19:50:34+0900"
+              "value": "2026-06-24T18:57:59+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-06-17T19:52:51+0900"
+              "value": "2026-06-24T19:00:10+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -6085,19 +6085,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "140722"
+              "value": "141410"
             },
             {
               "key": "SubnetNo",
-              "value": "304610"
+              "value": "306207"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5752765"
+              "value": "5773845"
             },
             {
               "key": "InitScriptNo",
-              "value": "175145"
+              "value": "176993"
             },
             {
               "key": "ServerInstanceType",
@@ -6137,13 +6137,13 @@
         "results": [
           {
             "infraId": "my08-infra101",
-            "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-            "nodeIp": "223.130.138.173",
+            "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "110.165.16.234",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -6152,13 +6152,13 @@
           },
           {
             "infraId": "my08-infra101",
-            "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "101.79.23.3",
+            "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+            "nodeIp": "101.79.16.82",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -6168,12 +6168,12 @@
           {
             "infraId": "my08-infra101",
             "nodeId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-            "nodeIp": "101.79.23.66",
+            "nodeIp": "175.45.194.62",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -6237,7 +6237,7 @@
 {
   "resourceType": "infra",
   "id": "my08-infra101",
-  "uid": "tbrthbuo412bd1m4pkib",
+  "uid": "tbhrf3lne7rc90b3e7jl",
   "name": "my08-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -6265,7 +6265,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my08-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbrthbuo412bd1m4pkib"
+    "sys.uid": "tbhrf3lne7rc90b3e7jl"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -6274,9 +6274,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb1207jt5bjv1qojs1iu",
-      "cspResourceName": "tb1207jt5bjv1qojs1iu",
-      "cspResourceId": "141727081",
+      "uid": "tb06c4jm4li058t05mu2",
+      "cspResourceName": "tb06c4jm4li058t05mu2",
+      "cspResourceId": "142258867",
       "name": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -6290,13 +6290,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:38",
+      "createdTime": "2026-06-24 10:01:51",
       "label": {
         "sourceMachineId": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:38",
-        "sys.cspResourceId": "141727081",
-        "sys.cspResourceName": "tb1207jt5bjv1qojs1iu",
+        "sys.createdTime": "2026-06-24 10:01:51",
+        "sys.cspResourceId": "142258867",
+        "sys.cspResourceName": "tb06c4jm4li058t05mu2",
         "sys.id": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -6305,7 +6305,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tb1207jt5bjv1qojs1iu",
+        "sys.uid": "tb06c4jm4li058t05mu2",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=75.0%",
@@ -6313,12 +6313,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.23.3",
+      "publicIP": "110.165.16.234",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -6368,22 +6368,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:54Z"
+        "firstUsedAt": "2026-06-24T10:02:20Z"
       },
       "commandStatus": [
         {
@@ -6391,22 +6391,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:55Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727081"
+          "value": "142258867"
         },
         {
           "key": "ServerName",
-          "value": "tb1207jt5bjv1qojs1iu"
+          "value": "tb06c4jm4li058t05mu2"
         },
         {
           "key": "CpuCount",
@@ -6422,7 +6422,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -6438,11 +6438,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:32+0900"
+          "value": "2026-06-24T18:57:57+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:43+0900"
+          "value": "2026-06-24T19:00:08+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -6466,19 +6466,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752763"
+          "value": "5773844"
         },
         {
           "key": "InitScriptNo",
-          "value": "175144"
+          "value": "176992"
         },
         {
           "key": "ServerInstanceType",
@@ -6509,9 +6509,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "uid": "tbhhgijohu9r4cgo8icv",
-      "cspResourceName": "tbhhgijohu9r4cgo8icv",
-      "cspResourceId": "141727075",
+      "uid": "tb0ra4b4onnu9p1406uv",
+      "cspResourceName": "tb0ra4b4onnu9p1406uv",
+      "cspResourceId": "142258890",
       "name": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
       "nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "location": {
@@ -6525,13 +6525,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:26",
+      "createdTime": "2026-06-24 10:01:56",
       "label": {
         "sourceMachineId": "ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:26",
-        "sys.cspResourceId": "141727075",
-        "sys.cspResourceName": "tbhhgijohu9r4cgo8icv",
+        "sys.createdTime": "2026-06-24 10:01:56",
+        "sys.cspResourceId": "142258890",
+        "sys.cspResourceName": "tb0ra4b4onnu9p1406uv",
         "sys.id": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -6540,7 +6540,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tbhhgijohu9r4cgo8icv",
+        "sys.uid": "tb0ra4b4onnu9p1406uv",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec288dd0-c6fa-8a49-2f60-bc898311febf | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -6548,12 +6548,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "223.130.138.173",
+      "publicIP": "101.79.16.82",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.7",
+      "privateIP": "10.0.1.8",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -6603,22 +6603,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-03"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:53Z"
+        "firstUsedAt": "2026-06-24T10:02:21Z"
       },
       "commandStatus": [
         {
@@ -6626,22 +6626,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:54Z",
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
           "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727075"
+          "value": "142258890"
         },
         {
           "key": "ServerName",
-          "value": "tbhhgijohu9r4cgo8icv"
+          "value": "tb0ra4b4onnu9p1406uv"
         },
         {
           "key": "CpuCount",
@@ -6657,7 +6657,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -6673,11 +6673,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:32+0900"
+          "value": "2026-06-24T18:58:00+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:44+0900"
+          "value": "2026-06-24T19:00:11+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -6701,19 +6701,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752764"
+          "value": "5773846"
         },
         {
           "key": "InitScriptNo",
-          "value": "175143"
+          "value": "176994"
         },
         {
           "key": "ServerInstanceType",
@@ -6744,9 +6744,9 @@
     {
       "resourceType": "node",
       "id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "uid": "tb2tjdd66tpis9o3255e",
-      "cspResourceName": "tb2tjdd66tpis9o3255e",
-      "cspResourceId": "141727087",
+      "uid": "tbio4pko2h6pfov5q2d6",
+      "cspResourceName": "tbio4pko2h6pfov5q2d6",
+      "cspResourceId": "142258884",
       "name": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
       "nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "location": {
@@ -6760,13 +6760,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-06-17 10:54:48",
+      "createdTime": "2026-06-24 10:02:15",
       "label": {
         "sourceMachineId": "ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-06-17 10:54:48",
-        "sys.cspResourceId": "141727087",
-        "sys.cspResourceName": "tb2tjdd66tpis9o3255e",
+        "sys.createdTime": "2026-06-24 10:02:15",
+        "sys.cspResourceId": "142258884",
+        "sys.cspResourceName": "tbio4pko2h6pfov5q2d6",
         "sys.id": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
         "sys.infraId": "my08-infra101",
         "sys.labelType": "node",
@@ -6775,7 +6775,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
         "sys.subnetId": "my08-subnet-01",
-        "sys.uid": "tb2tjdd66tpis9o3255e",
+        "sys.uid": "tbio4pko2h6pfov5q2d6",
         "sys.vNetId": "my08-vnet-01"
       },
       "description": "Recommended VM for ec2d32b5-98fb-5a96-7913-d3db1ec18932 | Match Rate: CPU=100.0% Memory=100.0% Image=75.0%",
@@ -6783,12 +6783,12 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.23.66",
+      "publicIP": "175.45.194.62",
       "sshPort": 22,
       "publicDNS": "",
-      "privateIP": "10.0.1.8",
+      "privateIP": "10.0.1.7",
       "privateDNS": "",
-      "rootDiskType": "HDD",
+      "rootDiskType": "SSD",
       "rootDiskSize": 50,
       "RootDeviceName": "/dev/vda",
       "connectionName": "ncp-kr",
@@ -6838,22 +6838,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my08-vnet-01",
-      "cspVNetId": "140722",
+      "cspVNetId": "141410",
       "subnetId": "my08-subnet-01",
-      "cspSubnetId": "304610",
+      "cspSubnetId": "306207",
       "networkInterface": "eth0",
       "securityGroupIds": [
         "my08-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my08-sshkey-01",
-      "cspSshKeyId": "tbe49h9riechidkmo3is",
+      "cspSshKeyId": "tbletu0bbkc5opmf9fck",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-06-17T10:54:54Z"
+        "firstUsedAt": "2026-06-24T10:02:21Z"
       },
       "commandStatus": [
         {
@@ -6861,22 +6861,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-06-17T10:54:53Z",
-          "completedTime": "2026-06-17T10:54:55Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-06-24T10:02:20Z",
+          "completedTime": "2026-06-24T10:02:21Z",
+          "elapsedTime": 1,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "141727087"
+          "value": "142258884"
         },
         {
           "key": "ServerName",
-          "value": "tb2tjdd66tpis9o3255e"
+          "value": "tbio4pko2h6pfov5q2d6"
         },
         {
           "key": "CpuCount",
@@ -6892,7 +6892,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbe49h9riechidkmo3is"
+          "value": "tbletu0bbkc5opmf9fck"
         },
         {
           "key": "ServerInstanceStatus",
@@ -6908,11 +6908,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-06-17T19:50:34+0900"
+          "value": "2026-06-24T18:57:59+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-06-17T19:52:51+0900"
+          "value": "2026-06-24T19:00:10+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -6936,19 +6936,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "140722"
+          "value": "141410"
         },
         {
           "key": "SubnetNo",
-          "value": "304610"
+          "value": "306207"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5752765"
+          "value": "5773845"
         },
         {
           "key": "InitScriptNo",
-          "value": "175145"
+          "value": "176993"
         },
         {
           "key": "ServerInstanceType",
@@ -6988,13 +6988,13 @@
     "results": [
       {
         "infraId": "my08-infra101",
-        "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-        "nodeIp": "223.130.138.173",
+        "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "110.165.16.234",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -7003,13 +7003,13 @@
       },
       {
         "infraId": "my08-infra101",
-        "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "101.79.23.3",
+        "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
+        "nodeIp": "101.79.16.82",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -7019,12 +7019,12 @@
       {
         "infraId": "my08-infra101",
         "nodeId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-        "nodeIp": "101.79.23.66",
+        "nodeIp": "175.45.194.62",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -7082,8 +7082,8 @@
       "command": "uname -a",
       "nodeGroup": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624",
       "nodeId": "my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "output": "Linux tb1207jt5bjv1qojs1iu 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "101.79.23.3",
+      "output": "Linux tb06c4jm4li058t05mu2 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "110.165.16.234",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 1,
@@ -7094,8 +7094,8 @@
       "command": "uname -a",
       "nodeGroup": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf",
       "nodeId": "my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1",
-      "output": "Linux tbhhgijohu9r4cgo8icv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "223.130.138.173",
+      "output": "Linux tb0ra4b4onnu9p1406uv 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "101.79.16.82",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 2,
@@ -7106,8 +7106,8 @@
       "command": "uname -a",
       "nodeGroup": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932",
       "nodeId": "my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1",
-      "output": "Linux tb2tjdd66tpis9o3255e 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
-      "publicIP": "101.79.23.66",
+      "output": "Linux tbio4pko2h6pfov5q2d6 5.15.0-140-generic #150-Ubuntu SMP Sat Apr 12 06:00:09 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+      "publicIP": "175.45.194.62",
       "sshTest": "successful",
       "status": "success",
       "testOrder": 3,
@@ -7137,7 +7137,7 @@
 
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-17 10:55:32
+**Generated At:** 2026-06-24 10:03:00
 
 **Namespace:** mig01
 
@@ -7179,9 +7179,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 141727081 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.23.3<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 141727075 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.138.173<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 141727087 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.23.66<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 142258867 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 110.165.16.234<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 142258890 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.16.82<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 142258884 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 175.45.194.62<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
 
 
 ## Network Resources
@@ -7193,7 +7193,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-vnet-01 |
-| **CSP VNet ID** | 140722 |
+| **CSP VNet ID** | 141410 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -7202,7 +7202,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my08-subnet-01 | 304610 | 10.0.1.0/24 | KR-1 |
+| my08-subnet-01 | 306207 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -7211,7 +7211,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my08-sshkey-01 | tbe49h9riechidkmo3is | cb-user |  |
+| my08-sshkey-01 | tbletu0bbkc5opmf9fck | cb-user |  |
 
 ### Security Groups
 
@@ -7220,7 +7220,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-01 |
-| **CSP Security Group ID** | 359138 |
+| **CSP Security Group ID** | 361081 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 15 rules |
 
@@ -7249,7 +7249,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-02 |
-| **CSP Security Group ID** | 359139 |
+| **CSP Security Group ID** | 361082 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -7283,7 +7283,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-03 |
-| **CSP Security Group ID** | 359140 |
+| **CSP Security Group ID** | 361084 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -7359,7 +7359,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-06-17 10:55:37*
+*Report generated: 2026-06-24 10:03:06*
 
 ---
 
@@ -7388,7 +7388,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | s4-g3, ci2-g3, s2-g3a |
+| 2 | **VM Spec** | 3 | ✅ Selected | ci2-g3, s2-g3a, s4-g3 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my08-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my08-vnet-01) |
@@ -7403,9 +7403,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 141727081<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 141727075<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 141727087<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 142258867<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 142258890<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
+| 3 | **VM Name:** my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 142258884<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
 
 ---
 
@@ -7439,7 +7439,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-01
 
-**CSP ID:** 359138 | **VNet:** my08-vnet-01 | **Rules:** 15
+**CSP ID:** 361081 | **VNet:** my08-vnet-01 | **Rules:** 15
 
 **Assigned VMs:**
 
@@ -7468,7 +7468,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-02
 
-**CSP ID:** 359139 | **VNet:** my08-vnet-01 | **Rules:** 20
+**CSP ID:** 361082 | **VNet:** my08-vnet-01 | **Rules:** 20
 
 **Assigned VMs:**
 
@@ -7502,7 +7502,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my08-sg-03
 
-**CSP ID:** 359140 | **VNet:** my08-vnet-01 | **Rules:** 20
+**CSP ID:** 361084 | **VNet:** my08-vnet-01 | **Rules:** 20
 
 **Assigned VMs:**
 
@@ -7544,13 +7544,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my08-vnet-01<br>**ID:** 140722 | 10.0.0.0/21 |
+| 1 | **Name:** my08-vnet-01<br>**ID:** 141410 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my08-subnet-01<br>**ID:** 304610 | 10.0.1.0/24 | my08-vnet-01 |
+| 1 | **Name:** my08-subnet-01<br>**ID:** 306207 | 10.0.1.0/24 | my08-vnet-01 |
 
 ### Source Network Information
 
@@ -7592,7 +7592,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my08-sshkey-01 | tbe49h9riechidkmo3is |  | Used by all 3 VMs |
+| 1 | my08-sshkey-01 | tbletu0bbkc5opmf9fck |  | Used by all 3 VMs |
 
 ---
 

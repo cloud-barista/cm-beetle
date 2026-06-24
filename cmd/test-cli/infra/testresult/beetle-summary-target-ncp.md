@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-17 10:55:32
+**Generated At:** 2026-06-24 10:03:00
 
 **Namespace:** mig01
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 141727081 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.23.3<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 141727075 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 223.130.138.173<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
-| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 141727087 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.23.66<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 142258867 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 110.165.16.234<br>**Private IP:** 10.0.1.6<br>**SGs:** my08-sg-01<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 142258890 | Running | 2 vCPU, 8.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 101.79.16.82<br>**Private IP:** 10.0.1.8<br>**SGs:** my08-sg-03<br>**SSH:** my08-sshkey-01 |
+| my08-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 142258884 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my08-vnet-01<br>**Subnet:** my08-subnet-01<br>**Public IP:** 175.45.194.62<br>**Private IP:** 10.0.1.7<br>**SGs:** my08-sg-02<br>**SSH:** my08-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-vnet-01 |
-| **CSP VNet ID** | 140722 |
+| **CSP VNet ID** | 141410 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my08-subnet-01 | 304610 | 10.0.1.0/24 | KR-1 |
+| my08-subnet-01 | 306207 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my08-sshkey-01 | tbe49h9riechidkmo3is | cb-user |  |
+| my08-sshkey-01 | tbletu0bbkc5opmf9fck | cb-user |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-01 |
-| **CSP Security Group ID** | 359138 |
+| **CSP Security Group ID** | 361081 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 15 rules |
 
@@ -112,7 +112,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-02 |
-| **CSP Security Group ID** | 359139 |
+| **CSP Security Group ID** | 361082 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 
@@ -146,7 +146,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my08-sg-03 |
-| **CSP Security Group ID** | 359140 |
+| **CSP Security Group ID** | 361084 |
 | **VNet** | my08-vnet-01 |
 | **Rule Count** | 20 rules |
 

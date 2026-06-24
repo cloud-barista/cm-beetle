@@ -11053,7 +11053,7 @@ const docTemplate = `{
             "name": "[Admin] API Request Management"
         },
         {
-            "description": "APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.)",
+            "description": "APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.) and NLBs (Managed Network Load Balancers)",
             "name": "[Recommendation] Infrastructure"
         },
         {
@@ -11081,12 +11081,16 @@ const docTemplate = `{
             "name": "[Summary/Report] Infrastructure Analysis for Migration"
         },
         {
-            "description": "APIs for recommending managed middleware (Object Storage, etc.)",
-            "name": "[Recommendation] Managed middleware (preview)"
+            "description": "APIs for recommending managed object storage (e.g., AWS S3)",
+            "name": "[Recommendation] Managed Object Storage"
         },
         {
-            "description": "APIs for migrating managed middleware (Object Storage, etc.)",
-            "name": "[Migration] Managed middleware (preview)"
+            "description": "APIs for migrating managed object storage (e.g.,AWS S3)",
+            "name": "[Migration] Managed Object Storage"
+        },
+        {
+            "description": "APIs for migrating managed network load balancers (NLB)",
+            "name": "[Migration] Managed Network Load Balancer (NLB) - preview"
         },
         {
             "description": "APIs for migrating data (Rsync, etc.)",

@@ -11,7 +11,7 @@ x-default-healthcheck: &default-healthcheck
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.5.1
+    image: cloudbaristaorg/cm-beetle:0.5.3
     container_name: cm-beetle
     build:
       context: ${PROJECT_ROOT}
@@ -57,7 +57,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.15
+    image: cloudbaristaorg/cb-tumblebug:0.12.19
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -196,7 +196,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.12.30
+    image: cloudbaristaorg/cb-spider:0.12.32
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
@@ -228,7 +228,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.39
+    image: cloudbaristaorg/cb-mapui:0.12.43
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui

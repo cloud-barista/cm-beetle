@@ -193,6 +193,8 @@ github.com/cloud-barista/cb-tumblebug v0.11.1/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajr
 github.com/cloud-barista/cb-tumblebug v0.11.9 h1:GgJZAk/cvrZZr8x6heKkCGD/QgNUBKpJRUsWtY5xXlo=
 github.com/cloud-barista/cb-tumblebug v0.11.9/go.mod h1:rNsvfQxOyAhC4ZEeBb/zfajrFXU70D10wLTcRPiRhf0=
 github.com/cloud-barista/cb-tumblebug v0.11.15 h1:6sz2NREfMOOfZSBL9d8i96y9hce96zFFlLssQKpt5+A=
+github.com/cloud-barista/cb-tumblebug v0.12.19 h1:Hhclrcs/rQNZJsEExP3xyuIh/G9CpyylACgSqGATMi4=
+github.com/cloud-barista/cb-tumblebug v0.12.19/go.mod h1:QNaNJw9eVJvVe6K0y1G0n1iz0C/OKYck1lF0WWa17RY=
 github.com/cloud-barista/cm-beetle/transx v0.1.0/go.mod h1:lEgonyJmSY6L7cBLNS1YItx7Pw1nN48j6y9pquBHyDQ=
 github.com/cloud-barista/cm-beetle/transx v0.1.1/go.mod h1:GivjSMvBpXko4vZGSHO4RqqLLDI6kYu/ZdxLCyhHG/g=
 github.com/cloud-barista/cm-model v0.0.10 h1:vGaYam3/VX8IvagHdtWx10ZgH36xZ+44Db2ZG/uSvA4=

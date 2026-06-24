@@ -7,8 +7,8 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.0+ (2aeaf75)
-- CB-Tumblebug: v0.12.13
+- CM-Beetle: v0.5.2+ (1c7e6cd)
+- CB-Tumblebug: v0.12.19
 - Source CSP: AWS
 - Source Region: ap-northeast-2
 - Target CSP: IBM
@@ -19,9 +19,9 @@
 - Namespace: mig01
 - Name Seed: data01
 - Test CLI: CM-Beetle data migration automated test CLI
-- Test Date: June 4, 2026
-- Test Time: 17:09:13 KST
-- Test Execution: 2026-06-04 17:09:13 KST
+- Test Date: June 24, 2026
+- Test Time: 20:00:06 KST
+- Test Execution: 2026-06-24 20:00:06 KST
 
 ### Scenario
 
@@ -50,16 +50,16 @@
 
 | Step | Endpoint / Description | Status | Duration | Details |
 |------|------------------------|--------|----------|---------|
-| 1 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` (target) | ✅ **PASS** | 11.63s | Pass |
-| 2 | `POST /beetle/migration/data` (migrate: source OS → target OS, encrypted, async) | ✅ **PASS** | 50.196s | Pass |
-| 3 | Verify migrated data (compare source and target object lists) | ✅ **PASS** | 3.049s | Pass |
-| 4 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{targetOsId}` (cleanup) | ✅ **PASS** | 17.644s | Pass |
+| 1 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` (target) | ✅ **PASS** | 11.855s | Pass |
+| 2 | `POST /beetle/migration/data` (migrate: source OS → target OS, encrypted, async) | ✅ **PASS** | 1m0.203s | Pass |
+| 3 | Verify migrated data (compare source and target object lists) | ✅ **PASS** | 3.866s | Pass |
+| 4 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{targetOsId}` (cleanup) | ✅ **PASS** | 17.293s | Pass |
 
 **Overall Result**: 4/4 steps passed ✅
 
-**Total Duration**: 1m28.523022544s
+**Total Duration**: 1m39.224368213s
 
-*Test executed on June 4, 2026 at 17:09:13 KST (2026-06-04 17:09:13 KST) using CM-Beetle automated test CLI*
+*Test executed on June 24, 2026 at 20:00:06 KST (2026-06-24 20:00:06 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -166,17 +166,17 @@
 #### 2.2 API Response Information
 
 - **Status**: ✅ **SUCCESS**
-- **Duration**: 50.196s
-- **Note**: Initial response was `202 Accepted` (status: `Handling`). The test CLI polled `GET /beetle/request/1780560569570937697` every 10s (timeout: 600s) until migration completed with status `Success`. Step 3 was then executed.
+- **Duration**: 1m0.203s
+- **Note**: Initial response was `202 Accepted` (status: `Handling`). The test CLI polled `GET /beetle/request/1782298824575095930` every 10s (timeout: 600s) until migration completed with status `Success`. Step 3 was then executed.
 <details>
 <summary>Initial Response Body (202 Accepted)</summary>
 
 ```json
 {
   "data": {
-    "reqId": "1780560569570937697",
+    "reqId": "1782298824575095930",
     "status": "Handling",
-    "statusUrl": "/beetle/request/1780560569570937697"
+    "statusUrl": "/beetle/request/1782298824575095930"
   },
   "message": "Migration started. Use GET /request/{reqId} to check status.",
   "success": true
@@ -352,7 +352,7 @@
 - **Source objects**: 25
 - **Target objects**: 25
 - **Matched**: 25/25 ✅
-- **Duration**: 3.049s
+- **Duration**: 3.866s
 
 ### Step 4: Delete target object storage (cleanup)
 
