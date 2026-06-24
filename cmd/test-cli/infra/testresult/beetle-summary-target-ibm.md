@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-17 10:49:24
+**Generated At:** 2026-06-24 09:56:39
 
 **Namespace:** mig01
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_4f52be74-e240-41f7-8dd7-d347b485e24b | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.102.87<br>**Private IP:** 10.0.1.6<br>**SGs:** my06-sg-01<br>**SSH:** my06-sshkey-01 |
-| my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 02h7_131d74aa-a054-4173-8910-4a4b2a6f6821 | Running | 2 vCPU, 8.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.102.88<br>**Private IP:** 10.0.1.4<br>**SGs:** my06-sg-03<br>**SSH:** my06-sshkey-01 |
-| my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 02h7_f8255603-7165-4f3f-9bc3-654d198e543b | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.102.89<br>**Private IP:** 10.0.1.5<br>**SGs:** my06-sg-02<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_f8178175-8693-4c3c-bb11-296961b82139 | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.94.241<br>**Private IP:** 10.0.1.6<br>**SGs:** my06-sg-01<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | 02h7_faa52016-7f78-46a7-bd3e-550531ee6879 | Running | 2 vCPU, 8.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.91.18<br>**Private IP:** 10.0.1.5<br>**SGs:** my06-sg-03<br>**SSH:** my06-sshkey-01 |
+| my06-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | 02h7_15d76d40-be51-4a99-8c5d-7fe9d8939e58 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my06-vnet-01<br>**Subnet:** my06-subnet-01<br>**Public IP:** 159.23.102.203<br>**Private IP:** 10.0.1.4<br>**SGs:** my06-sg-02<br>**SSH:** my06-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-vnet-01 |
-| **CSP VNet ID** | r026-cd3ce8b8-4ae4-4653-b2a6-fd7d0090368d |
+| **CSP VNet ID** | r026-4650a745-f71b-4cfc-9c2f-bb503634ac18 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ibm-au-syd |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my06-subnet-01 | 02h7-64bfc9e8-85b7-4753-b445-435d5ea2e7a1 | 10.0.1.0/24 | au-syd-1 |
+| my06-subnet-01 | 02h7-7b0aa5a3-b655-489f-bc3c-2146af5f1179 | 10.0.1.0/24 | au-syd-1 |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my06-sshkey-01 | r026-2f341c9c-64ac-4ee7-b293-3ca84ef5b711 |  | SHA256:TiIZxKGJd7PUoY5DmFkaXUBzWG6VRJMPuP9T5iY0cl4 |
+| my06-sshkey-01 | r026-f149af7c-f2ec-41c2-937f-f4f592fe4602 |  | SHA256:hpm7J8C7RXdoPYHRNRKt9tB0B04Zuncu03GzqKEshzM |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-01 |
-| **CSP Security Group ID** | r026-9685eddb-60c7-47fc-81a0-d0b9ae7cdc0e |
+| **CSP Security Group ID** | r026-4a4bcf87-47c6-4e4a-aef9-14c9b0081370 |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-02 |
-| **CSP Security Group ID** | r026-eb9d014b-2ce1-4b0d-a75c-106096c523d9 |
+| **CSP Security Group ID** | r026-51dd6208-ab6c-486a-b2c9-b1e68dcf7791 |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my06-sg-03 |
-| **CSP Security Group ID** | r026-64667452-f8c8-49ab-b1ef-ff541cde3042 |
+| **CSP Security Group ID** | r026-fca6d682-9c93-4321-8801-d4436cf67c14 |
 | **VNet** | my06-vnet-01 |
 | **Rule Count** | 19 rules |
 

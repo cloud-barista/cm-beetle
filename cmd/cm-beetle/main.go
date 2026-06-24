@@ -161,7 +161,7 @@ func checkReadiness(url string) (bool, error) {
 // @tag.description APIs for managing API requests (list, cancel, etc.)
 
 // @tag.name [Recommendation] Infrastructure
-// @tag.description APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.)
+// @tag.description APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.) and NLBs (Managed Network Load Balancers)
 
 // @tag.name [Recommendation] K8s Cluster (prototype)
 // @tag.description APIs for recommending optimal Kubernetes clusters (prototype)
@@ -181,11 +181,14 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Summary/Report] Infrastructure Analysis for Migration
 // @tag.description APIs for summarizing and reporting infrastructure analysis results
 
-// @tag.name [Recommendation] Managed middleware (preview)
-// @tag.description APIs for recommending managed middleware (Object Storage, etc.)
+// @tag.name [Recommendation] Managed Object Storage
+// @tag.description APIs for recommending managed object storage (e.g., AWS S3)
 
-// @tag.name [Migration] Managed middleware (preview)
-// @tag.description APIs for migrating managed middleware (Object Storage, etc.)
+// @tag.name [Migration] Managed Object Storage
+// @tag.description APIs for migrating managed object storage (e.g.,AWS S3)
+
+// @tag.name [Migration] Managed Network Load Balancer (NLB) - preview
+// @tag.description APIs for migrating managed network load balancers (NLB)
 
 // @tag.name [Migration] Data (incubating)
 // @tag.description APIs for migrating data (Rsync, etc.)

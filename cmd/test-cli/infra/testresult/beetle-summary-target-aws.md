@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-17 10:46:34
+**Generated At:** 2026-06-24 09:53:53
 
 **Namespace:** mig01
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my01-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-0425ea303a3ec34ba | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 13.124.194.20<br>**Private IP:** 10.0.1.171<br>**SGs:** my01-sg-01<br>**SSH:** my01-sshkey-01 |
-| my01-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-00a515dadf434b01a | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 13.125.176.19<br>**Private IP:** 10.0.1.10<br>**SGs:** my01-sg-03<br>**SSH:** my01-sshkey-01 |
-| my01-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-0e8b6794681b19e56 | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 52.78.66.65<br>**Private IP:** 10.0.1.208<br>**SGs:** my01-sg-02<br>**SSH:** my01-sshkey-01 |
+| my01-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-0c05b4a7f2ddc0c35 | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 43.203.209.215<br>**Private IP:** 10.0.1.222<br>**SGs:** my01-sg-01<br>**SSH:** my01-sshkey-01 |
+| my01-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-0b3db6a3bbb66ac75 | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 3.38.115.227<br>**Private IP:** 10.0.1.221<br>**SGs:** my01-sg-03<br>**SSH:** my01-sshkey-01 |
+| my01-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-0f3b1409385c0e416 | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 3.34.142.130<br>**Private IP:** 10.0.1.203<br>**SGs:** my01-sg-02<br>**SSH:** my01-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-vnet-01 |
-| **CSP VNet ID** | vpc-0fe4533820f162636 |
+| **CSP VNet ID** | vpc-0c13ad58d4523bac1 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | aws-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my01-subnet-01 | subnet-0d327d4ea137a0502 | 10.0.1.0/24 | ap-northeast-2a |
+| my01-subnet-01 | subnet-0f5a5ffac3a1bc368 | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my01-sshkey-01 | tbojleiabbl4rakk9qhs |  | 28:77:f4:1e:32:96:02:f8:19:2a:46:fe:4a:0b:f1:4e:69:5e:31:72 |
+| my01-sshkey-01 | tb72gm5jdq558jd43kuh |  | e4:be:e2:1c:fb:ac:af:b6:b0:f6:e7:43:dd:d3:db:e8:b9:93:50:f1 |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-sg-01 |
-| **CSP Security Group ID** | sg-0453baa45805db6fb |
+| **CSP Security Group ID** | sg-0de41a7d22971988c |
 | **VNet** | my01-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-sg-02 |
-| **CSP Security Group ID** | sg-033d323238fcb3132 |
+| **CSP Security Group ID** | sg-090212b173a5125ab |
 | **VNet** | my01-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my01-sg-03 |
-| **CSP Security Group ID** | sg-06c3ad0e17b06483b |
+| **CSP Security Group ID** | sg-06682789478d32123 |
 | **VNet** | my01-vnet-01 |
 | **Rule Count** | 19 rules |
 

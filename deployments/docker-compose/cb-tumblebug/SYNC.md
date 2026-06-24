@@ -59,6 +59,41 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
    md5sum $BEETLE/assets/assets.dump.gz $TB/assets/assets.dump.gz
    ```
 
+## v0.12.19 Sync (2026-06-24)
+
+Based on TB v0.12.19 `6b0b1102` (tagged release).
+
+| File                                  | Action                                                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Model files (imdl/cloud-model/)**   |                                                                                                                                                                 |
+| `copied-tb-model.go`                  | **Header updated** — No struct changes for copied types; upstream added `NLBFeatureSupport`/`NLBSupportResponse` in nlb.go but not copied (not needed by beetle) |
+| **docker-compose.yaml**               |                                                                                                                                                                 |
+| `docker-compose.yaml`                 | **Updated** — cb-tumblebug `0.12.15→0.12.19`, cb-spider `0.12.30→0.12.32`, cb-mapui `0.12.39→0.12.43`                                                         |
+| **Assets**                            |                                                                                                                                                                 |
+| `assets/assets.dump.gz`               | No change (MD5 identical: `77888ce732683fef...`)                                                                                                                |
+| `assets/cloudimage.csv`               | **Updated** — Added 2 Alibaba K8s node image entries (`AliyunLinux3ContainerOptimized`, `Ubuntu`) for ACK node pool support                                    |
+| `assets/k8sclusterinfo.yaml`          | **Updated** — Added `initialNodeGroupManagedByCluster: true` for Alibaba and Tencent clusters (initial node group lifecycle-bound to cluster)                   |
+| **Interface/MCP**                     |                                                                                                                                                                 |
+| `interface/mcp/tb-mcp.py`             | **Updated** — Migrated from SSE to Streamable HTTP transport; updated imports (`mcp.server.fastmcp` → `fastmcp`); removed monitoring policy comment             |
+| `interface/mcp/Dockerfile`            | **Updated** — Changed run command from `fastmcp run --transport sse` to `uv run ./tb-mcp.py`                                                                   |
+| `interface/mcp/architecture.md`       | **Updated** — Diagrams updated to reflect Streamable HTTP transport replacing SSE                                                                               |
+| `interface/mcp/README.md`             | **Updated** — Documentation updated for new transport mode                                                                                                      |
+| `interface/mcp/PROXY_README.md`       | **New** — Documentation for mcp-simple-proxy.py usage (copied to beetle)                                                                                       |
+| `interface/mcp/claude_desktop_config.json` | **New** — Claude Desktop configuration example (copied to beetle)                                                                                          |
+| `interface/mcp/mcp-simple-proxy.py`   | **New** — Simple stdio-to-Streamable-HTTP proxy for Claude Desktop integration (copied to beetle)                                                               |
+| **Init**                              |                                                                                                                                                                 |
+| `init/init.py`                        | No change                                                                                                                                                       |
+| `init/templates/`                     | **New templates in TB** — Many new infra/usecase/sg/vnet templates added; not copied (beetle manages its own templates)                                         |
+| **Config**                            |                                                                                                                                                                 |
+| `conf/cloud_conf.yaml`                | No change                                                                                                                                                       |
+
+**Summary of Changes:**
+
+- **Models**: No struct changes for beetle's copied types; only new standalone NLB support structs added upstream
+- **Docker Compose**: Updated all three service versions (tumblebug, spider, mapui)
+- **Assets**: K8s cluster info updated for Alibaba ACK and Tencent TKE initial node group management; cloudimage.csv updated with Alibaba image types
+- **MCP Interface**: Major migration from SSE to Streamable HTTP transport; added proxy support for Claude Desktop; three new files added
+
 ## v0.12.15 Sync (2026-06-15)
 
 Based on TB v0.12.15 `4f01927b` (tagged release).

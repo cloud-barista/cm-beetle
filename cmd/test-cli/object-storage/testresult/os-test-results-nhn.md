@@ -7,17 +7,17 @@
 
 ### Environment
 
-- CM-Beetle: v0.5.0+ (2aeaf75)
-- CB-Tumblebug: v0.12.13
+- CM-Beetle: v0.5.2+ (1c7e6cd)
+- CB-Tumblebug: v0.12.19
 - Target CSP: NHN
 - Target Region: kr1
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Name Seed: my
 - Test CLI: Custom automated testing tool
-- Test Date: June 4, 2026
-- Test Time: 17:59:40 KST
-- Test Execution: 2026-06-04 17:59:40 KST
+- Test Date: June 24, 2026
+- Test Time: 19:48:06 KST
+- Test Execution: 2026-06-24 19:48:06 KST
 
 ### Scenario
 
@@ -37,18 +37,18 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 8ms | Pass |
-| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 1.23s | Pass |
-| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 4ms | Pass |
-| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 93ms | Pass |
-| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 284ms | Pass |
-| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.902s | Pass |
+| 1 | `POST /beetle/recommendation/middleware/objectStorage` | ✅ **PASS** | 6ms | Pass |
+| 2 | `POST /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 1.335s | Pass |
+| 3 | `GET /beetle/migration/middleware/ns/mig01/objectStorage` | ✅ **PASS** | 3ms | Pass |
+| 4 | `HEAD /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 156ms | Pass |
+| 5 | `GET /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 313ms | Pass |
+| 6 | `DELETE /beetle/migration/middleware/ns/mig01/objectStorage/{{osId}}` | ✅ **PASS** | 6.997s | Pass |
 
 **Overall Result**: 6/6 tests passed ✅
 
-**Total Duration**: 13.525900317s
+**Total Duration**: 13.81468654s
 
-*Test executed on June 4, 2026 at 17:59:40 KST (2026-06-04 17:59:40 KST) using CM-Beetle automated test CLI*
+*Test executed on June 24, 2026 at 19:48:06 KST (2026-06-24 19:48:06 KST) using CM-Beetle automated test CLI*
 
 ---
 
