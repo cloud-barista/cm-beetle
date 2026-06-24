@@ -38,7 +38,7 @@ type RecommendObjectStorageRequest struct {
 // @Description
 // @Description [Note] To apply a naming prefix, use the `nameSeed` query parameter on the migration API (`POST /migration/.../objectStorage?nameSeed=xxx`).
 // @Description
-// @Tags [Recommendation] Managed middleware (preview)
+// @Tags [Recommendation] Managed Object Storage
 // @Accept json
 // @Produce	json
 // @Param request body RecommendObjectStorageRequest true "Specify the your object storage to be migrated"

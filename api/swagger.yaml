@@ -7534,7 +7534,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an object storage for cloud migration
       tags:
-      - '[Recommendation] Managed middleware (preview)'
+      - '[Recommendation] Managed Object Storage'
   /recommendation/resources/osImages:
     post:
       consumes:

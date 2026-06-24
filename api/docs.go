@@ -3008,7 +3008,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Managed middleware (preview)"
+                    "[Recommendation] Managed Object Storage"
                 ],
                 "summary": "Recommend an object storage for cloud migration",
                 "operationId": "RecommendObjectStorage",
