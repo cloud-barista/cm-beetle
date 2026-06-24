@@ -12,6 +12,8 @@ go 1.26.2
 // 5. !Importance! After building/testing, make sure to restore(remove/comment) the changes by step 1-3.
 // replace github.com/cloud-barista/cb-tumblebug => ../cb-tumblebug
 
+replace github.com/cloud-barista/cm-beetle/imdl => ./imdl
+
 require (
 	github.com/cloud-barista/cb-tumblebug v0.12.15
 	github.com/cloud-barista/cm-beetle/imdl v0.1.6

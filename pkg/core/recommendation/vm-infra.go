@@ -399,7 +399,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		var selectedVmSpec cloudmodel.SpecInfo
 		var selectedVmOsImage cloudmodel.ImageInfo
 		resolvedCspImageName := "" // set only when review resolves a newer image than the DB value
-		suggestedSystemDisk := "" // set when specImagePairReview confirms an available disk type
+		suggestedSystemDisk := ""  // set when specImagePairReview confirms an available disk type
 		if len(recommendedVmSpecInfoList) == 0 || len(recommendedVmOsImageInfoList) == 0 {
 			log.Warn().Msgf("no recommended VM specs or OS images found for node %s", node.MachineId)
 		} else {
@@ -539,7 +539,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			SpecId:           selectedVmSpec.Id,
 			ImageId:          selectedVmOsImage.Id,
-			CspImageName:     resolvedCspImageName,  // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
+			CspImageName:     resolvedCspImageName, // Set only when review resolved a newer image; TumbleBug sends this to Spider instead of looking up via ImageId.
 			VNetId:           recommendedVmInfra.TargetVNet.Name,
 			SubnetId:         recommendedVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			SecurityGroupIds: []string{recommendedSg.Name},                         // Set the security group ID
@@ -661,7 +661,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 		rootDiskSize := max(int(node.RootDisk.TotalSize), getCspMinRootDiskSizeGB(csp))
 		tempCreateNodeGroupReq := cloudmodel.CreateNodeGroupReq{
 			ConnectionName:   fmt.Sprintf("%s-%s", csp, region),
-			Description:      fmt.Sprintf("a recommended virtual machine %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
+			Description:      fmt.Sprintf("Recommended VM %02d for %s", i+1, node.MachineId), // Set MachineId to identify the source node
 			VNetId:           skeletonVmInfra.TargetVNet.Name,
 			SubnetId:         skeletonVmInfra.TargetVNet.SubnetInfoList[0].Name, // Set the first subnet for simplicity (TBD, select the appropriate subnet)
 			Name:             fmt.Sprintf("vm-%s", node.MachineId),              // Set MachineId to identify the source node

@@ -312,6 +312,9 @@ func RunServer(port string) {
 	gRecommendation.POST("/resources/osImages", controller.RecommendVmOsImages)
 	gRecommendation.POST("/resources/specs", controller.RecommendVmSpecs)
 
+	// Recommendation API for NLB-aware infrastructure (infraWithNlb)
+	gRecommendation.POST("/infraWithNlb", controller.RecommendInfraWithNlbCandidates)
+
 	/*
 	 * API group for managed middleware recommendation
 	 */
@@ -389,6 +392,12 @@ func RunServer(port string) {
 	 * API group for managed middleware migration
 	 */
 	gMigrationMiddleware := gMigration.Group("/middleware")
+
+	// Migration APIs for NLB
+	gMigrationMiddleware.POST("/ns/:nsId/infra/:infraId/nlb", controller.MigrateNlbs)
+	gMigrationMiddleware.GET("/ns/:nsId/infra/:infraId/nlb", controller.ListNlbs)
+	gMigrationMiddleware.GET("/ns/:nsId/infra/:infraId/nlb/:nlbId", controller.GetNlb)
+	gMigrationMiddleware.DELETE("/ns/:nsId/infra/:infraId/nlb/:nlbId", controller.DeleteNlb)
 
 	// Migration APIs for object storage
 	gMigrationMiddleware.POST("/ns/:nsId/objectStorage", controller.MigrateObjectStorage)

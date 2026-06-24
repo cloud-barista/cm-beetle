@@ -57,7 +57,7 @@ type MigrateObjectStorageRequest struct {
 // @Description [Examples]
 // @Description * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
 // @Description
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce	json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -115,7 +115,7 @@ func MigrateObjectStorage(c echo.Context) error {
 // @ID ListObjectStorages
 // @Summary List object storages (buckets)
 // @Description Get the list of all object storages (buckets) in the namespace
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -144,7 +144,7 @@ func ListObjectStorages(c echo.Context) error {
 // @ID GetObjectStorage
 // @Summary Get object storage (bucket) details
 // @Description Get details of a specific object storage (bucket)
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -187,7 +187,7 @@ func GetObjectStorage(c echo.Context) error {
 // @Description
 // @Description [Note]
 // @Description - Returns 200 OK if the bucket exists, 404 Not Found if it doesn't exist
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -237,7 +237,7 @@ func ExistObjectStorage(c echo.Context) error {
 // @Description - `empty`: Empty the bucket first, then delete.
 // @Description - `force`: Force-delete with all contents (passed to Spider as force=true).
 // @Description - `reconcile`: Remove only Tumblebug metadata without calling the CSP delete API.
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -276,7 +276,7 @@ func DeleteObjectStorage(c echo.Context) error {
 // @ID ListObjectStorageObjects
 // @Summary List objects in an object storage bucket
 // @Description List all objects stored in a specific object storage bucket by proxying Tumblebug GET /ns/{nsId}/resources/objectStorage/{osId}/object
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -318,7 +318,7 @@ func ListObjectStorageObjects(c echo.Context) error {
 // @Description Retrieve metadata (key, size, ETag, last-modified, storage class) of a specific object
 // @Description by proxying Tumblebug HEAD /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
 // @Description Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -368,7 +368,7 @@ func GetStorageObject(c echo.Context) error {
 // @Description Delete a specific object from an object storage bucket
 // @Description by proxying Tumblebug DELETE /ns/{nsId}/resources/objectStorage/{osId}/object/{objectKey}.
 // @Description Note: URL-encode the objectKey if it contains slashes (e.g., folder%2Ffile.txt).
-// @Tags [Migration] Managed middleware (preview)
+// @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)

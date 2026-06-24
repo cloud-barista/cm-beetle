@@ -585,14 +585,32 @@ func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	log.Debug().Msgf("Deleting VNets (nsId: %s, vNets: %v)", nsId, vNetIdMap)
 
 	// Delete all vNet
+
+	const vNetDeleteMaxRetries = 10
+	const vNetDeleteRetryInterval = 10 * time.Second
+
 	for vNetId := range vNetIdMap {
-		log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, action: %s)", nsId, vNetId, "withsubnets")
-		msg, err := tbclient.NewSession().DeleteVNet(nsId, vNetId, "withsubnets")
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to delete VNet (nsId: %s, vNetId: %s)", nsId, vNetId)
-			// Continue deleting other resources even if this fails
-		} else {
-			log.Debug().Msgf("VNet deleted (nsId: %s, vNetId: %s, msg:%s)", nsId, vNetId, msg)
+		var deleteErr error
+		for attempt := 1; attempt <= vNetDeleteMaxRetries; attempt++ {
+			log.Debug().Msgf("Deleting VNet (nsId: %s, vNetId: %s, attempt: %d/%d)",
+				nsId, vNetId, attempt, vNetDeleteMaxRetries)
+			msg, err := tbclient.NewSession().DeleteVNet(nsId, vNetId, "withsubnets")
+			if err == nil {
+				log.Debug().Msgf("VNet deleted (nsId: %s, vNetId: %s, msg: %s)", nsId, vNetId, msg)
+				deleteErr = nil
+				break
+			}
+			deleteErr = err
+			if attempt < vNetDeleteMaxRetries {
+				log.Warn().Err(err).Msgf("VNet deletion failed (nsId: %s, vNetId: %s, attempt: %d/%d) — "+
+					"CSP may still be releasing subnet dependencies. Retrying in %s...",
+					nsId, vNetId, attempt, vNetDeleteMaxRetries, vNetDeleteRetryInterval)
+				time.Sleep(vNetDeleteRetryInterval)
+			}
+		}
+		if deleteErr != nil {
+			log.Error().Err(deleteErr).Msgf("failed to delete VNet after %d attempts (nsId: %s, vNetId: %s)",
+				vNetDeleteMaxRetries, nsId, vNetId)
 		}
 	}
 
