@@ -327,6 +327,12 @@
                         "required": true
                     },
                     {
+                        "type": "boolean",
+                        "description": "Reuse existing NLB if one targeting the same nodeGroupId already exists, instead of creating a new one (default: true)",
+                        "name": "useExisting",
+                        "in": "query"
+                    },
+                    {
                         "description": "NLB migration request (use targetNlbList[] from /recommendation/infraWithNlb)",
                         "name": "request",
                         "in": "body",
@@ -484,6 +490,78 @@
                     },
                     "400": {
                         "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}/healthz": {
+            "get": {
+                "description": "Perform a live health check on NLB backend targets via the CSP.\nUnlike GET /nlb/{nlbId} (which returns cached state), this endpoint queries the CSP directly\nto retrieve the current health status of VM targets in the NLB target group.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed Network Load Balancer (NLB) - preview"
+                ],
+                "summary": "Get NLB health status (live CSP check)",
+                "operationId": "GetNlbHealth",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Infra ID",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "NLB ID",
+                        "name": "nlbId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "NLB health info (live from CSP)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_MigratedNlbInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "NLB not found",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }

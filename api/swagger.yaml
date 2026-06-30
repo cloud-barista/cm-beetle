@@ -5500,6 +5500,11 @@ paths:
         name: infraId
         required: true
         type: string
+      - description: 'Reuse existing NLB if one targeting the same nodeGroupId already
+          exists, instead of creating a new one (default: true)'
+        in: query
+        name: useExisting
+        type: boolean
       - description: NLB migration request (use targetNlbList[] from /recommendation/infraWithNlb)
         in: body
         name: request
@@ -5617,6 +5622,58 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get NLB details
+      tags:
+      - '[Migration] Managed Network Load Balancer (NLB) - preview'
+  /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}/healthz:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Perform a live health check on NLB backend targets via the CSP.
+        Unlike GET /nlb/{nlbId} (which returns cached state), this endpoint queries the CSP directly
+        to retrieve the current health status of VM targets in the NLB target group.
+      operationId: GetNlbHealth
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Infra ID
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - description: NLB ID
+        in: path
+        name: nlbId
+        required: true
+        type: string
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: NLB health info (live from CSP)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_MigratedNlbInfo'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: NLB not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get NLB health status (live CSP check)
       tags:
       - '[Migration] Managed Network Load Balancer (NLB) - preview'
   /migration/middleware/ns/{nsId}/objectStorage:
