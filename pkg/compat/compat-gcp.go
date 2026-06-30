@@ -10,7 +10,7 @@ func CheckGcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	log.Trace().Msgf("Starting GCP compatibility check for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 
 	// TODO: Add GCP-specific compatibility checks using Detail information
-	log.Info().Msg("GCP compatibility validation is planned for future implementation")
+	log.Debug().Msg("GCP compatibility validation is planned for future implementation")
 
 	log.Trace().Msgf("GCP compatibility check passed for Spec: %s, Image: %s", spec.CspSpecName, image.CspImageName)
 	return true
