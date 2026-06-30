@@ -34,6 +34,9 @@ cmd/cm-beetle/cm-beetle
 cmd/test-cli/infra/test-infra
 cmd/test-cli/infra/testconf/auth-config.json
 cmd/test-cli/infra/testconf/test-config.yaml
+cmd/test-cli/infra-with-nlb/test-infra-with-nlb
+cmd/test-cli/infra-with-nlb/testconf/auth-config.json
+cmd/test-cli/infra-with-nlb/testconf/test-config.yaml
 cmd/test-cli/object-storage/test-os
 cmd/test-cli/object-storage/testconf/auth-config.json
 cmd/test-cli/object-storage/testconf/test-config.yaml

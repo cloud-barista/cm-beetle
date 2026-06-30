@@ -1,4 +1,5 @@
 {
+  "nameSeed": "my",
   "desiredCsp": "aws",
   "desiredRegion": "ap-northeast-2",
   "sourceInfra": {

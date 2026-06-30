@@ -1,0 +1,50 @@
+test:
+  set:
+    mode: parallel # parallel or sequential
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: false
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: false
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: false
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: false
+    - csp: tencent
+      region: ap-seoul
+      name: Tencent-Seoul
+      execute: false # TBD      
+    - csp: ibm
+      region: au-syd
+      name: IBMCloud-Sydney
+      execute: false
+    - csp: openstack
+      region: RegionOne
+      name: OpenStack-Daejeon
+      execute: false # TBD
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: true
+    - csp: nhn
+      region: kr1
+      name: NHNCloud-Pangyo
+      execute: false # TBD
+    - csp: kt
+      region: kr1
+      name: KT-Seoul
+      execute: false # TBD
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: mig01
+  authConfigFile: testconf/auth-config.json
+  requestBodyFile: testconf/recommendation-request.json
