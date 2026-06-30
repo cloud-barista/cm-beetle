@@ -99,6 +99,7 @@ clean: ## Remove previous build
 	@rm -f api/docs.go api/swagger.*
 	@cd cmd/$(MODULE_NAME) && $(GO) clean
 	@cd cmd/test-cli/infra && $(GO) clean
+	@cd cmd/test-cli/infra-with-nlb && $(GO) clean
 	@cd cmd/test-cli/object-storage && $(GO) clean
 	@cd cmd/test-cli/data && $(GO) clean
 	@echo "Cleaned!"
@@ -110,6 +111,14 @@ test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
 	@cd cmd/test-cli/infra && $(GO) run main.go -config testconf/test-config.yaml
+
+test-infra-with-nlb: ## Run the infra-with-nlb migration test CLI for all CSP-Region pairs
+	@echo "Running infra-with-nlb migration test CLI..."
+	@if [ ! -f cmd/test-cli/infra-with-nlb/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/infra-with-nlb/testconf/template-test-config.yaml cmd/test-cli/infra-with-nlb/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/infra-with-nlb && $(GO) run main.go -config testconf/test-config.yaml
 
 test-os: ## Run the object storage migration test CLI for all CSP-Region pairs
 	@echo "Running object storage migration test CLI..."
