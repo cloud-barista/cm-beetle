@@ -32,7 +32,9 @@ import (
 // CreateNlbs migrates NLBs to the target cloud infra.
 // Each TargetNlb in req.NLBs is sent to Tumblebug as a separate NLBReq.
 // All NLBs are attempted; individual failures are recorded in the result.
-func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb) (cloudmodel.MigratedNlbResult, error) {
+// If useExisting is true (default) and an NLB with the same nodeGroupId already exists, it is reused.
+// (Tumblebug sets NLB Id = nodeGroupId, so GetNlb(nodeGroupId) is used for the existence check.)
+func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting bool) (cloudmodel.MigratedNlbResult, error) {
 	log.Info().
 		Str("nsId", nsId).
 		Str("infraId", infraId).
@@ -59,6 +61,21 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb) (cloudmodel
 			continue
 		}
 
+		// If useExisting is true, check if an NLB with the same nodeGroupId already exists and reuse it.
+		// Tumblebug sets NLB Id = nodeGroupId, so GetNlb(nodeGroupId) is the correct existence check.
+		if useExisting {
+			existingInfo, getErr := tbclient.NewSession().GetNlb(nsId, infraId, target.TargetGroup.NodeGroupId)
+			if getErr == nil && existingInfo.Id != "" {
+				log.Info().
+					Str("nlbId", existingInfo.Id).
+					Str("listenerPort", target.Listener.Port).
+					Msg("NLB already exists. CM-Beetle will reuse it.")
+				createdList = append(createdList, toMigratedNlbInfo(existingInfo))
+				continue
+			}
+		}
+
+		// NLB does not exist (or useExisting=false) — create it
 		tbReq := toTumblebugNLBReq(target)
 		info, err := tbclient.NewSession().CreateNlb(nsId, infraId, tbReq)
 		if err != nil {
@@ -140,6 +157,21 @@ func GetNlb(nsId, infraId, nlbId string) (cloudmodel.MigratedNlbInfo, error) {
 	}
 
 	log.Info().Str("nlbId", nlbId).Msg("NLB retrieved")
+	return toMigratedNlbInfo(info), nil
+}
+
+// GetNlbHealth performs a live health check on NLB targets via CSP.
+// Unlike GetNlb (which returns cached state), this call reaches out to the CSP to get current health status.
+func GetNlbHealth(nsId, infraId, nlbId string) (cloudmodel.MigratedNlbInfo, error) {
+	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB health")
+
+	info, err := tbclient.NewSession().GetNlbHealth(nsId, infraId, nlbId)
+	if err != nil {
+		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB health")
+		return cloudmodel.MigratedNlbInfo{}, err
+	}
+
+	log.Info().Str("nlbId", nlbId).Str("status", info.Status).Msg("NLB health retrieved")
 	return toMigratedNlbInfo(info), nil
 }
 

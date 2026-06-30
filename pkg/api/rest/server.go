@@ -397,6 +397,7 @@ func RunServer(port string) {
 	gMigrationMiddleware.POST("/ns/:nsId/infra/:infraId/nlb", controller.MigrateNlbs)
 	gMigrationMiddleware.GET("/ns/:nsId/infra/:infraId/nlb", controller.ListNlbs)
 	gMigrationMiddleware.GET("/ns/:nsId/infra/:infraId/nlb/:nlbId", controller.GetNlb)
+	gMigrationMiddleware.GET("/ns/:nsId/infra/:infraId/nlb/:nlbId/healthz", controller.GetNlbHealth)
 	gMigrationMiddleware.DELETE("/ns/:nsId/infra/:infraId/nlb/:nlbId", controller.DeleteNlb)
 
 	// Migration APIs for object storage

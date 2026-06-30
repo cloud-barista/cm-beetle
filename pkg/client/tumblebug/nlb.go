@@ -100,6 +100,29 @@ func (s *Session) GetNlb(nsId, infraId, nlbId string) (tbmodel.NLBInfo, error) {
 	return resBody, nil
 }
 
+// GetNlbHealth performs a live health check on NLB targets via CSP and returns the updated NLB info.
+func (s *Session) GetNlbHealth(nsId, infraId, nlbId string) (tbmodel.NLBInfo, error) {
+	log.Debug().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB health")
+
+	var resBody tbmodel.NLBInfo
+	resp, err := s.
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/ns/%s/infra/%s/nlb/%s/healthz", nsId, infraId, nlbId))
+
+	if err != nil {
+		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB health")
+		return tbmodel.NLBInfo{}, err
+	}
+	if resp.IsError() {
+		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
+		log.Error().Err(err).Msg("Failed to get NLB health")
+		return tbmodel.NLBInfo{}, err
+	}
+
+	log.Debug().Str("nlbId", nlbId).Msg("NLB health retrieved successfully")
+	return resBody, nil
+}
+
 // DeleteNlb deletes a specific NLB.
 func (s *Session) DeleteNlb(nsId, infraId, nlbId string) error {
 	log.Debug().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Deleting NLB")
