@@ -194,6 +194,15 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 		syntheticNode := synthesizeGroupRepresentativeNode(rnlb.memberMachineIds, nodeByMachineId)
 		nodeWithMergedFirewallRules := mergeNodesFirewallRules(rnlb.memberMachineIds, nodeByMachineId, syntheticNode)
 
+		// Cloud NLBs (AWS, GCP, Azure) operate in pass-through mode: they preserve the original
+		// client source IP instead of SNAT-ing to their own IP. In the source HAProxy setup the
+		// backend port (8086) was restricted to the internal VPC CIDR because haproxy was a proxy
+		// that always forwarded from its own internal IP. In the cloud NLB equivalent the backend
+		// VMs receive packets whose source IP is the external client IP, so the SG must allow
+		// the target port from 0.0.0.0/0. (Health checks still originate from VPC-internal NLB
+		// node IPs, so the existing VPC-CIDR rule continues to satisfy them.)
+		nodeWithMergedFirewallRules = ensurePortOpenToPublic(nodeWithMergedFirewallRules, rnlb.backendPort)
+
 		sg, sgErr := RecommendSecurityGroup(csp, region, nodeWithMergedFirewallRules)
 		if sgErr != nil {
 			log.Warn().Err(sgErr).Str("backend", backendName).Msg("failed to recommend SG for NLB NodeGroup")
@@ -772,6 +781,38 @@ func normalizeProtocol(proto string) string {
 	default:
 		return "TCP"
 	}
+}
+
+// ensurePortOpenToPublic returns a copy of node whose FirewallTable is guaranteed to contain
+// an inbound TCP rule that allows the given port from 0.0.0.0/0.
+// If such a rule already exists (exact port or wildcard "*") it is a no-op.
+func ensurePortOpenToPublic(node onpremmodel.NodeProperty, port int) onpremmodel.NodeProperty {
+	portStr := fmt.Sprintf("%d", port)
+	for _, rule := range node.FirewallTable {
+		if rule.Direction != "inbound" || rule.Action != "allow" {
+			continue
+		}
+		proto := strings.ToLower(rule.Protocol)
+		if proto != "tcp" && proto != "*" {
+			continue
+		}
+		if rule.DstPorts != portStr && rule.DstPorts != "*" {
+			continue
+		}
+		if rule.SrcCIDR == "0.0.0.0/0" || rule.SrcCIDR == "*" || rule.SrcCIDR == "" {
+			return node // already open to public
+		}
+	}
+	node.FirewallTable = append(node.FirewallTable, onpremmodel.FirewallRuleProperty{
+		Action:    "allow",
+		Direction: "inbound",
+		Protocol:  "tcp",
+		SrcCIDR:   "0.0.0.0/0",
+		SrcPorts:  "*",
+		DstCIDR:   "0.0.0.0/0",
+		DstPorts:  portStr,
+	})
+	return node
 }
 
 // sanitizeName converts a name to a safe NodeGroup ID component (lowercase, hyphens only).
