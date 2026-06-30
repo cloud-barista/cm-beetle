@@ -542,6 +542,19 @@ func sanitizeNlbListByCsp(nlbList []cloudmodel.NlbReq, csp string) []cloudmodel.
 		if csp == "azure" {
 			nlbList[i].HealthChecker.Timeout = -1
 		}
+
+		// IBM Cloud Load Balancer requires the health check timeout to be strictly
+		// less than the health check interval (delay).
+		if csp == "ibm" {
+			if nlbList[i].HealthChecker.Timeout >= nlbList[i].HealthChecker.Interval {
+				// Adjust timeout to be half of the interval (capped at 1 or greater)
+				newTimeout := nlbList[i].HealthChecker.Interval / 2
+				if newTimeout < 1 {
+					newTimeout = 1
+				}
+				nlbList[i].HealthChecker.Timeout = newTimeout
+			}
+		}
 	}
 	return nlbList
 }
