@@ -318,6 +318,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 
 	// ── Phase 6: build target NLB list — identical for all candidates ─────────
 	targetNlbList := buildTargetNlbList(resolvedNlbs)
+	targetNlbList = sanitizeNlbListByCsp(targetNlbList, csp)
 
 	// ── Phase 7: assemble candidates — candidate i uses the i-th ranked pair per NodeGroup ──
 	// maxCandidates = max pairs available across all NodeGroups, capped at limit.
@@ -531,6 +532,18 @@ func buildTargetNlbList(resolvedNlbs []resolvedNlb) []cloudmodel.NlbReq {
 	}
 
 	return targetNlbList
+}
+
+// sanitizeNlbListByCsp applies CSP-specific platform constraints and adjustments to the target NLB list.
+func sanitizeNlbListByCsp(nlbList []cloudmodel.NlbReq, csp string) []cloudmodel.NlbReq {
+	for i := range nlbList {
+		// Azure Load Balancers do not support custom health check timeouts.
+		// Setting Timeout to -1 tells Tumblebug/Spider to omit it.
+		if csp == "azure" {
+			nlbList[i].HealthChecker.Timeout = -1
+		}
+	}
+	return nlbList
 }
 
 // buildSyntheticSrcInfra builds an OnpremInfra containing one representative node per
