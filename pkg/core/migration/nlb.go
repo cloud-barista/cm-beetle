@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 		Int("count", len(req.TargetNlbList)).
 		Msg("Starting NLB migration")
 
-	var createdList []cloudmodel.MigratedNlbInfo
+	var createdList []cloudmodel.NLBInfo
 	var errs []string
 
 	for i, target := range req.TargetNlbList {
@@ -70,7 +71,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 					Str("nlbId", existingInfo.Id).
 					Str("listenerPort", target.Listener.Port).
 					Msg("NLB already exists. CM-Beetle will reuse it.")
-				createdList = append(createdList, toMigratedNlbInfo(existingInfo))
+				createdList = append(createdList, toNLBInfo(existingInfo))
 				continue
 			}
 		}
@@ -86,7 +87,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 			continue
 		}
 
-		createdList = append(createdList, toMigratedNlbInfo(info))
+		createdList = append(createdList, toNLBInfo(info))
 		log.Info().
 			Str("nlbId", info.Id).
 			Str("listenerPort", target.Listener.Port).
@@ -128,7 +129,7 @@ func CreateNlbs(nsId, infraId string, req cloudmodel.RecommendedNlb, useExisting
 }
 
 // ListNlbs returns all NLBs in the specified infra.
-func ListNlbs(nsId, infraId string) ([]cloudmodel.MigratedNlbInfo, error) {
+func ListNlbs(nsId, infraId string) ([]cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Msg("Listing NLBs")
 
 	resp, err := tbclient.NewSession().ListNlbs(nsId, infraId)
@@ -137,9 +138,9 @@ func ListNlbs(nsId, infraId string) ([]cloudmodel.MigratedNlbInfo, error) {
 		return nil, err
 	}
 
-	infos := make([]cloudmodel.MigratedNlbInfo, 0, len(resp.NLB))
+	infos := make([]cloudmodel.NLBInfo, 0, len(resp.NLB))
 	for _, item := range resp.NLB {
-		infos = append(infos, toMigratedNlbInfo(item))
+		infos = append(infos, toNLBInfo(item))
 	}
 
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Int("count", len(infos)).Msg("NLBs listed")
@@ -147,32 +148,32 @@ func ListNlbs(nsId, infraId string) ([]cloudmodel.MigratedNlbInfo, error) {
 }
 
 // GetNlb returns details of a specific NLB.
-func GetNlb(nsId, infraId, nlbId string) (cloudmodel.MigratedNlbInfo, error) {
+func GetNlb(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB")
 
 	info, err := tbclient.NewSession().GetNlb(nsId, infraId, nlbId)
 	if err != nil {
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB")
-		return cloudmodel.MigratedNlbInfo{}, err
+		return cloudmodel.NLBInfo{}, err
 	}
 
 	log.Info().Str("nlbId", nlbId).Msg("NLB retrieved")
-	return toMigratedNlbInfo(info), nil
+	return toNLBInfo(info), nil
 }
 
 // GetNlbHealth performs a live health check on NLB targets via CSP.
 // Unlike GetNlb (which returns cached state), this call reaches out to the CSP to get current health status.
-func GetNlbHealth(nsId, infraId, nlbId string) (cloudmodel.MigratedNlbInfo, error) {
+func GetNlbHealth(nsId, infraId, nlbId string) (cloudmodel.NLBInfo, error) {
 	log.Info().Str("nsId", nsId).Str("infraId", infraId).Str("nlbId", nlbId).Msg("Getting NLB health")
 
 	info, err := tbclient.NewSession().GetNlbHealth(nsId, infraId, nlbId)
 	if err != nil {
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB health")
-		return cloudmodel.MigratedNlbInfo{}, err
+		return cloudmodel.NLBInfo{}, err
 	}
 
 	log.Info().Str("nlbId", nlbId).Str("status", info.Status).Msg("NLB health retrieved")
-	return toMigratedNlbInfo(info), nil
+	return toNLBInfo(info), nil
 }
 
 // DeleteNlb deletes a specific NLB. Treats 404 as already deleted (idempotent).
@@ -228,31 +229,18 @@ func toTumblebugNLBReq(t cloudmodel.NlbReq) tbmodel.NLBReq {
 	}
 }
 
-// toMigratedNlbInfo converts a Tumblebug NLBInfo to MigratedNlbInfo.
-func toMigratedNlbInfo(src tbmodel.NLBInfo) cloudmodel.MigratedNlbInfo {
-	return cloudmodel.MigratedNlbInfo{
-		Id:          src.Id,
-		Name:        src.Name,
-		Description: src.Description,
-		Scope:       src.Scope,
-		Type:        src.Type,
-		Listener: cloudmodel.MigratedNlbListener{
-			Protocol: src.Listener.Protocol,
-			Port:     src.Listener.Port,
-			IP:       src.Listener.IP,
-			DNSName:  src.Listener.DNSName,
-		},
-		TargetGroup: cloudmodel.MigratedNlbTarget{
-			Protocol:    src.TargetGroup.Protocol,
-			Port:        src.TargetGroup.Port,
-			NodeGroupId: src.TargetGroup.NodeGroupId,
-			Nodes:       src.TargetGroup.Nodes,
-		},
-		HealthCheck: cloudmodel.MigratedNlbHealth{
-			Interval:  src.HealthChecker.Interval,
-			Threshold: src.HealthChecker.Threshold,
-			Timeout:   src.HealthChecker.Timeout,
-		},
-		Status: src.Status,
+// toNLBInfo converts a Tumblebug NLBInfo to cloudmodel.NLBInfo via JSON round-trip.
+// Both types are structurally equivalent, so this avoids manual field mapping
+// that would silently drift as either type evolves.
+func toNLBInfo(src tbmodel.NLBInfo) cloudmodel.NLBInfo {
+	data, err := json.Marshal(src)
+	if err != nil {
+		log.Warn().Err(err).Str("nlbId", src.Id).Msg("toNLBInfo: marshal failed")
+		return cloudmodel.NLBInfo{}
 	}
+	var result cloudmodel.NLBInfo
+	if err := json.Unmarshal(data, &result); err != nil {
+		log.Warn().Err(err).Str("nlbId", src.Id).Msg("toNLBInfo: unmarshal failed")
+	}
+	return result
 }
