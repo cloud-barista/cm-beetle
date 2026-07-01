@@ -804,6 +804,10 @@ definitions:
         $ref: '#/definitions/cloudmodel.MigratedNlbHealth'
       id:
         type: string
+      keyValueList:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
       listener:
         $ref: '#/definitions/cloudmodel.MigratedNlbListener'
       name:
@@ -5537,7 +5541,12 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Delete a specific NLB from the target infra
+      description: |-
+        Delete a specific NLB from the target infra.
+
+        [Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.
+        Deleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).
+        CM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.
       operationId: DeleteNlb
       parameters:
       - default: mig01
@@ -7363,6 +7372,29 @@ paths:
 
         [Note] The returned `targetInfra.nodeGroups[].name` values are referenced by `targetNlbList[].targetGroup.nodeGroupId`.
         Use the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.
+
+        ---
+        ## CSP-Specific NLB Notes
+
+        AWS:
+        - Port translation supported (e.g., listener 9999 → backend 8086).
+        - DNS endpoint; allow ~5 min for propagation after creation.
+        - [Auto] SG rule for backend port opened from 0.0.0.0/0.
+
+        Azure:
+        - Port translation supported. DNS + static IP endpoint.
+        - [Auto] Health check timeout omitted (not supported by Azure).
+
+        GCP:
+        - Port translation NOT supported; traffic arrives at backend VMs on the listener port.
+        - [Auto] Listener port is forced equal to the backend port — clients must connect on the application port (e.g., 8086, not 9999).
+        - IP-only endpoint (no DNS name).
+
+        IBM:
+        - Port translation supported.
+        - Listener address is assigned asynchronously; re-query if the address is empty after migration.
+        - [Auto] Health check timeout forced strictly less than the interval.
+        ---
       operationId: RecommendInfraWithNlbCandidates
       parameters:
       - default: aws

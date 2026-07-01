@@ -448,7 +448,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific NLB from the target infra",
+                "description": "Delete a specific NLB from the target infra.\n\n[Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.\nDeleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).\nCM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2848,7 +2848,7 @@ const docTemplate = `{
         },
         "/recommendation/infraWithNlb": {
             "post": {
-                "description": "Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.\n\nThe recommendation engine:\n1. Correlates NLB backend server IPs with source Node IPs\n2. Normalizes backend ports via majority vote when ports differ\n3. Assigns NLB-related nodes to shared NodeGroups (N:1), unrelated nodes to individual NodeGroups (1:1)\n4. Finds ranked compatible spec-image pairs per NodeGroup (representative node for NLB groups)\n5. Generates up to ` + "`" + `limit` + "`" + ` candidates — candidate i uses the i-th ranked pair per NodeGroup\n6. Maps source NLB configuration to target cloud NLB model (same for all candidates)\n\n[Note] ` + "`" + `sourceInfra.nlbs` + "`" + ` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n[Note] The returned ` + "`" + `targetInfra.nodeGroups[].name` + "`" + ` values are referenced by ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + `.\nUse the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.",
+                "description": "Perform NLB-aware infrastructure recommendation and return multiple Pareto-optimal candidates.\n\nThe recommendation engine:\n1. Correlates NLB backend server IPs with source Node IPs\n2. Normalizes backend ports via majority vote when ports differ\n3. Assigns NLB-related nodes to shared NodeGroups (N:1), unrelated nodes to individual NodeGroups (1:1)\n4. Finds ranked compatible spec-image pairs per NodeGroup (representative node for NLB groups)\n5. Generates up to ` + "`" + `limit` + "`" + ` candidates — candidate i uses the i-th ranked pair per NodeGroup\n6. Maps source NLB configuration to target cloud NLB model (same for all candidates)\n\n[Note] ` + "`" + `sourceInfra.nlbs` + "`" + ` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n[Note] The returned ` + "`" + `targetInfra.nodeGroups[].name` + "`" + ` values are referenced by ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + `.\nUse the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.\n\n---\n## CSP-Specific NLB Notes\n\nAWS:\n- Port translation supported (e.g., listener 9999 → backend 8086).\n- DNS endpoint; allow ~5 min for propagation after creation.\n- [Auto] SG rule for backend port opened from 0.0.0.0/0.\n\nAzure:\n- Port translation supported. DNS + static IP endpoint.\n- [Auto] Health check timeout omitted (not supported by Azure).\n\nGCP:\n- Port translation NOT supported; traffic arrives at backend VMs on the listener port.\n- [Auto] Listener port is forced equal to the backend port — clients must connect on the application port (e.g., 8086, not 9999).\n- IP-only endpoint (no DNS name).\n\nIBM:\n- Port translation supported.\n- Listener address is assigned asynchronously; re-query if the address is empty after migration.\n- [Auto] Health check timeout forced strictly less than the interval.\n---",
                 "consumes": [
                     "application/json"
                 ],
@@ -5005,6 +5005,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.KeyValue"
+                    }
                 },
                 "listener": {
                     "$ref": "#/definitions/cloudmodel.MigratedNlbListener"
