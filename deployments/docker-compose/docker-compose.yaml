@@ -11,11 +11,11 @@ x-default-healthcheck: &default-healthcheck
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.5.3
+    image: cloudbaristaorg/cm-beetle:0.5.4
     container_name: cm-beetle
-    build:
-      context: ${PROJECT_ROOT}
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${PROJECT_ROOT}
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - cloud-barista
@@ -57,7 +57,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.19
+    image: cloudbaristaorg/cb-tumblebug:0.12.22
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -228,7 +228,7 @@ services:
   # CB-MapUI
   # This is the Map-based client for CB-Tumblebug.
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.43
+    image: cloudbaristaorg/cb-mapui:0.12.47
     container_name: cb-mapui
     # build:
     #   context: ${PROJECT_ROOT}/../cb-mapui

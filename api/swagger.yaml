@@ -14,6 +14,7 @@ definitions:
     - Queued
     - Handling
     - Completed
+    - CompletedWithError
     - Failed
     - Timeout
     - Cancelled
@@ -23,6 +24,7 @@ definitions:
     - CommandStatusQueued
     - CommandStatusHandling
     - CommandStatusCompleted
+    - CommandStatusCompletedWithError
     - CommandStatusFailed
     - CommandStatusTimeout
     - CommandStatusCancelled

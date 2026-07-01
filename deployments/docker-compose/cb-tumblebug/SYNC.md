@@ -59,6 +59,39 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
    md5sum $BEETLE/assets/assets.dump.gz $TB/assets/assets.dump.gz
    ```
 
+## v0.12.22 Sync (2026-07-01)
+
+Based on TB v0.12.22 `50c213b8` (tagged release).
+
+| File                                  | Action                                                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Model files (imdl/cloud-model/)**   |                                                                                                                                                                 |
+| `copied-tb-model.go`                  | **Updated** — Added `CommandStatusCompletedWithError` constant to distinguish remote command non-zero exits from SSH/transport failures                         |
+| **docker-compose.yaml**               |                                                                                                                                                                 |
+| `docker-compose.yaml`                 | **Updated** — cb-tumblebug `0.12.19→0.12.22`, cb-mapui `0.12.43→0.12.47`, cb-spider unchanged `0.12.32`                                                        |
+| **Assets**                            |                                                                                                                                                                 |
+| `assets/assets.dump.gz`               | **Updated** — MD5 changed from `77888ce732683fef...` to `9db6eb7212e1450918145d664bbef465` (copied to beetle)                                                  |
+| `assets/cloudimage_ignore.yaml`       | **Updated** — Added Azure Hyper-V Generation 1 metadata filters to exclude legacy Gen1 images (modern Azure VMs require Gen2)                                  |
+| `assets/cloudinfo.yaml`               | **Updated** — CSP information and region updates (copied to beetle)                                                                                             |
+| `assets/k8sclusterinfo.yaml`          | **Updated** — K8s cluster version and configuration updates (copied to beetle)                                                                                  |
+| **Init**                              |                                                                                                                                                                 |
+| `init/decCredential.sh`               | **Differs** — TB version updated but not copied (beetle uses existing version)                                                                                  |
+| `init/openbao/`                       | **New in TB** — OpenBao-related files (not copied to beetle - not needed)                                                                                       |
+| `init/templates/*.json`               | **New templates in TB** — Many new infra/usecase templates added upstream; not copied (beetle manages its own templates)                                        |
+| **Config**                            |                                                                                                                                                                 |
+| `conf/setup.env`, `conf/traefik.yaml` | **New in TB** — TB-specific configuration files (not copied to beetle - not needed for beetle's deployment)                                                     |
+| **Scripts**                           |                                                                                                                                                                 |
+| `scripts/*`                           | **Many new scripts in TB** — Operational scripts for backup, etcd, NLB, usecases, etc. (not copied to beetle)                                                  |
+
+**Summary of Changes:**
+
+- **Models**: Added `CommandStatusCompletedWithError` status constant for better SSH command result handling
+- **Docker Compose**: Updated tumblebug and mapui versions; spider version remains unchanged
+- **Assets**: Updated binary dump, cloud image ignore patterns with Azure Gen1 filters, cloud info, and K8s cluster configurations
+- **Upstream additions not copied**: New infraAutopilot model structs (16 new types for declarative resilient infra provisioning), init templates, TB-specific configs, and operational scripts
+
+**Note**: TB v0.12.22 introduces extensive infraAutopilot functionality (availability query GPU support, image metadata filters, and 16 new structs for resilient provisioning). These are standalone features without dependency chains to beetle's existing copied structs, so they were not synchronized per dependency-based sync rules.
+
 ## v0.12.19 Sync (2026-06-24)
 
 Based on TB v0.12.19 `6b0b1102` (tagged release).
