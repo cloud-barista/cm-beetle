@@ -29,24 +29,24 @@ See also: [Object Storage Migration Feature Guide](object-storage-migration-feat
 
 | Feature        | AWS | Azure | GCP | Alibaba | Tencent | IBM | (OpenStack) | NCP | (NHN) | (KT) |
 | -------------- | :-: | :---: | :-: | :-----: | :-----: | :-: | :---------: | :-: | :---: | :--: |
-| Recommendation | ✅  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |     📅      | 🚧  |  📅   |  📅  |
-| Migration      | ✅  |  🚧   | 🚧  |   🚧    |   📅    | 🚧  |     📅      | 🚧  |  📅   |  📅  |
+| Recommendation | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |  📅   |  📅  |
+| Migration      | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |  📅   |  📅  |
 
 > - Recommendation groups source nodes by NLB backend topology (N:1) and returns Pareto-frontier spec candidates.
 > - Migration provisions NLBs on the target cloud after VM infrastructure is deployed.
 
 ### CSP-Specific Characteristics and Constraints
 
-| CSP   | Port translation | Endpoint        | Key constraint / auto-adjustment |
-|-------|:---------------:|-----------------|----------------------------------|
-| AWS   | ✅              | DNS name        | SG: backend port opened from `0.0.0.0/0` automatically. DNS takes ~5 min to propagate. |
-| Azure | ✅              | DNS + static IP | Health check timeout not supported — omitted automatically. |
-| GCP   | ❌              | IP only         | Listener port forced = backend (application) port. Clients connect on the application port (e.g., 8086, not 9999). |
-| IBM   | ✅              | IP (async)      | Listener address assigned asynchronously — re-query if empty after migration. Timeout < interval enforced automatically. |
+| CSP   | Port translation | Endpoint        | Key constraint / auto-adjustment                                                                                         |
+| ----- | :--------------: | --------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| AWS   |        ✅        | DNS name        | SG: backend port opened from `0.0.0.0/0` automatically. DNS takes ~5 min to propagate.                                   |
+| Azure |        ✅        | DNS + static IP | Health check timeout not supported — omitted automatically.                                                              |
+| GCP   |        ❌        | IP only         | Listener port forced = backend (application) port. Clients connect on the application port (e.g., 8086, not 9999).       |
+| IBM   |        ✅        | IP (async)      | Listener address assigned asynchronously — re-query if empty after migration. Timeout < interval enforced automatically. |
 
 > **GCP**: External Passthrough NLB uses target pools with no port translation. Traffic arrives at backend VMs on the listener port as-is, so the recommendation overrides the listener port to match the application port.
 >
-> **IBM**: The NLB listener address may be empty immediately after creation due to asynchronous provisioning. Retry the GET NLB call after a short wait.
+> **IBM**: Issue observed where both IP and DNS are empty — workaround uses Hostname from KeyValueList as fallback. Reported to Spider; expected to be resolved in a future update (not tracked).
 
 ### NLB Deletion Behavior
 
