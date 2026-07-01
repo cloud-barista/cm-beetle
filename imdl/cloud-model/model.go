@@ -28,13 +28,6 @@ type RecommendedNlb struct {
 	TargetNlbList []NlbReq `json:"targetNlbList" validate:"required"`
 }
 
-// MigratedNlbResult is the response returned after NLB migration.
-type MigratedNlbResult struct {
-	Status      string            `json:"status"` // "created" | "partial" | "failed"
-	Description string            `json:"description"`
-	NlbList     []MigratedNlbInfo `json:"nlbList"`
-}
-
 // CloudProperty represents the cloud service provider (CSP) information.
 type CloudProperty struct {
 	Csp    string `json:"csp" example:"aws"`
