@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.19 (commit: 6b0b110226d4d4fb4f6217db4530d54a868ecb08)
-// * Synchronized: 2026-07-01 (NLBInfo and nested types aligned with NLBInfo/NLBListenerInfo/NLBTargetGroupInfo/NLBHealthCheckerInfo)
+// * Version: CB-Tumblebug v0.12.22 (commit: 50c213b898301fcaba08c768df69250d48c35027)
+// * Synchronized: 2026-07-01 (Added CommandStatusCompletedWithError constant)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -201,6 +201,15 @@ const (
 
 	// CommandStatusCompleted indicates the command execution completed successfully
 	CommandStatusCompleted CommandExecutionStatus = "Completed"
+
+	// CommandStatusCompletedWithError indicates that the SSH transport
+	// succeeded and the remote command ran to completion, but the command
+	// itself exited with a non-zero status. Typical causes: the user's
+	// script reported an error, the remote process was killed by the kernel
+	// (e.g. OOM-killer), or any non-zero exit from the program. Distinct
+	// from CommandStatusFailed (which signals an SSH/transport-level
+	// failure — bastion auth, dial timeout, mid-session EOF, etc.).
+	CommandStatusCompletedWithError CommandExecutionStatus = "CompletedWithError"
 
 	// CommandStatusFailed indicates the command execution failed
 	CommandStatusFailed CommandExecutionStatus = "Failed"
