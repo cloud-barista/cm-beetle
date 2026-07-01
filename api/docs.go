@@ -5006,12 +5006,6 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "keyValueList": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cloudmodel.KeyValue"
-                    }
-                },
                 "listener": {
                     "$ref": "#/definitions/cloudmodel.MigratedNlbListener"
                 },

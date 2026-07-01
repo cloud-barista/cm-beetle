@@ -804,10 +804,6 @@ definitions:
         $ref: '#/definitions/cloudmodel.MigratedNlbHealth'
       id:
         type: string
-      keyValueList:
-        items:
-          $ref: '#/definitions/cloudmodel.KeyValue'
-        type: array
       listener:
         $ref: '#/definitions/cloudmodel.MigratedNlbListener'
       name:
