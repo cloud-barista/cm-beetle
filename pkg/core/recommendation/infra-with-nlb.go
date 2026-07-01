@@ -564,6 +564,16 @@ func sanitizeNlbListByCsp(nlbList []cloudmodel.NlbReq, csp string) []cloudmodel.
 				nlbList[i].HealthChecker.Timeout = newTimeout
 			}
 		}
+
+		// GCP External Passthrough NLB uses target pools and does NOT perform port translation.
+		// Traffic arrives at backend VMs on the same destination port as the forwarding rule
+		// (the listener port), not the application's backend port.
+		// To ensure traffic reaches the application, the listener port must equal the backend port.
+		// We use the backend (application) port as the authoritative value since the application
+		// cannot be reconfigured as part of the migration.
+		if csp == "gcp" {
+			nlbList[i].Listener.Port = nlbList[i].TargetGroup.Port
+		}
 	}
 	return nlbList
 }

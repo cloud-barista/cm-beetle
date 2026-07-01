@@ -267,6 +267,29 @@ type RecommendInfraWithNlbRequest struct {
 // @Description
 // @Description [Note] The returned `targetInfra.nodeGroups[].name` values are referenced by `targetNlbList[].targetGroup.nodeGroupId`.
 // @Description Use the same NodeGroup IDs when calling POST /migration/infra so that the NLB migration can reference them immediately.
+// @Description
+// @Description ---
+// @Description ## CSP-Specific NLB Notes
+// @Description
+// @Description AWS:
+// @Description - Port translation supported (e.g., listener 9999 → backend 8086).
+// @Description - DNS endpoint; allow ~5 min for propagation after creation.
+// @Description - [Auto] SG rule for backend port opened from 0.0.0.0/0.
+// @Description
+// @Description Azure:
+// @Description - Port translation supported. DNS + static IP endpoint.
+// @Description - [Auto] Health check timeout omitted (not supported by Azure).
+// @Description
+// @Description GCP:
+// @Description - Port translation NOT supported; traffic arrives at backend VMs on the listener port.
+// @Description - [Auto] Listener port is forced equal to the backend port — clients must connect on the application port (e.g., 8086, not 9999).
+// @Description - IP-only endpoint (no DNS name).
+// @Description
+// @Description IBM:
+// @Description - Port translation supported.
+// @Description - Listener address is assigned asynchronously; re-query if the address is empty after migration.
+// @Description - [Auto] Health check timeout forced strictly less than the interval.
+// @Description ---
 // @Tags [Recommendation] Infrastructure
 // @Accept json
 // @Produce json

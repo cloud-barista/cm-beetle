@@ -235,7 +235,11 @@ func GetNlbHealth(c echo.Context) error {
 // DeleteNlb godoc
 // @ID DeleteNlb
 // @Summary Delete an NLB
-// @Description Delete a specific NLB from the target infra
+// @Description Delete a specific NLB from the target infra.
+// @Description
+// @Description [Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.
+// @Description Deleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).
+// @Description CM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.
 // @Tags [Migration] Managed Network Load Balancer (NLB) - preview
 // @Accept json
 // @Produce json
