@@ -60,8 +60,8 @@ type CSPTestReport struct {
 	ListMCIIDsResponse        *cloudmodel.IdList
 	GetMCIResponse            *cloudmodel.VmInfraInfo
 	MigratedNlbResult         *cloudmodel.MigratedNlbResult
-	NlbListResponse           []cloudmodel.MigratedNlbInfo
-	GetNlbResponse            *cloudmodel.MigratedNlbInfo
+	NlbListResponse           []cloudmodel.NLBInfo
+	GetNlbResponse            *cloudmodel.NLBInfo
 	DeleteNlbResponse         interface{}
 	DeleteMCIResponse         interface{} // Simple response
 	TestResults               []TestResults
@@ -630,7 +630,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, sourceInfraModel on
 	if !stopTesting && infraId != "" {
 		result8 = runListNlbsTest(client, config, infraId, displayName)
 		if result8.Success {
-			if structuredResponse, err := convertMapToMigratedNlbInfoList(result8.Response); err == nil {
+			if structuredResponse, err := convertMapToNLBInfoList(result8.Response); err == nil {
 				cspReport.NlbListResponse = structuredResponse
 				if len(nlbIds) == 0 {
 					for _, nlbInfo := range structuredResponse {
@@ -656,7 +656,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, sourceInfraModel on
 	if !stopTesting && infraId != "" && len(nlbIds) > 0 {
 		result9 = runGetNlbTest(client, config, infraId, nlbIds[0], displayName)
 		if result9.Success {
-			if structuredResponse, err := convertMapToMigratedNlbInfo(result9.Response); err == nil {
+			if structuredResponse, err := convertMapToNLBInfo(result9.Response); err == nil {
 				cspReport.GetNlbResponse = structuredResponse
 			}
 		}
@@ -990,15 +990,15 @@ func convertMapToMigratedNlbResult(responseMap interface{}) (*cloudmodel.Migrate
 	return &apiResp.Data, nil
 }
 
-func convertMapToMigratedNlbInfoList(responseMap interface{}) ([]cloudmodel.MigratedNlbInfo, error) {
+func convertMapToNLBInfoList(responseMap interface{}) ([]cloudmodel.NLBInfo, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var apiResp model.ApiResponse[[]cloudmodel.MigratedNlbInfo]
+	var apiResp model.ApiResponse[[]cloudmodel.NLBInfo]
 	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
-		var response []cloudmodel.MigratedNlbInfo
+		var response []cloudmodel.NLBInfo
 		if err := json.Unmarshal(jsonBytes, &response); err != nil {
 			return nil, err
 		}
@@ -1008,15 +1008,15 @@ func convertMapToMigratedNlbInfoList(responseMap interface{}) ([]cloudmodel.Migr
 	return apiResp.Data, nil
 }
 
-func convertMapToMigratedNlbInfo(responseMap interface{}) (*cloudmodel.MigratedNlbInfo, error) {
+func convertMapToNLBInfo(responseMap interface{}) (*cloudmodel.NLBInfo, error) {
 	jsonBytes, err := json.Marshal(responseMap)
 	if err != nil {
 		return nil, err
 	}
 
-	var apiResp model.ApiResponse[cloudmodel.MigratedNlbInfo]
+	var apiResp model.ApiResponse[cloudmodel.NLBInfo]
 	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
-		var response cloudmodel.MigratedNlbInfo
+		var response cloudmodel.NLBInfo
 		if err := json.Unmarshal(jsonBytes, &response); err != nil {
 			return nil, err
 		}
@@ -1417,7 +1417,7 @@ func runListNlbsTest(client *resty.Client, config TestConfig, infraId string, di
 	url := fmt.Sprintf("%s/beetle/migration/middleware/ns/%s/infra/%s/nlb", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId)
 	log.Debug().Msgf("API Request URL: %s", url)
 
-	var apiResponse model.ApiResponse[[]cloudmodel.MigratedNlbInfo]
+	var apiResponse model.ApiResponse[[]cloudmodel.NLBInfo]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -1465,7 +1465,7 @@ func runGetNlbTest(client *resty.Client, config TestConfig, infraId, nlbId strin
 	url := fmt.Sprintf("%s/beetle/migration/middleware/ns/%s/infra/%s/nlb/%s", config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId, nlbId)
 	log.Debug().Msgf("API Request URL: %s", url)
 
-	var apiResponse model.ApiResponse[cloudmodel.MigratedNlbInfo]
+	var apiResponse model.ApiResponse[cloudmodel.NLBInfo]
 	var emptyBody interface{} = common.NoBody
 	err := common.ExecuteHttpRequest(
 		client,
@@ -1578,6 +1578,13 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 
 		if err == nil {
 			log.Info().Msg("MCI deletion initiated successfully")
+			break
+		}
+
+		// 404 means the infra doesn't exist (never created or already deleted) — no point retrying
+		if strings.Contains(err.Error(), "404") {
+			log.Info().Msgf("Infra not found (404) on attempt %d — treating as already deleted", attempt)
+			err = nil
 			break
 		}
 
@@ -2561,7 +2568,7 @@ func runSourceSummaryTest(client *resty.Client, config TestConfig, onpremInfraMo
 }
 
 // runNlbLoadBalancingTest performs Test 10: NLB Load Balancing Verification
-func runNlbLoadBalancingTest(client *resty.Client, config TestConfig, infraId string, nlbInfo *cloudmodel.MigratedNlbInfo, nlbReqs []cloudmodel.NlbReq, displayName string, authConfig AuthConfig) (result TestResults) {
+func runNlbLoadBalancingTest(client *resty.Client, config TestConfig, infraId string, nlbInfo *cloudmodel.NLBInfo, nlbReqs []cloudmodel.NlbReq, displayName string, authConfig AuthConfig) (result TestResults) {
 	log.Info().Msg("\n--- Test 10: NLB Load Balancing Verification ---")
 
 	result = TestResults{
@@ -2779,6 +2786,18 @@ server.serve_forever()
 	nlbDNSName := nlbInfo.Listener.DNSName
 	nlbListenerIP := nlbInfo.Listener.IP
 
+	// Fallback: IBM assigns the listener address asynchronously (ProvisioningStatus: "create_pending").
+	// The actual hostname is available in the top-level KeyValueList under Key="Hostname".
+	if nlbDNSName == "" && nlbListenerIP == "" {
+		for _, kv := range nlbInfo.KeyValueList {
+			if kv.Key == "Hostname" && kv.Value != "" {
+				nlbDNSName = kv.Value
+				log.Info().Str("hostname", nlbDNSName).Msg("NLB listener: using KeyValueList[Hostname] as DNS fallback")
+				break
+			}
+		}
+	}
+
 	if nlbDNSName == "" && nlbListenerIP == "" {
 		result.Success = false
 		result.Error = "NLB has no listener IP or DNSName available"
@@ -2958,7 +2977,7 @@ server.serve_forever()
 			config.Beetle.Endpoint, config.Beetle.NamespaceID, infraId, nlbInfo.Id)
 		healthResp, healthErr := client.R().Get(healthzUrl)
 		if healthErr == nil && !healthResp.IsError() {
-			var healthApiResp model.ApiResponse[cloudmodel.MigratedNlbInfo]
+			var healthApiResp model.ApiResponse[cloudmodel.NLBInfo]
 			if jsonErr := json.Unmarshal(healthResp.Body(), &healthApiResp); jsonErr == nil && healthApiResp.Data.Id != "" {
 				registeredNodes := len(healthApiResp.Data.TargetGroup.Nodes)
 				log.Info().Str("nlbId", nlbInfo.Id).Int("registeredNodes", registeredNodes).

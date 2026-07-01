@@ -115,7 +115,7 @@ func MigrateNlbs(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param infraId path string true "Infra ID"
 // @Param X-Request-Id header string false "Unique request ID"
-// @Success 200 {object} model.ApiResponse[[]cloudmodel.MigratedNlbInfo] "NLB list"
+// @Success 200 {object} model.ApiResponse[[]cloudmodel.NLBInfo] "NLB list"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb [get]
@@ -151,7 +151,7 @@ func ListNlbs(c echo.Context) error {
 // @Param infraId path string true "Infra ID"
 // @Param nlbId path string true "NLB ID"
 // @Param X-Request-Id header string false "Unique request ID"
-// @Success 200 {object} model.ApiResponse[cloudmodel.MigratedNlbInfo] "NLB details"
+// @Success 200 {object} model.ApiResponse[cloudmodel.NLBInfo] "NLB details"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "NLB not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
@@ -198,7 +198,7 @@ func GetNlb(c echo.Context) error {
 // @Param infraId path string true "Infra ID"
 // @Param nlbId path string true "NLB ID"
 // @Param X-Request-Id header string false "Unique request ID"
-// @Success 200 {object} model.ApiResponse[cloudmodel.MigratedNlbInfo] "NLB health info (live from CSP)"
+// @Success 200 {object} model.ApiResponse[cloudmodel.NLBInfo] "NLB health info (live from CSP)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "NLB not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
