@@ -52,3 +52,8 @@ beetle:
     api:
       username: default
       password: default
+
+  ## UI configuration
+  ui:
+    enabled: true
+    path: ./ui/dist

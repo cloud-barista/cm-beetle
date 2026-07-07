@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. CM-Honeybee (On-Premise Infrastructure Extractor)
+  # ============================================================================
+  cm-honeybee:
+    image: cloudbaristaorg/cm-honeybee:latest
+    container_name: cm-honeybee
+    ports:
+      - "8081:8081"
+    environment:
+      - HONEYBEE_API_ALLOW_ORIGINS=*
+      - HONEYBEE_LOG_LEVEL=debug
+    volumes:
+      - honeybee-db:/app/db
+    restart: always
+
+  # ============================================================================
+  # 2. CM-Damselfly (On-Premise & Cloud Infrastructure Model Repository)
+  # ============================================================================
+  cm-damselfly:
+    image: cloudbaristaorg/cm-damselfly:latest
+    container_name: cm-damselfly
+    ports:
+      - "8082:8082"
+    environment:
+      - DAMSELFLY_API_ALLOW_ORIGINS=*
+      - DAMSELFLY_LOG_LEVEL=debug
+    volumes:
+      - damselfly-db:/app/db
+    restart: always
+
+  # ============================================================================
+  # 3. CM-Beetle with Embedded Dashboard UI
+  # ============================================================================
+  cm-beetle:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    image: cloudbaristaorg/cm-beetle:latest
+    container_name: cm-beetle
+    ports:
+      - "8056:8056"
+    environment:
+      - BEETLE_SELF_ENDPOINT=localhost:8056
+      - BEETLE_API_ALLOW_ORIGINS=*
+      - BEETLE_API_AUTH_ENABLED=true
+      - BEETLE_API_AUTH_MODE=basic
+      - BEETLE_API_USERNAME=default
+      - BEETLE_API_PASSWORD=default
+      - BEETLE_UI_ENABLED=true
+      - BEETLE_UI_PATH=ui/dist
+      - BEETLE_LKVSTORE_PATH=/app/db/beetle.db
+      - BEETLE_LOGLEVEL=debug
+      - BEETLE_TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
+      - BEETLE_TUMBLEBUG_API_USERNAME=default
+      - BEETLE_TUMBLEBUG_API_PASSWORD=default
+    volumes:
+      - beetle-db:/app/db
+      - beetle-log:/app/log
+    depends_on:
+      - cm-honeybee
+      - cm-damselfly
+    restart: always
+
+volumes:
+  honeybee-db:
+  damselfly-db:
+  beetle-db:
+  beetle-log:

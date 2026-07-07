@@ -230,6 +230,17 @@ func RunServer(port string) {
 	// Beetle API group which has /beetle as prefix
 	gBeetle := e.Group("/beetle")
 
+	// UI static file serving (when enabled)
+	if config.Beetle.UI.Enabled {
+		uiDistPath := filepath.Join(config.Beetle.Root, config.Beetle.UI.Path)
+		gBeetle.Static("/ui", uiDistPath)
+		// SPA fallback: serve index.html for any sub-routes under /ui
+		gBeetle.GET("/ui/*", func(c echo.Context) error {
+			return c.File(filepath.Join(uiDistPath, "index.html"))
+		})
+		log.Info().Msgf("CM-Beetle UI Dashboard is enabled at /beetle/ui (Source: %s)", uiDistPath)
+	}
+
 	// Swagger API docs
 	swaggerRedirect := func(c echo.Context) error {
 		return c.Redirect(http.StatusMovedPermanently, "/beetle/api/index.html")

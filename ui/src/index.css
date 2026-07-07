@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-cyan: #06b6d4;
+  --color-brand-blue: #0ea5e9;
+  --color-brand-purple: #a855f7;
+  
+  /* Shared color variables controlled by css properties */
+  --color-bg-main: var(--bg-main);
+  --color-bg-panel: var(--bg-panel);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border-main: var(--border-main);
+  --color-bg-input: var(--bg-input);
+  --color-border-input: var(--border-input);
+
+  /* Enlarged Font Scales for Readability */
+  --text-xs: 0.95rem;   /* 12px -> 15.2px */
+  --text-sm: 1.1rem;    /* 14px -> 17.6px */
+  --text-base: 1.25rem; /* 16px -> 20px */
+  --text-lg: 1.4rem;    /* 18px -> 22.4px */
+  --text-xl: 1.6rem;    /* 20px -> 25.6px */
+  --text-2xl: 1.85rem;  /* 24px -> 29.6px */
+  --text-3xl: 2.2rem;   /* 30px -> 35.2px */
+}
+
+/* Default Dark mode theme values */
+:root {
+  color-scheme: dark;
+  --bg-main: #0b0f19;
+  --bg-panel: rgba(30, 41, 59, 0.4);
+  --bg-input: #0f172a;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-main: rgba(255, 255, 255, 0.05);
+  --border-input: rgba(255, 255, 255, 0.15);
+}
+
+/* Light mode override values */
+:root.light {
+  color-scheme: light;
+  --bg-main: #f1f5f9;
+  --bg-panel: #ffffff;
+  --bg-input: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --border-main: #e2e8f0;
+  --border-input: #cbd5e1;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  /* Enlarged font base scale for readability (3. 폰트 크기 확대 요청 반영) */
+  font-size: 16px;
+  line-height: 1.6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Responsive transitions for theme toggles */
+.glass-panel, .glass-panel-interactive, select, input, textarea {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+select, input, textarea {
+  border: 1px solid var(--border-input);
+}
+
+/* Glassmorphism panel styling helper using variable variables */
+.glass-panel {
+  background: var(--color-bg-panel);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border-main);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.glass-panel-interactive {
+  background: var(--color-bg-panel);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border-main);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-interactive:hover {
+  background: var(--color-bg-panel);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.08);
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-input);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+}
+:root.light ::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+}
+
+/* Glowing text and nodes */
+.glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.glow-purple {
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+/* Pulsing dot for healthy status */
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  background-color: #22c55e;
+  border-radius: 50%;
+}
+
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #22c55e;
+  border-radius: 50%;
+  animation: pulse 1.6s infinite ease-in-out;
+  transform-origin: center;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}

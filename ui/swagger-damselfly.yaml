@@ -1,0 +1,3342 @@
+basePath: /damselfly
+definitions:
+  cloudmodel.CloudProperty:
+    properties:
+      csp:
+        example: aws
+        type: string
+      region:
+        example: ap-northeast-2
+        type: string
+    type: object
+  cloudmodel.CreateNodeGroupReq:
+    properties:
+      connectionName:
+        example: testcloud01-seoul
+        type: string
+      cspImageName:
+        description: |-
+          CspImageName is the CSP-side image identifier pre-resolved by EnsureImageAvailable
+          at nodegroup level (Alibaba/Azure latest-version resolution included). When non-empty
+          and the image is not a custom image, CreateNode skips the redundant per-VM GetImage
+          DB call, significantly reducing concurrent DB load during large infra creation.
+          Custom images always go through the full GetImage path (this field stays empty for them).
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP (required
+          for option=register)
+        example: i-014fa6ede6ada0b2c
+        type: string
+      dataDiskIds:
+        items:
+          type: string
+        type: array
+      description:
+        example: Description
+        type: string
+      imageId:
+        description: ImageType        string   `json:"imageType"`
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: NodeGroup name of Nodes. Actual Node name will be generated with
+          -N postfix.
+        example: g1-1
+        type: string
+      nodeGroupSize:
+        description: NodeGroupSize is the number of Nodes to create in this NodeGroup.
+          If > 0, nodeGroup will be generated.
+        example: 3
+        type: integer
+      nodeUserName:
+        type: string
+      nodeUserPassword:
+        type: string
+      rootDiskSize:
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 50
+        type: integer
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: default, TYPE1, ...
+        type: string
+      securityGroupIds:
+        items:
+          type: string
+        type: array
+      specId:
+        type: string
+      sshKeyId:
+        type: string
+      subnetId:
+        type: string
+      vNetId:
+        type: string
+    required:
+    - connectionName
+    - imageId
+    - name
+    - securityGroupIds
+    - specId
+    - sshKeyId
+    - subnetId
+    - vNetId
+    type: object
+  cloudmodel.FirewallRuleReq:
+    properties:
+      CIDR:
+        description: CIDR is the allowed IP range (e.g. 0.0.0.0/0, 10.0.0/8)
+        example: 0.0.0.0/0
+        type: string
+      Direction:
+        description: Direction is the direction of the rule (inbound or outbound)
+        enum:
+        - inbound
+        - outbound
+        example: inbound
+        type: string
+      Ports:
+        description: |-
+          Ports is to get multiple ports or port ranges as a string (e.g. "22,900-1000,2000-3000")
+          This allows flexibility in specifying single ports or ranges in a comma-separated format.
+          This field is used to handle both single ports and port ranges in a unified way.
+          It can accept a single port (e.g. "22"), a range (e.g. "900-1000"), or multiple ports/ranges (e.g. "22,900-1000,2000-3000").
+        example: 22,900-1000,2000-3000
+        type: string
+      Protocol:
+        description: Protocol is the protocol type for the rule (TCP, UDP, ICMP).
+          Don't use ALL here.
+        enum:
+        - TCP
+        - UDP
+        - ICMP
+        example: TCP
+        type: string
+    required:
+    - Direction
+    - Protocol
+    type: object
+  cloudmodel.ImageInfo:
+    properties:
+      commandHistory:
+        description: CommandHistory stores the status and history of remote commands
+          executed on this VM
+        items:
+          $ref: '#/definitions/cloudmodel.ImageSourceCommandHistory'
+        type: array
+      connectionName:
+        type: string
+      creationDate:
+        type: string
+      cspImageId:
+        description: CspImageId is resource identifier managed by CSP
+        example: ami-0d399fba46a30a310
+        type: string
+      cspImageName:
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      fetchedTime:
+        type: string
+      id:
+        example: aws-ap-southeast-1
+        type: string
+      imageStatus:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.ImageStatus'
+        description: Available, Deprecated, NA
+        example: Available
+      infraType:
+        description: vm|k8s|kubernetes|container, etc.
+        type: string
+      isBasicGpuImage:
+        default: false
+        type: boolean
+      isBasicImage:
+        default: false
+        type: boolean
+      isGPUImage:
+        default: false
+        type: boolean
+      isKubernetesImage:
+        default: false
+        type: boolean
+      name:
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        description: Composite primary key
+        example: default
+        type: string
+      osArchitecture:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSArchitecture'
+        description: arm64, x86_64 etc.
+        example: x86_64
+      osDiskSizeGB:
+        description: 10, 50, 100 etc.
+        example: 50
+        type: number
+      osDiskType:
+        description: ebs, HDD, etc.
+        example: HDD
+        type: string
+      osDistribution:
+        description: Ubuntu 22.04~, CentOS 8 etc.
+        example: Ubuntu 22.04~
+        type: string
+      osPlatform:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.OSPlatform'
+        description: Linux/UNIX, Windows, NA
+        example: Linux/UNIX
+      osType:
+        example: ubuntu 22.04
+        type: string
+      providerName:
+        type: string
+      regionList:
+        description: Array field for supporting multiple regions
+        items:
+          type: string
+        type: array
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      sourceCspImageName:
+        description: SourceCspImageName is the name of the source CSP image from which
+          this image was created
+        example: csp-06eb41e14121c550a
+        type: string
+      sourceNodeUid:
+        description: SourceNodeUid is the UID of the source Node from which this image
+          was created
+        example: wef12awefadf1221edcf
+        type: string
+      systemLabel:
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  cloudmodel.ImageSourceCommandHistory:
+    properties:
+      commandExecuted:
+        description: CommandExecuted is the actual SSH command executed on the VM
+          (may be adjusted)
+        example: ls -la
+        type: string
+      index:
+        description: Index is sequential identifier for this command execution (1,
+          2, 3, ...)
+        example: 1
+        type: integer
+    type: object
+  cloudmodel.ImageStatus:
+    enum:
+    - Creating
+    - Available
+    - Failed
+    - Unavailable
+    - Deleting
+    - Deprecated
+    - NA
+    type: string
+    x-enum-varnames:
+    - ImageCreating
+    - ImageAvailable
+    - ImageFailed
+    - ImageUnavailable
+    - ImageDeleting
+    - ImageDeprecated
+    - ImageNA
+  cloudmodel.InfraCmdReq:
+    properties:
+      command:
+        description: Command is the list of commands to execute
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      timeoutMinutes:
+        default: 30
+        description: |-
+          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+          If not specified or set to 0, the default timeout (30 minutes) will be used
+        example: 30
+        type: integer
+      userName:
+        description: UserName is the SSH username to use for command execution
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
+  cloudmodel.InfraReq:
+    properties:
+      description:
+        example: Made in CB-TB
+        type: string
+      installMonAgent:
+        default: "no"
+        description: InstallMonAgent Option for CB-Dragonfly agent installation ([yes/no]
+          default:yes)
+        enum:
+        - "yes"
+        - "no"
+        example: "no"
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        example: infra01
+        type: string
+      nodeGroups:
+        items:
+          $ref: '#/definitions/cloudmodel.CreateNodeGroupReq'
+        type: array
+      placementAlgo:
+        type: string
+      policyOnPartialFailure:
+        default: continue
+        description: |-
+          PolicyOnPartialFailure determines how to handle Node creation failures
+          - "continue": Continue with partial Infra creation (default)
+          - "rollback": Cleanup entire Infra when any Node fails
+          - "refine": Mark failed Nodes for refinement
+        enum:
+        - continue
+        - rollback
+        - refine
+        example: continue
+        type: string
+      postCommand:
+        allOf:
+        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
+        description: PostCommand is for the command to bootstrap the Nodes
+      systemLabel:
+        description: SystemLabel is for describing the infra in a keyword (any string
+          can be used) for special System purpose
+        example: ""
+        type: string
+    required:
+    - name
+    - nodeGroups
+    type: object
+  cloudmodel.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  cloudmodel.NlbHealthCheckerReq:
+    properties:
+      interval:
+        description: Health check interval in seconds
+        type: integer
+      threshold:
+        description: Unhealthy threshold count
+        type: integer
+      timeout:
+        description: Health check timeout in seconds
+        type: integer
+    type: object
+  cloudmodel.NlbListenerReq:
+    properties:
+      port:
+        description: '"1"–"65535"'
+        type: string
+      protocol:
+        description: TCP | UDP
+        type: string
+    type: object
+  cloudmodel.NlbReq:
+    properties:
+      cspResourceId:
+        type: string
+      description:
+        type: string
+      healthChecker:
+        $ref: '#/definitions/cloudmodel.NlbHealthCheckerReq'
+      listener:
+        $ref: '#/definitions/cloudmodel.NlbListenerReq'
+      scope:
+        description: REGION | GLOBAL
+        type: string
+      targetGroup:
+        $ref: '#/definitions/cloudmodel.NlbTargetGroupReq'
+      type:
+        description: PUBLIC | INTERNAL
+        type: string
+    type: object
+  cloudmodel.NlbTargetGroupReq:
+    properties:
+      nodeGroupId:
+        description: NodeGroup ID in the target Infra
+        type: string
+      port:
+        description: Backend port
+        type: string
+      protocol:
+        description: TCP | HTTP | HTTPS
+        type: string
+    type: object
+  cloudmodel.OSArchitecture:
+    enum:
+    - arm32
+    - arm64
+    - arm64_mac
+    - x86_32
+    - x86_64
+    - x86_32_mac
+    - x86_64_mac
+    - s390x
+    - NA
+    - ""
+    type: string
+    x-enum-varnames:
+    - ARM32
+    - ARM64
+    - ARM64_MAC
+    - X86_32
+    - X86_64
+    - X86_32_MAC
+    - X86_64_MAC
+    - S390X
+    - ArchitectureNA
+    - ArchitectureUnknown
+  cloudmodel.OSPlatform:
+    enum:
+    - Linux/UNIX
+    - Windows
+    - NA
+    type: string
+    x-enum-varnames:
+    - Linux_UNIX
+    - Windows
+    - PlatformNA
+  cloudmodel.RecommendedInfra:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+    type: object
+  cloudmodel.SecurityGroupReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: CspResourceId is required to register object from CSP (option=register)
+        example: 'required for option=register only. ex: csp-06eb41e14121c550a'
+        type: string
+      description:
+        type: string
+      firewallRules:
+        description: validate:"required"`
+        items:
+          $ref: '#/definitions/cloudmodel.FirewallRuleReq'
+        type: array
+      name:
+        type: string
+      vNetId:
+        description: 'Optional for registration: some CSPs (e.g., Azure, Tencent,
+          NHN) don''t bind SG to VPC'
+        type: string
+    required:
+    - connectionName
+    - name
+    type: object
+  cloudmodel.SpecInfo:
+    properties:
+      acceleratorCount:
+        type: integer
+      acceleratorMemoryGB:
+        type: number
+      acceleratorModel:
+        type: string
+      acceleratorType:
+        type: string
+      architecture:
+        example: x86_64
+        type: string
+      associatedObjectList:
+        items:
+          type: string
+        type: array
+      connectionName:
+        type: string
+      costPerHour:
+        type: number
+      cspSpecName:
+        description: CspSpecName is name of the spec given by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      description:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/cloudmodel.KeyValue'
+        type: array
+      diskSizeGB:
+        type: number
+      evaluationScore01:
+        type: number
+      evaluationScore02:
+        type: number
+      evaluationScore03:
+        type: number
+      evaluationScore04:
+        type: number
+      evaluationScore05:
+        type: number
+      evaluationScore06:
+        type: number
+      evaluationScore07:
+        type: number
+      evaluationScore08:
+        type: number
+      evaluationScore09:
+        type: number
+      evaluationScore10:
+        type: number
+      evaluationStatus:
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: aws+ap-southeast+csp-06eb41e14121c550a
+        type: string
+      infraType:
+        description: InfraType can be one of vm|k8s|kubernetes|container, etc.
+        type: string
+      isAutoGenerated:
+        type: boolean
+      maxTotalStorageTiB:
+        type: integer
+      memoryGiB:
+        type: number
+      name:
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
+        type: string
+      namespace:
+        example: default
+        type: string
+      netBwGbps:
+        type: integer
+      orderInFilteredResult:
+        type: integer
+      osType:
+        type: string
+      providerName:
+        type: string
+      regionLatitude:
+        type: number
+      regionLongitude:
+        type: number
+      regionName:
+        type: string
+      rootDiskSize:
+        type: integer
+      rootDiskType:
+        type: string
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      vCPU:
+        type: integer
+    type: object
+  cloudmodel.SshKeyReq:
+    properties:
+      connectionName:
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing SSH keys" feature
+          CspResourceId is required to register object from CSP (option=register)
+        type: string
+      description:
+        type: string
+      fingerprint:
+        type: string
+      name:
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      username:
+        type: string
+      verifiedUsername:
+        type: string
+    required:
+    - connectionName
+    - name
+    type: object
+  cloudmodel.SubnetReq:
+    properties:
+      description:
+        example: subnet00 managed by CB-Tumblebug
+        type: string
+      ipv4_CIDR:
+        example: 10.0.1.0/24
+        type: string
+      name:
+        example: subnet00
+        type: string
+      zone:
+        type: string
+    required:
+    - ipv4_CIDR
+    - name
+    type: object
+  cloudmodel.VNetReq:
+    properties:
+      cidrBlock:
+        example: 10.0.0.0/16
+        type: string
+      connectionName:
+        example: aws-ap-northeast-2
+        type: string
+      description:
+        example: vnet00 managed by CB-Tumblebug
+        type: string
+      name:
+        example: vnet00
+        type: string
+      subnetInfoList:
+        items:
+          $ref: '#/definitions/cloudmodel.SubnetReq'
+        type: array
+    required:
+    - connectionName
+    - name
+    type: object
+  handler.CloudModelRespInfo:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateCloudModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.CreateInfraModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    type: object
+  handler.CreateOnPremModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.CreateOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.CreateSourceSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.CreateSourceSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.CreateTargetSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  handler.CreateTargetSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  handler.GetCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.GetCloudModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.CloudModelRespInfo'
+        type: array
+    type: object
+  handler.GetModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.ModelRespInfo'
+        type: array
+    type: object
+  handler.GetModelsVersionResp:
+    properties:
+      modelsVersion:
+        $ref: '#/definitions/handler.ModelsVersionRespInfo'
+    type: object
+  handler.GetOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.GetOnPremModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.OnPremModelRespInfo'
+        type: array
+    type: object
+  handler.GetSourceSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.GetSourceSoftwareModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.SourceSoftwareModelRespInfo'
+        type: array
+    type: object
+  handler.GetTargetSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  handler.GetTargetSoftwareModelsResp:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/handler.TargetSoftwareModelRespInfo'
+        type: array
+    type: object
+  handler.ModelRespInfo:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      region:
+        type: string
+      softwareModelVersion:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    - onpremiseInfraModel
+    - sourceSoftwareModel
+    - targetSoftwareModel
+    type: object
+  handler.ModelsVersionRespInfo:
+    properties:
+      cloudModelVersion:
+        type: string
+      onpremModelVersion:
+        type: string
+      softwareModelVersion:
+        type: string
+    type: object
+  handler.OnPremModelRespInfo:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.ResHTTPVersion:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.ResReadyz:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.SourceSoftwareModelRespInfo:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.TargetSoftwareModelRespInfo:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  handler.UpdateCloudModelReq:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      csp:
+        type: string
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      region:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.UpdateCloudModelResp:
+    properties:
+      cloudInfraModel:
+        $ref: '#/definitions/cloudmodel.RecommendedInfra'
+      cloudModelVersion:
+        type: string
+      createTime:
+        type: string
+      csp:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      region:
+        type: string
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+      zone:
+        type: string
+    required:
+    - cloudInfraModel
+    type: object
+  handler.UpdateOnPremModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.UpdateOnPremModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isCloudModel:
+        type: boolean
+      isInitUserModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      onpremModelVersion:
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  handler.UpdateSourceSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.UpdateSourceSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      sourceSoftwareModel:
+        $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - sourceSoftwareModel
+    type: object
+  handler.UpdateTargetSoftwareModelReq:
+    properties:
+      description:
+        type: string
+      isInitUserModel:
+        type: boolean
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  handler.UpdateTargetSoftwareModelResp:
+    properties:
+      createTime:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isInitUserModel:
+        type: boolean
+      isSoftwareModel:
+        type: boolean
+      isTargetModel:
+        type: boolean
+      modelType:
+        type: string
+      softwareModelVersion:
+        type: string
+      targetSoftwareModel:
+        $ref: '#/definitions/softwaremodel.TargetGroupSoftwareProperty'
+      updateTime:
+        type: string
+      userId:
+        type: string
+      userModelName:
+        type: string
+      userModelVersion:
+        type: string
+    required:
+    - targetSoftwareModel
+    type: object
+  model.Response:
+    properties:
+      details:
+        example: Any details
+        type: string
+      list:
+        items: {}
+        type: array
+      object:
+        additionalProperties: true
+        type: object
+      success:
+        example: true
+        type: boolean
+      text:
+        example: Any text
+        type: string
+    type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.K8sClusterProperty:
+    properties:
+      cniPlugin:
+        description: '[Reference] CNI plugin name (e.g., "calico", "flannel", "cilium")'
+        type: string
+      name:
+        description: '[Required] Cluster name'
+        type: string
+      nodePortRange:
+        description: '[Reference] NodePort range (e.g., "30000-32767")'
+        type: string
+      podCIDR:
+        description: '[Reference] Pod network CIDR (e.g., "10.244.0.0/16")'
+        type: string
+      serviceCIDR:
+        description: '[Reference] Service network CIDR (e.g., "10.96.0.0/12")'
+        type: string
+      version:
+        description: '[Required] Kubernetes version (e.g., "1.29.3")'
+        type: string
+    required:
+    - name
+    - version
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.NlbBackendProperty:
+    properties:
+      balance:
+        description: '"roundrobin" | "leastconn" | "source" (note only)'
+        type: string
+      name:
+        description: Backend section name
+        type: string
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbServerProperty'
+        type: array
+    type: object
+  onpremisemodel.NlbHealthCheckProperty:
+    properties:
+      enabled:
+        type: boolean
+      interval:
+        description: seconds; default 10
+        type: integer
+      port:
+        description: 0 = same as server port
+        type: integer
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      threshold:
+        description: default 3
+        type: integer
+      timeout:
+        description: seconds; default 10
+        type: integer
+    type: object
+  onpremisemodel.NlbListenerProperty:
+    properties:
+      bindAddress:
+        description: '"*" = all interfaces (→ PUBLIC), specific IP = INTERNAL'
+        type: string
+      port:
+        description: Listener port (1–65535)
+        type: integer
+      protocol:
+        description: '"tcp" | "udp"'
+        type: string
+    type: object
+  onpremisemodel.NlbProperty:
+    properties:
+      backend:
+        $ref: '#/definitions/onpremisemodel.NlbBackendProperty'
+      healthCheck:
+        $ref: '#/definitions/onpremisemodel.NlbHealthCheckProperty'
+      hostMachineId:
+        description: MachineId of the node running HAProxy
+        type: string
+      listener:
+        $ref: '#/definitions/onpremisemodel.NlbListenerProperty'
+      software:
+        description: '"haproxy"'
+        type: string
+    type: object
+  onpremisemodel.NlbServerProperty:
+    properties:
+      ip:
+        description: Server IP; used for IP correlation at recommendation time
+        type: string
+      name:
+        type: string
+      port:
+        description: Server port
+        type: integer
+      weight:
+        description: Traffic weight (reference only)
+        type: integer
+    type: object
+  onpremisemodel.NodeProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the node (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      role:
+        description: Node role (e.g., "control-plane", "worker", "standalone")
+        example: control-plane
+        type: string
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      k8sCluster:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.K8sClusterProperty'
+        description: 'TODO: Extend to a general ClusterProperty if other orchestrators
+          (e.g., OpenShift, Rancher) are needed.'
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      nlbs:
+        description: |-
+          NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.
+          Populated by cm-honeybee when HAProxy is detected on a node.
+          Used exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbProperty'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/onpremisemodel.NodeProperty'
+        type: array
+    required:
+    - nodes
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  softwaremodel.Binary:
+    properties:
+      binary_path:
+        type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      envs:
+        items:
+          type: string
+        type: array
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
+      launch_type:
+        description: 'Launch provenance: how the software was started on the source
+          host.'
+        type: string
+      name:
+        type: string
+      needed_libraries:
+        items:
+          type: string
+        type: array
+      pid_file:
+        description: PIDFile= for forking services
+        type: string
+      required_packages:
+        description: OS packages the target must install (package-provided linked
+          libs)
+        items:
+          type: string
+        type: array
+      service_type:
+        description: systemd Type= ("simple"|"forking"|...)
+        type: string
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        description: source unit file path (to copy)
+        type: string
+      uids:
+        items:
+          type: integer
+        type: array
+      version:
+        type: string
+      wine_prefix:
+        description: WINEPREFIX bottle dir (Wine apps)
+        type: string
+      working_directory:
+        description: used to synthesize a unit
+        type: string
+    required:
+    - envs
+    - gids
+    - name
+    - uids
+    - version
+    type: object
+  softwaremodel.BinaryMigrationInfo:
+    properties:
+      binary_path:
+        type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      envs:
+        items:
+          type: string
+        type: array
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
+      launch_type:
+        description: 'Launch provenance: how the software was started on the source
+          host.'
+        type: string
+      name:
+        type: string
+      needed_libraries:
+        items:
+          type: string
+        type: array
+      order:
+        type: integer
+      pid_file:
+        type: string
+      required_packages:
+        description: OS packages the target must install (package-provided linked
+          libs)
+        items:
+          type: string
+        type: array
+      service_type:
+        type: string
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        type: string
+      uids:
+        items:
+          type: integer
+        type: array
+      version:
+        type: string
+      wine_prefix:
+        type: string
+      working_directory:
+        type: string
+    required:
+    - envs
+    - gids
+    - name
+    - uids
+    - version
+    type: object
+  softwaremodel.Container:
+    properties:
+      container_id:
+        type: string
+      container_image:
+        $ref: '#/definitions/softwaremodel.ContainerImage'
+      container_ports:
+        items:
+          $ref: '#/definitions/softwaremodel.ContainerPort'
+        type: array
+      container_status:
+        type: string
+      docker_compose_path:
+        type: string
+      envs:
+        items:
+          $ref: '#/definitions/softwaremodel.Env'
+        type: array
+      mount_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      network_mode:
+        type: string
+      restart_policy:
+        type: string
+      runtime:
+        allOf:
+        - $ref: '#/definitions/softwaremodel.SoftwareContainerRuntimeType'
+        description: Which runtime uses for the container (Docker, Podman)
+    required:
+    - container_id
+    - container_image
+    - container_status
+    - name
+    - network_mode
+    - restart_policy
+    - runtime
+    type: object
+  softwaremodel.ContainerImage:
+    properties:
+      image_architecture:
+        $ref: '#/definitions/softwaremodel.SoftwareArchitecture'
+      image_hash:
+        type: string
+      image_name:
+        type: string
+      image_version:
+        type: string
+    required:
+    - image_architecture
+    - image_hash
+    - image_name
+    - image_version
+    type: object
+  softwaremodel.ContainerMigrationInfo:
+    properties:
+      container_id:
+        type: string
+      container_image:
+        $ref: '#/definitions/softwaremodel.ContainerImage'
+      container_ports:
+        items:
+          $ref: '#/definitions/softwaremodel.ContainerPort'
+        type: array
+      container_status:
+        type: string
+      docker_compose_path:
+        type: string
+      envs:
+        items:
+          $ref: '#/definitions/softwaremodel.Env'
+        type: array
+      mount_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      network_mode:
+        type: string
+      order:
+        type: integer
+      restart_policy:
+        type: string
+      runtime:
+        description: Which runtime uses for the container (Docker, Podman, ...)
+        type: string
+    required:
+    - container_id
+    - container_image
+    - container_status
+    - name
+    - network_mode
+    - restart_policy
+    - runtime
+    type: object
+  softwaremodel.ContainerPort:
+    properties:
+      container_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Port}
+        type: integer
+      host_ip:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostIp
+        type: string
+      host_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostPort
+        type: integer
+      protocol:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Protocol}
+        type: string
+    required:
+    - container_port
+    - host_ip
+    - host_port
+    - protocol
+    type: object
+  softwaremodel.Env:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    required:
+    - name
+    type: object
+  softwaremodel.Kubernetes:
+    properties:
+      kube_config:
+        type: string
+      resources:
+        additionalProperties: true
+        type: object
+      version:
+        description: Same as release
+        type: string
+    required:
+    - kube_config
+    - resources
+    - version
+    type: object
+  softwaremodel.KubernetesMigrationInfo:
+    properties:
+      kube_config:
+        type: string
+      order:
+        type: integer
+      resources:
+        additionalProperties: true
+        type: object
+      velero:
+        $ref: '#/definitions/softwaremodel.KubernetesVelero'
+      version:
+        description: Same as release
+        type: string
+    required:
+    - kube_config
+    - resources
+    - velero
+    - version
+    type: object
+  softwaremodel.KubernetesVelero:
+    properties:
+      backup_location_config:
+        type: string
+      bucket:
+        type: string
+      features:
+        type: string
+      plugins:
+        type: string
+      provider:
+        type: string
+      secret_file:
+        type: string
+    required:
+    - backup_location_config
+    - bucket
+    - provider
+    type: object
+  softwaremodel.MigrationList:
+    properties:
+      binaries:
+        items:
+          $ref: '#/definitions/softwaremodel.BinaryMigrationInfo'
+        type: array
+      containers:
+        items:
+          $ref: '#/definitions/softwaremodel.ContainerMigrationInfo'
+        type: array
+      kubernetes:
+        items:
+          $ref: '#/definitions/softwaremodel.KubernetesMigrationInfo'
+        type: array
+      packages:
+        items:
+          $ref: '#/definitions/softwaremodel.PackageMigrationInfo'
+        type: array
+    type: object
+  softwaremodel.MigrationServer:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+      migration_list:
+        $ref: '#/definitions/softwaremodel.MigrationList'
+      source_connection_info_id:
+        type: string
+    type: object
+  softwaremodel.Package:
+    properties:
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      gpg_key_url:
+        type: string
+      name:
+        type: string
+      need_to_delete_packages:
+        type: string
+      needed_packages:
+        type: string
+      repo_url:
+        type: string
+      repo_use_os_version_code:
+        default: false
+        type: boolean
+      type:
+        $ref: '#/definitions/softwaremodel.SoftwarePackageType'
+      version:
+        type: string
+    required:
+    - name
+    - needed_packages
+    - type
+    - version
+    type: object
+  softwaremodel.PackageMigrationInfo:
+    properties:
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      gpg_key_url:
+        type: string
+      name:
+        type: string
+      need_to_delete_packages:
+        items:
+          type: string
+        type: array
+      needed_packages:
+        items:
+          type: string
+        type: array
+      order:
+        type: integer
+      repo_url:
+        type: string
+      repo_use_os_version_code:
+        default: false
+        type: boolean
+      version:
+        type: string
+    required:
+    - name
+    - needed_packages
+    - version
+    type: object
+  softwaremodel.SoftwareArchitecture:
+    enum:
+    - common
+    - x86_64
+    - x86
+    - armv5
+    - armv6
+    - armv7
+    - arm64v8
+    type: string
+    x-enum-varnames:
+    - SoftwareArchitectureCommon
+    - SoftwareArchitectureX8664
+    - SoftwareArchitectureX86
+    - SoftwareArchitectureARMv5
+    - SoftwareArchitectureARMv6
+    - SoftwareArchitectureARMv7
+    - SoftwareArchitectureARM64v8
+  softwaremodel.SoftwareContainerRuntimeType:
+    enum:
+    - docker
+    - podman
+    type: string
+    x-enum-varnames:
+    - SoftwareContainerRuntimeTypeDocker
+    - SoftwareContainerRuntimeTypePodman
+  softwaremodel.SoftwareList:
+    properties:
+      binaries:
+        items:
+          $ref: '#/definitions/softwaremodel.Binary'
+        type: array
+      containers:
+        items:
+          $ref: '#/definitions/softwaremodel.Container'
+        type: array
+      kubernetes:
+        items:
+          $ref: '#/definitions/softwaremodel.Kubernetes'
+        type: array
+      packages:
+        items:
+          $ref: '#/definitions/softwaremodel.Package'
+        type: array
+    type: object
+  softwaremodel.SoftwarePackageType:
+    enum:
+    - deb
+    - rpm
+    type: string
+    x-enum-comments:
+      SoftwarePackageTypeDEB: Debian based package type
+      SoftwarePackageTypeRPM: RHEL based package type
+    x-enum-descriptions:
+    - Debian based package type
+    - RHEL based package type
+    x-enum-varnames:
+    - SoftwarePackageTypeDEB
+    - SoftwarePackageTypeRPM
+  softwaremodel.SourceConnectionInfoSoftwareProperty:
+    properties:
+      connection_id:
+        type: string
+      softwares:
+        $ref: '#/definitions/softwaremodel.SoftwareList'
+    required:
+    - connection_id
+    type: object
+  softwaremodel.SourceGroupSoftwareProperty:
+    properties:
+      connection_info_list:
+        items:
+          $ref: '#/definitions/softwaremodel.SourceConnectionInfoSoftwareProperty'
+        type: array
+      source_group_id:
+        type: string
+    required:
+    - source_group_id
+    type: object
+  softwaremodel.TargetGroupSoftwareProperty:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/softwaremodel.MigrationServer'
+        type: array
+    type: object
+info:
+  contact:
+    email: contact-to-cloud-barista@googlegroups.com
+    name: API Support
+    url: http://cloud-barista.github.io
+  description: CM-Damselfly REST API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: CM-Damselfly REST API
+  version: latest
+paths:
+  /cloudmodel:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of cloud user models.
+      operationId: GetCloudModels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained Cloud Migration User Models
+          schema:
+            $ref: '#/definitions/handler.GetCloudModelsResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of cloud user models
+      tags:
+      - '[API] Cloud Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new cloud user model with the given information.
+      operationId: CreateCloudModel
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateCloudModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Created the Cloud Migration User Model
+          schema:
+            $ref: '#/definitions/handler.CreateCloudModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new cloud user model
+      tags:
+      - '[API] Cloud Migration User Models'
+  /cloudmodel/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a cloud user model with the given information.
+      operationId: DeleteCloudModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Deleted the Cloud Migration User Model
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a cloud user model
+      tags:
+      - '[API] Cloud Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific cloud user model.
+      operationId: GetCloudModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained the Cloud Migration User Model
+          schema:
+            $ref: '#/definitions/handler.GetCloudModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific cloud user model
+      tags:
+      - '[API] Cloud Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a cloud user model with the given information.
+      operationId: UpdateCloudModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateCloudModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Updated the Cloud Migration User Model
+          schema:
+            $ref: '#/definitions/handler.UpdateCloudModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a cloud user model
+      tags:
+      - '[API] Cloud Migration User Models'
+  /httpVersion:
+    get:
+      consumes:
+      - application/json
+      description: Checks and logs the HTTP version of the incoming request to the
+        server console.
+      operationId: RestCheckHTTPVersion
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ResHTTPVersion'
+      summary: Check HTTP version of incoming request
+      tags:
+      - '[Admin] System management'
+  /infra-model:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of infra migration user models filtered by model type
+        and source/target classification.
+      operationId: GetInfraModels
+      parameters:
+      - description: Type of infra model to retrieve
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Whether to retrieve target models (true) or source models (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained infra migration user models
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of infra migration user models (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new infra migration user model. Use 'modelType' to select
+        on-premise or cloud, and 'isTargetModel' to select source or target model.
+      operationId: CreateInfraModel
+      parameters:
+      - description: Type of infra model to create
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Whether to create a target model (true) or a source model (false)
+        enum:
+        - "true"
+        - "false"
+        in: query
+        name: isTargetModel
+        required: true
+        type: string
+      - description: Infra model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInfraModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+  /infra-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific infra migration user model by ID. Works for both
+        on-premise and cloud models without requiring the caller to specify the model
+        type.
+      operationId: DeleteInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted the infra migration user model
+          schema:
+            type: string
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific infra migration user model by ID. Use 'modelType'
+        to specify whether it is an on-premise or cloud model.
+      operationId: GetInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of infra model to retrieve
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully obtained the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a specific infra migration user model by ID. Use 'modelType'
+        to specify whether it is an on-premise or cloud model.
+      operationId: UpdateInfraModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Type of infra model to update
+        enum:
+        - onprem
+        - cloud
+        in: query
+        name: modelType
+        required: true
+        type: string
+      - description: Infra model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateInfraModelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated the infra migration user model
+          schema:
+            type: object
+        "400":
+          description: Invalid request parameter
+          schema:
+            $ref: '#/definitions/model.Response'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a specific infra migration user model (on-premise or cloud)
+      tags:
+      - '[API] Migration User Models'
+  /model/{isTargetModel}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all user models.
+      operationId: GetModels
+      parameters:
+      - description: Is TargetModel ?
+        in: path
+        name: isTargetModel
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained Migration User Models.
+          schema:
+            $ref: '#/definitions/handler.GetModelsResp'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of all user models
+      tags:
+      - '[API] Migration User Models'
+  /model/version:
+    get:
+      consumes:
+      - application/json
+      description: Get the versions of all models(schemata of on-premise/cloud/software
+        migration models)
+      operationId: GetModelsVersion
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: This is the versions of all models(schemata)
+          schema:
+            $ref: '#/definitions/handler.GetModelsVersionResp'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get the versions of all models(schemata of on-premise/cloud/software
+        migration models)
+      tags:
+      - '[API] Migration Models'
+  /onpremmodel:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of on-premise models.
+      operationId: GetOnPremModels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained On-Premise Migration User Models
+          schema:
+            $ref: '#/definitions/handler.GetOnPremModelsResp'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of on-premise models
+      tags:
+      - '[API] On-Premise Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new on-premise model with the given information.
+      operationId: CreateOnPremModel
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateOnPremModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Created the On-Premise Migration User Model
+          schema:
+            $ref: '#/definitions/handler.CreateOnPremModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Create a new on-premise model
+      tags:
+      - '[API] On-Premise Migration User Models'
+  /onpremmodel/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a on-premise model with the given information.
+      operationId: DeleteOnPremModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Deleted the On-Premise Migration User Model
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a on-premise model
+      tags:
+      - '[API] On-Premise Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific on-premise model.
+      operationId: GetOnPremModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained the On-Premise Migration User Model
+          schema:
+            $ref: '#/definitions/handler.GetOnPremModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a specific on-premise model
+      tags:
+      - '[API] On-Premise Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a on-premise model with the given information.
+      operationId: UpdateOnPremModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateOnPremModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Updated the On-Premise Migration User Model
+          schema:
+            $ref: '#/definitions/handler.UpdateOnPremModelResp'
+        "404":
+          description: Model Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a on-premise model
+      tags:
+      - '[API] On-Premise Migration User Models'
+  /readyz:
+    get:
+      consumes:
+      - application/json
+      description: Check Damselfly is ready
+      operationId: RestGetReadyz
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ResReadyz'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.ResReadyz'
+      summary: Check Damselfly is ready
+      tags:
+      - '[Admin] System management'
+  /softwaremodel/source:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of source software user models.
+      operationId: GetSourceSoftwareModels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained Source Software Migration User Models
+          schema:
+            $ref: '#/definitions/handler.GetSourceSoftwareModelsResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of source software user models
+      tags:
+      - '[API] Source Software Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new source software user model with the given information.
+      operationId: CreateSourceSoftwareModel
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSourceSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Created the Source Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.CreateSourceSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Create a new source software user model
+      tags:
+      - '[API] Source Software Migration User Models'
+  /softwaremodel/source/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a source software user model with the given information.
+      operationId: DeleteSourceSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Deleted the Source Software Migration User Model
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a source software user model
+      tags:
+      - '[API] Source Software Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific source software user model.
+      operationId: GetSourceSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained the Source Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.GetSourceSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Get a specific source software user model
+      tags:
+      - '[API] Source Software Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a source software user model with the given information.
+      operationId: UpdateSourceSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateSourceSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Updated the Source Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.UpdateSourceSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a source software user model
+      tags:
+      - '[API] Source Software Migration User Models'
+  /softwaremodel/target:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of target software user models.
+      operationId: GetTargetSoftwareModels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained Target Software Migration User Models
+          schema:
+            $ref: '#/definitions/handler.GetTargetSoftwareModelsResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Get a list of target software user models
+      tags:
+      - '[API] Target Software Migration User Models'
+    post:
+      consumes:
+      - application/json
+      description: Create a new target software user model with the given information.
+      operationId: CreateTargetSoftwareModel
+      parameters:
+      - description: model information
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateTargetSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Created the Target Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.CreateTargetSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+      summary: Create a new target software user model
+      tags:
+      - '[API] Target Software Migration User Models'
+  /softwaremodel/target/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a target software user model with the given information.
+      operationId: DeleteTargetSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Deleted the Target Software Migration User Model
+          schema:
+            type: string
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Delete a target software user model
+      tags:
+      - '[API] Target Software Migration User Models'
+    get:
+      consumes:
+      - application/json
+      description: Get a specific target software user model.
+      operationId: GetTargetSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Obtained the Target Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.GetTargetSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+      summary: Get a specific target software user model
+      tags:
+      - '[API] Target Software Migration User Models'
+    put:
+      consumes:
+      - application/json
+      description: Update a target software user model with the given information.
+      operationId: UpdateTargetSoftwareModel
+      parameters:
+      - description: Model ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Model information to update
+        in: body
+        name: Model
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateTargetSoftwareModelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully Updated the Target Software Migration User Model
+          schema:
+            $ref: '#/definitions/handler.UpdateTargetSoftwareModelResp'
+        "400":
+          description: Invalid Request
+          schema:
+            type: object
+        "404":
+          description: Model Not Found
+          schema:
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: Update a target software user model
+      tags:
+      - '[API] Target Software Migration User Models'
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

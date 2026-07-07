@@ -25,6 +25,7 @@ type BeetleConfig struct {
 	Root        string            `mapstructure:"root"`
 	Self        SelfConfig        `mapstructure:"self"`
 	API         ApiConfig         `mapstructure:"api"`
+	UI          UiConfig          `mapstructure:"ui"`
 	LKVStore    LkvStoreConfig    `mapstructure:"lkvstore"`
 	LogFile     LogfileConfig     `mapstructure:"logfile"`
 	LogLevel    string            `mapstructure:"loglevel"`
@@ -43,6 +44,11 @@ type ApiConfig struct {
 	Auth     AuthConfig  `mapstructure:"auth"`
 	Username string      `mapstructure:"username"`
 	Password string      `mapstructure:"password"`
+}
+
+type UiConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Path    string `mapstructure:"path"`
 }
 
 type AllowConfig struct {
@@ -189,6 +195,8 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.api.auth.mode", "BEETLE_API_AUTH_MODE")
 	viper.BindEnv("beetle.api.username", "BEETLE_API_USERNAME")
 	viper.BindEnv("beetle.api.password", "BEETLE_API_PASSWORD")
+	viper.BindEnv("beetle.ui.enabled", "BEETLE_UI_ENABLED")
+	viper.BindEnv("beetle.ui.path", "BEETLE_UI_PATH")
 	viper.BindEnv("beetle.lkvstore.path", "BEETLE_LKVSTORE_PATH")
 	viper.BindEnv("beetle.logfile.path", "BEETLE_LOGFILE_PATH")
 	viper.BindEnv("beetle.logfile.maxsize", "BEETLE_LOGFILE_MAXSIZE")

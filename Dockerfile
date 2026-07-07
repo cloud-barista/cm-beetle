@@ -1,5 +1,17 @@
 ##############################################################
-## Stage 1 - Go Build
+## Stage 1 - Node UI Build
+##############################################################
+
+FROM node:20-bookworm-slim AS ui-builder
+
+WORKDIR /app/ui
+COPY ui/package*.json ./
+RUN npm install
+COPY ui/ ./
+RUN npm run build
+
+##############################################################
+## Stage 2 - Go Build
 ##############################################################
 
 FROM golang:1.26.2-bookworm AS builder
@@ -26,8 +38,8 @@ COPY analyzer ./analyzer
 COPY deepdiffgo ./deepdiffgo
 COPY imdl ./imdl
 RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go mod download
+  --mount=type=cache,target=/root/.cache/go-build \
+  go mod download
 
 # Copy some necessary files to the container
 COPY api ./api
@@ -38,11 +50,11 @@ COPY scripts ./scripts
 
 # Build the Go app
 RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    cd cmd/cm-beetle && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -tags cm-beetle -v -o cm-beetle main.go
+  --mount=type=cache,target=/root/.cache/go-build \
+  cd cmd/cm-beetle && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -tags cm-beetle -v -o cm-beetle main.go
 
 #############################################################
-## Stage 2 - Application Setup
+## Stage 3 - Application Setup
 ##############################################################
 
 FROM ubuntu:22.04 AS prod
@@ -54,16 +66,17 @@ WORKDIR /app
 
 # Installing necessary packages and cleaning up
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+  ca-certificates \
+  curl \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-## Copy the Pre-built binary and necessary files from the previous stage
+## Copy the Pre-built binary and necessary files from previous stages
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scripts/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle/cm-beetle /app/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 # COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
+COPY --from=ui-builder /app/ui/dist/ /app/ui/dist/
 
 ## Set environment variables 
 # Set system endpoints
@@ -77,10 +90,14 @@ ENV BEETLE_SELF_ENDPOINT=localhost:8056
 # Set BEETLE_API_AUTH_ENABLED=true currently for basic auth for all routes (i.e., url or path)
 # Set BEETLE_API_AUTH_MODE=basic or jwt (default: basic)
 ENV BEETLE_API_ALLOW_ORIGINS=* \
-    BEETLE_API_AUTH_ENABLED=true \
-    BEETLE_API_AUTH_MODE=basic \
-    BEETLE_API_USERNAME=default \
-    BEETLE_API_PASSWORD=default
+  BEETLE_API_AUTH_ENABLED=true \
+  BEETLE_API_AUTH_MODE=basic \
+  BEETLE_API_USERNAME=default \
+  BEETLE_API_PASSWORD=default
+
+## Set UI Dashboard configuration
+ENV BEETLE_UI_ENABLED=true \
+  BEETLE_UI_PATH=ui/dist
 
 ## Set internal DB config (lkvstore: local key-value store, default file path: ./db/beetle.db)
 ENV BEETLE_LKVSTORE_PATH=/app/db/beetle.db
@@ -89,12 +106,12 @@ ENV BEETLE_LKVSTORE_PATH=/app/db/beetle.db
 # Set log file path (default logfile path: ./beetle.log) 
 # Set log level, such as trace, debug info, warn, error, fatal, and panic
 ENV BEETLE_LOGFILE_PATH=/app/log/beetle.log \
-    BEETLE_LOGFILE_MAXSIZE=1000 \
-    BEETLE_LOGFILE_MAXBACKUPS=3 \
-    BEETLE_LOGFILE_MAXAGE=30 \
-    BEETLE_LOGFILE_COMPRESS=false \
-    BEETLE_LOGLEVEL=info \
-    BEETLE_LOGWRITER=both
+  BEETLE_LOGFILE_MAXSIZE=1000 \
+  BEETLE_LOGFILE_MAXBACKUPS=3 \
+  BEETLE_LOGFILE_MAXAGE=30 \
+  BEETLE_LOGFILE_COMPRESS=false \
+  BEETLE_LOGLEVEL=info \
+  BEETLE_LOGWRITER=both
 
 # Set execution environment, such as development or production
 ENV BEETLE_NODE_ENV=production
@@ -104,8 +121,8 @@ ENV BEETLE_AUTOCONTROL_DURATION_MS=10000
 
 ## Set Tumblebug access config
 ENV BEETLE_TUMBLEBUG_ENDPOINT=http://localhost:1323 \
-    BEETLE_TUMBLEBUG_API_USERNAME=default \
-    BEETLE_TUMBLEBUG_API_PASSWORD=default
+  BEETLE_TUMBLEBUG_API_USERNAME=default \
+  BEETLE_TUMBLEBUG_API_PASSWORD=default
 
 ENTRYPOINT [ "/app/cm-beetle" ]
 
