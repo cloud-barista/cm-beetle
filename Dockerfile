@@ -1,17 +1,5 @@
 ##############################################################
-## Stage 1 - Node UI Build
-##############################################################
-
-FROM node:20-bookworm-slim AS ui-builder
-
-WORKDIR /app/ui
-COPY ui/package*.json ./
-RUN npm install
-COPY ui/ ./
-RUN npm run build
-
-##############################################################
-## Stage 2 - Go Build
+## Stage 1 - Go Build
 ##############################################################
 
 FROM golang:1.26.2-bookworm AS builder
@@ -54,7 +42,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
   cd cmd/cm-beetle && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags '-s -w' -tags cm-beetle -v -o cm-beetle main.go
 
 #############################################################
-## Stage 3 - Application Setup
+## Stage 2 - Application Setup
 ##############################################################
 
 FROM ubuntu:22.04 AS prod
@@ -76,7 +64,6 @@ COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/scripts/ /app/scr
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/cmd/cm-beetle/cm-beetle /app/
 COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/api/ /app/api/
 # COPY --from=builder /go/src/github.com/cloud-barista/cm-beetle/conf/ /app/conf/
-COPY --from=ui-builder /app/ui/dist/ /app/ui/dist/
 
 ## Set environment variables 
 # Set system endpoints
@@ -95,9 +82,9 @@ ENV BEETLE_API_ALLOW_ORIGINS=* \
   BEETLE_API_USERNAME=default \
   BEETLE_API_PASSWORD=default
 
-## Set UI Dashboard configuration
-ENV BEETLE_UI_ENABLED=true \
-  BEETLE_UI_PATH=ui/dist
+## UI Dashboard is served separately by the Next.js UI service (see ui/Dockerfile).
+## Beetle runs as an API-only server, so UI serving is disabled.
+ENV BEETLE_UI_ENABLED=false
 
 ## Set internal DB config (lkvstore: local key-value store, default file path: ./db/beetle.db)
 ENV BEETLE_LKVSTORE_PATH=/app/db/beetle.db

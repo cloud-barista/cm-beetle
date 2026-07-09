@@ -19,6 +19,7 @@ on:
       - "docs/**"
       - "deepdiffgo/**"
       - "imdl/**"
+      - "ui/**"
 
 jobs:
   # The job key (i.e., ID) is "build-source-code"
