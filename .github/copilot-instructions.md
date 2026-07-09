@@ -60,6 +60,19 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - `pkg/config/`: Configuration management (Viper).
 - `pkg/modelconv/`: Model conversion utilities between internal, Tumblebug, and imdl model formats.
 - `imdl/`: Internalized infrastructure models (cloud and on-premise).
+- `ui/`: Beetle Lab web interface (Next.js 15 App Router with server-side API proxy routes).
+
+### UI Architecture
+
+**Beetle Lab** is the demonstration and testing interface for CM-Beetle, built with Next.js 15 and React 19.
+
+- **Framework:** Next.js App Router with standalone output mode for Docker deployment.
+- **Tech Stack:** React 19, Tailwind CSS 4, Zustand (state), Lucide React (icons).
+- **Branding:** Emerald (#10b981) / Teal (#14b8a6) color palette inspired by beetle exoskeletons.
+- **Architecture:** Server-side API proxy routes at `/beetle`, `/tumblebug`, `/honeybee`, `/damselfly`.
+- **Environment:** Backend services accessed via environment variables (server-side only, not exposed to browser).
+- **Deployment:** Standalone container (`ui/Dockerfile`) with Docker Compose overlay pattern (`docker-compose.ui.yaml`).
+- **Detailed Guidelines:** See `.github/instructions/ui.instructions.md` and `ui/DESIGN_SYSTEM.md`.
 
 ### Key Functional Areas
 
@@ -219,11 +232,25 @@ cloudModel := cloudmodel.SomeModel{}
 
 Always use the `Makefile` for build and run tasks.
 
+### Backend (Go)
+
 - **Build:** `make build` (builds `cm-beetle` binary in `cmd/cm-beetle/`).
 - **Run:** `make run` (sources `conf/setup.env` and runs the binary).
 - **Clean:** `make clean` (removes build artifacts).
 - **Lint:** `make lint` (runs `golangci-lint`).
 - **Test CLI:** `make test-cli` (builds and runs the test CLI).
+
+### UI (Next.js)
+
+- **Development:** `cd ui && npm run dev` (starts dev server at http://localhost:3000).
+- **Build:** `cd ui && npm run build` (generates standalone production build in `.next/standalone/`).
+- **Production:** `cd ui && npm run start` (runs production server).
+- **Lint:** `cd ui && npm run lint` (ESLint with Next.js rules).
+
+### Docker Compose
+
+- **Backend Only:** `docker compose up` (uses `docker-compose.yaml`).
+- **With UI:** `COMPOSE_FILE=docker-compose.yaml:docker-compose.ui.yaml docker compose up` (adds UI, Honeybee, Damselfly).
 
 ## API Documentation
 

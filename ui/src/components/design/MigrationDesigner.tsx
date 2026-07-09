@@ -381,7 +381,7 @@ export const MigrationDesigner: React.FC = () => {
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 1 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
           <div className="flex items-center space-x-3">
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${isModelLoaded ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-cyan-500 text-slate-950'}`}>
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${isModelLoaded ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
               {isModelLoaded ? '✓' : '1'}
             </span>
             <h3 className="text-base font-extrabold text-text-main">
@@ -405,7 +405,7 @@ export const MigrationDesigner: React.FC = () => {
                 setActiveTunedNodeId('');
                 setActiveStep(1);
               }}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer mb-3"
+              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer mb-3"
             >
               <option value="">-- Choose Source Model (Damselfly) --</option>
               {savedSourceModels.map((m) => (
@@ -419,7 +419,7 @@ export const MigrationDesigner: React.FC = () => {
                 onClick={handleLoadModel}
                 disabled={!selectedSourceModel}
                 className={`px-5 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer ${selectedSourceModel
-                    ? 'bg-cyan-500 hover:bg-cyan-600 text-slate-950 shadow-md shadow-cyan-500/25'
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
                     : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
                   }`}
               >
@@ -436,7 +436,7 @@ export const MigrationDesigner: React.FC = () => {
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${isModelLoaded ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center justify-between mb-4 border-b border-border-main/40 pb-3">
           <div className="flex items-center space-x-3">
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-cyan-500 text-slate-950'}`}>
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 2 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
               {activeStep > 2 ? '✓' : '2'}
             </span>
             <h3 className="text-base font-extrabold text-text-main">
@@ -447,7 +447,7 @@ export const MigrationDesigner: React.FC = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setIsJsonOpen(!isJsonOpen)}
-                className="px-3 py-1.5 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-cyan-600 dark:text-cyan-400"
+                className="px-3 py-1.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold transition cursor-pointer flex items-center text-emerald-600 dark:text-emerald-400"
               >
                 <Copy className="w-3.5 h-3.5 mr-1" />
                 JSON View
@@ -466,7 +466,7 @@ export const MigrationDesigner: React.FC = () => {
           <div className="bg-bg-panel/40 border border-border-main/30 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between text-sm space-y-2 md:space-y-0 mb-4">
             <div className="flex items-center space-x-2">
               <span className="text-text-muted font-bold">Loaded Model:</span>
-              <span className="text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
+              <span className="text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
               <span className="text-sm text-text-muted font-mono bg-bg-panel px-2 py-0.5 rounded border border-border-main/40">
                 v{selectedSourceModel.version || '1.0'}
               </span>
@@ -492,12 +492,12 @@ export const MigrationDesigner: React.FC = () => {
                         navigator.clipboard.writeText(JSON.stringify(selectedSourceModel?.onpremiseInfraModel, null, 2));
                         alert('JSON copied!');
                       }}
-                      className="px-3 py-1 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-cyan-600 dark:text-cyan-400"
+                      className="px-3 py-1 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-xs font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1" /> Copy JSON
                     </button>
                   </div>
-                  <pre className="text-sm font-mono text-slate-800 dark:text-cyan-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
+                  <pre className="text-sm font-mono text-slate-800 dark:text-emerald-400 bg-bg-panel p-3.5 rounded-xl border border-border-main overflow-y-auto max-h-[400px] select-text">
                     {JSON.stringify(selectedSourceModel?.onpremiseInfraModel, null, 2)}
                   </pre>
                 </div>
@@ -507,8 +507,8 @@ export const MigrationDesigner: React.FC = () => {
 
                   {/* Row 1: Network Configuration */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
-                    <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center">
-                      <Network className="w-4 h-4 mr-1.5 text-cyan-600 dark:text-cyan-400" />
+                    <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                      <Network className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                       1. Network Configuration
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mt-2">
@@ -530,7 +530,7 @@ export const MigrationDesigner: React.FC = () => {
                           <span className="text-text-muted font-semibold block">Source Network CIDR Block:</span>
                           <div className="flex flex-wrap gap-1.5 pt-0.5">
                             {(tunedNetwork.ipv4Networks.cidrBlocks || []).map((cidr: string, idx: number) => (
-                              <span key={idx} className="bg-cyan-500/10 border border-cyan-500/25 text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 font-mono text-sm px-2 py-1 rounded-md font-extrabold flex items-center space-x-1.5 animate-fade-in">
+                              <span key={idx} className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-mono text-sm px-2 py-1 rounded-md font-extrabold flex items-center space-x-1.5 animate-fade-in">
                                 <span>{cidr}</span>
                                 <button
                                   onClick={() => handleRemoveCidr(cidr)}
@@ -556,14 +556,14 @@ export const MigrationDesigner: React.FC = () => {
                                   setNewCidr('');
                                 }
                               }}
-                              className="flex-1 bg-bg-panel border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                              className="flex-1 bg-bg-panel border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
                             />
                             <button
                               onClick={() => {
                                 handleAddCidr(newCidr);
                                 setNewCidr('');
                               }}
-                              className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-sm cursor-pointer transition"
+                              className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-sm cursor-pointer transition"
                             >
                               Add
                             </button>
@@ -575,8 +575,8 @@ export const MigrationDesigner: React.FC = () => {
 
                   {/* Row 2: Server List */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
-                    <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center">
-                      <Sliders className="w-4 h-4 mr-1.5 text-cyan-600 dark:text-cyan-400" />
+                    <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                      <Sliders className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                       2. Server List ({tunedNodes.length} Servers)
                     </h4>
                     <div className="flex flex-wrap gap-2.5 max-h-36 overflow-y-auto p-2 bg-bg-panel/20 rounded-xl border border-border-main/20">
@@ -587,7 +587,7 @@ export const MigrationDesigner: React.FC = () => {
                           <div
                             key={n.machineId}
                             className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-bold transition border ${isActive
-                                ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 shadow-md shadow-cyan-500/10'
+                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 shadow-md shadow-emerald-500/10'
                                 : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
                               } ${isExcluded ? 'opacity-40' : ''}`}
                           >
@@ -621,8 +621,8 @@ export const MigrationDesigner: React.FC = () => {
                   {activeNode && (
                     <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
                       <div className="flex flex-col md:flex-row md:items-center md:justify-start md:space-x-3 border-b border-border-main/20 pb-2">
-                        <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center">
-                          <Server className="w-4 h-4 mr-1.5 text-cyan-600 dark:text-cyan-400" />
+                        <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                          <Server className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                           Server Details ({activeNode.hostname})
                         </h4>
                         <span className="text-sm text-text-muted font-mono bg-bg-panel px-2.5 py-0.5 rounded-md border border-border-main/30 mt-1 md:mt-0">
@@ -831,7 +831,7 @@ export const MigrationDesigner: React.FC = () => {
                               <div className="col-span-2 md:col-span-1">
                                 <button
                                   onClick={() => handleAddFirewallRule(activeNode.machineId)}
-                                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-bold py-1 text-sm rounded-lg cursor-pointer transition text-center"
+                                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-1 text-sm rounded-lg cursor-pointer transition text-center"
                                 >
                                   Add Rule
                                 </button>
@@ -846,8 +846,8 @@ export const MigrationDesigner: React.FC = () => {
 
                   {/* Row 4: Load Balancer (NLB) */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
-                    <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center">
-                      <Cpu className="w-4 h-4 mr-1.5 text-cyan-600 dark:text-cyan-400" />
+                    <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+                      <Cpu className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                       4. Network Load Balancer (NLB)
                     </h4>
                     {selectedSourceModel.onpremiseInfraModel.nlbs && selectedSourceModel.onpremiseInfraModel.nlbs.length > 0 ? (
@@ -856,10 +856,10 @@ export const MigrationDesigner: React.FC = () => {
                           <div key={idx} className="bg-bg-panel border border-border-main/40 rounded-xl p-4.5 space-y-3.5 leading-relaxed text-sm">
                             <div className="flex justify-between items-center border-b border-border-main/40 pb-2">
                               <span className="font-extrabold text-text-main text-base flex items-center">
-                                <span className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse" />
+                                <span className="w-2 h-2 bg-teal-500 rounded-full mr-2 animate-pulse" />
                                 Haproxy NLB
                               </span>
-                              <span className="text-sm font-bold px-2.5 py-1 bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-full border border-purple-200 dark:border-purple-800/40 uppercase">
+                              <span className="text-sm font-bold px-2.5 py-1 bg-teal-100 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 rounded-full border border-teal-200 dark:border-teal-800/40 uppercase">
                                 {nlb.listener.protocol} Mode
                               </span>
                             </div>
@@ -874,8 +874,8 @@ export const MigrationDesigner: React.FC = () => {
                               </div>
 
                               {/* Balancing Method */}
-                              <div className="pl-4 border-l-2 border-purple-500/30 py-0.5 space-y-2">
-                                <div className="text-sm text-purple-600 dark:text-purple-400 font-bold font-sans">
+                              <div className="pl-4 border-l-2 border-teal-500/30 py-0.5 space-y-2">
+                                <div className="text-sm text-teal-600 dark:text-teal-400 font-bold font-sans">
                                   ▼ Load Balancing: {nlb.backend.balance}
                                 </div>
                                 <div className="text-text-muted">
@@ -917,13 +917,13 @@ export const MigrationDesigner: React.FC = () => {
                   <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
                     <button
                       onClick={handleSaveTunedSourceModel}
-                      className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-cyan-500/10 shrink-0"
+                      className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
                     >
                       <Save className="w-4 h-4 mr-1.5" /> Save Revision
                     </button>
                     <div className="flex items-center space-x-2 text-sm text-text-muted">
                       <span className="font-bold">Model to save:</span>
-                      <span className="text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
+                      <span className="text-emerald-600 dark:text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{selectedSourceModel.name}</span>
                       <span className="text-sm text-text-muted font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/40">
                         v{selectedSourceModel.version || '1.0'}
                       </span>
@@ -941,7 +941,7 @@ export const MigrationDesigner: React.FC = () => {
          ------------------------------------------------------------- */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 3 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center space-x-3 mb-4 border-b border-border-main/40 pb-3">
-          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 3 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-cyan-500 text-slate-950'}`}>
+          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 3 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
             {activeStep > 3 ? '✓' : '3'}
           </span>
           <h3 className="text-base font-extrabold text-text-main">
@@ -951,11 +951,11 @@ export const MigrationDesigner: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
           <div>
-            <label className="block text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-2">Desired CSP</label>
+            <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired CSP</label>
             <select
               value={desiredCsp}
               onChange={(e) => setDesiredCsp(e.target.value)}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
+              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
             >
               {tumblebugProviders.map((csp: string) => {
                 const prettyCsp =
@@ -980,11 +980,11 @@ export const MigrationDesigner: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-2">Desired Region</label>
+            <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired Region</label>
             <select
               value={desiredRegion}
               onChange={(e) => setDesiredRegion(e.target.value)}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
+              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
             >
               {[...tumblebugRegions]
                 .sort((a, b) => a.id.localeCompare(b.id))
@@ -1001,7 +1001,7 @@ export const MigrationDesigner: React.FC = () => {
           <button
             onClick={handleRecommend}
             disabled={isRecommending || tunedNodes.length === 0 || !desiredCsp || !desiredRegion}
-            className="px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-cyan-500/10 flex items-center justify-center space-x-2 cursor-pointer"
+            className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
           >
             {isRecommending ? (
               <>
@@ -1023,7 +1023,7 @@ export const MigrationDesigner: React.FC = () => {
          ------------------------------------------------------------- */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 4 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         <div className="flex items-center space-x-3 mb-4 border-b border-border-main/40 pb-3">
-          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 4 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-cyan-500 text-slate-950'}`}>
+          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-extrabold ${activeStep > 4 ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-emerald-500 text-slate-950'}`}>
             {activeStep > 4 ? '✓' : '4'}
           </span>
           <h3 className="text-base font-extrabold text-text-main">
@@ -1051,7 +1051,7 @@ export const MigrationDesigner: React.FC = () => {
                         if (activeStep < 5) setActiveStep(5); // Unlock Next Step (Migration Execution)
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex items-center space-x-2 ${isActive
-                          ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                           : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
                         }`}
                     >
@@ -1062,7 +1062,7 @@ export const MigrationDesigner: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowCompareModal(true)}
-                className="px-4 py-2 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-xl text-sm font-bold flex items-center transition cursor-pointer"
+                className="px-4 py-2 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold flex items-center transition cursor-pointer"
               >
                 Compare Side-by-Side Matrix
               </button>
@@ -1075,7 +1075,7 @@ export const MigrationDesigner: React.FC = () => {
                 {/* Row 1: Detailed specifications overview card (Recommended Cloud Summary) */}
                 <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-4 w-full">
                   <div className="border-b border-border-main/30 pb-3 mb-2">
-                    <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400 block font-mono">Recommended Cloud Summary</span>
+                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 block font-mono">Recommended Cloud Summary</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1083,7 +1083,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 1. Estimation (Match Level & Est. Cost) */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
 
                         <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
                           <div className="flex items-center space-x-1.5">
@@ -1101,7 +1101,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 2. Network (VNet & Subnets) */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Network</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Network</span>
 
                         {/* 1 VNet(s) X Subnet(s) */}
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
@@ -1113,7 +1113,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 3. Compute (Nodes) */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
 
                         <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
                           {/* Left Side: Total Nodes Count */}
@@ -1128,7 +1128,7 @@ export const MigrationDesigner: React.FC = () => {
                             {editedCandidate.targetInfra.nodeGroups.map((ng, i) => (
                               <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-2">
                                 <span className="text-text-muted font-bold whitespace-nowrap">Node Group {i + 1}</span>
-                                <span className="font-extrabold text-cyan-600 dark:text-cyan-400">{ng.nodeGroupSize} Nodes</span>
+                                <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{ng.nodeGroupSize} Nodes</span>
                               </div>
                             ))}
                           </div>
@@ -1139,7 +1139,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 4. Security Groups */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Security</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security</span>
 
                         <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
                           {/* Left Side: Total SG Count */}
@@ -1154,7 +1154,7 @@ export const MigrationDesigner: React.FC = () => {
                             {(editedCandidate.targetSecurityGroupList || []).map((sg, i) => (
                               <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-1">
                                 <span className="text-text-muted font-bold">SG {i + 1}</span>
-                                <span className="font-extrabold text-cyan-600 dark:text-cyan-400">{(sg?.firewallRules || []).length} Rules</span>
+                                <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{(sg?.firewallRules || []).length} Rules</span>
                               </div>
                             ))}
                           </div>
@@ -1165,7 +1165,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 5. SSH Key */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
 
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
                           {editedCandidate.targetSshKey ? 1 : 0} SSH Key(s)
@@ -1176,7 +1176,7 @@ export const MigrationDesigner: React.FC = () => {
                     {/* 6. Load Balancer (NLB) */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
-                        <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
+                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
 
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
                           {(editedCandidate.targetNlbList || []).length} NLB(s)
@@ -1191,16 +1191,16 @@ export const MigrationDesigner: React.FC = () => {
                 <div className="w-full bg-bg-panel/40 border border-border-main/50 rounded-2xl p-5 relative min-h-[300px] flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Topology Visualization</span>
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Topology Visualization</span>
                       <span className="text-sm text-text-muted font-mono">{editedCandidate.targetCloud.region} ({editedCandidate.targetCloud.csp.toUpperCase()})</span>
                     </div>
                     {/* Simulated Topology Drawing */}
                     <div className="flex flex-col space-y-4 pt-4 text-sm">
 
                       {/* VPC / VNet Container */}
-                      <div className="border border-cyan-400 dark:border-cyan-800/40 bg-cyan-500/5 rounded-2xl p-5 relative">
-                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4 border-b border-cyan-200 dark:border-cyan-800/20 pb-3">
-                          <span className="font-extrabold text-cyan-600 dark:text-cyan-400 flex items-center space-x-1.5 font-mono">
+                      <div className="border border-emerald-400 dark:border-emerald-800/40 bg-emerald-500/5 rounded-2xl p-5 relative">
+                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4 border-b border-emerald-200 dark:border-emerald-800/20 pb-3">
+                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5 font-mono">
                             <Network className="w-4 h-4 animate-pulse" />
                             <span>VPC / VNet: {editedCandidate.targetVNet.name} ({editedCandidate.targetVNet.cidrBlock})</span>
                           </span>
@@ -1242,13 +1242,13 @@ export const MigrationDesigner: React.FC = () => {
                               const targetNodesArray = Array.from({ length: targetNodeCount });
 
                               return (
-                                <div key={nlbIdx} className="w-full max-w-lg bg-bg-panel border border-purple-300 dark:border-purple-800/40 rounded-xl p-4.5 space-y-3.5 shadow-md">
+                                <div key={nlbIdx} className="w-full max-w-lg bg-bg-panel border border-teal-300 dark:border-teal-800/40 rounded-xl p-4.5 space-y-3.5 shadow-md">
                                   <div className="flex justify-between items-center border-b border-border-main/40 pb-2">
-                                    <span className="font-extrabold text-purple-900 dark:text-purple-300 text-sm flex items-center">
-                                      <span className="w-2 h-2 bg-purple-500 rounded-full mr-2 animate-pulse" />
+                                    <span className="font-extrabold text-teal-900 dark:text-teal-300 text-sm flex items-center">
+                                      <span className="w-2 h-2 bg-teal-500 rounded-full mr-2 animate-pulse" />
                                       Target Managed NLB
                                     </span>
-                                    <span className="text-xs font-bold px-2 py-0.5 bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-full border border-purple-200 dark:border-purple-800/40 uppercase">
+                                    <span className="text-xs font-bold px-2 py-0.5 bg-teal-100 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 rounded-full border border-teal-200 dark:border-teal-800/40 uppercase">
                                       {nlb.type || 'PUBLIC'} Mode
                                     </span>
                                   </div>
@@ -1263,8 +1263,8 @@ export const MigrationDesigner: React.FC = () => {
                                     </div>
 
                                     {/* Balancing Method */}
-                                    <div className="pl-3.5 border-l-2 border-purple-500/30 py-0.5 space-y-2">
-                                      <div className="text-sm text-purple-600 dark:text-purple-400 font-bold font-sans">
+                                    <div className="pl-3.5 border-l-2 border-teal-500/30 py-0.5 space-y-2">
+                                      <div className="text-sm text-teal-600 dark:text-teal-400 font-bold font-sans">
                                         ▼ Target Routing Group
                                       </div>
                                       <div className="text-text-muted">
@@ -1300,10 +1300,10 @@ export const MigrationDesigner: React.FC = () => {
                         )}
 
                         {/* Subnet Container */}
-                        <div className="border border-dashed border-cyan-400 dark:border-cyan-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
+                        <div className="border border-dashed border-emerald-400 dark:border-emerald-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
                           <div className="flex justify-between items-center text-sm text-text-muted font-mono pb-2 border-b border-border-main">
                             <span>Subnet: default-subnet (10.0.1.0/24)</span>
-                            <span className="text-cyan-600 dark:text-cyan-400/70 font-semibold">Managed by Tumblebug</span>
+                            <span className="text-emerald-600 dark:text-emerald-400/70 font-semibold">Managed by Tumblebug</span>
                           </div>
 
                           {/* Node / VM Cards list */}
@@ -1313,17 +1313,17 @@ export const MigrationDesigner: React.FC = () => {
                               const nodesArray = Array.from({ length: nodeCount });
 
                               return (
-                                <div key={idx} className="bg-bg-panel border border-border-main/50 p-4 rounded-xl space-y-3.5 hover:border-cyan-500/30 transition shadow-inner flex flex-col justify-between">
+                                <div key={idx} className="bg-bg-panel border border-border-main/50 p-4 rounded-xl space-y-3.5 hover:border-emerald-500/30 transition shadow-inner flex flex-col justify-between">
                                   <div>
                                     <div className="flex justify-between items-start border-b border-border-main/20 pb-2 mb-2.5">
                                       <div className="flex items-center space-x-2">
-                                        <Layers className="w-4 h-4 text-cyan-600 dark:text-cyan-400 animate-pulse" />
+                                        <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                                         <div>
                                           <span className="text-sm font-normal text-text-muted block">Node Group</span>
                                           <span className="text-base font-extrabold text-text-main block">{ng.name}</span>
                                         </div>
                                       </div>
-                                      <span className="text-sm font-semibold bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded">Group Size: {nodeCount}</span>
+                                      <span className="text-sm font-semibold bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded">Group Size: {nodeCount}</span>
                                     </div>
 
                                     {/* Mapped Cloud Spec details (3-Column Grid) */}
@@ -1388,9 +1388,9 @@ export const MigrationDesigner: React.FC = () => {
                                           const nodeName = `${ng.name}-${suffix}`;
                                           const nodeIp = `10.0.1.${10 * (idx + 1) + nodeIdx}`;
                                           return (
-                                            <div key={nodeIdx} className="bg-bg-panel/80 border border-cyan-500/10 hover:border-cyan-500/30 p-2 rounded-lg flex items-center justify-between font-mono text-sm transition">
+                                            <div key={nodeIdx} className="bg-bg-panel/80 border border-emerald-500/10 hover:border-emerald-500/30 p-2 rounded-lg flex items-center justify-between font-mono text-sm transition">
                                               <div className="flex items-center space-x-2">
-                                                <Server className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                                                <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                                 <span className="font-sans font-normal text-text-muted text-sm">{nodeName}</span>
                                               </div>
                                               <span className="text-text-main font-bold">{nodeIp}</span>
@@ -1412,7 +1412,7 @@ export const MigrationDesigner: React.FC = () => {
                         <div className="flex flex-col space-y-4">
                           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-2 border-b border-border-main/20">
                             <div>
-                              <span className="block text-sm font-bold text-cyan-600 dark:text-cyan-400 font-mono">Review and Editing</span>
+                              <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">Review and Editing</span>
                               <span className="text-sm text-text-muted italic block mt-0.5">* Modifying resource values dynamically updates the topology diagram in real-time</span>
                             </div>
                           </div>
@@ -1422,7 +1422,7 @@ export const MigrationDesigner: React.FC = () => {
                             <button
                               onClick={() => setTargetActiveTab('network')}
                               className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'network'
-                                  ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
                                 }`}
                             >
@@ -1431,7 +1431,7 @@ export const MigrationDesigner: React.FC = () => {
                             <button
                               onClick={() => setTargetActiveTab('compute')}
                               className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'compute'
-                                  ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
                                 }`}
                             >
@@ -1447,7 +1447,7 @@ export const MigrationDesigner: React.FC = () => {
                             <button
                               onClick={() => setTargetActiveTab('security')}
                               className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'security'
-                                  ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
                                 }`}
                             >
@@ -1456,7 +1456,7 @@ export const MigrationDesigner: React.FC = () => {
                             <button
                               onClick={() => setTargetActiveTab('sshkey')}
                               className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'sshkey'
-                                  ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
                                 }`}
                             >
@@ -1474,7 +1474,7 @@ export const MigrationDesigner: React.FC = () => {
                                   <div key={ngIdx} className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
                                     <div className="flex justify-between items-center text-sm font-bold text-text-main border-b border-border-main/10 pb-1.5 font-mono">
                                       <span>Node Group #{ngIdx + 1} ({ng.specId})</span>
-                                      <span className="text-cyan-600 dark:text-cyan-400">Spec Match Type: Balanced</span>
+                                      <span className="text-emerald-600 dark:text-emerald-400">Spec Match Type: Balanced</span>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                                       {/* Node Group Name */}
@@ -1484,7 +1484,7 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={ng.name}
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'name', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                       {/* Spec ID */}
@@ -1494,7 +1494,7 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={ng.specId}
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'specId', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                       {/* Node Group Size */}
@@ -1505,7 +1505,7 @@ export const MigrationDesigner: React.FC = () => {
                                           min={1}
                                           value={ng.nodeGroupSize}
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'nodeGroupSize', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                       {/* OS Image ID */}
@@ -1515,7 +1515,7 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={ng.imageId}
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'imageId', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                       {/* Root Disk Size */}
@@ -1526,7 +1526,7 @@ export const MigrationDesigner: React.FC = () => {
                                           min={10}
                                           value={ng.rootDiskSize}
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'rootDiskSize', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                     </div>
@@ -1548,7 +1548,7 @@ export const MigrationDesigner: React.FC = () => {
                                       type="text"
                                       value={editedCandidate.targetVNet.name}
                                       onChange={(e) => handleTuneTargetVNetProperty('name', e.target.value)}
-                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                     />
                                   </div>
                                   <div>
@@ -1557,7 +1557,7 @@ export const MigrationDesigner: React.FC = () => {
                                       type="text"
                                       value={editedCandidate.targetVNet.cidrBlock}
                                       onChange={(e) => handleTuneTargetVNetProperty('cidrBlock', e.target.value)}
-                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                     />
                                   </div>
                                 </div>
@@ -1573,7 +1573,7 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={sub.name}
                                           onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'name', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                       <div>
@@ -1582,7 +1582,7 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={sub.ipv4_CIDR}
                                           onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'ipv4_CIDR', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
                                     </div>
@@ -1604,7 +1604,7 @@ export const MigrationDesigner: React.FC = () => {
                                       type="text"
                                       value={editedCandidate.targetSshKey.name}
                                       onChange={(e) => handleTuneTargetSshKeyProperty('name', e.target.value)}
-                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                     />
                                   </div>
                                   <div>
@@ -1613,7 +1613,7 @@ export const MigrationDesigner: React.FC = () => {
                                       type="text"
                                       value={editedCandidate.targetSshKey.description || ''}
                                       onChange={(e) => handleTuneTargetSshKeyProperty('description', e.target.value)}
-                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-cyan-500/40"
+                                      className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                       placeholder="e.g., Key pair created for cluster authentication"
                                     />
                                   </div>
@@ -1633,10 +1633,10 @@ export const MigrationDesigner: React.FC = () => {
                                           type="text"
                                           value={sg.name}
                                           onChange={(e) => handleTuneTargetSecurityGroupProperty(sgIdx, 'name', e.target.value)}
-                                          className="bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1 text-sm font-mono w-full max-w-sm focus:outline-none focus:border-cyan-500/40 font-extrabold"
+                                          className="bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1 text-sm font-mono w-full max-w-sm focus:outline-none focus:border-emerald-500/40 font-extrabold"
                                         />
                                       </div>
-                                      <span className="text-sm text-text-muted font-semibold bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 px-2 py-0.5 rounded self-start font-mono">
+                                      <span className="text-sm text-text-muted font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded self-start font-mono">
                                         Total Rules: {(sg.firewallRules || []).length}
                                       </span>
                                     </div>
@@ -1653,7 +1653,7 @@ export const MigrationDesigner: React.FC = () => {
                                           <div key={ruleIdx} className="bg-bg-panel border border-border-main p-3 rounded-lg flex justify-between items-center text-sm font-mono relative group">
                                             <div className="space-y-0.5">
                                               <div className="flex items-center space-x-2">
-                                                <span className={`text-xs px-1.5 py-0.5 rounded font-extrabold ${direction === 'INBOUND' ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
+                                                <span className={`text-xs px-1.5 py-0.5 rounded font-extrabold ${direction === 'INBOUND' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
                                                   {direction}
                                                 </span>
                                                 <span className="text-text-muted font-normal">{protocol} Port: {port}</span>
@@ -1676,14 +1676,14 @@ export const MigrationDesigner: React.FC = () => {
 
                                     {/* Add Target Firewall Rule form */}
                                     <div className="bg-bg-input/20 border border-border-main/20 p-3.5 rounded-lg space-y-3">
-                                      <span className="block text-sm font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider font-mono">Add Firewall Access Rule</span>
+                                      <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Add Firewall Access Rule</span>
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         <div>
                                           <label className="block text-sm font-bold text-text-muted mb-1">Direction</label>
                                           <select
                                             value={tgtRuleDir}
                                             onChange={(e) => setTgtRuleDir(e.target.value)}
-                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-cyan-500/40 cursor-pointer"
+                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-emerald-500/40 cursor-pointer"
                                           >
                                             <option value="inbound">Inbound</option>
                                             <option value="outbound">Outbound</option>
@@ -1694,7 +1694,7 @@ export const MigrationDesigner: React.FC = () => {
                                           <select
                                             value={tgtRuleProto}
                                             onChange={(e) => setTgtRuleProto(e.target.value)}
-                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-cyan-500/40 cursor-pointer"
+                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-emerald-500/40 cursor-pointer"
                                           >
                                             <option value="tcp">TCP</option>
                                             <option value="udp">UDP</option>
@@ -1708,7 +1708,7 @@ export const MigrationDesigner: React.FC = () => {
                                             type="text"
                                             value={tgtRulePort}
                                             onChange={(e) => setTgtRulePort(e.target.value)}
-                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-cyan-500/40 font-mono"
+                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-emerald-500/40 font-mono"
                                             placeholder="e.g., 80, 443, 22"
                                           />
                                         </div>
@@ -1718,14 +1718,14 @@ export const MigrationDesigner: React.FC = () => {
                                             type="text"
                                             value={tgtRuleCidr}
                                             onChange={(e) => setTgtRuleCidr(e.target.value)}
-                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-cyan-500/40 font-mono"
+                                            className="w-full bg-bg-input border border-border-main/40 text-text-main rounded-md px-2 py-1 text-sm focus:outline-none focus:border-emerald-500/40 font-mono"
                                             placeholder="e.g., 0.0.0.0/0"
                                           />
                                         </div>
                                       </div>
                                       <button
                                         onClick={() => handleAddTargetFirewallRule(sgIdx)}
-                                        className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-slate-950 rounded-lg text-sm font-bold transition cursor-pointer"
+                                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-sm font-bold transition cursor-pointer"
                                       >
                                         + Inject Rule to SG
                                       </button>
@@ -1743,7 +1743,7 @@ export const MigrationDesigner: React.FC = () => {
                             </span>
                             <button
                               onClick={() => setShowSaveTargetModal(true)}
-                              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-lg shadow-cyan-500/10"
+                              className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/10"
                             >
                               <Save className="w-4 h-4" />
                               <span>Save Cloud Design Model</span>
@@ -1772,7 +1772,7 @@ export const MigrationDesigner: React.FC = () => {
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-4 border-b border-border-main/30 pb-3">
               <h3 className="text-base font-extrabold text-text-main flex items-center">
-                <Sparkles className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mr-2" />
+                <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mr-2" />
                 Side-by-Side Candidate Comparison Matrix
               </h3>
               <button
@@ -1818,7 +1818,7 @@ export const MigrationDesigner: React.FC = () => {
                           {c.targetInfra.nodeGroups.map((ng, i) => (
                             <div key={i} className="flex justify-between border-b border-border-main/10 pb-1 last:border-0 last:pb-0">
                               <span className="text-text-muted">{ng.name}:</span>
-                              <span className="font-bold text-cyan-600 dark:text-cyan-400">{ng.specId} (x{ng.nodeGroupSize})</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">{ng.specId} (x{ng.nodeGroupSize})</span>
                             </div>
                           ))}
                         </td>
@@ -1853,7 +1853,7 @@ export const MigrationDesigner: React.FC = () => {
             <div className="mt-4 flex justify-end border-t border-border-main/30 pt-3">
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="px-5 py-2.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-xl text-sm font-bold cursor-pointer transition"
+                className="px-5 py-2.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold cursor-pointer transition"
               >
                 Close Comparison
               </button>
@@ -1898,13 +1898,13 @@ export const MigrationDesigner: React.FC = () => {
               <div className="flex justify-end space-x-3 text-sm font-bold">
                 <button
                   onClick={() => setShowSaveTargetModal(false)}
-                  className="px-4 py-2.5 bg-bg-panel border border-border-main text-text-main hover:bg-cyan-500/10 hover:border-cyan-500/20 rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-bg-panel border border-border-main text-text-main hover:bg-emerald-500/10 hover:border-emerald-500/20 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveTargetCloudModel}
-                  className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-sky-500 text-slate-950 rounded-xl cursor-pointer"
                 >
                   Save Design
                 </button>

@@ -283,12 +283,12 @@ export const SourceCenter: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-text-main flex items-center">
-                <Server className="w-5 h-5 text-cyan-400 mr-2" />
+                <Server className="w-5 h-5 text-emerald-400 mr-2" />
                 1. Source Infrastructures
               </h2>
               <button
                 onClick={() => setShowGroupModal(true)}
-                className="px-3 py-2 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-lg text-sm font-bold flex items-center transition cursor-pointer text-cyan-600 dark:text-cyan-400"
+                className="px-3 py-2 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-sm font-bold flex items-center transition cursor-pointer text-emerald-600 dark:text-emerald-400"
               >
                 <Plus className="w-4 h-4 mr-1" /> New Infra Group
               </button>
@@ -306,7 +306,7 @@ export const SourceCenter: React.FC = () => {
                   });
                 }
               }}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
             >
               <option value="">-- Select Source Infrastructure --</option>
               {sourceGroups.map((g) => (
@@ -327,7 +327,7 @@ export const SourceCenter: React.FC = () => {
         <div className="glass-panel p-6 rounded-2xl lg:col-span-2">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-base font-bold text-text-main flex items-center">
-              <Key className="w-5 h-5 text-purple-400 mr-2" />
+              <Key className="w-5 h-5 text-teal-400 mr-2" />
               2. Shared Credentials
             </h2>
             <label className="inline-flex items-center cursor-pointer">
@@ -337,7 +337,7 @@ export const SourceCenter: React.FC = () => {
                 onChange={(e) => setUseCommonCred(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="relative w-9 h-5 bg-bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600" />
+              <div className="relative w-9 h-5 bg-bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600" />
               <span className="ms-2 text-sm text-text-muted">Enable Auto Inherit</span>
             </label>
           </div>
@@ -353,7 +353,7 @@ export const SourceCenter: React.FC = () => {
                 disabled={!useCommonCred}
                 value={commonUser}
                 onChange={(e) => setCommonUser(e.target.value)}
-                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
             <div>
@@ -363,7 +363,7 @@ export const SourceCenter: React.FC = () => {
                 disabled={!useCommonCred}
                 value={commonPort}
                 onChange={(e) => setCommonPort(Number(e.target.value))}
-                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
             <div>
@@ -376,7 +376,7 @@ export const SourceCenter: React.FC = () => {
                 value={commonKey}
                 onChange={(e) => setCommonKey(e.target.value)}
                 rows={1}
-                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none overflow-hidden"
+                className="w-full bg-bg-input border border-border-main disabled:opacity-40 text-text-main rounded-xl px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none overflow-hidden"
               />
             </div>
           </div>
@@ -394,12 +394,12 @@ export const SourceCenter: React.FC = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={handleDownloadTemplate}
-              className="px-4 py-2.5 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-xl text-sm font-bold transition flex items-center cursor-pointer text-cyan-600 dark:text-cyan-400"
+              className="px-4 py-2.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-xl text-sm font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400"
             >
               <Download className="w-4 h-4 mr-1.5" />
               <span>Get JSON Template</span>
             </button>
-            <label className="px-4 py-2.5 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-xl text-sm font-bold transition flex items-center cursor-pointer text-cyan-600 dark:text-cyan-400">
+            <label className="px-4 py-2.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-xl text-sm font-bold transition flex items-center cursor-pointer text-emerald-600 dark:text-emerald-400">
               <Upload className="w-4 h-4 mr-1.5" />
               <span>Import JSON File</span>
               <input
@@ -411,13 +411,13 @@ export const SourceCenter: React.FC = () => {
             </label>
             <button
               onClick={handleAddRow}
-              className="px-4 py-2.5 bg-bg-panel border border-cyan-500/40 hover:bg-cyan-500/10 hover:border-cyan-500/30 rounded-xl text-sm font-bold transition cursor-pointer text-cyan-600 dark:text-cyan-400"
+              className="px-4 py-2.5 bg-bg-panel border border-emerald-500/40 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-xl text-sm font-bold transition cursor-pointer text-emerald-600 dark:text-emerald-400"
             >
               + Add Server Row
             </button>
             <button
               onClick={handleValidateConnections}
-              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-extrabold transition shadow-md shadow-purple-500/10 flex items-center cursor-pointer"
+              className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-extrabold transition shadow-md shadow-teal-500/10 flex items-center cursor-pointer"
             >
               <Play className="w-4 h-4 mr-1.5" /> Validate Connections
             </button>
@@ -440,7 +440,7 @@ export const SourceCenter: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-border-main">
               {serverRows.map((row, idx) => (
-                <tr key={row.id} className="hover:bg-cyan-500/[0.02] transition">
+                <tr key={row.id} className="hover:bg-emerald-500/[0.02] transition">
                   <td className="py-3.5 px-4 text-center text-text-muted">{idx + 1}</td>
 
                   {/* Connection Name */}
@@ -449,7 +449,7 @@ export const SourceCenter: React.FC = () => {
                       type="text"
                       value={row.name}
                       onChange={(e) => handleUpdateRow(row.id, 'name', e.target.value)}
-                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm"
+                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500/50 text-text-main text-sm"
                     />
                   </td>
 
@@ -460,7 +460,7 @@ export const SourceCenter: React.FC = () => {
                       placeholder="e.g. 10.0.1.30"
                       value={row.ip}
                       onChange={(e) => handleUpdateRow(row.id, 'ip', e.target.value)}
-                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm"
+                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500/50 text-text-main text-sm"
                     />
                   </td>
 
@@ -471,7 +471,7 @@ export const SourceCenter: React.FC = () => {
                       placeholder={useCommonCred ? String(commonPort) : '22'}
                       value={row.port}
                       onChange={(e) => handleUpdateRow(row.id, 'port', e.target.value)}
-                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm placeholder-purple-500/50"
+                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500/50 text-text-main text-sm placeholder-teal-500/50"
                     />
                   </td>
 
@@ -482,7 +482,7 @@ export const SourceCenter: React.FC = () => {
                       placeholder={useCommonCred ? commonUser : 'ubuntu'}
                       value={row.user}
                       onChange={(e) => handleUpdateRow(row.id, 'user', e.target.value)}
-                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm placeholder-purple-500/50"
+                      className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-500/50 text-text-main text-sm placeholder-teal-500/50"
                     />
                   </td>
 
@@ -502,7 +502,7 @@ export const SourceCenter: React.FC = () => {
                         }
                         value={row.privateKey}
                         onChange={(e) => handleUpdateRow(row.id, 'privateKey', e.target.value)}
-                        className={`w-full bg-transparent border-0 outline-none text-text-main text-sm mr-2 truncate ${!row.privateKey && useCommonCred && commonKey ? 'text-purple-400/70 font-semibold' : ''
+                        className={`w-full bg-transparent border-0 outline-none text-text-main text-sm mr-2 truncate ${!row.privateKey && useCommonCred && commonKey ? 'text-teal-400/70 font-semibold' : ''
                           }`}
                       />
                       <div className="flex items-center space-x-1 flex-shrink-0 text-xs text-text-muted bg-bg-panel px-2.5 py-1 rounded cursor-pointer">
@@ -518,7 +518,7 @@ export const SourceCenter: React.FC = () => {
                       <span className="px-3 py-1.5 bg-bg-input text-text-muted rounded-full font-bold border border-border-main text-xs">Idle</span>
                     )}
                     {row.status === 'checking' && (
-                      <span className="px-3 py-1.5 bg-cyan-100 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-800/40 rounded-full font-bold flex items-center justify-center space-x-1 text-xs">
+                      <span className="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 rounded-full font-bold flex items-center justify-center space-x-1 text-xs">
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         <span>Checking...</span>
                       </span>
@@ -559,7 +559,7 @@ export const SourceCenter: React.FC = () => {
           <button
             onClick={handleExtractAndSaveModel}
             disabled={isLoadingSource}
-            className="px-6 py-3.5 bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 disabled:opacity-50 text-slate-950 rounded-xl text-sm font-extrabold transition shadow-lg shadow-cyan-500/15 flex items-center cursor-pointer"
+            className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-sky-600 hover:from-emerald-600 hover:to-sky-700 disabled:opacity-50 text-slate-950 rounded-xl text-sm font-extrabold transition shadow-lg shadow-emerald-500/15 flex items-center cursor-pointer"
           >
             {isLoadingSource ? (
               <>
@@ -581,10 +581,10 @@ export const SourceCenter: React.FC = () => {
         <div className="glass-panel p-6 rounded-2xl animate-fade-in grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <h3 className="text-sm font-bold text-text-main mb-3 flex items-center">
-              <FileText className="w-4 h-4 text-cyan-400 mr-2" />
+              <FileText className="w-4 h-4 text-emerald-400 mr-2" />
               Extracted Source Infrastructure Model Spec
             </h3>
-            <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-cyan-400 max-h-80 overflow-y-auto">
+            <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-80 overflow-y-auto">
               <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
             </div>
           </div>
@@ -604,7 +604,7 @@ export const SourceCenter: React.FC = () => {
                   type="text"
                   value={modelName}
                   onChange={(e) => setModelName(e.target.value)}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
@@ -614,7 +614,7 @@ export const SourceCenter: React.FC = () => {
                   value={modelDesc}
                   onChange={(e) => setModelDesc(e.target.value)}
                   rows={3}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500 resize-none"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
                 />
               </div>
             </div>
@@ -681,7 +681,7 @@ export const SourceCenter: React.FC = () => {
                     setNewGroupDesc('');
                   }
                 }}
-                className="px-4 py-2.5 bg-cyan-500 text-slate-950 hover:bg-cyan-600 rounded-xl cursor-pointer"
+                className="px-4 py-2.5 bg-emerald-500 text-slate-950 hover:bg-emerald-600 rounded-xl cursor-pointer"
               >
                 Create
               </button>

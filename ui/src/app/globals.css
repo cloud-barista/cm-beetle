@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-cyan: #06b6d4;
-  --color-brand-blue: #0ea5e9;
-  --color-brand-purple: #a855f7;
-  
+  --color-brand-emerald: #10b981;
+  --color-brand-teal: #14b8a6;
+
   /* Shared color variables controlled by css properties */
   --color-bg-main: var(--bg-main);
   --color-bg-panel: var(--bg-panel);
@@ -15,25 +14,32 @@
   --color-border-input: var(--border-input);
 
   /* Enlarged Font Scales for Readability */
-  --text-xs: 0.95rem;   /* 12px -> 15.2px */
-  --text-sm: 1.1rem;    /* 14px -> 17.6px */
-  --text-base: 1.25rem; /* 16px -> 20px */
-  --text-lg: 1.4rem;    /* 18px -> 22.4px */
-  --text-xl: 1.6rem;    /* 20px -> 25.6px */
-  --text-2xl: 1.85rem;  /* 24px -> 29.6px */
-  --text-3xl: 2.2rem;   /* 30px -> 35.2px */
+  --text-xs: 0.95rem;
+  /* 12px -> 15.2px */
+  --text-sm: 1.1rem;
+  /* 14px -> 17.6px */
+  --text-base: 1.25rem;
+  /* 16px -> 20px */
+  --text-lg: 1.4rem;
+  /* 18px -> 22.4px */
+  --text-xl: 1.6rem;
+  /* 20px -> 25.6px */
+  --text-2xl: 1.85rem;
+  /* 24px -> 29.6px */
+  --text-3xl: 2.2rem;
+  /* 30px -> 35.2px */
 }
 
 /* Default Dark mode theme values */
 :root {
   color-scheme: dark;
-  --bg-main: #0b0f19;
-  --bg-panel: rgba(30, 41, 59, 0.4);
-  --bg-input: #0f172a;
+  --bg-main: #071a10;
+  --bg-panel: rgba(16, 185, 129, 0.05);
+  --bg-input: #0a1f13;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-main: rgba(255, 255, 255, 0.05);
-  --border-input: rgba(255, 255, 255, 0.15);
+  --border-main: rgba(16, 185, 129, 0.08);
+  --border-input: rgba(16, 185, 129, 0.2);
 }
 
 /* Light mode override values */
@@ -61,11 +67,17 @@ body {
 }
 
 /* Responsive transitions for theme toggles */
-.glass-panel, .glass-panel-interactive, select, input, textarea {
+.glass-panel,
+.glass-panel-interactive,
+select,
+input,
+textarea {
   transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
-select, input, textarea {
+select,
+input,
+textarea {
   border: 1px solid var(--border-input);
 }
 
@@ -89,8 +101,8 @@ select, input, textarea {
 
 .glass-panel-interactive:hover {
   background: var(--color-bg-panel);
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.08);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.08);
 }
 
 /* Scrollbar customization */
@@ -107,17 +119,18 @@ select, input, textarea {
   background: #cbd5e1;
   border-radius: 5px;
 }
+
 :root.light ::-webkit-scrollbar-thumb {
   background: #94a3b8;
 }
 
 /* Glowing text and nodes */
-.glow-cyan {
-  text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+.glow-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
-.glow-purple {
-  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+.glow-teal {
+  text-shadow: 0 0 10px rgba(20, 184, 166, 0.4);
 }
 
 /* Pulsing dot for healthy status */
@@ -148,6 +161,7 @@ select, input, textarea {
     transform: scale(1);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(3);
     opacity: 0;
@@ -160,6 +174,7 @@ select, input, textarea {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

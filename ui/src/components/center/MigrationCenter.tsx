@@ -71,7 +71,7 @@ export const MigrationCenter: React.FC = () => {
       case 'deploying':
       case 'processing':
         return (
-          <span className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full font-bold uppercase text-xs flex items-center justify-center space-x-1 w-28">
+          <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold uppercase text-xs flex items-center justify-center space-x-1 w-28">
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             <span>Building</span>
           </span>
@@ -111,7 +111,7 @@ export const MigrationCenter: React.FC = () => {
         <div className="glass-panel p-6 rounded-2xl animate-fade-in space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-text-main flex items-center">
-              <Server className="w-5 h-5 text-cyan-400 mr-2" />
+              <Server className="w-5 h-5 text-emerald-400 mr-2" />
               Active Provisioned Cloud VM Access Points
             </h3>
             {getStatusBadge(deploymentStatus.status)}
@@ -132,12 +132,12 @@ export const MigrationCenter: React.FC = () => {
                 {selectedCloudModel?.cloudInfraModel.targetInfra.nodeGroups.map((ng: any, idx: number) => {
                   const vm = deploymentStatus.vms?.[idx] || {};
                   return (
-                    <tr key={idx} className="hover:bg-cyan-500/[0.01] transition">
+                    <tr key={idx} className="hover:bg-emerald-500/[0.01] transition">
                       <td className="py-3.5 px-4 font-bold text-text-main">{ng.name}</td>
-                      <td className="py-3.5 px-4 font-mono text-cyan-400">{ng.specId}</td>
+                      <td className="py-3.5 px-4 font-mono text-emerald-400">{ng.specId}</td>
                       <td className="py-3.5 px-4 font-mono select-all text-text-main font-semibold">{vm.publicIp || 'Generating...'}</td>
                       <td className="py-3.5 px-4 font-mono text-text-muted">{vm.privateIp || 'Generating...'}</td>
-                      <td className="py-3.5 px-4 font-semibold text-purple-400">
+                      <td className="py-3.5 px-4 font-semibold text-teal-400">
                         {selectedCloudModel.cloudInfraModel.targetSshKey.name}
                       </td>
                     </tr>
@@ -155,7 +155,7 @@ export const MigrationCenter: React.FC = () => {
         <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <h2 className="text-base font-bold text-text-main flex items-center mb-2">
-              <Info className="w-5 h-5 text-cyan-400 mr-2" />
+              <Info className="w-5 h-5 text-emerald-400 mr-2" />
               1. Deployment Specifications
             </h2>
             <p className="text-sm text-text-muted mb-4">
@@ -170,7 +170,7 @@ export const MigrationCenter: React.FC = () => {
                   const model = savedCloudModels.find(m => m.id === e.target.value) || null;
                   selectCloudModel(model);
                 }}
-                className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
               >
                 <option value="">-- Choose Recommended Model --</option>
                 {savedCloudModels.map((m: any) => (
@@ -188,7 +188,7 @@ export const MigrationCenter: React.FC = () => {
                   type="text"
                   value={namespaceId}
                   onChange={(e) => useMigrationStore.setState({ namespaceId: e.target.value })}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
               </div>
               <div>
@@ -197,7 +197,7 @@ export const MigrationCenter: React.FC = () => {
                   type="text"
                   value={nameSeed}
                   onChange={(e) => useMigrationStore.setState({ nameSeed: e.target.value })}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
                 />
               </div>
             </div>
@@ -228,17 +228,17 @@ export const MigrationCenter: React.FC = () => {
         <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[400px] lg:col-span-2">
           <div className="px-5 py-4 bg-bg-input/40 border-b border-border-main flex items-center justify-between">
             <h3 className="text-sm font-bold text-text-main flex items-center">
-              <Terminal className="w-4 h-4 text-purple-400 mr-2" />
+              <Terminal className="w-4 h-4 text-teal-400 mr-2" />
               Live Provisioning logs Console
             </h3>
             {isDeploying && (
               <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-teal-500"></span>
               </span>
             )}
           </div>
-          <div className="flex-1 bg-bg-input p-4 font-mono text-xs text-cyan-400 overflow-y-auto space-y-2 select-text leading-relaxed">
+          <div className="flex-1 bg-bg-input p-4 font-mono text-xs text-emerald-400 overflow-y-auto space-y-2 select-text leading-relaxed">
             {mockBuildLogs.map((msg: string, i: number) => (
               <div key={i} className={msg.includes('SUCCESS') ? 'text-green-400 font-semibold' : msg.includes('FAILED') ? 'text-red-400 font-semibold' : 'text-text-muted'}>
                 {msg}
@@ -297,7 +297,7 @@ export const MigrationCenter: React.FC = () => {
               </div>
             ) : (
               <div className="bg-bg-input border border-border-main rounded-xl p-4 flex items-center space-x-3">
-                <div className="p-2 bg-cyan-500/10 text-cyan-400 rounded-lg animate-pulse">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg animate-pulse">
                   <RefreshCw className="w-5 h-5" />
                 </div>
                 <div>
@@ -313,12 +313,12 @@ export const MigrationCenter: React.FC = () => {
             <div className="glass-panel rounded-2xl overflow-hidden lg:col-span-2 flex flex-col">
               <div className="px-5 py-3.5 bg-bg-input/40 border-b border-border-main flex items-center justify-between">
                 <h3 className="text-sm font-bold text-text-main flex items-center">
-                  <Eye className="w-4 h-4 text-cyan-400 mr-2" />
+                  <Eye className="w-4 h-4 text-emerald-400 mr-2" />
                   Post-Migration Compliance & Comparison Report
                 </h3>
                 <button
                   onClick={handleDownloadReport}
-                  className="px-3.5 py-1.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-400 rounded-lg text-xs font-semibold flex items-center transition cursor-pointer"
+                  className="px-3.5 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold flex items-center transition cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 mr-1" />
                   Download Report

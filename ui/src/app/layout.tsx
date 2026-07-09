@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CM-Beetle Portal',
-  description: 'Computing Infrastructure Migration Dashboard for Cloud-Barista',
+  title: 'Beetle Lab',
+  description: 'Beetle Lab — CM-Beetle Demo & Testing Dashboard for Cloud-Barista',
   icons: {
     icon: '/favicon.svg',
   },
