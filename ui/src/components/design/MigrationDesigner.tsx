@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
@@ -37,7 +39,7 @@ export const MigrationDesigner: React.FC = () => {
   const [targetModelName, setTargetModelName] = useState('cloud-target-v1');
   const [targetModelDesc, setTargetModelDesc] = useState('Optimized Cloud architecture generated for onpremise cluster.');
   const [saveSuccess, setSaveSuccess] = useState(false);
-  
+
   // Tuned nodes state for left spec editor
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
   const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
@@ -49,7 +51,7 @@ export const MigrationDesigner: React.FC = () => {
 
   // Excluded node IDs list for target recommendation filters
   const [excludedNodeIds, setExcludedNodeIds] = useState<string[]>([]);
-  
+
   // Firewall rule creator form states
   const [newRuleDir, setNewRuleDir] = useState('inbound');
   const [newRuleProto, setNewRuleProto] = useState('tcp');
@@ -89,7 +91,7 @@ export const MigrationDesigner: React.FC = () => {
 
   // Exclude/Include node toggle
   const handleToggleNodeExclude = (machineId: string) => {
-    setExcludedNodeIds(prev => 
+    setExcludedNodeIds(prev =>
       prev.includes(machineId)
         ? prev.filter(id => id !== machineId)
         : [...prev, machineId]
@@ -102,9 +104,9 @@ export const MigrationDesigner: React.FC = () => {
       prev.map(node =>
         node.machineId === machineId
           ? {
-              ...node,
-              firewallTable: (node.firewallTable || []).filter((_, idx) => idx !== ruleIdx)
-            }
+            ...node,
+            firewallTable: (node.firewallTable || []).filter((_, idx) => idx !== ruleIdx)
+          }
           : node
       )
     );
@@ -126,9 +128,9 @@ export const MigrationDesigner: React.FC = () => {
       prev.map(node =>
         node.machineId === machineId
           ? {
-              ...node,
-              firewallTable: [...(node.firewallTable || []), newRule]
-            }
+            ...node,
+            firewallTable: [...(node.firewallTable || []), newRule]
+          }
           : node
       )
     );
@@ -142,8 +144,8 @@ export const MigrationDesigner: React.FC = () => {
       const currentVer = parseFloat(selectedSourceModel.version || '1.0');
       const nextVer = (currentVer + 0.1).toFixed(1);
 
-      const updatedInfra = { 
-        ...selectedSourceModel.onpremiseInfraModel, 
+      const updatedInfra = {
+        ...selectedSourceModel.onpremiseInfraModel,
         nodes: filteredNodes,
         network: tunedNetwork || selectedSourceModel.onpremiseInfraModel.network
       };
@@ -232,12 +234,12 @@ export const MigrationDesigner: React.FC = () => {
   const handleTuneTargetVNetProperty = (key: string, value: string) => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
-    
+
     // VNet Name 변경 시 referential integrity 동기화
     if (key === 'name') {
       const oldVnetName = updatedCandidate.targetVNet.name;
       updatedCandidate.targetVNet.name = value;
-      
+
       // 보안 그룹들의 vnetId 동기화
       if (updatedCandidate.targetSecurityGroupList) {
         updatedCandidate.targetSecurityGroupList.forEach((sg: any) => {
@@ -246,7 +248,7 @@ export const MigrationDesigner: React.FC = () => {
           }
         });
       }
-      
+
       // 컴퓨트 노드그룹들의 vnetId 동기화
       if (updatedCandidate.targetInfra?.nodeGroups) {
         updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
@@ -262,7 +264,7 @@ export const MigrationDesigner: React.FC = () => {
     } else {
       updatedCandidate.targetVNet[key] = value;
     }
-    
+
     updateEditedCandidate(updatedCandidate);
   };
 
@@ -272,7 +274,7 @@ export const MigrationDesigner: React.FC = () => {
     if (updatedCandidate.targetVNet.subnetInfoList && updatedCandidate.targetVNet.subnetInfoList[subIdx]) {
       const oldSubnetName = updatedCandidate.targetVNet.subnetInfoList[subIdx].name;
       updatedCandidate.targetVNet.subnetInfoList[subIdx][key] = value;
-      
+
       // Subnet Name 변경 시 컴퓨트 노드그룹들의 subnetId 레퍼런스 동기화
       if (key === 'name' && updatedCandidate.targetInfra?.nodeGroups) {
         updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
@@ -290,7 +292,7 @@ export const MigrationDesigner: React.FC = () => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
     updatedCandidate.targetSshKey[key] = value;
-    
+
     // SSH Key Name 변경 시 컴퓨트 노드그룹들의 sshKeyId 레퍼런스 동기화
     if (key === 'name' && updatedCandidate.targetInfra?.nodeGroups) {
       updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
@@ -307,12 +309,12 @@ export const MigrationDesigner: React.FC = () => {
     if (updatedCandidate.targetSecurityGroupList && updatedCandidate.targetSecurityGroupList[sgIdx]) {
       const oldSgName = updatedCandidate.targetSecurityGroupList[sgIdx].name;
       updatedCandidate.targetSecurityGroupList[sgIdx][key] = value;
-      
+
       // SG Name 변경 시 컴퓨트 노드그룹들의 securityGroupIds 레퍼런스 동기화
       if (key === 'name' && updatedCandidate.targetInfra?.nodeGroups) {
         updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
           if (ng.securityGroupIds) {
-            ng.securityGroupIds = ng.securityGroupIds.map((sgId: string) => 
+            ng.securityGroupIds = ng.securityGroupIds.map((sgId: string) =>
               sgId === oldSgName ? value : sgId
             );
           }
@@ -369,7 +371,7 @@ export const MigrationDesigner: React.FC = () => {
 
   return (
     <div className="space-y-8 mx-auto pb-24">
-      
+
       {/* -------------------------------------------------------------
           STEP 1: Source Spec Tuning & Verification
          ------------------------------------------------------------- */}
@@ -416,11 +418,10 @@ export const MigrationDesigner: React.FC = () => {
               <button
                 onClick={handleLoadModel}
                 disabled={!selectedSourceModel}
-                className={`px-5 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer ${
-                  selectedSourceModel
+                className={`px-5 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer ${selectedSourceModel
                     ? 'bg-cyan-500 hover:bg-cyan-600 text-slate-950 shadow-md shadow-cyan-500/25'
                     : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
-                }`}
+                  }`}
               >
                 <RefreshCw className="w-4.5 h-4.5 mr-1.5" /> Load Model
               </button>
@@ -503,7 +504,7 @@ export const MigrationDesigner: React.FC = () => {
               ) : (
                 /* Structured Hierarchy Spec Editor UI (Vertical 4 Rows: Network -> Server List -> Server Details/Tuning -> NLB) */
                 <div className="space-y-6">
-                  
+
                   {/* Row 1: Network Configuration */}
                   <div className="space-y-3 p-5 bg-bg-input/40 border border-border-main/50 rounded-xl">
                     <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 flex items-center">
@@ -583,13 +584,12 @@ export const MigrationDesigner: React.FC = () => {
                         const isExcluded = excludedNodeIds.includes(n.machineId);
                         const isActive = n.machineId === activeTunedNodeId;
                         return (
-                          <div 
+                          <div
                             key={n.machineId}
-                            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-bold transition border ${
-                              isActive 
-                                ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 shadow-md shadow-cyan-500/10' 
+                            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-bold transition border ${isActive
+                                ? 'bg-cyan-500/10 border-cyan-500 text-cyan-600 dark:text-cyan-600 dark:text-cyan-400 shadow-md shadow-cyan-500/10'
                                 : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
-                            } ${isExcluded ? 'opacity-40' : ''}`}
+                              } ${isExcluded ? 'opacity-40' : ''}`}
                           >
                             <button
                               onClick={() => setActiveTunedNodeId(n.machineId)}
@@ -603,11 +603,10 @@ export const MigrationDesigner: React.FC = () => {
                                 e.stopPropagation();
                                 handleToggleNodeExclude(n.machineId);
                               }}
-                              className={`ml-1 px-1.5 py-0.5 rounded text-sm cursor-pointer transition ${
-                                isExcluded 
-                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30' 
+                              className={`ml-1 px-1.5 py-0.5 rounded text-sm cursor-pointer transition ${isExcluded
+                                  ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30'
                                   : 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
-                              }`}
+                                }`}
                               title={isExcluded ? 'Include server in recommendation' : 'Exclude server from recommendation'}
                             >
                               {isExcluded ? 'Include' : 'Exclude'}
@@ -633,7 +632,7 @@ export const MigrationDesigner: React.FC = () => {
                       <div className="space-y-5 mt-2">
                         {/* Upper Row: Side-by-Side HW and OS specs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          
+
                           {/* 1. Server HW Spec */}
                           <div className="bg-bg-panel/30 border border-border-main/30 rounded-xl p-4 space-y-2.5 text-sm">
                             <span className="text-sm font-bold text-text-muted block mb-1 border-b border-border-main/20 pb-1">Server HW Spec</span>
@@ -662,8 +661,8 @@ export const MigrationDesigner: React.FC = () => {
                             <div className="flex justify-between">
                               <span className="text-text-muted font-normal">Memory RAM:</span>
                               <span className="text-text-main font-bold">
-                                {activeNode.memory.totalSize < 1000000 
-                                  ? activeNode.memory.totalSize.toFixed(1) 
+                                {activeNode.memory.totalSize < 1000000
+                                  ? activeNode.memory.totalSize.toFixed(1)
                                   : (activeNode.memory.totalSize / (1024 * 1024 * 1024)).toFixed(1)} GB
                               </span>
                             </div>
@@ -680,8 +679,8 @@ export const MigrationDesigner: React.FC = () => {
                               {activeNode.dataDisks && activeNode.dataDisks.length > 0 ? (
                                 <span className="text-text-main font-bold">
                                   {activeNode.dataDisks.map((d) => {
-                                    const sz = d.totalSize < 1000000 
-                                      ? d.totalSize.toFixed(0) 
+                                    const sz = d.totalSize < 1000000
+                                      ? d.totalSize.toFixed(0)
                                       : (d.totalSize / (1024 * 1024 * 1024)).toFixed(0);
                                     return `${sz}GB`;
                                   }).join(', ')} ({activeNode.dataDisks.length} disks)
@@ -864,7 +863,7 @@ export const MigrationDesigner: React.FC = () => {
                                 {nlb.listener.protocol} Mode
                               </span>
                             </div>
-                            
+
                             <div className="space-y-3 font-mono text-sm text-text-muted font-normal">
                               {/* Traffic Ingress */}
                               <div className="flex items-center space-x-2 text-text-muted">
@@ -913,7 +912,7 @@ export const MigrationDesigner: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Save spec and proceed button at the bottom of Step 1 */}
                   <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
                     <button
@@ -959,19 +958,19 @@ export const MigrationDesigner: React.FC = () => {
               className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-cyan-500 cursor-pointer"
             >
               {tumblebugProviders.map((csp: string) => {
-                const prettyCsp = 
+                const prettyCsp =
                   csp.toLowerCase() === 'aws' ? 'Amazon Web Services (AWS)' :
-                  csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
-                  csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
-                  csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
-                  csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
-                  csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
-                  csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
-                  csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
-                  csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
-                  csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
-                  csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
-                  csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
+                    csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
+                      csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
+                        csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
+                          csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
+                            csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
+                              csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
+                                csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
+                                  csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
+                                    csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
+                                      csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
+                                        csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
                 return (
                   <option key={csp} value={csp}>
                     {prettyCsp}
@@ -1051,11 +1050,10 @@ export const MigrationDesigner: React.FC = () => {
                         updateEditedCandidate(JSON.parse(JSON.stringify(c)));
                         if (activeStep < 5) setActiveStep(5); // Unlock Next Step (Migration Execution)
                       }}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex items-center space-x-2 ${
-                        isActive
+                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex items-center space-x-2 ${isActive
                           ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
                           : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
-                      }`}
+                        }`}
                     >
                       <span>Candidate {idx + 1}</span>
                     </button>
@@ -1073,7 +1071,7 @@ export const MigrationDesigner: React.FC = () => {
             {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
             {editedCandidate && (
               <div className="flex flex-col space-y-6 pt-4 border-t border-border-main/20">
-                
+
                 {/* Row 1: Detailed specifications overview card (Recommended Cloud Summary) */}
                 <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-4 w-full">
                   <div className="border-b border-border-main/30 pb-3 mb-2">
@@ -1081,12 +1079,12 @@ export const MigrationDesigner: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    
+
                     {/* 1. Estimation (Match Level & Est. Cost) */}
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
-                        
+
                         <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
                           <div className="flex items-center space-x-1.5">
                             <span className="text-xs text-text-muted font-bold font-sans">Match</span>
@@ -1104,7 +1102,7 @@ export const MigrationDesigner: React.FC = () => {
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Network</span>
-                        
+
                         {/* 1 VNet(s) X Subnet(s) */}
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
                           1 VNet(s) {editedCandidate.targetVNet.subnetInfoList?.length || 0} Subnet(s)
@@ -1116,7 +1114,7 @@ export const MigrationDesigner: React.FC = () => {
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
-                        
+
                         <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
                           {/* Left Side: Total Nodes Count */}
                           <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
@@ -1124,7 +1122,7 @@ export const MigrationDesigner: React.FC = () => {
                               {editedCandidate.targetInfra.nodeGroups.reduce((acc, ng) => acc + ng.nodeGroupSize, 0)} Node(s)
                             </div>
                           </div>
-                          
+
                           {/* Right Side: Per-NodeGroup list */}
                           <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
                             {editedCandidate.targetInfra.nodeGroups.map((ng, i) => (
@@ -1142,7 +1140,7 @@ export const MigrationDesigner: React.FC = () => {
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Security</span>
-                        
+
                         <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
                           {/* Left Side: Total SG Count */}
                           <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
@@ -1150,7 +1148,7 @@ export const MigrationDesigner: React.FC = () => {
                               {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s)
                             </div>
                           </div>
-                          
+
                           {/* Right Side: Per-SG Rules list */}
                           <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
                             {(editedCandidate.targetSecurityGroupList || []).map((sg, i) => (
@@ -1168,7 +1166,7 @@ export const MigrationDesigner: React.FC = () => {
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
-                        
+
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
                           {editedCandidate.targetSshKey ? 1 : 0} SSH Key(s)
                         </div>
@@ -1179,7 +1177,7 @@ export const MigrationDesigner: React.FC = () => {
                     <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
                       <div className="space-y-2">
                         <span className="block text-sm font-bold text-cyan-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
-                        
+
                         <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
                           {(editedCandidate.targetNlbList || []).length} NLB(s)
                         </div>
@@ -1198,7 +1196,7 @@ export const MigrationDesigner: React.FC = () => {
                     </div>
                     {/* Simulated Topology Drawing */}
                     <div className="flex flex-col space-y-4 pt-4 text-sm">
-                      
+
                       {/* VPC / VNet Container */}
                       <div className="border border-cyan-400 dark:border-cyan-800/40 bg-cyan-500/5 rounded-2xl p-5 relative">
                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4 border-b border-cyan-200 dark:border-cyan-800/20 pb-3">
@@ -1206,7 +1204,7 @@ export const MigrationDesigner: React.FC = () => {
                             <Network className="w-4 h-4 animate-pulse" />
                             <span>VPC / VNet: {editedCandidate.targetVNet.name} ({editedCandidate.targetVNet.cidrBlock})</span>
                           </span>
-                          
+
                           {/* Associated SSH Key & Security Group */}
                           <div className="flex flex-wrap gap-2">
                             {editedCandidate.targetSshKey && (
@@ -1232,13 +1230,13 @@ export const MigrationDesigner: React.FC = () => {
                           <div className="mb-4 relative z-10 flex flex-col items-center justify-center border-b border-border-main/20 pb-4">
                             {editedCandidate.targetNlbList.map((nlb, nlbIdx) => {
                               if (!nlb) return null;
-                              
+
                               // Find matching NodeGroup in target infrastructure to calculate simulated instances
                               // Fallback to first NodeGroup if name tuning mismatch occurs, or use original nodeGroupId
                               const matchingNg = editedCandidate.targetInfra.nodeGroups.find(
                                 (ng) => ng.name === nlb.targetGroup?.nodeGroupId
                               ) || editedCandidate.targetInfra.nodeGroups[0];
-                              
+
                               const namePrefix = matchingNg?.name || nlb.targetGroup?.nodeGroupId || 'target-node';
                               const targetNodeCount = matchingNg?.nodeGroupSize || 1;
                               const targetNodesArray = Array.from({ length: targetNodeCount });
@@ -1254,7 +1252,7 @@ export const MigrationDesigner: React.FC = () => {
                                       {nlb.type || 'PUBLIC'} Mode
                                     </span>
                                   </div>
-                                  
+
                                   <div className="space-y-3 font-mono text-sm text-text-muted font-normal text-left">
                                     {/* Traffic Ingress */}
                                     <div className="flex items-center space-x-2 text-text-muted">
@@ -1313,7 +1311,7 @@ export const MigrationDesigner: React.FC = () => {
                             {editedCandidate.targetInfra.nodeGroups.map((ng, idx) => {
                               const nodeCount = ng.nodeGroupSize || 1;
                               const nodesArray = Array.from({ length: nodeCount });
-                              
+
                               return (
                                 <div key={idx} className="bg-bg-panel border border-border-main/50 p-4 rounded-xl space-y-3.5 hover:border-cyan-500/30 transition shadow-inner flex flex-col justify-between">
                                   <div>
@@ -1350,20 +1348,20 @@ export const MigrationDesigner: React.FC = () => {
                                         if (!sg?.name) return false;
                                         const sgName = sg.name.toLowerCase();
                                         const ngName = ng.name.toLowerCase();
-                                        
+
                                         // 1. Partial/Exact name match
                                         if (sgName.includes(ngName) || ngName.includes(sgName)) return true;
-                                        
+
                                         // 2. Fallback to distribute different SGs to different NodeGroups as a realistic mock
                                         const ngIdx = editedCandidate.targetInfra.nodeGroups.indexOf(ng);
                                         return (ngIdx % 2 === sgIdx % 2) || sgName.includes('default') || sgName.includes('common');
                                       });
-                                      
-                                      const displaySgs = filteredSgs.length > 0 
-                                        ? filteredSgs 
-                                        : (editedCandidate.targetSecurityGroupList && editedCandidate.targetSecurityGroupList.length > 0 
-                                            ? [editedCandidate.targetSecurityGroupList[0]] 
-                                            : []);
+
+                                      const displaySgs = filteredSgs.length > 0
+                                        ? filteredSgs
+                                        : (editedCandidate.targetSecurityGroupList && editedCandidate.targetSecurityGroupList.length > 0
+                                          ? [editedCandidate.targetSecurityGroupList[0]]
+                                          : []);
 
                                       return (
                                         <div className="flex flex-wrap gap-2 items-center mb-4 bg-bg-input/10 p-2.5 rounded-lg border border-border-main/5 px-3">
@@ -1408,7 +1406,7 @@ export const MigrationDesigner: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Integrated Fine-Tuning & Saving Controls */}
                       <div className="mt-5 border-t border-border-main/30 pt-4 space-y-4">
                         <div className="flex flex-col space-y-4">
@@ -1423,21 +1421,19 @@ export const MigrationDesigner: React.FC = () => {
                           <div className="flex flex-wrap gap-1.5 border-b border-border-main/10 pb-2">
                             <button
                               onClick={() => setTargetActiveTab('network')}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${
-                                targetActiveTab === 'network'
+                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'network'
                                   ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
-                              }`}
+                                }`}
                             >
                               Network (VNet & Subnets)
                             </button>
                             <button
                               onClick={() => setTargetActiveTab('compute')}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${
-                                targetActiveTab === 'compute'
+                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'compute'
                                   ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
-                              }`}
+                                }`}
                             >
                               Compute (Nodes)
                             </button>
@@ -1450,21 +1446,19 @@ export const MigrationDesigner: React.FC = () => {
                             </button>
                             <button
                               onClick={() => setTargetActiveTab('security')}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${
-                                targetActiveTab === 'security'
+                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'security'
                                   ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
-                              }`}
+                                }`}
                             >
                               Security Groups & Rules
                             </button>
                             <button
                               onClick={() => setTargetActiveTab('sshkey')}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${
-                                targetActiveTab === 'sshkey'
+                              className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'sshkey'
                                   ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
                                   : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
-                              }`}
+                                }`}
                             >
                               SSH Auth Key
                             </button>
@@ -1472,7 +1466,7 @@ export const MigrationDesigner: React.FC = () => {
 
                           {/* Tabs Content */}
                           <div className="space-y-3">
-                            
+
                             {/* TAB 1: Compute Resources (Node Groups) */}
                             {targetActiveTab === 'compute' && (
                               <div className="space-y-3.5">
@@ -1654,7 +1648,7 @@ export const MigrationDesigner: React.FC = () => {
                                         const direction = (rule.direction || 'inbound').toUpperCase();
                                         const protocol = (rule.protocol || 'tcp').toUpperCase();
                                         const port = rule.dstPorts || rule.srcPorts || 'ALL';
-                                        
+
                                         return (
                                           <div key={ruleIdx} className="bg-bg-panel border border-border-main p-3 rounded-lg flex justify-between items-center text-sm font-mono relative group">
                                             <div className="space-y-0.5">
@@ -1774,7 +1768,7 @@ export const MigrationDesigner: React.FC = () => {
       {showCompareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
           <div className="glass-panel p-6 rounded-2xl w-full max-w-4xl border border-border-main animate-scale-up flex flex-col max-h-[85vh]">
-            
+
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-4 border-b border-border-main/30 pb-3">
               <h3 className="text-base font-extrabold text-text-main flex items-center">
@@ -1808,11 +1802,10 @@ export const MigrationDesigner: React.FC = () => {
                       <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Match Level</td>
                       {recommendationCandidates.map((c, idx) => (
                         <td key={idx} className="py-3.5 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-sm font-bold uppercase ${
-                            c.status === 'highly-matched'
+                          <span className={`px-2.5 py-1 rounded-full text-sm font-bold uppercase ${c.status === 'highly-matched'
                               ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
                               : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                          }`}>
+                            }`}>
                             {c.status}
                           </span>
                         </td>
@@ -1874,7 +1867,7 @@ export const MigrationDesigner: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
           <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
             <h3 className="text-base font-bold text-text-main mb-4">Save Recommended Design</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-text-muted mb-1.5">Design Template Name</label>

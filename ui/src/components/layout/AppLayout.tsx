@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2 } from 'lucide-react';
@@ -48,7 +50,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </span>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Dynamic Width Controller Slider */}
             <div className="flex items-center space-x-2 bg-bg-panel border border-border-main px-2.5 py-1 rounded-xl">
@@ -81,7 +83,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             >
               {themeMode === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
- 
+
             <div className="flex items-center space-x-2 text-xs text-text-muted bg-bg-panel border border-border-main px-3 py-1.5 rounded-full">
               <span className="pulse-dot" />
               <span>Multi-Cloud Engine Connected</span>
@@ -89,7 +91,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </div>
       </header>
- 
+
       {/* Main Tab Navigation bar */}
       <div className="bg-bg-panel border-b border-border-main">
         <div className="mx-auto px-6 py-4" style={{ width: `${layoutWidth}px`, maxWidth: '100%' }}>
@@ -101,29 +103,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-start p-4 rounded-xl text-left border transition-all duration-300 relative overflow-hidden group cursor-pointer ${
-                    isActive
+                  className={`flex items-start p-4 rounded-xl text-left border transition-all duration-300 relative overflow-hidden group cursor-pointer ${isActive
                       ? 'border-cyan-500 dark:border-cyan-500/40 bg-bg-panel shadow-lg shadow-cyan-500/10'
                       : 'border-border-main bg-bg-main/20 hover:border-cyan-500/30 hover:bg-bg-panel'
-                  }`}
+                    }`}
                 >
                   {/* Glowing border glow-effect for active tab */}
                   {isActive && (
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500" />
                   )}
-                  <div className={`p-2.5 rounded-lg mr-4 border transition-colors ${
-                    isActive 
-                      ? 'bg-cyan-100 dark:bg-cyan-950/40 border-cyan-300 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-400' 
+                  <div className={`p-2.5 rounded-lg mr-4 border transition-colors ${isActive
+                      ? 'bg-cyan-100 dark:bg-cyan-950/40 border-cyan-300 dark:border-cyan-800/40 text-cyan-600 dark:text-cyan-400'
                       : 'bg-bg-input border-transparent text-text-muted group-hover:text-cyan-600 dark:group-hover:text-cyan-400'
-                  }`}>
+                    }`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className={`font-bold text-base transition-colors duration-200 ${
-                      isActive 
-                        ? 'text-cyan-600 dark:text-cyan-400 font-extrabold' 
+                    <h3 className={`font-bold text-base transition-colors duration-200 ${isActive
+                        ? 'text-cyan-600 dark:text-cyan-400 font-extrabold'
                         : 'text-text-muted group-hover:text-cyan-600 dark:group-hover:text-cyan-400'
-                    }`}>
+                      }`}>
                       {item.label}
                     </h3>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
@@ -136,7 +135,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </nav>
         </div>
       </div>
- 
+
       {/* Content wrapper - Dynamic layout width */}
       <main className="flex-1 mx-auto px-6 py-8" style={{ width: `${layoutWidth}px`, maxWidth: '100%' }}>
         <div className="animate-fade-in">

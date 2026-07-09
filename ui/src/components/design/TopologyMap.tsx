@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useMemo } from 'react';
 import { ReactFlow, Background, Controls, Edge, Node } from '@xyflow/react';
 import { RecommendedInfra } from '../../types/migration';
@@ -76,7 +78,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
     const nodeGroups = targetInfra.nodeGroups;
     nodeGroups.forEach((ng, index) => {
       const vmNodeId = `vm-ng-${index}`;
-      
+
       // Calculate layout coordinates inside Subnet parent
       const xPos = 40 + index * 260;
       const yPos = 80;
@@ -114,7 +116,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
     // 5. Render Security Groups nodes (placed side-by-side)
     targetSecurityGroupList.forEach((sg, idx) => {
       const sgNodeId = `sg-node-${idx}`;
-      
+
       // Position SG nodes to the left/right of VNet
       const xPos = 700;
       const yPos = idx === 0 ? 180 : 320;
@@ -159,7 +161,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
     if (targetNlbList && targetNlbList.length > 0) {
       targetNlbList.forEach((nlb, nlbIdx) => {
         const nlbNodeId = `nlb-node-${nlbIdx}`;
-        
+
         // Position NLB left of the subnet VNet container
         const xPos = 700;
         const yPos = 50;

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { honeybeeApi } from '../../api/client';
@@ -184,7 +186,7 @@ export const SourceCenter: React.FC = () => {
     for (let i = 0; i < updatedRows.length; i++) {
       const row = updatedRows[i];
       handleUpdateRow(row.id, 'status', 'checking');
-      
+
       const creds = resolveCredentials(row);
       const payload = {
         ip: row.ip,
@@ -206,7 +208,7 @@ export const SourceCenter: React.FC = () => {
   // Register connections under selected group and fetch refined
   const handleExtractAndSaveModel = async () => {
     let sgId = activeSgId;
-    
+
     if (!sgId) {
       alert('Please select or create a Source Group first.');
       return;
@@ -249,7 +251,7 @@ export const SourceCenter: React.FC = () => {
         ip: "10.0.1.30",
         port: 22,
         user: "ubuntu",
-        privateKey: "" 
+        privateKey: ""
       },
       {
         name: "Database 1",
@@ -272,10 +274,10 @@ export const SourceCenter: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* 1. Group Selector & Credential Library */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Source Infrastructure Control Card */}
         <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
           <div>
@@ -440,7 +442,7 @@ export const SourceCenter: React.FC = () => {
               {serverRows.map((row, idx) => (
                 <tr key={row.id} className="hover:bg-cyan-500/[0.02] transition">
                   <td className="py-3.5 px-4 text-center text-text-muted">{idx + 1}</td>
-                  
+
                   {/* Connection Name */}
                   <td className="py-3.5 px-4">
                     <input
@@ -450,7 +452,7 @@ export const SourceCenter: React.FC = () => {
                       className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm"
                     />
                   </td>
-                  
+
                   {/* IP Address */}
                   <td className="py-3.5 px-4">
                     <input
@@ -461,7 +463,7 @@ export const SourceCenter: React.FC = () => {
                       className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm"
                     />
                   </td>
-                  
+
                   {/* SSH Port */}
                   <td className="py-3.5 px-4">
                     <input
@@ -472,7 +474,7 @@ export const SourceCenter: React.FC = () => {
                       className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm placeholder-purple-500/50"
                     />
                   </td>
-                  
+
                   {/* SSH Username */}
                   <td className="py-3.5 px-4">
                     <input
@@ -483,7 +485,7 @@ export const SourceCenter: React.FC = () => {
                       className="w-full bg-bg-input border border-border-main rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500/50 text-text-main text-sm placeholder-purple-500/50"
                     />
                   </td>
-                  
+
                   {/* SSH Key */}
                   <td className="py-3.5 px-4">
                     <div
@@ -494,15 +496,14 @@ export const SourceCenter: React.FC = () => {
                       <input
                         type="password"
                         placeholder={
-                          row.privateKey 
-                            ? 'Individual Key Loaded' 
+                          row.privateKey
+                            ? 'Individual Key Loaded'
                             : (useCommonCred && commonKey ? '🔗 Inheriting Shared Key template' : 'Drop PEM or paste Key here')
                         }
                         value={row.privateKey}
                         onChange={(e) => handleUpdateRow(row.id, 'privateKey', e.target.value)}
-                        className={`w-full bg-transparent border-0 outline-none text-text-main text-sm mr-2 truncate ${
-                          !row.privateKey && useCommonCred && commonKey ? 'text-purple-400/70 font-semibold' : ''
-                        }`}
+                        className={`w-full bg-transparent border-0 outline-none text-text-main text-sm mr-2 truncate ${!row.privateKey && useCommonCred && commonKey ? 'text-purple-400/70 font-semibold' : ''
+                          }`}
                       />
                       <div className="flex items-center space-x-1 flex-shrink-0 text-xs text-text-muted bg-bg-panel px-2.5 py-1 rounded cursor-pointer">
                         <Upload className="w-3.5 h-3.5" />
@@ -510,7 +511,7 @@ export const SourceCenter: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  
+
                   {/* Status Badge */}
                   <td className="py-3.5 px-4 text-center">
                     {row.status === 'idle' && (
@@ -538,7 +539,7 @@ export const SourceCenter: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  
+
                   {/* Actions */}
                   <td className="py-3.5 px-4 text-center">
                     <button
@@ -553,7 +554,7 @@ export const SourceCenter: React.FC = () => {
             </tbody>
           </table>
         </div>
-        
+
         <div className="px-6 py-4 bg-bg-input/20 border-t border-border-main flex justify-end">
           <button
             onClick={handleExtractAndSaveModel}
@@ -640,7 +641,7 @@ export const SourceCenter: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
           <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
             <h3 className="text-base font-bold text-text-main mb-4">Register New Source Infrastructure</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-text-muted mb-1.5">Infrastructure Name</label>

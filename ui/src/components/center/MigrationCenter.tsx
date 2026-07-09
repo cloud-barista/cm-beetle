@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { Play, CheckCircle2, AlertTriangle, RefreshCw, Terminal, Eye, Download, Info, Server } from 'lucide-react';
@@ -103,7 +105,7 @@ export const MigrationCenter: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Active IP Allocation Grid Panel */}
       {deploymentStatus && (
         <div className="glass-panel p-6 rounded-2xl animate-fade-in space-y-4">
@@ -114,7 +116,7 @@ export const MigrationCenter: React.FC = () => {
             </h3>
             {getStatusBadge(deploymentStatus.status)}
           </div>
-          
+
           <div className="overflow-x-auto border border-border-main rounded-xl">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
@@ -148,7 +150,7 @@ export const MigrationCenter: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Control Parameter Settings */}
         <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between space-y-6">
           <div className="space-y-4">
@@ -256,7 +258,7 @@ export const MigrationCenter: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="glass-panel p-6 rounded-2xl space-y-4 lg:col-span-1">
             <h3 className="text-sm font-bold text-text-main mb-4">Migration Plan Information</h3>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between pb-2 border-b border-border-main">
                 <span className="text-text-muted">Infrastructure ID:</span>
@@ -322,9 +324,9 @@ export const MigrationCenter: React.FC = () => {
                   Download Report
                 </button>
               </div>
-              <div 
+              <div
                 className="p-6 bg-bg-input text-text-main max-h-[500px] overflow-y-auto font-sans prose prose-sm max-w-none text-sm"
-                dangerouslySetInnerHTML={{ __html: liveReportHtml }} 
+                dangerouslySetInnerHTML={{ __html: liveReportHtml }}
               />
             </div>
           )}
