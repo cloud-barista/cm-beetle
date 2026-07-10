@@ -175,6 +175,15 @@ prepare-volumes: ## Create bind-mount directories with correct ownership
 
 up: compose # Build and up services by docker compose
 
+dev-ui: ## Run UI dev server locally with hot-reload (run 'make up' first to start backends)
+	@echo "Stopping containerised UI if running..."
+	@docker stop cm-beetle-ui 2>/dev/null || true
+	@echo "Installing UI dependencies (if needed)..."
+	@cd ui && npm install
+	@echo "Starting Next.js dev server with hot-reload at http://localhost:3000"
+	@echo "  (reads ui/.env.local — backends expected on localhost ports)"
+	@cd ui && npm run dev
+
 down: compose-down # Down services by docker compose
 
 # ===== Initialization =====

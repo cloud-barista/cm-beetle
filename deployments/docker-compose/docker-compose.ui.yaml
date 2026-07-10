@@ -47,8 +47,11 @@ services:
 
   # ============================================================================
   # 3. CM-Beetle UI (Next.js Dashboard, proxies to backend services)
+  #    Excluded from default 'up' — started explicitly with --profile ui
+  #    For local development, run:  cd ui && npm run dev
   # ============================================================================
   cm-beetle-ui:
+    profiles: [ui]
     build:
       context: ../../ui
       dockerfile: Dockerfile
