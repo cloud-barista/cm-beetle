@@ -167,6 +167,8 @@ interface MigrationState {
   
   fetchSourceGroups: () => Promise<void>;
   createSourceGroup: (name: string, description: string) => Promise<string>;
+  deleteSourceGroup: (sgId: string) => Promise<void>;
+  refreshSourceGroup: (sgId: string) => Promise<void>;
   registerConnection: (serverData: any) => Promise<void>;
   fetchRefinedInfra: (connId: string) => Promise<void>;
   fetchRefinedInfraByGroup: (sgId: string) => Promise<void>;
@@ -231,17 +233,11 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   },
 
   // --------------------------------------------------------------------------
-  // Page 1: Source Infrastructures - 100% Mocked Offline to bypass Honeybee
+  // Page 1: Source Infrastructures - Offline demo data aligned with Honeybee API schema
   // --------------------------------------------------------------------------
-  sourceGroups: [
-    { id: 'sg-demo-1', name: 'demo-source-infras', description: 'Demo On-Premise Source Infrastructure' }
-  ],
-  activeSgId: 'sg-demo-1',
-  connections: [
-    { id: 'conn-1', name: 'Web Server 1', ip: '10.0.1.30', port: 22, user: 'ubuntu', status: 'success' },
-    { id: 'conn-2', name: 'Database 1', ip: '10.0.1.221', port: 22, user: 'root', status: 'success' },
-    { id: 'conn-3', name: 'Database 2', ip: '10.0.1.138', port: 22, user: 'root', status: 'success' }
-  ],
+  sourceGroups: [],
+  activeSgId: '',
+  connections: [],
   isLoadingSource: false,
   refinedSourceInfra: DEMO_SOURCE_INFRA,
   savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL],
@@ -258,37 +254,83 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   ],
 
   fetchSourceGroups: async () => {
-    // Honeybee disconnected. Pure local offline flow to prevent empty screen.
-    set({
-      sourceGroups: [
-        { id: 'sg-demo-1', name: 'demo-source-infras', description: 'Demo On-Premise Source Infrastructure' }
-      ],
-      activeSgId: 'sg-demo-1',
-      connections: [
-        { id: 'conn-1', name: 'Web Server 1', ip: '10.0.1.30', port: 22, user: 'ubuntu', status: 'success' },
-        { id: 'conn-2', name: 'Database 1', ip: '10.0.1.221', port: 22, user: 'root', status: 'success' },
-        { id: 'conn-3', name: 'Database 2', ip: '10.0.1.138', port: 22, user: 'root', status: 'success' }
-      ]
-    });
+    try {
+      const response = await honeybeeApi.getSourceGroups();
+      // ListSourceGroupRes: { source_group: [], connection_info_status_count: {} }
+      const list = response?.source_group || (Array.isArray(response) ? response : []);
+      if (list.length > 0) {
+        // Real data from Honeybee — clear any stale selection
+        set({ sourceGroups: list, activeSgId: '', connections: [] });
+        return;
+      }
+      // Honeybee is up but has no groups yet — show empty state
+      set({ sourceGroups: [], activeSgId: '', connections: [] });
+    } catch {
+      // Honeybee unreachable — stay with current state (no crash)
+      set({ sourceGroups: [], activeSgId: '', connections: [] });
+    }
   },
 
   createSourceGroup: async (name, description) => {
-    const demoId = `sg-demo-${Date.now()}`;
-    const updatedGroups = [...get().sourceGroups, { id: demoId, name, description }];
-    set({ sourceGroups: updatedGroups, activeSgId: demoId, connections: [] });
-    return demoId;
+    try {
+      const result = await honeybeeApi.createSourceGroup(name, description);
+      const newId = result?.id || `sg-${Date.now()}`;
+      const newGroup = { id: newId, name, description, connection_info_status_count: { connection_info_total: 0, count_connection_success: 0, count_connection_failed: 0, count_agent_success: 0, count_agent_failed: 0 } };
+      set({ sourceGroups: [...get().sourceGroups, newGroup], activeSgId: newId, connections: [] });
+      return newId;
+    } catch {
+      const demoId = `sg-demo-${Date.now()}`;
+      const newGroup = { id: demoId, name, description, connection_info_status_count: { connection_info_total: 0, count_connection_success: 0, count_connection_failed: 0, count_agent_success: 0, count_agent_failed: 0 } };
+      set({ sourceGroups: [...get().sourceGroups, newGroup], activeSgId: demoId, connections: [] });
+      return demoId;
+    }
+  },
+
+  deleteSourceGroup: async (sgId) => {
+    try {
+      await honeybeeApi.deleteSourceGroup(sgId);
+    } catch {
+      // proceed with local removal even if API call fails
+    }
+    const updated = get().sourceGroups.filter((g: any) => g.id !== sgId);
+    const nextActiveId = get().activeSgId === sgId ? (updated[0]?.id || '') : get().activeSgId;
+    set({ sourceGroups: updated, activeSgId: nextActiveId, connections: nextActiveId ? get().connections : [] });
+  },
+
+  refreshSourceGroup: async (sgId) => {
+    try {
+      await honeybeeApi.refreshSourceGroup(sgId);
+    } catch {
+      // noop in offline mode
+    }
   },
 
   registerConnection: async (serverData) => {
-    const newConn = {
-      id: `conn-demo-${Date.now()}`,
-      name: serverData.name,
-      ip: serverData.ip,
-      port: serverData.port,
-      user: serverData.user,
-      privateKey: serverData.privateKey
-    };
-    set({ connections: [...get().connections, newConn] });
+    const sgId = get().activeSgId;
+    try {
+      const result = await honeybeeApi.registerConnectionInfo(sgId, serverData);
+      const newConn = result || {
+        id: `conn-${Date.now()}`,
+        name: serverData.name,
+        ip_address: serverData.ip,
+        ssh_port: String(serverData.port),
+        user: serverData.user,
+        connection_status: '',
+        agent_status: '',
+      };
+      set({ connections: [...get().connections, newConn] });
+    } catch {
+      const newConn = {
+        id: `conn-demo-${Date.now()}`,
+        name: serverData.name,
+        ip_address: serverData.ip,
+        ssh_port: String(serverData.port),
+        user: serverData.user,
+        connection_status: '',
+        agent_status: '',
+      };
+      set({ connections: [...get().connections, newConn] });
+    }
   },
 
   fetchRefinedInfra: async () => {

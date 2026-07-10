@@ -41,13 +41,13 @@ export const honeybeeApi = {
     description?: string;
   }) => {
     const response = await api.post(`/honeybee/source_group/${sgId}/connection_info`, {
-      name: serverData.name,
-      ip: serverData.ip,
-      port: serverData.port,
-      user: serverData.user,
-      password: serverData.password || '',
-      privateKey: serverData.privateKey || '',
-      description: serverData.description || ''
+      name:        serverData.name,
+      ip_address:  serverData.ip,
+      ssh_port:    String(serverData.port || 22),
+      user:        serverData.user,
+      password:    serverData.password    || '',
+      private_key: serverData.privateKey  || '',
+      description: serverData.description || '',
     });
     return response.data;
   },
@@ -69,27 +69,65 @@ export const honeybeeApi = {
     return response.data;
   },
 
-  // Helper utility api for testing connection (Mocking validation if not natively supported)
-  testSshConnection: async (serverData: {
-    ip: string;
-    port: number;
-    user: string;
-    password?: string;
-    privateKey?: string;
-  }): Promise<{ success: boolean; message: string }> => {
-    // Note: In case the /utility/ssh_test endpoint is absent, we catch gracefully
-    try {
-      const response = await api.post('/honeybee/utility/ssh_test', serverData);
-      return response.data;
-    } catch {
-      // Fallback: Perform a brief timeout delay to mock verification check in UI
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      if (!serverData.ip || !serverData.user) {
-        return { success: false, message: 'Missing IP Address or Username' };
-      }
-      return { success: true, message: 'Connection Verified via Local SSH Check' };
-    }
-  }
+  // Create source group with embedded connection info (single API call)
+  createSourceGroupWithConnections: async (data: {
+    name: string;
+    description?: string;
+    connection_info?: Array<{
+      name: string;
+      ip_address: string;
+      ssh_port: string;
+      user: string;
+      password?: string;
+      private_key?: string;
+      description?: string;
+    }>;
+  }) => {
+    const response = await api.post('/honeybee/source_group', data);
+    return response.data;
+  },
+
+  // Refresh all connection statuses in a source group
+  refreshSourceGroup: async (sgId: string) => {
+    const response = await api.put(`/honeybee/source_group/${sgId}/refresh`);
+    return response.data;
+  },
+
+  // Refresh individual connection status
+  refreshConnectionInfo: async (sgId: string, connId: string) => {
+    const response = await api.put(`/honeybee/source_group/${sgId}/connection_info/${connId}/refresh`);
+    return response.data;
+  },
+
+  // Trigger infra collection for all connections in a group
+  importInfraByGroup: async (sgId: string) => {
+    const response = await api.post(`/honeybee/source_group/${sgId}/import/infra`);
+    return response.data;
+  },
+
+  // Trigger infra collection for a single connection
+  importInfraByConnection: async (sgId: string, connId: string) => {
+    const response = await api.post(`/honeybee/source_group/${sgId}/connection_info/${connId}/import/infra`);
+    return response.data;
+  },
+
+  // Delete a source group
+  deleteSourceGroup: async (sgId: string) => {
+    const response = await api.delete(`/honeybee/source_group/${sgId}`);
+    return response.data;
+  },
+
+  // Update source group name/description
+  updateSourceGroup: async (sgId: string, name: string, description: string) => {
+    const response = await api.put(`/honeybee/source_group/${sgId}`, { name, description });
+    return response.data;
+  },
+
+  // Delete a single connection info entry
+  deleteConnectionInfo: async (sgId: string, connId: string) => {
+    const response = await api.delete(`/honeybee/source_group/${sgId}/connection_info/${connId}`);
+    return response.data;
+  },
 };
 
 // ============================================================================
