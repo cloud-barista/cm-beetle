@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-07-01 06:42:02
+**Generated At:** 2026-07-13 09:59:33
 
 **Namespace:** mig01
 
@@ -28,8 +28,8 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 | s4-g3 | 4 | 16.0 | - | x86_64 | default | $0.1747 | 2 |
+| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 
 ### VM Images
 
@@ -41,9 +41,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 142596691 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.179<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-1 | 142596698 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.181<br>**Private IP:** 10.0.1.8<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-2 | 142596695 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.180<br>**Private IP:** 10.0.1.7<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 143116661 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.24.200<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-1 | 143116664 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.29.129<br>**Private IP:** 10.0.1.7<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-2 | 143116668 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.31.161<br>**Private IP:** 10.0.1.8<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +55,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-vnet-01 |
-| **CSP VNet ID** | 141972 |
+| **CSP VNet ID** | 142787 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -64,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-mig-subnet-01 | 307646 | 10.0.1.0/24 | KR-1 |
+| my-mig-subnet-01 | 309774 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -73,7 +73,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-mig-sshkey-01 | tbq9b9ffgls9jobs6mc3 | cb-user |  |
+| my-mig-sshkey-01 | tbr77353jlg2mr6udfkn | cb-user |  |
 
 ### Security Groups
 
@@ -82,7 +82,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-01 |
-| **CSP Security Group ID** | 363817 |
+| **CSP Security Group ID** | 368570 |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 9 rules |
 
@@ -105,7 +105,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-02 |
-| **CSP Security Group ID** | 363818 |
+| **CSP Security Group ID** | 368571 |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 8 rules |
 

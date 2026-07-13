@@ -255,10 +255,12 @@ Compare and synchronize docker-compose deployment files:
 
 ### Step 7: SYNC.md Documentation
 
+**IMPORTANT**: Since the repository is version-controlled with Git, only keep the latest sync information in SYNC.md. Previous version history can be accessed through Git history.
+
 Document all docker-compose file changes in SYNC.md:
 
 - **Use `read_file`**: Read current SYNC.md to understand format
-- **Use `replace_string_in_file`** or **`multi_replace_string_in_file`**: Add new version section at the top:
+- **Use `replace_string_in_file`**: **Replace entire content** with the new version section:
 
   ```markdown
   ## v${input:version} Sync (YYYY-MM-DD)
@@ -271,6 +273,12 @@ Document all docker-compose file changes in SYNC.md:
   | `assets/cloudimage.csv` | **Updated** — [describe changes]      |
   | ...                     | ...                                   |
   ```
+
+- **File Replacement Strategy**:
+  - Delete ALL previous version sections
+  - Keep ONLY the new v${input:version} section
+  - Maintain file header/description if present
+  - Git history provides access to previous sync records
 
 - **Change Categories**:
   - **Updated**: File content changed, copy from TB
@@ -420,7 +428,7 @@ After synchronization (use appropriate tools for each validation):
 - [ ] **`grep_search`**: Verify docker-compose.yaml cb-spider version matches TB's docker-compose.yaml
 - [ ] **`grep_search`**: Verify docker-compose.yaml cb-mapui version matches TB's docker-compose.yaml
 - [ ] **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
-- [ ] **`read_file`**: Verify SYNC.md updated with new version section
+- [ ] **`read_file`**: Verify SYNC.md updated with new version only (old history removed)
 - [ ] **Docker-Compose Files**: Confirm all detected file changes documented in SYNC.md
 - [ ] **`get_errors`**: Check for any broken file references in docker-compose configuration
 
@@ -457,6 +465,7 @@ Follow the patterns and guidelines defined in:
 - **No Arbitrary Filtering**: NEVER skip structs based on subjective complexity judgments
 - **Dependency Inclusion**: MUST include ALL dependency structs required by existing structs
 - **Documentation Critical**: Maintain comprehensive change documentation
+- **SYNC.md Policy**: Keep only the latest version in SYNC.md (delete old history), as Git provides version control
 - **Dependency Analysis**: Always run `python3 scripts/analyze_dependencies.py` for final validation
 - **🚨 CRITICAL SAFEGUARD**: **NEVER DELETE Tumblebug-synchronized field comments** - These contain valuable examples and documentation from CB-Tumblebug source that must be preserved
 - **🚨 CLEAN DOCUMENTATION**: **DO NOT** include "// \* Path:" comments - Focus on clear struct names and descriptions only
@@ -499,7 +508,7 @@ Follow the patterns and guidelines defined in:
 
 15. **`run_in_terminal`**: Compare docker-compose deployment files
 16. **`run_in_terminal`**: Copy updated files when changes detected
-17. **`replace_string_in_file`**: Add new version section to SYNC.md
+17. **`replace_string_in_file`**: Replace SYNC.md content with new version (delete old history)
 
 ### Phase 4: Cleanup & Validation
 

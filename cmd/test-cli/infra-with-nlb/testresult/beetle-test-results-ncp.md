@@ -7,7 +7,7 @@
 
 ### Environment
 
-- CM-Beetle: 3950cc5
+- CM-Beetle: b418c24
 - imdl: unknown
 - CB-Tumblebug: Unknown (Fallback to Latest)
 - CB-Spider: Unknown (Fallback to Latest)
@@ -17,9 +17,9 @@
 - CM-Beetle URL: http://localhost:8056
 - Namespace: mig01
 - Test CLI: Custom automated testing tool
-- Test Date: July 1, 2026
-- Test Time: 15:30:42 KST
-- Test Execution: 2026-07-01 15:30:42 KST
+- Test Date: July 13, 2026
+- Test Time: 18:48:08 KST
+- Test Execution: 2026-07-13 18:48:08 KST
 
 ### Scenario
 
@@ -47,26 +47,26 @@
 
 | Test | Step (Endpoint / Description) | Status | Duration | Details |
 |------|-------------------------------|--------|----------|----------|
-| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 1m2.755s | Pass |
-| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 6m47.619s | Pass |
-| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 21ms | Pass |
-| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 3ms | Pass |
-| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 16ms | Pass |
-| 6 | Remote Command Accessibility Check | ✅ **PASS** | 9.656s | Pass |
-| 7 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 1m45.881s | Pass |
-| 8 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 8ms | Pass |
-| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 15ms | Pass |
-| 10 | NLB Load Balancing Verification | ✅ **PASS** | 1m37.874s | Pass |
-| 11 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.222s | Pass |
-| 12 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.22s | Pass |
-| 13 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 58.762s | Pass |
-| 14 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 2m12.186s | Pass |
+| 1 | `POST /beetle/recommendation/infraWithNlb` | ✅ **PASS** | 1m4.996s | Pass |
+| 2 | `POST /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 6m56.022s | Pass |
+| 3 | `GET /beetle/migration/ns/mig01/infra` | ✅ **PASS** | 25ms | Pass |
+| 4 | `GET /beetle/migration/ns/mig01/infra?option=id` | ✅ **PASS** | 36ms | Pass |
+| 5 | `GET /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 19ms | Pass |
+| 6 | Remote Command Accessibility Check | ✅ **PASS** | 10.458s | Pass |
+| 7 | `POST /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 1m40.649s | Pass |
+| 8 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb` | ✅ **PASS** | 6ms | Pass |
+| 9 | `GET /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 9ms | Pass |
+| 10 | NLB Load Balancing Verification | ✅ **PASS** | 1m37.859s | Pass |
+| 11 | `GET /beetle/summary/target/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.242s | Pass |
+| 12 | `POST /beetle/report/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 5.234s | Pass |
+| 13 | `DELETE /beetle/migration/middleware/ns/mig01/infra/{{infraId}}/nlb/{{nlbId}}` | ✅ **PASS** | 58.44s | Pass |
+| 14 | `DELETE /beetle/migration/ns/mig01/infra/{{infraId}}` | ✅ **PASS** | 1m55.545s | Pass |
 
 **Overall Result**: 14/14 tests passed ✅
 
-**Total Duration**: 15m30.576855769s
+**Total Duration**: 15m19.877982207s
 
-*Test executed on July 1, 2026 at 15:30:42 KST (2026-07-01 15:30:42 KST) using CM-Beetle automated test CLI*
+*Test executed on July 13, 2026 at 18:48:08 KST (2026-07-13 18:48:08 KST) using CM-Beetle automated test CLI*
 
 ---
 
@@ -603,7 +603,7 @@
       "targetSpecList": [
         {
           "id": "ncp+kr+s4-g3",
-          "uid": "tbm9opoi4hdt1krq5t5s",
+          "uid": "tbgfd0kehhigfc4vjj3e",
           "cspSpecName": "s4-g3",
           "name": "ncp+kr+s4-g3",
           "namespace": "system",
@@ -686,13 +686,13 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675"
             }
           ]
         },
         {
           "id": "ncp+kr+ci2-g3",
-          "uid": "tb3kd4r9fjj7qc3r5acu",
+          "uid": "tba7m9r0ek9peml03on1",
           "cspSpecName": "ci2-g3",
           "name": "ncp+kr+ci2-g3",
           "namespace": "system",
@@ -775,7 +775,7 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318,16946033"
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675"
             }
           ]
         }
@@ -790,13 +790,13 @@
             "kr"
           ],
           "id": "23214590",
-          "uid": "tbuaurmepoesrrcfn1lt",
+          "uid": "tbaj52o7m5ndf7tosbeo",
           "name": "23214590",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2026.06.08 09:13:04 Mon",
+          "fetchedTime": "2026.06.29 18:04:52 Mon",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -820,7 +820,7 @@
             },
             {
               "key": "ServerImageDescription",
-              "value": "kernel version : 5.15.0-140-generic"
+              "value": "kernel version : 5.15.0-181-generic"
             },
             {
               "key": "ServerImageProductCode",
@@ -1002,7 +1002,7 @@
             },
             "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=25.0% Image=60.0%",
             "connectionName": "ncp-kr",
-            "specId": "ncp+kr+s2-g3a",
+            "specId": "ncp+kr+s2-g3",
             "imageId": "23214590",
             "vNetId": "mig-vnet-01",
             "subnetId": "mig-subnet-01",
@@ -1047,7 +1047,7 @@
       "targetSpecList": [
         {
           "id": "ncp+kr+s4-g3a",
-          "uid": "tb3nu29jb3b462tjqqf4",
+          "uid": "tb1c84chetpdufe5s5ps",
           "cspSpecName": "s4-g3a",
           "name": "ncp+kr+s4-g3a",
           "namespace": "system",
@@ -1130,15 +1130,15 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675"
             }
           ]
         },
         {
-          "id": "ncp+kr+s2-g3a",
-          "uid": "tbde6sbvnj1m13s0kfl0",
-          "cspSpecName": "s2-g3a",
-          "name": "ncp+kr+s2-g3a",
+          "id": "ncp+kr+s2-g3",
+          "uid": "tb6i123h9gdi83lkdh2r",
+          "cspSpecName": "s2-g3",
+          "name": "ncp+kr+s2-g3",
           "namespace": "system",
           "connectionName": "ncp-kr",
           "providerName": "ncp",
@@ -1167,7 +1167,7 @@
           "details": [
             {
               "key": "ServerSpecCode",
-              "value": "s2-g3a"
+              "value": "s2-g3"
             },
             {
               "key": "GenerationCode",
@@ -1211,7 +1211,7 @@
             },
             {
               "key": "ServerProductCode",
-              "value": "SVR.VSVR.AMD.STAND.C002.M008.G003"
+              "value": "SVR.VSVR.STAND.C002.M008.G003"
             },
             {
               "key": "ServerSpecDescription",
@@ -1219,7 +1219,7 @@
             },
             {
               "key": "CorrespondingImageIds",
-              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675,17552318"
+              "value": "109093105,107029409,104630229,100524418,25495367,23221307,23221289,23214590,19463675"
             }
           ]
         }
@@ -1234,13 +1234,13 @@
             "kr"
           ],
           "id": "23214590",
-          "uid": "tbuaurmepoesrrcfn1lt",
+          "uid": "tbaj52o7m5ndf7tosbeo",
           "name": "23214590",
           "sourceNodeUid": "",
           "sourceCspImageName": "",
           "connectionName": "ncp-kr",
           "infraType": "",
-          "fetchedTime": "2026.06.08 09:13:04 Mon",
+          "fetchedTime": "2026.06.29 18:04:52 Mon",
           "creationDate": "",
           "isGPUImage": false,
           "isKubernetesImage": false,
@@ -1264,7 +1264,7 @@
             },
             {
               "key": "ServerImageDescription",
-              "value": "kernel version : 5.15.0-140-generic"
+              "value": "kernel version : 5.15.0-181-generic"
             },
             {
               "key": "ServerImageProductCode",
@@ -1436,7 +1436,7 @@
 {
   "resourceType": "infra",
   "id": "my-infra101",
-  "uid": "tbcka9ob5ngmj3o64de7",
+  "uid": "tbpribbtee4572771ngd",
   "name": "my-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -1464,7 +1464,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbcka9ob5ngmj3o64de7"
+    "sys.uid": "tbpribbtee4572771ngd"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -1473,9 +1473,9 @@
     {
       "resourceType": "node",
       "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb0d6j1sb7gueaallvh5",
-      "cspResourceName": "tb0d6j1sb7gueaallvh5",
-      "cspResourceId": "142596691",
+      "uid": "tb8vrkcumg5qnel1tbbp",
+      "cspResourceName": "tb8vrkcumg5qnel1tbbp",
+      "cspResourceId": "143116661",
       "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -1489,13 +1489,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-01 06:37:37",
+      "createdTime": "2026-07-13 09:55:13",
       "label": {
         "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:37:37",
-        "sys.cspResourceId": "142596691",
-        "sys.cspResourceName": "tb0d6j1sb7gueaallvh5",
+        "sys.createdTime": "2026-07-13 09:55:13",
+        "sys.cspResourceId": "143116661",
+        "sys.cspResourceName": "tb8vrkcumg5qnel1tbbp",
         "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my-infra101",
         "sys.labelType": "node",
@@ -1504,7 +1504,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb0d6j1sb7gueaallvh5",
+        "sys.uid": "tb8vrkcumg5qnel1tbbp",
         "sys.vNetId": "my-mig-vnet-01"
       },
       "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=60.0%",
@@ -1512,7 +1512,7 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.27.179",
+      "publicIP": "101.79.24.200",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
@@ -1567,22 +1567,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
+      "cspVNetId": "142787",
       "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841291",
       "securityGroupIds": [
         "my-mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:05Z"
+        "firstUsedAt": "2026-07-13T09:55:39Z"
       },
       "commandStatus": [
         {
@@ -1590,22 +1590,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:06Z",
-          "elapsedTime": 1,
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "142596691"
+          "value": "143116661"
         },
         {
           "key": "ServerName",
-          "value": "tb0d6j1sb7gueaallvh5"
+          "value": "tb8vrkcumg5qnel1tbbp"
         },
         {
           "key": "CpuCount",
@@ -1621,7 +1621,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
+          "value": "tbr77353jlg2mr6udfkn"
         },
         {
           "key": "ServerInstanceStatus",
@@ -1637,11 +1637,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-07-01T15:33:42+0900"
+          "value": "2026-07-13T18:51:12+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-07-01T15:35:11+0900"
+          "value": "2026-07-13T18:52:41+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -1665,19 +1665,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "141972"
+          "value": "142787"
         },
         {
           "key": "SubnetNo",
-          "value": "307646"
+          "value": "309774"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5796956"
+          "value": "5841291"
         },
         {
           "key": "InitScriptNo",
-          "value": "179364"
+          "value": "181500"
         },
         {
           "key": "ServerInstanceType",
@@ -1702,15 +1702,19 @@
         {
           "key": "ServerSpecCode",
           "value": "ci2-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
         }
       ]
     },
     {
       "resourceType": "node",
       "id": "my-ng-influxdb-back-1",
-      "uid": "tbrc4osvf89mr7vj8nkn",
-      "cspResourceName": "tbrc4osvf89mr7vj8nkn",
-      "cspResourceId": "142596698",
+      "uid": "tbh9oi2ljubvl1e81kun",
+      "cspResourceName": "tbh9oi2ljubvl1e81kun",
+      "cspResourceId": "143116664",
       "name": "my-ng-influxdb-back-1",
       "nodeGroupId": "my-ng-influxdb-back",
       "location": {
@@ -1724,14 +1728,14 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-01 06:38:00",
+      "createdTime": "2026-07-13 09:55:33",
       "label": {
         "nlbBackend": "influxdb_back",
         "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:38:00",
-        "sys.cspResourceId": "142596698",
-        "sys.cspResourceName": "tbrc4osvf89mr7vj8nkn",
+        "sys.createdTime": "2026-07-13 09:55:33",
+        "sys.cspResourceId": "143116664",
+        "sys.cspResourceName": "tbh9oi2ljubvl1e81kun",
         "sys.id": "my-ng-influxdb-back-1",
         "sys.infraId": "my-infra101",
         "sys.labelType": "node",
@@ -1740,7 +1744,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my-ng-influxdb-back",
         "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbrc4osvf89mr7vj8nkn",
+        "sys.uid": "tbh9oi2ljubvl1e81kun",
         "sys.vNetId": "my-mig-vnet-01"
       },
       "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
@@ -1748,243 +1752,7 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.27.181",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.8",
-      "privateDNS": "",
-      "rootDiskType": "SSD",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/vda",
-      "connectionName": "ncp-kr",
-      "connectionConfig": {
-        "configName": "ncp-kr",
-        "providerName": "ncp",
-        "driverName": "ncp-driver-v1.0.so",
-        "credentialName": "ncp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncp-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "ncp+kr+s4-g3",
-      "cspSpecName": "s4-g3",
-      "spec": {
-        "cspSpecName": "s4-g3",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.1747
-      },
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "23214590",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-      },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
-      "securityGroupIds": [
-        "my-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:06Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:07Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "142596698"
-        },
-        {
-          "key": "ServerName",
-          "value": "tbrc4osvf89mr7vj8nkn"
-        },
-        {
-          "key": "CpuCount",
-          "value": "4"
-        },
-        {
-          "key": "MemorySize",
-          "value": "17179869184"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2026-07-01T15:33:45+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2026-07-01T15:35:21+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C004.M016.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "141972"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "307646"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "5796958"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "179366"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:STAND,codeName:Standard}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "s4-g3"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my-ng-influxdb-back-2",
-      "uid": "tb2oeo8u3ds034ptjavc",
-      "cspResourceName": "tb2oeo8u3ds034ptjavc",
-      "cspResourceId": "142596695",
-      "name": "my-ng-influxdb-back-2",
-      "nodeGroupId": "my-ng-influxdb-back",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-07-01 06:37:54",
-      "label": {
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:37:54",
-        "sys.cspResourceId": "142596695",
-        "sys.cspResourceName": "tb2oeo8u3ds034ptjavc",
-        "sys.id": "my-ng-influxdb-back-2",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-2",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb2oeo8u3ds034ptjavc",
-        "sys.vNetId": "my-mig-vnet-01"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
-      "region": {
-        "region": "KR",
-        "zone": "KR-1"
-      },
-      "publicIP": "101.79.27.180",
+      "publicIP": "101.79.29.129",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.7",
@@ -2039,22 +1807,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
+      "cspVNetId": "142787",
       "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841292",
       "securityGroupIds": [
         "my-mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:06Z"
+        "firstUsedAt": "2026-07-13T09:55:40Z"
       },
       "commandStatus": [
         {
@@ -2062,22 +1830,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:07Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "142596695"
+          "value": "143116664"
         },
         {
           "key": "ServerName",
-          "value": "tb2oeo8u3ds034ptjavc"
+          "value": "tbh9oi2ljubvl1e81kun"
         },
         {
           "key": "CpuCount",
@@ -2093,7 +1861,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
+          "value": "tbr77353jlg2mr6udfkn"
         },
         {
           "key": "ServerInstanceStatus",
@@ -2109,11 +1877,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-07-01T15:33:45+0900"
+          "value": "2026-07-13T18:51:13+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-07-01T15:35:14+0900"
+          "value": "2026-07-13T18:52:42+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -2137,19 +1905,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "141972"
+          "value": "142787"
         },
         {
           "key": "SubnetNo",
-          "value": "307646"
+          "value": "309774"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5796957"
+          "value": "5841292"
         },
         {
           "key": "InitScriptNo",
-          "value": "179365"
+          "value": "181501"
         },
         {
           "key": "ServerInstanceType",
@@ -2174,6 +1942,250 @@
         {
           "key": "ServerSpecCode",
           "value": "s4-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my-ng-influxdb-back-2",
+      "uid": "tbl6o0uo19be1rdkpnp6",
+      "cspResourceName": "tbl6o0uo19be1rdkpnp6",
+      "cspResourceId": "143116668",
+      "name": "my-ng-influxdb-back-2",
+      "nodeGroupId": "my-ng-influxdb-back",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-07-13 09:55:27",
+      "label": {
+        "nlbBackend": "influxdb_back",
+        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-07-13 09:55:27",
+        "sys.cspResourceId": "143116668",
+        "sys.cspResourceName": "tbl6o0uo19be1rdkpnp6",
+        "sys.id": "my-ng-influxdb-back-2",
+        "sys.infraId": "my-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my-ng-influxdb-back-2",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my-ng-influxdb-back",
+        "sys.subnetId": "my-mig-subnet-01",
+        "sys.uid": "tbl6o0uo19be1rdkpnp6",
+        "sys.vNetId": "my-mig-vnet-01"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
+      "region": {
+        "region": "KR",
+        "zone": "KR-1"
+      },
+      "publicIP": "101.79.31.161",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.8",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/vda",
+      "connectionName": "ncp-kr",
+      "connectionConfig": {
+        "configName": "ncp-kr",
+        "providerName": "ncp",
+        "driverName": "ncp-driver-v1.0.so",
+        "credentialName": "ncp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncp-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncp+kr+s4-g3",
+      "cspSpecName": "s4-g3",
+      "spec": {
+        "cspSpecName": "s4-g3",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.1747
+      },
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "23214590",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+      },
+      "vNetId": "my-mig-vnet-01",
+      "cspVNetId": "142787",
+      "subnetId": "my-mig-subnet-01",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841293",
+      "securityGroupIds": [
+        "my-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my-mig-sshkey-01",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+        "firstUsedAt": "2026-07-13T09:55:40Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "143116668"
+        },
+        {
+          "key": "ServerName",
+          "value": "tbl6o0uo19be1rdkpnp6"
+        },
+        {
+          "key": "CpuCount",
+          "value": "4"
+        },
+        {
+          "key": "MemorySize",
+          "value": "17179869184"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "tbr77353jlg2mr6udfkn"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2026-07-13T18:51:15+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2026-07-13T18:52:51+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.STAND.C004.M016.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "142787"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "309774"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "5841293"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "181502"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s4-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
         }
       ]
     }
@@ -2189,28 +2201,13 @@
     "results": [
       {
         "infraId": "my-infra101",
-        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "101.79.27.179",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
         "nodeId": "my-ng-influxdb-back-1",
-        "nodeIp": "101.79.27.181",
+        "nodeIp": "101.79.29.129",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -2220,12 +2217,27 @@
       {
         "infraId": "my-infra101",
         "nodeId": "my-ng-influxdb-back-2",
-        "nodeIp": "101.79.27.180",
+        "nodeIp": "101.79.31.161",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "infraId": "my-infra101",
+        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "101.79.24.200",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -2263,7 +2275,7 @@
     {
       "resourceType": "infra",
       "id": "my-infra101",
-      "uid": "tbcka9ob5ngmj3o64de7",
+      "uid": "tbpribbtee4572771ngd",
       "name": "my-infra101",
       "status": "Running:3 (R:3/3)",
       "statusCount": {
@@ -2291,7 +2303,7 @@
         "sys.manager": "cb-tumblebug",
         "sys.name": "my-infra101",
         "sys.namespace": "mig01",
-        "sys.uid": "tbcka9ob5ngmj3o64de7"
+        "sys.uid": "tbpribbtee4572771ngd"
       },
       "systemLabel": "",
       "systemMessage": null,
@@ -2300,9 +2312,9 @@
         {
           "resourceType": "node",
           "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-          "uid": "tb0d6j1sb7gueaallvh5",
-          "cspResourceName": "tb0d6j1sb7gueaallvh5",
-          "cspResourceId": "142596691",
+          "uid": "tb8vrkcumg5qnel1tbbp",
+          "cspResourceName": "tb8vrkcumg5qnel1tbbp",
+          "cspResourceId": "143116661",
           "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
           "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
           "location": {
@@ -2316,13 +2328,13 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-07-01 06:37:37",
+          "createdTime": "2026-07-13 09:55:13",
           "label": {
             "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-07-01 06:37:37",
-            "sys.cspResourceId": "142596691",
-            "sys.cspResourceName": "tb0d6j1sb7gueaallvh5",
+            "sys.createdTime": "2026-07-13 09:55:13",
+            "sys.cspResourceId": "143116661",
+            "sys.cspResourceName": "tb8vrkcumg5qnel1tbbp",
             "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
             "sys.infraId": "my-infra101",
             "sys.labelType": "node",
@@ -2331,7 +2343,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
             "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tb0d6j1sb7gueaallvh5",
+            "sys.uid": "tb8vrkcumg5qnel1tbbp",
             "sys.vNetId": "my-mig-vnet-01"
           },
           "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=60.0%",
@@ -2339,7 +2351,7 @@
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "101.79.27.179",
+          "publicIP": "101.79.24.200",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.6",
@@ -2394,22 +2406,22 @@
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
           "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "141972",
+          "cspVNetId": "142787",
           "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "307646",
-          "networkInterface": "eth0",
+          "cspSubnetId": "309774",
+          "networkInterface": "nic-5841291",
           "securityGroupIds": [
             "my-mig-sg-02"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+          "cspSshKeyId": "tbr77353jlg2mr6udfkn",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-07-01T06:38:05Z"
+            "firstUsedAt": "2026-07-13T09:55:39Z"
           },
           "commandStatus": [
             {
@@ -2417,22 +2429,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-07-01T06:38:05Z",
-              "completedTime": "2026-07-01T06:38:06Z",
-              "elapsedTime": 1,
+              "startedTime": "2026-07-13T09:55:38Z",
+              "completedTime": "2026-07-13T09:55:41Z",
+              "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "142596691"
+              "value": "143116661"
             },
             {
               "key": "ServerName",
-              "value": "tb0d6j1sb7gueaallvh5"
+              "value": "tb8vrkcumg5qnel1tbbp"
             },
             {
               "key": "CpuCount",
@@ -2448,7 +2460,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "tbq9b9ffgls9jobs6mc3"
+              "value": "tbr77353jlg2mr6udfkn"
             },
             {
               "key": "ServerInstanceStatus",
@@ -2464,11 +2476,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2026-07-01T15:33:42+0900"
+              "value": "2026-07-13T18:51:12+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-07-01T15:35:11+0900"
+              "value": "2026-07-13T18:52:41+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -2492,19 +2504,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "141972"
+              "value": "142787"
             },
             {
               "key": "SubnetNo",
-              "value": "307646"
+              "value": "309774"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5796956"
+              "value": "5841291"
             },
             {
               "key": "InitScriptNo",
-              "value": "179364"
+              "value": "181500"
             },
             {
               "key": "ServerInstanceType",
@@ -2529,15 +2541,19 @@
             {
               "key": "ServerSpecCode",
               "value": "ci2-g3"
+            },
+            {
+              "key": "IsPreInstallGpuDriver",
+              "value": "false"
             }
           ]
         },
         {
           "resourceType": "node",
           "id": "my-ng-influxdb-back-1",
-          "uid": "tbrc4osvf89mr7vj8nkn",
-          "cspResourceName": "tbrc4osvf89mr7vj8nkn",
-          "cspResourceId": "142596698",
+          "uid": "tbh9oi2ljubvl1e81kun",
+          "cspResourceName": "tbh9oi2ljubvl1e81kun",
+          "cspResourceId": "143116664",
           "name": "my-ng-influxdb-back-1",
           "nodeGroupId": "my-ng-influxdb-back",
           "location": {
@@ -2551,14 +2567,14 @@
           "monAgentStatus": "notInstalled",
           "networkAgentStatus": "notInstalled",
           "systemMessage": "",
-          "createdTime": "2026-07-01 06:38:00",
+          "createdTime": "2026-07-13 09:55:33",
           "label": {
             "nlbBackend": "influxdb_back",
             "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
             "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-07-01 06:38:00",
-            "sys.cspResourceId": "142596698",
-            "sys.cspResourceName": "tbrc4osvf89mr7vj8nkn",
+            "sys.createdTime": "2026-07-13 09:55:33",
+            "sys.cspResourceId": "143116664",
+            "sys.cspResourceName": "tbh9oi2ljubvl1e81kun",
             "sys.id": "my-ng-influxdb-back-1",
             "sys.infraId": "my-infra101",
             "sys.labelType": "node",
@@ -2567,7 +2583,7 @@
             "sys.namespace": "mig01",
             "sys.nodeGroupId": "my-ng-influxdb-back",
             "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tbrc4osvf89mr7vj8nkn",
+            "sys.uid": "tbh9oi2ljubvl1e81kun",
             "sys.vNetId": "my-mig-vnet-01"
           },
           "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
@@ -2575,243 +2591,7 @@
             "region": "KR",
             "zone": "KR-1"
           },
-          "publicIP": "101.79.27.181",
-          "sshPort": 22,
-          "publicDNS": "",
-          "privateIP": "10.0.1.8",
-          "privateDNS": "",
-          "rootDiskType": "SSD",
-          "rootDiskSize": 50,
-          "RootDeviceName": "/dev/vda",
-          "connectionName": "ncp-kr",
-          "connectionConfig": {
-            "configName": "ncp-kr",
-            "providerName": "ncp",
-            "driverName": "ncp-driver-v1.0.so",
-            "credentialName": "ncp",
-            "credentialHolder": "admin",
-            "regionZoneInfoName": "ncp-kr",
-            "regionZoneInfo": {
-              "assignedRegion": "KR",
-              "assignedZone": "KR-1"
-            },
-            "regionDetail": {
-              "regionId": "KR",
-              "regionName": "kr",
-              "description": "Korea 1",
-              "location": {
-                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-                "latitude": 37.4754,
-                "longitude": 126.8831
-              },
-              "zones": [
-                "KR-1",
-                "KR-2"
-              ]
-            },
-            "regionRepresentative": true,
-            "verified": true
-          },
-          "specId": "ncp+kr+s4-g3",
-          "cspSpecName": "s4-g3",
-          "spec": {
-            "cspSpecName": "s4-g3",
-            "vCPU": 4,
-            "memoryGiB": 16,
-            "costPerHour": 0.1747
-          },
-          "imageId": "23214590",
-          "cspImageName": "23214590",
-          "image": {
-            "resourceType": "image",
-            "cspImageName": "23214590",
-            "osType": "Ubuntu 22.04",
-            "osArchitecture": "x86_64",
-            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-          },
-          "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "141972",
-          "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "307646",
-          "networkInterface": "eth0",
-          "securityGroupIds": [
-            "my-mig-sg-01"
-          ],
-          "dataDiskIds": null,
-          "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
-          "nodeUserName": "cb-user",
-          "sshHostKeyInfo": {
-            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-            "keyType": "ecdsa-sha2-nistp256",
-            "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-07-01T06:38:06Z"
-          },
-          "commandStatus": [
-            {
-              "index": 1,
-              "commandRequested": "uname -a",
-              "commandExecuted": "uname -a",
-              "status": "Completed",
-              "startedTime": "2026-07-01T06:38:05Z",
-              "completedTime": "2026-07-01T06:38:07Z",
-              "elapsedTime": 2,
-              "resultSummary": "Command executed successfully",
-              "stdout": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-              "stderr": "\n"
-            }
-          ],
-          "addtionalDetails": [
-            {
-              "key": "ServerInstanceNo",
-              "value": "142596698"
-            },
-            {
-              "key": "ServerName",
-              "value": "tbrc4osvf89mr7vj8nkn"
-            },
-            {
-              "key": "CpuCount",
-              "value": "4"
-            },
-            {
-              "key": "MemorySize",
-              "value": "17179869184"
-            },
-            {
-              "key": "PlatformType",
-              "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-            },
-            {
-              "key": "LoginKeyName",
-              "value": "tbq9b9ffgls9jobs6mc3"
-            },
-            {
-              "key": "ServerInstanceStatus",
-              "value": "{code:RUN,codeName:서버 RUN 상태}"
-            },
-            {
-              "key": "ServerInstanceOperation",
-              "value": "{code:NULL,codeName:서버 NULL OP}"
-            },
-            {
-              "key": "ServerInstanceStatusName",
-              "value": "running"
-            },
-            {
-              "key": "CreateDate",
-              "value": "2026-07-01T15:33:45+0900"
-            },
-            {
-              "key": "Uptime",
-              "value": "2026-07-01T15:35:21+0900"
-            },
-            {
-              "key": "ServerImageProductCode",
-              "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-            },
-            {
-              "key": "ServerProductCode",
-              "value": "SVR.VSVR.STAND.C004.M016.G003"
-            },
-            {
-              "key": "IsProtectServerTermination",
-              "value": "false"
-            },
-            {
-              "key": "ZoneCode",
-              "value": "KR-1"
-            },
-            {
-              "key": "RegionCode",
-              "value": "KR"
-            },
-            {
-              "key": "VpcNo",
-              "value": "141972"
-            },
-            {
-              "key": "SubnetNo",
-              "value": "307646"
-            },
-            {
-              "key": "NetworkInterfaceNoList",
-              "value": "5796958"
-            },
-            {
-              "key": "InitScriptNo",
-              "value": "179366"
-            },
-            {
-              "key": "ServerInstanceType",
-              "value": "{code:STAND,codeName:Standard}"
-            },
-            {
-              "key": "BaseBlockStorageDiskType",
-              "value": "{code:NET,codeName:네트웍 스토리지}"
-            },
-            {
-              "key": "BaseBlockStorageDiskDetailType",
-              "value": "{code:SSD,codeName:SSD}"
-            },
-            {
-              "key": "HypervisorType",
-              "value": "{code:KVM,codeName:KVM}"
-            },
-            {
-              "key": "ServerImageNo",
-              "value": "23214590"
-            },
-            {
-              "key": "ServerSpecCode",
-              "value": "s4-g3"
-            }
-          ]
-        },
-        {
-          "resourceType": "node",
-          "id": "my-ng-influxdb-back-2",
-          "uid": "tb2oeo8u3ds034ptjavc",
-          "cspResourceName": "tb2oeo8u3ds034ptjavc",
-          "cspResourceId": "142596695",
-          "name": "my-ng-influxdb-back-2",
-          "nodeGroupId": "my-ng-influxdb-back",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "status": "Running",
-          "targetStatus": "None",
-          "targetAction": "None",
-          "monAgentStatus": "notInstalled",
-          "networkAgentStatus": "notInstalled",
-          "systemMessage": "",
-          "createdTime": "2026-07-01 06:37:54",
-          "label": {
-            "nlbBackend": "influxdb_back",
-            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-            "sys.connectionName": "ncp-kr",
-            "sys.createdTime": "2026-07-01 06:37:54",
-            "sys.cspResourceId": "142596695",
-            "sys.cspResourceName": "tb2oeo8u3ds034ptjavc",
-            "sys.id": "my-ng-influxdb-back-2",
-            "sys.infraId": "my-infra101",
-            "sys.labelType": "node",
-            "sys.manager": "cb-tumblebug",
-            "sys.name": "my-ng-influxdb-back-2",
-            "sys.namespace": "mig01",
-            "sys.nodeGroupId": "my-ng-influxdb-back",
-            "sys.subnetId": "my-mig-subnet-01",
-            "sys.uid": "tb2oeo8u3ds034ptjavc",
-            "sys.vNetId": "my-mig-vnet-01"
-          },
-          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
-          "region": {
-            "region": "KR",
-            "zone": "KR-1"
-          },
-          "publicIP": "101.79.27.180",
+          "publicIP": "101.79.29.129",
           "sshPort": 22,
           "publicDNS": "",
           "privateIP": "10.0.1.7",
@@ -2866,22 +2646,22 @@
             "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
           },
           "vNetId": "my-mig-vnet-01",
-          "cspVNetId": "141972",
+          "cspVNetId": "142787",
           "subnetId": "my-mig-subnet-01",
-          "cspSubnetId": "307646",
-          "networkInterface": "eth0",
+          "cspSubnetId": "309774",
+          "networkInterface": "nic-5841292",
           "securityGroupIds": [
             "my-mig-sg-01"
           ],
           "dataDiskIds": null,
           "sshKeyId": "my-mig-sshkey-01",
-          "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+          "cspSshKeyId": "tbr77353jlg2mr6udfkn",
           "nodeUserName": "cb-user",
           "sshHostKeyInfo": {
             "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
             "keyType": "ecdsa-sha2-nistp256",
             "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-            "firstUsedAt": "2026-07-01T06:38:06Z"
+            "firstUsedAt": "2026-07-13T09:55:40Z"
           },
           "commandStatus": [
             {
@@ -2889,22 +2669,22 @@
               "commandRequested": "uname -a",
               "commandExecuted": "uname -a",
               "status": "Completed",
-              "startedTime": "2026-07-01T06:38:05Z",
-              "completedTime": "2026-07-01T06:38:07Z",
-              "elapsedTime": 2,
+              "startedTime": "2026-07-13T09:55:38Z",
+              "completedTime": "2026-07-13T09:55:41Z",
+              "elapsedTime": 3,
               "resultSummary": "Command executed successfully",
-              "stdout": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stdout": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
               "stderr": "\n"
             }
           ],
           "addtionalDetails": [
             {
               "key": "ServerInstanceNo",
-              "value": "142596695"
+              "value": "143116664"
             },
             {
               "key": "ServerName",
-              "value": "tb2oeo8u3ds034ptjavc"
+              "value": "tbh9oi2ljubvl1e81kun"
             },
             {
               "key": "CpuCount",
@@ -2920,7 +2700,7 @@
             },
             {
               "key": "LoginKeyName",
-              "value": "tbq9b9ffgls9jobs6mc3"
+              "value": "tbr77353jlg2mr6udfkn"
             },
             {
               "key": "ServerInstanceStatus",
@@ -2936,11 +2716,11 @@
             },
             {
               "key": "CreateDate",
-              "value": "2026-07-01T15:33:45+0900"
+              "value": "2026-07-13T18:51:13+0900"
             },
             {
               "key": "Uptime",
-              "value": "2026-07-01T15:35:14+0900"
+              "value": "2026-07-13T18:52:42+0900"
             },
             {
               "key": "ServerImageProductCode",
@@ -2964,19 +2744,19 @@
             },
             {
               "key": "VpcNo",
-              "value": "141972"
+              "value": "142787"
             },
             {
               "key": "SubnetNo",
-              "value": "307646"
+              "value": "309774"
             },
             {
               "key": "NetworkInterfaceNoList",
-              "value": "5796957"
+              "value": "5841292"
             },
             {
               "key": "InitScriptNo",
-              "value": "179365"
+              "value": "181501"
             },
             {
               "key": "ServerInstanceType",
@@ -3001,6 +2781,250 @@
             {
               "key": "ServerSpecCode",
               "value": "s4-g3"
+            },
+            {
+              "key": "IsPreInstallGpuDriver",
+              "value": "false"
+            }
+          ]
+        },
+        {
+          "resourceType": "node",
+          "id": "my-ng-influxdb-back-2",
+          "uid": "tbl6o0uo19be1rdkpnp6",
+          "cspResourceName": "tbl6o0uo19be1rdkpnp6",
+          "cspResourceId": "143116668",
+          "name": "my-ng-influxdb-back-2",
+          "nodeGroupId": "my-ng-influxdb-back",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "status": "Running",
+          "targetStatus": "None",
+          "targetAction": "None",
+          "monAgentStatus": "notInstalled",
+          "networkAgentStatus": "notInstalled",
+          "systemMessage": "",
+          "createdTime": "2026-07-13 09:55:27",
+          "label": {
+            "nlbBackend": "influxdb_back",
+            "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+            "sys.connectionName": "ncp-kr",
+            "sys.createdTime": "2026-07-13 09:55:27",
+            "sys.cspResourceId": "143116668",
+            "sys.cspResourceName": "tbl6o0uo19be1rdkpnp6",
+            "sys.id": "my-ng-influxdb-back-2",
+            "sys.infraId": "my-infra101",
+            "sys.labelType": "node",
+            "sys.manager": "cb-tumblebug",
+            "sys.name": "my-ng-influxdb-back-2",
+            "sys.namespace": "mig01",
+            "sys.nodeGroupId": "my-ng-influxdb-back",
+            "sys.subnetId": "my-mig-subnet-01",
+            "sys.uid": "tbl6o0uo19be1rdkpnp6",
+            "sys.vNetId": "my-mig-vnet-01"
+          },
+          "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
+          "region": {
+            "region": "KR",
+            "zone": "KR-1"
+          },
+          "publicIP": "101.79.31.161",
+          "sshPort": 22,
+          "publicDNS": "",
+          "privateIP": "10.0.1.8",
+          "privateDNS": "",
+          "rootDiskType": "SSD",
+          "rootDiskSize": 50,
+          "RootDeviceName": "/dev/vda",
+          "connectionName": "ncp-kr",
+          "connectionConfig": {
+            "configName": "ncp-kr",
+            "providerName": "ncp",
+            "driverName": "ncp-driver-v1.0.so",
+            "credentialName": "ncp",
+            "credentialHolder": "admin",
+            "regionZoneInfoName": "ncp-kr",
+            "regionZoneInfo": {
+              "assignedRegion": "KR",
+              "assignedZone": "KR-1"
+            },
+            "regionDetail": {
+              "regionId": "KR",
+              "regionName": "kr",
+              "description": "Korea 1",
+              "location": {
+                "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+                "latitude": 37.4754,
+                "longitude": 126.8831
+              },
+              "zones": [
+                "KR-1",
+                "KR-2"
+              ]
+            },
+            "regionRepresentative": true,
+            "verified": true
+          },
+          "specId": "ncp+kr+s4-g3",
+          "cspSpecName": "s4-g3",
+          "spec": {
+            "cspSpecName": "s4-g3",
+            "vCPU": 4,
+            "memoryGiB": 16,
+            "costPerHour": 0.1747
+          },
+          "imageId": "23214590",
+          "cspImageName": "23214590",
+          "image": {
+            "resourceType": "image",
+            "cspImageName": "23214590",
+            "osType": "Ubuntu 22.04",
+            "osArchitecture": "x86_64",
+            "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+          },
+          "vNetId": "my-mig-vnet-01",
+          "cspVNetId": "142787",
+          "subnetId": "my-mig-subnet-01",
+          "cspSubnetId": "309774",
+          "networkInterface": "nic-5841293",
+          "securityGroupIds": [
+            "my-mig-sg-01"
+          ],
+          "dataDiskIds": null,
+          "sshKeyId": "my-mig-sshkey-01",
+          "cspSshKeyId": "tbr77353jlg2mr6udfkn",
+          "nodeUserName": "cb-user",
+          "sshHostKeyInfo": {
+            "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+            "keyType": "ecdsa-sha2-nistp256",
+            "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+            "firstUsedAt": "2026-07-13T09:55:40Z"
+          },
+          "commandStatus": [
+            {
+              "index": 1,
+              "commandRequested": "uname -a",
+              "commandExecuted": "uname -a",
+              "status": "Completed",
+              "startedTime": "2026-07-13T09:55:38Z",
+              "completedTime": "2026-07-13T09:55:41Z",
+              "elapsedTime": 3,
+              "resultSummary": "Command executed successfully",
+              "stdout": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+              "stderr": "\n"
+            }
+          ],
+          "addtionalDetails": [
+            {
+              "key": "ServerInstanceNo",
+              "value": "143116668"
+            },
+            {
+              "key": "ServerName",
+              "value": "tbl6o0uo19be1rdkpnp6"
+            },
+            {
+              "key": "CpuCount",
+              "value": "4"
+            },
+            {
+              "key": "MemorySize",
+              "value": "17179869184"
+            },
+            {
+              "key": "PlatformType",
+              "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+            },
+            {
+              "key": "LoginKeyName",
+              "value": "tbr77353jlg2mr6udfkn"
+            },
+            {
+              "key": "ServerInstanceStatus",
+              "value": "{code:RUN,codeName:서버 RUN 상태}"
+            },
+            {
+              "key": "ServerInstanceOperation",
+              "value": "{code:NULL,codeName:서버 NULL OP}"
+            },
+            {
+              "key": "ServerInstanceStatusName",
+              "value": "running"
+            },
+            {
+              "key": "CreateDate",
+              "value": "2026-07-13T18:51:15+0900"
+            },
+            {
+              "key": "Uptime",
+              "value": "2026-07-13T18:52:51+0900"
+            },
+            {
+              "key": "ServerImageProductCode",
+              "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+            },
+            {
+              "key": "ServerProductCode",
+              "value": "SVR.VSVR.STAND.C004.M016.G003"
+            },
+            {
+              "key": "IsProtectServerTermination",
+              "value": "false"
+            },
+            {
+              "key": "ZoneCode",
+              "value": "KR-1"
+            },
+            {
+              "key": "RegionCode",
+              "value": "KR"
+            },
+            {
+              "key": "VpcNo",
+              "value": "142787"
+            },
+            {
+              "key": "SubnetNo",
+              "value": "309774"
+            },
+            {
+              "key": "NetworkInterfaceNoList",
+              "value": "5841293"
+            },
+            {
+              "key": "InitScriptNo",
+              "value": "181502"
+            },
+            {
+              "key": "ServerInstanceType",
+              "value": "{code:STAND,codeName:Standard}"
+            },
+            {
+              "key": "BaseBlockStorageDiskType",
+              "value": "{code:NET,codeName:네트웍 스토리지}"
+            },
+            {
+              "key": "BaseBlockStorageDiskDetailType",
+              "value": "{code:SSD,codeName:SSD}"
+            },
+            {
+              "key": "HypervisorType",
+              "value": "{code:KVM,codeName:KVM}"
+            },
+            {
+              "key": "ServerImageNo",
+              "value": "23214590"
+            },
+            {
+              "key": "ServerSpecCode",
+              "value": "s4-g3"
+            },
+            {
+              "key": "IsPreInstallGpuDriver",
+              "value": "false"
             }
           ]
         }
@@ -3016,28 +3040,13 @@
         "results": [
           {
             "infraId": "my-infra101",
-            "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-            "nodeIp": "101.79.27.179",
-            "command": {
-              "0": "uname -a"
-            },
-            "stdout": {
-              "0": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-            },
-            "stderr": {
-              "0": ""
-            },
-            "err": null
-          },
-          {
-            "infraId": "my-infra101",
             "nodeId": "my-ng-influxdb-back-1",
-            "nodeIp": "101.79.27.181",
+            "nodeIp": "101.79.29.129",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -3047,12 +3056,27 @@
           {
             "infraId": "my-infra101",
             "nodeId": "my-ng-influxdb-back-2",
-            "nodeIp": "101.79.27.180",
+            "nodeIp": "101.79.31.161",
             "command": {
               "0": "uname -a"
             },
             "stdout": {
-              "0": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+              "0": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+            },
+            "stderr": {
+              "0": ""
+            },
+            "err": null
+          },
+          {
+            "infraId": "my-infra101",
+            "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+            "nodeIp": "101.79.24.200",
+            "command": {
+              "0": "uname -a"
+            },
+            "stdout": {
+              "0": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
             },
             "stderr": {
               "0": ""
@@ -3098,7 +3122,7 @@
 {
   "resourceType": "infra",
   "id": "my-infra101",
-  "uid": "tbcka9ob5ngmj3o64de7",
+  "uid": "tbpribbtee4572771ngd",
   "name": "my-infra101",
   "status": "Running:3 (R:3/3)",
   "statusCount": {
@@ -3126,7 +3150,7 @@
     "sys.manager": "cb-tumblebug",
     "sys.name": "my-infra101",
     "sys.namespace": "mig01",
-    "sys.uid": "tbcka9ob5ngmj3o64de7"
+    "sys.uid": "tbpribbtee4572771ngd"
   },
   "systemLabel": "",
   "systemMessage": null,
@@ -3135,9 +3159,9 @@
     {
       "resourceType": "node",
       "id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-      "uid": "tb0d6j1sb7gueaallvh5",
-      "cspResourceName": "tb0d6j1sb7gueaallvh5",
-      "cspResourceId": "142596691",
+      "uid": "tb8vrkcumg5qnel1tbbp",
+      "cspResourceName": "tb8vrkcumg5qnel1tbbp",
+      "cspResourceId": "143116661",
       "name": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
       "nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
       "location": {
@@ -3151,13 +3175,13 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-01 06:37:37",
+      "createdTime": "2026-07-13 09:55:13",
       "label": {
         "sourceMachineIds": "ec268ed7-821e-9d73-e79f-961262161624",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:37:37",
-        "sys.cspResourceId": "142596691",
-        "sys.cspResourceName": "tb0d6j1sb7gueaallvh5",
+        "sys.createdTime": "2026-07-13 09:55:13",
+        "sys.cspResourceId": "143116661",
+        "sys.cspResourceName": "tb8vrkcumg5qnel1tbbp",
         "sys.id": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
         "sys.infraId": "my-infra101",
         "sys.labelType": "node",
@@ -3166,7 +3190,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624",
         "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb0d6j1sb7gueaallvh5",
+        "sys.uid": "tb8vrkcumg5qnel1tbbp",
         "sys.vNetId": "my-mig-vnet-01"
       },
       "description": "Recommended VM 01 for ec268ed7-821e-9d73-e79f-961262161624 | Match Rate: CPU=100.0% Memory=50.0% Image=60.0%",
@@ -3174,7 +3198,7 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.27.179",
+      "publicIP": "101.79.24.200",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.6",
@@ -3229,22 +3253,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
+      "cspVNetId": "142787",
       "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841291",
       "securityGroupIds": [
         "my-mig-sg-02"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:05Z"
+        "firstUsedAt": "2026-07-13T09:55:39Z"
       },
       "commandStatus": [
         {
@@ -3252,22 +3276,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:06Z",
-          "elapsedTime": 1,
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "142596691"
+          "value": "143116661"
         },
         {
           "key": "ServerName",
-          "value": "tb0d6j1sb7gueaallvh5"
+          "value": "tb8vrkcumg5qnel1tbbp"
         },
         {
           "key": "CpuCount",
@@ -3283,7 +3307,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
+          "value": "tbr77353jlg2mr6udfkn"
         },
         {
           "key": "ServerInstanceStatus",
@@ -3299,11 +3323,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-07-01T15:33:42+0900"
+          "value": "2026-07-13T18:51:12+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-07-01T15:35:11+0900"
+          "value": "2026-07-13T18:52:41+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -3327,19 +3351,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "141972"
+          "value": "142787"
         },
         {
           "key": "SubnetNo",
-          "value": "307646"
+          "value": "309774"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5796956"
+          "value": "5841291"
         },
         {
           "key": "InitScriptNo",
-          "value": "179364"
+          "value": "181500"
         },
         {
           "key": "ServerInstanceType",
@@ -3364,15 +3388,19 @@
         {
           "key": "ServerSpecCode",
           "value": "ci2-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
         }
       ]
     },
     {
       "resourceType": "node",
       "id": "my-ng-influxdb-back-1",
-      "uid": "tbrc4osvf89mr7vj8nkn",
-      "cspResourceName": "tbrc4osvf89mr7vj8nkn",
-      "cspResourceId": "142596698",
+      "uid": "tbh9oi2ljubvl1e81kun",
+      "cspResourceName": "tbh9oi2ljubvl1e81kun",
+      "cspResourceId": "143116664",
       "name": "my-ng-influxdb-back-1",
       "nodeGroupId": "my-ng-influxdb-back",
       "location": {
@@ -3386,14 +3414,14 @@
       "monAgentStatus": "notInstalled",
       "networkAgentStatus": "notInstalled",
       "systemMessage": "",
-      "createdTime": "2026-07-01 06:38:00",
+      "createdTime": "2026-07-13 09:55:33",
       "label": {
         "nlbBackend": "influxdb_back",
         "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
         "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:38:00",
-        "sys.cspResourceId": "142596698",
-        "sys.cspResourceName": "tbrc4osvf89mr7vj8nkn",
+        "sys.createdTime": "2026-07-13 09:55:33",
+        "sys.cspResourceId": "143116664",
+        "sys.cspResourceName": "tbh9oi2ljubvl1e81kun",
         "sys.id": "my-ng-influxdb-back-1",
         "sys.infraId": "my-infra101",
         "sys.labelType": "node",
@@ -3402,7 +3430,7 @@
         "sys.namespace": "mig01",
         "sys.nodeGroupId": "my-ng-influxdb-back",
         "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tbrc4osvf89mr7vj8nkn",
+        "sys.uid": "tbh9oi2ljubvl1e81kun",
         "sys.vNetId": "my-mig-vnet-01"
       },
       "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
@@ -3410,243 +3438,7 @@
         "region": "KR",
         "zone": "KR-1"
       },
-      "publicIP": "101.79.27.181",
-      "sshPort": 22,
-      "publicDNS": "",
-      "privateIP": "10.0.1.8",
-      "privateDNS": "",
-      "rootDiskType": "SSD",
-      "rootDiskSize": 50,
-      "RootDeviceName": "/dev/vda",
-      "connectionName": "ncp-kr",
-      "connectionConfig": {
-        "configName": "ncp-kr",
-        "providerName": "ncp",
-        "driverName": "ncp-driver-v1.0.so",
-        "credentialName": "ncp",
-        "credentialHolder": "admin",
-        "regionZoneInfoName": "ncp-kr",
-        "regionZoneInfo": {
-          "assignedRegion": "KR",
-          "assignedZone": "KR-1"
-        },
-        "regionDetail": {
-          "regionId": "KR",
-          "regionName": "kr",
-          "description": "Korea 1",
-          "location": {
-            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-            "latitude": 37.4754,
-            "longitude": 126.8831
-          },
-          "zones": [
-            "KR-1",
-            "KR-2"
-          ]
-        },
-        "regionRepresentative": true,
-        "verified": true
-      },
-      "specId": "ncp+kr+s4-g3",
-      "cspSpecName": "s4-g3",
-      "spec": {
-        "cspSpecName": "s4-g3",
-        "vCPU": 4,
-        "memoryGiB": 16,
-        "costPerHour": 0.1747
-      },
-      "imageId": "23214590",
-      "cspImageName": "23214590",
-      "image": {
-        "resourceType": "image",
-        "cspImageName": "23214590",
-        "osType": "Ubuntu 22.04",
-        "osArchitecture": "x86_64",
-        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
-      },
-      "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
-      "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
-      "securityGroupIds": [
-        "my-mig-sg-01"
-      ],
-      "dataDiskIds": null,
-      "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
-      "nodeUserName": "cb-user",
-      "sshHostKeyInfo": {
-        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
-        "keyType": "ecdsa-sha2-nistp256",
-        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:06Z"
-      },
-      "commandStatus": [
-        {
-          "index": 1,
-          "commandRequested": "uname -a",
-          "commandExecuted": "uname -a",
-          "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:07Z",
-          "elapsedTime": 2,
-          "resultSummary": "Command executed successfully",
-          "stdout": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
-          "stderr": "\n"
-        }
-      ],
-      "addtionalDetails": [
-        {
-          "key": "ServerInstanceNo",
-          "value": "142596698"
-        },
-        {
-          "key": "ServerName",
-          "value": "tbrc4osvf89mr7vj8nkn"
-        },
-        {
-          "key": "CpuCount",
-          "value": "4"
-        },
-        {
-          "key": "MemorySize",
-          "value": "17179869184"
-        },
-        {
-          "key": "PlatformType",
-          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
-        },
-        {
-          "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
-        },
-        {
-          "key": "ServerInstanceStatus",
-          "value": "{code:RUN,codeName:서버 RUN 상태}"
-        },
-        {
-          "key": "ServerInstanceOperation",
-          "value": "{code:NULL,codeName:서버 NULL OP}"
-        },
-        {
-          "key": "ServerInstanceStatusName",
-          "value": "running"
-        },
-        {
-          "key": "CreateDate",
-          "value": "2026-07-01T15:33:45+0900"
-        },
-        {
-          "key": "Uptime",
-          "value": "2026-07-01T15:35:21+0900"
-        },
-        {
-          "key": "ServerImageProductCode",
-          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
-        },
-        {
-          "key": "ServerProductCode",
-          "value": "SVR.VSVR.STAND.C004.M016.G003"
-        },
-        {
-          "key": "IsProtectServerTermination",
-          "value": "false"
-        },
-        {
-          "key": "ZoneCode",
-          "value": "KR-1"
-        },
-        {
-          "key": "RegionCode",
-          "value": "KR"
-        },
-        {
-          "key": "VpcNo",
-          "value": "141972"
-        },
-        {
-          "key": "SubnetNo",
-          "value": "307646"
-        },
-        {
-          "key": "NetworkInterfaceNoList",
-          "value": "5796958"
-        },
-        {
-          "key": "InitScriptNo",
-          "value": "179366"
-        },
-        {
-          "key": "ServerInstanceType",
-          "value": "{code:STAND,codeName:Standard}"
-        },
-        {
-          "key": "BaseBlockStorageDiskType",
-          "value": "{code:NET,codeName:네트웍 스토리지}"
-        },
-        {
-          "key": "BaseBlockStorageDiskDetailType",
-          "value": "{code:SSD,codeName:SSD}"
-        },
-        {
-          "key": "HypervisorType",
-          "value": "{code:KVM,codeName:KVM}"
-        },
-        {
-          "key": "ServerImageNo",
-          "value": "23214590"
-        },
-        {
-          "key": "ServerSpecCode",
-          "value": "s4-g3"
-        }
-      ]
-    },
-    {
-      "resourceType": "node",
-      "id": "my-ng-influxdb-back-2",
-      "uid": "tb2oeo8u3ds034ptjavc",
-      "cspResourceName": "tb2oeo8u3ds034ptjavc",
-      "cspResourceId": "142596695",
-      "name": "my-ng-influxdb-back-2",
-      "nodeGroupId": "my-ng-influxdb-back",
-      "location": {
-        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
-        "latitude": 37.4754,
-        "longitude": 126.8831
-      },
-      "status": "Running",
-      "targetStatus": "None",
-      "targetAction": "None",
-      "monAgentStatus": "notInstalled",
-      "networkAgentStatus": "notInstalled",
-      "systemMessage": "",
-      "createdTime": "2026-07-01 06:37:54",
-      "label": {
-        "nlbBackend": "influxdb_back",
-        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
-        "sys.connectionName": "ncp-kr",
-        "sys.createdTime": "2026-07-01 06:37:54",
-        "sys.cspResourceId": "142596695",
-        "sys.cspResourceName": "tb2oeo8u3ds034ptjavc",
-        "sys.id": "my-ng-influxdb-back-2",
-        "sys.infraId": "my-infra101",
-        "sys.labelType": "node",
-        "sys.manager": "cb-tumblebug",
-        "sys.name": "my-ng-influxdb-back-2",
-        "sys.namespace": "mig01",
-        "sys.nodeGroupId": "my-ng-influxdb-back",
-        "sys.subnetId": "my-mig-subnet-01",
-        "sys.uid": "tb2oeo8u3ds034ptjavc",
-        "sys.vNetId": "my-mig-vnet-01"
-      },
-      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
-      "region": {
-        "region": "KR",
-        "zone": "KR-1"
-      },
-      "publicIP": "101.79.27.180",
+      "publicIP": "101.79.29.129",
       "sshPort": 22,
       "publicDNS": "",
       "privateIP": "10.0.1.7",
@@ -3701,22 +3493,22 @@
         "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
       },
       "vNetId": "my-mig-vnet-01",
-      "cspVNetId": "141972",
+      "cspVNetId": "142787",
       "subnetId": "my-mig-subnet-01",
-      "cspSubnetId": "307646",
-      "networkInterface": "eth0",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841292",
       "securityGroupIds": [
         "my-mig-sg-01"
       ],
       "dataDiskIds": null,
       "sshKeyId": "my-mig-sshkey-01",
-      "cspSshKeyId": "tbq9b9ffgls9jobs6mc3",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
       "nodeUserName": "cb-user",
       "sshHostKeyInfo": {
         "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
         "keyType": "ecdsa-sha2-nistp256",
         "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
-        "firstUsedAt": "2026-07-01T06:38:06Z"
+        "firstUsedAt": "2026-07-13T09:55:40Z"
       },
       "commandStatus": [
         {
@@ -3724,22 +3516,22 @@
           "commandRequested": "uname -a",
           "commandExecuted": "uname -a",
           "status": "Completed",
-          "startedTime": "2026-07-01T06:38:05Z",
-          "completedTime": "2026-07-01T06:38:07Z",
-          "elapsedTime": 2,
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
           "resultSummary": "Command executed successfully",
-          "stdout": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stdout": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
           "stderr": "\n"
         }
       ],
       "addtionalDetails": [
         {
           "key": "ServerInstanceNo",
-          "value": "142596695"
+          "value": "143116664"
         },
         {
           "key": "ServerName",
-          "value": "tb2oeo8u3ds034ptjavc"
+          "value": "tbh9oi2ljubvl1e81kun"
         },
         {
           "key": "CpuCount",
@@ -3755,7 +3547,7 @@
         },
         {
           "key": "LoginKeyName",
-          "value": "tbq9b9ffgls9jobs6mc3"
+          "value": "tbr77353jlg2mr6udfkn"
         },
         {
           "key": "ServerInstanceStatus",
@@ -3771,11 +3563,11 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-07-01T15:33:45+0900"
+          "value": "2026-07-13T18:51:13+0900"
         },
         {
           "key": "Uptime",
-          "value": "2026-07-01T15:35:14+0900"
+          "value": "2026-07-13T18:52:42+0900"
         },
         {
           "key": "ServerImageProductCode",
@@ -3799,19 +3591,19 @@
         },
         {
           "key": "VpcNo",
-          "value": "141972"
+          "value": "142787"
         },
         {
           "key": "SubnetNo",
-          "value": "307646"
+          "value": "309774"
         },
         {
           "key": "NetworkInterfaceNoList",
-          "value": "5796957"
+          "value": "5841292"
         },
         {
           "key": "InitScriptNo",
-          "value": "179365"
+          "value": "181501"
         },
         {
           "key": "ServerInstanceType",
@@ -3836,6 +3628,250 @@
         {
           "key": "ServerSpecCode",
           "value": "s4-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "resourceType": "node",
+      "id": "my-ng-influxdb-back-2",
+      "uid": "tbl6o0uo19be1rdkpnp6",
+      "cspResourceName": "tbl6o0uo19be1rdkpnp6",
+      "cspResourceId": "143116668",
+      "name": "my-ng-influxdb-back-2",
+      "nodeGroupId": "my-ng-influxdb-back",
+      "location": {
+        "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+        "latitude": 37.4754,
+        "longitude": 126.8831
+      },
+      "status": "Running",
+      "targetStatus": "None",
+      "targetAction": "None",
+      "monAgentStatus": "notInstalled",
+      "networkAgentStatus": "notInstalled",
+      "systemMessage": "",
+      "createdTime": "2026-07-13 09:55:27",
+      "label": {
+        "nlbBackend": "influxdb_back",
+        "sourceMachineIds": "ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf",
+        "sys.connectionName": "ncp-kr",
+        "sys.createdTime": "2026-07-13 09:55:27",
+        "sys.cspResourceId": "143116668",
+        "sys.cspResourceName": "tbl6o0uo19be1rdkpnp6",
+        "sys.id": "my-ng-influxdb-back-2",
+        "sys.infraId": "my-infra101",
+        "sys.labelType": "node",
+        "sys.manager": "cb-tumblebug",
+        "sys.name": "my-ng-influxdb-back-2",
+        "sys.namespace": "mig01",
+        "sys.nodeGroupId": "my-ng-influxdb-back",
+        "sys.subnetId": "my-mig-subnet-01",
+        "sys.uid": "tbl6o0uo19be1rdkpnp6",
+        "sys.vNetId": "my-mig-vnet-01"
+      },
+      "description": "Recommended VM for NLB backend influxdb_back (2 nodes) | Match Rate: CPU=100.0% Memory=100.0% Image=60.0%",
+      "region": {
+        "region": "KR",
+        "zone": "KR-1"
+      },
+      "publicIP": "101.79.31.161",
+      "sshPort": 22,
+      "publicDNS": "",
+      "privateIP": "10.0.1.8",
+      "privateDNS": "",
+      "rootDiskType": "SSD",
+      "rootDiskSize": 50,
+      "RootDeviceName": "/dev/vda",
+      "connectionName": "ncp-kr",
+      "connectionConfig": {
+        "configName": "ncp-kr",
+        "providerName": "ncp",
+        "driverName": "ncp-driver-v1.0.so",
+        "credentialName": "ncp",
+        "credentialHolder": "admin",
+        "regionZoneInfoName": "ncp-kr",
+        "regionZoneInfo": {
+          "assignedRegion": "KR",
+          "assignedZone": "KR-1"
+        },
+        "regionDetail": {
+          "regionId": "KR",
+          "regionName": "kr",
+          "description": "Korea 1",
+          "location": {
+            "display": "Seoul(Gasan) / Pyeongchon (South Korea)",
+            "latitude": 37.4754,
+            "longitude": 126.8831
+          },
+          "zones": [
+            "KR-1",
+            "KR-2"
+          ]
+        },
+        "regionRepresentative": true,
+        "verified": true
+      },
+      "specId": "ncp+kr+s4-g3",
+      "cspSpecName": "s4-g3",
+      "spec": {
+        "cspSpecName": "s4-g3",
+        "vCPU": 4,
+        "memoryGiB": 16,
+        "costPerHour": 0.1747
+      },
+      "imageId": "23214590",
+      "cspImageName": "23214590",
+      "image": {
+        "resourceType": "image",
+        "cspImageName": "23214590",
+        "osType": "Ubuntu 22.04",
+        "osArchitecture": "x86_64",
+        "osDistribution": "ubuntu-22.04-base (Hypervisor:KVM)"
+      },
+      "vNetId": "my-mig-vnet-01",
+      "cspVNetId": "142787",
+      "subnetId": "my-mig-subnet-01",
+      "cspSubnetId": "309774",
+      "networkInterface": "nic-5841293",
+      "securityGroupIds": [
+        "my-mig-sg-01"
+      ],
+      "dataDiskIds": null,
+      "sshKeyId": "my-mig-sshkey-01",
+      "cspSshKeyId": "tbr77353jlg2mr6udfkn",
+      "nodeUserName": "cb-user",
+      "sshHostKeyInfo": {
+        "hostKey": "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHWlg+tXjkjnBfk0KfXIZnsAnFZeTiRoXl6rO1F9LAx0QmlAhB6H9S23i9Ye/A9ACdUpS363A6UvMT7MLqDkFNU=",
+        "keyType": "ecdsa-sha2-nistp256",
+        "fingerprint": "SHA256:2WSq7XAjDTgX/DGvHQOWkvXaevoO2kb8tl2cApRpCVE",
+        "firstUsedAt": "2026-07-13T09:55:40Z"
+      },
+      "commandStatus": [
+        {
+          "index": 1,
+          "commandRequested": "uname -a",
+          "commandExecuted": "uname -a",
+          "status": "Completed",
+          "startedTime": "2026-07-13T09:55:38Z",
+          "completedTime": "2026-07-13T09:55:41Z",
+          "elapsedTime": 3,
+          "resultSummary": "Command executed successfully",
+          "stdout": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n\n",
+          "stderr": "\n"
+        }
+      ],
+      "addtionalDetails": [
+        {
+          "key": "ServerInstanceNo",
+          "value": "143116668"
+        },
+        {
+          "key": "ServerName",
+          "value": "tbl6o0uo19be1rdkpnp6"
+        },
+        {
+          "key": "CpuCount",
+          "value": "4"
+        },
+        {
+          "key": "MemorySize",
+          "value": "17179869184"
+        },
+        {
+          "key": "PlatformType",
+          "value": "{code:UBD64,codeName:Ubuntu Desktop 64 Bit}"
+        },
+        {
+          "key": "LoginKeyName",
+          "value": "tbr77353jlg2mr6udfkn"
+        },
+        {
+          "key": "ServerInstanceStatus",
+          "value": "{code:RUN,codeName:서버 RUN 상태}"
+        },
+        {
+          "key": "ServerInstanceOperation",
+          "value": "{code:NULL,codeName:서버 NULL OP}"
+        },
+        {
+          "key": "ServerInstanceStatusName",
+          "value": "running"
+        },
+        {
+          "key": "CreateDate",
+          "value": "2026-07-13T18:51:15+0900"
+        },
+        {
+          "key": "Uptime",
+          "value": "2026-07-13T18:52:51+0900"
+        },
+        {
+          "key": "ServerImageProductCode",
+          "value": "SW.VSVR.OS.LNX64.UBNTU.SVR22.G003"
+        },
+        {
+          "key": "ServerProductCode",
+          "value": "SVR.VSVR.STAND.C004.M016.G003"
+        },
+        {
+          "key": "IsProtectServerTermination",
+          "value": "false"
+        },
+        {
+          "key": "ZoneCode",
+          "value": "KR-1"
+        },
+        {
+          "key": "RegionCode",
+          "value": "KR"
+        },
+        {
+          "key": "VpcNo",
+          "value": "142787"
+        },
+        {
+          "key": "SubnetNo",
+          "value": "309774"
+        },
+        {
+          "key": "NetworkInterfaceNoList",
+          "value": "5841293"
+        },
+        {
+          "key": "InitScriptNo",
+          "value": "181502"
+        },
+        {
+          "key": "ServerInstanceType",
+          "value": "{code:STAND,codeName:Standard}"
+        },
+        {
+          "key": "BaseBlockStorageDiskType",
+          "value": "{code:NET,codeName:네트웍 스토리지}"
+        },
+        {
+          "key": "BaseBlockStorageDiskDetailType",
+          "value": "{code:SSD,codeName:SSD}"
+        },
+        {
+          "key": "HypervisorType",
+          "value": "{code:KVM,codeName:KVM}"
+        },
+        {
+          "key": "ServerImageNo",
+          "value": "23214590"
+        },
+        {
+          "key": "ServerSpecCode",
+          "value": "s4-g3"
+        },
+        {
+          "key": "IsPreInstallGpuDriver",
+          "value": "false"
         }
       ]
     }
@@ -3851,28 +3887,13 @@
     "results": [
       {
         "infraId": "my-infra101",
-        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
-        "nodeIp": "101.79.27.179",
-        "command": {
-          "0": "uname -a"
-        },
-        "stdout": {
-          "0": "Linux tb0d6j1sb7gueaallvh5 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
-        },
-        "stderr": {
-          "0": ""
-        },
-        "err": null
-      },
-      {
-        "infraId": "my-infra101",
         "nodeId": "my-ng-influxdb-back-1",
-        "nodeIp": "101.79.27.181",
+        "nodeIp": "101.79.29.129",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tbrc4osvf89mr7vj8nkn 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbh9oi2ljubvl1e81kun 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -3882,12 +3903,27 @@
       {
         "infraId": "my-infra101",
         "nodeId": "my-ng-influxdb-back-2",
-        "nodeIp": "101.79.27.180",
+        "nodeIp": "101.79.31.161",
         "command": {
           "0": "uname -a"
         },
         "stdout": {
-          "0": "Linux tb2oeo8u3ds034ptjavc 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+          "0": "Linux tbl6o0uo19be1rdkpnp6 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
+        },
+        "stderr": {
+          "0": ""
+        },
+        "err": null
+      },
+      {
+        "infraId": "my-infra101",
+        "nodeId": "my-ng-ec268ed7-821e-9d73-e79f-961262161624-1",
+        "nodeIp": "101.79.24.200",
+        "command": {
+          "0": "uname -a"
+        },
+        "stdout": {
+          "0": "Linux tb8vrkcumg5qnel1tbbp 5.15.0-181-generic #191-Ubuntu SMP Fri May 22 19:09:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n"
         },
         "stderr": {
           "0": ""
@@ -3939,8 +3975,8 @@
     {
       "resourceType": "",
       "id": "my-ng-influxdb-back",
-      "cspResourceName": "tbun6uth37c7rfbnvqga",
-      "cspResourceId": "142596939",
+      "cspResourceName": "tb2lmrjjda4gj21nqmd9",
+      "cspResourceId": "143116808",
       "name": "my-ng-influxdb-back",
       "connectionName": "ncp-kr",
       "connectionConfig": {
@@ -3972,16 +4008,16 @@
       "scope": "REGION",
       "listener": {
         "protocol": "TCP",
-        "ip": "101.79.27.197",
+        "ip": "101.79.24.34",
         "port": "9999",
         "keyValueList": [
           {
             "key": "LoadBalancerInstanceNo",
-            "value": "142596939"
+            "value": "143116808"
           },
           {
             "key": "LoadBalancerListenerNo",
-            "value": "589089"
+            "value": "601167"
           },
           {
             "key": "ProtocolType",
@@ -4001,7 +4037,7 @@
           },
           {
             "key": "LoadBalancerRuleNoList",
-            "value": "660483"
+            "value": "673076"
           }
         ]
       },
@@ -4031,13 +4067,13 @@
         "threshold": 3,
         "timeout": 0
       },
-      "createdTime": "2026-07-01T15:38:52+09:00",
+      "createdTime": "2026-07-13T18:56:28+09:00",
       "description": "Migrated from HAProxy backend: influxdb_back",
       "status": "",
       "keyValueList": [
         {
           "key": "LoadBalancerInstanceNo",
-          "value": "142596939"
+          "value": "143116808"
         },
         {
           "key": "LoadBalancerInstanceStatus",
@@ -4053,19 +4089,19 @@
         },
         {
           "key": "CreateDate",
-          "value": "2026-07-01T15:38:52+0900"
+          "value": "2026-07-13T18:56:28+0900"
         },
         {
           "key": "LoadBalancerName",
-          "value": "tbun6uth37c7rfbnvqga"
+          "value": "tb2lmrjjda4gj21nqmd9"
         },
         {
           "key": "LoadBalancerDomain",
-          "value": "tbun6uth37c7rfbnvqga-142596939-56e7db94d387.kr.lb.naverncp.com"
+          "value": "tb2lmrjjda4gj21nqmd9-143116808-768675247ace.kr.lb.naverncp.com"
         },
         {
           "key": "LoadBalancerIpList",
-          "value": "101.79.27.197"
+          "value": "101.79.24.34"
         },
         {
           "key": "LoadBalancerType",
@@ -4081,7 +4117,7 @@
         },
         {
           "key": "VpcNo",
-          "value": "141972"
+          "value": "142787"
         },
         {
           "key": "RegionCode",
@@ -4089,23 +4125,23 @@
         },
         {
           "key": "SubnetNoList",
-          "value": "307652"
+          "value": "309776"
         },
         {
           "key": "LoadBalancerSubnetList",
-          "value": "{zoneCode:KR-1,subnetNo:307652,publicIpInstanceNo:142596957}"
+          "value": "{zoneCode:KR-1,subnetNo:309776,publicIpInstanceNo:143116817}"
         },
         {
           "key": "LoadBalancerListenerNoList",
-          "value": "589089"
+          "value": "601167"
         },
         {
           "key": "ListenerId",
-          "value": "589089"
+          "value": "601167"
         },
         {
           "key": "HealthCheckerId",
-          "value": "5822613"
+          "value": "5943795"
         }
       ],
       "isAutoGenerated": false,
@@ -4141,8 +4177,8 @@
   {
     "resourceType": "",
     "id": "my-ng-influxdb-back",
-    "cspResourceName": "tbun6uth37c7rfbnvqga",
-    "cspResourceId": "142596939",
+    "cspResourceName": "tb2lmrjjda4gj21nqmd9",
+    "cspResourceId": "143116808",
     "name": "my-ng-influxdb-back",
     "connectionName": "ncp-kr",
     "connectionConfig": {
@@ -4174,16 +4210,16 @@
     "scope": "REGION",
     "listener": {
       "protocol": "TCP",
-      "ip": "101.79.27.197",
+      "ip": "101.79.24.34",
       "port": "9999",
       "keyValueList": [
         {
           "key": "LoadBalancerInstanceNo",
-          "value": "142596939"
+          "value": "143116808"
         },
         {
           "key": "LoadBalancerListenerNo",
-          "value": "589089"
+          "value": "601167"
         },
         {
           "key": "ProtocolType",
@@ -4203,7 +4239,7 @@
         },
         {
           "key": "LoadBalancerRuleNoList",
-          "value": "660483"
+          "value": "673076"
         }
       ]
     },
@@ -4233,13 +4269,13 @@
       "threshold": 3,
       "timeout": 0
     },
-    "createdTime": "2026-07-01T15:38:52+09:00",
+    "createdTime": "2026-07-13T18:56:28+09:00",
     "description": "Migrated from HAProxy backend: influxdb_back",
     "status": "",
     "keyValueList": [
       {
         "key": "LoadBalancerInstanceNo",
-        "value": "142596939"
+        "value": "143116808"
       },
       {
         "key": "LoadBalancerInstanceStatus",
@@ -4255,19 +4291,19 @@
       },
       {
         "key": "CreateDate",
-        "value": "2026-07-01T15:38:52+0900"
+        "value": "2026-07-13T18:56:28+0900"
       },
       {
         "key": "LoadBalancerName",
-        "value": "tbun6uth37c7rfbnvqga"
+        "value": "tb2lmrjjda4gj21nqmd9"
       },
       {
         "key": "LoadBalancerDomain",
-        "value": "tbun6uth37c7rfbnvqga-142596939-56e7db94d387.kr.lb.naverncp.com"
+        "value": "tb2lmrjjda4gj21nqmd9-143116808-768675247ace.kr.lb.naverncp.com"
       },
       {
         "key": "LoadBalancerIpList",
-        "value": "101.79.27.197"
+        "value": "101.79.24.34"
       },
       {
         "key": "LoadBalancerType",
@@ -4283,7 +4319,7 @@
       },
       {
         "key": "VpcNo",
-        "value": "141972"
+        "value": "142787"
       },
       {
         "key": "RegionCode",
@@ -4291,23 +4327,23 @@
       },
       {
         "key": "SubnetNoList",
-        "value": "307652"
+        "value": "309776"
       },
       {
         "key": "LoadBalancerSubnetList",
-        "value": "{zoneCode:KR-1,subnetNo:307652,publicIpInstanceNo:142596957}"
+        "value": "{zoneCode:KR-1,subnetNo:309776,publicIpInstanceNo:143116817}"
       },
       {
         "key": "LoadBalancerListenerNoList",
-        "value": "589089"
+        "value": "601167"
       },
       {
         "key": "ListenerId",
-        "value": "589089"
+        "value": "601167"
       },
       {
         "key": "HealthCheckerId",
-        "value": "5822613"
+        "value": "5943795"
       }
     ],
     "isAutoGenerated": false,
@@ -4341,8 +4377,8 @@
 {
   "resourceType": "",
   "id": "my-ng-influxdb-back",
-  "cspResourceName": "tbun6uth37c7rfbnvqga",
-  "cspResourceId": "142596939",
+  "cspResourceName": "tb2lmrjjda4gj21nqmd9",
+  "cspResourceId": "143116808",
   "name": "my-ng-influxdb-back",
   "connectionName": "ncp-kr",
   "connectionConfig": {
@@ -4374,16 +4410,16 @@
   "scope": "REGION",
   "listener": {
     "protocol": "TCP",
-    "ip": "101.79.27.197",
+    "ip": "101.79.24.34",
     "port": "9999",
     "keyValueList": [
       {
         "key": "LoadBalancerInstanceNo",
-        "value": "142596939"
+        "value": "143116808"
       },
       {
         "key": "LoadBalancerListenerNo",
-        "value": "589089"
+        "value": "601167"
       },
       {
         "key": "ProtocolType",
@@ -4403,7 +4439,7 @@
       },
       {
         "key": "LoadBalancerRuleNoList",
-        "value": "660483"
+        "value": "673076"
       }
     ]
   },
@@ -4433,13 +4469,13 @@
     "threshold": 3,
     "timeout": 0
   },
-  "createdTime": "2026-07-01T15:38:52+09:00",
+  "createdTime": "2026-07-13T18:56:28+09:00",
   "description": "Migrated from HAProxy backend: influxdb_back",
   "status": "",
   "keyValueList": [
     {
       "key": "LoadBalancerInstanceNo",
-      "value": "142596939"
+      "value": "143116808"
     },
     {
       "key": "LoadBalancerInstanceStatus",
@@ -4455,19 +4491,19 @@
     },
     {
       "key": "CreateDate",
-      "value": "2026-07-01T15:38:52+0900"
+      "value": "2026-07-13T18:56:28+0900"
     },
     {
       "key": "LoadBalancerName",
-      "value": "tbun6uth37c7rfbnvqga"
+      "value": "tb2lmrjjda4gj21nqmd9"
     },
     {
       "key": "LoadBalancerDomain",
-      "value": "tbun6uth37c7rfbnvqga-142596939-56e7db94d387.kr.lb.naverncp.com"
+      "value": "tb2lmrjjda4gj21nqmd9-143116808-768675247ace.kr.lb.naverncp.com"
     },
     {
       "key": "LoadBalancerIpList",
-      "value": "101.79.27.197"
+      "value": "101.79.24.34"
     },
     {
       "key": "LoadBalancerType",
@@ -4483,7 +4519,7 @@
     },
     {
       "key": "VpcNo",
-      "value": "141972"
+      "value": "142787"
     },
     {
       "key": "RegionCode",
@@ -4491,23 +4527,23 @@
     },
     {
       "key": "SubnetNoList",
-      "value": "307652"
+      "value": "309776"
     },
     {
       "key": "LoadBalancerSubnetList",
-      "value": "{zoneCode:KR-1,subnetNo:307652,publicIpInstanceNo:142596957}"
+      "value": "{zoneCode:KR-1,subnetNo:309776,publicIpInstanceNo:143116817}"
     },
     {
       "key": "LoadBalancerListenerNoList",
-      "value": "589089"
+      "value": "601167"
     },
     {
       "key": "ListenerId",
-      "value": "589089"
+      "value": "601167"
     },
     {
       "key": "HealthCheckerId",
-      "value": "5822613"
+      "value": "5943795"
     }
   ],
   "isAutoGenerated": false,
@@ -4550,7 +4586,7 @@
 
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-07-01 06:42:02
+**Generated At:** 2026-07-13 09:59:33
 
 **Namespace:** mig01
 
@@ -4578,8 +4614,8 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 | s4-g3 | 4 | 16.0 | - | x86_64 | default | $0.1747 | 2 |
+| ci2-g3 | 2 | 4.0 | - | x86_64 | default | $0.0730 | 1 |
 
 ### VM Images
 
@@ -4591,9 +4627,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 142596691 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.179<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-1 | 142596698 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.181<br>**Private IP:** 10.0.1.8<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-2 | 142596695 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.27.180<br>**Private IP:** 10.0.1.7<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 143116661 | Running | 2 vCPU, 4.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.24.200<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-1 | 143116664 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.29.129<br>**Private IP:** 10.0.1.7<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-2 | 143116668 | Running | 4 vCPU, 16.0 GiB | ubuntu-22.04-base (Hypervisor:KVM) (ubuntu-22.04-base (Hypervisor:KVM)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 101.79.31.161<br>**Private IP:** 10.0.1.8<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -4605,7 +4641,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-vnet-01 |
-| **CSP VNet ID** | 141972 |
+| **CSP VNet ID** | 142787 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ncp-kr |
 | **Subnet Count** | 1 |
@@ -4614,7 +4650,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-mig-subnet-01 | 307646 | 10.0.1.0/24 | KR-1 |
+| my-mig-subnet-01 | 309774 | 10.0.1.0/24 | KR-1 |
 
 
 ## Security Resources
@@ -4623,7 +4659,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-mig-sshkey-01 | tbq9b9ffgls9jobs6mc3 | cb-user |  |
+| my-mig-sshkey-01 | tbr77353jlg2mr6udfkn | cb-user |  |
 
 ### Security Groups
 
@@ -4632,7 +4668,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-01 |
-| **CSP Security Group ID** | 363817 |
+| **CSP Security Group ID** | 368570 |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 9 rules |
 
@@ -4655,7 +4691,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-02 |
-| **CSP Security Group ID** | 363818 |
+| **CSP Security Group ID** | 368571 |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 8 rules |
 
@@ -4716,7 +4752,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-07-01 06:42:07*
+*Report generated: 2026-07-13 09:59:38*
 
 ---
 
@@ -4760,9 +4796,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 142596691<br>**Label(sourceMachineId):** ng-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my-ng-influxdb-back-1<br>**VM ID:** 142596698<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
-| 3 | **VM Name:** my-ng-influxdb-back-2<br>**VM ID:** 142596695<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
+| 1 | **VM Name:** my-ng-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 143116661<br>**Label(sourceMachineId):** ng-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** ng-ec268ed7-821e-9d73-e79f |
+| 2 | **VM Name:** my-ng-influxdb-back-1<br>**VM ID:** 143116664<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
+| 3 | **VM Name:** my-ng-influxdb-back-2<br>**VM ID:** 143116668<br>**Label(sourceMachineId):** ng | **Hostname:** N/A<br>**Machine ID:** ng |
 
 ---
 
@@ -4796,7 +4832,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-mig-sg-01
 
-**CSP ID:** 363817 | **VNet:** my-mig-vnet-01 | **Rules:** 9
+**CSP ID:** 368570 | **VNet:** my-mig-vnet-01 | **Rules:** 9
 
 **Assigned VMs:**
 
@@ -4821,7 +4857,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-mig-sg-02
 
-**CSP ID:** 363818 | **VNet:** my-mig-vnet-01 | **Rules:** 8
+**CSP ID:** 368571 | **VNet:** my-mig-vnet-01 | **Rules:** 8
 
 **Assigned VMs:**
 
@@ -4851,13 +4887,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my-mig-vnet-01<br>**ID:** 141972 | 10.0.0.0/21 |
+| 1 | **Name:** my-mig-vnet-01<br>**ID:** 142787 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my-mig-subnet-01<br>**ID:** 307646 | 10.0.1.0/24 | my-mig-vnet-01 |
+| 1 | **Name:** my-mig-subnet-01<br>**ID:** 309774 | 10.0.1.0/24 | my-mig-vnet-01 |
 
 ### Source Network Information
 
@@ -4899,7 +4935,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my-mig-sshkey-01 | tbq9b9ffgls9jobs6mc3 |  | Used by all 3 VMs |
+| 1 | my-mig-sshkey-01 | tbr77353jlg2mr6udfkn |  | Used by all 3 VMs |
 
 ---
 

@@ -10,7 +10,7 @@ This document covers recommendation and migration support for VM infrastructure 
 | Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
-| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| Node Spec       | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 
@@ -23,4 +23,4 @@ This document covers recommendation and migration support for VM infrastructure 
 
 ## Roadmap
 
--  **Planned**: Tencent, OpenStack
+- **Planned**: Tencent, OpenStack

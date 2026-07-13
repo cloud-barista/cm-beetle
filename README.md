@@ -19,14 +19,14 @@ The tables below show recommendation and migration support by target CSP and res
 <details>
 <summary>Legend</summary>
 
-| Icon | Meaning                                    |
-| :--: | ------------------------------------------ |
-|  ✅  | Fully supported                            |
-|  ⚠️  | Supported with known issues or limitations |
-|  🚧  | In progress                                |
-|  📅  | Planned                                    |
-|  ❌  | Not available                              |
-|  —   | Not planned                                |
+| Icon | Meaning         |
+| :--: | --------------- |
+|  ✅  | Fully supported |
+|  ⚠️  | Has limitations |
+|  🚧  | In progress     |
+|  📅  | Planned         |
+|  ❌  | Not available   |
+|  —   | Not planned     |
 
 > **(CSP)** — Low priority or not pursued this year.
 
@@ -38,8 +38,8 @@ The tables below show recommendation and migration support by target CSP and res
 | Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
-| VM Spec         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
-| VM Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| Node Spec       | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | K8s Cluster     | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
 | K8s Node Image  | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |

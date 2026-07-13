@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-07-01 05:44:53
+**Generated At:** 2026-07-13 09:42:43
 
 **Namespace:** mig01
 
@@ -35,15 +35,15 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| r026-c8e249d4-f148-4416-a3c6-555b7a02f67d | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | - | 3 |
+| r026-7769ffd7-a85c-45e0-a4e8-390fe5ef9599 | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | - | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_328ef6c6-2022-4e3f-80e6-8350bd9fbf87 | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.93.79<br>**Private IP:** 10.0.1.5<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-1 | 02h7_2ad476fc-d760-48c9-bc4b-6fab410225ab | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.102.107<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
-| my-ng-influxdb-back-2 | 02h7_ce163b62-c155-4950-802c-ec40da1bbee1 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.97.167<br>**Private IP:** 10.0.1.4<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-ec268ed7-821e-9d73-e79f-961262161624-1 | 02h7_86aaa57b-7093-43cd-8b00-111ae902a1e3 | Running | 2 vCPU, 2.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.93.219<br>**Private IP:** 10.0.1.4<br>**SGs:** my-mig-sg-02<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-1 | 02h7_35a2336c-2360-41bc-9d1a-c0329c7aea61 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.98.228<br>**Private IP:** 10.0.1.5<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
+| my-ng-influxdb-back-2 | 02h7_57bb1846-1e20-4101-b3a3-351f585f49d7 | Running | 4 vCPU, 16.0 GiB | Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64) (Ubuntu Linux 22.04 LTS Jammy Jellyfish Minimal Install (amd64)) | **VNet:** my-mig-vnet-01<br>**Subnet:** my-mig-subnet-01<br>**Public IP:** 159.23.93.220<br>**Private IP:** 10.0.1.6<br>**SGs:** my-mig-sg-01<br>**SSH:** my-mig-sshkey-01 |
 
 
 ## Network Resources
@@ -55,7 +55,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-vnet-01 |
-| **CSP VNet ID** | r026-7212abef-b5a8-4644-ac0b-d144865621fa |
+| **CSP VNet ID** | r026-973a751e-d6bc-4105-a2b1-e76438bea613 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | ibm-au-syd |
 | **Subnet Count** | 1 |
@@ -64,7 +64,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-mig-subnet-01 | 02h7-ec0a1ab9-6ef0-492c-a1a3-df8868f54252 | 10.0.1.0/24 | au-syd-1 |
+| my-mig-subnet-01 | 02h7-4890848c-4a5a-414f-9ca3-3e72ab12c84a | 10.0.1.0/24 | au-syd-1 |
 
 
 ## Security Resources
@@ -73,7 +73,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-mig-sshkey-01 | r026-2088d198-ebc6-40fc-b315-1705d5317a4f |  | SHA256:FgjlOFRS1MnzOV56AtNKu8a1izvF/6ZBK4S8B+2sHqI |
+| my-mig-sshkey-01 | r026-b3b9388b-6054-4ef4-9d25-d4a0b45ffac0 |  | SHA256:W9+bkBcpsLeBdDiDOPUXfFQJ/q1cPg31WqKwqVudX/E |
 
 ### Security Groups
 
@@ -82,7 +82,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-01 |
-| **CSP Security Group ID** | r026-164ce32e-81ac-426a-a167-377f1f23ed5d |
+| **CSP Security Group ID** | r026-e9472d3e-f8b2-4c3e-a8e5-be6a646610fa |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 5 rules |
 
@@ -101,7 +101,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-mig-sg-02 |
-| **CSP Security Group ID** | r026-63762c39-f4c5-48f4-8919-4321bb449b04 |
+| **CSP Security Group ID** | r026-95fb8ca5-af0a-4f5c-b195-cee7dfe0f2d8 |
 | **VNet** | my-mig-vnet-01 |
 | **Rule Count** | 4 rules |
 
