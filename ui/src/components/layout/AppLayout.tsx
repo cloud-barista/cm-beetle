@@ -43,7 +43,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </div>
             <div>
               <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-400 bg-clip-text text-transparent">
-                Beetle Lab
+                Beetle UX Lab
               </span>
               <span className="ml-2.5 text-xs font-semibold px-2.5 py-1 bg-bg-input border border-border-main rounded-full text-text-muted">
                 CM-Beetle v0.5.4

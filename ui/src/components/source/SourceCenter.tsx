@@ -337,11 +337,43 @@ export const SourceCenter: React.FC = () => {
 
   // ─── Inline Section 2 actions ─────────────────────────────────
 
+  // Load built-in sample infrastructure (no API call required)
+  const handleLoadSampleInfra = () => {
+    const SAMPLE_ID = 'sg-sample';
+    const sampleGroup = {
+      id: SAMPLE_ID,
+      name: '[Sample] web-db-cluster',
+      description: '1 Web Server (HAProxy/App) + 2 InfluxDB nodes on 10.0.1.x',
+      connection_info_status_count: {
+        connection_info_total: 3,
+        count_connection_success: 3,
+        count_connection_failed: 0,
+        count_agent_success: 3,
+        count_agent_failed: 0,
+      },
+    };
+    const sampleConnections = [
+      { id: 'sample-c1', name: 'Web Server 1',  ip_address: '10.0.1.30',  ssh_port: '22', user: 'ubuntu', connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c2', name: 'Database 1',   ip_address: '10.0.1.221', ssh_port: '22', user: 'root',   connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+      { id: 'sample-c3', name: 'Database 2',   ip_address: '10.0.1.138', ssh_port: '22', user: 'root',   connection_status: 'success', agent_status: 'success', connection_failed_message: '', agent_failed_message: '' },
+    ];
+    const current = useMigrationStore.getState().sourceGroups;
+    if (!current.some((g: any) => g.id === SAMPLE_ID)) {
+      useMigrationStore.setState({ sourceGroups: [sampleGroup, ...current] });
+    }
+    useMigrationStore.setState({ activeSgId: SAMPLE_ID, connections: sampleConnections });
+    setRegisterStatus('done');
+    setImportStatus('idle');
+    setRefreshStatus('idle');
+  };
+
   const handleSelectGroup = (sgId: string) => {
     useMigrationStore.setState({ activeSgId: sgId });
     setRegisterStatus('idle');
     setImportStatus('idle');
     setRefreshStatus('idle');
+    // Skip API call for the built-in sample group — connections are already in store
+    if (sgId === 'sg-sample') return;
     honeybeeApi.getConnectionInfoList(sgId)
       .then((data: any) => {
         const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
@@ -352,7 +384,7 @@ export const SourceCenter: React.FC = () => {
 
   const handleDeleteInlineRow = async (localId: string) => {
     const row = serverRows.find(r => r.localId === localId);
-    if (row?.connId && activeSgId) {
+    if (row?.connId && activeSgId && activeSgId !== 'sg-sample') {
       try {
         await honeybeeApi.deleteConnectionInfo(activeSgId, row.connId);
         const data = await honeybeeApi.getConnectionInfoList(activeSgId);
@@ -365,7 +397,7 @@ export const SourceCenter: React.FC = () => {
   };
 
   const handleRegisterConnections = async () => {
-    if (!activeSgId) return;
+    if (!activeSgId || activeSgId === 'sg-sample') return;
     const newRows = serverRows.filter(r => !r.connId && r.ip.trim());
     if (newRows.length === 0) return;
     setRegisterStatus('registering');
@@ -382,7 +414,7 @@ export const SourceCenter: React.FC = () => {
   };
 
   const handleRefreshAll = async () => {
-    if (!activeSgId) return;
+    if (!activeSgId || activeSgId === 'sg-sample') return;
     setRefreshStatus('refreshing');
     try {
       await refreshSourceGroup(activeSgId);
@@ -496,12 +528,21 @@ export const SourceCenter: React.FC = () => {
               Click a group to manage its server connections below, or create a new group.
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition cursor-pointer shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> New Source Group
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLoadSampleInfra}
+              className="px-4 py-2.5 bg-bg-panel border border-teal-500/40 hover:bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl text-sm font-bold flex items-center gap-2 transition cursor-pointer"
+              title="Load built-in sample infrastructure data (no API call required)"
+            >
+              <FileText className="w-4 h-4" /> Load Sample Infra
+            </button>
+            <button
+              onClick={openCreateModal}
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition cursor-pointer shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> New Source Group
+            </button>
+          </div>
         </div>
 
         {sourceGroups.length === 0 ? (

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText } from 'lucide-react';
 
 
 
@@ -215,6 +215,36 @@ export const MigrationDesigner: React.FC = () => {
     setTunedNetwork(updatedNetwork);
   };
 
+  // ── Spec / Image detail helpers ──────────────────────────────────────────
+  // specId format: "csp+region+instanceType" → extract instance type portion
+  const extractInstanceType = (specId: string) => specId.split('+').pop() || specId;
+
+  // Lookup SpecInfo from targetSpecList by specId (try id, name, cspSpecName)
+  const getSpecInfo = (candidate: typeof editedCandidate, specId: string) => {
+    if (!candidate?.targetSpecList) return null;
+    return candidate.targetSpecList.find((s: any) =>
+      s.id === specId || s.name === specId || s.cspSpecName === extractInstanceType(specId)
+    ) ?? (candidate.targetSpecList.length === 1 ? candidate.targetSpecList[0] : null);
+  };
+
+  // Lookup ImageInfo from targetOsImageList by imageId
+  const getImageInfo = (candidate: typeof editedCandidate, imageId: string) => {
+    if (!candidate?.targetOsImageList) return null;
+    return candidate.targetOsImageList.find((img: any) =>
+      img.id === imageId || img.cspImageId === imageId || img.cspImageName === imageId || img.name === imageId
+    ) ?? (candidate.targetOsImageList.length === 1 ? candidate.targetOsImageList[0] : null);
+  };
+
+  // Human-readable OS name: prefer osDistribution, fallback osType
+  const formatOsName = (imgInfo: any) => imgInfo?.osDistribution || imgInfo?.osType || '';
+
+  // Human-readable memory: show GiB or MiB
+  const formatMemory = (gib: number) => {
+    if (!gib && gib !== 0) return '—';
+    return gib < 1 ? `${Math.round(gib * 1024)} MiB` : `${gib} GiB`;
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const handleTuneTargetNodeProperty = (ngIdx: number, key: string, value: any) => {
     if (!editedCandidate) return;
     const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
@@ -410,11 +440,29 @@ export const MigrationDesigner: React.FC = () => {
               <option value="">-- Choose Source Model (Damselfly) --</option>
               {savedSourceModels.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} (v{m.version || '1.0'})
+                  {m.id === 'model-demo-1' ? `[Sample] ${m.name}` : m.name} (v{m.version || '1.0'})
                 </option>
               ))}
             </select>
-            <div className="flex justify-start">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const sample = savedSourceModels.find(m => m.id === 'model-demo-1') || savedSourceModels[0];
+                  if (!sample?.onpremiseInfraModel) return;
+                  selectSourceModel(sample);
+                  const nodes = sample.onpremiseInfraModel.nodes || [];
+                  setTunedNodes(JSON.parse(JSON.stringify(nodes)));
+                  setTunedNetwork(JSON.parse(JSON.stringify(sample.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
+                  setExcludedNodeIds([]);
+                  setIsModelLoaded(true);
+                  setActiveStep(2);
+                  if (nodes.length > 0) setActiveTunedNodeId(nodes[0].machineId);
+                }}
+                className="px-4 py-3 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer bg-bg-panel border border-teal-500/40 hover:bg-teal-500/10 text-teal-600 dark:text-teal-400"
+                title="Load the built-in sample source infrastructure model"
+              >
+                <FileText className="w-4 h-4 mr-1.5" /> Use Sample Model
+              </button>
               <button
                 onClick={handleLoadModel}
                 disabled={!selectedSourceModel}
@@ -1042,20 +1090,30 @@ export const MigrationDesigner: React.FC = () => {
                 <span className="text-sm font-bold text-text-muted">Alternatives:</span>
                 {recommendationCandidates.map((c, idx) => {
                   const isActive = selectedCandidateIndex === idx;
+                  // Show first nodeGroup's spec summary on the button
+                  const firstNg = c.targetInfra?.nodeGroups?.[0];
+                  const specInfo = firstNg ? getSpecInfo(c, firstNg.specId) : null;
+                  const vcpu    = specInfo?.vCPU;
+                  const memGiB  = specInfo?.memoryGiB;
                   return (
                     <button
                       key={idx}
                       onClick={() => {
                         selectCandidate(idx);
                         updateEditedCandidate(JSON.parse(JSON.stringify(c)));
-                        if (activeStep < 5) setActiveStep(5); // Unlock Next Step (Migration Execution)
+                        if (activeStep < 5) setActiveStep(5);
                       }}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex items-center space-x-2 ${isActive
+                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex flex-col items-start ${isActive
                           ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
                           : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
                         }`}
                     >
                       <span>Candidate {idx + 1}</span>
+                      {(vcpu || memGiB) && (
+                        <span className="text-xs font-normal opacity-70 mt-0.5">
+                          {vcpu ? `${vcpu} vCPU` : ''}{vcpu && memGiB ? ' · ' : ''}{memGiB ? formatMemory(memGiB) : ''}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -1326,18 +1384,45 @@ export const MigrationDesigner: React.FC = () => {
                                       <span className="text-sm font-semibold bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded">Group Size: {nodeCount}</span>
                                     </div>
 
-                                    {/* Mapped Cloud Spec details (3-Column Grid) */}
+                                    {/* Mapped Cloud Spec details */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm font-mono mb-3.5 text-text-muted bg-bg-input/30 p-3 rounded-lg border border-border-main/10">
+                                      {/* Spec: vCPU + Memory first, Spec ID below */}
+                                      {(() => {
+                                        const specInfo = getSpecInfo(editedCandidate, ng.specId);
+                                        const vcpu    = specInfo?.vCPU;
+                                        const memGiB  = specInfo?.memoryGiB;
+                                        return (
+                                          <div>
+                                            <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">VM Spec</span>
+                                            {(vcpu || memGiB) ? (
+                                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                {vcpu  && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
+                                                {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                              </div>
+                                            ) : null}
+                                            <span className="text-text-muted text-xs truncate block font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
+                                          </div>
+                                        );
+                                      })()}
+
+                                      {/* Image: OS name first, Image ID below */}
+                                      {(() => {
+                                        const imgInfo = getImageInfo(editedCandidate, ng.imageId);
+                                        const osName  = formatOsName(imgInfo);
+                                        return (
+                                          <div>
+                                            <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">OS Image</span>
+                                            {osName ? (
+                                              <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-sm font-extrabold px-2 py-0.5 rounded block mb-1 truncate" title={osName}>{osName}</span>
+                                            ) : null}
+                                            <span className="text-text-muted text-xs truncate block font-mono" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
+                                          </div>
+                                        );
+                                      })()}
+
+                                      {/* Root Disk */}
                                       <div>
-                                        <span className="block font-normal text-text-muted text-sm mb-0.5">Node Spec</span>
-                                        <span className="text-text-main font-extrabold text-base truncate block" title={ng.specId}>{ng.specId}</span>
-                                      </div>
-                                      <div>
-                                        <span className="block font-normal text-text-muted text-sm mb-0.5">Node Image</span>
-                                        <span className="text-text-main font-extrabold text-base truncate block" title={ng.imageId}>{ng.imageId}</span>
-                                      </div>
-                                      <div>
-                                        <span className="block font-normal text-text-muted text-sm mb-0.5">Root Disk</span>
+                                        <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">Root Disk</span>
                                         <span className="text-text-main font-extrabold text-base block">{ng.rootDiskSize} GB SSD</span>
                                       </div>
                                     </div>
@@ -1470,12 +1555,41 @@ export const MigrationDesigner: React.FC = () => {
                             {/* TAB 1: Compute Resources (Node Groups) */}
                             {targetActiveTab === 'compute' && (
                               <div className="space-y-3.5">
-                                {editedCandidate.targetInfra.nodeGroups.map((ng, ngIdx) => (
+                                {editedCandidate.targetInfra.nodeGroups.map((ng, ngIdx) => {
+                                  const specInfo = getSpecInfo(editedCandidate, ng.specId);
+                                  const imgInfo  = getImageInfo(editedCandidate, ng.imageId);
+                                  const osName   = formatOsName(imgInfo);
+                                  const vcpu     = specInfo?.vCPU;
+                                  const memGiB   = specInfo?.memoryGiB;
+                                  return (
                                   <div key={ngIdx} className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
                                     <div className="flex justify-between items-center text-sm font-bold text-text-main border-b border-border-main/10 pb-1.5 font-mono">
-                                      <span>Node Group #{ngIdx + 1} ({ng.specId})</span>
+                                      <span>Node Group #{ngIdx + 1} — {extractInstanceType(ng.specId)}</span>
                                       <span className="text-emerald-600 dark:text-emerald-400">Spec Match Type: Balanced</span>
                                     </div>
+
+                                    {/* Spec & Image summary badges */}
+                                    <div className="flex flex-wrap gap-3 p-3 bg-bg-input/20 rounded-lg border border-border-main/10">
+                                      {/* Spec badges */}
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-bold text-text-muted uppercase tracking-wide">VM Spec</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{vcpu} vCPU</span>}
+                                          {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                          <span className="text-xs text-text-muted font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
+                                        </div>
+                                      </div>
+                                      <div className="w-px bg-border-main/30 self-stretch mx-1" />
+                                      {/* Image badges */}
+                                      <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-bold text-text-muted uppercase tracking-wide">OS Image</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {osName && <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{osName}</span>}
+                                          <span className="text-xs text-text-muted font-mono truncate max-w-[220px]" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                                       {/* Node Group Name */}
                                       <div>
@@ -1489,7 +1603,7 @@ export const MigrationDesigner: React.FC = () => {
                                       </div>
                                       {/* Spec ID */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Instance Spec ID</label>
+                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Spec ID</label>
                                         <input
                                           type="text"
                                           value={ng.specId}
@@ -1510,7 +1624,7 @@ export const MigrationDesigner: React.FC = () => {
                                       </div>
                                       {/* OS Image ID */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">OS Image ID</label>
+                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Image ID</label>
                                         <input
                                           type="text"
                                           value={ng.imageId}
@@ -1531,7 +1645,8 @@ export const MigrationDesigner: React.FC = () => {
                                       </div>
                                     </div>
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
 

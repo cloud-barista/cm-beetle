@@ -342,8 +342,15 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   },
 
   fetchSavedSourceModels: async () => {
-    // Damselfly disconnected. Pure local offline flow to prevent empty select box.
-    set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL] });
+    try {
+      const models = await damselflyApi.getSourceModels();
+      // Always include the built-in sample model at the top of the list
+      const withoutSample = models.filter(m => m.id !== DEFAULT_FALLBACK_SOURCE_MODEL.id);
+      set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL, ...withoutSample] });
+    } catch {
+      // Damselfly unreachable — show sample model only
+      set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL] });
+    }
   },
 
   selectSourceModel: (model) => {
