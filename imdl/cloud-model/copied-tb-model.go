@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.22 (commit: 50c213b898301fcaba08c768df69250d48c35027)
-// * Synchronized: 2026-07-01 (Added CommandStatusCompletedWithError constant)
+// * Version: CB-Tumblebug v0.12.25 (commit: a032bfd359eec305370e8b7434a18109854f4cb2)
+// * Synchronized: 2026-07-13 (Added RepeatCount and LastOccurredTime to CommandStatusInfo)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -261,6 +261,18 @@ type CommandStatusInfo struct {
 
 	// Stderr contains the standard error from command execution (truncated for history)
 	Stderr string `json:"stderr,omitempty" example:""`
+
+	// RepeatCount is the number of times this exact command produced this exact
+	// outcome (same CommandRequested, Status, ResultSummary, and ErrorMessage) on
+	// consecutive attempts. Absent/0 means it has not repeated. Repeats are merged
+	// into a single record instead of appended, so retry storms (e.g. a failing
+	// install script retried repeatedly) do not grow this VM's history unbounded.
+	RepeatCount int `json:"repeatCount,omitempty" example:"3"`
+
+	// LastOccurredTime is when the most recent repeat of this outcome happened.
+	// Only set once RepeatCount is greater than 0; StartedTime/CompletedTime keep
+	// referring to the first occurrence.
+	LastOccurredTime string `json:"lastOccurredTime,omitempty" example:"2024-01-15T10:35:00Z"`
 }
 
 // InfraInfo is struct for Infra info
