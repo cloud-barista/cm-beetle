@@ -178,7 +178,7 @@ const ServerTableRow: React.FC<RowProps> = ({
 
 const TABLE_HEADER = (
   <thead>
-    <tr className="border-b border-border-main bg-bg-input/40 text-text-muted uppercase tracking-wide text-xs font-bold">
+    <tr className="border-b border-border-main bg-bg-input/40 text-text-muted text-xs font-bold">
       <th className="py-3 px-3 w-10 text-center">#</th>
       <th className="py-3 px-3 min-w-[150px]">Name</th>
       <th className="py-3 px-3 min-w-[140px]">IP Address</th>

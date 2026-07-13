@@ -59,7 +59,11 @@ export const MigrationDesigner: React.FC = () => {
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
 
   // Target Cloud Resource Editor tab states
-  const [targetActiveTab, setTargetActiveTab] = useState<'network' | 'sshkey' | 'security' | 'compute' | 'storage'>('network');
+  const [targetActiveTab, setTargetActiveTab] = useState<'network' | 'sshkey' | 'security' | 'compute' | 'storage' | 'nlb'>('network');
+  // Track which node group cards are expanded in Topology (key = "subIdx-ngIdx")
+  const [expandedNgCards, setExpandedNgCards] = useState<Record<string, boolean>>({});
+  const toggleNgCard = (key: string) =>
+    setExpandedNgCards(prev => ({ ...prev, [key]: !prev[key] }));
   const [tgtRuleDir, setTgtRuleDir] = useState('inbound');
   const [tgtRuleProto, setTgtRuleProto] = useState('tcp');
   const [tgtRulePort, setTgtRulePort] = useState('');
@@ -235,8 +239,17 @@ export const MigrationDesigner: React.FC = () => {
     ) ?? (candidate.targetOsImageList.length === 1 ? candidate.targetOsImageList[0] : null);
   };
 
-  // Human-readable OS name: prefer osDistribution, fallback osType
-  const formatOsName = (imgInfo: any) => imgInfo?.osDistribution || imgInfo?.osType || '';
+  // Human-readable OS name: use imgInfo fields if available, otherwise extract last path component from imageId
+  const formatOsName = (imgInfo: any, imageId?: string): string => {
+    if (imgInfo?.osDistribution) return imgInfo.osDistribution;
+    if (imgInfo?.osType)         return imgInfo.osType;
+    // Fallback: extract last component from path-like imageId
+    if (imageId) {
+      if (imageId.includes('/')) return imageId.split('/').pop() || imageId;
+      return imageId;
+    }
+    return '';
+  };
 
   // Human-readable memory: show GiB or MiB
   const formatMemory = (gib: number) => {
@@ -317,6 +330,48 @@ export const MigrationDesigner: React.FC = () => {
     updateEditedCandidate(updatedCandidate);
   };
 
+  const handleAddSubnet = () => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const n = updatedCandidate.targetVNet.subnetInfoList.length + 1;
+    const vnetCidrBase = updatedCandidate.targetVNet.cidrBlock.split('.').slice(0, 2).join('.');
+    updatedCandidate.targetVNet.subnetInfoList.push({
+      name: `${updatedCandidate.targetVNet.name}-subnet-${n}`,
+      ipv4_CIDR: `${vnetCidrBase}.${n}.0/24`,
+      description: '',
+      zone: '',
+    });
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  const handleDeleteSubnet = (subIdx: number) => {
+    if (!editedCandidate) return;
+    if (editedCandidate.targetVNet.subnetInfoList.length <= 1) return; // keep minimum 1
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const deleted = updatedCandidate.targetVNet.subnetInfoList[subIdx];
+    updatedCandidate.targetVNet.subnetInfoList.splice(subIdx, 1);
+    const fallback = updatedCandidate.targetVNet.subnetInfoList[0];
+    // Reassign nodeGroups referencing the deleted subnet
+    if (updatedCandidate.targetInfra?.nodeGroups) {
+      updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
+        if (ng.subnetId === deleted.name) ng.subnetId = fallback.name;
+      });
+    }
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  // NLB property tuning (supports dot-notation for nested fields, e.g. 'listener.port')
+  const handleTuneTargetNlbProperty = (nlbIdx: number, path: string, value: any) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    if (!updatedCandidate.targetNlbList?.[nlbIdx]) return;
+    const keys = path.split('.');
+    let obj: any = updatedCandidate.targetNlbList[nlbIdx];
+    for (let i = 0; i < keys.length - 1; i++) { obj = obj[keys[i]]; }
+    obj[keys[keys.length - 1]] = value;
+    updateEditedCandidate(updatedCandidate);
+  };
+
   // 2. SSH Key property tuning
   const handleTuneTargetSshKeyProperty = (key: string, value: string) => {
     if (!editedCandidate) return;
@@ -370,18 +425,67 @@ export const MigrationDesigner: React.FC = () => {
     if (updatedCandidate.targetSecurityGroupList && updatedCandidate.targetSecurityGroupList[sgIdx]) {
       const rules = updatedCandidate.targetSecurityGroupList[sgIdx].firewallRules || [];
       const newRule = {
-        action: 'accept',
-        direction: tgtRuleDir,
-        protocol: tgtRuleProto,
-        dstCIDR: tgtRuleCidr,
-        dstPorts: tgtRulePort,
-        srcCIDR: tgtRuleCidr,
-        srcPorts: '*'
+        Direction: tgtRuleDir,
+        Protocol: tgtRuleProto.toUpperCase(),
+        CIDR: tgtRuleCidr,
+        Ports: tgtRulePort,
       };
       updatedCandidate.targetSecurityGroupList[sgIdx].firewallRules = [...rules, newRule];
     }
     updateEditedCandidate(updatedCandidate);
     setTgtRulePort('');
+  };
+
+  // Add a new empty Security Group to the candidate
+  const handleAddSecurityGroup = () => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const n = (updatedCandidate.targetSecurityGroupList || []).length + 1;
+    const newSg = {
+      name: `${updatedCandidate.targetVNet?.name || 'sg'}-sg-${n}`,
+      vnetId: updatedCandidate.targetVNet?.name || '',
+      description: '',
+      firewallRules: [],
+    };
+    updatedCandidate.targetSecurityGroupList = [...(updatedCandidate.targetSecurityGroupList || []), newSg];
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  // Delete a Security Group and remove it from all node groups
+  const handleDeleteSecurityGroup = (sgIdx: number) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const deleted = updatedCandidate.targetSecurityGroupList[sgIdx];
+    updatedCandidate.targetSecurityGroupList.splice(sgIdx, 1);
+    if (updatedCandidate.targetInfra?.nodeGroups) {
+      updatedCandidate.targetInfra.nodeGroups.forEach((ng: any) => {
+        if (ng.securityGroupIds) {
+          ng.securityGroupIds = ng.securityGroupIds.filter((id: string) => id !== deleted.name);
+        }
+      });
+    }
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  // Add a Security Group to a specific node group
+  const handleNodeGroupAddSg = (ngIdx: number, sgName: string) => {
+    if (!editedCandidate || !sgName) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const ng = updatedCandidate.targetInfra.nodeGroups[ngIdx];
+    if (!ng.securityGroupIds) ng.securityGroupIds = [];
+    if (!ng.securityGroupIds.includes(sgName)) ng.securityGroupIds.push(sgName);
+    updateEditedCandidate(updatedCandidate);
+  };
+
+  // Remove a Security Group from a specific node group
+  const handleNodeGroupRemoveSg = (ngIdx: number, sgName: string) => {
+    if (!editedCandidate) return;
+    const updatedCandidate = JSON.parse(JSON.stringify(editedCandidate));
+    const ng = updatedCandidate.targetInfra.nodeGroups[ngIdx];
+    if (ng.securityGroupIds) {
+      ng.securityGroupIds = ng.securityGroupIds.filter((id: string) => id !== sgName);
+    }
+    updateEditedCandidate(updatedCandidate);
   };
 
   const handleSaveTargetCloudModel = async () => {
@@ -811,7 +915,7 @@ export const MigrationDesigner: React.FC = () => {
                                   <span className={`uppercase font-extrabold text-xs px-2 py-0.5 rounded ${rule.direction === 'inbound' ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'}`}>
                                     {rule.direction === 'inbound' ? 'Inbound' : 'Outbound'}
                                   </span>
-                                  <span>{rule.protocol.toUpperCase()}</span>
+                                  <span>{(rule.protocol || '').toUpperCase()}</span>
                                   <span>Port: {rule.dstPorts}</span>
                                   <span className="truncate max-w-[120px]" title={rule.srcCIDR}>{rule.srcCIDR}</span>
                                   <button
@@ -1085,46 +1189,6 @@ export const MigrationDesigner: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-bold text-text-muted">Alternatives:</span>
-                {recommendationCandidates.map((c, idx) => {
-                  const isActive = selectedCandidateIndex === idx;
-                  // Show first nodeGroup's spec summary on the button
-                  const firstNg = c.targetInfra?.nodeGroups?.[0];
-                  const specInfo = firstNg ? getSpecInfo(c, firstNg.specId) : null;
-                  const vcpu    = specInfo?.vCPU;
-                  const memGiB  = specInfo?.memoryGiB;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        selectCandidate(idx);
-                        updateEditedCandidate(JSON.parse(JSON.stringify(c)));
-                        if (activeStep < 5) setActiveStep(5);
-                      }}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold border transition cursor-pointer flex flex-col items-start ${isActive
-                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
-                          : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
-                        }`}
-                    >
-                      <span>Candidate {idx + 1}</span>
-                      {(vcpu || memGiB) && (
-                        <span className="text-xs font-normal opacity-70 mt-0.5">
-                          {vcpu ? `${vcpu} vCPU` : ''}{vcpu && memGiB ? ' · ' : ''}{memGiB ? formatMemory(memGiB) : ''}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                onClick={() => setShowCompareModal(true)}
-                className="px-4 py-2 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold flex items-center transition cursor-pointer"
-              >
-                Compare Side-by-Side Matrix
-              </button>
-            </div>
 
             {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
             {editedCandidate && (
@@ -1245,7 +1309,8 @@ export const MigrationDesigner: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Row 2: Topology diagram (Wide full layout) */}
+                {/* Row 2: Topology Visualization */}
+
                 <div className="w-full bg-bg-panel/40 border border-border-main/50 rounded-2xl p-5 relative min-h-[300px] flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4">
@@ -1357,139 +1422,187 @@ export const MigrationDesigner: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Subnet Container */}
-                        <div className="border border-dashed border-emerald-400 dark:border-emerald-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
-                          <div className="flex justify-between items-center text-sm text-text-muted font-mono pb-2 border-b border-border-main">
-                            <span>Subnet: default-subnet (10.0.1.0/24)</span>
-                            <span className="text-emerald-600 dark:text-emerald-400/70 font-semibold">Managed by Tumblebug</span>
+                        {/* Dynamic Subnet Containers — one per subnet in targetVNet.subnetInfoList */}
+                        {(editedCandidate.targetVNet.subnetInfoList?.length > 0
+                          ? editedCandidate.targetVNet.subnetInfoList
+                          : [{ name: 'default-subnet', ipv4_CIDR: '10.0.1.0/24', description: '', zone: '' }]
+                        ).map((sub, subIdx) => {
+                          // NodeGroups assigned to this subnet; unassigned ones go to first subnet
+                          const assignedNgs = editedCandidate.targetInfra.nodeGroups.filter(
+                            ng => ng.subnetId === sub.name
+                          );
+                          const allSubnetNames = editedCandidate.targetVNet.subnetInfoList?.map(s => s.name) || [];
+                          const unassignedNgs = editedCandidate.targetInfra.nodeGroups.filter(
+                            ng => !allSubnetNames.includes(ng.subnetId)
+                          );
+                          const displayNgs = assignedNgs.length > 0
+                            ? assignedNgs
+                            : subIdx === 0 ? unassignedNgs : [];
+
+                          return (
+                        <div key={subIdx} className="border border-dashed border-emerald-400 dark:border-emerald-800/30 bg-bg-panel/40 rounded-xl p-4 space-y-3">
+                          <div className="flex items-center text-sm text-text-muted font-mono pb-2 border-b border-border-main">
+                            <span>
+                              Subnet: {sub.name} ({sub.ipv4_CIDR})
+                              {sub.zone && <span className="ml-2 text-xs text-emerald-600 dark:text-emerald-400/70">Zone: {sub.zone}</span>}
+                            </span>
                           </div>
 
-                          {/* Node / VM Cards list */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {editedCandidate.targetInfra.nodeGroups.map((ng, idx) => {
+                          {/* Node Groups — accordion table, independent row expansion */}
+                          {displayNgs.length === 0 ? (
+                            <div className="text-xs text-text-muted italic py-2 text-center">No nodes assigned to this subnet</div>
+                          ) : (
+                          <div className="divide-y divide-border-main/20 rounded-xl border border-border-main/30 overflow-hidden">
+                            {displayNgs.map((ng, idx) => {
+                              const cardKey = `${subIdx}-${idx}`;
+                              const isExpanded = !!expandedNgCards[cardKey];
                               const nodeCount = ng.nodeGroupSize || 1;
                               const nodesArray = Array.from({ length: nodeCount });
 
+                              const specInfo = getSpecInfo(editedCandidate, ng.specId);
+                              const vcpu    = specInfo?.vCPU;
+                              const memGiB  = specInfo?.memoryGiB;
+                              const imgInfo = getImageInfo(editedCandidate, ng.imageId);
+                              const osName  = formatOsName(imgInfo, ng.imageId);
+
+                              // Security groups for this node group
+                              // Priority 1: use explicit securityGroupIds if set
+                              // Priority 2: name-based heuristic for backwards compatibility
+                              const ngSgs = (() => {
+                                if (ng.securityGroupIds && ng.securityGroupIds.length > 0) {
+                                  return (editedCandidate.targetSecurityGroupList || []).filter((sg: any) =>
+                                    ng.securityGroupIds.includes(sg.name)
+                                  );
+                                }
+                                // Heuristic: name match only (no index-based or blanket fallback)
+                                return (editedCandidate.targetSecurityGroupList || []).filter((sg: any) => {
+                                  if (!sg?.name) return false;
+                                  const s = sg.name.toLowerCase(), n = ng.name.toLowerCase();
+                                  return s.includes(n) || n.includes(s) || s.includes('default') || s.includes('common');
+                                });
+                              })();
+
                               return (
-                                <div key={idx} className="bg-bg-panel border border-border-main/50 p-4 rounded-xl space-y-3.5 hover:border-emerald-500/30 transition shadow-inner flex flex-col justify-between">
-                                  <div>
-                                    <div className="flex justify-between items-start border-b border-border-main/20 pb-2 mb-2.5">
-                                      <div className="flex items-center space-x-2">
-                                        <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-                                        <div>
-                                          <span className="text-sm font-normal text-text-muted block">Node Group</span>
-                                          <span className="text-base font-extrabold text-text-main block">{ng.name}</span>
+                                <div key={idx} className={isExpanded ? 'bg-bg-input/10' : 'bg-bg-panel/30 hover:bg-bg-input/10 transition'}>
+                                  {/* Summary row — always visible */}
+                                  <button
+                                    onClick={() => toggleNgCard(cardKey)}
+                                    className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 text-left cursor-pointer"
+                                  >
+                                    <ChevronDown className={`w-3.5 h-3.5 text-text-muted flex-shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+
+                                    {/* Node Group label + name — flex-1 to use available space */}
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0 min-w-[180px]">
+                                      <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                      <div className="min-w-0">
+                                        <span className="text-xs text-text-muted font-normal block leading-none mb-0.5">Node Group</span>
+                                        <span className="text-sm font-bold text-text-main block" title={ng.name}>{ng.name}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Spec: vCPU · Memory · instance type */}
+                                    <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+                                      {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
+                                      {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                      <span className="text-xs font-mono text-text-muted">{extractInstanceType(ng.specId)}</span>
+                                    </div>
+
+                                    {/* OS */}
+                                    {osName && <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded flex-shrink-0">{osName}</span>}
+
+                                    {/* Disk */}
+                                    <span className="text-xs font-mono text-text-muted flex-shrink-0">{ng.rootDiskSize} GB</span>
+
+                                    {/* Security Groups */}
+                                    {ngSgs.map((sg: any, sgIdx: number) => (
+                                      <span key={sgIdx} className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-1.5 py-0.5 rounded font-mono flex-shrink-0">
+                                        {sg.name}
+                                      </span>
+                                    ))}
+
+                                    {/* Node count — push to right */}
+                                    <span className="ml-auto flex-shrink-0 text-xs font-bold bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded">×{nodeCount}</span>
+                                  </button>
+
+                                  {/* Expanded: detail summary + VM nodes */}
+                                  {isExpanded && (
+                                    <div className="border-t border-border-main/20 px-4 py-3 space-y-3 bg-bg-input/5">
+
+                                      {/* Top summary: Spec · Image · Root Disk · SG · Size */}
+                                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                                        {/* Spec */}
+                                        <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
+                                          <span className="block text-xs font-bold text-text-muted mb-1">Spec</span>
+                                          <div className="flex flex-wrap gap-1">
+                                            {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{vcpu} vCPU</span>}
+                                            {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                          </div>
+                                          <span className="text-xs font-mono text-text-muted mt-1 block" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
+                                        </div>
+
+                                        {/* Image */}
+                                        <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
+                                          <span className="block text-xs font-bold text-text-muted mb-1">Image</span>
+                                          {osName
+                                            ? <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-1.5 py-0.5 rounded inline-block">{osName}</span>
+                                            : <span className="text-xs font-mono text-text-muted break-all" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
+                                          }
+                                        </div>
+
+                                        {/* Root Disk */}
+                                        <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
+                                          <span className="block text-xs font-bold text-text-muted mb-1">Root Disk</span>
+                                          <span className="text-sm font-extrabold text-text-main">{ng.rootDiskSize} GB</span>
+                                        </div>
+
+                                        {/* Security Group */}
+                                        <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
+                                          <span className="block text-xs font-bold text-text-muted mb-1">Security Group</span>
+                                          <div className="flex flex-col gap-1">
+                                            {ngSgs.length > 0
+                                              ? ngSgs.map((sg: any, i: number) => (
+                                                  <span key={i} className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-1.5 py-0.5 rounded font-mono">{sg.name}</span>
+                                                ))
+                                              : <span className="text-xs text-text-muted">—</span>
+                                            }
+                                          </div>
+                                        </div>
+
+                                        {/* Size (node count) */}
+                                        <div className="bg-bg-panel border border-border-main/30 rounded-lg px-3 py-2">
+                                          <span className="block text-xs font-bold text-text-muted mb-1">Size</span>
+                                          <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{nodeCount}</span>
+                                          <span className="text-xs text-text-muted ml-1">node{nodeCount > 1 ? 's' : ''}</span>
                                         </div>
                                       </div>
-                                      <span className="text-sm font-semibold bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded">Group Size: {nodeCount}</span>
-                                    </div>
 
-                                    {/* Mapped Cloud Spec details */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm font-mono mb-3.5 text-text-muted bg-bg-input/30 p-3 rounded-lg border border-border-main/10">
-                                      {/* Spec: vCPU + Memory first, Spec ID below */}
-                                      {(() => {
-                                        const specInfo = getSpecInfo(editedCandidate, ng.specId);
-                                        const vcpu    = specInfo?.vCPU;
-                                        const memGiB  = specInfo?.memoryGiB;
-                                        return (
-                                          <div>
-                                            <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">VM Spec</span>
-                                            {(vcpu || memGiB) ? (
-                                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                {vcpu  && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
-                                                {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                      {/* VM node list */}
+                                      <div className="space-y-1">
+                                        <span className="text-xs text-text-muted font-semibold">Nodes</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                                          {nodesArray.map((_, nodeIdx) => {
+                                            const suffix   = String(nodeIdx + 1).padStart(2, '0');
+                                            const nodeName = `${ng.name}-${suffix}`;
+                                            return (
+                                              <div key={nodeIdx} className="bg-bg-panel border border-emerald-500/10 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-mono text-xs">
+                                                <Server className="w-3 h-3 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                                <span className="text-text-muted truncate">{nodeName}</span>
                                               </div>
-                                            ) : null}
-                                            <span className="text-text-muted text-xs truncate block font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
-                                          </div>
-                                        );
-                                      })()}
-
-                                      {/* Image: OS name first, Image ID below */}
-                                      {(() => {
-                                        const imgInfo = getImageInfo(editedCandidate, ng.imageId);
-                                        const osName  = formatOsName(imgInfo);
-                                        return (
-                                          <div>
-                                            <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">OS Image</span>
-                                            {osName ? (
-                                              <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-sm font-extrabold px-2 py-0.5 rounded block mb-1 truncate" title={osName}>{osName}</span>
-                                            ) : null}
-                                            <span className="text-text-muted text-xs truncate block font-mono" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
-                                          </div>
-                                        );
-                                      })()}
-
-                                      {/* Root Disk */}
-                                      <div>
-                                        <span className="block font-normal text-text-muted text-xs mb-1 uppercase tracking-wide">Root Disk</span>
-                                        <span className="text-text-main font-extrabold text-base block">{ng.rootDiskSize} GB SSD</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Associated Security Groups */}
-                                    {(() => {
-                                      const filteredSgs = (editedCandidate.targetSecurityGroupList || []).filter((sg, sgIdx) => {
-                                        if (!sg?.name) return false;
-                                        const sgName = sg.name.toLowerCase();
-                                        const ngName = ng.name.toLowerCase();
-
-                                        // 1. Partial/Exact name match
-                                        if (sgName.includes(ngName) || ngName.includes(sgName)) return true;
-
-                                        // 2. Fallback to distribute different SGs to different NodeGroups as a realistic mock
-                                        const ngIdx = editedCandidate.targetInfra.nodeGroups.indexOf(ng);
-                                        return (ngIdx % 2 === sgIdx % 2) || sgName.includes('default') || sgName.includes('common');
-                                      });
-
-                                      const displaySgs = filteredSgs.length > 0
-                                        ? filteredSgs
-                                        : (editedCandidate.targetSecurityGroupList && editedCandidate.targetSecurityGroupList.length > 0
-                                          ? [editedCandidate.targetSecurityGroupList[0]]
-                                          : []);
-
-                                      return (
-                                        <div className="flex flex-wrap gap-2 items-center mb-4 bg-bg-input/10 p-2.5 rounded-lg border border-border-main/5 px-3">
-                                          <span className="text-sm font-normal text-text-muted block">Security Group(s)</span>
-                                          {displaySgs.length > 0 ? (
-                                            displaySgs.map((sg, sgIdx) => (
-                                              <span key={sgIdx} className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-sm px-2 py-0.5 rounded font-extrabold font-mono">
-                                                {sg.name || 'default-sg'}
-                                              </span>
-                                            ))
-                                          ) : (
-                                            <span className="text-sm text-text-muted italic">none</span>
-                                          )}
+                                            );
+                                          })}
                                         </div>
-                                      );
-                                    })()}
-
-                                    {/* VISUAL INDIVIDUAL NODES - LOOP BY SIZE */}
-                                    <div className="space-y-1.5">
-                                      <span className="block text-sm font-normal text-text-muted">Node(s) ({nodeCount})</span>
-                                      <div className="grid grid-cols-1 gap-1.5">
-                                        {nodesArray.map((_, nodeIdx) => {
-                                          const suffix = String(nodeIdx + 1).padStart(2, '0');
-                                          const nodeName = `${ng.name}-${suffix}`;
-                                          const nodeIp = `10.0.1.${10 * (idx + 1) + nodeIdx}`;
-                                          return (
-                                            <div key={nodeIdx} className="bg-bg-panel/80 border border-emerald-500/10 hover:border-emerald-500/30 p-2 rounded-lg flex items-center justify-between font-mono text-sm transition">
-                                              <div className="flex items-center space-x-2">
-                                                <Server className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                                                <span className="font-sans font-normal text-text-muted text-sm">{nodeName}</span>
-                                              </div>
-                                              <span className="text-text-main font-bold">{nodeIp}</span>
-                                            </div>
-                                          );
-                                        })}
                                       </div>
+
                                     </div>
-                                  </div>
+                                  )}
                                 </div>
                               );
                             })}
                           </div>
+                          )}
                         </div>
+                          );
+                        })}
                       </div>
 
                       {/* Integrated Fine-Tuning & Saving Controls */}
@@ -1499,6 +1612,36 @@ export const MigrationDesigner: React.FC = () => {
                             <div>
                               <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">Review and Editing</span>
                               <span className="text-sm text-text-muted italic block mt-0.5">* Modifying resource values dynamically updates the topology diagram in real-time</span>
+                            </div>
+                            {/* Alternatives selector — between Topology and Review & Editing */}
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
+                              <span className="text-xs font-bold text-text-muted">Alternatives:</span>
+                              {recommendationCandidates.map((c, idx) => {
+                                const isActive = selectedCandidateIndex === idx;
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      selectCandidate(idx);
+                                      updateEditedCandidate(JSON.parse(JSON.stringify(c)));
+                                      if (activeStep < 5) setActiveStep(5);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                      isActive
+                                        ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                        : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
+                                    }`}
+                                  >
+                                    Alt {idx + 1}
+                                  </button>
+                                );
+                              })}
+                              <button
+                                onClick={() => setShowCompareModal(true)}
+                                className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-lg text-xs font-bold transition cursor-pointer"
+                              >
+                                Compare
+                              </button>
                             </div>
                           </div>
 
@@ -1527,7 +1670,7 @@ export const MigrationDesigner: React.FC = () => {
                               className="px-3 py-1.5 rounded-lg text-sm font-bold border border-border-main/10 bg-bg-panel/10 text-text-muted/40 cursor-not-allowed opacity-50 flex items-center space-x-1"
                               title="Storage Tuning is coming soon in next version"
                             >
-                              <span>Storage (Soon)</span>
+                              <span>Disk (Soon)</span>
                             </button>
                             <button
                               onClick={() => setTargetActiveTab('security')}
@@ -1547,6 +1690,17 @@ export const MigrationDesigner: React.FC = () => {
                             >
                               SSH Auth Key
                             </button>
+                            {(editedCandidate.targetNlbList || []).length > 0 && (
+                              <button
+                                onClick={() => setTargetActiveTab('nlb')}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition cursor-pointer ${targetActiveTab === 'nlb'
+                                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold'
+                                    : 'bg-bg-panel/40 border-border-main/30 text-text-muted hover:text-text-main'
+                                  }`}
+                              >
+                                NLB — Network Load Balancer
+                              </button>
+                            )}
                           </div>
 
                           {/* Tabs Content */}
@@ -1558,7 +1712,7 @@ export const MigrationDesigner: React.FC = () => {
                                 {editedCandidate.targetInfra.nodeGroups.map((ng, ngIdx) => {
                                   const specInfo = getSpecInfo(editedCandidate, ng.specId);
                                   const imgInfo  = getImageInfo(editedCandidate, ng.imageId);
-                                  const osName   = formatOsName(imgInfo);
+                                  const osName   = formatOsName(imgInfo, ng.imageId);
                                   const vcpu     = specInfo?.vCPU;
                                   const memGiB   = specInfo?.memoryGiB;
                                   return (
@@ -1572,28 +1726,28 @@ export const MigrationDesigner: React.FC = () => {
                                     <div className="flex flex-wrap gap-3 p-3 bg-bg-input/20 rounded-lg border border-border-main/10">
                                       {/* Spec badges */}
                                       <div className="flex flex-col gap-1">
-                                        <span className="text-xs font-bold text-text-muted uppercase tracking-wide">VM Spec</span>
+                                        <span className="text-xs font-bold text-text-muted">VM Spec</span>
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                          {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{vcpu} vCPU</span>}
-                                          {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{formatMemory(memGiB)}</span>}
+                                          {vcpu   && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{vcpu} vCPU</span>}
+                                          {memGiB && <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-2 py-0.5 rounded">{formatMemory(memGiB)}</span>}
                                           <span className="text-xs text-text-muted font-mono" title={ng.specId}>{extractInstanceType(ng.specId)}</span>
                                         </div>
                                       </div>
-                                      <div className="w-px bg-border-main/30 self-stretch mx-1" />
-                                      {/* Image badges */}
-                                      <div className="flex flex-col gap-1">
-                                        <span className="text-xs font-bold text-text-muted uppercase tracking-wide">OS Image</span>
-                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                          {osName && <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-sm font-extrabold px-2.5 py-0.5 rounded">{osName}</span>}
-                                          <span className="text-xs text-text-muted font-mono truncate max-w-[220px]" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
+                                      <div className="w-px bg-border-main/30 self-stretch mx-1 hidden sm:block" />
+                                      {/* Image badges — flex-1 so it uses remaining width without truncation */}
+                                      <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+                                        <span className="text-xs font-bold text-text-muted">OS Image</span>
+                                        <div className="flex flex-wrap gap-1.5 items-start">
+                                          {osName && <span className="bg-teal-500/10 border border-teal-500/20 text-teal-600 dark:text-teal-400 text-xs font-extrabold px-2 py-0.5 rounded break-words">{osName}</span>}
+                                          <span className="text-xs text-text-muted font-mono break-all" title={ng.imageId}>{ng.imageId.split('/').pop() || ng.imageId}</span>
                                         </div>
                                       </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
                                       {/* Node Group Name */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Node Group Name</label>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Name</label>
                                         <input
                                           type="text"
                                           value={ng.name}
@@ -1603,7 +1757,7 @@ export const MigrationDesigner: React.FC = () => {
                                       </div>
                                       {/* Spec ID */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Spec ID</label>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Spec ID</label>
                                         <input
                                           type="text"
                                           value={ng.specId}
@@ -1611,20 +1765,9 @@ export const MigrationDesigner: React.FC = () => {
                                           className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
                                       </div>
-                                      {/* Node Group Size */}
+                                      {/* Image ID */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Node Count</label>
-                                        <input
-                                          type="number"
-                                          min={1}
-                                          value={ng.nodeGroupSize}
-                                          onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'nodeGroupSize', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
-                                        />
-                                      </div>
-                                      {/* OS Image ID */}
-                                      <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Image ID</label>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Image ID</label>
                                         <input
                                           type="text"
                                           value={ng.imageId}
@@ -1634,7 +1777,7 @@ export const MigrationDesigner: React.FC = () => {
                                       </div>
                                       {/* Root Disk Size */}
                                       <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Root Disk (GB)</label>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Root Disk (GB)</label>
                                         <input
                                           type="number"
                                           min={10}
@@ -1642,6 +1785,70 @@ export const MigrationDesigner: React.FC = () => {
                                           onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'rootDiskSize', e.target.value)}
                                           className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                                         />
+                                      </div>
+                                      {/* Subnet Assignment */}
+                                      <div>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Subnet</label>
+                                        <select
+                                          value={ng.subnetId}
+                                          onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'subnetId', e.target.value)}
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer"
+                                        >
+                                          {(editedCandidate.targetVNet.subnetInfoList || []).map((sub, sIdx) => (
+                                            <option key={sIdx} value={sub.name}>{sub.name}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      {/* Node Count — last column */}
+                                      <div>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Node Count</label>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          value={ng.nodeGroupSize}
+                                          onChange={(e) => handleTuneTargetNodeProperty(ngIdx, 'nodeGroupSize', e.target.value)}
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Security Group assignment */}
+                                    <div className="border-t border-border-main/20 pt-3 space-y-2">
+                                      <label className="block text-sm font-bold text-text-muted font-sans">Security Groups</label>
+                                      <div className="flex flex-wrap gap-2 items-center min-h-[32px]">
+                                        {/* Current SGs as removable pills */}
+                                        {(ng.securityGroupIds || []).map((sgId: string, i: number) => (
+                                          <span key={i} className="inline-flex items-center gap-1 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-2 py-1 rounded-lg font-mono">
+                                            {sgId}
+                                            <button
+                                              onClick={() => handleNodeGroupRemoveSg(ngIdx, sgId)}
+                                              className="ml-0.5 text-orange-400 hover:text-red-400 transition cursor-pointer leading-none"
+                                              title={`Remove ${sgId}`}
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        ))}
+                                        {/* Dropdown to add a SG not yet assigned */}
+                                        {(editedCandidate.targetSecurityGroupList || []).filter(
+                                          (sg: any) => !(ng.securityGroupIds || []).includes(sg.name)
+                                        ).length > 0 && (
+                                          <select
+                                            defaultValue=""
+                                            onChange={(e) => { if (e.target.value) { handleNodeGroupAddSg(ngIdx, e.target.value); e.target.value = ''; } }}
+                                            className="bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2 py-1 text-xs font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer"
+                                          >
+                                            <option value="">+ Add SG</option>
+                                            {(editedCandidate.targetSecurityGroupList || [])
+                                              .filter((sg: any) => !(ng.securityGroupIds || []).includes(sg.name))
+                                              .map((sg: any, i: number) => (
+                                                <option key={i} value={sg.name}>{sg.name}</option>
+                                              ))}
+                                          </select>
+                                        )}
+                                        {(ng.securityGroupIds || []).length === 0 && (editedCandidate.targetSecurityGroupList || []).length === 0 && (
+                                          <span className="text-xs text-text-muted italic">No security groups defined — add one in the Security Groups tab</span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1658,7 +1865,7 @@ export const MigrationDesigner: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
-                                    <label className="block text-sm font-bold text-text-muted uppercase mb-1">VNet Resource Name</label>
+                                    <label className="block text-sm font-bold text-text-muted mb-1">VNet Resource Name</label>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetVNet.name}
@@ -1667,7 +1874,7 @@ export const MigrationDesigner: React.FC = () => {
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-bold text-text-muted uppercase mb-1">VNet CIDR Address Block</label>
+                                    <label className="block text-sm font-bold text-text-muted mb-1">VNet CIDR Address Block</label>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetVNet.cidrBlock}
@@ -1679,26 +1886,57 @@ export const MigrationDesigner: React.FC = () => {
 
                                 {/* Subnets list editing */}
                                 <div className="space-y-3 mt-4">
-                                  <span className="block text-sm font-bold text-text-muted uppercase tracking-wider font-mono">Subnet Resource Blocks</span>
+                                  <div className="flex items-center justify-between">
+                                    <span className="block text-sm font-bold text-text-muted font-mono">Subnet Resource Blocks</span>
+                                    <button
+                                      onClick={handleAddSubnet}
+                                      className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    >
+                                      + Add Subnet
+                                    </button>
+                                  </div>
                                   {editedCandidate.targetVNet.subnetInfoList && editedCandidate.targetVNet.subnetInfoList.map((sub, subIdx) => (
-                                    <div key={subIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                      <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1">Subnet #{subIdx + 1} Name</label>
-                                        <input
-                                          type="text"
-                                          value={sub.name}
-                                          onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'name', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
-                                        />
+                                    <div key={subIdx} className="bg-bg-input/20 border border-border-main/20 p-3 rounded-lg space-y-2.5">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-text-muted uppercase">Subnet #{subIdx + 1}</span>
+                                        <button
+                                          onClick={() => handleDeleteSubnet(subIdx)}
+                                          disabled={editedCandidate.targetVNet.subnetInfoList.length <= 1}
+                                          className="px-2 py-1 text-xs font-bold text-red-400 hover:bg-red-500/10 rounded disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+                                          title={editedCandidate.targetVNet.subnetInfoList.length <= 1 ? 'At least 1 subnet required' : 'Delete subnet'}
+                                        >
+                                          Delete
+                                        </button>
                                       </div>
-                                      <div>
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1">Subnet #{subIdx + 1} CIDR Block</label>
-                                        <input
-                                          type="text"
-                                          value={sub.ipv4_CIDR}
-                                          onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'ipv4_CIDR', e.target.value)}
-                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
-                                        />
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <div>
+                                          <label className="block text-xs font-bold text-text-muted mb-1">Name</label>
+                                          <input
+                                            type="text"
+                                            value={sub.name}
+                                            onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'name', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-bold text-text-muted mb-1">CIDR Block</label>
+                                          <input
+                                            type="text"
+                                            value={sub.ipv4_CIDR}
+                                            onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'ipv4_CIDR', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs font-bold text-text-muted mb-1">Zone <span className="text-text-muted font-normal normal-case">(optional)</span></label>
+                                          <input
+                                            type="text"
+                                            placeholder="e.g. ap-northeast-2a"
+                                            value={sub.zone || ''}
+                                            onChange={(e) => handleTuneTargetSubnetProperty(subIdx, 'zone', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
+                                          />
+                                        </div>
                                       </div>
                                     </div>
                                   ))}
@@ -1714,7 +1952,7 @@ export const MigrationDesigner: React.FC = () => {
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
                                   <div>
-                                    <label className="block text-sm font-bold text-text-muted uppercase mb-1">SSH Key Pair Name ID</label>
+                                    <label className="block text-sm font-bold text-text-muted mb-1">SSH Key Pair Name ID</label>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetSshKey.name}
@@ -1723,7 +1961,7 @@ export const MigrationDesigner: React.FC = () => {
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-bold text-text-muted uppercase mb-1">Description / Scope Tag</label>
+                                    <label className="block text-sm font-bold text-text-muted mb-1">Description / Scope Tag</label>
                                     <input
                                       type="text"
                                       value={editedCandidate.targetSshKey.description || ''}
@@ -1739,11 +1977,24 @@ export const MigrationDesigner: React.FC = () => {
                             {/* TAB 4: Security Groups & Rules */}
                             {targetActiveTab === 'security' && (
                               <div className="space-y-4">
+                                {/* Add SG header */}
+                                <div className="flex items-center justify-between pb-2 border-b border-border-main/20">
+                                  <span className="text-sm font-semibold text-text-muted">
+                                    {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s)
+                                  </span>
+                                  <button
+                                    onClick={handleAddSecurityGroup}
+                                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-bold transition cursor-pointer"
+                                  >
+                                    + Add Security Group
+                                  </button>
+                                </div>
+
                                 {editedCandidate.targetSecurityGroupList && editedCandidate.targetSecurityGroupList.map((sg, sgIdx) => (
                                   <div key={sgIdx} className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-4">
                                     <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 border-b border-border-main/10 pb-2">
                                       <div className="flex-1">
-                                        <label className="block text-sm font-bold text-text-muted uppercase mb-1 font-sans">Security Group Name</label>
+                                        <label className="block text-sm font-bold text-text-muted mb-1 font-sans">Security Group Name</label>
                                         <input
                                           type="text"
                                           value={sg.name}
@@ -1751,47 +2002,72 @@ export const MigrationDesigner: React.FC = () => {
                                           className="bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1 text-sm font-mono w-full max-w-sm focus:outline-none focus:border-emerald-500/40 font-extrabold"
                                         />
                                       </div>
-                                      <span className="text-sm text-text-muted font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded self-start font-mono">
-                                        Total Rules: {(sg.firewallRules || []).length}
-                                      </span>
+                                      <div className="flex items-center gap-2 self-start">
+                                        <span className="text-sm text-text-muted font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono">
+                                          {(sg.firewallRules || []).length} rules
+                                        </span>
+                                        <button
+                                          onClick={() => handleDeleteSecurityGroup(sgIdx)}
+                                          className="px-2.5 py-1 text-xs font-bold text-red-400 hover:bg-red-500/10 border border-red-400/30 hover:border-red-400/60 rounded-lg transition cursor-pointer"
+                                          title="Delete this Security Group"
+                                        >
+                                          Delete SG
+                                        </button>
+                                      </div>
                                     </div>
 
-                                    {/* Firewall rules lists */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                      {(sg.firewallRules || []).map((rule, ruleIdx) => {
-                                        if (!rule) return null;
-                                        const direction = (rule.direction || 'inbound').toUpperCase();
-                                        const protocol = (rule.protocol || 'tcp').toUpperCase();
-                                        const port = rule.dstPorts || rule.srcPorts || 'ALL';
+                                    {/* Firewall rules — table list */}
+                                    {(sg.firewallRules || []).length > 0 && (
+                                      <div className="rounded-lg border border-border-main/30 overflow-hidden">
+                                        {/* Header row */}
+                                        <div className="grid grid-cols-[1fr_1fr_1fr_2.5fr_80px] bg-bg-input/40 px-5 py-2.5 text-xs font-bold text-text-muted border-b border-border-main/20 gap-6">
+                                          <span>Direction</span>
+                                          <span>Protocol</span>
+                                          <span>Port Range</span>
+                                          <span>CIDR (Source / Destination)</span>
+                                          <span />
+                                        </div>
+                                        {/* Data rows */}
+                                        <div className="divide-y divide-border-main/15">
+                                          {(sg.firewallRules || []).map((rule, ruleIdx) => {
+                                            if (!rule) return null;
+                                            const dir       = (rule.Direction || rule.direction || 'inbound').toLowerCase();
+                                            const isInbound = dir === 'inbound';
+                                            const proto     = (rule.Protocol   || rule.protocol   || 'tcp').toLowerCase();
+                                            const protocol  = proto.toUpperCase();
+                                            const port      = rule.Ports || rule.dstPorts || rule.srcPorts || '*';
+                                            const cidr      = rule.CIDR
+                                              ? rule.CIDR
+                                              : isInbound
+                                                ? (rule.srcCIDR || rule.dstCIDR || '0.0.0.0/0')
+                                                : (rule.dstCIDR || rule.srcCIDR || '0.0.0.0/0');
 
-                                        return (
-                                          <div key={ruleIdx} className="bg-bg-panel border border-border-main p-3 rounded-lg flex justify-between items-center text-sm font-mono relative group">
-                                            <div className="space-y-0.5">
-                                              <div className="flex items-center space-x-2">
-                                                <span className={`text-xs px-1.5 py-0.5 rounded font-extrabold ${direction === 'INBOUND' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
-                                                  {direction}
+                                            return (
+                                              <div key={ruleIdx} className="grid grid-cols-[1fr_1fr_1fr_2.5fr_80px] items-center px-5 py-3 gap-6 hover:bg-bg-input/10 transition text-sm font-mono">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-extrabold w-fit ${isInbound ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'}`}>
+                                                  {dir.toUpperCase()}
                                                 </span>
-                                                <span className="text-text-muted font-normal">{protocol} Port: {port}</span>
+                                                <span className="text-text-muted">{protocol}</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{port}</span>
+                                                <span className="text-text-muted truncate" title={cidr}>
+                                                  <span className="text-text-muted/50 text-xs mr-1">{isInbound ? 'Source:' : 'Destination:'}</span>{cidr}
+                                                </span>
+                                                <button
+                                                  onClick={() => handleDeleteTargetFirewallRule(sgIdx, ruleIdx)}
+                                                  className="text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 px-2 py-1 rounded transition cursor-pointer"
+                                                >
+                                                  Delete
+                                                </button>
                                               </div>
-                                              <div className="text-sm text-text-muted font-normal">
-                                                {rule.srcCIDR || '0.0.0.0/0'}
-                                              </div>
-                                            </div>
-                                            <button
-                                              onClick={() => handleDeleteTargetFirewallRule(sgIdx, ruleIdx)}
-                                              className="text-red-500 hover:text-red-400 p-1 hover:bg-red-500/10 rounded cursor-pointer transition"
-                                              title="Delete Rule"
-                                            >
-                                              Delete
-                                            </button>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
 
                                     {/* Add Target Firewall Rule form */}
                                     <div className="bg-bg-input/20 border border-border-main/20 p-3.5 rounded-lg space-y-3">
-                                      <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Add Firewall Access Rule</span>
+                                      <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">Add Firewall Access Rule</span>
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         <div>
                                           <label className="block text-sm font-bold text-text-muted mb-1">Direction</label>
@@ -1842,8 +2118,121 @@ export const MigrationDesigner: React.FC = () => {
                                         onClick={() => handleAddTargetFirewallRule(sgIdx)}
                                         className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-sm font-bold transition cursor-pointer"
                                       >
-                                        + Inject Rule to SG
+                                        + Add Rule to SG
                                       </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* TAB 5: NLB */}
+                            {targetActiveTab === 'nlb' && (
+                              <div className="space-y-3.5">
+                                {(editedCandidate.targetNlbList || []).length === 0 ? (
+                                  <div className="py-6 text-center text-text-muted text-sm italic">No NLBs in this candidate.</div>
+                                ) : (editedCandidate.targetNlbList || []).map((nlb: any, nlbIdx: number) => (
+                                  <div key={nlbIdx} className="bg-bg-panel/40 p-4 rounded-xl border border-border-main/30 space-y-3">
+                                    <div className="flex justify-between items-center text-sm font-bold text-text-main border-b border-border-main/10 pb-1.5 font-mono">
+                                      <span>NLB #{nlbIdx + 1}</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                      {/* Type */}
+                                      <div>
+                                        <label className="block text-xs font-bold text-text-muted mb-1">Type</label>
+                                        <select value={nlb.type || 'PUBLIC'} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'type', e.target.value)}
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer">
+                                          <option value="PUBLIC">PUBLIC</option>
+                                          <option value="INTERNAL">INTERNAL</option>
+                                        </select>
+                                      </div>
+                                      {/* Scope */}
+                                      <div>
+                                        <label className="block text-xs font-bold text-text-muted mb-1">Scope</label>
+                                        <select value={nlb.scope || 'REGION'} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'scope', e.target.value)}
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer">
+                                          <option value="REGION">REGION</option>
+                                          <option value="GLOBAL">GLOBAL</option>
+                                        </select>
+                                      </div>
+                                      {/* Description */}
+                                      <div>
+                                        <label className="block text-xs font-bold text-text-muted mb-1">Description</label>
+                                        <input type="text" value={nlb.description || ''} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'description', e.target.value)}
+                                          className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                      </div>
+                                    </div>
+                                    {/* Listener */}
+                                    <div>
+                                      <span className="block text-xs font-bold text-text-muted mb-2">Listener</span>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Protocol</label>
+                                          <select value={nlb.listener?.protocol || 'TCP'} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'listener.protocol', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer">
+                                            <option value="TCP">TCP</option>
+                                            <option value="UDP">UDP</option>
+                                            <option value="HTTP">HTTP</option>
+                                            <option value="HTTPS">HTTPS</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Port</label>
+                                          <input type="text" value={nlb.listener?.port || ''} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'listener.port', e.target.value)}
+                                            placeholder="e.g. 80" className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* Target Group */}
+                                    <div>
+                                      <span className="block text-xs font-bold text-text-muted mb-2">Target Group</span>
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Node Group</label>
+                                          <select value={nlb.targetGroup?.nodeGroupId || ''} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'targetGroup.nodeGroupId', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer">
+                                            {editedCandidate.targetInfra.nodeGroups.map((ng: any, i: number) => (
+                                              <option key={i} value={ng.name}>{ng.name}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Protocol</label>
+                                          <select value={nlb.targetGroup?.protocol || 'TCP'} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'targetGroup.protocol', e.target.value)}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40 cursor-pointer">
+                                            <option value="TCP">TCP</option>
+                                            <option value="UDP">UDP</option>
+                                            <option value="HTTP">HTTP</option>
+                                            <option value="HTTPS">HTTPS</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Port</label>
+                                          <input type="text" value={nlb.targetGroup?.port || ''} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'targetGroup.port', e.target.value)}
+                                            placeholder="e.g. 8080" className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {/* Health Checker */}
+                                    <div>
+                                      <span className="block text-xs font-bold text-text-muted mb-2">Health Checker</span>
+                                      <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Interval (s)</label>
+                                          <input type="number" min={1} value={nlb.healthChecker?.interval ?? 10} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'healthChecker.interval', parseInt(e.target.value))}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Timeout (s)</label>
+                                          <input type="number" min={1} value={nlb.healthChecker?.timeout ?? 10} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'healthChecker.timeout', parseInt(e.target.value))}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-text-muted mb-1">Threshold</label>
+                                          <input type="number" min={1} value={nlb.healthChecker?.threshold ?? 3} onChange={(e) => handleTuneTargetNlbProperty(nlbIdx, 'healthChecker.threshold', parseInt(e.target.value))}
+                                            className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:border-emerald-500/40" />
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 ))}

@@ -120,7 +120,7 @@ export const MigrationCenter: React.FC = () => {
           <div className="overflow-x-auto border border-border-main rounded-xl">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border-main bg-bg-input/40 text-text-muted uppercase tracking-wider font-bold">
+                <tr className="border-b border-border-main bg-bg-input/40 text-text-muted font-bold">
                   <th className="py-3 px-4">Cloud Node Group</th>
                   <th className="py-3 px-4">Instance Spec ID</th>
                   <th className="py-3 px-4">Public IP Address</th>

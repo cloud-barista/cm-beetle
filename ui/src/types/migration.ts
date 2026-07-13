@@ -41,13 +41,19 @@ export interface RouteProperty {
 }
 
 export interface FirewallRule {
-  action: string;
-  direction: string;
-  dstCIDR: string;
-  dstPorts: string;
-  protocol: string;
-  srcCIDR: string;
-  srcPorts: string;
+  // Lowercase fields — on-premise source infra (onpremmodel.FirewallRuleProperty)
+  action?: string;
+  direction?: string;
+  dstCIDR?: string;
+  dstPorts?: string;
+  protocol?: string;
+  srcCIDR?: string;
+  srcPorts?: string;
+  // Capitalized fields — CB-Tumblebug target recommendation (cloudmodel.FirewallRuleReq)
+  Direction?: string;
+  Protocol?: string;
+  CIDR?: string;
+  Ports?: string;
 }
 
 export interface OsProperty {
@@ -166,6 +172,7 @@ export interface SubnetInfo {
   name: string;
   ipv4_CIDR: string;
   description: string;
+  zone?: string;
 }
 
 export interface TargetVNet {

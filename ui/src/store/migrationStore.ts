@@ -345,7 +345,7 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     try {
       const models = await damselflyApi.getSourceModels();
       // Always include the built-in sample model at the top of the list
-      const withoutSample = models.filter(m => m.id !== DEFAULT_FALLBACK_SOURCE_MODEL.id);
+      const withoutSample = models.filter((m: OnpremModelEnvelope) => m.id !== DEFAULT_FALLBACK_SOURCE_MODEL.id);
       set({ savedSourceModels: [DEFAULT_FALLBACK_SOURCE_MODEL, ...withoutSample] });
     } catch {
       // Damselfly unreachable — show sample model only

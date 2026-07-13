@@ -19,6 +19,10 @@ next-env.d.ts
 .env
 .env*.local
 
+# TypeScript build cache (generated, not for version control)
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

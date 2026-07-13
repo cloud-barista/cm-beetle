@@ -111,6 +111,24 @@ ui/src/
 - Use `clsx()` for conditional classes
 - Dark mode by default (optional `dark:` prefix)
 
+### Text Casing
+
+- **Labels and section headers**: Title Case only — **never ALL CAPS**
+  - ✅ `Spec`, `Root Disk`, `Security Group`, `Node Count`
+  - ❌ `SPEC`, `ROOT DISK`, `SECURITY GROUP`, `NODE COUNT`
+- **Tailwind**: Do **not** use `uppercase` + `tracking-wide/tracking-wider` on labels; reserve `uppercase` for dynamic data-value badges (e.g., `{status}`, `{direction}`)
+- **Data value badges** (e.g., status pills, direction indicators): `uppercase` is acceptable to visually distinguish computed values from labels
+
+### Badge vs Plain Text
+
+Use **colored background badges** for:
+- Resource identifiers compared across candidates: vCPU, memory, instance type (emerald), OS image (teal), security group name (orange)
+- Status / categorical values: match status, direction, type
+
+Use **plain text** for:
+- Scalar measurements: disk size (GB), node count
+- Form field values inside inputs
+
 ### State Management
 
 ```typescript
