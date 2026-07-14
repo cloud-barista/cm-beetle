@@ -135,25 +135,27 @@ export const honeybeeApi = {
 // ============================================================================
 export const damselflyApi = {
   // Save source infra model as a catalog template
-  saveSourceModel: async (name: string, description: string, onpremiseInfraModel: OnpremInfra): Promise<OnpremModelEnvelope> => {
+  saveSourceModel: async (name: string, description: string, onpremiseInfraModel: OnpremInfra, version?: string): Promise<OnpremModelEnvelope> => {
     const response = await api.post('/damselfly/infra-model?modelType=onprem&isTargetModel=false', {
       userModelName: name,
+      userModelVersion: version,
       description,
       onpremiseInfraModel
     });
     const m = response.data;
-    return { ...m, id: m.id || m.uid || 'model-demo-1', name: m.name || m.userModelName || name };
+    return { ...m, id: m.id || m.uid || 'model-demo-1', name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
   },
 
   // Update existing source model
-  updateSourceModel: async (id: string, name: string, description: string, onpremiseInfraModel: OnpremInfra): Promise<OnpremModelEnvelope> => {
+  updateSourceModel: async (id: string, name: string, description: string, onpremiseInfraModel: OnpremInfra, version?: string): Promise<OnpremModelEnvelope> => {
     const response = await api.put(`/damselfly/infra-model/${id}?modelType=onprem&isTargetModel=false`, {
       userModelName: name,
+      userModelVersion: version,
       description,
       onpremiseInfraModel
     });
     const m = response.data;
-    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name };
+    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
   },
 
   // Get all source models list
@@ -177,14 +179,27 @@ export const damselflyApi = {
   },
 
   // Save recommended target cloud spec as design template
-  saveCloudModel: async (name: string, description: string, cloudInfraModel: RecommendedInfra): Promise<CloudModelEnvelope> => {
+  saveCloudModel: async (name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
     const response = await api.post('/damselfly/infra-model?modelType=cloud&isTargetModel=true', {
       userModelName: name,
+      userModelVersion: version,
       description,
       cloudInfraModel
     });
     const m = response.data;
-    return { ...m, id: m.id || m.uid || 'cloud-demo-1', name: m.name || m.userModelName || name };
+    return { ...m, id: m.id || m.uid || 'cloud-demo-1', name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
+  },
+
+  // Update existing target cloud design
+  updateCloudModel: async (id: string, name: string, description: string, cloudInfraModel: RecommendedInfra, version?: string): Promise<CloudModelEnvelope> => {
+    const response = await api.put(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`, {
+      userModelName: name,
+      userModelVersion: version,
+      description,
+      cloudInfraModel
+    });
+    const m = response.data;
+    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
   },
 
   // Get target cloud design templates

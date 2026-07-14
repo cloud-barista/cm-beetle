@@ -3,18 +3,20 @@
 import React from 'react';
 import { useMigrationStore } from '@/store/migrationStore';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { SourceCenter } from '@/components/source/SourceCenter';
-import { MigrationDesigner } from '@/components/design/MigrationDesigner';
-import { MigrationCenter } from '@/components/center/MigrationCenter';
+import { SourceMetadataExtraction } from '@/components/source/SourceMetadataExtraction';
+import { SourceInfraRefinement } from '@/components/refine/SourceInfraRefinement';
+import { CloudInfraOptimizer } from '@/components/design/CloudInfraOptimizer';
+import { MigrationExecution } from '@/components/center/MigrationExecution';
 
 export default function Home() {
   const { activeTab } = useMigrationStore();
 
   return (
     <AppLayout>
-      {activeTab === 'source' && <SourceCenter />}
-      {activeTab === 'design' && <MigrationDesigner />}
-      {activeTab === 'migrate' && <MigrationCenter />}
+      {activeTab === 'source' && <SourceMetadataExtraction />}
+      {activeTab === 'refine' && <SourceInfraRefinement />}
+      {activeTab === 'design' && <CloudInfraOptimizer />}
+      {activeTab === 'migrate' && <MigrationExecution />}
     </AppLayout>
   );
 }

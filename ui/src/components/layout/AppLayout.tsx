@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
-import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2 } from 'lucide-react';
+import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2, Sliders } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -27,9 +27,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [layoutWidth, setLayoutWidth] = React.useState<number>(1920);
 
   const navItems = [
-    { id: 'source', label: '1. Source Infrastructures', icon: Database, desc: 'Register host connections & extract system models' },
-    { id: 'design', label: '2. Target Cloud Optimizer', icon: Compass, desc: 'Compose & compare multiple cloud architecture combinations' },
-    { id: 'migrate', label: '3. Migration Execution', icon: Cpu, desc: 'Trigger deployment & monitor build logs' },
+    { id: 'source', label: '1. Source Infra Metadata Extraction', icon: Database, desc: 'Register hosts and extract infra metadata' },
+    { id: 'refine', label: '2. Source Infra Metadata Refinement', icon: Sliders, desc: 'Review and refine source infra metadata' },
+    { id: 'design', label: '3. Target Cloud Infra Optimization', icon: Compass, desc: 'Review and customize target cloud infra' },
+    { id: 'migrate', label: '4. Migration Execution', icon: Cpu, desc: 'Execute migration and check status' },
   ] as const;
 
   return (
@@ -95,7 +96,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main Tab Navigation bar */}
       <div className="bg-bg-panel border-b border-border-main">
         <div className="mx-auto px-6 py-4" style={{ width: `${layoutWidth}px`, maxWidth: '100%' }}>
-          <nav className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <nav className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -118,8 +119,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     }`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className={`font-bold text-base transition-colors duration-200 ${isActive
+                  <div className="min-w-0">
+                    <h3 className={`font-bold text-sm transition-colors duration-200 ${isActive
                       ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
                       : 'text-text-muted group-hover:text-emerald-600 dark:group-hover:text-emerald-400'
                       }`}>

@@ -142,17 +142,17 @@ const DEMO_SOURCE_INFRA: OnpremInfra = {
 };
 
 const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
-  id: 'model-demo-1',
-  name: 'onpremise-web-db-v1',
-  description: 'Production server cluster containing 1 Web and 2 InfluxDB DB nodes',
+  id: 'sample-source-infra-1',
+  name: '[Sample] web-haproxy-influxdb',
+  description: '1 HAProxy/App node + 2 InfluxDB nodes with NLB (sample)',
   onpremiseInfraModel: DEMO_SOURCE_INFRA,
   version: '1.0',
   updatedTime: new Date().toISOString()
 };
 
 interface MigrationState {
-  activeTab: 'source' | 'design' | 'migrate';
-  setActiveTab: (tab: 'source' | 'design' | 'migrate') => void;
+  activeTab: 'source' | 'refine' | 'design' | 'migrate';
+  setActiveTab: (tab: 'source' | 'refine' | 'design' | 'migrate') => void;
   themeMode: 'dark' | 'light';
   toggleTheme: () => void;
 
@@ -174,8 +174,8 @@ interface MigrationState {
   fetchRefinedInfraByGroup: (sgId: string) => Promise<void>;
   fetchSavedSourceModels: () => Promise<void>;
   selectSourceModel: (model: OnpremModelEnvelope | null) => void;
-  saveSourceModel: (name: string, description: string) => Promise<void>;
-  updateSourceModel: (id: string, name: string, description: string, updatedInfra: OnpremInfra) => Promise<void>;
+  saveSourceModel: (name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
+  updateSourceModel: (id: string, name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
 
   // Page 2: Target Cloud Optimizer State
   desiredCsp: string;
@@ -196,7 +196,8 @@ interface MigrationState {
   updateEditedCandidate: (updated: RecommendedInfra) => void;
   fetchSavedCloudModels: () => Promise<void>;
   selectCloudModel: (model: CloudModelEnvelope | null) => void;
-  saveCloudModel: (name: string, description: string) => Promise<void>;
+  saveCloudModel: (name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
+  updateCloudModel: (id: string, name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
   fetchTumblebugProviders: () => Promise<void>;
   fetchTumblebugRegions: (providerName: string) => Promise<void>;
 
@@ -360,22 +361,20 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     });
   },
 
-  saveSourceModel: async (name, description) => {
-    const infra = get().refinedSourceInfra || DEMO_SOURCE_INFRA;
-    const demoModel: OnpremModelEnvelope = {
-      id: `model-demo-${Date.now()}`,
-      name,
-      description,
-      onpremiseInfraModel: infra,
-      version: '1.0',
-      updatedTime: new Date().toISOString()
-    };
-    set({ savedSourceModels: [...get().savedSourceModels, demoModel] });
+  saveSourceModel: async (name, description, version, infra) => {
+    const saved = await damselflyApi.saveSourceModel(name, description, infra, version);
+    set({
+      savedSourceModels: [...get().savedSourceModels, saved],
+      selectedSourceModel: saved
+    });
+    return saved;
   },
 
-  updateSourceModel: async (id, name, description, updatedInfra) => {
-    const updatedList = get().savedSourceModels.map(m => m.id === id ? { ...m, name, description, onpremiseInfraModel: updatedInfra } : m);
-    set({ savedSourceModels: updatedList });
+  updateSourceModel: async (id, name, description, version, updatedInfra) => {
+    const saved = await damselflyApi.updateSourceModel(id, name, description, updatedInfra, version);
+    const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
+    set({ savedSourceModels: updatedList, selectedSourceModel: saved });
+    return saved;
   },
 
   // --------------------------------------------------------------------------
@@ -443,7 +442,7 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   },
 
   fetchSavedCloudModels: async () => {
-    // Damselfly disconnected. Pure local offline flow to prevent empty select box.
+    // Fallback demo model shown when Damselfly is unreachable, to prevent an empty select box.
     const fallbackCloudModels: CloudModelEnvelope[] = [
       {
         id: 'cloud-demo-1',
@@ -477,7 +476,13 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
         updatedTime: new Date().toISOString()
       }
     ];
-    set({ savedCloudModels: fallbackCloudModels });
+    try {
+      const models = await damselflyApi.getCloudModels();
+      set({ savedCloudModels: models.length > 0 ? models : fallbackCloudModels });
+    } catch {
+      // Damselfly unreachable — show fallback demo model only
+      set({ savedCloudModels: fallbackCloudModels });
+    }
   },
 
   selectCloudModel: (model) => {
@@ -487,18 +492,20 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     });
   },
 
-  saveCloudModel: async (name, description) => {
-    const candidate = get().editedCandidate;
-    if (!candidate) throw new Error('No edited cloud configuration to save');
-    const demoModel: CloudModelEnvelope = {
-      id: `cloud-demo-${Date.now()}`,
-      name,
-      description,
-      cloudInfraModel: candidate,
-      version: '1.0',
-      updatedTime: new Date().toISOString()
-    };
-    set({ savedCloudModels: [...get().savedCloudModels, demoModel] });
+  saveCloudModel: async (name, description, version, cloudInfra) => {
+    const saved = await damselflyApi.saveCloudModel(name, description, cloudInfra, version);
+    set({
+      savedCloudModels: [...get().savedCloudModels, saved],
+      selectedCloudModel: saved
+    });
+    return saved;
+  },
+
+  updateCloudModel: async (id, name, description, version, cloudInfra) => {
+    const saved = await damselflyApi.updateCloudModel(id, name, description, cloudInfra, version);
+    const updatedList = get().savedCloudModels.map(m => m.id === id ? saved : m);
+    set({ savedCloudModels: updatedList, selectedCloudModel: saved });
+    return saved;
   },
 
   fetchTumblebugProviders: async () => {

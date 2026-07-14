@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { Play, CheckCircle2, AlertTriangle, RefreshCw, Terminal, Eye, Download, Info, Server } from 'lucide-react';
 
-export const MigrationCenter: React.FC = () => {
+export const MigrationExecution: React.FC = () => {
   const {
     savedCloudModels,
     selectedCloudModel,
