@@ -1,0 +1,74 @@
+# Overlay file: extend docker-compose.yaml with UI-related services.
+#
+# Usage:
+#   # Backend only (Beetle + Tumblebug stack):
+#   docker compose -f docker-compose.yaml up
+#
+#   # Backend + Honeybee + Damselfly (no UI):
+#   docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up
+#
+#   # Full stack including UI dashboard:
+#   docker compose -f docker-compose.yaml -f docker-compose.ui.yaml --profile ui up
+
+services:
+  # ============================================================================
+  # 1. CM-Honeybee (On-Premise Infrastructure Extractor)
+  # ============================================================================
+  cm-honeybee:
+    image: cloudbaristaorg/cm-honeybee:0.5.3
+    container_name: cm-honeybee
+    networks:
+      - cloud-barista
+    ports:
+      - "8081:8081"
+    environment:
+      - HONEYBEE_API_ALLOW_ORIGINS=*
+      - HONEYBEE_LOG_LEVEL=debug
+    volumes:
+      - ./data/cm-honeybee-container/db/:/app/db/
+    restart: always
+
+  # ============================================================================
+  # 2. CM-Damselfly (On-Premise & Cloud Infrastructure Model Repository)
+  # ============================================================================
+  cm-damselfly:
+    image: cloudbaristaorg/cm-damselfly:0.5.3
+    container_name: cm-damselfly
+    networks:
+      - cloud-barista
+    ports:
+      - "8088:8088"
+    environment:
+      - DAMSELFLY_API_ALLOW_ORIGINS=*
+      - DAMSELFLY_LOG_LEVEL=debug
+    volumes:
+      - ./data/cm-damselfly-container/db/:/app/db/
+    restart: always
+
+  # ============================================================================
+  # 3. CM-Beetle UI (Next.js Dashboard, proxies to backend services)
+  #    Excluded from default 'up' — started explicitly with --profile ui
+  #    For local development, run:  cd ui && npm run dev
+  # ============================================================================
+  cm-beetle-ui:
+    profiles: [ui]
+    build:
+      context: ../../ui
+      dockerfile: Dockerfile
+    image: cloudbaristaorg/cm-beetle-ui:latest
+    container_name: cm-beetle-ui
+    networks:
+      - cloud-barista
+    ports:
+      - "3000:3000"
+    environment:
+      # Resolved server-side via Docker internal DNS from docker-compose.yaml network.
+      - BEETLE_ENDPOINT=http://cm-beetle:8056
+      - TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
+      - HONEYBEE_ENDPOINT=http://cm-honeybee:8081
+      - DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
+    depends_on:
+      - cm-beetle
+      - cm-honeybee
+      - cm-damselfly
+    restart: always

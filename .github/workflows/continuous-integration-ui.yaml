@@ -1,0 +1,48 @@
+# This workflow performs continuous integration (CI) for the CM-Beetle UI.
+# Triggered on pull requests that touch the ui/ directory.
+# Verifies the Next.js build succeeds before merging.
+name: Continuous Integration - UI (CI)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "ui/**"
+      - ".github/workflows/continuous-integration-ui.yaml"
+
+jobs:
+  build-ui:
+    name: Build UI (Next.js)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Build Next.js app
+        working-directory: ui
+        run: npm run build
+
+  build-container-image:
+    name: Build UI container image
+    runs-on: ubuntu-22.04
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build ui/ --file ui/Dockerfile --tag cm-beetle-ui

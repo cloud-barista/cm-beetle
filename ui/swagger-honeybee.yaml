@@ -1,0 +1,5480 @@
+basePath: /honeybee
+definitions:
+  blkiodev.ThrottleDevice:
+    properties:
+      path:
+        type: string
+      rate:
+        format: int64
+        type: integer
+    type: object
+  blkiodev.WeightDevice:
+    properties:
+      path:
+        type: string
+      weight:
+        format: int32
+        type: integer
+    type: object
+  container.CgroupnsMode:
+    enum:
+    - ""
+    - private
+    - host
+    type: string
+    x-enum-varnames:
+    - CgroupnsModeEmpty
+    - CgroupnsModePrivate
+    - CgroupnsModeHost
+  container.Config:
+    properties:
+      argsEscaped:
+        description: True if command is already escaped (meaning treat as a command
+          line) (Windows specific).
+        type: boolean
+      attachStderr:
+        description: Attach the standard error
+        type: boolean
+      attachStdin:
+        description: Attach the standard input, makes possible user interaction
+        type: boolean
+      attachStdout:
+        description: Attach the standard output
+        type: boolean
+      cmd:
+        description: Command to run when starting the container
+        items:
+          type: string
+        type: array
+      domainname:
+        description: Domainname
+        type: string
+      entrypoint:
+        description: Entrypoint to run when starting the container
+        items:
+          type: string
+        type: array
+      env:
+        description: List of environment variable to set in the container
+        items:
+          type: string
+        type: array
+      exposedPorts:
+        allOf:
+        - $ref: '#/definitions/nat.PortSet'
+        description: List of exposed ports
+      healthcheck:
+        allOf:
+        - $ref: '#/definitions/container.HealthConfig'
+        description: Healthcheck describes how to check the container is healthy
+      hostname:
+        description: Hostname
+        type: string
+      image:
+        description: Name of the image as it was passed by the operator (e.g. could
+          be symbolic)
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        description: List of labels set to this container
+        type: object
+      macAddress:
+        description: |-
+          Mac Address of the container.
+
+          Deprecated: this field is deprecated since API v1.44. Use EndpointSettings.MacAddress instead.
+        type: string
+      networkDisabled:
+        description: Is network disabled
+        type: boolean
+      onBuild:
+        description: ONBUILD metadata that were defined on the image Dockerfile
+        items:
+          type: string
+        type: array
+      openStdin:
+        description: Open stdin
+        type: boolean
+      shell:
+        description: Shell for shell-form of RUN, CMD, ENTRYPOINT
+        items:
+          type: string
+        type: array
+      stdinOnce:
+        description: If true, close stdin after the 1 attached client disconnects.
+        type: boolean
+      stopSignal:
+        description: Signal to stop a container
+        type: string
+      stopTimeout:
+        description: Timeout (in seconds) to stop a container
+        type: integer
+      tty:
+        description: Attach standard streams to a tty, including stdin if it is not
+          closed.
+        type: boolean
+      user:
+        description: User that will run the command(s) inside the container, also
+          support user:group
+        type: string
+      volumes:
+        additionalProperties:
+          type: object
+        description: List of volumes (mounts) used for the container
+        type: object
+      workingDir:
+        description: Current directory (PWD) in the command will be launched
+        type: string
+    type: object
+  container.ContainerState:
+    enum:
+    - created
+    - running
+    - paused
+    - restarting
+    - removing
+    - exited
+    - dead
+    type: string
+    x-enum-comments:
+      StateCreated: StateCreated indicates the container is created, but not (yet)
+        started.
+      StateDead: StateDead indicates that the container failed to be deleted. Containers
+        in this state are attempted to be cleaned up when the daemon restarts.
+      StateExited: StateExited indicates that the container exited.
+      StatePaused: StatePaused indicates that the container's current state is paused.
+      StateRemoving: StateRemoving indicates that the container is being removed.
+      StateRestarting: StateRestarting indicates that the container is currently restarting.
+      StateRunning: StateRunning indicates that the container is running.
+    x-enum-descriptions:
+    - StateCreated indicates the container is created, but not (yet) started.
+    - StateRunning indicates that the container is running.
+    - StatePaused indicates that the container's current state is paused.
+    - StateRestarting indicates that the container is currently restarting.
+    - StateRemoving indicates that the container is being removed.
+    - StateExited indicates that the container exited.
+    - StateDead indicates that the container failed to be deleted. Containers in this
+      state are attempted to be cleaned up when the daemon restarts.
+    x-enum-varnames:
+    - StateCreated
+    - StateRunning
+    - StatePaused
+    - StateRestarting
+    - StateRemoving
+    - StateExited
+    - StateDead
+  container.DeviceMapping:
+    properties:
+      cgroupPermissions:
+        type: string
+      pathInContainer:
+        type: string
+      pathOnHost:
+        type: string
+    type: object
+  container.DeviceRequest:
+    properties:
+      capabilities:
+        description: An OR list of AND lists of device capabilities (e.g. "gpu")
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+      count:
+        description: Number of devices to request (-1 = All)
+        type: integer
+      deviceIDs:
+        description: List of device IDs as recognizable by the device driver
+        items:
+          type: string
+        type: array
+      driver:
+        description: Name of device driver
+        type: string
+      options:
+        additionalProperties:
+          type: string
+        description: Options to pass onto the device driver
+        type: object
+    type: object
+  container.Health:
+    properties:
+      failingStreak:
+        description: FailingStreak is the number of consecutive failures
+        type: integer
+      log:
+        description: Log contains the last few results (oldest first)
+        items:
+          $ref: '#/definitions/container.HealthcheckResult'
+        type: array
+      status:
+        allOf:
+        - $ref: '#/definitions/container.HealthStatus'
+        description: Status is one of [Starting], [Healthy] or [Unhealthy].
+    type: object
+  container.HealthConfig:
+    properties:
+      interval:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: Zero means to inherit. Durations are expressed as integer nanoseconds.
+      retries:
+        description: |-
+          Retries is the number of consecutive failures needed to consider a container as unhealthy.
+          Zero means inherit.
+        type: integer
+      startInterval:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: The interval to attempt healthchecks at during the start period
+      startPeriod:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: The start period for the container to initialize before the retries
+          starts to count down.
+      test:
+        description: |-
+          Test is the test to perform to check that the container is healthy.
+          An empty slice means to inherit the default.
+          The options are:
+          {} : inherit healthcheck
+          {"NONE"} : disable healthcheck
+          {"CMD", args...} : exec arguments directly
+          {"CMD-SHELL", command} : run command with system's default shell
+        items:
+          type: string
+        type: array
+      timeout:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: Timeout is the time to wait before considering the check to have
+          hung.
+    type: object
+  container.HealthStatus:
+    enum:
+    - none
+    - starting
+    - healthy
+    - unhealthy
+    type: string
+    x-enum-comments:
+      Healthy: Healthy indicates that the container is running correctly
+      NoHealthcheck: Indicates there is no healthcheck
+      Starting: Starting indicates that the container is not yet ready
+      Unhealthy: Unhealthy indicates that the container has a problem
+    x-enum-descriptions:
+    - Indicates there is no healthcheck
+    - Starting indicates that the container is not yet ready
+    - Healthy indicates that the container is running correctly
+    - Unhealthy indicates that the container has a problem
+    x-enum-varnames:
+    - NoHealthcheck
+    - Starting
+    - Healthy
+    - Unhealthy
+  container.HealthcheckResult:
+    properties:
+      end:
+        description: End is the time this check ended
+        type: string
+      exitCode:
+        description: 'ExitCode meanings: 0=healthy, 1=unhealthy, 2=reserved (considered
+          unhealthy), else=error running probe'
+        type: integer
+      output:
+        description: Output from last check
+        type: string
+      start:
+        description: Start is the time this check started
+        type: string
+    type: object
+  container.HostConfig:
+    properties:
+      CpuCount:
+        description: Applicable to Windows
+        type: integer
+      CpuPercent:
+        description: CPU percent
+        type: integer
+      CpuPeriod:
+        description: CPU CFS (Completely Fair Scheduler) period
+        type: integer
+      CpuQuota:
+        description: CPU CFS (Completely Fair Scheduler) quota
+        type: integer
+      CpuRealtimePeriod:
+        description: CPU real-time period
+        type: integer
+      CpuRealtimeRuntime:
+        description: CPU real-time runtime
+        type: integer
+      CpuShares:
+        description: Applicable to all platforms
+        type: integer
+      Dns:
+        description: List of DNS server to lookup
+        items:
+          type: string
+        type: array
+      DnsOptions:
+        description: List of DNSOption to look for
+        items:
+          type: string
+        type: array
+      DnsSearch:
+        description: List of DNSSearch to look for
+        items:
+          type: string
+        type: array
+      NanoCpus:
+        description: CPU quota in units of 10<sup>-9</sup> CPUs.
+        type: integer
+      annotations:
+        additionalProperties:
+          type: string
+        description: Arbitrary non-identifying metadata attached to container and
+          provided to the runtime
+        type: object
+      autoRemove:
+        description: Automatically remove container when it exits
+        type: boolean
+      binds:
+        description: Applicable to all platforms
+        items:
+          type: string
+        type: array
+      blkioDeviceReadBps:
+        items:
+          $ref: '#/definitions/blkiodev.ThrottleDevice'
+        type: array
+      blkioDeviceReadIOps:
+        items:
+          $ref: '#/definitions/blkiodev.ThrottleDevice'
+        type: array
+      blkioDeviceWriteBps:
+        items:
+          $ref: '#/definitions/blkiodev.ThrottleDevice'
+        type: array
+      blkioDeviceWriteIOps:
+        items:
+          $ref: '#/definitions/blkiodev.ThrottleDevice'
+        type: array
+      blkioWeight:
+        description: Block IO weight (relative weight vs. other containers)
+        format: int32
+        type: integer
+      blkioWeightDevice:
+        items:
+          $ref: '#/definitions/blkiodev.WeightDevice'
+        type: array
+      capAdd:
+        description: Applicable to UNIX platforms
+        items:
+          type: string
+        type: array
+      capDrop:
+        description: List of kernel capabilities to remove from the container
+        items:
+          type: string
+        type: array
+      cgroup:
+        description: Cgroup to use for the container
+        type: string
+      cgroupParent:
+        description: Applicable to UNIX platforms
+        type: string
+      cgroupnsMode:
+        allOf:
+        - $ref: '#/definitions/container.CgroupnsMode'
+        description: Cgroup namespace mode to use for the container
+      consoleSize:
+        description: Initial console size (height,width)
+        items:
+          type: integer
+        type: array
+      containerIDFile:
+        description: File (path) where the containerId is written
+        type: string
+      cpusetCpus:
+        description: CpusetCpus 0-2, 0,1
+        type: string
+      cpusetMems:
+        description: CpusetMems 0-2, 0,1
+        type: string
+      deviceCgroupRules:
+        description: List of rule to be added to the device cgroup
+        items:
+          type: string
+        type: array
+      deviceRequests:
+        description: List of device requests for device drivers
+        items:
+          $ref: '#/definitions/container.DeviceRequest'
+        type: array
+      devices:
+        description: List of devices to map inside the container
+        items:
+          $ref: '#/definitions/container.DeviceMapping'
+        type: array
+      extraHosts:
+        description: List of extra hosts
+        items:
+          type: string
+        type: array
+      groupAdd:
+        description: List of additional groups that the container process will run
+          as
+        items:
+          type: string
+        type: array
+      init:
+        description: Run a custom init inside the container, if null, use the daemon's
+          configured settings
+        type: boolean
+      iomaximumBandwidth:
+        description: Maximum IO in bytes per second for the container system drive
+        format: int64
+        type: integer
+      iomaximumIOps:
+        description: Maximum IOps for the container system drive
+        format: int64
+        type: integer
+      ipcMode:
+        allOf:
+        - $ref: '#/definitions/container.IpcMode'
+        description: IPC namespace to use for the container
+      isolation:
+        allOf:
+        - $ref: '#/definitions/container.Isolation'
+        description: Applicable to Windows
+      kernelMemory:
+        description: |-
+          KernelMemory specifies the kernel memory limit (in bytes) for the container.
+          Deprecated: kernel 5.4 deprecated kmem.limit_in_bytes.
+        type: integer
+      kernelMemoryTCP:
+        description: |-
+          Hard limit for kernel TCP buffer memory (in bytes).
+
+          Deprecated: This field is deprecated and will be removed in the next release.
+          Starting with 6.12, the kernel has deprecated kernel memory tcp accounting
+          for cgroups v1.
+        type: integer
+      links:
+        description: List of links (in the name:alias form)
+        items:
+          type: string
+        type: array
+      logConfig:
+        allOf:
+        - $ref: '#/definitions/container.LogConfig'
+        description: Configuration of the logs for this container
+      maskedPaths:
+        description: MaskedPaths is the list of paths to be masked inside the container
+          (this overrides the default set of paths)
+        items:
+          type: string
+        type: array
+      memory:
+        description: Memory limit (in bytes)
+        format: int64
+        type: integer
+      memoryReservation:
+        description: Memory soft limit (in bytes)
+        format: int64
+        type: integer
+      memorySwap:
+        description: Total memory usage (memory + swap); set `-1` to enable unlimited
+          swap
+        format: int64
+        type: integer
+      memorySwappiness:
+        description: Tuning container memory swappiness behaviour
+        format: int64
+        type: integer
+      mounts:
+        description: Mounts specs used by the container
+        items:
+          $ref: '#/definitions/mount.Mount'
+        type: array
+      networkMode:
+        description: Network mode to use for the container
+        type: string
+      oomKillDisable:
+        description: Whether to disable OOM Killer or not
+        type: boolean
+      oomScoreAdj:
+        description: Container preference for OOM-killing
+        type: integer
+      pidMode:
+        description: PID namespace to use for the container
+        type: string
+      pidsLimit:
+        description: Setting PIDs limit for a container; Set `0` or `-1` for unlimited,
+          or `null` to not change.
+        format: int64
+        type: integer
+      portBindings:
+        allOf:
+        - $ref: '#/definitions/nat.PortMap'
+        description: Port mapping between the exposed port (container) and the host
+      privileged:
+        description: Is the container in privileged mode
+        type: boolean
+      publishAllPorts:
+        description: Should docker publish all exposed port for the container
+        type: boolean
+      readonlyPaths:
+        description: ReadonlyPaths is the list of paths to be set as read-only inside
+          the container (this overrides the default set of paths)
+        items:
+          type: string
+        type: array
+      readonlyRootfs:
+        description: Is the container root filesystem in read-only
+        type: boolean
+      restartPolicy:
+        allOf:
+        - $ref: '#/definitions/container.RestartPolicy'
+        description: Restart policy to be used for the container
+      runtime:
+        description: Runtime to use with this container
+        type: string
+      securityOpt:
+        description: List of string values to customize labels for MLS systems, such
+          as SELinux.
+        items:
+          type: string
+        type: array
+      shmSize:
+        description: Total shm memory usage
+        format: int64
+        type: integer
+      storageOpt:
+        additionalProperties:
+          type: string
+        description: Storage driver options per container.
+        type: object
+      sysctls:
+        additionalProperties:
+          type: string
+        description: List of Namespaced sysctls used for the container
+        type: object
+      tmpfs:
+        additionalProperties:
+          type: string
+        description: List of tmpfs (mounts) used for the container
+        type: object
+      ulimits:
+        description: List of ulimits to be set in the container
+        items:
+          $ref: '#/definitions/container.Ulimit'
+        type: array
+      usernsMode:
+        description: The user namespace to use for the container
+        type: string
+      utsmode:
+        description: UTS namespace to use for the container
+        type: string
+      volumeDriver:
+        description: Name of the volume driver used to mount volumes
+        type: string
+      volumesFrom:
+        description: List of volumes to take from other container
+        items:
+          type: string
+        type: array
+    type: object
+  container.InspectResponse:
+    properties:
+      Id:
+        type: string
+      ImageManifestDescriptor:
+        allOf:
+        - $ref: '#/definitions/v1.Descriptor'
+        description: ImageManifestDescriptor is the descriptor of a platform-specific
+          manifest of the image used to create the container.
+      appArmorProfile:
+        type: string
+      args:
+        items:
+          type: string
+        type: array
+      config:
+        $ref: '#/definitions/container.Config'
+      created:
+        type: string
+      driver:
+        type: string
+      execIDs:
+        items:
+          type: string
+        type: array
+      graphDriver:
+        $ref: '#/definitions/storage.DriverData'
+      hostConfig:
+        $ref: '#/definitions/container.HostConfig'
+      hostnamePath:
+        type: string
+      hostsPath:
+        type: string
+      image:
+        type: string
+      logPath:
+        type: string
+      mountLabel:
+        type: string
+      mounts:
+        items:
+          $ref: '#/definitions/container.MountPoint'
+        type: array
+      name:
+        type: string
+      networkSettings:
+        $ref: '#/definitions/container.NetworkSettings'
+      path:
+        type: string
+      platform:
+        type: string
+      processLabel:
+        type: string
+      resolvConfPath:
+        type: string
+      restartCount:
+        type: integer
+      sizeRootFs:
+        type: integer
+      sizeRw:
+        type: integer
+      state:
+        $ref: '#/definitions/container.State'
+    type: object
+  container.IpcMode:
+    enum:
+    - none
+    - host
+    - container
+    - private
+    - shareable
+    type: string
+    x-enum-varnames:
+    - IPCModeNone
+    - IPCModeHost
+    - IPCModeContainer
+    - IPCModePrivate
+    - IPCModeShareable
+  container.Isolation:
+    enum:
+    - ""
+    - default
+    - process
+    - hyperv
+    type: string
+    x-enum-comments:
+      IsolationDefault: IsolationDefault is the default isolation mode on current
+        daemon
+      IsolationEmpty: IsolationEmpty is unspecified (same behavior as default)
+      IsolationHyperV: IsolationHyperV is HyperV isolation mode
+      IsolationProcess: IsolationProcess is process isolation mode
+    x-enum-descriptions:
+    - IsolationEmpty is unspecified (same behavior as default)
+    - IsolationDefault is the default isolation mode on current daemon
+    - IsolationProcess is process isolation mode
+    - IsolationHyperV is HyperV isolation mode
+    x-enum-varnames:
+    - IsolationEmpty
+    - IsolationDefault
+    - IsolationProcess
+    - IsolationHyperV
+  container.LogConfig:
+    properties:
+      config:
+        additionalProperties:
+          type: string
+        type: object
+      type:
+        type: string
+    type: object
+  container.MountPoint:
+    properties:
+      destination:
+        description: |-
+          Destination is the path relative to the container root (`/`) where the
+          Source is mounted inside the container.
+        type: string
+      driver:
+        description: Driver is the volume driver used to create the volume (if it
+          is a volume).
+        type: string
+      mode:
+        description: |-
+          Mode is a comma separated list of options supplied by the user when
+          creating the bind/volume mount.
+
+          The default is platform-specific (`"z"` on Linux, empty on Windows).
+        type: string
+      name:
+        description: |-
+          Name is the name reference to the underlying data defined by `Source`
+          e.g., the volume name.
+        type: string
+      propagation:
+        allOf:
+        - $ref: '#/definitions/mount.Propagation'
+        description: |-
+          Propagation describes how mounts are propagated from the host into the
+          mount point, and vice-versa. Refer to the Linux kernel documentation
+          for details:
+          https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt
+
+          This field is not used on Windows.
+      rw:
+        description: RW indicates whether the mount is mounted writable (read-write).
+        type: boolean
+      source:
+        description: |-
+          Source is the source location of the mount.
+
+          For volumes, this contains the storage location of the volume (within
+          `/var/lib/docker/volumes/`). For bind-mounts, and `npipe`, this contains
+          the source (host) part of the bind-mount. For `tmpfs` mount points, this
+          field is empty.
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/mount.Type'
+        description: |-
+          Type is the type of mount, see `Type<foo>` definitions in
+          github.com/docker/docker/api/types/mount.Type
+    type: object
+  container.NetworkSettings:
+    properties:
+      bridge:
+        description: 'Deprecated: This field is only set when the daemon is started
+          with the --bridge flag specified.'
+        type: string
+      endpointID:
+        description: |-
+          EndpointID uniquely represents a service endpoint in a Sandbox
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      gateway:
+        description: |-
+          Gateway holds the gateway address for the network
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      globalIPv6Address:
+        description: |-
+          GlobalIPv6Address holds network's global IPv6 address
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      globalIPv6PrefixLen:
+        description: |-
+          GlobalIPv6PrefixLen represents mask length of network's global IPv6 address
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: integer
+      hairpinMode:
+        description: |-
+          HairpinMode specifies if hairpin NAT should be enabled on the virtual interface
+
+          Deprecated: This field is never set and will be removed in a future release.
+        type: boolean
+      ipaddress:
+        description: |-
+          IPAddress holds the IPv4 address for the network
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      ipprefixLen:
+        description: |-
+          IPPrefixLen represents mask length of network's IPv4 address
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: integer
+      ipv6Gateway:
+        description: |-
+          IPv6Gateway holds gateway address specific for IPv6
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      linkLocalIPv6Address:
+        description: |-
+          LinkLocalIPv6Address is an IPv6 unicast address using the link-local prefix
+
+          Deprecated: This field is never set and will be removed in a future release.
+        type: string
+      linkLocalIPv6PrefixLen:
+        description: |-
+          LinkLocalIPv6PrefixLen is the prefix length of an IPv6 unicast address
+
+          Deprecated: This field is never set and will be removed in a future release.
+        type: integer
+      macAddress:
+        description: |-
+          MacAddress holds the MAC address for the network
+
+          Deprecated: This field will be removed in v29. You should look for the default network in NetworkSettings.Networks instead.
+        type: string
+      networks:
+        additionalProperties:
+          $ref: '#/definitions/network.EndpointSettings'
+        type: object
+      ports:
+        allOf:
+        - $ref: '#/definitions/nat.PortMap'
+        description: Ports is a collection of PortBinding indexed by Port
+      sandboxID:
+        description: SandboxID uniquely represents a container's network stack
+        type: string
+      sandboxKey:
+        description: SandboxKey identifies the sandbox
+        type: string
+      secondaryIPAddresses:
+        description: 'Deprecated: This field is never set and will be removed in a
+          future release.'
+        items:
+          $ref: '#/definitions/network.Address'
+        type: array
+      secondaryIPv6Addresses:
+        description: 'Deprecated: This field is never set and will be removed in a
+          future release.'
+        items:
+          $ref: '#/definitions/network.Address'
+        type: array
+    type: object
+  container.NetworkSettingsSummary:
+    properties:
+      networks:
+        additionalProperties:
+          $ref: '#/definitions/network.EndpointSettings'
+        type: object
+    type: object
+  container.Port:
+    properties:
+      IP:
+        description: Host IP address that the container's port is mapped to
+        type: string
+      PrivatePort:
+        description: |-
+          Port on the container
+          Required: true
+        type: integer
+      PublicPort:
+        description: Port exposed on the host
+        type: integer
+      Type:
+        description: |-
+          type
+          Required: true
+        type: string
+    type: object
+  container.RestartPolicy:
+    properties:
+      maximumRetryCount:
+        type: integer
+      name:
+        $ref: '#/definitions/container.RestartPolicyMode'
+    type: object
+  container.RestartPolicyMode:
+    enum:
+    - "no"
+    - always
+    - on-failure
+    - unless-stopped
+    type: string
+    x-enum-varnames:
+    - RestartPolicyDisabled
+    - RestartPolicyAlways
+    - RestartPolicyOnFailure
+    - RestartPolicyUnlessStopped
+  container.State:
+    properties:
+      dead:
+        type: boolean
+      error:
+        type: string
+      exitCode:
+        type: integer
+      finishedAt:
+        type: string
+      health:
+        $ref: '#/definitions/container.Health'
+      oomkilled:
+        type: boolean
+      paused:
+        type: boolean
+      pid:
+        type: integer
+      restarting:
+        type: boolean
+      running:
+        type: boolean
+      startedAt:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/container.ContainerState'
+        description: String representation of the container state. Can be one of "created",
+          "running", "paused", "restarting", "removing", "exited", or "dead"
+    type: object
+  container.Summary:
+    properties:
+      Id:
+        type: string
+      ImageManifestDescriptor:
+        $ref: '#/definitions/v1.Descriptor'
+      command:
+        type: string
+      created:
+        format: int64
+        type: integer
+      hostConfig:
+        properties:
+          annotations:
+            additionalProperties:
+              type: string
+            type: object
+          networkMode:
+            type: string
+        type: object
+      image:
+        type: string
+      imageID:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      mounts:
+        items:
+          $ref: '#/definitions/container.MountPoint'
+        type: array
+      names:
+        items:
+          type: string
+        type: array
+      networkSettings:
+        $ref: '#/definitions/container.NetworkSettingsSummary'
+      ports:
+        items:
+          $ref: '#/definitions/container.Port'
+        type: array
+      sizeRootFs:
+        type: integer
+      sizeRw:
+        type: integer
+      state:
+        $ref: '#/definitions/container.ContainerState'
+      status:
+        type: string
+    type: object
+  container.Ulimit:
+    properties:
+      hard:
+        format: int64
+        type: integer
+      name:
+        type: string
+      soft:
+        format: int64
+        type: integer
+    type: object
+  data.MinIOData:
+    properties:
+      address:
+        description: Required for connection
+        type: string
+      buckets:
+        description: Required
+        items:
+          $ref: '#/definitions/data.MinioBucket'
+        type: array
+      errors:
+        items:
+          type: string
+        type: array
+      root_user:
+        description: Required for authentication (sensitive)
+        type: string
+    type: object
+  data.MinIOObjectInfo:
+    properties:
+      etag:
+        description: ETag for integrity check - Required
+        type: string
+      key:
+        description: Object key (path) - Required
+        type: string
+      last_modified:
+        description: Last modified timestamp - Required
+        type: string
+      metadata:
+        additionalProperties:
+          type: string
+        description: User metadata (includes content-type) - Required
+        type: object
+      size:
+        description: Object size in bytes - Required
+        type: integer
+    type: object
+  data.MinioBucket:
+    properties:
+      name:
+        description: Required
+        type: string
+      object_list:
+        description: Required for migration
+        items:
+          $ref: '#/definitions/data.MinIOObjectInfo'
+        type: array
+      objects:
+        description: Required for planning
+        type: integer
+      versioned:
+        description: Required for migration planning
+        type: boolean
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.Benchmark:
+    properties:
+      data:
+        $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.BenchmarkData'
+      type:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.BenchmarkData:
+    properties:
+      desc:
+        type: string
+      elapsed:
+        type: string
+      result:
+        type: string
+      specid:
+        type: string
+      unit:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CSPInfo:
+    properties:
+      credential_keys:
+        items:
+          type: string
+        type: array
+      default_region:
+        type: string
+      name:
+        example: AWS
+        type: string
+      regions:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo:
+    properties:
+      agent_failed_message:
+        type: string
+      agent_status:
+        type: string
+      connection_failed_message:
+        type: string
+      connection_status:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      ip_address:
+        description: SSH fields — required when parent SourceGroup.Type == "ssh".
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      private_key:
+        type: string
+      public_key:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        description: |-
+          CSP fields — required when parent SourceGroup.Type == "csp".
+          ResourceType: "vm" | "k8s" | "object_storage".
+        type: string
+      source_group_id:
+        type: string
+      ssh_port:
+        type: string
+      user:
+        type: string
+    required:
+    - id
+    - name
+    - source_group_id
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfoStatusCount:
+    properties:
+      connection_info_total:
+        type: integer
+      count_agent_failed:
+        type: integer
+      count_agent_success:
+        type: integer
+      count_connection_failed:
+        type: integer
+      count_connection_success:
+        type: integer
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateConnectionInfoReq:
+    properties:
+      description:
+        type: string
+      ip_address:
+        description: SSH fields — required when parent SourceGroup.Type == "ssh".
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      private_key:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        description: CSP fields — required when parent SourceGroup.Type == "csp".
+        type: string
+      ssh_port:
+        type: string
+      user:
+        type: string
+    required:
+    - name
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateSourceGroupReq:
+    properties:
+      connection_info:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateConnectionInfoReq'
+        type: array
+      credential:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KeyValue'
+        type: array
+      description:
+        type: string
+      name:
+        type: string
+      provider_name:
+        type: string
+      region_name:
+        type: string
+      type:
+        description: CSP fields — required when Type == "csp".
+        type: string
+    required:
+    - name
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DataInfoList:
+    properties:
+      minio_data:
+        items:
+          $ref: '#/definitions/data.MinIOData'
+        type: array
+    required:
+    - minio_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DiscoverRes:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DiscoveredResource'
+        type: array
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DiscoveredResource:
+    properties:
+      extra:
+        additionalProperties:
+          type: string
+        type: object
+      name:
+        type: string
+      region:
+        type: string
+      resource_id:
+        example: i-0abc...
+        type: string
+      resource_type:
+        example: vm
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.HelmInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/kubernetes.Helm'
+        type: array
+    required:
+    - servers
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.InfraInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/infra.Infra'
+        type: array
+    required:
+    - servers
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KeyValue:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KubernetesInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/kubernetes.Kubernetes'
+        type: array
+    required:
+    - servers
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListCSPRes:
+    properties:
+      csp:
+        items:
+          type: string
+        type: array
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListConnectionInfoRes:
+    properties:
+      connection_info:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo'
+        type: array
+      connection_info_status_count:
+        $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfoStatusCount'
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListSourceGroupRes:
+    properties:
+      connection_info_status_count:
+        $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfoStatusCount'
+      source_group:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroupRes'
+        type: array
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.RegisterTargetInfoReq:
+    properties:
+      id:
+        type: string
+      label:
+        properties:
+          sys.namespace:
+            type: string
+        required:
+        - sys.namespace
+        type: object
+      resourceType:
+        type: string
+    required:
+    - id
+    - label
+    - resourceType
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedBenchmarkInfo:
+    properties:
+      benchmark:
+        type: string
+      connection_id:
+        type: string
+      saved_time:
+        type: string
+      status:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedDataInfo:
+    properties:
+      connection_id:
+        type: string
+      data_data:
+        type: string
+      saved_time:
+        type: string
+      status:
+        type: string
+    required:
+    - connection_id
+    - data_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedHelmInfo:
+    properties:
+      connection_id:
+        type: string
+      helm_data:
+        type: string
+      saved_time:
+        type: string
+      status:
+        type: string
+    required:
+    - connection_id
+    - helm_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedInfraInfo:
+    properties:
+      connection_id:
+        type: string
+      infra_data:
+        type: string
+      saved_time:
+        type: string
+      status:
+        type: string
+    required:
+    - connection_id
+    - infra_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedKubernetesInfo:
+    properties:
+      connection_id:
+        type: string
+      kubernetes_data:
+        type: string
+      saved_time:
+        type: string
+      status:
+        type: string
+    required:
+    - connection_id
+    - kubernetes_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedSoftwareInfo:
+    properties:
+      connection_id:
+        type: string
+      saved_time:
+        type: string
+      software_data:
+        type: string
+      status:
+        type: string
+    required:
+    - connection_id
+    - software_data
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg:
+    properties:
+      message:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SoftwareInfoList:
+    properties:
+      servers:
+        items:
+          $ref: '#/definitions/software.Software'
+        type: array
+    required:
+    - servers
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroup:
+    properties:
+      credential:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KeyValue'
+        type: array
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      provider_name:
+        description: |-
+          CSP fields — populated only when Type == "csp".
+          Credential is stored RSA-encrypted at rest. It is decrypted on demand and
+          registered to cb-spider only transiently (per discovery/collection call);
+          honeybee is the single source of truth, so no spider connection name is kept.
+        type: string
+      region_name:
+        type: string
+      target_info:
+        $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.TargetInfo'
+      type:
+        description: |-
+          Type discriminates how this group's connections are collected.
+          Allowed: "ssh" (default, on-prem) or "csp" (cb-spider backed).
+        type: string
+    required:
+    - id
+    - name
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroupRes:
+    properties:
+      connection_info_status_count:
+        $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfoStatusCount'
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      provider_name:
+        type: string
+      region_name:
+        type: string
+      type:
+        type: string
+    required:
+    - id
+    - name
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.TargetInfo:
+    properties:
+      mci_id:
+        type: string
+      ns_id:
+        type: string
+    type: object
+  github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.UpdateSourceGroupReq:
+    properties:
+      credential:
+        items:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KeyValue'
+        type: array
+      description:
+        type: string
+      name:
+        type: string
+      region_name:
+        description: CSP fields — only honored for CSP groups.
+        type: string
+    required:
+    - name
+    type: object
+  image.AttestationProperties:
+    properties:
+      For:
+        description: For is the digest of the image manifest that this attestation
+          is for.
+        type: string
+    type: object
+  image.ImageProperties:
+    properties:
+      Containers:
+        description: |-
+          Containers is an array containing the IDs of the containers that are
+          using this image.
+
+          Required: true
+        items:
+          type: string
+        type: array
+      Platform:
+        allOf:
+        - $ref: '#/definitions/v1.Platform'
+        description: |-
+          Platform is the OCI platform object describing the platform of the image.
+
+          Required: true
+      size:
+        properties:
+          Unpacked:
+            description: |-
+              Unpacked is the size (in bytes) of the locally unpacked
+              (uncompressed) image content that's directly usable by the containers
+              running this image.
+              It's independent of the distributable content - e.g.
+              the image might still have an unpacked data that's still used by
+              some container even when the distributable/compressed content is
+              already gone.
+
+              Required: true
+            type: integer
+        type: object
+    type: object
+  image.InspectResponse:
+    properties:
+      Descriptor:
+        allOf:
+        - $ref: '#/definitions/v1.Descriptor'
+        description: |-
+          Descriptor is the OCI descriptor of the image target.
+          It's only set if the daemon provides a multi-platform image store.
+
+          WARNING: This is experimental and may change at any time without any backward
+          compatibility.
+      Id:
+        description: |-
+          ID is the content-addressable ID of an image.
+
+          This identifier is a content-addressable digest calculated from the
+          image's configuration (which includes the digests of layers used by
+          the image).
+
+          Note that this digest differs from the `RepoDigests` below, which
+          holds digests of image manifests that reference the image.
+        type: string
+      Manifests:
+        description: |-
+          Manifests is a list of image manifests available in this image. It
+          provides a more detailed view of the platform-specific image manifests or
+          other image-attached data like build attestations.
+
+          Only available if the daemon provides a multi-platform image store, the client
+          requests manifests AND does not request a specific platform.
+
+          WARNING: This is experimental and may change at any time without any backward
+          compatibility.
+        items:
+          $ref: '#/definitions/image.ManifestSummary'
+        type: array
+      VirtualSize:
+        description: |-
+          VirtualSize is the total size of the image including all layers it is
+          composed of.
+
+          Deprecated: this field is omitted in API v1.44, but kept for backward compatibility. Use Size instead.
+        type: integer
+      architecture:
+        description: Architecture is the hardware CPU architecture that the image
+          runs on.
+        type: string
+      author:
+        description: |-
+          Author is the name of the author that was specified when committing the
+          image, or as specified through MAINTAINER (deprecated) in the Dockerfile.
+        type: string
+      comment:
+        description: |-
+          Comment is an optional message that can be set when committing or
+          importing the image.
+        type: string
+      config:
+        $ref: '#/definitions/v1.DockerOCIImageConfig'
+      container:
+        description: |-
+          Container is the ID of the container that was used to create the image.
+
+          Depending on how the image was created, this field may be empty.
+
+          Deprecated: this field is omitted in API v1.45, but kept for backward compatibility.
+        type: string
+      containerConfig:
+        allOf:
+        - $ref: '#/definitions/container.Config'
+        description: |-
+          ContainerConfig is an optional field containing the configuration of the
+          container that was last committed when creating the image.
+
+          Previous versions of Docker builder used this field to store build cache,
+          and it is not in active use anymore.
+
+          Deprecated: this field is omitted in API v1.45, but kept for backward compatibility.
+      created:
+        description: |-
+          Created is the date and time at which the image was created, formatted in
+          RFC 3339 nano-seconds (time.RFC3339Nano).
+
+          This information is only available if present in the image,
+          and omitted otherwise.
+        type: string
+      dockerVersion:
+        description: |-
+          DockerVersion is the version of Docker that was used to build the image.
+
+          Depending on how the image was created, this field may be empty.
+
+          Deprecated: this field is deprecated, and will be removed in the next release.
+        type: string
+      graphDriver:
+        allOf:
+        - $ref: '#/definitions/storage.DriverData'
+        description: |-
+          GraphDriver holds information about the storage driver used to store the
+          container's and image's filesystem.
+      metadata:
+        allOf:
+        - $ref: '#/definitions/image.Metadata'
+        description: |-
+          Metadata of the image in the local cache.
+
+          This information is local to the daemon, and not part of the image itself.
+      os:
+        description: OS is the Operating System the image is built to run on.
+        type: string
+      osVersion:
+        description: |-
+          OsVersion is the version of the Operating System the image is built to
+          run on (especially for Windows).
+        type: string
+      parent:
+        description: |-
+          Parent is the ID of the parent image.
+
+          Depending on how the image was created, this field may be empty and
+          is only set for images that were built/created locally. This field
+          is empty if the image was pulled from an image registry.
+
+          Deprecated: this field is deprecated, and will be removed in the next release.
+        type: string
+      repoDigests:
+        description: |-
+          RepoDigests is a list of content-addressable digests of locally available
+          image manifests that the image is referenced from. Multiple manifests can
+          refer to the same image.
+
+          These digests are usually only available if the image was either pulled
+          from a registry, or if the image was pushed to a registry, which is when
+          the manifest is generated and its digest calculated.
+        items:
+          type: string
+        type: array
+      repoTags:
+        description: |-
+          RepoTags is a list of image names/tags in the local image cache that
+          reference this image.
+
+          Multiple image tags can refer to the same image, and this list may be
+          empty if no tags reference the image, in which case the image is
+          "untagged", in which case it can still be referenced by its ID.
+        items:
+          type: string
+        type: array
+      rootFS:
+        allOf:
+        - $ref: '#/definitions/image.RootFS'
+        description: |-
+          RootFS contains information about the image's RootFS, including the
+          layer IDs.
+      size:
+        description: Size is the total size of the image including all layers it is
+          composed of.
+        format: int64
+        type: integer
+      variant:
+        description: Variant is the CPU architecture variant (presently ARM-only).
+        type: string
+    type: object
+  image.ManifestKind:
+    enum:
+    - image
+    - attestation
+    - unknown
+    type: string
+    x-enum-varnames:
+    - ManifestKindImage
+    - ManifestKindAttestation
+    - ManifestKindUnknown
+  image.ManifestSummary:
+    properties:
+      AttestationData:
+        allOf:
+        - $ref: '#/definitions/image.AttestationProperties'
+        description: Present only if Kind == ManifestKindAttestation.
+      Available:
+        description: |-
+          Indicates whether all the child content (image config, layers) is
+          fully available locally
+
+          Required: true
+        type: boolean
+      Descriptor:
+        allOf:
+        - $ref: '#/definitions/v1.Descriptor'
+        description: |-
+          Descriptor is the OCI descriptor of the image.
+
+          Required: true
+      ID:
+        description: |-
+          ID is the content-addressable ID of an image and is the same as the
+          digest of the image manifest.
+
+          Required: true
+        type: string
+      ImageData:
+        allOf:
+        - $ref: '#/definitions/image.ImageProperties'
+        description: Present only if Kind == ManifestKindImage.
+      Kind:
+        allOf:
+        - $ref: '#/definitions/image.ManifestKind'
+        description: |-
+          Kind is the kind of the image manifest.
+
+          Required: true
+      Size:
+        description: |-
+          Size is the size information of the content related to this manifest.
+          Note: These sizes only take the locally available content into account.
+
+          Required: true
+        properties:
+          Content:
+            description: |-
+              Content is the size (in bytes) of all the locally present
+              content in the content store (e.g. image config, layers)
+              referenced by this manifest and its children.
+              This only includes blobs in the content store.
+            type: integer
+          Total:
+            description: |-
+              Total is the total size (in bytes) of all the locally present
+              data (both distributable and non-distributable) that's related to
+              this manifest and its children.
+              This equal to the sum of [Content] size AND all the sizes in the
+              [Size] struct present in the Kind-specific data struct.
+              For example, for an image kind (Kind == ManifestKindImage),
+              this would include the size of the image content and unpacked
+              image snapshots ([Size.Content] + [ImageData.Size.Unpacked]).
+            type: integer
+        type: object
+    type: object
+  image.Metadata:
+    properties:
+      lastTagTime:
+        description: LastTagTime is the date and time at which the image was last
+          tagged.
+        type: string
+    type: object
+  image.RootFS:
+    properties:
+      layers:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+    type: object
+  infra.BucketEncryption:
+    properties:
+      enabled:
+        type: boolean
+      type:
+        description: e.g., "SSE-S3", "SSE-KMS"
+        type: string
+    type: object
+  infra.BucketLifecycle:
+    properties:
+      enabled:
+        type: boolean
+      rules_count:
+        description: Number of lifecycle rules
+        type: integer
+    type: object
+  infra.CPU:
+    properties:
+      cache:
+        description: KB
+        type: integer
+      cores:
+        description: ea
+        type: integer
+      cpus:
+        description: ea
+        type: integer
+      max_speed:
+        description: MHz
+        type: integer
+      model:
+        type: string
+      threads:
+        description: ea
+        type: integer
+      vendor:
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  infra.Compute:
+    properties:
+      compute_resource:
+        $ref: '#/definitions/infra.ComputeResource'
+      connection:
+        items:
+          $ref: '#/definitions/infra.Connection'
+        type: array
+      os:
+        $ref: '#/definitions/infra.System'
+    required:
+    - compute_resource
+    - os
+    type: object
+  infra.ComputeResource:
+    properties:
+      cpu:
+        $ref: '#/definitions/infra.CPU'
+      data_disk:
+        items:
+          $ref: '#/definitions/infra.Disk'
+        type: array
+      memory:
+        $ref: '#/definitions/infra.Memory'
+      root_disk:
+        $ref: '#/definitions/infra.Disk'
+    required:
+    - cpu
+    - memory
+    type: object
+  infra.Connection:
+    properties:
+      keypair:
+        $ref: '#/definitions/infra.Keypair'
+    type: object
+  infra.DRM:
+    properties:
+      driver_date:
+        type: string
+      driver_description:
+        type: string
+      driver_name:
+        type: string
+      driver_version:
+        type: string
+    type: object
+  infra.Disk:
+    properties:
+      available:
+        description: GB
+        type: integer
+      label:
+        type: string
+      name:
+        type: string
+      size:
+        description: GB
+        type: integer
+      type:
+        type: string
+      used:
+        description: GB
+        type: integer
+    required:
+    - available
+    - used
+    type: object
+  infra.GPU:
+    properties:
+      drm:
+        items:
+          $ref: '#/definitions/infra.DRM'
+        type: array
+      errors:
+        items:
+          type: string
+        type: array
+      nvidia:
+        items:
+          $ref: '#/definitions/infra.NVIDIA'
+        type: array
+    type: object
+  infra.HAProxy:
+    properties:
+      backends:
+        items:
+          $ref: '#/definitions/infra.HAProxyBackend'
+        type: array
+      config_path:
+        type: string
+      defaults:
+        additionalProperties:
+          type: string
+        type: object
+      errors:
+        items:
+          type: string
+        type: array
+      frontends:
+        items:
+          $ref: '#/definitions/infra.HAProxyFrontend'
+        type: array
+      global:
+        additionalProperties:
+          type: string
+        type: object
+      listens:
+        items:
+          $ref: '#/definitions/infra.HAProxyListen'
+        type: array
+      version:
+        type: string
+    type: object
+  infra.HAProxyBackend:
+    properties:
+      balance:
+        type: string
+      name:
+        type: string
+      options:
+        additionalProperties:
+          type: string
+        type: object
+      servers:
+        items:
+          $ref: '#/definitions/infra.HAProxyServer'
+        type: array
+    type: object
+  infra.HAProxyFrontend:
+    properties:
+      bind:
+        type: string
+      default_backend:
+        type: string
+      name:
+        type: string
+      options:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  infra.HAProxyListen:
+    properties:
+      balance:
+        type: string
+      bind:
+        type: string
+      name:
+        type: string
+      options:
+        additionalProperties:
+          type: string
+        type: object
+      servers:
+        items:
+          $ref: '#/definitions/infra.HAProxyServer'
+        type: array
+    type: object
+  infra.HAProxyServer:
+    properties:
+      address:
+        type: string
+      name:
+        type: string
+      options:
+        type: string
+    type: object
+  infra.Infra:
+    properties:
+      compute:
+        $ref: '#/definitions/infra.Compute'
+      gpu:
+        $ref: '#/definitions/infra.GPU'
+      haproxy:
+        $ref: '#/definitions/infra.HAProxy'
+      minio:
+        $ref: '#/definitions/infra.MinIO'
+      network:
+        $ref: '#/definitions/network.Network'
+      storage:
+        $ref: '#/definitions/infra.Storage'
+    type: object
+  infra.Kernel:
+    properties:
+      architecture:
+        type: string
+      release:
+        type: string
+      version:
+        type: string
+    type: object
+  infra.Keypair:
+    properties:
+      name:
+        type: string
+      private_key:
+        type: string
+      public_key:
+        type: string
+    type: object
+  infra.Memory:
+    properties:
+      available:
+        description: MB
+        type: integer
+      size:
+        description: MB
+        type: integer
+      speed:
+        description: MHz
+        type: integer
+      type:
+        type: string
+      used:
+        description: MB
+        type: integer
+    required:
+    - available
+    - size
+    - used
+    type: object
+  infra.MinIO:
+    properties:
+      address:
+        type: string
+      buckets:
+        items:
+          $ref: '#/definitions/infra.MinioBucket'
+        type: array
+      config_path:
+        type: string
+      console_address:
+        type: string
+      cors_allow_origin:
+        description: Server-level CORS configuration
+        items:
+          type: string
+        type: array
+      errors:
+        items:
+          type: string
+        type: array
+      opts:
+        additionalProperties:
+          type: string
+        type: object
+      process_info:
+        type: string
+      root_user:
+        type: string
+      server_info:
+        $ref: '#/definitions/infra.MinIOServerInfo'
+      version:
+        type: string
+      volumes:
+        type: string
+    type: object
+  infra.MinIOServerInfo:
+    properties:
+      disks:
+        type: integer
+      offline_disks:
+        type: integer
+      online_disks:
+        type: integer
+      servers:
+        type: integer
+      storage_info:
+        $ref: '#/definitions/infra.MinIOStorageInfo'
+    type: object
+  infra.MinIOStorageInfo:
+    properties:
+      free_gb:
+        type: number
+      total_gb:
+        type: number
+      used_gb:
+        type: number
+      used_percent:
+        type: number
+    type: object
+  infra.MinioBucket:
+    properties:
+      encryption:
+        $ref: '#/definitions/infra.BucketEncryption'
+      lifecycle:
+        $ref: '#/definitions/infra.BucketLifecycle'
+      name:
+        type: string
+      object_lock:
+        type: boolean
+      replication:
+        type: boolean
+      size_gb:
+        type: number
+      tags:
+        additionalProperties:
+          type: string
+        type: object
+      versioned:
+        type: boolean
+    type: object
+  infra.MountPoint:
+    properties:
+      mounted_information:
+        items:
+          $ref: '#/definitions/infra.MountedInformation'
+        type: array
+    type: object
+  infra.MountedInformation:
+    properties:
+      destination:
+        type: string
+      filesystem:
+        type: string
+      option:
+        type: string
+      source:
+        type: string
+    type: object
+  infra.NVIDIA:
+    properties:
+      device_attribute:
+        $ref: '#/definitions/infra.NVIDIADeviceAttribute'
+      performance:
+        $ref: '#/definitions/infra.NVIDIAPerformance'
+    type: object
+  infra.NVIDIADeviceAttribute:
+    properties:
+      cuda_version:
+        type: string
+      driver_version:
+        type: string
+      gpu_uuid:
+        type: string
+      product_architecture:
+        type: string
+      product_brand:
+        type: string
+      product_name:
+        type: string
+    type: object
+  infra.NVIDIAPerformance:
+    properties:
+      bar1_memory_total:
+        description: mb
+        type: integer
+      bar1_memory_usage:
+        description: percent
+        type: integer
+      bar1_memory_used:
+        description: mb
+        type: integer
+      fb_memory_total:
+        description: mb
+        type: integer
+      fb_memory_usage:
+        description: percent
+        type: integer
+      fb_memory_used:
+        description: mb
+        type: integer
+      gpu_usage:
+        description: percent
+        type: integer
+    type: object
+  infra.Node:
+    properties:
+      hostname:
+        type: string
+      hypervisor:
+        type: string
+      machineid:
+        type: string
+      timezone:
+        type: string
+    type: object
+  infra.OS:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      id_like:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      pretty_name:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      version_codename:
+        example: jammy
+        type: string
+      version_id:
+        example: "22.04"
+        type: string
+    required:
+    - name
+    - pretty_name
+    - version
+    type: object
+  infra.Storage:
+    properties:
+      mount_point:
+        $ref: '#/definitions/infra.MountPoint'
+    type: object
+  infra.System:
+    properties:
+      kernel:
+        $ref: '#/definitions/infra.Kernel'
+      node:
+        $ref: '#/definitions/infra.Node'
+      os:
+        $ref: '#/definitions/infra.OS'
+    required:
+    - os
+    type: object
+  kubernetes.Cluster:
+    properties:
+      cni_plugin:
+        description: CNI plugin name (e.g., "calico", "flannel", "cilium")
+        type: string
+      name:
+        description: Cluster name (e.g., kubeadm ClusterConfiguration clusterName)
+        type: string
+      node_port_range:
+        description: NodePort range (e.g., "30000-32767")
+        type: string
+      pod_cidr:
+        description: Pod network CIDR (e.g., "10.244.0.0/16")
+        type: string
+      service_cidr:
+        description: Service network CIDR (e.g., "10.96.0.0/12")
+        type: string
+      version:
+        description: Kubernetes version (e.g., "1.29.3")
+        type: string
+    type: object
+  kubernetes.Helm:
+    properties:
+      release:
+        items:
+          $ref: '#/definitions/kubernetes.Release'
+        type: array
+      repo:
+        items:
+          $ref: '#/definitions/kubernetes.Repo'
+        type: array
+    type: object
+  kubernetes.Kubernetes:
+    properties:
+      cluster:
+        $ref: '#/definitions/kubernetes.Cluster'
+      node_count:
+        $ref: '#/definitions/kubernetes.NodeCount'
+      nodes:
+        items:
+          $ref: '#/definitions/kubernetes.Node'
+        type: array
+      workloads:
+        additionalProperties: true
+        type: object
+    type: object
+  kubernetes.Node:
+    properties:
+      addresses: {}
+      labels: {}
+      name: {}
+      node_info: {}
+      node_spec:
+        $ref: '#/definitions/kubernetes.NodeSpec'
+      type:
+        $ref: '#/definitions/kubernetes.NodeType'
+    type: object
+  kubernetes.NodeCount:
+    properties:
+      control_plane:
+        type: integer
+      total:
+        type: integer
+      worker:
+        type: integer
+    type: object
+  kubernetes.NodeSpec:
+    properties:
+      cpu:
+        description: cores
+        type: integer
+      ephemeral_storage:
+        description: MiB
+        type: integer
+      memory:
+        description: MiB
+        type: integer
+    type: object
+  kubernetes.NodeType:
+    enum:
+    - control-plane
+    - worker
+    type: string
+    x-enum-varnames:
+    - NodeTypeControlPlane
+    - NodeTypeWorker
+  kubernetes.Release:
+    properties:
+      app_version:
+        type: string
+      chart:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      revision:
+        type: integer
+      status:
+        type: string
+      updated:
+        type: string
+    type: object
+  kubernetes.Repo:
+    properties:
+      name:
+        type: string
+      url:
+        type: string
+    type: object
+  mount.BindOptions:
+    properties:
+      createMountpoint:
+        type: boolean
+      nonRecursive:
+        type: boolean
+      propagation:
+        $ref: '#/definitions/mount.Propagation'
+      readOnlyForceRecursive:
+        description: ReadOnlyForceRecursive raises an error if the mount cannot be
+          made recursively read-only.
+        type: boolean
+      readOnlyNonRecursive:
+        description: |-
+          ReadOnlyNonRecursive makes the mount non-recursively read-only, but still leaves the mount recursive
+          (unless NonRecursive is set to true in conjunction).
+        type: boolean
+    type: object
+  mount.ClusterOptions:
+    type: object
+  mount.Consistency:
+    enum:
+    - consistent
+    - cached
+    - delegated
+    - default
+    type: string
+    x-enum-varnames:
+    - ConsistencyFull
+    - ConsistencyCached
+    - ConsistencyDelegated
+    - ConsistencyDefault
+  mount.Driver:
+    properties:
+      name:
+        type: string
+      options:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  mount.ImageOptions:
+    properties:
+      subpath:
+        type: string
+    type: object
+  mount.Mount:
+    properties:
+      bindOptions:
+        $ref: '#/definitions/mount.BindOptions'
+      clusterOptions:
+        $ref: '#/definitions/mount.ClusterOptions'
+      consistency:
+        $ref: '#/definitions/mount.Consistency'
+      imageOptions:
+        $ref: '#/definitions/mount.ImageOptions'
+      readOnly:
+        description: attempts recursive read-only if possible
+        type: boolean
+      source:
+        description: |-
+          Source specifies the name of the mount. Depending on mount type, this
+          may be a volume name or a host path, or even ignored.
+          Source is not supported for tmpfs (must be an empty value)
+        type: string
+      target:
+        type: string
+      tmpfsOptions:
+        $ref: '#/definitions/mount.TmpfsOptions'
+      type:
+        $ref: '#/definitions/mount.Type'
+      volumeOptions:
+        $ref: '#/definitions/mount.VolumeOptions'
+    type: object
+  mount.Propagation:
+    enum:
+    - rprivate
+    - private
+    - rshared
+    - shared
+    - rslave
+    - slave
+    type: string
+    x-enum-varnames:
+    - PropagationRPrivate
+    - PropagationPrivate
+    - PropagationRShared
+    - PropagationShared
+    - PropagationRSlave
+    - PropagationSlave
+  mount.TmpfsOptions:
+    properties:
+      mode:
+        allOf:
+        - $ref: '#/definitions/os.FileMode'
+        description: Mode of the tmpfs upon creation
+      options:
+        description: |-
+          Options to be passed to the tmpfs mount. An array of arrays. Flag
+          options should be provided as 1-length arrays. Other types should be
+          provided as 2-length arrays, where the first item is the key and the
+          second the value.
+        items:
+          items:
+            type: string
+          type: array
+        type: array
+      sizeBytes:
+        description: |-
+          Size sets the size of the tmpfs, in bytes.
+
+          This will be converted to an operating system specific value
+          depending on the host. For example, on linux, it will be converted to
+          use a 'k', 'm' or 'g' syntax. BSD, though not widely supported with
+          docker, uses a straight byte value.
+
+          Percentages are not supported.
+        type: integer
+    type: object
+  mount.Type:
+    enum:
+    - bind
+    - volume
+    - tmpfs
+    - npipe
+    - cluster
+    - image
+    type: string
+    x-enum-varnames:
+    - TypeBind
+    - TypeVolume
+    - TypeTmpfs
+    - TypeNamedPipe
+    - TypeCluster
+    - TypeImage
+  mount.VolumeOptions:
+    properties:
+      driverConfig:
+        $ref: '#/definitions/mount.Driver'
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      noCopy:
+        type: boolean
+      subpath:
+        type: string
+    type: object
+  nat.PortBinding:
+    properties:
+      HostIp:
+        description: HostIP is the host IP Address
+        type: string
+      hostPort:
+        description: HostPort is the host port number
+        type: string
+    type: object
+  nat.PortMap:
+    additionalProperties:
+      items:
+        $ref: '#/definitions/nat.PortBinding'
+      type: array
+    type: object
+  nat.PortSet:
+    additionalProperties:
+      type: object
+    type: object
+  network.Address:
+    properties:
+      addr:
+        type: string
+      prefixLen:
+        type: integer
+    type: object
+  network.CSP:
+    properties:
+      name:
+        type: string
+      nlb:
+        items:
+          $ref: '#/definitions/network.NLB'
+        type: array
+      security_group:
+        items:
+          $ref: '#/definitions/network.SecurityGroup'
+        type: array
+      vpc:
+        items:
+          $ref: '#/definitions/network.VPC'
+        type: array
+    type: object
+  network.DNS:
+    properties:
+      dns_server:
+        description: IPv4 or IPv6 DNS Server Addresses
+        items:
+          type: string
+        type: array
+    type: object
+  network.EndpointIPAMConfig:
+    properties:
+      ipv4Address:
+        type: string
+      ipv6Address:
+        type: string
+      linkLocalIPs:
+        items:
+          type: string
+        type: array
+    type: object
+  network.EndpointSettings:
+    properties:
+      aliases:
+        description: Aliases holds the list of extra, user-specified DNS names for
+          this endpoint.
+        items:
+          type: string
+        type: array
+      dnsnames:
+        description: |-
+          DNSNames holds all the (non fully qualified) DNS names associated to this endpoint. First entry is used to
+          generate PTR records.
+        items:
+          type: string
+        type: array
+      driverOpts:
+        additionalProperties:
+          type: string
+        type: object
+      endpointID:
+        type: string
+      gateway:
+        type: string
+      globalIPv6Address:
+        type: string
+      globalIPv6PrefixLen:
+        type: integer
+      gwPriority:
+        description: |-
+          GwPriority determines which endpoint will provide the default gateway
+          for the container. The endpoint with the highest priority will be used.
+          If multiple endpoints have the same priority, they are lexicographically
+          sorted based on their network name, and the one that sorts first is picked.
+        type: integer
+      ipaddress:
+        type: string
+      ipamconfig:
+        allOf:
+        - $ref: '#/definitions/network.EndpointIPAMConfig'
+        description: Configurations
+      ipprefixLen:
+        type: integer
+      ipv6Gateway:
+        type: string
+      links:
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: |-
+          MacAddress may be used to specify a MAC address when the container is created.
+          Once the container is running, it becomes operational data (it may contain a
+          generated address).
+        type: string
+      networkID:
+        description: Operational data
+        type: string
+    type: object
+  network.FirewallRule:
+    properties:
+      action:
+        description: allow, deny
+        type: string
+      direction:
+        description: inbound, outbound
+        type: string
+      dst:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0",
+          "2001:db8:4567::/48", "2001:db8:1234:0::/64", "::/0"
+        type: string
+      dst_ports:
+        description: e.g., "80", "80,443", "1024-65535"
+        type: string
+      priority:
+        description: Lower has higher priority
+        type: integer
+      protocol:
+        description: '*, tcp, udp, icmp, icmpv6'
+        type: string
+      src:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0",
+          "2001:db8:4567::/48", "2001:db8:1234:0::/64", "::/0"
+        type: string
+      src_ports:
+        description: e.g., "80", "80,443", "1024-65535"
+        type: string
+    type: object
+  network.Host:
+    properties:
+      dns:
+        $ref: '#/definitions/network.DNS'
+      firewall_rule:
+        items:
+          $ref: '#/definitions/network.FirewallRule'
+        type: array
+      network_interface:
+        items:
+          $ref: '#/definitions/network.NIC'
+        type: array
+      route:
+        items:
+          $ref: '#/definitions/network.Route'
+        type: array
+    type: object
+  network.NIC:
+    properties:
+      address:
+        items:
+          type: string
+        type: array
+      gateway:
+        type: string
+      interface:
+        type: string
+      mac_address:
+        type: string
+      mtu:
+        type: integer
+    type: object
+  network.NLB:
+    properties:
+      description:
+        type: string
+      health_checker:
+        type: string
+      id:
+        type: string
+      listener:
+        type: string
+      name:
+        type: string
+      target_group:
+        type: string
+    type: object
+  network.Network:
+    properties:
+      csp:
+        $ref: '#/definitions/network.CSP'
+      host:
+        $ref: '#/definitions/network.Host'
+    type: object
+  network.Route:
+    properties:
+      destination:
+        type: string
+      family:
+        type: string
+      interface:
+        type: string
+      link:
+        type: string
+      metric:
+        type: integer
+      netmask:
+        type: string
+      next_hop:
+        type: string
+      proto:
+        type: string
+      scope:
+        type: string
+      source:
+        type: string
+    type: object
+  network.SecurityGroup:
+    properties:
+      description:
+        type: string
+      firewall_rule:
+        items:
+          $ref: '#/definitions/network.FirewallRule'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      vnet_id:
+        type: string
+    type: object
+  network.Subnet:
+    properties:
+      ipv4_cidr:
+        description: IPv4 Network Address with CIDR Prefix Length
+        type: string
+      ipv6_cidr:
+        description: IPv6 Network Address with CIDR Prefix Length
+        type: string
+      name:
+        type: string
+    type: object
+  network.VPC:
+    properties:
+      address_space:
+        description: IPv4 CIDR or IPv6 CIDR
+        items:
+          type: string
+        type: array
+      dns_server:
+        items:
+          $ref: '#/definitions/network.DNS'
+        type: array
+      id:
+        type: string
+      region:
+        type: string
+      subnet:
+        items:
+          $ref: '#/definitions/network.Subnet'
+        type: array
+    type: object
+  onpremisemodel.CpuProperty:
+    properties:
+      architecture:
+        example: x86_64
+        type: string
+      cores:
+        description: Number of physical cores per CPU
+        example: 18
+        type: integer
+      cpus:
+        description: Number of physical CPUs (sockets)
+        example: 2
+        type: integer
+      maxSpeed:
+        description: Maximum speed in GHz
+        example: 3.6
+        type: number
+      model:
+        example: Intel(R) Xeon(R) Gold 6140 CPU @ 2.30GHz
+        type: string
+      threads:
+        description: Number of logical CPUs (threads) per CPU with hyper-threading
+          enabled
+        example: 36
+        type: integer
+      vendor:
+        example: GenuineIntel
+        type: string
+    required:
+    - cores
+    - cpus
+    - threads
+    type: object
+  onpremisemodel.DiskProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      label:
+        type: string
+      totalSize:
+        description: Unit GiB
+        example: 1024
+        type: integer
+      type:
+        description: SSD, HDD
+        example: SSD
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - label
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.FirewallRuleProperty:
+    properties:
+      action:
+        description: e.g., allow, deny
+        type: string
+      direction:
+        description: e.g., inbound, outbound
+        type: string
+      dstCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      dstPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+      protocol:
+        description: e.g., "TCP", "UDP", "ICMP", "*" (for all protocol)
+        type: string
+      srcCIDR:
+        description: e.g., "123.123.123.123/32", "123.123.123.123/24", "0.0.0.0/0"
+        type: string
+      srcPorts:
+        description: e.g., "80", "80,443", "1024-65535", "*" (for all ports)
+        type: string
+    type: object
+  onpremisemodel.GatewayProperty:
+    properties:
+      interfaceName:
+        description: Name of the network interface associated with the gateway
+        type: string
+      ip:
+        description: IP address of the gateway
+        type: string
+      machineId:
+        description: Unique identifier for the machine (e.g., UUID)
+        type: string
+    type: object
+  onpremisemodel.K8sClusterProperty:
+    properties:
+      cniPlugin:
+        description: '[Reference] CNI plugin name (e.g., "calico", "flannel", "cilium")'
+        type: string
+      name:
+        description: '[Required] Cluster name'
+        type: string
+      nodePortRange:
+        description: '[Reference] NodePort range (e.g., "30000-32767")'
+        type: string
+      podCIDR:
+        description: '[Reference] Pod network CIDR (e.g., "10.244.0.0/16")'
+        type: string
+      serviceCIDR:
+        description: '[Reference] Service network CIDR (e.g., "10.96.0.0/12")'
+        type: string
+      version:
+        description: '[Required] Kubernetes version (e.g., "1.29.3")'
+        type: string
+    required:
+    - name
+    - version
+    type: object
+  onpremisemodel.MemoryProperty:
+    properties:
+      available:
+        description: Unit GiB
+        type: integer
+      totalSize:
+        description: Unit GiB
+        example: 128
+        type: integer
+      type:
+        example: DDR4
+        type: string
+      used:
+        description: Unit GiB
+        type: integer
+    required:
+    - totalSize
+    - type
+    type: object
+  onpremisemodel.NetworkDetail:
+    properties:
+      cidrBlocks:
+        items:
+          type: string
+        type: array
+      defaultGateways:
+        items:
+          $ref: '#/definitions/onpremisemodel.GatewayProperty'
+        type: array
+    type: object
+  onpremisemodel.NetworkInterfaceProperty:
+    properties:
+      ipv4CidrBlocks:
+        description: IPv4 address with prefix length (e.g., 192.168.0.21/24), instead
+          of inet addr, Bcast, and Mask
+        items:
+          type: string
+        type: array
+      ipv6CidrBlocks:
+        description: IPv6 address with prefix length (e.g., "2001:db8::1/64")
+        items:
+          type: string
+        type: array
+      macAddress:
+        description: MAC address
+        type: string
+      mtu:
+        description: Maximum Transmission Unit (MTU) in bytes
+        type: integer
+      name:
+        description: Interface name (e.g., eth0, ens01, enp0s3)
+        type: string
+      state:
+        description: Interface state (e.g., UP, DOWN)
+        type: string
+    required:
+    - name
+    type: object
+  onpremisemodel.NetworkProperty:
+    properties:
+      ipv4Networks:
+        $ref: '#/definitions/onpremisemodel.NetworkDetail'
+      ipv6Networks:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.NetworkDetail'
+        description: TBD
+    type: object
+  onpremisemodel.NlbBackendProperty:
+    properties:
+      balance:
+        description: '"roundrobin" | "leastconn" | "source" (note only)'
+        type: string
+      name:
+        description: Backend section name
+        type: string
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      servers:
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbServerProperty'
+        type: array
+    type: object
+  onpremisemodel.NlbHealthCheckProperty:
+    properties:
+      enabled:
+        type: boolean
+      interval:
+        description: seconds; default 10
+        type: integer
+      port:
+        description: 0 = same as server port
+        type: integer
+      protocol:
+        description: '"tcp" | "http"'
+        type: string
+      threshold:
+        description: default 3
+        type: integer
+      timeout:
+        description: seconds; default 10
+        type: integer
+    type: object
+  onpremisemodel.NlbListenerProperty:
+    properties:
+      bindAddress:
+        description: '"*" = all interfaces (→ PUBLIC), specific IP = INTERNAL'
+        type: string
+      port:
+        description: Listener port (1–65535)
+        type: integer
+      protocol:
+        description: '"tcp" | "udp"'
+        type: string
+    type: object
+  onpremisemodel.NlbProperty:
+    properties:
+      backend:
+        $ref: '#/definitions/onpremisemodel.NlbBackendProperty'
+      healthCheck:
+        $ref: '#/definitions/onpremisemodel.NlbHealthCheckProperty'
+      hostMachineId:
+        description: MachineId of the node running HAProxy
+        type: string
+      listener:
+        $ref: '#/definitions/onpremisemodel.NlbListenerProperty'
+      software:
+        description: '"haproxy"'
+        type: string
+    type: object
+  onpremisemodel.NlbServerProperty:
+    properties:
+      ip:
+        description: Server IP; used for IP correlation at recommendation time
+        type: string
+      name:
+        type: string
+      port:
+        description: Server port
+        type: integer
+      weight:
+        description: Traffic weight (reference only)
+        type: integer
+    type: object
+  onpremisemodel.NodeProperty:
+    properties:
+      cpu:
+        $ref: '#/definitions/onpremisemodel.CpuProperty'
+      dataDisks:
+        items:
+          $ref: '#/definitions/onpremisemodel.DiskProperty'
+        type: array
+      firewallTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.FirewallRuleProperty'
+        type: array
+      hostname:
+        type: string
+      interfaces:
+        items:
+          $ref: '#/definitions/onpremisemodel.NetworkInterfaceProperty'
+        type: array
+      machineId:
+        description: Unique identifier for the node (e.g., UUID)
+        type: string
+      memory:
+        $ref: '#/definitions/onpremisemodel.MemoryProperty'
+      os:
+        $ref: '#/definitions/onpremisemodel.OsProperty'
+      role:
+        description: Node role (e.g., "control-plane", "worker", "standalone")
+        example: control-plane
+        type: string
+      rootDisk:
+        $ref: '#/definitions/onpremisemodel.DiskProperty'
+      routingTable:
+        items:
+          $ref: '#/definitions/onpremisemodel.RouteProperty'
+        type: array
+    type: object
+  onpremisemodel.OnpremInfra:
+    properties:
+      k8sCluster:
+        allOf:
+        - $ref: '#/definitions/onpremisemodel.K8sClusterProperty'
+        description: 'TODO: Extend to a general ClusterProperty if other orchestrators
+          (e.g., OpenShift, Rancher) are needed.'
+      network:
+        $ref: '#/definitions/onpremisemodel.NetworkProperty'
+      nlbs:
+        description: |-
+          NLBs holds on-premise NLB instances (HAProxy-based), one entry per frontend-backend pair.
+          Populated by cm-honeybee when HAProxy is detected on a node.
+          Used exclusively by POST /recommendation/infraWithNlb; ignored by POST /recommendation/infra.
+        items:
+          $ref: '#/definitions/onpremisemodel.NlbProperty'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/onpremisemodel.NodeProperty'
+        type: array
+    required:
+    - nodes
+    type: object
+  onpremisemodel.OnpremiseInfraModel:
+    properties:
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+    required:
+    - onpremiseInfraModel
+    type: object
+  onpremisemodel.OsProperty:
+    properties:
+      id:
+        example: ubuntu
+        type: string
+      idLike:
+        example: debian
+        type: string
+      name:
+        example: Ubuntu
+        type: string
+      prettyName:
+        description: Pretty name
+        example: Ubuntu 22.04.3 LTS
+        type: string
+      version:
+        description: Full version string
+        example: 22.04.3 LTS (Jammy Jellyfish)
+        type: string
+      versionCodename:
+        example: jammy
+        type: string
+      versionId:
+        example: "22.04"
+        type: string
+    required:
+    - prettyName
+    type: object
+  onpremisemodel.RouteProperty:
+    properties:
+      destination:
+        description: Destination network, expressed in CIDR format
+        type: string
+      gateway:
+        description: Gateway address to which packets are forwarded
+        type: string
+      interface:
+        description: Network interface associated with the route
+        type: string
+      linkState:
+        description: Link state of the route (e.g., UP, DOWN)
+        type: string
+      metric:
+        description: Metric value indicating the priority of the route
+        type: integer
+      protocol:
+        description: Protocol used to set the route (e.g., kernel, static)
+        type: string
+      scope:
+        description: Scope of the route (e.g., global, link, host)
+        type: string
+      source:
+        description: Optionally stores the source address (used for policy-based routing)
+        type: string
+    type: object
+  os.FileMode:
+    enum:
+    - 2147483648
+    - 1073741824
+    - 536870912
+    - 268435456
+    - 134217728
+    - 67108864
+    - 33554432
+    - 16777216
+    - 8388608
+    - 4194304
+    - 2097152
+    - 1048576
+    - 524288
+    - 2401763328
+    - 511
+    - 2147483648
+    - 1073741824
+    - 536870912
+    - 268435456
+    - 134217728
+    - 67108864
+    - 33554432
+    - 16777216
+    - 8388608
+    - 4194304
+    - 2097152
+    - 1048576
+    - 524288
+    - 2401763328
+    - 511
+    format: int32
+    type: integer
+    x-enum-comments:
+      ModeAppend: 'a: append-only'
+      ModeCharDevice: 'c: Unix character device, when ModeDevice is set'
+      ModeDevice: 'D: device file'
+      ModeDir: 'd: is a directory'
+      ModeExclusive: 'l: exclusive use'
+      ModeIrregular: '?: non-regular file; nothing else is known about this file'
+      ModeNamedPipe: 'p: named pipe (FIFO)'
+      ModePerm: Unix permission bits, 0o777
+      ModeSetgid: 'g: setgid'
+      ModeSetuid: 'u: setuid'
+      ModeSocket: 'S: Unix domain socket'
+      ModeSticky: 't: sticky'
+      ModeSymlink: 'L: symbolic link'
+      ModeTemporary: 'T: temporary file; Plan 9 only'
+    x-enum-descriptions:
+    - 'd: is a directory'
+    - 'a: append-only'
+    - 'l: exclusive use'
+    - 'T: temporary file; Plan 9 only'
+    - 'L: symbolic link'
+    - 'D: device file'
+    - 'p: named pipe (FIFO)'
+    - 'S: Unix domain socket'
+    - 'u: setuid'
+    - 'g: setgid'
+    - 'c: Unix character device, when ModeDevice is set'
+    - 't: sticky'
+    - '?: non-regular file; nothing else is known about this file'
+    - ""
+    - Unix permission bits, 0o777
+    x-enum-varnames:
+    - ModeDir
+    - ModeAppend
+    - ModeExclusive
+    - ModeTemporary
+    - ModeSymlink
+    - ModeDevice
+    - ModeNamedPipe
+    - ModeSocket
+    - ModeSetuid
+    - ModeSetgid
+    - ModeCharDevice
+    - ModeSticky
+    - ModeIrregular
+    - ModeType
+    - ModePerm
+  software.Binary:
+    properties:
+      cmdline:
+        type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
+      config_files:
+        items:
+          $ref: '#/definitions/software.ConfigFile'
+        type: array
+      connection_status:
+        type: string
+      data_dirs:
+        items:
+          type: string
+        type: array
+      dependencies:
+        description: non-package-owned runtime paths to copy
+        items:
+          type: string
+        type: array
+      environ:
+        items:
+          type: string
+        type: array
+      executable_path:
+        type: string
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
+      launch_type:
+        description: 'Launch provenance: how the process was started on this host.'
+        type: string
+      libraries:
+        items:
+          type: string
+        type: array
+      library_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      open_file_paths:
+        items:
+          type: string
+        type: array
+      pid:
+        type: integer
+      pid_file:
+        type: string
+      required_packages:
+        description: OS packages providing the linked libs the target must install
+        items:
+          type: string
+        type: array
+      service_type:
+        description: systemd Type= ("simple"|"forking"|...)
+        type: string
+      static:
+        type: boolean
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        type: string
+      uids:
+        items:
+          type: integer
+        type: array
+      version:
+        type: string
+      wine_prefix:
+        type: string
+      working_directory:
+        type: string
+    type: object
+  software.ConfigFile:
+    properties:
+      path:
+        type: string
+      source:
+        description: flag | openfd
+        type: string
+    type: object
+  software.Container:
+    properties:
+      containerInspect:
+        $ref: '#/definitions/container.InspectResponse'
+      containerSummary:
+        $ref: '#/definitions/container.Summary'
+      imageInspect:
+        $ref: '#/definitions/image.InspectResponse'
+    type: object
+  software.DEB:
+    properties:
+      architecture:
+        type: string
+      conffiles:
+        items:
+          type: string
+        type: array
+      depends:
+        type: string
+      description:
+        type: string
+      homepage:
+        type: string
+      installed_size:
+        type: integer
+      maintainer:
+        type: string
+      multi_arch:
+        type: string
+      package:
+        type: string
+      pre_depends:
+        type: string
+      priority:
+        type: string
+      section:
+        type: string
+      source:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
+  software.RPM:
+    properties:
+      arch:
+        type: string
+      group:
+        type: string
+      license:
+        type: string
+      name:
+        type: string
+      release:
+        type: string
+      requires:
+        items:
+          type: string
+        type: array
+      size:
+        type: integer
+      sourceRpm:
+        type: string
+      summary:
+        type: string
+      vendor:
+        type: string
+      version:
+        type: string
+    type: object
+  software.Software:
+    properties:
+      deb:
+        items:
+          $ref: '#/definitions/software.DEB'
+        type: array
+      docker:
+        items:
+          $ref: '#/definitions/software.Container'
+        type: array
+      legacy:
+        items:
+          $ref: '#/definitions/software.Binary'
+        type: array
+      podman:
+        items:
+          $ref: '#/definitions/software.Container'
+        type: array
+      rpm:
+        items:
+          $ref: '#/definitions/software.RPM'
+        type: array
+    type: object
+  softwaremodel.Binary:
+    properties:
+      binary_path:
+        type: string
+      cmdline_slice:
+        items:
+          type: string
+        type: array
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      envs:
+        items:
+          type: string
+        type: array
+      gids:
+        items:
+          type: integer
+        type: array
+      is_wine:
+        type: boolean
+      launch_type:
+        description: 'Launch provenance: how the software was started on the source
+          host.'
+        type: string
+      name:
+        type: string
+      needed_libraries:
+        items:
+          type: string
+        type: array
+      pid_file:
+        description: PIDFile= for forking services
+        type: string
+      required_packages:
+        description: OS packages the target must install (package-provided linked
+          libs)
+        items:
+          type: string
+        type: array
+      service_type:
+        description: systemd Type= ("simple"|"forking"|...)
+        type: string
+      systemd_enabled:
+        type: boolean
+      systemd_unit_name:
+        type: string
+      systemd_unit_path:
+        description: source unit file path (to copy)
+        type: string
+      uids:
+        items:
+          type: integer
+        type: array
+      version:
+        type: string
+      wine_prefix:
+        description: WINEPREFIX bottle dir (Wine apps)
+        type: string
+      working_directory:
+        description: used to synthesize a unit
+        type: string
+    required:
+    - envs
+    - gids
+    - name
+    - uids
+    - version
+    type: object
+  softwaremodel.Container:
+    properties:
+      container_id:
+        type: string
+      container_image:
+        $ref: '#/definitions/softwaremodel.ContainerImage'
+      container_ports:
+        items:
+          $ref: '#/definitions/softwaremodel.ContainerPort'
+        type: array
+      container_status:
+        type: string
+      docker_compose_path:
+        type: string
+      envs:
+        items:
+          $ref: '#/definitions/softwaremodel.Env'
+        type: array
+      mount_paths:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      network_mode:
+        type: string
+      restart_policy:
+        type: string
+      runtime:
+        allOf:
+        - $ref: '#/definitions/softwaremodel.SoftwareContainerRuntimeType'
+        description: Which runtime uses for the container (Docker, Podman)
+    required:
+    - container_id
+    - container_image
+    - container_status
+    - name
+    - network_mode
+    - restart_policy
+    - runtime
+    type: object
+  softwaremodel.ContainerImage:
+    properties:
+      image_architecture:
+        $ref: '#/definitions/softwaremodel.SoftwareArchitecture'
+      image_hash:
+        type: string
+      image_name:
+        type: string
+      image_version:
+        type: string
+    required:
+    - image_architecture
+    - image_hash
+    - image_name
+    - image_version
+    type: object
+  softwaremodel.ContainerPort:
+    properties:
+      container_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Port}
+        type: integer
+      host_ip:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostIp
+        type: string
+      host_port:
+        description: NetworkSettings.Ports.{Port}/{Protocol}.HostPort
+        type: integer
+      protocol:
+        description: NetworkSettings.Ports.{Port}/{Protocol} -> {Protocol}
+        type: string
+    required:
+    - container_port
+    - host_ip
+    - host_port
+    - protocol
+    type: object
+  softwaremodel.Env:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    required:
+    - name
+    type: object
+  softwaremodel.Kubernetes:
+    properties:
+      kube_config:
+        type: string
+      resources:
+        additionalProperties: true
+        type: object
+      version:
+        description: Same as release
+        type: string
+    required:
+    - kube_config
+    - resources
+    - version
+    type: object
+  softwaremodel.Package:
+    properties:
+      custom_configs:
+        items:
+          type: string
+        type: array
+      custom_data_paths:
+        items:
+          type: string
+        type: array
+      gpg_key_url:
+        type: string
+      name:
+        type: string
+      need_to_delete_packages:
+        type: string
+      needed_packages:
+        type: string
+      repo_url:
+        type: string
+      repo_use_os_version_code:
+        default: false
+        type: boolean
+      type:
+        $ref: '#/definitions/softwaremodel.SoftwarePackageType'
+      version:
+        type: string
+    required:
+    - name
+    - needed_packages
+    - type
+    - version
+    type: object
+  softwaremodel.SoftwareArchitecture:
+    enum:
+    - common
+    - x86_64
+    - x86
+    - armv5
+    - armv6
+    - armv7
+    - arm64v8
+    type: string
+    x-enum-varnames:
+    - SoftwareArchitectureCommon
+    - SoftwareArchitectureX8664
+    - SoftwareArchitectureX86
+    - SoftwareArchitectureARMv5
+    - SoftwareArchitectureARMv6
+    - SoftwareArchitectureARMv7
+    - SoftwareArchitectureARM64v8
+  softwaremodel.SoftwareContainerRuntimeType:
+    enum:
+    - docker
+    - podman
+    type: string
+    x-enum-varnames:
+    - SoftwareContainerRuntimeTypeDocker
+    - SoftwareContainerRuntimeTypePodman
+  softwaremodel.SoftwareList:
+    properties:
+      binaries:
+        items:
+          $ref: '#/definitions/softwaremodel.Binary'
+        type: array
+      containers:
+        items:
+          $ref: '#/definitions/softwaremodel.Container'
+        type: array
+      kubernetes:
+        items:
+          $ref: '#/definitions/softwaremodel.Kubernetes'
+        type: array
+      packages:
+        items:
+          $ref: '#/definitions/softwaremodel.Package'
+        type: array
+    type: object
+  softwaremodel.SoftwarePackageType:
+    enum:
+    - deb
+    - rpm
+    type: string
+    x-enum-comments:
+      SoftwarePackageTypeDEB: Debian based package type
+      SoftwarePackageTypeRPM: RHEL based package type
+    x-enum-descriptions:
+    - Debian based package type
+    - RHEL based package type
+    x-enum-varnames:
+    - SoftwarePackageTypeDEB
+    - SoftwarePackageTypeRPM
+  softwaremodel.SourceConnectionInfoSoftwareProperty:
+    properties:
+      connection_id:
+        type: string
+      softwares:
+        $ref: '#/definitions/softwaremodel.SoftwareList'
+    required:
+    - connection_id
+    type: object
+  softwaremodel.SourceGroupSoftwareProperty:
+    properties:
+      connection_info_list:
+        items:
+          $ref: '#/definitions/softwaremodel.SourceConnectionInfoSoftwareProperty'
+        type: array
+      source_group_id:
+        type: string
+    required:
+    - source_group_id
+    type: object
+  storage.DriverData:
+    properties:
+      Data:
+        additionalProperties:
+          type: string
+        description: |-
+          Low-level storage metadata, provided as key/value pairs.
+
+          This information is driver-specific, and depends on the storage-driver
+          in use, and should be used for informational purposes only.
+
+          Required: true
+        type: object
+      Name:
+        description: |-
+          Name of the storage driver.
+          Required: true
+        type: string
+    type: object
+  time.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    format: int64
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+  v1.Descriptor:
+    properties:
+      annotations:
+        additionalProperties:
+          type: string
+        description: Annotations contains arbitrary metadata relating to the targeted
+          content.
+        type: object
+      artifactType:
+        description: ArtifactType is the IANA media type of this artifact.
+        type: string
+      data:
+        description: |-
+          Data is an embedding of the targeted content. This is encoded as a base64
+          string when marshalled to JSON (automatically, by encoding/json). If
+          present, Data can be used directly to avoid fetching the targeted content.
+        items:
+          type: integer
+        type: array
+      digest:
+        description: Digest is the digest of the targeted content.
+        type: string
+      mediaType:
+        description: MediaType is the media type of the object this schema refers
+          to.
+        type: string
+      platform:
+        allOf:
+        - $ref: '#/definitions/v1.Platform'
+        description: |-
+          Platform describes the platform which the image in the manifest runs on.
+
+          This should only be used when referring to a manifest.
+      size:
+        description: Size specifies the size in bytes of the blob.
+        type: integer
+      urls:
+        description: URLs specifies a list of URLs from which this object MAY be downloaded
+        items:
+          type: string
+        type: array
+    type: object
+  v1.DockerOCIImageConfig:
+    properties:
+      ArgsEscaped:
+        description: |-
+          ArgsEscaped
+
+          Deprecated: This field is present only for legacy compatibility with
+          Docker and should not be used by new image builders.  It is used by Docker
+          for Windows images to indicate that the `Entrypoint` or `Cmd` or both,
+          contains only a single element array, that is a pre-escaped, and combined
+          into a single string `CommandLine`. If `true` the value in `Entrypoint` or
+          `Cmd` should be used as-is to avoid double escaping.
+          https://github.com/opencontainers/image-spec/pull/892
+        type: boolean
+      Cmd:
+        description: Cmd defines the default arguments to the entrypoint of the container.
+        items:
+          type: string
+        type: array
+      Entrypoint:
+        description: Entrypoint defines a list of arguments to use as the command
+          to execute when the container starts.
+        items:
+          type: string
+        type: array
+      Env:
+        description: Env is a list of environment variables to be used in a container.
+        items:
+          type: string
+        type: array
+      ExposedPorts:
+        additionalProperties:
+          type: object
+        description: ExposedPorts a set of ports to expose from a container running
+          this image.
+        type: object
+      Labels:
+        additionalProperties:
+          type: string
+        description: Labels contains arbitrary metadata for the container.
+        type: object
+      StopSignal:
+        description: StopSignal contains the system call signal that will be sent
+          to the container to exit.
+        type: string
+      User:
+        description: User defines the username or UID which the process in the container
+          should run as.
+        type: string
+      Volumes:
+        additionalProperties:
+          type: object
+        description: Volumes is a set of directories describing where the process
+          is likely write data specific to a container instance.
+        type: object
+      WorkingDir:
+        description: WorkingDir sets the current working directory of the entrypoint
+          process in the container.
+        type: string
+      healthcheck:
+        allOf:
+        - $ref: '#/definitions/v1.HealthcheckConfig'
+        description: Healthcheck describes how to check the container is healthy
+      onBuild:
+        description: ONBUILD metadata that were defined on the image Dockerfile
+        items:
+          type: string
+        type: array
+      shell:
+        description: Shell for shell-form of RUN, CMD, ENTRYPOINT
+        items:
+          type: string
+        type: array
+    type: object
+  v1.HealthcheckConfig:
+    properties:
+      interval:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: Zero means to inherit. Durations are expressed as integer nanoseconds.
+      retries:
+        description: |-
+          Retries is the number of consecutive failures needed to consider a container as unhealthy.
+          Zero means inherit.
+        type: integer
+      startInterval:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: The interval to attempt healthchecks at during the start period
+      startPeriod:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: The start period for the container to initialize before the retries
+          starts to count down.
+      test:
+        description: |-
+          Test is the test to perform to check that the container is healthy.
+          An empty slice means to inherit the default.
+          The options are:
+          {} : inherit healthcheck
+          {"NONE"} : disable healthcheck
+          {"CMD", args...} : exec arguments directly
+          {"CMD-SHELL", command} : run command with system's default shell
+        items:
+          type: string
+        type: array
+      timeout:
+        allOf:
+        - $ref: '#/definitions/time.Duration'
+        description: Timeout is the time to wait before considering the check to have
+          hung.
+    type: object
+  v1.Platform:
+    properties:
+      architecture:
+        description: |-
+          Architecture field specifies the CPU architecture, for example
+          `amd64` or `ppc64le`.
+        type: string
+      os:
+        description: OS specifies the operating system, for example `linux` or `windows`.
+        type: string
+      os.features:
+        description: |-
+          OSFeatures is an optional field specifying an array of strings,
+          each listing a required OS feature (for example on Windows `win32k`).
+        items:
+          type: string
+        type: array
+      os.version:
+        description: |-
+          OSVersion is an optional field specifying the operating system
+          version, for example on Windows `10.0.14393.1066`.
+        type: string
+      variant:
+        description: |-
+          Variant is an optional field specifying a variant of the CPU, for
+          example `v7` to specify ARMv7 when architecture is `arm`.
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Collecting and Aggregating server module
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: CM-Honeybee Server REST API
+  version: latest
+paths:
+  /bench/{connId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the benchmark information of the connection information.
+      operationId: get-benchmark-info
+      parameters:
+      - description: ID of the connection info
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the benchmark.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedBenchmarkInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the benchmark.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Benchmark Info
+      tags:
+      - '[Import] BenchmarkInfo'
+  /bench/{connId}/run:
+    post:
+      consumes:
+      - application/json
+      description: Run the benchmark information of the connection information. If
+        no Benchmark Agent is present on the connected server, it will be automatically
+        installed, and the benchmark will be executed.
+      operationId: run-benchmark-info
+      parameters:
+      - description: ID of the connection info
+        in: path
+        name: connId
+        required: true
+        type: string
+      - default: cpus,cpum
+        description: Comma-separated types for benchmarking (e.g., cpus, cpum, memR,
+          memW, fioR, fioW, dbR, dbW)
+        in: query
+        name: types
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the benchmark.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.Benchmark'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the benchmark.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Run Benchmark Information
+      tags:
+      - '[Import] BenchmarkInfo'
+  /bench/{connId}/stop:
+    post:
+      consumes:
+      - application/json
+      description: Stop the benchmark
+      operationId: stop-benchmark
+      parameters:
+      - description: ID of the connection info
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Benchmark Stopped.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to stop of the benchmark.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Stop Benchmark
+      tags:
+      - '[Import] BenchmarkInfo'
+  /connection_info/{connId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the connection information directly.
+      operationId: get-connection-info-directly
+      parameters:
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get ConnectionInfo Directly
+      tags:
+      - '[On-premise] ConnectionInfo'
+  /connection_info/{connId}/refresh:
+    put:
+      consumes:
+      - application/json
+      description: Refresh the connection info status directly.
+      operationId: refresh-connection-info-status-directly
+      parameters:
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Refresh Connection Info Status Directly
+      tags:
+      - '[On-premise] ConnectionInfo'
+  /csp:
+    get:
+      consumes:
+      - application/json
+      description: Return the list of CSPs supported by the connected cb-spider.
+      operationId: list-csp
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of CSP names
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListCSPRes'
+        "500":
+          description: Failed to query cb-spider
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: List supported CSPs
+      tags:
+      - '[CSP] Metadata'
+  /csp/{name}:
+    get:
+      consumes:
+      - application/json
+      description: Return the credential keys, regions, and other metadata for the
+        given CSP. Name is matched case-insensitively.
+      operationId: get-csp
+      parameters:
+      - description: CSP name (case-insensitive, e.g. aws or AWS)
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: CSP metadata
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CSPInfo'
+        "400":
+          description: Unsupported or missing CSP name
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to query cb-spider
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get CSP metadata
+      tags:
+      - '[CSP] Metadata'
+  /readyz:
+    get:
+      consumes:
+      - application/json
+      description: Check Honeybee is ready
+      operationId: health-check-readyz
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get ready state.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "500":
+          description: Failed to check ready state.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Check Ready
+      tags:
+      - "[Admin]\tSystem management"
+  /source_group:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of source group.
+      operationId: list-source-group
+      parameters:
+      - description: Page of the source group list.
+        in: query
+        name: page
+        type: string
+      - description: Row of the source group list.
+        in: query
+        name: row
+        type: string
+      - description: Name of the source group.
+        in: query
+        name: name
+        type: string
+      - description: Description of the source group.
+        in: query
+        name: description
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get a list of source group.
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListSourceGroupRes'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get a list of source group.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: List SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+    post:
+      consumes:
+      - application/json
+      description: Register the source group.
+      operationId: register-source-group
+      parameters:
+      - description: source group of the node.
+        in: body
+        name: SourceGroup
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateSourceGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully register the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroupRes'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to register the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Register SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+  /source_group/{sgId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the source group.
+      operationId: delete-source-group
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully delete the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to delete the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Delete SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+    get:
+      consumes:
+      - application/json
+      description: Get the source group.
+      operationId: get-source-group
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroupRes'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+    put:
+      consumes:
+      - application/json
+      description: Update the source group.
+      operationId: update-source-group
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: source group to modify.
+        in: body
+        name: SourceGroup
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.UpdateSourceGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully update the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroup'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to update the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Update SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+  /source_group/{sgId}/connection_info:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of connection information.
+      operationId: list-connection-info
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: Page of the connection information list.
+        in: query
+        name: page
+        type: string
+      - description: Row of the connection information list.
+        in: query
+        name: row
+        type: string
+      - description: Name of the connection information.
+        in: query
+        name: name
+        type: string
+      - description: Description of the connection information.
+        in: query
+        name: description
+        type: string
+      - description: IP address of the connection information.
+        in: query
+        name: ip_address
+        type: string
+      - description: SSH port of the connection information.
+        in: query
+        name: ssh_port
+        type: string
+      - description: User of the connection information.
+        in: query
+        name: user
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get a list of connection information.
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ListConnectionInfoRes'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get a list of connection information.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: List ConnectionInfo
+      tags:
+      - '[On-premise] ConnectionInfo'
+    post:
+      consumes:
+      - application/json
+      description: Create the connection information.
+      operationId: create-connection-info
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: Connection information of the node.
+        in: body
+        name: ConnectionInfo
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateConnectionInfoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully register the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to register the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Create ConnectionInfo
+      tags:
+      - '[On-premise] ConnectionInfo'
+  /source_group/{sgId}/connection_info/{connId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the connection information.
+      operationId: delete-connection-info
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully delete the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to delete the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Delete ConnectionInfo
+      tags:
+      - '[On-premise] ConnectionInfo'
+    get:
+      consumes:
+      - application/json
+      description: Get the connection information.
+      operationId: get-connection-info
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get ConnectionInfo
+      tags:
+      - '[On-premise] ConnectionInfo'
+    put:
+      consumes:
+      - application/json
+      description: Update the connection information.
+      operationId: update-connection-info
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      - description: Connection information to modify.
+        in: body
+        name: ConnectionInfo
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.CreateConnectionInfoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully update the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.ConnectionInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to update the connection information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Update ConnectionInfo
+      tags:
+      - '[On-premise] ConnectionInfo'
+  /source_group/{sgId}/connection_info/{connId}/data:
+    get:
+      consumes:
+      - application/json
+      description: Get the data information of the connection information.
+      operationId: get-data-info
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the data.
+          schema:
+            $ref: '#/definitions/data.MinIOData'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the data.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Data Information
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/connection_info/{connId}/helm:
+    get:
+      consumes:
+      - application/json
+      description: Get the helm information of the connection information.
+      operationId: get-helm-info
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/kubernetes.Helm'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Helm Information
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/connection_info/{connId}/import/data:
+    post:
+      consumes:
+      - application/json
+      description: Import the data information.
+      operationId: import-data
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the data information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedDataInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the data information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import data
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/connection_info/{connId}/import/helm:
+    post:
+      consumes:
+      - application/json
+      description: Import the helm information.
+      operationId: import-helm
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the helm information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedHelmInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the helm information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import helm
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/connection_info/{connId}/import/infra:
+    post:
+      consumes:
+      - application/json
+      description: Import the infra information.
+      operationId: import-infra
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the infra information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedInfraInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the infra information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import Infra
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/connection_info/{connId}/import/kubernetes:
+    post:
+      consumes:
+      - application/json
+      description: Import the kubernetes information.
+      operationId: import-kubernetes
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the kubernetes information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedKubernetesInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the kubernetes information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import kubernetes
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/connection_info/{connId}/import/software:
+    post:
+      consumes:
+      - application/json
+      description: Import the software information.
+      operationId: import-software
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      - description: 'Enable for show all packages include default packages. (Default:
+          false)'
+        in: query
+        name: show_default_packages
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the software information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedSoftwareInfo'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the software information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import software
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/connection_info/{connId}/infra:
+    get:
+      consumes:
+      - application/json
+      description: Get the infra information of the connection information.
+      operationId: get-infra-info
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the infra.
+          schema:
+            $ref: '#/definitions/infra.Infra'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Infra Information
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/connection_info/{connId}/infra/refined:
+    get:
+      consumes:
+      - application/json
+      description: Get the refined infra information of the connection information.
+      operationId: get-infra-info-refined
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get refined information of the infra.
+          schema:
+            $ref: '#/definitions/onpremisemodel.OnpremiseInfraModel'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get refined information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Refined Infra Information
+      tags:
+      - '[Get] Get refined source info'
+  /source_group/{sgId}/connection_info/{connId}/kubernetes:
+    get:
+      consumes:
+      - application/json
+      description: Get the kubernetes information of the connection information.
+      operationId: get-kubernetes-info
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/kubernetes.Kubernetes'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Kubernetes Information
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/connection_info/{connId}/refresh:
+    put:
+      consumes:
+      - application/json
+      description: Refresh the connection info status.
+      operationId: refresh-connection-info-status
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connectionInfo
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Refresh Connection Info Status
+      tags:
+      - '[On-premise] ConnectionInfo'
+  /source_group/{sgId}/connection_info/{connId}/software:
+    get:
+      consumes:
+      - application/json
+      description: Get the software information of the connection information.
+      operationId: get-software-info
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the software.
+          schema:
+            $ref: '#/definitions/software.Software'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the software.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Software Information
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/connection_info/{connId}/software/refined:
+    get:
+      consumes:
+      - application/json
+      description: Get the refined software information of the connection information.
+      operationId: get-software-info-refined
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: ID of the connection info.
+        in: path
+        name: connId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get refined information of softwares.
+          schema:
+            $ref: '#/definitions/softwaremodel.SourceConnectionInfoSoftwareProperty'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get refined information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Refined Software Information
+      tags:
+      - '[Get] Get refined source info'
+  /source_group/{sgId}/data:
+    get:
+      consumes:
+      - application/json
+      description: Get the data information for all connections in the source group.
+      operationId: get-data-info-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the data.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DataInfoList'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the data.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Data Information Source Group
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/discover:
+    get:
+      consumes:
+      - application/json
+      description: Lists VMs / K8s clusters / object-storage buckets reachable through
+        the CSP connection bound to this SourceGroup. Used by the UI to populate ConnectionInfo
+        selection.
+      operationId: discover-source-group-resources
+      parameters:
+      - description: ID of the SourceGroup (must be type=csp)
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: Resource type to discover (vm | k8s | object_storage)
+        in: query
+        name: resource_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Discovered resources
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.DiscoverRes'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Discovery failed
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Discover CSP resources for a SourceGroup
+      tags:
+      - '[CSP] Discovery'
+  /source_group/{sgId}/helm:
+    get:
+      consumes:
+      - application/json
+      description: Get the helm information for all connections in the source group.
+      operationId: get-helm-info-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the helm.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.HelmInfoList'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the helm.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get helm Information Source Group
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/import/data:
+    post:
+      consumes:
+      - application/json
+      description: Import data information for all connections in the source group.
+      operationId: import-data-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the data information
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedDataInfo'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the data information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import Data Source Group
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/import/helm:
+    post:
+      consumes:
+      - application/json
+      description: Import helm information for all connections in the source group.
+      operationId: import-helm-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the helm information
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedHelmInfo'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the helm information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import helm Source Group
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/import/infra:
+    post:
+      consumes:
+      - application/json
+      description: Import infra information for all connections in the source group.
+      operationId: import-infra-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the infra information
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedInfraInfo'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the infra information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import Infra Source Group
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/import/kubernetes:
+    post:
+      consumes:
+      - application/json
+      description: Import kubernetes information for all connections in the source
+        group.
+      operationId: import-kubernetes-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the kubernetes information
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedKubernetesInfo'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the kubernetes information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import Kubernetes Source Group
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/import/software:
+    post:
+      consumes:
+      - application/json
+      description: Import software information for all connections in the source group.
+      operationId: import-software-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: 'Enable for show all packages include default packages. (Default:
+          false)'
+        in: query
+        name: show_default_packages
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully saved the software information
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SavedSoftwareInfo'
+            type: array
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to save the software information
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Import Software Source Group
+      tags:
+      - '[Import] Import source info'
+  /source_group/{sgId}/infra:
+    get:
+      consumes:
+      - application/json
+      description: Get the infra information for all connections in the source group.
+      operationId: get-infra-info-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.InfraInfoList'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Infra Information Source Group
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/infra/refined:
+    get:
+      consumes:
+      - application/json
+      description: Get the refined infra information for all connections in the source
+        group.
+      operationId: get-infra-info-source-group-refined
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get refined information of the infra.
+          schema:
+            $ref: '#/definitions/onpremisemodel.OnpremiseInfraModel'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get refined information of the infra.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Refined Infra Information Source Group
+      tags:
+      - '[Get] Get refined source info'
+  /source_group/{sgId}/kubernetes:
+    get:
+      consumes:
+      - application/json
+      description: Get the kubernetes information for all connections in the source
+        group.
+      operationId: get-kubernetes-info-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.KubernetesInfoList'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the kubernetes.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Kubernetes Information Source Group
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/refresh:
+    put:
+      consumes:
+      - application/json
+      description: Refresh connection info status of the source group.
+      operationId: refresh-source-group-connection-info-status
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SimpleMsg'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to refresh the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Refresh SourceGroup Connection Info Status
+      tags:
+      - '[On-premise] SourceGroup'
+  /source_group/{sgId}/software:
+    get:
+      consumes:
+      - application/json
+      description: Get the software information for all connections in the source
+        group.
+      operationId: get-software-info-source-group
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get information of the software.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SoftwareInfoList'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get information of the software.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Software Information Source Group
+      tags:
+      - '[Get] Get source info'
+  /source_group/{sgId}/software/refined:
+    get:
+      consumes:
+      - application/json
+      description: Get the refined software information for all connections in the
+        source group.
+      operationId: get-software-info-source-group-refined
+      parameters:
+      - description: ID of the source group.
+        in: path
+        name: sgId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully get refined information of softwares.
+          schema:
+            $ref: '#/definitions/softwaremodel.SourceGroupSoftwareProperty'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to get refined information of the software.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Get Refined Software Information Source Group
+      tags:
+      - '[Get] Get refined source info'
+  /source_group/{sgId}/target:
+    post:
+      consumes:
+      - application/json
+      description: Register target information to the source group.
+      operationId: register-target-to-source-group
+      parameters:
+      - description: ID of the SourceGroup
+        in: path
+        name: sgId
+        required: true
+        type: string
+      - description: Target info data received from infra migration via beetle.
+        in: body
+        name: TargetInfo
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.RegisterTargetInfoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully update the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_model.SourceGroup'
+        "400":
+          description: Sent bad request.
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+        "500":
+          description: Failed to update the source group
+          schema:
+            $ref: '#/definitions/github_com_cloud-barista_cm-honeybee_server_pkg_api_rest_common.ErrorResponse'
+      summary: Register TargetInfo to SourceGroup
+      tags:
+      - '[On-premise] SourceGroup'
+swagger: "2.0"
