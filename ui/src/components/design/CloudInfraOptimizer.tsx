@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2 } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 
 
@@ -27,7 +27,10 @@ export const CloudInfraOptimizer: React.FC = () => {
     updateEditedCandidate,
     saveCloudModel,
     updateCloudModel,
+    deleteCloudModel,
     savedCloudModels,
+    selectedCloudModel,
+    selectCloudModel,
     fetchSavedCloudModels,
     tumblebugProviders,
     tumblebugRegions,
@@ -47,6 +50,11 @@ export const CloudInfraOptimizer: React.FC = () => {
   const [newCidr, setNewCidr] = useState('');
   const [activeStep, setActiveStep] = useState<number>(1);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [recommendMode, setRecommendMode] = useState<'new' | 'saved'>('new');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Excluded node IDs list for target recommendation filters
   const [excludedNodeIds, setExcludedNodeIds] = useState<string[]>([]);
@@ -79,10 +87,10 @@ export const CloudInfraOptimizer: React.FC = () => {
   // (source model selection & tuning now happens in SourceInfraRefinement)
   useEffect(() => {
     if (selectedSourceModel?.onpremiseInfraModel && tunedNodes.length === 0) {
-      setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes)));
+      setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
       setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
-      if (selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-        setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0].machineId);
+      if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
+        setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
       }
     }
   }, [selectedSourceModel]);
@@ -93,13 +101,13 @@ export const CloudInfraOptimizer: React.FC = () => {
 
   const handleLoadModel = () => {
     if (!selectedSourceModel || !selectedSourceModel.onpremiseInfraModel) return;
-    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes)));
+    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
     setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
     setExcludedNodeIds([]);
     setIsModelLoaded(true);
     setActiveStep(2); // Unlock Step 2: Review and Editing
-    if (selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0].machineId);
+    if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
+      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
     }
   };
 
@@ -202,6 +210,35 @@ export const CloudInfraOptimizer: React.FC = () => {
     };
     await triggerRecommendation(sourceInfra);
     setActiveStep(2);
+  };
+
+  const handleLoadDesign = () => {
+    if (!selectedCloudModel) return;
+    setActiveStep(2);
+  };
+
+  const handleDeleteDesign = () => {
+    if (!selectedCloudModel || selectedCloudModel.id === 'cloud-demo-1') return;
+    setDeleteConfirmText('');
+    setDeleteError('');
+    setIsDeleting(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDeleteDesign = async () => {
+    if (!selectedCloudModel) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await deleteCloudModel(selectedCloudModel.id);
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText('');
+      setActiveStep(1);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete design');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAddCidr = (cidr: string) => {
@@ -527,110 +564,183 @@ export const CloudInfraOptimizer: React.FC = () => {
           </h3>
         </div>
 
-        {/* Source Model selection */}
-        <div className="mb-6 pb-6 border-b border-border-main/20">
-          <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Source Infrastructure Model</label>
-          <div className="flex flex-col gap-2 max-w-md">
-            <select
-              value={selectedSourceModel?.id || ''}
-              onChange={(e) => {
-                const m = savedSourceModels.find((x: any) => x.id === e.target.value) || null;
-                selectSourceModel(m);
-                setTunedNodes([]);
-                setIsModelLoaded(false);
-              }}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-            >
-              <option value="">-- Choose Source Model --</option>
-              {savedSourceModels.map((m: any) => (
-                <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0'})</option>
-              ))}
-            </select>
-            <button
-              onClick={handleLoadModel}
-              disabled={!selectedSourceModel}
-              className={`self-start px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${selectedSourceModel
-                ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
-                : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'}`}
-            >
-              <RefreshCw className="w-4 h-4" />
-              {isModelLoaded ? 'Model Loaded ✓' : 'Load Model'}
-            </button>
-          </div>
-          {isModelLoaded && tunedNodes.length > 0 && (
-            <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-              {tunedNodes.length} node(s) ready for recommendation
-            </p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-          <div>
-            <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired CSP</label>
-            <select
-              value={desiredCsp}
-              onChange={(e) => setDesiredCsp(e.target.value)}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-            >
-              {tumblebugProviders.map((csp: string) => {
-                const prettyCsp =
-                  csp.toLowerCase() === 'aws' ? 'Amazon Web Services (AWS)' :
-                    csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
-                      csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
-                        csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
-                          csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
-                            csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
-                              csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
-                                csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
-                                  csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
-                                    csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
-                                      csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
-                                        csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
-                return (
-                  <option key={csp} value={csp}>
-                    {prettyCsp}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired Region</label>
-            <select
-              value={desiredRegion}
-              onChange={(e) => setDesiredRegion(e.target.value)}
-              className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-            >
-              {[...tumblebugRegions]
-                .sort((a, b) => a.id.localeCompare(b.id))
-                .map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({r.id})
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-start">
+        {/* Tab switch control */}
+        <div className="flex border-b border-border-main/20 mb-6 max-w-4xl">
           <button
-            onClick={handleRecommend}
-            disabled={isRecommending || tunedNodes.length === 0 || !desiredCsp || !desiredRegion}
-            className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
+            onClick={() => { setRecommendMode('new'); selectCloudModel(null); }}
+            className={`flex-1 pb-3 text-sm font-bold text-center border-b-2 transition-all cursor-pointer ${
+              recommendMode === 'new'
+                ? 'border-emerald-500 text-emerald-500'
+                : 'border-transparent text-text-muted hover:text-text-main'
+            }`}
           >
-            {isRecommending ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Recommending...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                <span>Recommend Target Cloud Infrastructure</span>
-              </>
-            )}
+            Generate New Recommendation
+          </button>
+          <button
+            onClick={() => { setRecommendMode('saved'); selectSourceModel(null); setTunedNodes([]); setIsModelLoaded(false); }}
+            className={`flex-1 pb-3 text-sm font-bold text-center border-b-2 transition-all cursor-pointer ${
+              recommendMode === 'saved'
+                ? 'border-emerald-500 text-emerald-500'
+                : 'border-transparent text-text-muted hover:text-text-main'
+            }`}
+          >
+            Load Customized Cloud Infrastructure
           </button>
         </div>
+
+        {recommendMode === 'new' ? (
+          <>
+            {/* Source Model selection */}
+            <div className="mb-6 pb-6 border-b border-border-main/20">
+              <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Source Infrastructure Model</label>
+              <div className="flex flex-col gap-2 max-w-4xl">
+                <select
+                  value={selectedSourceModel?.id || ''}
+                  onChange={(e) => {
+                    const m = savedSourceModels.find((x: any) => x.id === e.target.value) || null;
+                    selectSourceModel(m);
+                    setTunedNodes([]);
+                    setIsModelLoaded(false);
+                  }}
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="">-- Choose Source Model --</option>
+                  {savedSourceModels.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0'})</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleLoadModel}
+                  disabled={!selectedSourceModel}
+                  className={`self-start px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${selectedSourceModel
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
+                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'}`}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  {isModelLoaded ? 'Model Loaded ✓' : 'Load Model'}
+                </button>
+              </div>
+              {isModelLoaded && tunedNodes.length > 0 && (
+                <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {tunedNodes.length} node(s) ready for recommendation
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+              <div>
+                <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired CSP</label>
+                <select
+                  value={desiredCsp}
+                  onChange={(e) => setDesiredCsp(e.target.value)}
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                >
+                  {tumblebugProviders.map((csp: string) => {
+                    const prettyCsp =
+                      csp.toLowerCase() === 'aws' ? 'Amazon Web Services (AWS)' :
+                        csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
+                          csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
+                            csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
+                              csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
+                                csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
+                                  csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
+                                    csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
+                                      csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
+                                        csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
+                                          csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
+                                            csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
+                    return (
+                      <option key={csp} value={csp}>
+                        {prettyCsp}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired Region</label>
+                <select
+                  value={desiredRegion}
+                  onChange={(e) => setDesiredRegion(e.target.value)}
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                >
+                  {[...tumblebugRegions]
+                    .sort((a, b) => a.id.localeCompare(b.id))
+                    .map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.id})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-start">
+              <button
+                onClick={handleRecommend}
+                disabled={isRecommending || tunedNodes.length === 0 || !desiredCsp || !desiredRegion}
+                className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                {isRecommending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Recommending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Recommend Target Cloud Infrastructure</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="max-w-4xl space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Target Cloud Infrastructure Model</label>
+              <select
+                value={selectedCloudModel?.id || ''}
+                onChange={(e) => {
+                  const m = savedCloudModels.find((x: any) => x.id === e.target.value) || null;
+                  selectCloudModel(m);
+                }}
+                className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+              >
+                <option value="">-- Choose Target Cloud Infrastructure Model --</option>
+                {savedCloudModels.map((m: any) => (
+                  <option key={m.id} value={m.id}>{m.name} (v{m.version || '1.0.0'})</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleLoadDesign}
+                disabled={!selectedCloudModel}
+                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
+                  selectedCloudModel
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md shadow-emerald-500/25'
+                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                }`}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Load Design</span>
+              </button>
+              <button
+                onClick={handleDeleteDesign}
+                disabled={!selectedCloudModel || selectedCloudModel.id === 'cloud-demo-1'}
+                className={`px-5 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition cursor-pointer ${
+                  selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1'
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20'
+                    : 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Design</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* -------------------------------------------------------------
@@ -1076,35 +1186,42 @@ export const CloudInfraOptimizer: React.FC = () => {
                               <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">Review and Editing</span>
                               <span className="text-sm text-text-muted italic block mt-0.5">* Modifying resource values dynamically updates the topology diagram in real-time</span>
                             </div>
-                            {/* Alternatives selector — between Topology and Review & Editing */}
                             <div className="flex items-center gap-2 flex-wrap justify-end">
-                              <span className="text-xs font-bold text-text-muted">Alternatives:</span>
-                              {recommendationCandidates.map((c, idx) => {
-                                const isActive = selectedCandidateIndex === idx;
-                                return (
+                              {selectedCloudModel ? (
+                                <span className="px-3.5 py-1.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 rounded-xl text-xs font-extrabold font-mono">
+                                  Loaded Design: {selectedCloudModel.name} (v{selectedCloudModel.version})
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="text-xs font-bold text-text-muted">Alternatives:</span>
+                                  {recommendationCandidates.map((c, idx) => {
+                                    const isActive = selectedCandidateIndex === idx;
+                                    return (
+                                      <button
+                                        key={idx}
+                                        onClick={() => {
+                                          selectCandidate(idx);
+                                          updateEditedCandidate(JSON.parse(JSON.stringify(c)));
+                                          if (activeStep < 3) setActiveStep(1);
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                          isActive
+                                            ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                            : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
+                                        }`}
+                                      >
+                                        Alt {idx + 1}
+                                      </button>
+                                    );
+                                  })}
                                   <button
-                                    key={idx}
-                                    onClick={() => {
-                                      selectCandidate(idx);
-                                      updateEditedCandidate(JSON.parse(JSON.stringify(c)));
-                                      if (activeStep < 3) setActiveStep(1);
-                                    }}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
-                                      isActive
-                                        ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
-                                        : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
-                                    }`}
+                                    onClick={() => setShowCompareModal(true)}
+                                    className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-lg text-xs font-bold transition cursor-pointer"
                                   >
-                                    Alt {idx + 1}
+                                    Compare
                                   </button>
-                                );
-                              })}
-                              <button
-                                onClick={() => setShowCompareModal(true)}
-                                className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-lg text-xs font-bold transition cursor-pointer"
-                              >
-                                Compare
-                              </button>
+                                </>
+                              )}
                             </div>
                           </div>
 
@@ -1713,7 +1830,7 @@ export const CloudInfraOptimizer: React.FC = () => {
                               className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/10"
                             >
                               <Save className="w-4 h-4" />
-                              <span>Save Desired Cloud Revision</span>
+                              <span>Save Target Cloud Infrastructure Model</span>
                             </button>
                           </div>
                         </div>
@@ -1829,14 +1946,82 @@ export const CloudInfraOptimizer: React.FC = () => {
       <SaveRevisionModal
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
-        title="Save Desired Cloud Revision"
-        defaultName=""
-        defaultDescription=""
-        defaultVersion="1.0.0"
+        title="Save Target Cloud Infrastructure Model"
+        defaultName={selectedCloudModel?.name || ''}
+        defaultDescription={selectedCloudModel?.description || ''}
+        defaultVersion={selectedCloudModel?.version || '1.0.0'}
         existingRevisions={savedCloudModels.map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
-        successMessage="Cloud Design saved to Damselfly Repository successfully."
+        successMessage="Target Cloud Infrastructure Model saved to Damselfly Repository successfully."
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && selectedCloudModel && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" /> Delete Target Cloud Infrastructure Model
+              </h3>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
+                disabled={isDeleting}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-sm text-text-muted leading-relaxed">
+                Are you sure you want to delete the target cloud infrastructure model <strong className="text-text-main">"{selectedCloudModel.name}"</strong>? This action cannot be undone.
+              </p>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-bold text-text-muted">
+                  To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{selectedCloudModel.name}</span> in the box below:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type the design name to delete"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                  disabled={isDeleting}
+                />
+              </div>
+
+              {deleteError && (
+                <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
+                  <span>{deleteError}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteDesign}
+                  disabled={isDeleting || deleteConfirmText !== selectedCloudModel.name}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
+                    isDeleting || deleteConfirmText !== selectedCloudModel.name
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
+                  }`}
+                >
+                  {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../types/migration';
 import { honeybeeApi, damselflyApi, beetleApi, tumblebugApi } from '../api/client';
+import recommendedInfraSample from '../data/sampleTargetInfra.json';
 
 // ----------------------------------------------------------------------------
 // HIGH QUALITY DEMO / SOURCE INFRA MODEL DATA
 // Cloned exactly from: cmd/test-cli/infra-with-nlb/testconf/recommendation-request.json
 // ----------------------------------------------------------------------------
-const DEMO_SOURCE_INFRA: OnpremInfra = {
+export const DEMO_SOURCE_INFRA: OnpremInfra = {
   network: {
     ipv4Networks: {
       defaultGateways: [
@@ -176,6 +177,7 @@ interface MigrationState {
   selectSourceModel: (model: OnpremModelEnvelope | null) => void;
   saveSourceModel: (name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
   updateSourceModel: (id: string, name: string, description: string, version: string, infra: OnpremInfra) => Promise<OnpremModelEnvelope>;
+  deleteSourceModel: (id: string) => Promise<void>;
 
   // Page 2: Target Cloud Optimizer State
   desiredCsp: string;
@@ -198,6 +200,7 @@ interface MigrationState {
   selectCloudModel: (model: CloudModelEnvelope | null) => void;
   saveCloudModel: (name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
   updateCloudModel: (id: string, name: string, description: string, version: string, cloudInfra: RecommendedInfra) => Promise<CloudModelEnvelope>;
+  deleteCloudModel: (id: string) => Promise<void>;
   fetchTumblebugProviders: () => Promise<void>;
   fetchTumblebugRegions: (providerName: string) => Promise<void>;
 
@@ -248,10 +251,10 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     'ibm', 'ncp', 'nhn', 'kt', 'openstack'
   ],
   tumblebugRegions: [
-    { id: 'ap-northeast-2', name: 'Asia Pacific (Seoul)' },
-    { id: 'us-east-1', name: 'US East (N. Virginia)' },
-    { id: 'us-west-2', name: 'US West (Oregon)' },
-    { id: 'eu-west-1', name: 'Europe (Ireland)' }
+    { id: 'ap-northeast-2', name: 'Seoul' },
+    { id: 'us-east-1', name: 'N. Virginia' },
+    { id: 'us-west-2', name: 'Oregon' },
+    { id: 'eu-west-1', name: 'Ireland' }
   ],
 
   fetchSourceGroups: async () => {
@@ -334,12 +337,27 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     }
   },
 
-  fetchRefinedInfra: async () => {
-    set({ refinedSourceInfra: DEMO_SOURCE_INFRA });
+  fetchRefinedInfra: async (connId: string) => {
+    const activeSgId = get().activeSgId;
+    if (!activeSgId) return;
+    try {
+      const data = await honeybeeApi.getRefinedInfraByConnection(activeSgId, connId);
+      set({ refinedSourceInfra: data });
+    } catch (err) {
+      console.warn('Failed to fetch refined infra from Honeybee by connection, falling back to demo:', err);
+      set({ refinedSourceInfra: DEMO_SOURCE_INFRA });
+    }
   },
 
-  fetchRefinedInfraByGroup: async () => {
-    set({ refinedSourceInfra: DEMO_SOURCE_INFRA });
+  fetchRefinedInfraByGroup: async (sgId: string) => {
+    try {
+      const data = await honeybeeApi.getRefinedInfraByGroup(sgId);
+      set({ refinedSourceInfra: data });
+    } catch (err) {
+      console.warn('Failed to fetch refined infra from Honeybee by group:', err);
+      // For real groups, set to null if fetching fails (i.e. not yet collected or error)
+      set({ refinedSourceInfra: null });
+    }
   },
 
   fetchSavedSourceModels: async () => {
@@ -375,6 +393,15 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     const updatedList = get().savedSourceModels.map(m => m.id === id ? saved : m);
     set({ savedSourceModels: updatedList, selectedSourceModel: saved });
     return saved;
+  },
+
+  deleteSourceModel: async (id) => {
+    await damselflyApi.deleteSourceModel(id);
+    const updatedList = get().savedSourceModels.filter(m => m.id !== id);
+    set({
+      savedSourceModels: updatedList,
+      selectedSourceModel: get().selectedSourceModel?.id === id ? null : get().selectedSourceModel
+    });
   },
 
   // --------------------------------------------------------------------------
@@ -446,39 +473,16 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     const fallbackCloudModels: CloudModelEnvelope[] = [
       {
         id: 'cloud-demo-1',
-        name: 'cloud-target-v1',
+        name: '[Sample] cloud-target-v1',
         description: 'Optimized Cloud architecture generated for onpremise cluster.',
-        cloudInfraModel: {
-          status: 'highly-matched',
-          description: 'Optimal spec scenario matching source cores & memory properties exactly.',
-          targetCloud: { csp: 'aws', region: 'ap-northeast-2' },
-          targetInfra: {
-            name: 'optimal-infra',
-            description: 'AWS recommended compute spec infrastructure',
-            nodeGroups: [
-              { name: 'web-group', nodeGroupSize: 1, label: { sourceMachineIds: 'ec268ed7-821e-9d73-e79f-961262161624' }, description: 'Web node spec mapping', connectionName: 'conn-aws', specId: 't3.small', imageId: 'ami-ubuntu-jammy-22.04', vNetId: 'vnet-demo', subnetId: 'subnet-1', securityGroupIds: ['sg-web'], sshKeyId: 'demo-key', rootDiskSize: 10 },
-              { name: 'db-group', nodeGroupSize: 2, label: { sourceMachineIds: 'ec2d32b5-98fb-5a96-7913-d3db1ec18932,ec288dd0-c6fa-8a49-2f60-bc898311febf' }, description: 'InfluxDB nodes mapping', connectionName: 'conn-aws', specId: 't3.large', imageId: 'ami-ubuntu-jammy-22.04', vNetId: 'vnet-demo', subnetId: 'subnet-1', securityGroupIds: ['sg-db'], sshKeyId: 'demo-key', rootDiskSize: 30 }
-            ]
-          },
-          targetVNet: {
-            name: 'vnet-demo',
-            connectionName: 'conn-aws',
-            cidrBlock: '10.0.0.0/16',
-            subnetInfoList: [{ name: 'subnet-1', ipv4_CIDR: '10.0.1.0/24', description: 'Primary Subnet Block' }],
-            description: 'Primary Virtual Network'
-          },
-          targetSshKey: { name: 'demo-key', connectionName: 'conn-aws', description: 'Admin cluster SSH key' },
-          targetSecurityGroupList: [
-            { name: 'sg-web', connectionName: 'conn-aws', vNetId: 'vnet-demo', description: 'Security rules for web access', firewallRules: [{ action: 'allow', direction: 'inbound', dstCIDR: '0.0.0.0/0', dstPorts: '22,9999', protocol: 'tcp', srcCIDR: '0.0.0.0/0', srcPorts: '*' }] }
-          ]
-        },
+        cloudInfraModel: recommendedInfraSample.data[0] as any,
         version: '1.0',
         updatedTime: new Date().toISOString()
       }
     ];
     try {
       const models = await damselflyApi.getCloudModels();
-      set({ savedCloudModels: models.length > 0 ? models : fallbackCloudModels });
+      set({ savedCloudModels: [fallbackCloudModels[0], ...models] });
     } catch {
       // Damselfly unreachable — show fallback demo model only
       set({ savedCloudModels: fallbackCloudModels });
@@ -488,7 +492,8 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   selectCloudModel: (model) => {
     set({ 
       selectedCloudModel: model,
-      editedCandidate: model ? model.cloudInfraModel : null
+      editedCandidate: model ? model.cloudInfraModel : null,
+      recommendationCandidates: model ? [model.cloudInfraModel] : []
     });
   },
 
@@ -508,6 +513,22 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     return saved;
   },
 
+  deleteCloudModel: async (id) => {
+    try {
+      await damselflyApi.deleteCloudModel(id);
+      const updated = get().savedCloudModels.filter(m => m.id !== id);
+      set({
+        savedCloudModels: updated,
+        selectedCloudModel: get().selectedCloudModel?.id === id ? null : get().selectedCloudModel,
+        editedCandidate: get().selectedCloudModel?.id === id ? null : get().editedCandidate,
+        recommendationCandidates: get().selectedCloudModel?.id === id ? [] : get().recommendationCandidates
+      });
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+
   fetchTumblebugProviders: async () => {
     const list = await tumblebugApi.getProviders();
     set({ tumblebugProviders: list });
@@ -515,11 +536,25 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     const activeCsp = get().desiredCsp || (list.length > 0 ? list[0] : 'aws');
     const regions = await tumblebugApi.getRegions(activeCsp);
     set({ tumblebugRegions: regions });
+    
+    // Sync desiredRegion if the current one is not in the loaded regions list
+    if (regions.length > 0) {
+      const exists = regions.some(r => r.id === get().desiredRegion);
+      if (!exists) {
+        set({ desiredRegion: regions[0].id });
+      }
+    }
   },
 
   fetchTumblebugRegions: async (providerName: string) => {
     const regions = await tumblebugApi.getRegions(providerName);
     set({ tumblebugRegions: regions });
+    if (regions.length > 0) {
+      const exists = regions.some(r => r.id === get().desiredRegion);
+      if (!exists) {
+        set({ desiredRegion: regions[0].id });
+      }
+    }
   },
 
   // --------------------------------------------------------------------------

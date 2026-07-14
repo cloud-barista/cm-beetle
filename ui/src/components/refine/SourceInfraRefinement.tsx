@@ -24,7 +24,7 @@ const SAMPLE_MODEL: OnpremModelEnvelope = {
 export const SourceInfraRefinement: React.FC = () => {
   const {
     savedSourceModels, selectedSourceModel, selectSourceModel,
-    fetchSavedSourceModels, saveSourceModel, updateSourceModel,
+    fetchSavedSourceModels, saveSourceModel, updateSourceModel, deleteSourceModel,
   } = useMigrationStore();
 
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
@@ -41,6 +41,10 @@ export const SourceInfraRefinement: React.FC = () => {
   const [newRuleCidr, setNewRuleCidr] = useState('0.0.0.0/0');
   const [tuningSourceSaveSuccess, setTuningSourceSaveSuccess] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Ensure sample model is always in the list
   const allModels: OnpremModelEnvelope[] = [
@@ -52,14 +56,20 @@ export const SourceInfraRefinement: React.FC = () => {
 
   const handleLoadModel = () => {
     if (!selectedSourceModel || !selectedSourceModel.onpremiseInfraModel) return;
-    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes)));
+    setTunedNodes(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.nodes || [])));
     setTunedNetwork(JSON.parse(JSON.stringify(selectedSourceModel.onpremiseInfraModel.network || { ipv4Networks: {}, ipv6Networks: {} })));
     setExcludedNodeIds([]);
     setIsModelLoaded(true);
     setActiveStep(2); // Unlock Step 2: Review and Editing
-    if (selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
-      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0].machineId);
+    if (selectedSourceModel.onpremiseInfraModel.nodes && selectedSourceModel.onpremiseInfraModel.nodes.length > 0) {
+      setActiveTunedNodeId(selectedSourceModel.onpremiseInfraModel.nodes[0]?.machineId || '');
     }
+  };
+
+  const handleDeleteModel = () => {
+    if (!selectedSourceModel || selectedSourceModel.id === 'sample-source-infra-1') return;
+    setDeleteConfirmText('');
+    setShowDeleteConfirm(true);
   };
 
   const activeNode = tunedNodes.find((n) => n.machineId === activeTunedNodeId);
@@ -198,6 +208,14 @@ export const SourceInfraRefinement: React.FC = () => {
               >
                 <RefreshCw className="w-4 h-4 mr-1.5" /> Load Model
               </button>
+              {selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' && (
+                <button
+                  onClick={handleDeleteModel}
+                  className="px-5 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" /> Delete Model
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -229,11 +247,7 @@ export const SourceInfraRefinement: React.FC = () => {
           )}
         </div>
 
-        {tuningSourceSaveSuccess && (
-          <div className="p-3 mb-4 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm text-center rounded-lg font-medium animate-fade-in">
-            Source specification updated and saved. Ready to define target Cloud settings.
-          </div>
-        )}
+
 
         {selectedSourceModel && isModelLoaded && (
           <div className="bg-bg-panel/40 border border-border-main/30 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between text-sm space-y-2 md:space-y-0 mb-4">
@@ -721,6 +735,97 @@ export const SourceInfraRefinement: React.FC = () => {
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && selectedSourceModel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" /> Delete Model
+              </h3>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
+                disabled={isDeleting}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-sm text-text-muted leading-relaxed">
+                Are you sure you want to delete the model <strong className="text-text-main">"{selectedSourceModel.name}"</strong>? This action cannot be undone.
+              </p>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-bold text-text-muted">
+                  To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{selectedSourceModel.name}</span> in the box below:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type the model name to delete"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                  disabled={isDeleting}
+                />
+              </div>
+
+              {deleteError && (
+                <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
+                  <span>{deleteError}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); setDeleteConfirmText(''); }}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setIsDeleting(true);
+                    setDeleteError('');
+                    try {
+                      await deleteSourceModel(selectedSourceModel.id);
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                      setIsModelLoaded(false);
+                      setTunedNodes([]);
+                      setActiveStep(1);
+                    } catch (err: any) {
+                      setDeleteError(err.message || 'Failed to delete model');
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
+                  disabled={isDeleting || deleteConfirmText !== selectedSourceModel.name}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
+                    isDeleting || deleteConfirmText !== selectedSourceModel.name
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20 animate-pulse'
+                  }`}
+                >
+                  {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {tuningSourceSaveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          <span>Source specification updated and saved. Ready to define target Cloud settings.</span>
+        </div>
+      )}
 
     </div>
   );

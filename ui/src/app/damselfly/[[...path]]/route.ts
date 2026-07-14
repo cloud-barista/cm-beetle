@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { proxy } from '@/lib/proxy';
 
-const TARGET = process.env.DAMSELFLY_ENDPOINT || 'http://localhost:8082';
+const TARGET = process.env.DAMSELFLY_ENDPOINT || 'http://localhost:8088';
 
 async function handler(
   req: NextRequest,

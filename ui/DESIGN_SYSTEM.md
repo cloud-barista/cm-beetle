@@ -317,7 +317,7 @@ CMD ["node", "server.js"]
 BEETLE_ENDPOINT=http://cm-beetle:8056
 TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
 HONEYBEE_ENDPOINT=http://cm-honeybee:8081
-DAMSELFLY_ENDPOINT=http://cm-damselfly:8082
+DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
 ```
 
 ### Docker Compose

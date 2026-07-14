@@ -43,7 +43,7 @@ export const MigrationExecution: React.FC = () => {
 
   const handleStartDeploy = async () => {
     if (!selectedCloudModel) {
-      alert('Please choose a Target Cloud Design model first.');
+      alert('Please choose a Target Cloud Infrastructure Model first.');
       return;
     }
     if (!namespaceId) {
@@ -163,7 +163,7 @@ export const MigrationExecution: React.FC = () => {
             </p>
 
             <div>
-              <label className="block text-sm font-semibold text-text-muted mb-1.5">Load Target Cloud Design</label>
+              <label className="block text-sm font-semibold text-text-muted mb-1.5">Load Target Cloud Infrastructure Model</label>
               <select
                 value={selectedCloudModel?.id || ''}
                 onChange={(e) => {

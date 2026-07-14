@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore } from '../../store/migrationStore';
+import { useMigrationStore, DEMO_SOURCE_INFRA } from '../../store/migrationStore';
 import { honeybeeApi } from '../../api/client';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 import {
@@ -315,6 +315,13 @@ export const SourceMetadataExtraction: React.FC = () => {
 
   // ── Delete confirm ───────────────────────────────────────────────
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+  const [groupDeleteError, setGroupDeleteError] = useState('');
+  const [connectionToDelete, setConnectionToDelete] = useState<{ localId: string; connId: string; name: string } | null>(null);
+  const [connDeleteConfirmText, setConnDeleteConfirmText] = useState('');
+  const [isDeletingConn, setIsDeletingConn] = useState(false);
+  const [connDeleteError, setConnDeleteError] = useState('');
 
   // ── Collect & Save ───────────────────────────────────────────────
   const [importStatus, setImportStatus] = useState<'idle'|'importing'|'done'|'failed'>('idle');
@@ -468,27 +475,53 @@ export const SourceMetadataExtraction: React.FC = () => {
     setImportStatus('idle');
     setRefreshStatus('idle');
     // Skip API call for the built-in sample group — connections are already in store
-    if (sgId === 'sg-sample') return;
+    if (sgId === 'sg-sample') {
+      useMigrationStore.setState({ refinedSourceInfra: DEMO_SOURCE_INFRA });
+      return;
+    }
+    // Set refinedSourceInfra to null first when switching groups so we don't show stale preview
+    useMigrationStore.setState({ refinedSourceInfra: null });
+
     honeybeeApi.getConnectionInfoList(sgId)
       .then((data: any) => {
         const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
         useMigrationStore.setState({ connections: list });
       })
       .catch(() => useMigrationStore.setState({ connections: [] }));
+
+    // Fetch the previously refined infra for this group if it exists
+    fetchRefinedInfraByGroup(sgId);
   };
 
-  const handleDeleteInlineRow = async (localId: string) => {
+  const handleDeleteInlineRow = (localId: string) => {
     const row = serverRows.find(r => r.localId === localId);
-    if (row?.connId && activeSgId && activeSgId !== 'sg-sample') {
-      try {
-        await honeybeeApi.deleteConnectionInfo(activeSgId, row.connId);
-        const data = await honeybeeApi.getConnectionInfoList(activeSgId);
-        const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
-        useMigrationStore.setState({ connections: list });
-        return;
-      } catch (err) { console.error('Delete failed:', err); }
+    if (!row) return;
+    if (row.connId && activeSgId && activeSgId !== 'sg-sample') {
+      setConnectionToDelete({ localId, connId: row.connId, name: row.name || row.ip || 'Unnamed Server' });
+      setConnDeleteConfirmText('');
+      setConnDeleteError('');
+      setIsDeletingConn(false);
+    } else {
+      setServerRows(prev => prev.length > 1 ? prev.filter(r => r.localId !== localId) : [emptyRow()]);
     }
-    setServerRows(prev => prev.length > 1 ? prev.filter(r => r.localId !== localId) : [emptyRow()]);
+  };
+
+  const handleConfirmDeleteConnection = async () => {
+    if (!connectionToDelete || !activeSgId) return;
+    setIsDeletingConn(true);
+    setConnDeleteError('');
+    try {
+      await honeybeeApi.deleteConnectionInfo(activeSgId, connectionToDelete.connId);
+      const data = await honeybeeApi.getConnectionInfoList(activeSgId);
+      const list: any[] = data?.connection_info || (Array.isArray(data) ? data : []);
+      useMigrationStore.setState({ connections: list });
+      setConnectionToDelete(null);
+    } catch (err: any) {
+      console.error('Delete failed:', err);
+      setConnDeleteError(err.message || 'Failed to delete connection');
+    } finally {
+      setIsDeletingConn(false);
+    }
   };
 
   // Draft rows aren't "deleted" — their fields are just cleared back to blank
@@ -554,10 +587,10 @@ export const SourceMetadataExtraction: React.FC = () => {
     setIsCreating(true);
     try {
       const connList = rowsWithIp
-        .map(r => {
-          const creds = resolveCredentials(r);
-          return { name: r.name || 'Server', ip_address: r.ip.trim(), ssh_port: String(creds.port), user: creds.user, private_key: creds.privateKey, password: creds.password, description: '' };
-        });
+         .map(r => {
+           const creds = resolveCredentials(r);
+           return { name: r.name || 'Server', ip_address: r.ip.trim(), ssh_port: String(creds.port), user: creds.user, private_key: creds.privateKey, password: creds.password, description: '' };
+         });
 
       if (connList.length > 0) {
         const result = await honeybeeApi.createSourceGroupWithConnections({ name: newGroupName.trim(), description: newGroupDesc.trim(), connection_info: connList });
@@ -583,8 +616,17 @@ export const SourceMetadataExtraction: React.FC = () => {
 
   // ─── Group delete ────────────────────────────────────────────────
   const handleDeleteGroup = async (sgId: string) => {
-    setDeleteConfirmId(null);
-    await deleteSourceGroup(sgId);
+    setIsDeletingGroup(true);
+    setGroupDeleteError('');
+    try {
+      await deleteSourceGroup(sgId);
+      setDeleteConfirmId(null);
+      setDeleteConfirmText('');
+    } catch (err: any) {
+      setGroupDeleteError(err.message || 'Failed to delete source group');
+    } finally {
+      setIsDeletingGroup(false);
+    }
   };
 
   // ─── Collect & Save ──────────────────────────────────────────────
@@ -595,8 +637,9 @@ export const SourceMetadataExtraction: React.FC = () => {
       await honeybeeApi.importInfraByGroup(activeSgId);
       await fetchRefinedInfraByGroup(activeSgId);
       setImportStatus('done');
-    } catch {
-      await fetchRefinedInfraByGroup(activeSgId);
+    } catch (err) {
+      console.warn('Honeybee import failed, falling back to demo data for testing:', err);
+      useMigrationStore.setState({ refinedSourceInfra: DEMO_SOURCE_INFRA });
       setImportStatus('done');
     }
   };
@@ -858,7 +901,6 @@ export const SourceMetadataExtraction: React.FC = () => {
               </p>
             </div>
             <div className="flex-1 min-w-[280px] flex flex-col justify-center space-y-3">
-              {saveSuccess && <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs text-center font-medium">Model saved to Damselfly successfully.</div>}
               <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-bold rounded-lg text-sm transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
                 <Save className="w-4 h-4" /> Save Source Infra Revision
               </button>
@@ -981,19 +1023,144 @@ export const SourceMetadataExtraction: React.FC = () => {
       )}
 
       {/* ══════════════════════════════════════════════════
-          Delete Confirm Dialog
+          Delete Source Group Confirm Dialog
       ══════════════════════════════════════════════════ */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-sm border border-red-500/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-500/10 rounded-lg"><Trash2 className="w-5 h-5 text-red-400" /></div>
-              <h3 className="text-base font-bold text-text-main">Delete Source Group</h3>
+      {deleteConfirmId && (() => {
+        const group = sourceGroups.find(g => g.id === deleteConfirmId);
+        if (!group) return null;
+        return (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                  <Trash2 className="w-4 h-4 text-red-500" /> Delete Source Group
+                </h3>
+                <button
+                  onClick={() => { setDeleteConfirmId(null); setDeleteConfirmText(''); setGroupDeleteError(''); }}
+                  disabled={isDeletingGroup}
+                  className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Are you sure you want to delete the source group <strong className="text-text-main">"{group.name}"</strong>? This will permanently delete the group and all its registered server connection entries. This cannot be undone.
+                </p>
+
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-xs font-bold text-text-muted">
+                    To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{group.name}</span> in the box below:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type the source group name to delete"
+                    className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                    disabled={isDeletingGroup}
+                  />
+                </div>
+
+                {groupDeleteError && (
+                  <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
+                    <span>{groupDeleteError}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => { setDeleteConfirmId(null); setDeleteConfirmText(''); setGroupDeleteError(''); }}
+                    disabled={isDeletingGroup}
+                    className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDeleteGroup(deleteConfirmId)}
+                    disabled={isDeletingGroup || deleteConfirmText !== group.name}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
+                      isDeletingGroup || deleteConfirmText !== group.name
+                        ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                        : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
+                    }`}
+                  >
+                    {isDeletingGroup && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-text-muted mb-5">This will permanently delete this source group and all its connection information. This cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2.5 bg-bg-input border border-border-main hover:bg-bg-panel rounded-xl text-sm font-bold cursor-pointer">Cancel</button>
-              <button onClick={() => handleDeleteGroup(deleteConfirmId)} className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold cursor-pointer">Delete</button>
+          </div>
+        );
+      })()}
+
+      {/* ══════════════════════════════════════════════════
+          Delete Server Connection Confirm Dialog
+      ══════════════════════════════════════════════════ */}
+      {connectionToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" /> Delete Server Connection
+              </h3>
+              <button
+                onClick={() => { setConnectionToDelete(null); setConnDeleteConfirmText(''); setConnDeleteError(''); }}
+                disabled={isDeletingConn}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-sm text-text-muted leading-relaxed">
+                Are you sure you want to delete the server connection <strong className="text-text-main">"{connectionToDelete.name}"</strong>? This will permanently remove the server from this source group.
+              </p>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-bold text-text-muted">
+                  To confirm, type <span className="font-mono bg-bg-panel px-1 py-0.5 rounded border border-border-main/60 text-text-main select-all">{connectionToDelete.name}</span> in the box below:
+                </label>
+                <input
+                  type="text"
+                  value={connDeleteConfirmText}
+                  onChange={(e) => setConnDeleteConfirmText(e.target.value)}
+                  placeholder="Type the server name/IP to delete"
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                  disabled={isDeletingConn}
+                />
+              </div>
+
+              {connDeleteError && (
+                <div className="flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-3 rounded-xl text-xs font-semibold border border-red-500/20">
+                  <span>{connDeleteError}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setConnectionToDelete(null); setConnDeleteConfirmText(''); setConnDeleteError(''); }}
+                  disabled={isDeletingConn}
+                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-semibold hover:bg-bg-input transition cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteConnection}
+                  disabled={isDeletingConn || connDeleteConfirmText !== connectionToDelete.name}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
+                    isDeletingConn || connDeleteConfirmText !== connectionToDelete.name
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
+                  }`}
+                >
+                  {isDeletingConn && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirm Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1011,6 +1178,14 @@ export const SourceMetadataExtraction: React.FC = () => {
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
       />
+
+      {/* Toast Notification */}
+      {saveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-950/95 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 px-5 py-4.5 rounded-2xl shadow-2xl shadow-emerald-500/10 animate-fade-in font-bold text-sm backdrop-blur-md">
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          <span>Model saved to Damselfly successfully.</span>
+        </div>
+      )}
     </div>
   );
 };

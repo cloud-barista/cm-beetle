@@ -61,12 +61,12 @@ export const honeybeeApi = {
   // Get refined OnpremInfra model after background scan finishes
   getRefinedInfraByConnection: async (sgId: string, connId: string): Promise<OnpremInfra> => {
     const response = await api.get(`/honeybee/source_group/${sgId}/connection_info/${connId}/infra/refined`);
-    return response.data;
+    return response.data?.onpremiseInfraModel || response.data;
   },
 
   getRefinedInfraByGroup: async (sgId: string): Promise<OnpremInfra> => {
     const response = await api.get(`/honeybee/source_group/${sgId}/infra/refined`);
-    return response.data;
+    return response.data?.onpremiseInfraModel || response.data;
   },
 
   // Create source group with embedded connection info (single API call)
@@ -158,6 +158,11 @@ export const damselflyApi = {
     return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName || name, version: m.version || m.userModelVersion || version };
   },
 
+  // Delete existing source model
+  deleteSourceModel: async (id: string): Promise<void> => {
+    await api.delete(`/damselfly/infra-model/${id}`);
+  },
+
   // Get all source models list
   getSourceModels: async (): Promise<OnpremModelEnvelope[]> => {
     const response = await api.get('/damselfly/infra-model?modelType=onprem&isTargetModel=false');
@@ -167,7 +172,8 @@ export const damselflyApi = {
       id: m.id || m.uid,
       name: m.name || m.userModelName || 'Unnamed Model',
       description: m.description,
-      onpremiseInfraModel: m.onpremiseInfraModel
+      onpremiseInfraModel: m.onpremiseInfraModel,
+      version: m.version || m.userModelVersion || '1.0.0'
     }));
   },
 
@@ -175,7 +181,12 @@ export const damselflyApi = {
   getSourceModel: async (id: string): Promise<OnpremModelEnvelope> => {
     const response = await api.get(`/damselfly/infra-model/${id}?modelType=onprem&isTargetModel=false`);
     const m = response.data;
-    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName };
+    return {
+      ...m,
+      id: m.id || m.uid || id,
+      name: m.name || m.userModelName,
+      version: m.version || m.userModelVersion || '1.0.0'
+    };
   },
 
   // Save recommended target cloud spec as design template
@@ -211,14 +222,24 @@ export const damselflyApi = {
       id: m.id || m.uid,
       name: m.name || m.userModelName || 'Unnamed Design',
       description: m.description,
-      cloudInfraModel: m.cloudInfraModel
+      cloudInfraModel: m.cloudInfraModel,
+      version: m.version || m.userModelVersion || '1.0.0'
     }));
   },
 
   getCloudModel: async (id: string): Promise<CloudModelEnvelope> => {
     const response = await api.get(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`);
     const m = response.data;
-    return { ...m, id: m.id || m.uid || id, name: m.name || m.userModelName };
+    return {
+      ...m,
+      id: m.id || m.uid || id,
+      name: m.name || m.userModelName,
+      version: m.version || m.userModelVersion || '1.0.0'
+    };
+  },
+
+  deleteCloudModel: async (id: string): Promise<void> => {
+    await api.delete(`/damselfly/infra-model/${id}`);
   }
 };
 
@@ -228,15 +249,27 @@ export const damselflyApi = {
 export const beetleApi = {
   // Get Cloud Recommendation candidates based on Source model input
   getRecommendations: async (sourceInfra: OnpremInfra, desiredCsp: string, desiredRegion: string): Promise<RecommendedInfra[]> => {
-    // Unconditionally call /recommendation/infraWithNlb as requested
-    const endpoint = '/beetle/recommendation/infraWithNlb';
-      
-    const response = await api.post(`${endpoint}?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}`, {
-      nameSeed: 'my',
-      desiredCsp,
-      desiredRegion,
-      sourceInfra
-    });
+    const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
+    
+    let response;
+    if (hasNlbs) {
+      // Call NLB-aware recommendation endpoint
+      response = await api.post(`/beetle/recommendation/infraWithNlb?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}`, {
+        nameSeed: 'my',
+        desiredCsp,
+        desiredRegion,
+        sourceInfra
+      });
+    } else {
+      // Call standard VM recommendation endpoint
+      response = await api.post(`/beetle/recommendation/infra?desiredCsp=${desiredCsp}&desiredRegion=${desiredRegion}`, {
+        desiredCspAndRegionPair: {
+          csp: desiredCsp,
+          region: desiredRegion
+        },
+        onpremiseInfraModel: sourceInfra
+      });
+    }
     
     // Beetle recommendation returns wrapping object: { success: true, data: RecommendedInfra[] }
     if (response.data && Array.isArray(response.data.data)) {

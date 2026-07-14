@@ -15,7 +15,7 @@ services:
   # 1. CM-Honeybee (On-Premise Infrastructure Extractor)
   # ============================================================================
   cm-honeybee:
-    image: cloudbaristaorg/cm-honeybee:latest
+    image: cloudbaristaorg/cm-honeybee:0.5.3
     container_name: cm-honeybee
     networks:
       - cloud-barista
@@ -32,12 +32,12 @@ services:
   # 2. CM-Damselfly (On-Premise & Cloud Infrastructure Model Repository)
   # ============================================================================
   cm-damselfly:
-    image: cloudbaristaorg/cm-damselfly:latest
+    image: cloudbaristaorg/cm-damselfly:0.5.3
     container_name: cm-damselfly
     networks:
       - cloud-barista
     ports:
-      - "8082:8082"
+      - "8088:8088"
     environment:
       - DAMSELFLY_API_ALLOW_ORIGINS=*
       - DAMSELFLY_LOG_LEVEL=debug
@@ -66,7 +66,7 @@ services:
       - BEETLE_ENDPOINT=http://cm-beetle:8056
       - TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       - HONEYBEE_ENDPOINT=http://cm-honeybee:8081
-      - DAMSELFLY_ENDPOINT=http://cm-damselfly:8082
+      - DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
     depends_on:
       - cm-beetle
       - cm-honeybee
