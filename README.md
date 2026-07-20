@@ -38,7 +38,7 @@ The tables below show recommendation and migration support by target CSP and res
 | Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
-| Node Spec       | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
+| Node Spec       | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |    📅     | ✅  |  —  |  —  |
 | K8s Cluster     | 🚧  |  📅   | 📅  |   📅    |   📅    | 📅  |    ❌     |  —  |  —  | ❌  |
