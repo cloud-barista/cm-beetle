@@ -10,7 +10,7 @@ This document covers recommendation and migration support for VM infrastructure 
 | Subnet          | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | Security Group  | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | SSH Key         | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
-| Node Spec       | ✅  |  ✅   | ✅  |   ⚠️    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
+| Node Spec       | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | OS Image        | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 | Virtual Machine | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |   —   |  —   |
 
