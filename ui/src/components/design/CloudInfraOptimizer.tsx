@@ -288,6 +288,17 @@ export const CloudInfraOptimizer: React.FC = () => {
     ) ?? (candidate.targetOsImageList.length === 1 ? candidate.targetOsImageList[0] : null);
   };
 
+  const getEstimatedMonthlyCost = (candidate: typeof editedCandidate) => {
+    if (!candidate?.targetInfra?.nodeGroups) return '0.00';
+    let totalHourlyCost = 0;
+    candidate.targetInfra.nodeGroups.forEach((ng) => {
+      const spec = getSpecInfo(candidate, ng.specId);
+      const costPerHour = spec ? (spec.costPerHour || 0) : 0;
+      totalHourlyCost += costPerHour * (ng.nodeGroupSize || 0);
+    });
+    return (totalHourlyCost * 720).toFixed(2);
+  };
+
   // Human-readable OS name: use imgInfo fields if available, otherwise extract last path component from imageId
   const formatOsName = (imgInfo: any, imageId?: string): string => {
     if (imgInfo?.osDistribution) return imgInfo.osDistribution;
@@ -787,7 +798,9 @@ export const CloudInfraOptimizer: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-1.5 border-l border-border-main/20 pl-3">
                             <span className="text-xs text-text-muted font-bold font-sans">Cost</span>
-                            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">$134.78/mo</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">
+                              ${getEstimatedMonthlyCost(editedCandidate)}/month
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1187,6 +1200,12 @@ export const CloudInfraOptimizer: React.FC = () => {
                               <span className="text-sm text-text-muted italic block mt-0.5">* Modifying resource values dynamically updates the topology diagram in real-time</span>
                             </div>
                             <div className="flex items-center gap-2 flex-wrap justify-end">
+                              {editedCandidate && (
+                                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
+                                  <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span>Cost: ${getEstimatedMonthlyCost(editedCandidate)}/month</span>
+                                </span>
+                              )}
                               {selectedCloudModel ? (
                                 <span className="px-3.5 py-1.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 rounded-xl text-xs font-extrabold font-mono">
                                   Loaded Design: {selectedCloudModel.name} (v{selectedCloudModel.version})
@@ -1201,8 +1220,6 @@ export const CloudInfraOptimizer: React.FC = () => {
                                         key={idx}
                                         onClick={() => {
                                           selectCandidate(idx);
-                                          updateEditedCandidate(JSON.parse(JSON.stringify(c)));
-                                          if (activeStep < 3) setActiveStep(1);
                                         }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
                                           isActive
@@ -1911,7 +1928,7 @@ export const CloudInfraOptimizer: React.FC = () => {
                         <td key={idx} className="py-3.5 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold font-mono">
                           <div className="flex items-center space-x-1">
                             <DollarSign className="w-3.5 h-3.5" />
-                            <span>{idx === 0 ? '134.78' : idx === 1 ? '149.20' : '89.50'}</span>
+                            <span>{getEstimatedMonthlyCost(c)}</span>
                             <span className="text-sm text-text-muted">/ month</span>
                           </div>
                         </td>
