@@ -222,6 +222,17 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 
 		// Check if SSH access rule exists and add if missing
 		sgReq = checkAndSupportSSHAccessRule(sgReq)
+		
+		// Deduplicate firewall rules before sending to Tumblebug
+		if sgReq.FirewallRules != nil {
+			originalCount := len(*sgReq.FirewallRules)
+			dedupedRules := recommendation.DeduplicateFirewallRules(*sgReq.FirewallRules)
+			sgReq.FirewallRules = &dedupedRules
+			if originalCount != len(dedupedRules) {
+				log.Warn().Msgf("Removed %d duplicate firewall rule(s) for SG '%s' (original: %d, deduplicated: %d)",
+					originalCount-len(dedupedRules), sgReq.Name, originalCount, len(dedupedRules))
+			}
+		}
 
 		// Create security group
 		log.Debug().Msgf("Creating a security group (nsId: %s, sgReq.sgName: %s, sgReq.VNetId: %s, vNetInfo.vNetId: %s)",
@@ -897,6 +908,17 @@ func useOrCreateSecurityGroup(nsId string, sgReq SecurityGroupRequirement, sgCre
 	}
 
 	sgCreationReq = checkAndSupportSSHAccessRule(sgCreationReq)
+	
+	// Deduplicate firewall rules before sending to Tumblebug
+	if sgCreationReq.FirewallRules != nil {
+		originalCount := len(*sgCreationReq.FirewallRules)
+		dedupedRules := recommendation.DeduplicateFirewallRules(*sgCreationReq.FirewallRules)
+		sgCreationReq.FirewallRules = &dedupedRules
+		if originalCount != len(dedupedRules) {
+			log.Warn().Msgf("Removed %d duplicate firewall rule(s) for SG '%s' during fallback creation (original: %d, deduplicated: %d)",
+				originalCount-len(dedupedRules), sgCreationReq.Name, originalCount, len(dedupedRules))
+		}
+	}
 
 	log.Debug().Msgf("Creating a security group (nsId: %s, sgName: %s, VNetId: %s)", nsId, sgCreationReq.Name, sgCreationReq.VNetId)
 	tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.SecurityGroupReq, tbmodel.SecurityGroupReq](sgCreationReq)
