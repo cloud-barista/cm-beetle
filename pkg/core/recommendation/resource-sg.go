@@ -46,10 +46,21 @@ func RecommendSecurityGroup(csp string, region string, node onpremmodel.NodeProp
 	} else {
 		log.Info().Msgf("Generating security group rules based on %d firewall rules from node configuration", len(firewallRules))
 		sgRules = generateSecurityGroupRules(firewallRules)
+
+		// Deduplicate security group rules to prevent 'same permission multiple times' error
+		// This is necessary because input may contain both individual ports and comma-separated combinations
+		// Example: "80", "443", "80,443" → after split: "80", "443", "80", "443" (duplicates)
+		originalCount := len(sgRules)
+		sgRules = DeduplicateFirewallRules(sgRules)
+		if originalCount != len(sgRules) {
+			log.Warn().Msgf("Removed %d duplicate firewall rule(s) during recommendation (original: %d, deduplicated: %d)",
+				originalCount-len(sgRules), originalCount, len(sgRules))
+		}
+
 		firewallRulesPtr = &sgRules // Point to the generated rules
 	}
 
-	log.Debug().Msgf("sgRules: %+v", sgRules)
+	log.Debug().Msgf("sgRules after deduplication: %+v", sgRules)
 
 	// [Output]
 	// Create a security group for all rules
@@ -88,7 +99,7 @@ func RecommendSecurityGroups(csp string, region string, servers []onpremmodel.No
 		if err != nil {
 			log.Error().Err(err).Msgf("failed to recommend security group for node: %+v", node)
 			recommendedTargetSg.Description = fmt.Sprintf("Failed to recommend security group for %s", node.MachineId) // Set MachineId to identify the source node
-			recommendedTargetSg.FirewallRules = nil                                                                      // No rules if recommendation fails
+			recommendedTargetSg.FirewallRules = nil                                                                    // No rules if recommendation fails
 		}
 
 		// Check duplicates and append the recommended security group
@@ -294,33 +305,33 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 				var dstPorts string
 				// Handle wildcard ports based on protocol
 				if rule.DstPorts == "*" {
-					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
+					dstPorts = "1-65535" // TCP/UDP use 1-65535 range
 				} else {
 					dstPorts = rule.DstPorts
 				}
 
-				// * Note: CB-Tumblebug will handle comma-separated ports and port ranges.
-				// In here, just convert : to - for port ranges.
-				if strings.Contains(dstPorts, ":") {
-					// Handle port range with colon notation (e.g., 30000:40000)
-					portRange := strings.Split(dstPorts, ":")
-					if len(portRange) == 2 {
-						dstPorts = strings.TrimSpace(portRange[0]) + "-" + strings.TrimSpace(portRange[1])
-					} else {
-						log.Warn().Msgf("Invalid port range format in rule.DstPorts: %s - skipping rule", dstPorts)
+				// Convert colon notation to dash for port ranges (e.g., 30000:40000 → 30000-40000)
+				dstPorts = strings.ReplaceAll(dstPorts, ":", "-")
+
+				// Split comma-separated ports (same as Tumblebug's ConvertFirewallRuleRequestObjToInfoObjs)
+				// This prevents duplication when Tumblebug expands the rules
+				portList := strings.Split(dstPorts, ",")
+				for _, port := range portList {
+					port = strings.TrimSpace(port)
+					if port == "" {
 						continue
 					}
-				}
 
-				tbRule := cloudmodel.FirewallRuleReq{
-					Direction: rule.Direction,
-					Protocol:  protocol,
-					CIDR:      srcCIDR,
-					Ports:     dstPorts,
-				}
+					tbRule := cloudmodel.FirewallRuleReq{
+						Direction: rule.Direction,
+						Protocol:  protocol,
+						CIDR:      srcCIDR,
+						Ports:     port,
+					}
 
-				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created inbound rule for '%s' protocol: %+v", protocol, tbRule)
+					tbRules = append(tbRules, tbRule)
+					log.Debug().Msgf("Created inbound rule for '%s' protocol with port '%s': %+v", protocol, port, tbRule)
+				}
 			default:
 				log.Warn().Msgf("Unsupported protocol '%s' in inbound rule: %+v - skipping rule", protocol, rule)
 				continue
@@ -377,32 +388,32 @@ func generateSecurityGroupRules(rules []onpremmodel.FirewallRuleProperty) []clou
 				var dstPorts string
 				// Handle wildcard ports based on protocol
 				if rule.DstPorts == "*" {
-					dstPorts = "1:65535" // TCP/UDP use 1-65535 range
+					dstPorts = "1-65535" // TCP/UDP use 1-65535 range
 				} else {
 					dstPorts = rule.DstPorts
 				}
 
-				// * Note: CB-Tumblebug will handle comma-separated ports and port ranges.
-				// In here, just convert : to - for port ranges.
-				if strings.Contains(dstPorts, ":") {
-					// Handle port range with colon notation
-					portRange := strings.Split(dstPorts, ":")
-					if len(portRange) == 2 {
-						dstPorts = strings.TrimSpace(portRange[0]) + "-" + strings.TrimSpace(portRange[1])
-					} else {
-						log.Warn().Msgf("Invalid port range format: %s - skipping rule", dstPorts)
+				// Convert colon notation to dash for port ranges (e.g., 30000:40000 → 30000-40000)
+				dstPorts = strings.ReplaceAll(dstPorts, ":", "-")
+
+				// Split comma-separated ports (same as Tumblebug's ConvertFirewallRuleRequestObjToInfoObjs)
+				// This prevents duplication when Tumblebug expands the rules
+				portList := strings.Split(dstPorts, ",")
+				for _, port := range portList {
+					port = strings.TrimSpace(port)
+					if port == "" {
 						continue
 					}
-				}
 
-				tbRule := cloudmodel.FirewallRuleReq{
-					Direction: rule.Direction,
-					Protocol:  protocol,
-					CIDR:      dstCIDR,
-					Ports:     dstPorts,
+					tbRule := cloudmodel.FirewallRuleReq{
+						Direction: rule.Direction,
+						Protocol:  protocol,
+						CIDR:      dstCIDR,
+						Ports:     port,
+					}
+					tbRules = append(tbRules, tbRule)
+					log.Debug().Msgf("Created outbound rule for '%s' protocol with port '%s': %+v", protocol, port, tbRule)
 				}
-				tbRules = append(tbRules, tbRule)
-				log.Debug().Msgf("Created outbound rule for '%s' protocol: %+v", protocol, tbRule)
 			default:
 				log.Warn().Msgf("Unsupported protocol '%s' in outbound rule: %+v - skipping rule", protocol, rule)
 				continue
@@ -432,4 +443,63 @@ func isIPv6Rule(rule onpremmodel.FirewallRuleProperty) bool {
 	}
 
 	return false
+}
+
+// DeduplicateFirewallRules removes duplicate firewall rules from the given slice
+// Two rules are considered duplicate if they have the same Direction, Protocol, CIDR, and Ports
+// Protocol and Direction are compared case-insensitively
+// Note: This function expects rules to be already split by comma (same as Tumblebug's processing)
+func DeduplicateFirewallRules(rules []cloudmodel.FirewallRuleReq) []cloudmodel.FirewallRuleReq {
+	if len(rules) == 0 {
+		return rules
+	}
+
+	log.Info().Msgf("Starting deduplication for %d firewall rules", len(rules))
+
+	seen := make(map[string]bool)
+	result := []cloudmodel.FirewallRuleReq{}
+	duplicateCount := 0
+
+	for i, rule := range rules {
+		key := createRuleKey(rule)
+		log.Debug().Msgf("Rule %d: key='%s' (Direction=%s, Protocol=%s, CIDR=%s, Ports=%s)",
+			i+1, key, rule.Direction, rule.Protocol, rule.CIDR, rule.Ports)
+
+		if !seen[key] {
+			seen[key] = true
+			result = append(result, rule)
+			log.Debug().Msgf("  ✓ Keeping rule (first occurrence)")
+		} else {
+			duplicateCount++
+			log.Warn().Msgf("  ✗ DUPLICATE DETECTED - removing exact duplicate with key: %s", key)
+		}
+	}
+
+	log.Info().Msgf("Deduplication complete: %d duplicates removed, %d unique rules remaining",
+		duplicateCount, len(result))
+	return result
+}
+
+// createRuleKey creates a normalized unique key for a firewall rule
+// Format: direction|protocol|cidr|ports (all lowercase for case-insensitive comparison)
+func createRuleKey(rule cloudmodel.FirewallRuleReq) string {
+	// Normalize all fields to lowercase for consistent comparison
+	direction := strings.ToLower(strings.TrimSpace(rule.Direction))
+	protocol := strings.ToLower(strings.TrimSpace(rule.Protocol))
+	cidr := strings.TrimSpace(rule.CIDR)
+	ports := normalizePorts(rule.Ports)
+
+	// Create unique key
+	key := fmt.Sprintf("%s|%s|%s|%s", direction, protocol, cidr, ports)
+
+	return key
+}
+
+// normalizePorts normalizes port specification for consistent comparison
+// Note: At this point, ports are already split by comma in generateSecurityGroupRules,
+// so each rule contains only a single port or port range (e.g., "80" or "900-1000")
+func normalizePorts(ports string) string {
+	// Simply trim whitespace - no comma splitting or sorting needed
+	// as rules are already split into individual port/range entries
+	return strings.TrimSpace(ports)
 }
