@@ -214,13 +214,14 @@ func collectSourceComputeResources(infraData *onpremmodel.OnpremInfra) SourceSum
 
 // isMainInterface checks if the interface is a main/primary interface
 func isMainInterface(name string) bool {
-	// Main interfaces typically include: lo, eth*, eno*, enp*, br-ex, etc.
+	// Main interfaces typically include: lo, eth*, and the systemd predictable
+	// network interface naming scheme variants eno*/ens*/enp*/enx*, br-ex, etc.
 	// Exclude tap*, veth*, and other virtual interfaces
 	if name == "" {
 		return false
 	}
 
-	mainPrefixes := []string{"lo", "eth", "eno", "enp", "br-"}
+	mainPrefixes := []string{"lo", "eth", "eno", "ens", "enp", "enx", "br-"}
 	for _, prefix := range mainPrefixes {
 		if strings.HasPrefix(name, prefix) {
 			return true

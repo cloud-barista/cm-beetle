@@ -16,6 +16,7 @@ package report
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cloud-barista/cm-beetle/pkg/core/summary"
@@ -318,15 +319,19 @@ func writeVmMigrationStatus(md *strings.Builder, report *MigrationReport) {
 
 	if report.TargetDetails != nil && report.TargetDetails.ComputeResources.Vms != nil {
 		for i, vm := range report.TargetDetails.ComputeResources.Vms {
-			// Extract sourceMachineId from VM name
-			sourceMachineId := extractSourceMachineId(vm.Name)
+			// Resolve the source machine ID via the matched source node, rather
+			// than re-parsing it out of the VM name (see findSourceServer).
+			sourceMachineId := "N/A"
+			if node := findSourceServer(vm, report.SourceDetails); node != nil {
+				sourceMachineId = node.MachineId
+			}
 
 			// Format VM info
 			vmInfo := fmt.Sprintf("**VM Name:** %s<br>**VM ID:** %s<br>**Label(sourceMachineId):** %s",
 				vm.Name, vm.CspVmId, sourceMachineId)
 
 			// Get source node info
-			sourceInfo := extractSourceServerInfoDetailed(vm.Name, report.SourceDetails)
+			sourceInfo := extractSourceServerInfoDetailed(vm, report.SourceDetails)
 
 			md.WriteString(fmt.Sprintf("| %d | %s | %s |\n", i+1, vmInfo, sourceInfo))
 		}
@@ -357,8 +362,8 @@ func writeVmSpecStatus(md *strings.Builder, report *MigrationReport) {
 		for i, vm := range report.TargetDetails.ComputeResources.Vms {
 			vmName := vm.Name
 			specInfo := formatVmSpecInfo(vm)
-			sourceInfo := extractSourceServerInfoDetailed(vm.Name, report.SourceDetails)
-			sourceSpec := formatSourceServerSpecInfo(vm.Name, report.SourceDetails)
+			sourceInfo := extractSourceServerInfoDetailed(vm, report.SourceDetails)
+			sourceSpec := formatSourceServerSpecInfo(vm, report.SourceDetails)
 			md.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s |\n", i+1, vmName, specInfo, sourceInfo, sourceSpec))
 		}
 	}
@@ -388,8 +393,8 @@ func writeVmImageStatus(md *strings.Builder, report *MigrationReport) {
 		for i, vm := range report.TargetDetails.ComputeResources.Vms {
 			vmName := vm.Name
 			imageInfo := fmt.Sprintf("**Image ID:** %s<br>**OS Type:** %s<br>**OS Distribution:** %s", vm.Image.Id, vm.Image.OsType, vm.Image.Distribution)
-			sourceInfo := extractSourceServerInfoDetailed(vm.Name, report.SourceDetails)
-			sourceOS := extractSourceOSInfoDetailed(vm.Name, report.SourceDetails)
+			sourceInfo := extractSourceServerInfoDetailed(vm, report.SourceDetails)
+			sourceOS := extractSourceOSInfoDetailed(vm, report.SourceDetails)
 			md.WriteString(fmt.Sprintf("| %d | %s | %s | %s | %s |\n", i+1, vmName, imageInfo, sourceInfo, sourceOS))
 		}
 	}
@@ -423,7 +428,7 @@ func writeSecurityGroupStatus(md *strings.Builder, report *MigrationReport) {
 				md.WriteString("**Assigned VMs:**\n\n")
 				for _, vm := range assignedVMsList {
 					sourceInfo := extractSourceServerInfoDetailed(vm, report.SourceDetails)
-					md.WriteString(fmt.Sprintf("- **VM:** %s\n", vm))
+					md.WriteString(fmt.Sprintf("- **VM:** %s\n", vm.Name))
 					md.WriteString(fmt.Sprintf("  - **Source Server:** %s\n", strings.ReplaceAll(sourceInfo, "<br>", ", ")))
 				}
 				md.WriteString("\n")
@@ -557,7 +562,7 @@ func writeNetworkStatus(md *strings.Builder, report *MigrationReport) {
 				if len(mainRoutes) > 0 {
 					md.WriteString("**Main Routes:**\n\n")
 					md.WriteString("| Destination | Gateway | Interface |\n")
-					md.WriteString("|-------------|---------||-----------|\n")
+					md.WriteString("|-------------|---------|-----------|\n")
 
 					for _, route := range mainRoutes {
 						gateway := route.Gateway
@@ -605,112 +610,133 @@ func writeSshKeyStatus(md *strings.Builder, report *MigrationReport) {
 
 // Helper functions for extracting source information
 
-// extractSourceMachineId extracts machine ID from VM name
-func extractSourceMachineId(vmName string) string {
-	// VM name format: "migrated-{machineId}-..."
-	parts := strings.Split(vmName, "-")
-	if len(parts) >= 6 {
-		// Reconstruct full machine ID from parts (e.g., 0036e4b9-c8b4-e811-906e-000ffee02d5c)
-		return fmt.Sprintf("%s-%s-%s-%s-%s", parts[1], parts[2], parts[3], parts[4], parts[5])
+// sourceMachineIdsLabelKey is the NodeGroup creation-time label set by the
+// recommendation phase (see pkg/core/recommendation) recording which source
+// machine(s) a NodeGroup was recommended from.
+const sourceMachineIdsLabelKey = "sourceMachineIds"
+
+// resolveSourceMachineID resolves the exact source machine ID for a target VM
+// from its "sourceMachineIds" label, which is authoritative and set at
+// NodeGroup creation time — unlike inferring it from the VM name.
+//
+// For a 1:1 NodeGroup (NodeGroupSize == 1) the label holds exactly one machine
+// ID. For an N:1 NLB backend NodeGroup (NodeGroupSize > 1), CB-Tumblebug copies
+// the *same* CreateNodeGroupReq.Label verbatim onto every VM in the group, so
+// the label alone can't tell VMs in that group apart — it holds the full
+// comma-separated list of member machine IDs. To pick the right entry for this
+// specific VM, we use its 1-based index within the group: CB-Tumblebug names
+// NodeGroup members "<groupName>-1", "-2", ... in the same order it created
+// them, which is the same order cm-beetle used to build the label's list, so
+// the Nth VM corresponds to the Nth machine ID.
+func resolveSourceMachineID(vm summary.SummaryVmInfo) string {
+	ids := vm.Label[sourceMachineIdsLabelKey]
+	if ids == "" {
+		return ""
 	}
-	if len(parts) >= 2 {
-		return parts[1]
+
+	idList := strings.Split(ids, ",")
+	if len(idList) == 1 {
+		return strings.TrimSpace(idList[0])
 	}
-	return "N/A"
+
+	idx := vmGroupIndex(vm.Name)
+	if idx < 1 || idx > len(idList) {
+		return ""
+	}
+
+	return strings.TrimSpace(idList[idx-1])
+}
+
+// vmGroupIndex extracts the 1-based NodeGroup member index from a VM name's
+// trailing "-N" suffix. Returns 0 if the name has no such numeric suffix.
+func vmGroupIndex(vmName string) int {
+	i := strings.LastIndex(vmName, "-")
+	if i < 0 || i == len(vmName)-1 {
+		return 0
+	}
+
+	n, err := strconv.Atoi(vmName[i+1:])
+	if err != nil || n < 1 {
+		return 0
+	}
+
+	return n
+}
+
+// findSourceServer locates the source node a target VM was migrated from.
+// It first tries the authoritative "sourceMachineIds" label (see
+// resolveSourceMachineID); if the VM has no usable label — e.g. it was
+// manually registered rather than created through the recommendation flow —
+// it falls back to matching by substring containment of a known machine ID in
+// the VM name.
+func findSourceServer(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) *summary.SourceServerInfo {
+	if sourceDetails == nil {
+		return nil
+	}
+
+	if machineID := resolveSourceMachineID(vm); machineID != "" {
+		for i, node := range sourceDetails.ComputeResources.Servers {
+			if node.MachineId == machineID {
+				return &sourceDetails.ComputeResources.Servers[i]
+			}
+		}
+	}
+
+	for i, node := range sourceDetails.ComputeResources.Servers {
+		if node.MachineId != "" && strings.Contains(vm.Name, node.MachineId) {
+			return &sourceDetails.ComputeResources.Servers[i]
+		}
+	}
+
+	return nil
 }
 
 // extractSourceServerInfoDetailed extracts detailed source node information
-func extractSourceServerInfoDetailed(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func extractSourceServerInfoDetailed(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "**Hostname:** N/A<br>**Machine ID:** N/A"
 	}
 
-	// Extract machine ID from VM name (format: "migrated-{MachineId}")
-	machineID := extractSourceMachineId(vmName)
-
-	// Match source node by machine ID field directly
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("**Hostname:** %s<br>**Machine ID:** %s", node.Hostname, node.MachineId)
-		}
-	}
-
-	// If no match found, still show the machine ID extracted from VM name
-	return fmt.Sprintf("**Hostname:** N/A<br>**Machine ID:** %s", machineID)
+	return fmt.Sprintf("**Hostname:** %s<br>**Machine ID:** %s", node.Hostname, node.MachineId)
 }
 
-func extractSourceServerInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func extractSourceServerInfo(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "N/A"
 	}
 
-	// Extract machine ID from VM name
-	machineID := extractSourceMachineId(vmName)
-
-	// Match by machine ID field
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("%s<br>%s", node.Hostname, node.MachineId)
-		}
-	}
-
-	return fmt.Sprintf("Source node<br>%s", machineID)
+	return fmt.Sprintf("%s<br>%s", node.Hostname, node.MachineId)
 }
 
-func extractSourceSpecInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func extractSourceSpecInfo(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "N/A"
 	}
 
-	// Extract machine ID from VM name
-	machineID := extractSourceMachineId(vmName)
-
-	// Match by machine ID field
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("%d CPUs, %d Threads<br>%d GB RAM, %d GB Disk",
-				node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
-		}
-	}
-
-	return "N/A"
+	return fmt.Sprintf("%d CPUs, %d Threads<br>%d GB RAM, %d GB Disk",
+		node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
 }
 
-func extractSourceOSInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func extractSourceOSInfo(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "N/A"
 	}
 
-	// Extract machine ID from VM name
-	machineID := extractSourceMachineId(vmName)
-
-	// Match by machine ID field
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("%s %s", node.OS.Name, node.OS.Version)
-		}
-	}
-
-	return "N/A"
+	return fmt.Sprintf("%s %s", node.OS.Name, node.OS.Version)
 }
 
-func extractSourceOSInfoDetailed(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func extractSourceOSInfoDetailed(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "**PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A"
 	}
 
-	// Extract machine ID from VM name
-	machineID := extractSourceMachineId(vmName)
-
-	// Match by machine ID field
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("**PrettyName:** %s<br>**Name:** %s<br>**Version:** %s",
-				node.OS.PrettyName, node.OS.Name, node.OS.Version)
-		}
-	}
-
-	return "**PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A"
+	return fmt.Sprintf("**PrettyName:** %s<br>**Name:** %s<br>**Version:** %s",
+		node.OS.PrettyName, node.OS.Name, node.OS.Version)
 }
 
 // formatVmSpecInfo formats VM spec information for display
@@ -722,49 +748,18 @@ func formatVmSpecInfo(vm summary.SummaryVmInfo) string {
 }
 
 // formatSourceServerSpecInfo formats source node spec information for display
-func formatSourceServerSpecInfo(vmName string, sourceDetails *summary.SourceInfraSummary) string {
-	if sourceDetails == nil || sourceDetails.ComputeResources.Servers == nil {
+func formatSourceServerSpecInfo(vm summary.SummaryVmInfo, sourceDetails *summary.SourceInfraSummary) string {
+	node := findSourceServer(vm, sourceDetails)
+	if node == nil {
 		return "**CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A"
 	}
 
-	// Extract machine ID from VM name
-	machineID := extractSourceMachineId(vmName)
-
-	// Match by machine ID field
-	for _, node := range sourceDetails.ComputeResources.Servers {
-		if node.MachineId == machineID {
-			return fmt.Sprintf("**CPUs:** %d<br>**Threads:** %d<br>**Memory:** %d GB<br>**Root Disk:** %d GB",
-				node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
-		}
-	}
-
-	return "**CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A"
+	return fmt.Sprintf("**CPUs:** %d<br>**Threads:** %d<br>**Memory:** %d GB<br>**Root Disk:** %d GB",
+		node.CPU.CPUs, node.CPU.Threads, node.Memory.TotalGB, node.Disk.TotalGB)
 }
 
-func getVMsUsingSecurityGroup(sgName string, targetDetails *summary.TargetInfraSummary) string {
-	if targetDetails == nil || targetDetails.ComputeResources.Vms == nil {
-		return "N/A"
-	}
-
-	vms := []string{}
-	for _, vm := range targetDetails.ComputeResources.Vms {
-		for _, sg := range vm.Misc.SecurityGroups {
-			if sg == sgName {
-				vms = append(vms, vm.Name)
-				break
-			}
-		}
-	}
-
-	if len(vms) == 0 {
-		return "N/A"
-	}
-
-	return strings.Join(vms, "<br>")
-}
-
-func getVMsUsingSecurityGroupList(sgName string, targetDetails *summary.TargetInfraSummary) []string {
-	vms := []string{}
+func getVMsUsingSecurityGroupList(sgName string, targetDetails *summary.TargetInfraSummary) []summary.SummaryVmInfo {
+	vms := []summary.SummaryVmInfo{}
 	if targetDetails == nil || targetDetails.ComputeResources.Vms == nil {
 		return vms
 	}
@@ -772,7 +767,7 @@ func getVMsUsingSecurityGroupList(sgName string, targetDetails *summary.TargetIn
 	for _, vm := range targetDetails.ComputeResources.Vms {
 		for _, sg := range vm.Misc.SecurityGroups {
 			if sg == sgName {
-				vms = append(vms, vm.Name)
+				vms = append(vms, vm)
 				break
 			}
 		}

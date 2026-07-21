@@ -375,6 +375,7 @@ func collectComputeResources(nsId string, infraInfo *tbmodel.InfraInfo, specIds,
 			},
 			Region: node.Region.Region,
 			Zone:   node.Region.Zone,
+			Label:  node.Label,
 		}
 
 		resources.Vms = append(resources.Vms, reportVm)
@@ -404,16 +405,16 @@ func buildInfraOverview(infraInfo *tbmodel.InfraInfo) TargetInfraOverview {
 	}
 
 	return TargetInfraOverview{
-		InfraName:       infraInfo.Name,
+		InfraName:        infraInfo.Name,
 		InfraDescription: infraInfo.Description,
-		Status:          infraInfo.Status,
-		TargetCloud:     targetCloud,
-		TargetRegion:    targetRegion,
-		TotalVmCount:    len(infraInfo.Node),
-		RunningVmCount:  runningCount,
-		StoppedVmCount:  stoppedCount,
-		Label:           infraInfo.Label,
-		InstallMonAgent: infraInfo.InstallMonAgent,
+		Status:           infraInfo.Status,
+		TargetCloud:      targetCloud,
+		TargetRegion:     targetRegion,
+		TotalVmCount:     len(infraInfo.Node),
+		RunningVmCount:   runningCount,
+		StoppedVmCount:   stoppedCount,
+		Label:            infraInfo.Label,
+		InstallMonAgent:  infraInfo.InstallMonAgent,
 	}
 }
 
