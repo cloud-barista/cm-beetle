@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
@@ -84,13 +85,15 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 
 // MigrateData godoc
 // @ID MigrateData
-// @Summary [Async] Migrate data from source to target
-// @Description **Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.
+// @Summary Migrate data from source to target (sync by default; async via Prefer: respond-async)
+// @Description By default this API runs synchronously and returns the migration result directly.
 // @Description
-// @Description [How to Use]
-// @Description 1. Call this API → Receive 202 Accepted with reqId
+// @Description [Async Operation (opt-in)]
+// @Description 1. Send header `Prefer: respond-async` → Receive 202 Accepted with reqId
 // @Description 2. Poll GET /request/{reqId} to check status
 // @Description 3. Status flow: Handling → Success / Error
+// @Description * Only the "respond-async" preference token is recognized; other tokens (e.g. wait=N) are ignored.
+// @Description * If too many async jobs are already running, this returns 503 instead of 202; retry after the `Retry-After` seconds.
 // @Description
 // @Description [Endpoint Requirements]
 // @Description * Both source and destination must be remote endpoints (SSH or object storage)
@@ -112,9 +115,13 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Accept  json
 // @Produce  json
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used as reqId for tracking migration status."
+// @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Param reqBody body transx.DataMigrationModel true "Data migration request (supports plaintext or encrypted with encryptionKeyId)"
-// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started - use GET /request/{reqId} to check status"
+// @Success 200 {object} model.ApiResponse[any] "Migration completed synchronously"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or decryption failed"
+// @Failure 500 {object} model.ApiResponse[any] "Migration failed"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/data [post]
 func MigrateData(c echo.Context) error {
 
@@ -173,60 +180,60 @@ func MigrateData(c echo.Context) error {
 		Str("strategy", req.Strategy).
 		Msg("Starting data migration")
 
-	// Get the request ID from header for async tracking
-	reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (map[string]any, error) {
+			return runDataMigration(*req)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
 
-	// Execute migration asynchronously
-	go executeMigrationAsync(reqID, *req)
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		log.Info().Str("reqId", reqID).Msg("Data migration started asynchronously")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Migration started. Use GET /request/{reqId} to check status.",
+		))
+	}
 
-	// Return immediately with 202 Accepted
-	log.Info().Str("reqId", reqID).Msg("Data migration started asynchronously")
-	return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
-		model.AsyncJobResponse{
-			ReqID:     reqID,
-			Status:    common.RequestStatusHandling,
-			StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
-		},
-		"Migration started. Use GET /request/{reqId} to check status.",
-	))
+	// Synchronous path
+	result, err := runDataMigration(*req)
+	if err != nil {
+		log.Error().Err(err).Msg("Data migration failed")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+	}
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(result, "Data migrated successfully"))
 }
 
-// executeMigrationAsync performs the data migration in background and updates request status.
-func executeMigrationAsync(reqID string, req transx.DataMigrationModel) {
-	startTime := time.Now()
-
-	// Execute migration
-	err := transx.Transfer(req)
-
-	// Calculate elapsed time
-	elapsedTime := time.Since(startTime)
-
-	// Get current request details
-	details, ok := common.GetRequest(reqID)
-	if !ok {
-		log.Error().Str("reqId", reqID).Msg("Failed to get request details for status update")
-		return
-	}
-
-	// Update status based on result
-	details.EndTime = time.Now()
-	if err != nil {
-		log.Error().Err(err).Str("reqId", reqID).Dur("elapsedTime", elapsedTime).Msg("Data migration failed")
-		details.Status = common.RequestStatusError
-		details.ErrorResponse = fmt.Sprintf("Data migration failed: %v (%s)", err, elapsedTime.Round(time.Millisecond))
-	} else {
-		log.Info().Str("reqId", reqID).Dur("elapsedTime", elapsedTime).Msg("Data migration completed successfully")
-		details.Status = common.RequestStatusSuccess
-		details.ResponseData = map[string]any{
-			"message":     fmt.Sprintf("Data migrated successfully (%s)", elapsedTime.Round(time.Millisecond)),
-			"elapsedTime": elapsedTime.Round(time.Millisecond).String(),
+// preferRespondAsync reports whether Prefer includes "respond-async" (RFC 7240).
+// Other tokens (e.g. wait=N) are ignored.
+func preferRespondAsync(c echo.Context) bool {
+	for _, token := range strings.Split(c.Request().Header.Get("Prefer"), ",") {
+		if strings.TrimSpace(token) == "respond-async" {
+			return true
 		}
 	}
+	return false
+}
 
-	// Save updated status
-	if err := common.SetRequest(reqID, details); err != nil {
-		log.Error().Err(err).Str("reqId", reqID).Msg("Failed to update request status")
+// runDataMigration performs the data migration and returns a summary of the result.
+func runDataMigration(req transx.DataMigrationModel) (map[string]any, error) {
+	start := time.Now()
+	if err := transx.Transfer(req); err != nil {
+		return nil, fmt.Errorf("data migration failed: %w (%s)", err, time.Since(start).Round(time.Millisecond))
 	}
+	elapsed := time.Since(start).Round(time.Millisecond)
+	return map[string]any{
+		"message":     fmt.Sprintf("Data migrated successfully (%s)", elapsed),
+		"elapsedTime": elapsed.String(),
+	}, nil
 }
 
 // ============================================================================

@@ -46,6 +46,9 @@ cmd/test-cli/data/log/
 cmd/test-cli/data/test-result/
 cmd/test-cli/data/testconf/auth-config.json
 cmd/test-cli/data/testconf/test-config.yaml
+cmd/test-cli/async/test-async
+cmd/test-cli/async/testconf/auth-config.json
+cmd/test-cli/async/testconf/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*

@@ -5316,12 +5316,14 @@ paths:
       consumes:
       - application/json
       description: |
-        **Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.
+        By default this API runs synchronously and returns the migration result directly.
 
-        [How to Use]
-        1. Call this API → Receive 202 Accepted with reqId
+        [Async Operation (opt-in)]
+        1. Send header `Prefer: respond-async` → Receive 202 Accepted with reqId
         2. Poll GET /request/{reqId} to check status
         3. Status flow: Handling → Success / Error
+        * Only the "respond-async" preference token is recognized; other tokens (e.g. wait=N) are ignored.
+        * If too many async jobs are already running, this returns 503 instead of 202; retry after the `Retry-After` seconds.
 
         [Endpoint Requirements]
         * Both source and destination must be remote endpoints (SSH or object storage)
@@ -5345,6 +5347,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       - description: Data migration request (supports plaintext or encrypted with
           encryptionKeyId)
         in: body
@@ -5355,15 +5364,30 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: Migration completed synchronously
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
         "202":
-          description: Migration started - use GET /request/{reqId} to check status
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
           schema:
             $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters or decryption failed
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: '[Async] Migrate data from source to target'
+        "500":
+          description: Migration failed
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: 'Migrate data from source to target (sync by default; async via Prefer:
+        respond-async)'
       tags:
       - '[Migration] Data (incubating)'
   /migration/data/encryptionKey:
@@ -5561,6 +5585,10 @@ paths:
         Ensure `targetGroup.nodeGroupId` matches the NodeGroup IDs created during infra migration.
 
         [Note] All NLBs are attempted independently. Partial success is possible.
+
+        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+        asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
       operationId: MigrateNlbs
       parameters:
       - default: mig01
@@ -5589,6 +5617,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -5596,12 +5631,22 @@ paths:
           description: NLBs created successfully
           schema:
             $ref: '#/definitions/model.ApiResponse-cloudmodel_MigratedNlbResult'
+        "202":
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during NLB creation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (Preview) Migrate NLBs to a cloud infra
@@ -5617,6 +5662,10 @@ paths:
         [Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.
         Deleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).
         CM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.
+
+        By default this API runs synchronously (always includes the 15s settle wait). Send header
+        `Prefer: respond-async` to run it asynchronously instead: receive 202 Accepted with a reqId,
+        then poll GET /request/{reqId} (status flow: Handling → Success / Error).
       operationId: DeleteNlb
       parameters:
       - default: mig01
@@ -5639,9 +5688,21 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this deletion asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
+        "202":
+          description: Deletion started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "204":
           description: NLB deleted (includes 15s settle wait for CSP async cleanup)
         "400":
@@ -5650,6 +5711,11 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete an NLB
@@ -5794,7 +5860,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: |
+      description: |-
         Migrate object storages to cloud based on recommendation results
 
         [Note]
@@ -5808,6 +5874,10 @@ paths:
 
         [Examples]
         * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
+
+        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+        asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
       operationId: MigrateObjectStorage
       parameters:
       - default: mig01
@@ -5833,17 +5903,34 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
         "201":
           description: Created - Object storages created successfully
+        "202":
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during object storage creation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Migrate object storages to cloud
@@ -6198,6 +6285,10 @@ paths:
         - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
         - **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).
         - Recommended: pass the recommendation API response as-is to use the latest resolved image.
+
+        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+        asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
       operationId: MigrateInfra
       parameters:
       - default: mig01
@@ -6227,6 +6318,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -6234,6 +6332,11 @@ paths:
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
             $ref: '#/definitions/model.ApiResponse-controller_MigrateInfraResponse'
+        "202":
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "404":
           description: Not Found
           schema:
@@ -6242,15 +6345,26 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
-        defaults
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+        with defaults (sync by default; async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
   /migration/ns/{nsId}/infra/{infraId}:
     delete:
       consumes:
       - application/json
-      description: Delete the migrated mult-cloud infrastructure (MCI)
+      description: |-
+        Delete the migrated mult-cloud infrastructure (MCI).
+
+        This operation can take a long time (multiple settle-time waits and vNet-deletion
+        retries). By default it runs synchronously. Send header `Prefer: respond-async` to run
+        it asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
       operationId: DeleteInfra
       parameters:
       - default: mig01
@@ -6279,6 +6393,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this deletion asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -6286,6 +6407,11 @@ paths:
           description: The result of deleting the migrated multi-cloud infrastructure
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "202":
+          description: Deletion started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "404":
           description: Not Found
           schema:
@@ -6294,7 +6420,13 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Delete the migrated mult-cloud infrastructure (MCI)
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: 'Delete the migrated mult-cloud infrastructure (MCI) (sync by default;
+        async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
     get:
@@ -6343,8 +6475,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Migrate an infrastructure to the multi-cloud infrastructure (MCI)
-        with defaults.
+      description: |-
+        Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+
+        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+        asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
       operationId: MigrateInfraWithDefaults
       parameters:
       - default: mig01
@@ -6365,6 +6501,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -6372,12 +6515,22 @@ paths:
           description: Successfully migrated to the multi-cloud infrastructure
           schema:
             $ref: '#/definitions/model.ApiResponse-controller_MigrateInfraWithDefaultsResponse'
+        "202":
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Migrate an infrastructure to the multi-cloud infrastructure (MCI) with
-        defaults
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+        with defaults (sync by default; async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
   /migration/ns/{nsId}/resources/securityGroup:
@@ -7342,6 +7495,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this recommendation asynchronously
+          (RFC 7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -7349,12 +7509,22 @@ paths:
           description: Successfully recommended infrastructure candidates
           schema:
             $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra'
+        "202":
+          description: Recommendation started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request parameters
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend multiple VM infrastructure candidates for cloud migration
@@ -7404,6 +7574,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this recommendation asynchronously
+          (RFC 7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -7411,12 +7588,22 @@ paths:
           description: The result of recommended infrastructure
           schema:
             $ref: '#/definitions/model.ApiResponse-controller_RecommendInfraWithDefaultsResponse'
+        "202":
+          description: Recommendation started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
@@ -7503,6 +7690,13 @@ paths:
         in: header
         name: X-Request-Id
         type: string
+      - description: Set to 'respond-async' to run this recommendation asynchronously
+          (RFC 7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       produces:
       - application/json
       responses:
@@ -7510,12 +7704,22 @@ paths:
           description: NLB-aware recommendation candidates
           schema:
             $ref: '#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra'
+        "202":
+          description: Recommendation started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "400":
           description: Invalid request
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (Preview) Recommend infrastructure candidates with NLB for cloud migration

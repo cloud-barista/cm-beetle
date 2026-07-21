@@ -44,16 +44,23 @@ type MigrateInfraWithDefaultsResponse struct {
 
 // MigrateInfraWithDefaults godoc
 // @ID MigrateInfraWithDefaults
-// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults
+// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)
 // @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+// @Description
+// @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+// @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param mciInfo body MigrateInfraWithDefaultsRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 201 {object} model.ApiResponse[MigrateInfraWithDefaultsResponse] "Successfully migrated to the multi-cloud infrastructure"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/ns/{nsId}/infraWithDefaults [post]
 func MigrateInfraWithDefaults(c echo.Context) error {
 
@@ -75,6 +82,26 @@ func MigrateInfraWithDefaults(c echo.Context) error {
 	log.Debug().Msgf("req.InfraDynamicReq: %v", req.InfraDynamicReq)
 
 	// [Process]
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
+			return migration.CreateVMInfraWithDefaults(nsId, &req.InfraDynamicReq)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Migration started. Use GET /request/{reqId} to check status."))
+	}
+
 	// Create the VM infrastructure for migration
 	mciInfo, err := migration.CreateVMInfraWithDefaults(nsId, &req.InfraDynamicReq)
 
@@ -102,13 +129,17 @@ type MigrateInfraResponse struct {
 
 // MigrateInfra godoc
 // @ID MigrateInfra
-// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults
+// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)
 // @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
 // @Description
 // @Description **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
 // @Description - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
 // @Description - **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).
 // @Description - Recommended: pass the recommendation API response as-is to use the latest resolved image.
+// @Description
+// @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+// @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -117,9 +148,12 @@ type MigrateInfraResponse struct {
 // @Param useExisting query bool false "Reuse existing resources (VNet, SSH Key, Security Group) if they already exist, instead of creating new ones (default: true)"
 // @Param infraInfo body MigrateInfraRequest true "Specify the information for the targeted multi-cloud infrastructure"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 201 {object} model.ApiResponse[MigrateInfraResponse] "Successfully migrated to the multi-cloud infrastructure"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/ns/{nsId}/infra [post]
 func MigrateInfra(c echo.Context) error {
 
@@ -159,6 +193,29 @@ func MigrateInfra(c echo.Context) error {
 	// Validate names and referential integrity
 	if ok, detail := common.ValidateComposedNames(infraToMigrate); !ok {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Naming/Reference validation failed: "+detail))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (cloudmodel.VmInfraInfo, error) {
+			if useExisting {
+				return migration.CreateInfraWithExisting(nsId, &infraToMigrate)
+			}
+			return migration.CreateInfra(nsId, &infraToMigrate)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Migration started. Use GET /request/{reqId} to check status."))
 	}
 
 	// Create the VM infrastructure for migration
@@ -286,8 +343,13 @@ func GetInfra(c echo.Context) error {
 
 // DeleteInfra godoc
 // @ID DeleteInfra
-// @Summary Delete the migrated mult-cloud infrastructure (MCI)
-// @Description Delete the migrated mult-cloud infrastructure (MCI)
+// @Summary Delete the migrated mult-cloud infrastructure (MCI) (sync by default; async via Prefer: respond-async)
+// @Description Delete the migrated mult-cloud infrastructure (MCI).
+// @Description
+// @Description This operation can take a long time (multiple settle-time waits and vNet-deletion
+// @Description retries). By default it runs synchronously. Send header `Prefer: respond-async` to run
+// @Description it asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -295,9 +357,12 @@ func GetInfra(c echo.Context) error {
 // @Param infraId path string true "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')" default(my-infra101)
 // @Param option query string false "Option for deletion" Enums(terminate,force) default(terminate)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[any] "The result of deleting the migrated multi-cloud infrastructure"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Deletion started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/ns/{nsId}/infra/{infraId} [delete]
 func DeleteInfra(c echo.Context) error {
 
@@ -322,6 +387,26 @@ func DeleteInfra(c echo.Context) error {
 		err := fmt.Errorf("invalid request, the option (option: %s) is invalid", option)
 		log.Warn().Msg(err.Error())
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (common.SimpleMsg, error) {
+			return migration.DeleteVMInfra(nsId, infraId, option)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Deletion started. Use GET /request/{reqId} to check status."))
 	}
 
 	// [Process]

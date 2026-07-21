@@ -57,6 +57,9 @@ type MigrateObjectStorageRequest struct {
 // @Description [Examples]
 // @Description * Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md
 // @Description
+// @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+// @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
 // @Tags [Migration] Managed Object Storage
 // @Accept json
 // @Produce	json
@@ -64,9 +67,12 @@ type MigrateObjectStorageRequest struct {
 // @Param nameSeed query string false "Optional prefix for bucket names (e.g., 'my' → 'my-os-01'). Applied at migration time."
 // @Param request body MigrateObjectStorageRequest true "Object storage migration request (use RecommendObjectStorage response)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 201 "Created - Object storages created successfully"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during object storage creation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [post]
 func MigrateObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -94,6 +100,29 @@ func MigrateObjectStorage(c echo.Context) error {
 	nameSeed := c.QueryParam("nameSeed")
 	if ok, detail := common.IsValidNameSeed(nameSeed); !ok {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid nameSeed: "+detail))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (map[string]any, error) {
+			if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed); err != nil {
+				return nil, err
+			}
+			return map[string]any{"message": "Object storages created successfully"}, nil
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Object storage migration started. Use GET /request/{reqId} to check status."))
 	}
 
 	if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed); err != nil {

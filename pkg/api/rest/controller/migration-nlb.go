@@ -21,6 +21,7 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -44,6 +45,10 @@ import (
 // @Description Ensure `targetGroup.nodeGroupId` matches the NodeGroup IDs created during infra migration.
 // @Description
 // @Description [Note] All NLBs are attempted independently. Partial success is possible.
+// @Description
+// @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+// @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
 // @Tags [Migration] Managed Network Load Balancer (NLB) - preview
 // @Accept json
 // @Produce json
@@ -52,9 +57,12 @@ import (
 // @Param useExisting query bool false "Reuse existing NLB if one targeting the same nodeGroupId already exists, instead of creating a new one (default: true)"
 // @Param request body cloudmodel.RecommendedNlb true "NLB migration request (use targetNlbList[] from /recommendation/infraWithNlb)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided)"
+// @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 201 {object} model.ApiResponse[cloudmodel.MigratedNlbResult] "NLBs created successfully"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during NLB creation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb [post]
 func MigrateNlbs(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -87,6 +95,26 @@ func MigrateNlbs(c echo.Context) error {
 	useExisting := true
 	if c.QueryParam("useExisting") == "false" {
 		useExisting = false
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (cloudmodel.MigratedNlbResult, error) {
+			return migration.CreateNlbs(nsId, infraId, req, useExisting)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"NLB migration started. Use GET /request/{reqId} to check status."))
 	}
 
 	result, err := migration.CreateNlbs(nsId, infraId, req, useExisting)
@@ -240,6 +268,10 @@ func GetNlbHealth(c echo.Context) error {
 // @Description [Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.
 // @Description Deleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).
 // @Description CM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.
+// @Description
+// @Description By default this API runs synchronously (always includes the 15s settle wait). Send header
+// @Description `Prefer: respond-async` to run it asynchronously instead: receive 202 Accepted with a reqId,
+// @Description then poll GET /request/{reqId} (status flow: Handling → Success / Error).
 // @Tags [Migration] Managed Network Load Balancer (NLB) - preview
 // @Accept json
 // @Produce json
@@ -247,9 +279,12 @@ func GetNlbHealth(c echo.Context) error {
 // @Param infraId path string true "Infra ID"
 // @Param nlbId path string true "NLB ID"
 // @Param X-Request-Id header string false "Unique request ID"
+// @Param Prefer header string false "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 204 "NLB deleted (includes 15s settle wait for CSP async cleanup)"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Deletion started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId} [delete]
 func DeleteNlb(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -265,6 +300,29 @@ func DeleteNlb(c echo.Context) error {
 	nlbId := c.Param("nlbId")
 	if nlbId == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nlbId required"))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (map[string]any, error) {
+			if err := migration.DeleteNlb(nsId, infraId, nlbId); err != nil {
+				return nil, err
+			}
+			return map[string]any{"message": fmt.Sprintf("NLB '%s' deleted successfully", nlbId)}, nil
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"NLB deletion started. Use GET /request/{reqId} to check status."))
 	}
 
 	if err := migration.DeleteNlb(nsId, infraId, nlbId); err != nil {

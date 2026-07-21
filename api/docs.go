@@ -62,7 +62,7 @@ const docTemplate = `{
         },
         "/migration/data": {
             "post": {
-                "description": "**Asynchronous Operation**: This API returns immediately with a request ID. The actual migration runs in the background.\n\n[How to Use]\n1. Call this API → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "By default this API runs synchronously and returns the migration result directly.\n\n[Async Operation (opt-in)]\n1. Send header ` + "`" + `Prefer: respond-async` + "`" + ` → Receive 202 Accepted with reqId\n2. Poll GET /request/{reqId} to check status\n3. Status flow: Handling → Success / Error\n* Only the \"respond-async\" preference token is recognized; other tokens (e.g. wait=N) are ignored.\n* If too many async jobs are already running, this returns 503 instead of 202; retry after the ` + "`" + `Retry-After` + "`" + ` seconds.\n\n[Endpoint Requirements]\n* Both source and destination must be remote endpoints (SSH or object storage)\n* Local filesystem access is not allowed for security reasons\n\n[Transfer Options]\n* Strategy: auto (default), direct, relay\n* SSH: Supports PrivateKey content or PrivateKeyPath\n\n[Encryption Support]\n* To encrypt sensitive fields, first call GET /migration/data/encryptionKey\n* Encrypted requests include ` + "`" + `encryptionKeyId` + "`" + ` field\n* Server automatically detects and decrypts encrypted requests\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -72,13 +72,22 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Data (incubating)"
                 ],
-                "summary": "[Async] Migrate data from source to target",
+                "summary": "Migrate data from source to target (sync by default; async via Prefer: respond-async)",
                 "operationId": "MigrateData",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Unique request ID (auto-generated if not provided). Used as reqId for tracking migration status.",
                         "name": "X-Request-Id",
+                        "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
                         "in": "header"
                     },
                     {
@@ -92,14 +101,32 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "Migration completed synchronously",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
                     "202": {
-                        "description": "Migration started - use GET /request/{reqId} to check status",
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request parameters or decryption failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Migration failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -304,7 +331,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate NLBs to the target cloud infra based on recommendation results.\n\n[Prerequisites]\n- The target Namespace (nsId) must exist.\n- The target Infra (infraId) must exist and have at least one NodeGroup in Running state.\n- Each ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + ` must reference an existing NodeGroup in the Infra.\n\n[Note] Input should be the ` + "`" + `targetNlbList` + "`" + ` field from the POST /recommendation/infraWithNlb response.\nEnsure ` + "`" + `targetGroup.nodeGroupId` + "`" + ` matches the NodeGroup IDs created during infra migration.\n\n[Note] All NLBs are attempted independently. Partial success is possible.",
+                "description": "Migrate NLBs to the target cloud infra based on recommendation results.\n\n[Prerequisites]\n- The target Namespace (nsId) must exist.\n- The target Infra (infraId) must exist and have at least one NodeGroup in Running state.\n- Each ` + "`" + `targetNlbList[].targetGroup.nodeGroupId` + "`" + ` must reference an existing NodeGroup in the Infra.\n\n[Note] Input should be the ` + "`" + `targetNlbList` + "`" + ` field from the POST /recommendation/infraWithNlb response.\nEnsure ` + "`" + `targetGroup.nodeGroupId` + "`" + ` matches the NodeGroup IDs created during infra migration.\n\n[Note] All NLBs are attempted independently. Partial success is possible.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -352,6 +379,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided)",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -359,6 +395,12 @@ const docTemplate = `{
                         "description": "NLBs created successfully",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-cloudmodel_MigratedNlbResult"
+                        }
+                    },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -369,6 +411,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during NLB creation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -448,7 +496,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific NLB from the target infra.\n\n[Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.\nDeleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).\nCM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.",
+                "description": "Delete a specific NLB from the target infra.\n\n[Note] Some CSPs delete NLBs asynchronously — the API returns success before ENIs are fully released.\nDeleting VNet/subnets immediately after NLB deletion may cause dependency errors (e.g., DependencyViolation on AWS).\nCM-Beetle waits a short period (e.g., 15s) after a successful deletion response to allow CSP-side cleanup to complete.\n\nBy default this API runs synchronously (always includes the 15s settle wait). Send header\n` + "`" + `Prefer: respond-async` + "`" + ` to run it asynchronously instead: receive 202 Accepted with a reqId,\nthen poll GET /request/{reqId} (status flow: Handling → Success / Error).",
                 "consumes": [
                     "application/json"
                 ],
@@ -488,9 +536,24 @@ const docTemplate = `{
                         "description": "Unique request ID",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
+                    "202": {
+                        "description": "Deletion started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
                     "204": {
                         "description": "NLB deleted (includes 15s settle wait for CSP async cleanup)"
                     },
@@ -502,6 +565,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -633,7 +702,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is omitted, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n",
+                "description": "Migrate object storages to cloud based on recommendation results\n\n[Note]\n- This API creates object storages (buckets) in the target cloud within the specified namespace\n- Input should be the output from RecommendObjectStorage API\n- Connection name is automatically generated from CSP and region in the request body\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), bucket names are prefixed at migration time: ` + "`" + `my-os-01` + "`" + `.\n- If ` + "`" + `nameSeed` + "`" + ` is omitted, bucket names are used as-is from the recommendation result.\n\n[Examples]\n* Test results: https://github.com/cloud-barista/cm-beetle/blob/main/docs/test-results-data-migration.md\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -674,11 +743,26 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "Created - Object storages created successfully"
+                    },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
                     },
                     "400": {
                         "description": "Invalid request parameters",
@@ -688,6 +772,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during object storage creation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1156,7 +1246,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1166,7 +1256,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)",
                 "operationId": "MigrateInfra",
                 "parameters": [
                     {
@@ -1203,6 +1293,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1210,6 +1309,12 @@ const docTemplate = `{
                         "description": "Successfully migrated to the multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "404": {
@@ -1220,6 +1325,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1287,7 +1398,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete the migrated mult-cloud infrastructure (MCI)",
+                "description": "Delete the migrated mult-cloud infrastructure (MCI).\n\nThis operation can take a long time (multiple settle-time waits and vNet-deletion\nretries). By default it runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run\nit asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1297,7 +1408,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Delete the migrated mult-cloud infrastructure (MCI)",
+                "summary": "Delete the migrated mult-cloud infrastructure (MCI) (sync by default; async via Prefer: respond-async)",
                 "operationId": "DeleteInfra",
                 "parameters": [
                     {
@@ -1332,6 +1443,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1339,6 +1459,12 @@ const docTemplate = `{
                         "description": "The result of deleting the migrated multi-cloud infrastructure",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "202": {
+                        "description": "Deletion started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "404": {
@@ -1352,13 +1478,19 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
                     }
                 }
             }
         },
         "/migration/ns/{nsId}/infraWithDefaults": {
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1368,7 +1500,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)",
                 "operationId": "MigrateInfraWithDefaults",
                 "parameters": [
                     {
@@ -1393,6 +1525,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1402,8 +1543,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.ApiResponse-controller_MigrateInfraWithDefaultsResponse"
                         }
                     },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2748,6 +2901,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2755,6 +2917,12 @@ const docTemplate = `{
                         "description": "Successfully recommended infrastructure candidates",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -2765,6 +2933,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2822,6 +2996,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2829,6 +3012,12 @@ const docTemplate = `{
                         "description": "The result of recommended infrastructure",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-controller_RecommendInfraWithDefaultsResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "404": {
@@ -2839,6 +3028,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -2910,6 +3105,15 @@ const docTemplate = `{
                         "description": "Unique request ID (auto-generated if not provided)",
                         "name": "X-Request-Id",
                         "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2917,6 +3121,12 @@ const docTemplate = `{
                         "description": "NLB-aware recommendation candidates",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
                         }
                     },
                     "400": {
@@ -2927,6 +3137,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }

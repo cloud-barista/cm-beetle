@@ -30,8 +30,8 @@ func RequestIdAndDetailsIssuer(next echo.HandlerFunc) echo.HandlerFunc {
 			return next(c)
 		}
 
-		// Make X-Request-Id visible to all handlers
-		c.Response().Header().Set("Access-Control-Expose-Headers", echo.HeaderXRequestID)
+		// Make X-Request-Id and Preference-Applied visible to browser-based clients
+		c.Response().Header().Set("Access-Control-Expose-Headers", echo.HeaderXRequestID+", Preference-Applied")
 
 		// Get or generate Request ID
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)

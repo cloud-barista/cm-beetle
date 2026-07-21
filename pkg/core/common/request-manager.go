@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -352,6 +353,62 @@ func UpdateRequestProgress(reqID string, progressData any) {
 	if err := SetRequest(reqID, details); err != nil {
 		log.Error().Err(err).Str("reqID", reqID).Msg("Failed to update request progress")
 	}
+}
+
+// maxConcurrentAsyncJobs caps background jobs from RunAsync (shared by all async endpoints).
+const maxConcurrentAsyncJobs = 20
+
+var asyncJobSemaphore = make(chan struct{}, maxConcurrentAsyncJobs)
+
+// RunAsync runs work in the background, recovers panics, and finalizes the request record.
+// Returns false at capacity — caller must respond 503, not spawn anyway.
+//
+// See docs/api-response-policy.md ("Async Responses") for the client-facing contract
+// (Prefer: respond-async -> 202 -> poll GET /request/{reqId}).
+func RunAsync[T any](reqID string, work func() (T, error)) bool {
+	select {
+	case asyncJobSemaphore <- struct{}{}:
+	default:
+		return false
+	}
+	go func() {
+		defer func() { <-asyncJobSemaphore }()
+		defer func() {
+			if r := recover(); r != nil {
+				// Stack trace stays server-side; clients never see it (matches middleware.Recover()).
+				log.Error().Str("reqId", reqID).Str("stack", string(debug.Stack())).Msgf("panic: %v", r)
+				finalizeError(reqID, fmt.Errorf("internal error (panic): %v", r))
+			}
+		}()
+		result, err := work()
+		finalizeRequest(reqID, result, err)
+	}()
+	return true
+}
+
+// finalizeRequest updates a request's status to Success or Error and stores the result or error message.
+func finalizeRequest[T any](reqID string, result T, err error) {
+	details, ok := GetRequest(reqID)
+	if !ok {
+		log.Error().Str("reqId", reqID).Msg("Failed to get request details for status update")
+		return
+	}
+	details.EndTime = time.Now()
+	if err != nil {
+		details.Status = RequestStatusError
+		details.ErrorResponse = err.Error()
+	} else {
+		details.Status = RequestStatusSuccess
+		details.ResponseData = result
+	}
+	if setErr := SetRequest(reqID, details); setErr != nil {
+		log.Error().Err(setErr).Str("reqId", reqID).Msg("Failed to update request status")
+	}
+}
+
+// finalizeError marks a request as failed (e.g. after a panic recovery, with no result value).
+func finalizeError(reqID string, err error) {
+	finalizeRequest[any](reqID, nil, err)
 }
 
 // ============================================================================
