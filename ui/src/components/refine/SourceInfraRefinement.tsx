@@ -169,7 +169,20 @@ export const SourceInfraRefinement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 mx-auto pb-24">
+    <div className="space-y-6 mx-auto pb-24">
+
+      {/* Top Banner Description Box */}
+      <div className="glass-panel px-6 py-4.5 rounded-2xl border border-border-main flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="flex items-center gap-2 shrink-0">
+          <Sliders className="w-5 h-5 text-emerald-500" />
+          <h2 className="text-base font-extrabold text-text-main tracking-tight">
+            Source Infra Refinement
+          </h2>
+        </div>
+        <span className="text-sm text-text-muted">
+          Review & refine extracted source metadata, adjust node specifications, configure network settings, and set migration parameters.
+        </span>
+      </div>
 
       {/* ═══ STEP 1: Source Infrastructure Model Selection ═══ */}
       <div className={`glass-panel p-6 rounded-2xl transition-all duration-300 ${activeStep >= 1 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>

@@ -8,6 +8,7 @@ import {
   Plus, Server, Key, Upload, CheckCircle2, XCircle,
   RefreshCw, FileText, ChevronRight, Download, Trash2,
   AlertCircle, Loader2, ChevronDown, ChevronUp, Play, X, Save,
+  Database
 } from 'lucide-react';
 
 // A plain SSH username never looks like this — treat long base64-like
@@ -671,6 +672,19 @@ export const SourceMetadataExtraction: React.FC = () => {
   // ─── Render ──────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+
+      {/* Top Banner Description Box */}
+      <div className="glass-panel px-6 py-4.5 rounded-2xl border border-border-main flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="flex items-center gap-2 shrink-0">
+          <Database className="w-5 h-5 text-emerald-500" />
+          <h2 className="text-base font-extrabold text-text-main tracking-tight">
+            Source Infra Analysis
+          </h2>
+        </div>
+        <span className="text-sm text-text-muted">
+          Register source hosts, extract system configurations, and analyze infrastructure specifications & network topology metadata.
+        </span>
+      </div>
 
       {/* ══════════════════════════════════════════════════
           SECTION 1 — Source Infrastructure Groups

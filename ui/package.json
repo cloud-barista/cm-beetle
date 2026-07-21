@@ -1,6 +1,6 @@
 {
-  "name": "cm-beetle-ui",
-  "version": "0.5.4",
+  "name": "beetle-ui",
+  "version": "0.5.6",
   "private": true,
   "scripts": {
     "dev": "next dev",

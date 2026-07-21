@@ -109,11 +109,19 @@ import { Database } from "lucide-react";
 - Use `clsx()` for conditional classes
 - Dark mode by default (optional `dark:` prefix)
 
-### Text Casing
+### Text Casing & Font Sizes
 
+- **Tab Description Boxes**:
+  - Single-line flex container (`flex flex-wrap items-center gap-x-3 gap-y-1.5 px-6 py-4.5 rounded-2xl`)
+  - Title: `text-base font-extrabold text-text-main` with Lucide icon (`w-5 h-5 text-emerald-500`)
+  - Description: `text-sm text-text-muted`
 - **Labels and section headers**: Title Case only — **never ALL CAPS**
   - ✅ `Spec`, `Root Disk`, `Security Group`, `Node Count`
   - ❌ `SPEC`, `ROOT DISK`, `SECURITY GROUP`, `NODE COUNT`
+- **Card Titles & Badges**:
+  - Main card title: `text-sm font-extrabold text-text-main`
+  - Badges & status pills: `text-xs font-mono font-bold` or `text-xs font-extrabold`
+  - Buttons: `text-xs font-bold font-mono`
 - **Tailwind**: Do **not** use `uppercase` + `tracking-wide/tracking-wider` on labels; reserve `uppercase` for dynamic data-value badges (e.g., `{status}`, `{direction}`)
 - **Data value badges** (e.g., status pills, direction indicators): `uppercase` is acceptable to visually distinguish computed values from labels
 
