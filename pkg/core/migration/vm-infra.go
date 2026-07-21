@@ -313,6 +313,9 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	var temp cloudmodel.VmInfraInfo
 	temp.InfraInfo = infraInfoConverted
 
+	log.Debug().Msgf("Stabilizing newly created VM infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
+	time.Sleep(5 * time.Second)
+
 	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 	return temp, nil
 }
@@ -425,6 +428,9 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 
 	var temp cloudmodel.VmInfraInfo
 	temp.InfraInfo = infraInfoConverted
+	log.Debug().Msgf("Stabilizing newly created VM infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
+	time.Sleep(5 * time.Second)
+
 	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 	return temp, nil
 }

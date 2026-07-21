@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
-import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2, Sliders } from 'lucide-react';
+import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2, Sliders, Server } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -27,10 +27,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [layoutWidth, setLayoutWidth] = React.useState<number>(1920);
 
   const navItems = [
-    { id: 'source', label: '1. Source Infra Metadata Extraction', icon: Database, desc: 'Register hosts and extract infra metadata' },
-    { id: 'refine', label: '2. Source Infra Metadata Refinement', icon: Sliders, desc: 'Review and refine source infra metadata' },
-    { id: 'design', label: '3. Target Cloud Infra Optimization', icon: Compass, desc: 'Review and customize target cloud infra' },
-    { id: 'migrate', label: '4. Migration Execution', icon: Cpu, desc: 'Execute migration and check status' },
+    { id: 'source', label: '1. Source Infra Analysis', icon: Database, desc: 'Register hosts & extract metadata' },
+    { id: 'refine', label: '2. Source Infra Refinement', icon: Sliders, desc: 'Review & refine source metadata' },
+    { id: 'design', label: '3. Target Cloud Optimization', icon: Compass, desc: 'Customize target cloud model' },
+    { id: 'migrate', label: '4. Target Cloud Migration', icon: Cpu, desc: 'Execute migration & check status' },
+    { id: 'operations', label: '5. Cloud Infra Overview', icon: Server, desc: 'Inspect topology & cloud resources' },
   ] as const;
 
   return (
@@ -47,7 +48,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 Beetle UX Lab
               </span>
               <span className="ml-2.5 text-xs font-semibold px-2.5 py-1 bg-bg-input border border-border-main rounded-full text-text-muted">
-                CM-Beetle v0.5.4
+                CM-Beetle v0.5.6
               </span>
             </div>
           </div>
@@ -96,7 +97,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main Tab Navigation bar */}
       <div className="bg-bg-panel border-b border-border-main">
         <div className="mx-auto px-6 py-4" style={{ width: `${layoutWidth}px`, maxWidth: '100%' }}>
-          <nav className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <nav className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;

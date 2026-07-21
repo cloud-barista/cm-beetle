@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2 } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 
 
@@ -560,7 +560,20 @@ export const CloudInfraOptimizer: React.FC = () => {
   const { isRecommending } = useMigrationStore();
 
   return (
-    <div className="space-y-8 mx-auto pb-24">
+    <div className="space-y-6 mx-auto pb-24">
+
+      {/* Top Banner Description Box */}
+      <div className="glass-panel px-6 py-4.5 rounded-2xl border border-border-main flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <div className="flex items-center gap-2 shrink-0">
+          <Compass className="w-5 h-5 text-emerald-500" />
+          <h2 className="text-base font-extrabold text-text-main tracking-tight">
+            Target Cloud Optimization
+          </h2>
+        </div>
+        <span className="text-sm text-text-muted">
+          Generate AI-optimized target cloud recommendations, compare multi-CSP specs & cost estimates, and customize target cloud models.
+        </span>
+      </div>
 
       {/* -------------------------------------------------------------
           STEP 1: Desired CSP and Region Selection
@@ -1847,7 +1860,7 @@ export const CloudInfraOptimizer: React.FC = () => {
                               className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/10"
                             >
                               <Save className="w-4 h-4" />
-                              <span>Save Target Cloud Infrastructure Model</span>
+                              <span>Save Target Cloud Infra Model</span>
                             </button>
                           </div>
                         </div>
@@ -1865,7 +1878,7 @@ export const CloudInfraOptimizer: React.FC = () => {
       {/* Compare Candidates Modal */}
       {showCompareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-4xl border border-border-main animate-scale-up flex flex-col max-h-[85vh]">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-[92vw] border border-border-main animate-scale-up flex flex-col max-h-[85vh]">
 
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-4 border-b border-border-main/30 pb-3">
@@ -1963,7 +1976,7 @@ export const CloudInfraOptimizer: React.FC = () => {
       <SaveRevisionModal
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
-        title="Save Target Cloud Infrastructure Model"
+        title="Save Target Cloud Infra Model"
         defaultName={selectedCloudModel?.name || ''}
         defaultDescription={selectedCloudModel?.description || ''}
         defaultVersion={selectedCloudModel?.version || '1.0.0'}

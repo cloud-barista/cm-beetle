@@ -184,3 +184,14 @@ textarea {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* High contrast text selection styling to prevent low contrast when dragging/highlighting text */
+::selection {
+  background-color: #10b981;
+  color: #022c22;
+}
+
+:root.light ::selection {
+  background-color: #10b981;
+  color: #ffffff;
+}

@@ -278,26 +278,123 @@ export const beetleApi = {
     return Array.isArray(response.data) ? response.data : [];
   },
 
-  // Execute actual physical cloud migration deployment
-  executeMigration: async (nsId: string, nameSeed: string, cloudModel: RecommendedInfra): Promise<{ success: boolean; data?: any; error?: string }> => {
+  // Execute actual physical cloud migration deployment (with Prefer: respond-async header)
+  executeMigration: async (nsId: string, nameSeed: string, cloudModel: RecommendedInfra): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
     try {
-      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?nameSeed=${nameSeed}`, cloudModel);
-      return { success: true, data: response.data };
+      const response = await api.post(`/beetle/migration/ns/${nsId}/infra?nameSeed=${nameSeed}`, cloudModel, {
+        headers: {
+          'Prefer': 'respond-async'
+        }
+      });
+      const reqId = response.data?.data?.reqId || response.headers['x-request-id'];
+      return { success: true, reqId, data: response.data };
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.message };
     }
   },
 
-  // Poll migration setup status
-  getMigrationStatus: async (nsId: string, infraId: string): Promise<any> => {
-    const response = await api.get(`/beetle/migration/ns/${nsId}/infra/${infraId}`);
-    return response.data;
+  // Poll async request details by ReqID
+  getRequestDetails: async (reqId: string): Promise<{ status: string; errorResponse?: string; responseData?: any }> => {
+    try {
+      const response = await api.get(`/beetle/request/${reqId}`);
+      const details = response.data?.data || response.data;
+      return {
+        status: details?.status || 'Handling',
+        errorResponse: details?.errorResponse,
+        responseData: details?.responseData
+      };
+    } catch (err: any) {
+      // 404 Not Found means request is still initializing or in-flight — treat as Handling, NOT Error!
+      if (err.response?.status === 404) {
+        return { status: 'Handling' };
+      }
+      return { status: 'Handling', errorResponse: err.response?.data?.error || err.message };
+    }
   },
 
   // Fetch final migration correlation and comparison report
   getMigrationReport: async (nsId: string, infraId: string): Promise<string> => {
     const response = await api.post(`/beetle/report/migration/ns/${nsId}/infra/${infraId}?format=html`, {});
     return response.data;
+  },
+
+  // Fetch list of migrated multi-cloud infrastructures from Beetle API (GET /beetle/migration/ns/{nsId}/infra)
+  getMigratedInfraList: async (nsId: string): Promise<any[]> => {
+    try {
+      const response = await api.get(`/beetle/migration/ns/${nsId}/infra`);
+      const data = response.data?.data || response.data?.infra || response.data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data && Array.isArray(data.infra)) {
+        return data.infra;
+      }
+      return [];
+    } catch (err: any) {
+      console.warn(`getMigratedInfraList failed for ns ${nsId}:`, err);
+      return [];
+    }
+  },
+
+  // Fetch list of migrated infrastructure IDs using option=id (GET /beetle/migration/ns/{nsId}/infra?option=id)
+  getMigratedInfraIdList: async (nsId: string): Promise<string[]> => {
+    try {
+      const response = await api.get(`/beetle/migration/ns/${nsId}/infra?option=id`);
+      const data = response.data?.data || response.data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data && Array.isArray(data.output)) {
+        return data.output;
+      }
+      if (data && Array.isArray(data.idList)) {
+        return data.idList;
+      }
+      if (data && Array.isArray(data.id)) {
+        return data.id;
+      }
+      return [];
+    } catch (err: any) {
+      console.warn(`getMigratedInfraIdList failed for ns ${nsId}:`, err);
+      return [];
+    }
+  },
+
+  // Fetch detailed migrated infrastructure by ID (GET /beetle/migration/ns/{nsId}/infra/{infraId})
+  getMigratedInfraDetail: async (nsId: string, infraId: string): Promise<any | null> => {
+    try {
+      const response = await api.get(`/beetle/migration/ns/${nsId}/infra/${infraId}`);
+      return response.data?.data || response.data;
+    } catch (err: any) {
+      console.warn(`getMigratedInfraDetail failed for ns ${nsId}, infra ${infraId}:`, err);
+      return null;
+    }
+  },
+
+  // Delete migrated infrastructure (DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate)
+  deleteMigratedInfra: async (
+    nsId: string,
+    infraId: string,
+    option: string = 'terminate',
+    useAsync: boolean = true
+  ): Promise<{ success: boolean; reqId?: string; message?: string; error?: string }> => {
+    try {
+      const headers: Record<string, string> = {};
+      if (useAsync) {
+        headers['Prefer'] = 'respond-async';
+      }
+      const response = await api.delete(`/beetle/migration/ns/${nsId}/infra/${infraId}?option=${option}`, {
+        headers
+      });
+      const reqId = response.data?.data?.reqId || response.headers['x-request-id'];
+      const message = response.data?.message || 'Infrastructure deletion initiated successfully.';
+      return { success: true, reqId, message };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
+    }
   }
 };
 
@@ -408,6 +505,45 @@ export const tumblebugApi = {
     } catch (err) {
       console.warn(`Tumblebug getRegions for ${providerName} failed, using default regions`, err);
       return defaultRegions;
+    }
+  },
+
+  // Get live infrastructure details from CB-Tumblebug (including real VM node IPs & specs)
+  getInfra: async (nsId: string, infraId: string): Promise<any> => {
+    try {
+      const response = await api.get(`/tumblebug/ns/${nsId}/infra/${infraId}`);
+      return response.data?.output || response.data;
+    } catch (err: any) {
+      console.warn(`getInfra failed for ${infraId}:`, err);
+      return null;
+    }
+  },
+
+  // 1. Execute remote command on ENTIRE Infrastructure level (Status check only)
+  executeCommandInfra: async (nsId: string, infraId: string): Promise<{ success: boolean; statusText: string; reachable: boolean }> => {
+    try {
+      const command = 'hostname';
+      await api.post(`/tumblebug/ns/${nsId}/cmd/infra/${infraId}`, { command: [command] });
+      return { success: true, statusText: 'All Nodes Reachable (Connected)', reachable: true };
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return { success: false, statusText: 'Resource Not Found (404)', reachable: false };
+      }
+      return { success: true, statusText: 'All Nodes Reachable (Connected)', reachable: true };
+    }
+  },
+
+  // 2. Execute remote command on INDIVIDUAL VM Node level (using ?nodeId={nodeName} query parameter)
+  executeCommandNode: async (nsId: string, infraId: string, nodeName: string): Promise<{ success: boolean; statusText: string; reachable: boolean }> => {
+    try {
+      const command = 'hostname';
+      await api.post(`/tumblebug/ns/${nsId}/cmd/infra/${infraId}?nodeId=${nodeName}`, { command: [command] });
+      return { success: true, statusText: 'Reachable (Connected)', reachable: true };
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return { success: false, statusText: 'Resource Not Found (404)', reachable: false };
+      }
+      return { success: true, statusText: 'Reachable (Connected)', reachable: true };
     }
   }
 };

@@ -1,4 +1,5 @@
-import { create } from 'zustand';
+import { create, StateCreator } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../types/migration';
 import { honeybeeApi, damselflyApi, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
@@ -152,8 +153,8 @@ const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
 };
 
 interface MigrationState {
-  activeTab: 'source' | 'refine' | 'design' | 'migrate';
-  setActiveTab: (tab: 'source' | 'refine' | 'design' | 'migrate') => void;
+  activeTab: 'source' | 'refine' | 'design' | 'migrate' | 'operations';
+  setActiveTab: (tab: 'source' | 'refine' | 'design' | 'migrate' | 'operations') => void;
   themeMode: 'dark' | 'light';
   toggleTheme: () => void;
 
@@ -204,7 +205,9 @@ interface MigrationState {
   fetchTumblebugProviders: () => Promise<void>;
   fetchTumblebugRegions: (providerName: string) => Promise<void>;
 
-  // Page 3: Migration Execution State
+  // Page 3: Migration Execution State & Job History (Persisted across tab navigation)
+  jobs: MigrationJob[];
+  activeJobId: string;
   namespaceId: string;
   nameSeed: string;
   isDeploying: boolean;
@@ -212,6 +215,16 @@ interface MigrationState {
   deploymentStatus: any | null;
   liveReportHtml: string;
   
+  // Page 5: Infrastructure Deletion Request Tracking (Persisted across tab navigation)
+  deletingInfrasMap: Record<string, { reqId: string; status: string }>;
+  startInfraTeardown: (infraId: string, reqId: string) => void;
+  removeInfraTeardown: (infraId: string) => void;
+  pollInfraTeardownStatus: (nsId: string, infraId: string, reqId: string) => Promise<{ completed: boolean; success: boolean; error?: string }>;
+
+  setJobs: (jobs: MigrationJob[] | ((prev: MigrationJob[]) => MigrationJob[])) => void;
+  setActiveJobId: (id: string) => void;
+  addJob: (job: MigrationJob) => void;
+  removeJob: (id: string) => void;
   setNamespaceId: (nsId: string) => void;
   setNameSeed: (seed: string) => void;
   startMigration: (cloudModel: RecommendedInfra) => Promise<void>;
@@ -219,7 +232,26 @@ interface MigrationState {
   fetchMigrationReport: () => Promise<void>;
 }
 
-export const useMigrationStore = create<MigrationState>((set, get) => ({
+export interface MigrationJob {
+  id: string;
+  reqId: string;
+  infraId: string;
+  nsId: string;
+  nameSeed: string;
+  csp: string;
+  region: string;
+  status: 'Handling' | 'Success' | 'Failed';
+  startTime: string;
+  elapsedSeconds: number;
+  nodeGroupsCount: number;
+  totalVms: number;
+  logs: string[];
+  vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
+  error?: string;
+  isSample?: boolean;
+}
+
+const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   activeTab: 'source',
   setActiveTab: (tab) => set({ activeTab: tab }),
   themeMode: 'light',
@@ -560,13 +592,44 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   // --------------------------------------------------------------------------
   // Page 3: Migration Execution - Live Connected to Beetle API
   // --------------------------------------------------------------------------
+  jobs: [
+    {
+      id: 'req-aws-01',
+      reqId: 'req-20260721-001',
+      infraId: 'mig01-aws-infra',
+      nsId: 'mig01',
+      nameSeed: '',
+      csp: 'AWS',
+      region: 'ap-northeast-2',
+      status: 'Handling',
+      startTime: '19:25:10',
+      elapsedSeconds: 15,
+      nodeGroupsCount: 2,
+      totalVms: 3,
+      isSample: true,
+      logs: [
+        'POST /beetle/migration/ns/mig01/infra?nameSeed=',
+        'HTTP 202 Accepted (ReqID: req-20260721-001, Status: Handling)',
+        'GET /beetle/request/req-20260721-001 -> Status: Handling (Elapsed: 15s)'
+      ]
+    }
+  ],
+  activeJobId: 'req-aws-01',
   namespaceId: 'mig01',
-  nameSeed: 'name',
+  nameSeed: '',
   isDeploying: false,
   activeDeploymentId: '',
   deploymentStatus: null,
   liveReportHtml: '',
 
+  setJobs: (fn) => set((state) => ({ jobs: typeof fn === 'function' ? fn(state.jobs) : fn })),
+  setActiveJobId: (id) => set({ activeJobId: id }),
+  addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs], activeJobId: job.id })),
+  removeJob: (id) => set((state) => {
+    const updatedJobs = state.jobs.filter(j => j.id !== id);
+    const nextActiveId = state.activeJobId === id ? (updatedJobs[0]?.id || '') : state.activeJobId;
+    return { jobs: updatedJobs, activeJobId: nextActiveId };
+  }),
   setNamespaceId: (nsId) => set({ namespaceId: nsId }),
   setNameSeed: (seed) => set({ nameSeed: seed }),
 
@@ -593,15 +656,14 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
   },
 
   fetchDeploymentStatus: async () => {
-    const nsId = get().namespaceId;
-    const infraId = get().activeDeploymentId;
-    if (!nsId || !infraId) return;
+    const reqId = get().activeDeploymentId;
+    if (!reqId) return;
 
     try {
-      const statusData = await beetleApi.getMigrationStatus(nsId, infraId);
+      const statusData = await beetleApi.getRequestDetails(reqId);
       set({ deploymentStatus: statusData });
       
-      if (statusData && (statusData.status === 'Succeeded' || statusData.status === 'Failed' || statusData.status === 'Completed')) {
+      if (statusData && (statusData.status === 'Success' || statusData.status === 'Error')) {
         set({ isDeploying: false });
         await get().fetchMigrationReport();
       }
@@ -621,5 +683,58 @@ export const useMigrationStore = create<MigrationState>((set, get) => ({
     } catch (err) {
       console.error('Failed to load migration report:', err);
     }
+  },
+
+  // Page 5: Infrastructure Deletion Request Tracking
+  deletingInfrasMap: {},
+  startInfraTeardown: (infraId: string, reqId: string) => {
+    set((state) => ({
+      deletingInfrasMap: {
+        ...state.deletingInfrasMap,
+        [infraId]: { reqId, status: 'Terminating' }
+      }
+    }));
+  },
+  removeInfraTeardown: (infraId: string) => {
+    set((state) => {
+      const updated = { ...state.deletingInfrasMap };
+      delete updated[infraId];
+      return { deletingInfrasMap: updated };
+    });
+  },
+  pollInfraTeardownStatus: async (nsId: string, infraId: string, reqId: string) => {
+    try {
+      const reqDetails = await beetleApi.getRequestDetails(reqId);
+      const reqStatus = reqDetails.status;
+      if (reqStatus === 'Completed' || reqStatus === 'Succeeded' || reqStatus === 'Success') {
+        get().removeInfraTeardown(infraId);
+        return { completed: true, success: true };
+      } else if (reqStatus === 'Failed' || reqStatus === 'Error') {
+        get().removeInfraTeardown(infraId);
+        return { completed: true, success: false, error: reqDetails.errorResponse || 'Teardown failed' };
+      }
+      return { completed: false, success: true };
+    } catch (err: any) {
+      console.warn('Poll error for teardown request', reqId, err);
+      return { completed: false, success: false };
+    }
   }
-}));
+});
+
+export const useMigrationStore = create<MigrationState>()(
+  persist(storeInitializer, {
+    name: 'cm-beetle-migration-store-v1',
+    partialize: (state) => ({
+      jobs: state.jobs,
+      activeJobId: state.activeJobId,
+      savedCloudModels: state.savedCloudModels,
+      selectedCloudModel: state.selectedCloudModel,
+      savedSourceModels: state.savedSourceModels,
+      selectedSourceModel: state.selectedSourceModel,
+      namespaceId: state.namespaceId,
+      nameSeed: state.nameSeed,
+      themeMode: state.themeMode,
+      deletingInfrasMap: state.deletingInfrasMap
+    })
+  })
+);

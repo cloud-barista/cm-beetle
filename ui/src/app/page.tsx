@@ -7,6 +7,7 @@ import { SourceMetadataExtraction } from '@/components/source/SourceMetadataExtr
 import { SourceInfraRefinement } from '@/components/refine/SourceInfraRefinement';
 import { CloudInfraOptimizer } from '@/components/design/CloudInfraOptimizer';
 import { MigrationExecution } from '@/components/center/MigrationExecution';
+import { MigratedInfraManagement } from '@/components/operations/MigratedInfraManagement';
 
 export default function Home() {
   const { activeTab } = useMigrationStore();
@@ -17,6 +18,7 @@ export default function Home() {
       {activeTab === 'refine' && <SourceInfraRefinement />}
       {activeTab === 'design' && <CloudInfraOptimizer />}
       {activeTab === 'migrate' && <MigrationExecution />}
+      {activeTab === 'operations' && <MigratedInfraManagement />}
     </AppLayout>
   );
 }
