@@ -13,9 +13,9 @@ services:
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.5.6
     container_name: cm-beetle
-    # build:
-    #   context: ${PROJECT_ROOT}
-    #   dockerfile: Dockerfile
+    build:
+      context: ${PROJECT_ROOT}
+      dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - cloud-barista

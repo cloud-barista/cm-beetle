@@ -16,7 +16,6 @@ package report
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -120,25 +119,35 @@ func buildExecutiveSummary(sourceSummary *summary.SourceInfraSummary, targetSumm
 func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSummary *summary.TargetInfraSummary) []SourceTargetMapping {
 	var mappings []SourceTargetMapping
 
-	// Create a map of machine IDs from target VMs
-	vmByMachineID := make(map[string]summary.SummaryVmInfo)
-	for _, vm := range targetSummary.ComputeResources.Vms {
-		// Extract sourceMachineId from VM name or labels
-		machineID := extractSourceMachineID(vm.Name)
-		if machineID != "" {
-			vmByMachineID[machineID] = vm
+	// Build a source-machine-ID -> target VM index, preferring the
+	// authoritative "sourceMachineIds" label set at NodeGroup creation time
+	// (see resolveSourceMachineID) over any inference from the VM name.
+	vmByMachineID := make(map[string]*summary.SummaryVmInfo)
+	for i, vm := range targetSummary.ComputeResources.Vms {
+		if machineID := resolveSourceMachineID(vm); machineID != "" {
+			vmByMachineID[machineID] = &targetSummary.ComputeResources.Vms[i]
 		}
 	}
 
 	// Match source servers to target VMs
 	mappingID := 1
 	for _, sourceNode := range sourceSummary.ComputeResources.Servers {
-		// Try to find matching VM by machine ID (now directly from source node data)
 		machineID := sourceNode.MachineId
-		targetVM, found := vmByMachineID[machineID]
+		targetVM := vmByMachineID[machineID]
 
-		if !found {
-			// Try alternative matching strategies
+		if targetVM == nil && machineID != "" {
+			// Fallback for VMs without a usable label (e.g. manually
+			// registered nodes): match by substring containment of the
+			// machine ID in the VM name.
+			for i, vm := range targetSummary.ComputeResources.Vms {
+				if strings.Contains(vm.Name, machineID) {
+					targetVM = &targetSummary.ComputeResources.Vms[i]
+					break
+				}
+			}
+		}
+
+		if targetVM == nil {
 			log.Warn().Msgf("No matching target VM found for source node: %s (MachineId: %s)", sourceNode.Hostname, machineID)
 			continue
 		}
@@ -183,7 +192,7 @@ func buildMigrationMappings(sourceSummary *summary.SourceInfraSummary, targetSum
 		}
 
 		// Analyze resource changes
-		resourceChanges := analyzeResourceChanges(sourceNode, targetVM)
+		resourceChanges := analyzeResourceChanges(sourceNode, *targetVM)
 
 		// Calculate cost for this VM
 		costPerMonth := 0.0
@@ -496,44 +505,4 @@ func generateRecommendations(sourceSummary *summary.SourceInfraSummary, targetSu
 	})
 
 	return recommendations
-}
-
-// Helper functions
-
-// extractSourceMachineID extracts machine ID from VM name
-// Example: "migrated-0036e4b9-c8b4-e811-906e-000ffee02d5c-1" -> "0036e4b9-c8b4-e811-906e-000ffee02d5c"
-func extractSourceMachineID(vmName string) string {
-	// A UUID pattern: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-	re := regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
-	match := re.FindString(vmName)
-	if match != "" {
-		return match
-	}
-
-	// Fallback to legacy logic if regex fails (though unlikely for UUIDs)
-	// Remove prefixes
-	name := vmName
-	if strings.Contains(name, "migrated-") {
-		name = name[strings.Index(name, "migrated-")+len("migrated-"):]
-	} else if strings.Contains(name, "vm-") {
-		name = name[strings.Index(name, "vm-")+len("vm-"):]
-	}
-
-	parts := strings.Split(name, "-")
-	if len(parts) >= 5 {
-		// Reconstruct the GUID format
-		return strings.Join(parts[:5], "-")
-	}
-	return ""
-}
-
-// extractMachineIDFromHostname attempts to extract machine ID from source node
-// This is a placeholder - actual implementation depends on source data structure
-func extractMachineIDFromHostname(hostname string) string {
-	// In real implementation, this would look up machine ID from source data
-	// For now, we'll use a placeholder that matches the VM naming pattern
-
-	// This is a simplified approach - in production, you'd need actual machine IDs
-	// from the source infrastructure data
-	return "" // Will be populated from actual source data
 }

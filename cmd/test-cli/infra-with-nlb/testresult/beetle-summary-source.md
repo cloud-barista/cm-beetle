@@ -1,6 +1,6 @@
 # Source Infrastructure Summary
 
-**Generated At:** 2026-07-13 11:03:30
+**Generated At:** 2026-07-21 04:13:58
 
 **Infrastructure Name:** infra-3-nodes
 
@@ -92,6 +92,14 @@
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.30/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 #### 2. ip-10-0-1-221
 
@@ -100,6 +108,14 @@
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.221/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 #### 3. ip-10-0-1-138
 
@@ -108,6 +124,14 @@
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.138/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
 
 
 ## Security Resources

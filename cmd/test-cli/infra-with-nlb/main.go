@@ -1674,6 +1674,11 @@ func loadSourceInfraModel(requestBodyPath string) (onpremmodel.OnpremInfra, stri
 	return tempRequest.SourceInfra, tempRequest.NameSeed, nil
 }
 
+// cmBeetleModulePath is the main module's path, used to distinguish the
+// repo-root go.mod from the nested imdl submodule's own go.mod when walking
+// up the directory tree in findRepoRoot.
+const cmBeetleModulePath = "github.com/cloud-barista/cm-beetle"
+
 // getGitHash returns the current git commit hash
 func getGitHash() string {
 	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
@@ -1685,96 +1690,127 @@ func getGitHash() string {
 	return strings.TrimSpace(string(output))
 }
 
-func getBeetleVersion() string {
-	cwd, err := os.Getwd()
+// findRepoRoot walks up from the current working directory to locate the
+// cm-beetle repo root, identified by its go.mod's exact module path (which
+// distinguishes it from the nested imdl submodule's own go.mod). This test-cli
+// is always run with its own directory as cwd (see Makefile: `cd
+// cmd/test-cli/infra-with-nlb && go run main.go ...`), so version-detection
+// helpers can't assume repo-root-relative paths resolve directly from cwd.
+func findRepoRoot() (string, error) {
+	dir, err := os.Getwd()
 	if err != nil {
-		return "unknown"
+		return "", err
 	}
 
-	// Try to get version from cmd/beetle/main.go or similar
-	versionFilePath := filepath.Join(cwd, "pkg", "config", "config.go")
-	fileContent, err := os.ReadFile(versionFilePath)
-	if err != nil {
-		// Fallback to git hash
-		return getGitHash()
-	}
-
-	// Simple regex to find Version constant
-	re := regexp.MustCompile(`Version\s*=\s*"([^"]+)"`)
-	matches := re.FindStringSubmatch(string(fileContent))
-	if len(matches) > 1 {
-		return fmt.Sprintf("%s (%s)", matches[1], getGitHash())
-	}
-
-	return getGitHash()
-}
-
-func getVersionFromDockerCompose(serviceName string) string {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "unknown"
-	}
-
-	composePath := filepath.Join(cwd, "docker-compose.yaml")
-	fileContent, err := os.ReadFile(composePath)
-	if err != nil {
-		// Try parent directory
-		composePath = filepath.Join(cwd, "..", "docker-compose.yaml")
-		fileContent, err = os.ReadFile(composePath)
-		if err != nil {
-			return "unknown"
-		}
-	}
-
-	// Parse yaml to find service image tag
-	var composeData map[string]interface{}
-	if err := yaml.Unmarshal(fileContent, &composeData); err != nil {
-		return "unknown"
-	}
-
-	if services, ok := composeData["services"].(map[string]interface{}); ok {
-		if service, ok := services[serviceName].(map[string]interface{}); ok {
-			if image, ok := service["image"].(string); ok {
-				// Extract tag from image name (e.g. cloudbarista/cb-tumblebug:0.12.1)
-				parts := strings.Split(image, ":")
-				if len(parts) > 1 {
-					return parts[len(parts)-1]
+	for {
+		if content, err := os.ReadFile(filepath.Join(dir, "go.mod")); err == nil {
+			for _, line := range strings.Split(string(content), "\n") {
+				if strings.TrimSpace(line) == "module "+cmBeetleModulePath {
+					return dir, nil
 				}
 			}
 		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("cm-beetle repo root not found (started from %s)", dir)
+		}
+		dir = parent
+	}
+}
+
+// getBeetleVersion returns the CM-Beetle version from git tags or commit hash.
+// Only beetle release tags (v[0-9]*) are matched to avoid picking up imdl/*, transx/* tags.
+// Expected format: v0.4.5 (exact tag) or v0.4.5+ (short hash) for commits after tag.
+func getBeetleVersion() string {
+	commitHash := getGitHash()
+
+	// Check if we are exactly on a beetle release tag (v[0-9]*)
+	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match", "--match", "v[0-9]*")
+	if exactTag, err := cmdExact.Output(); err == nil {
+		return strings.TrimSpace(string(exactTag))
 	}
 
+	// Get the latest beetle release tag (we are ahead of it)
+	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
+	if tag, err := cmdTag.Output(); err == nil {
+		tagStr := strings.TrimSpace(string(tag))
+		if tagStr != "" {
+			if commitHash != "unknown" {
+				return fmt.Sprintf("%s+ (%s)", tagStr, commitHash)
+			}
+			return fmt.Sprintf("%s+", tagStr)
+		}
+	}
+
+	// No beetle release tags available, fallback to main (hash)
+	if commitHash != "unknown" {
+		return fmt.Sprintf("main (%s)", commitHash)
+	}
+	return "main (unknown)"
+}
+
+// getVersionFromDockerCompose extracts version from docker-compose.yaml for a given service.
+func getVersionFromDockerCompose(serviceName string) string {
+	repoRoot, err := findRepoRoot()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to locate cm-beetle repo root")
+		return "unknown"
+	}
+
+	composePath := filepath.Join(repoRoot, "deployments", "docker-compose", "docker-compose.yaml")
+	content, err := os.ReadFile(composePath)
+	if err != nil {
+		return "unknown"
+	}
+
+	// Pattern to match: image: cloudbaristaorg/serviceName:version (excluding commented lines)
+	// This pattern ensures we don't match lines starting with # (comments)
+	pattern := fmt.Sprintf(`(?m)^\s*image:\s*cloudbaristaorg/%s:([\d\.]+)`, serviceName)
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(string(content))
+
+	if len(matches) >= 2 {
+		return matches[1]
+	}
 	return "unknown"
 }
 
+// getImdlVersion returns the version of the imdl module from its git tags (format: imdl/vX.Y.Z).
 func getImdlVersion() string {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "unknown"
+	commitHash := getGitHash()
+
+	// Check if we are exactly on an imdl tag
+	cmdExact := exec.Command("git", "describe", "--tags", "--exact-match", "--match", "imdl/v*")
+	if exactTag, err := cmdExact.Output(); err == nil {
+		return strings.TrimPrefix(strings.TrimSpace(string(exactTag)), "imdl/")
 	}
 
-	// Check go.mod to extract imdl version if it's imported
-	goModPath := filepath.Join(cwd, "go.mod")
-	fileContent, err := os.ReadFile(goModPath)
-	if err != nil {
-		return "unknown"
+	// Get the latest imdl tag (we are ahead of it)
+	cmdTag := exec.Command("git", "describe", "--tags", "--abbrev=0", "--match", "imdl/v*")
+	if tag, err := cmdTag.Output(); err == nil {
+		tagStr := strings.TrimPrefix(strings.TrimSpace(string(tag)), "imdl/")
+		if tagStr != "" {
+			if commitHash != "unknown" {
+				return fmt.Sprintf("%s+ (%s)", tagStr, commitHash)
+			}
+			return fmt.Sprintf("%s+", tagStr)
+		}
 	}
 
-	// Simple regex to find imdl dependency
-	re := regexp.MustCompile(`github.com/cloud-barista/cm-beetle/imdl\s+(v\S+)`)
-	matches := re.FindStringSubmatch(string(fileContent))
-	if len(matches) > 1 {
-		return matches[1]
+	// No imdl tags available
+	if commitHash != "unknown" {
+		return fmt.Sprintf("main (%s)", commitHash)
 	}
-
-	return "local-workspace"
+	return "main (unknown)"
 }
 
+// formatServiceVersion returns "v{version}" or "unknown" when version is not available.
 func formatServiceVersion(version string) string {
 	if version == "unknown" {
-		return "Unknown (Fallback to Latest)"
+		return "unknown"
 	}
-	return version
+	return "v" + version
 }
 
 func generateMarkdownReport(report *CSPTestReport) error {

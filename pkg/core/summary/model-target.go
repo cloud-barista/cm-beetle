@@ -140,6 +140,14 @@ type SummaryVmInfo struct {
 	Misc    SummaryVmMiscInfo  `json:"misc"`
 	Region  string             `json:"region" example:"ap-northeast-2"`
 	Zone    string             `json:"zone,omitempty" example:"ap-northeast-2a"`
+	// Label carries the node's labels as set at NodeGroup creation time, e.g.
+	// {"sourceMachineIds": "<id1>,<id2>,..."} recording which source machine(s)
+	// this VM's NodeGroup was recommended from. For an NLB backend NodeGroup
+	// (NodeGroupSize > 1) this same label is shared verbatim by every VM in the
+	// group, so resolving the single machine ID for one specific VM additionally
+	// requires its 1-based index within the group (see the VM name's trailing
+	// "-N" suffix, which CB-Tumblebug assigns in the same order as this list).
+	Label map[string]string `json:"label,omitempty" example:"{\"sourceMachineIds\":\"0036e4b9-c8b4-e811-906e-000ffee02d5c\"}"`
 }
 
 // SummaryVmSpecInfo represents VM Spec summary embedded in VM info
