@@ -28,6 +28,7 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
 	"github.com/labstack/echo/v4"
 
@@ -67,9 +68,12 @@ type RecommendInfraWithDefaultsResponse struct {
 // @Param desiredCsp query string false "Provider (e.g., aws, azure, gcp)" Enums(aws,azure,gcp,alibaba,ncp) default(aws)
 // @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[RecommendInfraWithDefaultsResponse] "The result of recommended infrastructure"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /recommendation/infraWithDefaults [post]
 func RecommendVMInfraWithDefaults(c echo.Context) error {
 
@@ -107,6 +111,26 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (cloudmodel.RecommendedInfraDynamicList, error) {
+			return recommendation.RecommendVmInfraWithDefaults(csp, region, sourceInfra)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Recommendation started. Use GET /request/{reqId} to check status."))
 	}
 
 	// [Process]
@@ -166,9 +190,12 @@ type RecommendInfraResponse struct {
 // @Param limit query int false "Limit (default: 3) the number of recommended infrastructures"
 // @Param minMatchRate query number false "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "Successfully recommended infrastructure candidates"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /recommendation/infra [post]
 func RecommendVmInfraCandidates(c echo.Context) error {
 
@@ -225,6 +252,26 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	if !ok {
 		log.Error().Err(err).Msg("failed to validate CSP and region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
+	}
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
+			return recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Recommendation started. Use GET /request/{reqId} to check status."))
 	}
 
 	// [Process]
@@ -299,9 +346,12 @@ type RecommendInfraWithNlbRequest struct {
 // @Param minMatchRate query number false "Minimum match rate (0-100) for highly-matched classification" default(90.0)
 // @Param request body RecommendInfraWithNlbRequest true "Source infra including NLBs (from cm-honeybee)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided)"
+// @Param Prefer header string false "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.RecommendedInfra] "NLB-aware recommendation candidates"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /recommendation/infraWithNlb [post]
 func RecommendInfraWithNlbCandidates(c echo.Context) error {
 
@@ -354,6 +404,28 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 		Int("limit", limit).
 		Float64("minMatchRate", minMatchRate).
 		Msg("Processing infraWithNlb recommendation request")
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() ([]cloudmodel.RecommendedInfra, error) {
+			return recommendation.RecommendInfraWithNlbCandidates(
+				req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
+			)
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			"Recommendation started. Use GET /request/{reqId} to check status."))
+	}
 
 	// [Process]
 	candidates, err := recommendation.RecommendInfraWithNlbCandidates(

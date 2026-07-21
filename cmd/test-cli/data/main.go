@@ -869,6 +869,7 @@ func runMigrateDataStep(
 
 	var asyncResp AsyncJobResponseWrapper
 	resp, err := client.R().
+		SetHeader("Prefer", "respond-async").
 		SetBody(encModel).
 		SetResult(&asyncResp).
 		Post(url)

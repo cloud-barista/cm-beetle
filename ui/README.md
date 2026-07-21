@@ -1,4 +1,4 @@
-# CM-Beetle UI
+# CM-Beetle UX Lab
 
 Web-based dashboard for **CM-Beetle** — the Computing Infrastructure Migration sub-system of the [Cloud-Barista](https://github.com/cloud-barista) platform.
 

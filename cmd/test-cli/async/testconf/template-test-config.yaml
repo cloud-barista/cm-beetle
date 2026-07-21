@@ -1,0 +1,9 @@
+beetle:
+  endpoint: http://localhost:8056/beetle
+  namespaceId: mig01
+  requestBodyFile: testconf/recommendation-request.json
+  authConfigFile: testconf/auth-config.json
+
+poll:
+  intervalSec: 10  # fixed poll interval
+  timeoutSec: 300

@@ -42,8 +42,8 @@ func ResponseBodyDump() echo.MiddlewareFunc {
 			reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 			// log.Debug().Msgf("(BodyDump middleware) Request ID: %s", reqID)
 
-			// Skip status update for async requests (202 Accepted)
-			// The background goroutine will update the status when the job completes.
+			// 202 is reserved repo-wide for async jobs (common.RunAsync finalizes the status
+			// itself); never return 202 for any other reason, or its status stays "Handling" forever.
 			if c.Response().Status == http.StatusAccepted {
 				// log.Debug().Msg("Skipping BodyDump for async request (202 Accepted)")
 				return
