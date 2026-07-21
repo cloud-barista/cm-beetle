@@ -10613,6 +10613,16 @@ const docTemplate = `{
                 "image": {
                     "$ref": "#/definitions/summary.SummaryVmImageInfo"
                 },
+                "label": {
+                    "description": "Label carries the node's labels as set at NodeGroup creation time, e.g.\n{\"sourceMachineIds\": \"\u003cid1\u003e,\u003cid2\u003e,...\"} recording which source machine(s)\nthis VM's NodeGroup was recommended from. For an NLB backend NodeGroup\n(NodeGroupSize \u003e 1) this same label is shared verbatim by every VM in the\ngroup, so resolving the single machine ID for one specific VM additionally\nrequires its 1-based index within the group (see the VM name's trailing\n\"-N\" suffix, which CB-Tumblebug assigns in the same order as this list).",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "{\"sourceMachineIds\"": "\"0036e4b9-c8b4-e811-906e-000ffee02d5c\"}"
+                    }
+                },
                 "misc": {
                     "$ref": "#/definitions/summary.SummaryVmMiscInfo"
                 },
