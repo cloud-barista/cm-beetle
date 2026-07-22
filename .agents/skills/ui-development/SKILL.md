@@ -1,9 +1,9 @@
 ---
 name: ui-development
-description: Guidelines and instructions for developing the Beetle Lab UI (Next.js 15, React 19, Tailwind CSS, Zustand) in the ui/ directory.
+description: Guidelines and instructions for developing the Beetle UX Lab (Next.js 15, React 19, Tailwind CSS, Zustand) in the ui/ directory.
 ---
 
-# Beetle Lab UI Instructions
+# Beetle UX Lab Instructions
 
 ## Quick Reference
 
@@ -13,7 +13,7 @@ description: Guidelines and instructions for developing the Beetle Lab UI (Next.
 
 ### Branding & Colors
 
-- **Brand Name:** Beetle Lab (UI), CM-Beetle (documentation/API)
+- **Brand Name:** Beetle UX Lab, CM-Beetle (documentation/API)
 - **Color Palette:** Emerald (#10b981) / Teal (#14b8a6) **only**
 - **Forbidden Colors:** ❌ `cyan-*`, `purple-*`, `sky-*` (removed from codebase)
 - **Gradients:** `from-emerald-400 via-teal-400 to-teal-400`

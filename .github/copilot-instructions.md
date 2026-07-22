@@ -60,11 +60,11 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - `pkg/config/`: Configuration management (Viper).
 - `pkg/modelconv/`: Model conversion utilities between internal, Tumblebug, and imdl model formats.
 - `imdl/`: Internalized infrastructure models (cloud and on-premise).
-- `ui/`: Beetle Lab web interface (Next.js 15 App Router with server-side API proxy routes).
+- `ui/`: Beetle UX Lab web interface (Next.js 15 App Router with server-side API proxy routes).
 
 ### UI Architecture
 
-**Beetle Lab** is the demonstration and testing interface for CM-Beetle, built with Next.js 15 and React 19.
+**Beetle UX Lab** is the demonstration and testing interface for CM-Beetle, built with Next.js 15 and React 19.
 
 - **Framework:** Next.js App Router with standalone output mode for Docker deployment.
 - **Tech Stack:** React 19, Tailwind CSS 4, Zustand (state), Lucide React (icons).
