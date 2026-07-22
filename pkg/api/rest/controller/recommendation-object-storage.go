@@ -17,8 +17,8 @@ import (
 
 // RecommendObjectStorageRequest represents a request for object storage migration recommendations
 type RecommendObjectStorageRequest struct {
-	DesiredCloud         storagemodel.CloudProperty         `json:"desiredCloud" validate:"required"`
-	SourceObjectStorages []storagemodel.SourceObjectStorage `json:"sourceObjectStorages" validate:"required,min=1"`
+	DesiredCloud         storagemodel.CloudProperty                 `json:"desiredCloud" validate:"required"`
+	SourceObjectStorages []storagemodel.SourceObjectStorageProperty `json:"sourceObjectStorages" validate:"required,min=1"`
 }
 
 // RecommendObjectStorage godoc

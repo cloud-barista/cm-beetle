@@ -399,10 +399,17 @@ func RunServer(port string) {
 	gMigration.POST("/data/test/encrypt", controller.TestEncryptData)
 	gMigration.POST("/data/test/decrypt", controller.TestDecryptData)
 
+	// Minimal Test APIs (Isolated in controller/minimal-test-api.go for easy future removal)
+	gMigration.GET("/security/publicKey", controller.GetSecurityPublicKey)
+
 	/*
 	 * API group for managed middleware migration
 	 */
 	gMigrationMiddleware := gMigration.Group("/middleware")
+
+	// Minimal Test API: Object Storage Scan & Inspect
+	gMigrationMiddleware.POST("/objectStorage/scan", controller.ScanObjectStorage)
+	gMigrationMiddleware.POST("/objectStorage/inspect", controller.InspectObjectStorage)
 
 	// Migration APIs for NLB
 	gMigrationMiddleware.POST("/ns/:nsId/infra/:infraId/nlb", controller.MigrateNlbs)

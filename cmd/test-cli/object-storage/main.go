@@ -61,8 +61,8 @@ type AuthConfig struct {
 
 // OsRequest holds the source object storage information loaded from JSON.
 type OsRequest struct {
-	NameSeed             string                             `json:"nameSeed"`
-	SourceObjectStorages []storagemodel.SourceObjectStorage `json:"sourceObjectStorages"`
+	NameSeed             string                                     `json:"nameSeed"`
+	SourceObjectStorages []storagemodel.SourceObjectStorageProperty `json:"sourceObjectStorages"`
 }
 
 // TestResults holds the result of a single API test.

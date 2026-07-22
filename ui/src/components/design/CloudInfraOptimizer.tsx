@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
 
 
 
-export const CloudInfraOptimizer: React.FC = () => {
+export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () => void }> = ({ onNext, onBack }) => {
   const {
     savedSourceModels,
     selectedSourceModel,
@@ -1863,6 +1863,29 @@ export const CloudInfraOptimizer: React.FC = () => {
                               <span>Save Target Cloud Infra Model</span>
                             </button>
                           </div>
+
+                          {(onNext || onBack) && (
+                            <div className="flex items-center justify-between pt-4 border-t border-border-main/20 mt-4">
+                              {onBack ? (
+                                <button
+                                  onClick={onBack}
+                                  className="px-4 py-2 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5"
+                                >
+                                  <ArrowLeft className="w-3.5 h-3.5" />
+                                  <span>Back to 2. Refinement</span>
+                                </button>
+                              ) : <div />}
+                              {onNext && (
+                                <button
+                                  onClick={onNext}
+                                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
+                                >
+                                  <span>Next: Proceed to 4. Migration Execution</span>
+                                  <ArrowRight className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

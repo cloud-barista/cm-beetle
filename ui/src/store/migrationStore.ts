@@ -152,9 +152,11 @@ const DEFAULT_FALLBACK_SOURCE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString()
 };
 
+export type TabType = 'infra' | 'storage' | 'data' | 'credential' | 'overview' | 'source' | 'refine' | 'design' | 'migrate' | 'operations';
+
 interface MigrationState {
-  activeTab: 'source' | 'refine' | 'design' | 'migrate' | 'operations';
-  setActiveTab: (tab: 'source' | 'refine' | 'design' | 'migrate' | 'operations') => void;
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
   themeMode: 'dark' | 'light';
   toggleTheme: () => void;
 
@@ -562,7 +564,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   fetchTumblebugProviders: async () => {
-    const list = await tumblebugApi.getProviders();
+    const rawList = await tumblebugApi.getProviders();
+    const list = rawList.filter((p: string) => p.toLowerCase() !== 'openstack-ex01');
     set({ tumblebugProviders: list });
     // Dynamically pull regions for the currently set desiredCsp or the first returned provider
     const activeCsp = get().desiredCsp || (list.length > 0 ? list[0] : 'aws');
