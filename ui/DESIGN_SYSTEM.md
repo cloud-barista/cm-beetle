@@ -1,16 +1,16 @@
-# Beetle Lab Design System
+# Beetle UX Lab Design System
 
 > Unified design guidelines for CM-Beetle UI across all AI coding assistants (GitHub Copilot, Claude, Cursor, Windsurf, etc.)
 
 ## Overview
 
-**Beetle Lab** is the demonstration and testing interface for CM-Beetle, a Cloud-Barista sub-system enabling infrastructure migration from on-premise to multi-cloud environments.
+**Beetle UX Lab** is the demonstration and testing interface for CM-Beetle, a Cloud-Barista sub-system enabling infrastructure migration from on-premise to multi-cloud environments.
 
 ## Branding
 
 ### Identity
 
-- **Name:** Beetle Lab
+- **Name:** Beetle UX Lab
 - **Tagline:** Cloud Infrastructure Migration Laboratory
 - **Version:** v0.5.6
 - **Concept:** Inspired by the iridescent emerald-teal colors of scarab beetles in nature
@@ -128,7 +128,7 @@ Use emerald-to-teal gradients for visual hierarchy:
 ```tsx
 {/* Text gradient */}
 <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-teal-400 bg-clip-text text-transparent">
-  Beetle Lab
+  Beetle UX Lab
 </span>
 
 {/* Background gradient */}

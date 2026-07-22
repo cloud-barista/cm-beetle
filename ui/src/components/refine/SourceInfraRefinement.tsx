@@ -9,6 +9,7 @@ import {
   RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, Server, Cpu,
   HardDrive, Network, Shield, Save, CheckCircle2, Loader2,
   FileText, Copy, Sparkles, GitBranch, Layers, X, Sliders,
+  ArrowRight, ArrowLeft,
 } from 'lucide-react';
 
 const SAMPLE_INFRA: OnpremInfra = sampleData.sourceInfra as OnpremInfra;
@@ -21,7 +22,7 @@ const SAMPLE_MODEL: OnpremModelEnvelope = {
   updatedTime: new Date().toISOString(),
 };
 
-export const SourceInfraRefinement: React.FC = () => {
+export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () => void }> = ({ onNext, onBack }) => {
   const {
     savedSourceModels, selectedSourceModel, selectSourceModel,
     fetchSavedSourceModels, saveSourceModel, updateSourceModel, deleteSourceModel,
@@ -729,6 +730,29 @@ export const SourceInfraRefinement: React.FC = () => {
                       </span>
                     </div>
                   </div>
+
+                  {(onNext || onBack) && (
+                    <div className="flex items-center justify-between pt-4 border-t border-border-main/20 mt-4">
+                      {onBack ? (
+                        <button
+                          onClick={onBack}
+                          className="px-4 py-2 bg-bg-input border border-border-main hover:bg-bg-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer flex items-center space-x-1.5"
+                        >
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                          <span>Back to 1. Source Analysis</span>
+                        </button>
+                      ) : <div />}
+                      {onNext && (
+                        <button
+                          onClick={onNext}
+                          className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer ml-auto"
+                        >
+                          <span>Next: Proceed to 3. Target Infra Optimization</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

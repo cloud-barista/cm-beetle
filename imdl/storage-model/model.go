@@ -27,8 +27,15 @@ type TargetObjectStorage struct {
 	BucketSpecProperty // Target configuration derived from source features
 }
 
-// SourceObjectStorage describes a bucket as observed in the source environment.
+// SourceObjectStorage describes the source object storage environment/group input for recommendation and model persistence.
 type SourceObjectStorage struct {
+	Description          string                        `json:"description,omitempty"` // Human-readable description
+	SourceCloud          *CloudProperty                `json:"sourceCloud,omitempty"`  // Source cloud provider and region (optional)
+	SourceObjectStorages []SourceObjectStorageProperty `json:"sourceObjectStorages" validate:"required,min=1"`
+}
+
+// SourceObjectStorageProperty describes a bucket as observed in the source environment.
+type SourceObjectStorageProperty struct {
 	BucketName string `json:"bucketName" validate:"required"` // Source bucket name
 
 	BucketFeatureProperty // Feature configuration observed in the source

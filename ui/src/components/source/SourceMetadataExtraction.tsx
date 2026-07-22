@@ -8,7 +8,7 @@ import {
   Plus, Server, Key, Upload, CheckCircle2, XCircle,
   RefreshCw, FileText, ChevronRight, Download, Trash2,
   AlertCircle, Loader2, ChevronDown, ChevronUp, Play, X, Save,
-  Database
+  Database, ArrowRight
 } from 'lucide-react';
 
 // A plain SSH username never looks like this — treat long base64-like
@@ -282,7 +282,7 @@ const TABLE_HEADER = (
 // Main component
 // ─────────────────────────────────────────────────────────
 
-export const SourceMetadataExtraction: React.FC = () => {
+export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ onNext }) => {
   const {
     sourceGroups, activeSgId, connections, refinedSourceInfra, isLoadingSource,
     fetchSourceGroups, createSourceGroup, deleteSourceGroup, refreshSourceGroup,
@@ -718,9 +718,12 @@ export const SourceMetadataExtraction: React.FC = () => {
         </div>
 
         {sourceGroups.length === 0 ? (
-          <div className="text-center py-12 text-text-muted">
-            <Server className="w-10 h-10 mx-auto mb-3 opacity-20" />
-            <p className="text-sm">No source groups yet. Create one to get started.</p>
+          <div className="p-8 text-center border border-dashed border-border-main rounded-xl bg-bg-main/30 space-y-2">
+            <Server className="w-8 h-8 text-text-muted mx-auto" />
+            <p className="text-sm font-bold text-text-main">No storage groups created yet</p>
+            <p className="text-xs text-text-muted">
+              Click <span className="font-bold text-teal-500">&quot;Load Sample Infra&quot;</span> above to inspect demo data, or <span className="font-bold text-emerald-500">&quot;+ New Source Group&quot;</span> to create one.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -780,6 +783,18 @@ export const SourceMetadataExtraction: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {!activeSgId && onNext && (
+          <div className="mt-5 pt-4 border-t border-border-main/50 flex justify-end">
+            <button
+              onClick={onNext}
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+            >
+              <span>Next: Proceed to 2. Refinement</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>
@@ -933,6 +948,18 @@ export const SourceMetadataExtraction: React.FC = () => {
               <div className="bg-bg-input border border-border-main rounded-xl p-4 text-xs font-mono text-slate-800 dark:text-emerald-400 max-h-[60vh] overflow-y-auto">
                 <pre>{JSON.stringify(refinedSourceInfra, null, 2)}</pre>
               </div>
+            </div>
+          )}
+
+          {onNext && (
+            <div className="mt-5 pt-4 border-t border-border-main flex justify-end">
+              <button
+                onClick={onNext}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+              >
+                <span>Next: Proceed to 2. Refinement</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>

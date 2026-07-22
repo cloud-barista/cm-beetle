@@ -26,7 +26,8 @@ import {
   Layers,
   Globe,
   ArrowRight,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
 
 interface MigrationJob {
@@ -48,7 +49,7 @@ interface MigrationJob {
   isSample?: boolean;
 }
 
-export const MigrationExecution: React.FC = () => {
+export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
     jobs,
     activeJobId,
@@ -533,6 +534,23 @@ export const MigrationExecution: React.FC = () => {
             No active migration jobs launched yet. Click "+ Launch New Migration" above to start.
           </div>
         )}
+
+        {onBack && !activeJob && (
+          <div className="flex items-center justify-between pt-4 border-t border-border-main/40 mt-4">
+            <button
+              onClick={onBack}
+              className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to 3. Target Infra Optimization</span>
+            </button>
+
+            <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Final Step: 4. Migration Execution &amp; Monitoring</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECTION 2: Selected Job Detail Panel */}
@@ -718,6 +736,23 @@ export const MigrationExecution: React.FC = () => {
             </div>
           </div>
 
+          {/* Bottom Navigation Row INSIDE the Selected Job Detail Panel */}
+          {onBack && (
+            <div className="flex items-center justify-between pt-4 border-t border-border-main/40 mt-4">
+              <button
+                onClick={onBack}
+                className="px-5 py-2.5 bg-bg-input/60 hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to 3. Target Infra Optimization</span>
+              </button>
+
+              <div className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-bold font-mono">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Final Step: 4. Migration Execution &amp; Monitoring</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

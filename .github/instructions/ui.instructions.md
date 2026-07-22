@@ -3,7 +3,7 @@ applyTo:
   - ui/**
 ---
 
-# Beetle Lab UI Instructions
+# Beetle UX Lab Instructions
 
 ## Quick Reference
 
@@ -13,7 +13,7 @@ applyTo:
 
 ### Branding & Colors
 
-- **Brand Name:** Beetle Lab (UI), CM-Beetle (documentation/API)
+- **Brand Name:** Beetle UX Lab, CM-Beetle (documentation/API)
 - **Color Palette:** Emerald (#10b981) / Teal (#14b8a6) **only**
 - **Forbidden Colors:** ❌ `cyan-*`, `purple-*`, `sky-*` (removed from codebase)
 - **Gradients:** `from-emerald-400 via-teal-400 to-teal-400`
@@ -32,21 +32,24 @@ applyTo:
 
 ```typescript
 // app/beetle/[[...path]]/route.ts
-import { proxy } from '@/lib/proxy';
+import { proxy } from "@/lib/proxy";
 
-const TARGET = process.env.BEETLE_ENDPOINT || 'http://localhost:8056';
+const TARGET = process.env.BEETLE_ENDPOINT || "http://localhost:8056";
 
-export async function GET(req: Request, { params }: { params: { path?: string[] } }) {
-  return proxy(req, TARGET, '/beetle', params.path);
+export async function GET(
+  req: Request,
+  { params }: { params: { path?: string[] } },
+) {
+  return proxy(req, TARGET, "/beetle", params.path);
 }
 ```
 
 **Client Components:**
 
 ```tsx
-'use client'; // Required for useState, Zustand, event handlers
+"use client"; // Required for useState, Zustand, event handlers
 
-import { useMigrationStore } from '@/store/migrationStore';
+import { useMigrationStore } from "@/store/migrationStore";
 ```
 
 ### Component Patterns
@@ -70,9 +73,9 @@ import { useMigrationStore } from '@/store/migrationStore';
 **Icon Usage:**
 
 ```tsx
-import { Database } from 'lucide-react';
+import { Database } from "lucide-react";
 
-<Database className="w-5 h-5 text-emerald-500" />
+<Database className="w-5 h-5 text-emerald-500" />;
 ```
 
 ## File Organization
@@ -122,10 +125,12 @@ ui/src/
 ### Badge vs Plain Text
 
 Use **colored background badges** for:
+
 - Resource identifiers compared across candidates: vCPU, memory, instance type (emerald), OS image (teal), security group name (orange)
 - Status / categorical values: match status, direction, type
 
 Use **plain text** for:
+
 - Scalar measurements: disk size (GB), node count
 - Form field values inside inputs
 
@@ -133,7 +138,7 @@ Use **plain text** for:
 
 ```typescript
 // Zustand store pattern
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface Store {
   value: string;
@@ -141,7 +146,7 @@ interface Store {
 }
 
 export const useStore = create<Store>((set) => ({
-  value: '',
+  value: "",
   setValue: (value) => set({ value }),
 }));
 ```
