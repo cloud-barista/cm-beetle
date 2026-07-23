@@ -6,7 +6,7 @@ import { SourceMetadataExtraction } from '@/components/source/SourceMetadataExtr
 import { SourceInfraRefinement } from '@/components/refine/SourceInfraRefinement';
 import { CloudInfraOptimizer } from '@/components/design/CloudInfraOptimizer';
 import { MigrationExecution } from '@/components/center/MigrationExecution';
-import { Database, Sliders, Compass, Cpu, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Database, Sliders, Compass, Play, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export const InfrastructureMigration: React.FC = () => {
   const { activeTab } = useMigrationStore();
@@ -21,7 +21,7 @@ export const InfrastructureMigration: React.FC = () => {
     { id: 'source', label: '1. Source Analysis', icon: Database, desc: 'Register hosts & extract metadata' },
     { id: 'refine', label: '2. Refinement', icon: Sliders, desc: 'Review & refine source specs' },
     { id: 'design', label: '3. Target Infra Optimization', icon: Compass, desc: 'Customize target cloud model' },
-    { id: 'migrate', label: '4. Migration Execution', icon: Cpu, desc: 'Execute VM migration & check status' },
+    { id: 'migrate', label: '4. Migration Execution', icon: Play, desc: 'Execute VM migration & check status' },
   ] as const;
 
   return (
@@ -30,7 +30,7 @@ export const InfrastructureMigration: React.FC = () => {
       <div className="bg-bg-panel border border-border-main rounded-2xl p-4 shadow-sm space-y-3">
         {/* Row 1: Workflow Title Line */}
         <div className="flex items-center space-x-2.5 border-b border-border-main pb-3 px-1">
-          <Cpu className="w-5 h-5 text-emerald-500" />
+          <Play className="w-5 h-5 text-emerald-500" />
           <h2 className="text-base font-extrabold text-text-main">Infrastructure Migration Workflow</h2>
         </div>
 

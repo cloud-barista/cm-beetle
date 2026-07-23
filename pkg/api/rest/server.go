@@ -333,6 +333,7 @@ func RunServer(port string) {
 
 	// Recommendation APIs for object storage
 	gRecommendationMiddleware.POST("/objectStorage", controller.RecommendObjectStorage)
+	gRecommendationMiddleware.GET("/objectStorage/support", controller.GetObjectStorageSupport)
 
 	/*
 	 * API group for computing infra migration

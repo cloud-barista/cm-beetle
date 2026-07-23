@@ -1,0 +1,70 @@
+{
+  "status": "success",
+  "description": "Successfully recommended 2 object storage configuration(s)",
+  "targetCloud": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
+  "targetObjectStorages": [
+    {
+      "bucketName": "source-bucket-01-x8f2",
+      "targetObjectStorageName": "source-bucket-01",
+      "sourceBucketName": "source-bucket-01",
+      "storageClass": "Standard",
+      "versioningEnabled": false,
+      "encryptionEnabled": false,
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "https://example.com",
+            "https://app.example.com"
+          ],
+          "allowedMethod": [
+            "GET",
+            "PUT",
+            "POST",
+            "DELETE"
+          ],
+          "allowedHeader": [
+            "*"
+          ],
+          "exposeHeader": [
+            "ETag",
+            "x-amz-request-id"
+          ],
+          "maxAgeSeconds": 3600
+        }
+      ],
+      "isPublic": false
+    },
+    {
+      "bucketName": "source-bucket-02-x8f2",
+      "targetObjectStorageName": "source-bucket-02",
+      "sourceBucketName": "source-bucket-02",
+      "storageClass": "Standard-IA",
+      "versioningEnabled": true,
+      "encryptionEnabled": true,
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "*"
+          ],
+          "allowedMethod": [
+            "GET"
+          ],
+          "allowedHeader": [
+            "Content-Type",
+            "Authorization"
+          ],
+          "exposeHeader": [
+            "ETag"
+          ],
+          "maxAgeSeconds": 86400
+        }
+      ],
+      "isPublic": false
+    }
+  ]
+}

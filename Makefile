@@ -191,7 +191,7 @@ dev-ui: ## Run UI dev server locally with hot-reload (run 'make up' first to sta
 	@cd ui && npm install
 	@echo "Starting Next.js dev server with hot-reload at http://localhost:3000"
 	@echo "  (reads ui/.env.local — backends expected on localhost ports)"
-	@cd ui && npm run dev
+	@cd ui && CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true TURBOPACK_ROOT=$$(pwd) npm run dev
 
 down: compose-down # Down services by docker compose
 
