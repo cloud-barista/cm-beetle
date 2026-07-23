@@ -4,12 +4,33 @@ import (
 	"fmt"
 	"net/http"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	storagemodel "github.com/cloud-barista/cm-beetle/imdl/storage-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
+
+// Dummy blank identifier to retain tbmodel import for Swagger annotations without logging
+var _ = tbmodel.ObjectStorageSupportResponse{}
+
+// GetObjectStorageSupport godoc
+// @ID GetObjectStorageSupport
+// @Summary Get CSP feature support map for object storage (Proxied to Tumblebug)
+// @Description Forward object storage support request to CB-Tumblebug via Proxy (Returns ObjectStorageSupportResponse)
+// @Tags [Recommendation] Managed Object Storage
+// @Accept json
+// @Produce json
+// @Success 200 {object} tbmodel.ObjectStorageSupportResponse
+// @Router /recommendation/middleware/objectStorage/support [get]
+func GetObjectStorageSupport(c echo.Context) error {
+	sourcePattern := "/recommendation/middleware/objectStorage/support"
+	targetPattern := "/objectStorage/support"
+
+	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
+	return proxyHandler(c)
+}
 
 // ============================================================================
 // Request Models

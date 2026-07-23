@@ -26,31 +26,21 @@ description: Guidelines and instructions for developing the Beetle UX Lab (Next.
 - **State:** Zustand v5 for global state
 - **Icons:** Lucide React (HardDrive, Database, Cpu, Compass, etc.)
 
-### Architecture
+### Typography & Key-Value Rules
 
-**Server-Side API Proxy Pattern:**
+- **Key (Labels / Field Names):** Always standard weight (`font-normal text-text-muted`). Never bold.
+- **Value (Data / Metrics):** Always bold (`font-extrabold text-text-main`).
+- **Minimum Font Size:** Main labels and data values must be at least `text-sm` (16px). Avoid `text-[9px]`, `text-[10px]`, `text-[11px]`.
+- **Text Casing:** Title Case only — never `ALL CAPS` on static labels.
+  - ✅ `Node Spec`, `Node Image`, `Root Disk`, `Security Group(s)`, `Node(s)`
+  - ❌ `NODE SPEC`, `NODE IMAGE`, `ROOT DISK`, `SECURITY GROUP`
+- **Tailwind:** Do **not** use `uppercase` + `tracking-wider` on static labels. Reserve `uppercase` for dynamic value badges (e.g., `{status}`, `{protocol}`).
 
-```typescript
-// app/beetle/[[...path]]/route.ts
-import { proxy } from "@/lib/proxy";
+### Project Terminology Standards
 
-const TARGET = process.env.BEETLE_ENDPOINT || "http://localhost:8056";
-
-export async function GET(
-  req: Request,
-  { params }: { params: { path?: string[] } },
-) {
-  return proxy(req, TARGET, "/beetle", params.path);
-}
-```
-
-**Client Components:**
-
-```tsx
-"use client"; // Required for useState, Zustand, event handlers
-
-import { useMigrationStore } from "@/store/migrationStore";
-```
+- **Nodes / Node Groups:** Use `Node` or `Node Group` across all UI labels and cards (never `VM Instance` or `Active Instances`).
+- **Step 2 Tab Name:** `2. Target Cloud Optimizer` (never `Cloud Target Optimizer`).
+- **Spec Header:** `onpremiseInfraModel` (omit `Spec` postfix).
 
 ### Component Patterns
 
@@ -65,7 +55,7 @@ import { useMigrationStore } from "@/store/migrationStore";
 **Primary Button:**
 
 ```tsx
-<button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+<button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold">
   Action
 </button>
 ```
@@ -78,21 +68,28 @@ import { Database } from "lucide-react";
 <Database className="w-5 h-5 text-emerald-500" />;
 ```
 
+## Flexible Topology Visual Patterns (UX Scenario Reference)
+
+> **Note:** The following visual structures are recommended reference patterns for topology visualization. They should be adapted flexibly if UX scenarios, user flows, or design layouts evolve.
+
+- **NLB Traffic Flow Pattern:**
+  - Ingress traffic: `Traffic Ingress ➔ Listener Port: {port}`
+  - Target routing: `Target NodeGroup: {nodeGroupName}`
+  - Destination node tree: Display specific target nodes (`nodeGroup-01`, `nodeGroup-02`) and ports (`Port: 8086`) with tree connectors (`├─`, `└─`).
+- **Node Group Details Pattern:**
+  - 3-column responsive spec grid (`Node Spec`, `Node Image`, `Root Disk`) using `grid-cols-1 md:grid-cols-3`.
+  - Associated Security Group(s) list filtered to display matching security groups per Node Group.
+
 ## File Organization
 
 - [ui/src/app/layout.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/app/layout.tsx) # Root layout
 - [ui/src/app/page.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/app/page.tsx) # Main entry with tab routing
 - [ui/src/app/globals.css](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/app/globals.css) # Tailwind theme (emerald/teal)
-- `ui/src/app/beetle/[[...path]]/` # API proxy routes
-- `ui/src/app/tumblebug/[[...path]]/`
-- `ui/src/app/honeybee/[[...path]]/`
-- `ui/src/app/damselfly/[[...path]]/`
-- [ui/src/components/layout/AppLayout.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/components/layout/AppLayout.tsx) # Header, navigation, theme toggle
+- [ui/src/components/layout/AppLayout.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/components/layout/AppLayout.tsx)
 - [ui/src/components/source/SourceCenter.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/components/source/SourceCenter.tsx)
 - [ui/src/components/design/MigrationDesigner.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/components/design/MigrationDesigner.tsx)
 - [ui/src/components/center/MigrationCenter.tsx](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/components/center/MigrationCenter.tsx)
-- [ui/src/store/migrationStore.ts](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/store/migrationStore.ts) # Zustand global state
-- [ui/src/lib/proxy.ts](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/lib/proxy.ts) # Generic reverse-proxy helper
+- [ui/src/store/migrationStore.ts](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/src/store/migrationStore.ts)
 
 ## Code Quality Standards
 
@@ -106,102 +103,5 @@ import { Database } from "lucide-react";
 
 - Tailwind utilities first, custom CSS only when necessary
 - Group classes: `bg-* text-* border-* rounded-* p-* m-*`
-- Use `clsx()` for conditional classes
-- Dark mode by default (optional `dark:` prefix)
-
-### Text Casing & Font Sizes
-
-- **Tab Description Boxes**:
-  - Single-line flex container (`flex flex-wrap items-center gap-x-3 gap-y-1.5 px-6 py-4.5 rounded-2xl`)
-  - Title: `text-base font-extrabold text-text-main` with Lucide icon (`w-5 h-5 text-emerald-500`)
-  - Description: `text-sm text-text-muted`
-- **Labels and section headers**: Title Case only — **never ALL CAPS**
-  - ✅ `Spec`, `Root Disk`, `Security Group`, `Node Count`
-  - ❌ `SPEC`, `ROOT DISK`, `SECURITY GROUP`, `NODE COUNT`
-- **Card Titles & Badges**:
-  - Main card title: `text-sm font-extrabold text-text-main`
-  - Badges & status pills: `text-xs font-mono font-bold` or `text-xs font-extrabold`
-  - Buttons: `text-xs font-bold font-mono`
-- **Tailwind**: Do **not** use `uppercase` + `tracking-wide/tracking-wider` on labels; reserve `uppercase` for dynamic data-value badges (e.g., `{status}`, `{direction}`)
-- **Data value badges** (e.g., status pills, direction indicators): `uppercase` is acceptable to visually distinguish computed values from labels
-
-### Badge vs Plain Text
-
-Use **colored background badges** for:
-
-- Resource identifiers compared across candidates: vCPU, memory, instance type (emerald), OS image (teal), security group name (orange)
-- Status / categorical values: match status, direction, type
-
-Use **plain text** for:
-
-- Scalar measurements: disk size (GB), node count
-- Form field values inside inputs
-
-### State Management
-
-```typescript
-// Zustand store pattern
-import { create } from "zustand";
-
-interface Store {
-  value: string;
-  setValue: (value: string) => void;
-}
-
-export const useStore = create<Store>((set) => ({
-  value: "",
-  setValue: (value) => set({ value }),
-}));
-```
-
-## Docker Deployment
-
-**Standalone Build:**
-
-```dockerfile
-# Multi-stage build with node:20-bookworm-slim
-# Copies .next/standalone for production
-```
-
-**Environment Variables:**
-
-```bash
-BEETLE_ENDPOINT=http://cm-beetle:8056
-TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
-HONEYBEE_ENDPOINT=http://cm-honeybee:8081
-DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
-```
-
-## Common Tasks
-
-### Add New API Route
-
-1. Create `app/[service]/[[...path]]/route.ts`
-2. Import `proxy` from `@/lib/proxy`
-3. Define `TARGET` from environment variable
-4. Export GET, POST, PUT, DELETE methods
-
-### Add New Component
-
-1. Create in appropriate `components/` subdirectory
-2. Add `'use client'` if using hooks/interactivity
-3. Use Lucide React icons with `text-emerald-*` or `text-teal-*`
-4. Follow glass panel pattern for containers
-
-### Update Colors
-
-1. Edit `src/app/globals.css` @theme variables
-2. Use `emerald-*` / `teal-*` Tailwind classes
-3. Update CSS custom properties in `:root` for dark/light modes
-
-## Design Philosophy
-
-1. **Emerald Elegance:** Beetle-inspired emerald/teal palette
-2. **Glass & Glow:** Premium glassmorphic effects
-3. **Dark-First:** Default dark mode (#071a10 emerald-tinted background)
-4. **Server-Side Security:** Environment variables never exposed to browser
-5. **Clarity Over Complexity:** Prioritize user comprehension
-
----
-
-**For Detailed Guidelines:** Always consult [DESIGN_SYSTEM.md](file:///home/ubuntu/dev/cloud-barista/cm-beetle/ui/DESIGN_SYSTEM.md) before making significant changes to branding, colors, or component patterns.
+- Dark mode by default (`dark:` class support)
+- Light mode high contrast: Use `--border-input` (`#cbd5e1`) for form borders and high-contrast text (`text-slate-800` or `text-text-main`) for previews.

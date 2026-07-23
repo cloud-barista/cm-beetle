@@ -571,6 +571,32 @@ export const beetleApi = {
       console.warn('Fallback: Simulated target user model fetch', err);
       return { success: true, targetModel: null };
     }
+  },
+
+  // Execute Target Object Storage Migration (Async-supported API via Prefer: respond-async)
+  executeObjectStorageMigration: async (nsId: string, nameSeed: string, requestBody: any, preferAsync: boolean = true): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (preferAsync) {
+        headers['Prefer'] = 'respond-async';
+      }
+      const response = await api.post(`/beetle/migration/ns/${nsId}/objectStorage?nameSeed=${nameSeed}`, requestBody, { headers });
+      
+      if (response.status === 202) {
+        const reqId = response.data?.data?.reqId || response.data?.reqId || `req-${Date.now()}`;
+        return { success: true, reqId, data: response.data };
+      }
+      return { success: true, reqId: response.data?.reqId, data: response.data };
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'Object Storage migration execution failed';
+      return { success: false, error: errorMsg };
+    }
+  },
+
+  // Get CSP Feature Support for Object Storage (/beetle/recommendation/middleware/objectStorage/support)
+  getObjectStorageSupport: async (): Promise<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>> => {
+    const response = await api.get('/beetle/recommendation/middleware/objectStorage/support');
+    return response.data?.supports || response.data;
   }
 };
 

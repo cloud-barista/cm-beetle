@@ -1697,6 +1697,34 @@ definitions:
     required:
     - onpremiseInfraModel
     type: object
+  controller.InspectObjectStorageRequest:
+    properties:
+      accessKeyId:
+        type: string
+      csp:
+        type: string
+      keyId:
+        type: string
+      region:
+        type: string
+      s3AccessKey:
+        type: string
+      s3SecretKey:
+        type: string
+      secretAccessKey:
+        type: string
+      selectedBucketNames:
+        items:
+          type: string
+        type: array
+      subscriptionId:
+        type: string
+      tenantId:
+        type: string
+    required:
+    - csp
+    - selectedBucketNames
+    type: object
   controller.JSONResult:
     type: object
   controller.MigrateInfraRequest:
@@ -2065,12 +2093,53 @@ definitions:
         $ref: '#/definitions/storagemodel.CloudProperty'
       sourceObjectStorages:
         items:
-          $ref: '#/definitions/storagemodel.SourceObjectStorage'
+          $ref: '#/definitions/storagemodel.SourceObjectStorageProperty'
         minItems: 1
         type: array
     required:
     - desiredCloud
     - sourceObjectStorages
+    type: object
+  controller.ScanObjectStorageRequest:
+    properties:
+      accessKeyId:
+        type: string
+      csp:
+        type: string
+      keyId:
+        type: string
+      region:
+        type: string
+      s3AccessKey:
+        type: string
+      s3SecretKey:
+        type: string
+      secretAccessKey:
+        type: string
+      subscriptionId:
+        type: string
+      tenantId:
+        type: string
+    required:
+    - csp
+    - region
+    type: object
+  controller.ScannedBucketSummary:
+    properties:
+      bucketName:
+        type: string
+      creationTime:
+        type: string
+      encryptionType:
+        type: string
+      objectCount:
+        type: integer
+      region:
+        type: string
+      sizeBytes:
+        type: integer
+      versioningEnabled:
+        type: boolean
     type: object
   map_string_string:
     additionalProperties:
@@ -2197,6 +2266,26 @@ definitions:
         description: Contains the actual response data (single object, list, or page)
         items:
           $ref: '#/definitions/cloudmodel.RecommendedInfra'
+        type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-array_controller_ScannedBucketSummary:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+        items:
+          $ref: '#/definitions/controller.ScannedBucketSummary'
         type: array
       error:
         description: Error message for failed responses
@@ -2615,6 +2704,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/storagemodel.RecommendedObjectStorage'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-storagemodel_SourceObjectStorage:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/storagemodel.SourceObjectStorage'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -3083,6 +3191,28 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
+  model.ObjectStorageFeatureSupport:
+    properties:
+      cors:
+        example: true
+        type: boolean
+      presignedUrl:
+        example: true
+        type: boolean
+      versioning:
+        example: true
+        type: boolean
+    type: object
+  model.ObjectStorageSupportResponse:
+    properties:
+      resourceType:
+        example: objectStorage
+        type: string
+      supports:
+        additionalProperties:
+          $ref: '#/definitions/model.ObjectStorageFeatureSupport'
+        type: object
+    type: object
   model.RegionDetail:
     properties:
       description:
@@ -4000,6 +4130,23 @@ definitions:
         type: array
     type: object
   storagemodel.SourceObjectStorage:
+    properties:
+      description:
+        description: Human-readable description
+        type: string
+      sourceCloud:
+        allOf:
+        - $ref: '#/definitions/storagemodel.CloudProperty'
+        description: Source cloud provider and region (optional)
+      sourceObjectStorages:
+        items:
+          $ref: '#/definitions/storagemodel.SourceObjectStorageProperty'
+        minItems: 1
+        type: array
+    required:
+    - sourceObjectStorages
+    type: object
+  storagemodel.SourceObjectStorageProperty:
     properties:
       accessFrequency:
         description: 'Access pattern: "frequent" | "infrequent" | "archive"'
@@ -6233,6 +6380,90 @@ paths:
       summary: Get metadata of an object in an object storage bucket
       tags:
       - '[Migration] Managed Object Storage'
+  /migration/middleware/objectStorage/inspect:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.
+
+        [Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (`SourceObjectStorage`).
+        - Versioning: Extracted via `GetBucketVersioning`. If versioning is disabled or error occurs, `versioningEnabled` is false.
+        - Encryption: Extracted via `GetBucketEncryption`. If encryption rules are absent or error occurs, `encryptionEnabled` is false.
+        - CORS: Extracted via `GetBucketCors`. If CORS rules are absent or error occurs, `corsEnabled` is false and `corsRule` is nil.
+        - Public Access: Extracted via `GetBucketPolicy`. If wildcard public policy statement is detected, `isPublic` is true, otherwise false.
+        - Tags: Extracted via `GetBucketTagging`. If tags are not set, `tags` is nil/empty map.
+        - CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.
+        - AccessFrequency: Defaults to `"frequent"` (Standard storage tier baseline for recommendation).
+      operationId: InspectObjectStorage
+      parameters:
+      - description: Parameters and selected bucket names for deep object storage
+          inspection
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.InspectObjectStorageRequest'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully collected source object storage model for selected
+            buckets
+          schema:
+            $ref: '#/definitions/model.ApiResponse-storagemodel_SourceObjectStorage'
+        "400":
+          description: Invalid request parameters or missing credentials
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Failed to inspect object storage buckets
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (CM-Beetle) Collect deep metadata from selected source object storage
+        buckets
+      tags:
+      - '[Minimal Test]'
+  /migration/middleware/objectStorage/scan:
+    post:
+      consumes:
+      - application/json
+      description: Scan and list all object storage buckets in the specified cloud
+        provider account using provided CSP access credentials via MinIO S3 SDK.
+      operationId: ScanObjectStorage
+      parameters:
+      - description: CSP credentials and target cloud information for bucket scanning
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ScanObjectStorageRequest'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of discovered object storage buckets
+          schema:
+            $ref: '#/definitions/model.ApiResponse-array_controller_ScannedBucketSummary'
+        "400":
+          description: Invalid request parameters or missing credentials
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Failed to list buckets from S3 API
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (CB-Tumblebug) Scan cloud account object storage buckets
+      tags:
+      - '[Minimal Test]'
   /migration/ns/{nsId}/infra:
     get:
       consumes:
@@ -7269,6 +7500,34 @@ paths:
       summary: Get a specific migrated virtual network
       tags:
       - '[Migration] Resources for VM infrastructure'
+  /migration/security/publicKey:
+    get:
+      consumes:
+      - application/json
+      description: Generate and return a one-time RSA public key bundle for encrypting
+        sensitive CSP access credentials (accessKey, secretKey, tokens) before scanning
+        or sending across web clients.
+      operationId: GetSecurityPublicKey
+      parameters:
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Public key bundle containing keyId, algorithm, publicKey (PEM),
+            and expiresAt
+          schema:
+            $ref: '#/definitions/model.ApiResponse-transx_PublicKeyBundle'
+        "500":
+          description: Key generation failed
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (CM-Beetle) Get RSA public key for credential encryption
+      tags:
+      - '[Minimal Test]'
   /naming/alignment:
     post:
       consumes:
@@ -7896,6 +8155,23 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an object storage for cloud migration
+      tags:
+      - '[Recommendation] Managed Object Storage'
+  /recommendation/middleware/objectStorage/support:
+    get:
+      consumes:
+      - application/json
+      description: Forward object storage support request to CB-Tumblebug via Proxy
+        (Returns ObjectStorageSupportResponse)
+      operationId: GetObjectStorageSupport
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ObjectStorageSupportResponse'
+      summary: Get CSP feature support map for object storage (Proxied to Tumblebug)
       tags:
       - '[Recommendation] Managed Object Storage'
   /recommendation/resources/osImages:

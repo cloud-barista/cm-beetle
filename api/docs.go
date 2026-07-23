@@ -1185,6 +1185,112 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/middleware/objectStorage/inspect": {
+            "post": {
+                "description": "Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.\n\n[Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (` + "`" + `SourceObjectStorage` + "`" + `).\n- Versioning: Extracted via ` + "`" + `GetBucketVersioning` + "`" + `. If versioning is disabled or error occurs, ` + "`" + `versioningEnabled` + "`" + ` is false.\n- Encryption: Extracted via ` + "`" + `GetBucketEncryption` + "`" + `. If encryption rules are absent or error occurs, ` + "`" + `encryptionEnabled` + "`" + ` is false.\n- CORS: Extracted via ` + "`" + `GetBucketCors` + "`" + `. If CORS rules are absent or error occurs, ` + "`" + `corsEnabled` + "`" + ` is false and ` + "`" + `corsRule` + "`" + ` is nil.\n- Public Access: Extracted via ` + "`" + `GetBucketPolicy` + "`" + `. If wildcard public policy statement is detected, ` + "`" + `isPublic` + "`" + ` is true, otherwise false.\n- Tags: Extracted via ` + "`" + `GetBucketTagging` + "`" + `. If tags are not set, ` + "`" + `tags` + "`" + ` is nil/empty map.\n- CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.\n- AccessFrequency: Defaults to ` + "`" + `\"frequent\"` + "`" + ` (Standard storage tier baseline for recommendation).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Minimal Test]"
+                ],
+                "summary": "(CM-Beetle) Collect deep metadata from selected source object storage buckets",
+                "operationId": "InspectObjectStorage",
+                "parameters": [
+                    {
+                        "description": "Parameters and selected bucket names for deep object storage inspection",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.InspectObjectStorageRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully collected source object storage model for selected buckets",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-storagemodel_SourceObjectStorage"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters or missing credentials",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to inspect object storage buckets",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/objectStorage/scan": {
+            "post": {
+                "description": "Scan and list all object storage buckets in the specified cloud provider account using provided CSP access credentials via MinIO S3 SDK.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Minimal Test]"
+                ],
+                "summary": "(CB-Tumblebug) Scan cloud account object storage buckets",
+                "operationId": "ScanObjectStorage",
+                "parameters": [
+                    {
+                        "description": "CSP credentials and target cloud information for bucket scanning",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.ScanObjectStorageRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of discovered object storage buckets",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_controller_ScannedBucketSummary"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters or missing credentials",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to list buckets from S3 API",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/migration/ns/{nsId}/infra": {
             "get": {
                 "description": "Get the migrated multi-cloud infrastructure (MCI)",
@@ -2632,6 +2738,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/security/publicKey": {
+            "get": {
+                "description": "Generate and return a one-time RSA public key bundle for encrypting sensitive CSP access credentials (accessKey, secretKey, tokens) before scanning or sending across web clients.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Minimal Test]"
+                ],
+                "summary": "(CM-Beetle) Get RSA public key for credential encryption",
+                "operationId": "GetSecurityPublicKey",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public key bundle containing keyId, algorithm, publicKey (PEM), and expiresAt",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-transx_PublicKeyBundle"
+                        }
+                    },
+                    "500": {
+                        "description": "Key generation failed",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/naming/alignment": {
             "post": {
                 "description": "When a parent/primary resource is renamed (e.g., VNet), this API updates all\nchild/dependent references in the model (e.g., SecurityGroup.VNetId, SubGroup.VNetId).\n\n**Supported resourceType values** (cb-tumblebug convention):\n- ` + "`" + `vNet` + "`" + ` : Rename VNet → propagates to SecurityGroup.VNetId, SubGroup.VNetId\n- ` + "`" + `subnet` + "`" + ` : Rename Subnet → propagates to SubGroup.SubnetId\n- ` + "`" + `sshKey` + "`" + ` : Rename SSH Key → propagates to SubGroup.SshKeyId\n- ` + "`" + `securityGroup` + "`" + ` : Rename SecurityGroup → propagates to SubGroup.SecurityGroupIds\n- ` + "`" + `infra` + "`" + ` : Rename Infra (no child propagation)\n\nAfter propagation, names are validated for referential integrity.\nThe returned model uses **base names only** (NameSeed is applied at migration time via query param).\n\nSee also: [API Guide: Align Names](https://github.com/cloud-barista/cm-beetle/blob/main/docs/api-guide-align-names.md)\n",
@@ -3366,6 +3510,30 @@ const docTemplate = `{
                         "description": "Internal server error during recommendation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/middleware/objectStorage/support": {
+            "get": {
+                "description": "Forward object storage support request to CB-Tumblebug via Proxy (Returns ObjectStorageSupportResponse)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed Object Storage"
+                ],
+                "summary": "Get CSP feature support map for object storage (Proxied to Tumblebug)",
+                "operationId": "GetObjectStorageSupport",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.ObjectStorageSupportResponse"
                         }
                     }
                 }
@@ -6489,6 +6657,48 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.InspectObjectStorageRequest": {
+            "type": "object",
+            "required": [
+                "csp",
+                "selectedBucketNames"
+            ],
+            "properties": {
+                "accessKeyId": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "keyId": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "s3AccessKey": {
+                    "type": "string"
+                },
+                "s3SecretKey": {
+                    "type": "string"
+                },
+                "secretAccessKey": {
+                    "type": "string"
+                },
+                "selectedBucketNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "subscriptionId": {
+                    "type": "string"
+                },
+                "tenantId": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.JSONResult": {
             "type": "object"
         },
@@ -6951,8 +7161,70 @@ const docTemplate = `{
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "$ref": "#/definitions/storagemodel.SourceObjectStorage"
+                        "$ref": "#/definitions/storagemodel.SourceObjectStorageProperty"
                     }
+                }
+            }
+        },
+        "controller.ScanObjectStorageRequest": {
+            "type": "object",
+            "required": [
+                "csp",
+                "region"
+            ],
+            "properties": {
+                "accessKeyId": {
+                    "type": "string"
+                },
+                "csp": {
+                    "type": "string"
+                },
+                "keyId": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "s3AccessKey": {
+                    "type": "string"
+                },
+                "s3SecretKey": {
+                    "type": "string"
+                },
+                "secretAccessKey": {
+                    "type": "string"
+                },
+                "subscriptionId": {
+                    "type": "string"
+                },
+                "tenantId": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ScannedBucketSummary": {
+            "type": "object",
+            "properties": {
+                "bucketName": {
+                    "type": "string"
+                },
+                "creationTime": {
+                    "type": "string"
+                },
+                "encryptionType": {
+                    "type": "string"
+                },
+                "objectCount": {
+                    "type": "integer"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "sizeBytes": {
+                    "type": "integer"
+                },
+                "versioningEnabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -7130,6 +7402,33 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/cloudmodel.RecommendedInfra"
+                    }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-array_controller_ScannedBucketSummary": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.ScannedBucketSummary"
                     }
                 },
                 "error": {
@@ -7765,6 +8064,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-storagemodel_SourceObjectStorage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.SourceObjectStorage"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-string": {
             "type": "object",
             "properties": {
@@ -8362,6 +8689,38 @@ const docTemplate = `{
                 "Windows",
                 "PlatformNA"
             ]
+        },
+        "model.ObjectStorageFeatureSupport": {
+            "type": "object",
+            "properties": {
+                "cors": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "presignedUrl": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "versioning": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ObjectStorageSupportResponse": {
+            "type": "object",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "example": "objectStorage"
+                },
+                "supports": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/model.ObjectStorageFeatureSupport"
+                    }
+                }
+            }
         },
         "model.RegionDetail": {
             "type": "object",
@@ -9635,6 +9994,33 @@ const docTemplate = `{
             }
         },
         "storagemodel.SourceObjectStorage": {
+            "type": "object",
+            "required": [
+                "sourceObjectStorages"
+            ],
+            "properties": {
+                "description": {
+                    "description": "Human-readable description",
+                    "type": "string"
+                },
+                "sourceCloud": {
+                    "description": "Source cloud provider and region (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.CloudProperty"
+                        }
+                    ]
+                },
+                "sourceObjectStorages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.SourceObjectStorageProperty"
+                    }
+                }
+            }
+        },
+        "storagemodel.SourceObjectStorageProperty": {
             "type": "object",
             "required": [
                 "bucketName"

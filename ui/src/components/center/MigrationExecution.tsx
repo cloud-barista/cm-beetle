@@ -410,7 +410,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       {/* 1. Single-Line Tab Description Box */}
       <div className="glass-panel px-6 py-4.5 rounded-2xl border border-border-main flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <div className="flex items-center gap-2 shrink-0">
-          <Cpu className="w-5 h-5 text-emerald-500" />
+          <Play className="w-5 h-5 text-emerald-500" />
           <h2 className="text-base font-extrabold text-text-main tracking-tight">
             Target Cloud Migration
           </h2>
