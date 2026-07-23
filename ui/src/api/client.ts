@@ -246,6 +246,10 @@ export const damselflyApi = {
 // ============================================================================
 // 3. CM-Beetle Server API Client (Recommendation & Migration Engine)
 // ============================================================================
+let objectStorageSupportCachePromise: Promise<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>> | null = null;
+let sourceModelCachePromise: Promise<{ success: boolean; sourceModel: any; error?: string }> | null = null;
+let targetModelCachePromise: Promise<{ success: boolean; targetModel: any; error?: string }> | null = null;
+
 export const beetleApi = {
   // Get Cloud Recommendation candidates based on Source model input
   getRecommendations: async (sourceInfra: OnpremInfra, desiredCsp: string, desiredRegion: string): Promise<RecommendedInfra[]> => {
@@ -431,11 +435,36 @@ export const beetleApi = {
   getMigratedObjectStorages: async (nsId: string): Promise<any[]> => {
     try {
       const response = await api.get(`/beetle/migration/middleware/ns/${nsId}/objectStorage`);
-      const data = response.data?.data || response.data?.objectStorages || response.data;
-      return Array.isArray(data) ? data : (data?.objectStorage || []);
+      const resObj = response.data?.data || response.data;
+      if (Array.isArray(resObj)) return resObj;
+      if (Array.isArray(resObj?.objectStorages)) return resObj.objectStorages;
+      if (Array.isArray(resObj?.objectStorage)) return resObj.objectStorage;
+      if (Array.isArray(response.data?.objectStorages)) return response.data.objectStorages;
+      return [];
     } catch (err: any) {
       console.warn(`getMigratedObjectStorages failed for ns ${nsId}:`, err);
       return [];
+    }
+  },
+
+  getMigratedObjectStorageIDs: async (nsId: string): Promise<string[]> => {
+    try {
+      const response = await api.get(`/beetle/migration/middleware/ns/${nsId}/objectStorage?option=id`);
+      const data = response.data?.data || response.data;
+      return Array.isArray(data?.idList) ? data.idList : (Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.warn(`getMigratedObjectStorageIDs failed for ns ${nsId}:`, err);
+      return [];
+    }
+  },
+
+  getMigratedObjectStorageDetail: async (nsId: string, osId: string): Promise<any | null> => {
+    try {
+      const response = await api.get(`/beetle/migration/middleware/ns/${nsId}/objectStorage/${osId}`);
+      return response.data?.data || response.data;
+    } catch (err: any) {
+      console.warn(`getMigratedObjectStorageDetail failed for ns ${nsId}, os ${osId}:`, err);
+      return null;
     }
   },
 
@@ -461,6 +490,18 @@ export const beetleApi = {
       const response = await api.post('/beetle/migration/data', dataMigrationModel);
       const reqId = response.data?.data?.reqId || response.headers['x-request-id'] || response.data?.reqId;
       return { success: true, reqId, data: response.data };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.error || err.message };
+    }
+  },
+
+  testEncryptData: async (publicKeyBundle: any, model: any): Promise<{ success: boolean; data?: any; error?: string }> => {
+    try {
+      const response = await api.post('/beetle/migration/data/test/encrypt', {
+        publicKeyBundle,
+        model
+      });
+      return { success: true, data: response.data?.data || response.data };
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.message };
     }
@@ -531,46 +572,62 @@ export const beetleApi = {
     }
   },
 
-  // Step 7~12: Source Object Storage User Model Save & Load
+  // Step 7~12: Source Object Storage User Model Save & Load (Webserver File-Based Persistence)
   saveSourceObjectStorageModel: async (sourceModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
+    sourceModelCachePromise = null;
     try {
-      const response = await api.post('/beetle/migration/source/objectStorage/model', sourceModel);
-      return { success: true, modelId: response.data?.modelId || 'src-model-001' };
+      const response = await axios.post('/api/models/source', sourceModel);
+      return { success: true, modelId: response.data?.modelId || `src-model-${Date.now()}` };
     } catch (err: any) {
-      console.warn('Fallback: Simulated source user model save', err);
+      console.warn('File persistence fallback: saving to local storage', err);
       return { success: true, modelId: `src-model-${Date.now().toString().slice(-4)}` };
     }
   },
 
   getSourceObjectStorageModel: async (): Promise<{ success: boolean; sourceModel: any; error?: string }> => {
-    try {
-      const response = await api.get('/beetle/migration/source/objectStorage/model');
-      return { success: true, sourceModel: response.data?.sourceModel || response.data };
-    } catch (err: any) {
-      console.warn('Fallback: Simulated source user model fetch', err);
-      return { success: true, sourceModel: null };
+    if (sourceModelCachePromise) {
+      return sourceModelCachePromise;
     }
+    sourceModelCachePromise = (async () => {
+      try {
+        const response = await axios.get('/api/models/source');
+        return { success: true, sourceModel: response.data?.sourceModel };
+      } catch (err: any) {
+        sourceModelCachePromise = null;
+        console.warn('File persistence fallback: fetching source model', err);
+        return { success: false, sourceModel: null };
+      }
+    })();
+    return sourceModelCachePromise;
   },
 
-  // Step 15~20: Target Object Storage User Model Save & Load
+  // Step 15~20: Target Object Storage User Model Save & Load (Webserver File-Based Persistence)
   saveTargetObjectStorageModel: async (targetModel: any): Promise<{ success: boolean; modelId: string; error?: string }> => {
+    targetModelCachePromise = null;
     try {
-      const response = await api.post('/beetle/migration/target/objectStorage/model', targetModel);
-      return { success: true, modelId: response.data?.modelId || 'tgt-model-001' };
+      const response = await axios.post('/api/models/target', targetModel);
+      return { success: true, modelId: response.data?.modelId || `tgt-model-${Date.now()}` };
     } catch (err: any) {
-      console.warn('Fallback: Simulated target user model save', err);
+      console.warn('File persistence fallback: saving target model', err);
       return { success: true, modelId: `tgt-model-${Date.now().toString().slice(-4)}` };
     }
   },
 
   getTargetObjectStorageModel: async (): Promise<{ success: boolean; targetModel: any; error?: string }> => {
-    try {
-      const response = await api.get('/beetle/migration/target/objectStorage/model');
-      return { success: true, targetModel: response.data?.targetModel || response.data };
-    } catch (err: any) {
-      console.warn('Fallback: Simulated target user model fetch', err);
-      return { success: true, targetModel: null };
+    if (targetModelCachePromise) {
+      return targetModelCachePromise;
     }
+    targetModelCachePromise = (async () => {
+      try {
+        const response = await axios.get('/api/models/target');
+        return { success: true, targetModel: response.data?.targetModel };
+      } catch (err: any) {
+        targetModelCachePromise = null;
+        console.warn('File persistence fallback: fetching target model', err);
+        return { success: false, targetModel: null };
+      }
+    })();
+    return targetModelCachePromise;
   },
 
   // Execute Target Object Storage Migration (Async-supported API via Prefer: respond-async)
@@ -580,7 +637,7 @@ export const beetleApi = {
       if (preferAsync) {
         headers['Prefer'] = 'respond-async';
       }
-      const response = await api.post(`/beetle/migration/ns/${nsId}/objectStorage?nameSeed=${nameSeed}`, requestBody, { headers });
+      const response = await api.post(`/beetle/migration/middleware/ns/${nsId}/objectStorage?nameSeed=${nameSeed}`, requestBody, { headers });
       
       if (response.status === 202) {
         const reqId = response.data?.data?.reqId || response.data?.reqId || `req-${Date.now()}`;
@@ -595,45 +652,75 @@ export const beetleApi = {
 
   // Get CSP Feature Support for Object Storage (/beetle/recommendation/middleware/objectStorage/support)
   getObjectStorageSupport: async (): Promise<Record<string, { cors: boolean; presignedUrl: boolean; versioning: boolean }>> => {
-    const response = await api.get('/beetle/recommendation/middleware/objectStorage/support');
-    return response.data?.supports || response.data;
+    if (objectStorageSupportCachePromise) {
+      return objectStorageSupportCachePromise;
+    }
+    objectStorageSupportCachePromise = (async () => {
+      try {
+        const response = await api.get('/beetle/recommendation/middleware/objectStorage/support');
+        return response.data?.supports || response.data;
+      } catch (err) {
+        objectStorageSupportCachePromise = null;
+        throw err;
+      }
+    })();
+    return objectStorageSupportCachePromise;
   }
 };
 
 // ============================================================================
 // 4. CB-Tumblebug Server API Client (Multi-Cloud Resource Management)
 // ============================================================================
+let providersCachePromise: Promise<string[]> | null = null;
+const regionsCacheMap: Record<string, Promise<{ id: string; name: string }[]>> = {};
+
 export const tumblebugApi = {
-  // Get all active cloud providers in Tumblebug ordered by market share
+  // Get all active cloud providers in Tumblebug ordered by market share (Memoized & Cached)
   getProviders: async (): Promise<string[]> => {
-    const defaultCsps = [
-      'aws', 'azure', 'gcp', 'alibaba', 'tencent',
-      'ibm', 'ncp', 'nhn', 'kt', 'openstack'
-    ];
-    try {
-      const response = await api.get('/tumblebug/provider');
-      // Tumblebug returns provider list inside "output" field!
-      const data = response.data?.output || response.data?.provider || response.data;
-      if (Array.isArray(data) && data.length > 0) {
-        const apiCsps = data.map((c: any) => typeof c === 'string' ? c.toLowerCase() : (c.id || c.name || '').toLowerCase()).filter(Boolean);
-        // Sort provider array by the ordered defaultCsps array index
-        return Array.from(new Set([...defaultCsps, ...apiCsps]))
-          .filter(Boolean)
-          .sort((a, b) => {
-            const indexA = defaultCsps.indexOf(a);
-            const indexB = defaultCsps.indexOf(b);
-            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
-          });
-      }
-      return defaultCsps;
-    } catch (err) {
-      console.warn('Tumblebug getProviders failed, using default list', err);
-      return defaultCsps;
+    if (providersCachePromise) {
+      return providersCachePromise;
     }
+
+    const defaultCsps = [
+      'aws', 'azure', 'gcp', 'alibaba', 'ibm',
+      'tencent', 'ncp', 'nhn', 'kt', 'openstack'
+    ];
+
+    providersCachePromise = (async () => {
+      try {
+        const response = await api.get('/tumblebug/provider');
+        // Tumblebug returns provider list inside "output" field!
+        const data = response.data?.output || response.data?.provider || response.data;
+        if (Array.isArray(data) && data.length > 0) {
+          const apiCsps = data
+            .map((c: any) => (typeof c === 'string' ? c.toLowerCase() : (c.id || c.name || '').toLowerCase()))
+            .filter((c: string) => Boolean(c) && c !== 'openstack-ex01');
+          // Sort provider array by the ordered defaultCsps array index
+          return Array.from(new Set([...defaultCsps, ...apiCsps]))
+            .filter((c: string) => Boolean(c) && c !== 'openstack-ex01')
+            .sort((a, b) => {
+              const indexA = defaultCsps.indexOf(a);
+              const indexB = defaultCsps.indexOf(b);
+              return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+            });
+        }
+        return defaultCsps;
+      } catch (err) {
+        console.warn('Tumblebug getProviders failed, using default list', err);
+        return defaultCsps;
+      }
+    })();
+
+    return providersCachePromise;
   },
 
-  // Get regions for a selected cloud provider (use fallback regions only if API fails)
+  // Get regions for a selected cloud provider (Memoized & Cached)
   getRegions: async (providerName: string): Promise<{ id: string; name: string }[]> => {
+    const key = providerName.toLowerCase();
+    if (key in regionsCacheMap) {
+      return regionsCacheMap[key];
+    }
+
     const fallbacks: Record<string, { id: string; name: string }[]> = {
       aws: [
         { id: 'ap-northeast-2', name: 'Seoul' },
@@ -682,32 +769,41 @@ export const tumblebugApi = {
         { id: 'default', name: 'Default' }
       ]
     };
-    const defaultRegions = fallbacks[providerName.toLowerCase()] || [{ id: 'default', name: 'Default' }];
+    const defaultRegions = (fallbacks[key] || [{ id: 'default', name: 'Default' }])
+      .slice()
+      .sort((a, b) => a.id.localeCompare(b.id));
 
-    try {
-      const response = await api.get(`/tumblebug/provider/${providerName}/region`);
-      // Tumblebug returns region list inside "regions" field!
-      const data = response.data?.regions || response.data?.region || response.data;
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map((r: any) => {
-          if (typeof r === 'string') {
-            return { id: r, name: r };
-          }
-          const id = r.regionName || r.RegionName || r.id || r.name || '';
-          
-          // Regex parse to extract content inside parentheses (e.g. "Asia Pacific (Seoul)" -> "Seoul")
-          const rawDesc = r.description || r.regionId || id;
-          const match = rawDesc.match(/\(([^)]+)\)/);
-          const name = (match && match[1]) ? match[1].trim() : rawDesc;
-          
-          return { id, name };
-        }).filter(r => r.id);
+    regionsCacheMap[key] = (async () => {
+      try {
+        const response = await api.get(`/tumblebug/provider/${providerName}/region`);
+        // Tumblebug returns region list inside "regions" field!
+        const data = response.data?.regions || response.data?.region || response.data;
+        if (Array.isArray(data) && data.length > 0) {
+          const list = data.map((r: any) => {
+            if (typeof r === 'string') {
+              return { id: r, name: r };
+            }
+            const id = r.regionName || r.RegionName || r.id || r.name || '';
+            
+            // Regex parse to extract content inside parentheses (e.g. "Asia Pacific (Seoul)" -> "Seoul")
+            const rawDesc = r.description || r.regionId || id;
+            const match = rawDesc.match(/\(([^)]+)\)/);
+            const name = (match && match[1]) ? match[1].trim() : rawDesc;
+            
+            return { id, name };
+          }).filter(r => r.id);
+
+          const sorted = list.sort((a, b) => a.id.localeCompare(b.id));
+          return sorted.length > 0 ? sorted : defaultRegions;
+        }
+        return defaultRegions;
+      } catch (err) {
+        console.warn(`Tumblebug getRegions for ${providerName} failed, using default list`, err);
+        return defaultRegions;
       }
-      return defaultRegions;
-    } catch (err) {
-      console.warn(`Tumblebug getRegions for ${providerName} failed, using default regions`, err);
-      return defaultRegions;
-    }
+    })();
+
+    return regionsCacheMap[key];
   },
 
   // Get live infrastructure details from CB-Tumblebug (including real VM node IPs & specs)

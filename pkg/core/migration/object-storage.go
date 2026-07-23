@@ -42,15 +42,74 @@ func GenerateConnectionName(csp, region string) (string, error) {
 	return connectionName, nil
 }
 
-// toMigratedObjectStorageInfo converts a TB ObjectStorageInfo to the migration model representation.
-func toMigratedObjectStorageInfo(src tbmodel.ObjectStorageInfo) MigratedObjectStorageInfo {
-	return MigratedObjectStorageInfo{
-		Id:             src.Id,
-		Name:           src.Name,
-		Status:         src.Status,
-		Description:    src.Description,
-		ConnectionName: src.ConnectionName,
-		CreationDate:   src.CreationDate,
+// toStorageModelObjectStorageInfo converts a TB ObjectStorageInfo to the storagemodel representation.
+func toStorageModelObjectStorageInfo(src tbmodel.ObjectStorageInfo) storagemodel.ObjectStorageInfo {
+	contents := make([]storagemodel.Object, 0, len(src.Contents))
+	for _, c := range src.Contents {
+		contents = append(contents, storagemodel.Object{
+			Key:          c.Key,
+			LastModified: c.LastModified,
+			ETag:         c.ETag,
+			Size:         c.Size,
+			StorageClass: c.StorageClass,
+		})
+	}
+
+	conditions := make([]storagemodel.Condition, 0, len(src.Conditions))
+	for _, cond := range src.Conditions {
+		conditions = append(conditions, storagemodel.Condition{
+			Type:               storagemodel.ConditionType(cond.Type),
+			Status:             storagemodel.ConditionStatus(cond.Status),
+			Reason:             cond.Reason,
+			Message:            cond.Message,
+			LastTransitionTime: cond.LastTransitionTime,
+		})
+	}
+
+	return storagemodel.ObjectStorageInfo{
+		ResourceType:    src.ResourceType,
+		Id:              src.Id,
+		Uid:             src.Uid,
+		CspResourceName: src.CspResourceName,
+		CspResourceId:   src.CspResourceId,
+		ConnectionName:  src.ConnectionName,
+		ConnectionConfig: storagemodel.ConnConfig{
+			ConfigName:         src.ConnectionConfig.ConfigName,
+			ProviderName:       src.ConnectionConfig.ProviderName,
+			DriverName:         src.ConnectionConfig.DriverName,
+			CredentialName:     src.ConnectionConfig.CredentialName,
+			CredentialHolder:   src.ConnectionConfig.CredentialHolder,
+			RegionZoneInfoName: src.ConnectionConfig.RegionZoneInfoName,
+			RegionZoneInfo: storagemodel.RegionZoneInfo{
+				AssignedRegion: src.ConnectionConfig.RegionZoneInfo.AssignedRegion,
+				AssignedZone:   src.ConnectionConfig.RegionZoneInfo.AssignedZone,
+			},
+			RegionDetail: storagemodel.RegionDetail{
+				RegionId:           src.ConnectionConfig.RegionDetail.RegionId,
+				RegionName:         src.ConnectionConfig.RegionDetail.RegionName,
+				Description:        src.ConnectionConfig.RegionDetail.Description,
+				Zones:              src.ConnectionConfig.RegionDetail.Zones,
+				RepresentativeZone: src.ConnectionConfig.RegionDetail.RepresentativeZone,
+				Location: storagemodel.Location{
+					Display:   src.ConnectionConfig.RegionDetail.Location.Display,
+					Latitude:  src.ConnectionConfig.RegionDetail.Location.Latitude,
+					Longitude: src.ConnectionConfig.RegionDetail.Location.Longitude,
+				},
+			},
+			RegionRepresentative: src.ConnectionConfig.RegionRepresentative,
+			Verified:             src.ConnectionConfig.Verified,
+		},
+		Description:   src.Description,
+		Status:        src.Status,
+		SystemMessage: src.SystemMessage,
+		Conditions:    conditions,
+		Name:          src.Name,
+		Prefix:        src.Prefix,
+		Marker:        src.Marker,
+		MaxKeys:       src.MaxKeys,
+		IsTruncated:   src.IsTruncated,
+		CreationDate:  src.CreationDate,
+		Contents:      contents,
 	}
 }
 
@@ -180,38 +239,52 @@ func CreateObjectStorage(nsId string, req storagemodel.RecommendedObjectStorage,
 }
 
 // ListObjectStorages returns all migrated object storages in the namespace.
-func ListObjectStorages(nsId string) (MigratedObjectStorageListResponse, error) {
+func ListObjectStorages(nsId string) (storagemodel.ObjectStorageListResponse, error) {
 	log.Info().Str("nsId", nsId).Msg("Listing object storages")
 
 	result, err := tbclient.NewSession().ListObjectStorages(nsId, "", "", "")
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storages")
-		return MigratedObjectStorageListResponse{}, err
+		return storagemodel.ObjectStorageListResponse{}, err
 	}
 
-	infos := make([]MigratedObjectStorageInfo, 0, len(result.ObjectStorage))
+	infos := make([]storagemodel.ObjectStorageInfo, 0, len(result.ObjectStorage))
 	for _, item := range result.ObjectStorage {
-		infos = append(infos, toMigratedObjectStorageInfo(item))
+		infos = append(infos, toStorageModelObjectStorageInfo(item))
 	}
 
-	resp := MigratedObjectStorageListResponse{ObjectStorages: infos}
+	resp := storagemodel.ObjectStorageListResponse{ObjectStorage: infos}
 
 	log.Info().Str("nsId", nsId).Int("count", len(infos)).Msg("Object storages listed")
 	return resp, nil
 }
 
+// ListObjectStorageIDs returns all migrated object storage IDs in the namespace.
+func ListObjectStorageIDs(nsId string) (storagemodel.IdList, error) {
+	log.Info().Str("nsId", nsId).Msg("Listing object storage IDs")
+
+	result, err := tbclient.NewSession().ListObjectStorageIDs(nsId)
+	if err != nil {
+		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storage IDs")
+		return storagemodel.IdList{}, err
+	}
+
+	resp := storagemodel.IdList{IdList: result.IdList}
+	return resp, nil
+}
+
 // GetObjectStorage returns details of a specific migrated object storage.
-func GetObjectStorage(nsId, osId string) (MigratedObjectStorageInfo, error) {
+func GetObjectStorage(nsId, osId string) (storagemodel.ObjectStorageInfo, error) {
 	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Getting object storage")
 
 	result, err := tbclient.NewSession().GetObjectStorage(nsId, osId)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to get object storage")
-		return MigratedObjectStorageInfo{}, err
+		return storagemodel.ObjectStorageInfo{}, err
 	}
 
 	log.Info().Str("nsId", nsId).Str("osId", osId).Msg("Object storage retrieved")
-	return toMigratedObjectStorageInfo(result), nil
+	return toStorageModelObjectStorageInfo(result), nil
 }
 
 // ExistObjectStorage checks whether a specific object storage exists.

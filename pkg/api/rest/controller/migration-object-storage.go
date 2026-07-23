@@ -148,8 +148,10 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param option query string false "Option to filter list (e.g., 'id')" Enums(id)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[migration.MigratedObjectStorageListResponse] "Successfully retrieved object storage list"
+// @Success 200 {object} model.ApiResponse[storagemodel.ObjectStorageListResponse] "Successfully retrieved object storage list (default)"
+// @Success 200 {object} model.ApiResponse[storagemodel.IdList] "Successfully retrieved object storage ID list (option=id)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [get]
@@ -158,6 +160,22 @@ func ListObjectStorages(c echo.Context) error {
 	if nsId == "" {
 		log.Warn().Msg("nsId is required")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("nsId required"))
+	}
+
+	option := c.QueryParam("option")
+	if option != "" && option != "id" {
+		err := fmt.Errorf("invalid request, the option (option: %s) is invalid", option)
+		log.Warn().Msg(err.Error())
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	if option == "id" {
+		idList, err := migration.ListObjectStorageIDs(nsId)
+		if err != nil {
+			log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storage IDs")
+			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list object storage IDs: %v", err)))
+		}
+		return c.JSON(http.StatusOK, model.SuccessResponse(idList))
 	}
 
 	result, err := migration.ListObjectStorages(nsId)
@@ -179,7 +197,7 @@ func ListObjectStorages(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param osId path string true "Object Storage ID (bucket ID)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[migration.MigratedObjectStorageInfo] "Successfully retrieved object storage details"
+// @Success 200 {object} model.ApiResponse[storagemodel.ObjectStorageInfo] "Successfully retrieved object storage details"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during get operation"

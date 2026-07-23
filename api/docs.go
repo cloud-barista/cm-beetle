@@ -674,6 +674,15 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "id"
+                        ],
+                        "type": "string",
+                        "description": "Option to filter list (e.g., 'id')",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
@@ -682,9 +691,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved object storage list",
+                        "description": "Successfully retrieved object storage ID list (option=id)",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-migration_MigratedObjectStorageListResponse"
+                            "$ref": "#/definitions/model.ApiResponse-storagemodel_IdList"
                         }
                     },
                     "400": {
@@ -826,7 +835,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved object storage details",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-migration_MigratedObjectStorageInfo"
+                            "$ref": "#/definitions/model.ApiResponse-storagemodel_ObjectStorageInfo"
                         }
                     },
                     "400": {
@@ -7234,46 +7243,6 @@ const docTemplate = `{
                 "type": "string"
             }
         },
-        "migration.MigratedObjectStorageInfo": {
-            "type": "object",
-            "properties": {
-                "connectionName": {
-                    "description": "Connection identifier (format: \"{csp}-{region}\")",
-                    "type": "string"
-                },
-                "creationDate": {
-                    "description": "Bucket creation date (RFC 3339)",
-                    "type": "string"
-                },
-                "description": {
-                    "description": "Description",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Bucket ID (unique identifier within the namespace)",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Bucket name in the target cloud",
-                    "type": "string"
-                },
-                "status": {
-                    "description": "Current status (e.g., \"Available\")",
-                    "type": "string"
-                }
-            }
-        },
-        "migration.MigratedObjectStorageListResponse": {
-            "type": "object",
-            "properties": {
-                "objectStorages": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/migration.MigratedObjectStorageInfo"
-                    }
-                }
-            }
-        },
         "migration.StorageObjectInfo": {
             "type": "object",
             "properties": {
@@ -7840,62 +7809,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-migration_MigratedObjectStorageInfo": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/migration.MigratedObjectStorageInfo"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-migration_MigratedObjectStorageListResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/migration.MigratedObjectStorageListResponse"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
         "model.ApiResponse-migration_StorageObjectListResponse": {
             "type": "object",
             "properties": {
@@ -8016,6 +7929,90 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/model.K8sNodeGroupReq"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-storagemodel_IdList": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.IdList"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-storagemodel_ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.ObjectStorageInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-storagemodel_ObjectStorageListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/storagemodel.ObjectStorageListResponse"
                         }
                     ]
                 },
@@ -9964,6 +9961,206 @@ const docTemplate = `{
                 }
             }
         },
+        "storagemodel.Condition": {
+            "type": "object",
+            "properties": {
+                "lastTransitionTime": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "storagemodel.ConnConfig": {
+            "type": "object",
+            "properties": {
+                "configName": {
+                    "type": "string"
+                },
+                "credentialHolder": {
+                    "type": "string"
+                },
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionDetail": {
+                    "$ref": "#/definitions/storagemodel.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/storagemodel.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "storagemodel.IdList": {
+            "type": "object",
+            "properties": {
+                "idList": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "storagemodel.Location": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "storagemodel.Object": {
+            "type": "object",
+            "properties": {
+                "eTag": {
+                    "type": "string",
+                    "example": "9b2cf535f27731c974343645a3985328"
+                },
+                "key": {
+                    "type": "string",
+                    "example": "test-object.txt"
+                },
+                "lastModified": {
+                    "type": "string",
+                    "example": "2025-09-04T04:18:06Z"
+                },
+                "size": {
+                    "type": "integer",
+                    "example": 1024
+                },
+                "storageClass": {
+                    "type": "string",
+                    "example": "STANDARD"
+                }
+            }
+        },
+        "storagemodel.ObjectStorageInfo": {
+            "type": "object",
+            "properties": {
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.Condition"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/storagemodel.ConnConfig"
+                },
+                "connectionName": {
+                    "description": "Variables for management of Object Storage resource in CB-Tumblebug",
+                    "type": "string"
+                },
+                "contents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.Object"
+                    }
+                },
+                "creationDate": {
+                    "type": "string",
+                    "example": "2025-09-04T04:18:06Z"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": ""
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": ""
+                },
+                "description": {
+                    "type": "string",
+                    "example": "this object storage is managed by CB-Tumblebug"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "globally-unique-bucket-name-12345"
+                },
+                "isTruncated": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "marker": {
+                    "type": "string",
+                    "example": ""
+                },
+                "maxKeys": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "globally-unique-bucket-name-12345"
+                },
+                "prefix": {
+                    "type": "string",
+                    "example": ""
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of this resource",
+                    "type": "string",
+                    "example": "ObjectStorage"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "systemMessage": {
+                    "type": "string"
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                }
+            }
+        },
+        "storagemodel.ObjectStorageListResponse": {
+            "type": "object",
+            "properties": {
+                "objectStorage": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/storagemodel.ObjectStorageInfo"
+                    }
+                }
+            }
+        },
         "storagemodel.RecommendedObjectStorage": {
             "type": "object",
             "properties": {
@@ -9990,6 +10187,43 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "storagemodel.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/storagemodel.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "representativeZone": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "storagemodel.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
                 }
             }
         },

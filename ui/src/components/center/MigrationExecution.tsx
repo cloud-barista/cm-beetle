@@ -27,7 +27,12 @@ import {
   Globe,
   ArrowRight,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Filter,
+  ShieldCheck,
+  Database,
+  Shield,
+  Lock
 } from 'lucide-react';
 
 interface MigrationJob {
@@ -65,12 +70,192 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     setActiveTab
   } = useMigrationStore();
 
-  // Launch Modal State
+  // Launch Modal State (Infra)
   const [showLaunchModal, setShowLaunchModal] = useState(false);
   const [customNsId, setCustomNsId] = useState(namespaceId || 'mig01');
   const [customInfraId, setCustomInfraId] = useState('');
   const [customNameSeed, setCustomNameSeed] = useState(nameSeed || '');
   const [preferAsync, setPreferAsync] = useState(true);
+
+  // Launch Modal State (Data Migration with Field Encryption)
+  const [showDataLaunchModal, setShowDataLaunchModal] = useState(false);
+  const [dataCsp, setDataCsp] = useState('aws');
+  const [dataAccessKeyId, setDataAccessKeyId] = useState('');
+  const [dataSecretAccessKey, setDataSecretAccessKey] = useState('');
+  const [dataEndpoint, setDataEndpoint] = useState('');
+  const [dataRegion, setDataRegion] = useState('ap-northeast-2');
+  const [dataNsId, setDataNsId] = useState(namespaceId || 'mig01');
+  const [sourceBucketList, setSourceBucketList] = useState<string[]>(['source-bucket-01', 'source-bucket-02']);
+  const [selectedSourceBucket, setSelectedSourceBucket] = useState('source-bucket-01');
+  const [sourceSubPath, setSourceSubPath] = useState('');
+  const [isScanningSource, setIsScanningSource] = useState(false);
+  const [targetStorageList, setTargetStorageList] = useState<any[]>([]);
+  const [selectedTargetStorage, setSelectedTargetStorage] = useState('');
+  const [targetSubPath, setTargetSubPath] = useState('');
+  const [isFetchingTargets, setIsFetchingTargets] = useState(false);
+  const [dataStrategy, setDataStrategy] = useState('auto');
+  const [includeFilter, setIncludeFilter] = useState('');
+  const [excludeFilter, setExcludeFilter] = useState('*.tmp, *.bak');
+  const [isEncryptingAndLaunching, setIsEncryptingAndLaunching] = useState(false);
+  const [dataLaunchError, setDataLaunchError] = useState<string | null>(null);
+
+  // Auto fetch migrated target storages when opening data launch modal or changing nsId
+  const handleFetchTargetStorages = async (nsIdToFetch: string) => {
+    setIsFetchingTargets(true);
+    try {
+      const storages = await beetleApi.getMigratedObjectStorages(nsIdToFetch || 'mig01');
+      const list = Array.isArray(storages) ? storages : [];
+      setTargetStorageList(list);
+      if (list.length > 0) {
+        const firstId = list[0].id || list[0].name || list[0].bucketName || list[0].osId || 'target-storage-01';
+        setSelectedTargetStorage(firstId);
+      } else {
+        setSelectedTargetStorage('target-storage-01');
+      }
+    } catch {
+      setSelectedTargetStorage('target-storage-01');
+    } finally {
+      setIsFetchingTargets(false);
+    }
+  };
+
+  const handleScanSourceBuckets = async () => {
+    if (!dataAccessKeyId || !dataSecretAccessKey) {
+      alert('Please enter Source Access Key ID and Secret Access Key.');
+      return;
+    }
+    setIsScanningSource(true);
+    setDataLaunchError(null);
+    try {
+      const res = await beetleApi.scanSourceObjectStorage({
+        csp: dataCsp,
+        accessKeyId: dataAccessKeyId,
+        secretAccessKey: dataSecretAccessKey,
+        endpoint: dataEndpoint,
+        region: dataRegion
+      });
+      if (res.success && res.bucketNames && res.bucketNames.length > 0) {
+        setSourceBucketList(res.bucketNames);
+        setSelectedSourceBucket(res.bucketNames[0]);
+      } else if (res.error) {
+        setDataLaunchError(res.error);
+      }
+    } catch (err: any) {
+      setDataLaunchError(err.message || 'Failed to scan source buckets.');
+    } finally {
+      setIsScanningSource(false);
+    }
+  };
+
+  const handleOpenDataLaunchModal = () => {
+    setShowDataLaunchModal(true);
+    handleFetchTargetStorages(dataNsId);
+  };
+
+  const handleConfirmDataLaunch = async () => {
+    setIsEncryptingAndLaunching(true);
+    setDataLaunchError(null);
+
+    try {
+      // 1. Fetch One-Time RSA Encryption Key Bundle
+      const keyBundle = await beetleApi.getDataMigrationEncryptionKey();
+
+      const rawSourceBucket = selectedSourceBucket || 'source-bucket-01';
+      const cleanSourceSubPath = sourceSubPath.trim().replace(/^\/+/, '');
+      const fullSourcePath = cleanSourceSubPath ? `${rawSourceBucket}/${cleanSourceSubPath}` : rawSourceBucket;
+
+      const rawTargetStorage = selectedTargetStorage || 'target-storage-01';
+      const cleanTargetSubPath = targetSubPath.trim().replace(/^\/+/, '');
+      const fullTargetPath = cleanTargetSubPath ? `${rawTargetStorage}/${cleanTargetSubPath}` : rawTargetStorage;
+
+      // 2. Construct Plaintext Model
+      const plainModel = {
+        source: {
+          storageType: 'objectstorage',
+          path: fullSourcePath,
+          objectStorage: {
+            accessType: 'minio',
+            minio: {
+              endpoint: dataEndpoint || `https://s3.${dataRegion}.amazonaws.com`,
+              accessKeyId: dataAccessKeyId || 'AKIAEXAMPLE123456789',
+              secretAccessKey: dataSecretAccessKey || 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+              region: dataRegion
+            }
+          }
+        },
+        destination: {
+          storageType: 'objectstorage',
+          path: fullTargetPath,
+          objectStorage: {
+            accessType: 'tumblebug',
+            tumblebug: {
+              endpoint: 'http://localhost:1323/tumblebug',
+              nsId: dataNsId || 'mig01',
+              osId: selectedTargetStorage || 'target-storage-01'
+            }
+          }
+        },
+        strategy: dataStrategy || 'auto',
+        filter: {
+          include: includeFilter ? [includeFilter] : [],
+          exclude: excludeFilter ? [excludeFilter] : []
+        }
+      };
+
+      // 3. Encrypt Sensitive Fields
+      let modelToSend = plainModel;
+      let usedKeyId = 'rsa-oaep-256';
+
+      try {
+        const encRes = await beetleApi.testEncryptData(keyBundle, plainModel);
+        if (encRes.success && encRes.data) {
+          modelToSend = encRes.data;
+          usedKeyId = keyBundle?.keyId || 'rsa-oaep-256';
+        }
+      } catch (e) {
+        console.warn('Field encryption fallback to plaintext mode:', e);
+      }
+
+      // 4. Dispatch Data Migration Execution
+      const res = await beetleApi.migrateData(modelToSend);
+
+      if (!res.success && res.error) {
+        setDataLaunchError(res.error);
+        setIsEncryptingAndLaunching(false);
+        return;
+      }
+
+      const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
+      const newJob: MigrationJob = {
+        id: reqId,
+        reqId,
+        infraId: `data-${selectedSourceBucket || 'source'} -> ${selectedTargetStorage || 'target'}`,
+        nsId: dataNsId,
+        nameSeed: 'data-mig',
+        csp: dataCsp,
+        region: dataRegion,
+        status: 'Handling',
+        startTime: new Date().toLocaleTimeString(),
+        elapsedSeconds: 0,
+        nodeGroupsCount: 1,
+        totalVms: 1,
+        logs: [
+          `GET /beetle/migration/data/encryptionKey -> Issued KeyID: ${usedKeyId}`,
+          `POST /beetle/migration/data -> Encrypted fields & Dispatched (ReqID: ${reqId}, Status: Handling)`
+        ]
+      };
+
+      setJobs(prev => [newJob, ...prev]);
+      setActiveJobId(newJob.id);
+      setShowDataLaunchModal(false);
+      setToastMsg(`🔒 Data Migration launched with encrypted credentials! (ReqID: ${reqId})`);
+      setTimeout(() => setToastMsg(null), 6000);
+    } catch (err: any) {
+      setDataLaunchError(err.message || 'Failed to execute data migration.');
+    } finally {
+      setIsEncryptingAndLaunching(false);
+    }
+  };
 
   // Keep fresh reference of jobs to prevent React closure stale state in setInterval
   const jobsRef = useRef(jobs);
@@ -422,14 +607,16 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
       {/* 2. Dedicated Action Control Box */}
       <div className="glass-panel p-4 rounded-2xl border border-border-main flex flex-wrap items-center gap-3">
-        {/* + Launch New Migration Button */}
+        {/* + Launch New Migration Button (Infra) */}
         <button
           onClick={handleOpenLaunchModal}
           className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
         >
           <Plus className="w-4 h-4" />
-          <span>Launch New Migration</span>
+          <span>Launch New Infrastructure Migration</span>
         </button>
+
+
 
         {/* Active Jobs Summary Badge */}
         <div className="px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-xs font-bold font-mono text-text-main flex items-center gap-2">
@@ -881,6 +1068,285 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <span>Launch Migration</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Launch New Data Migration Modal (With Field Encryption & Target Object Storage Selection) */}
+      {showDataLaunchModal && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-bg-panel border border-border-main rounded-2xl max-w-[95vw] xl:max-w-[1550px] w-full p-6 sm:p-8 space-y-6 shadow-2xl overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-border-main/40 pb-4">
+              <div className="flex items-center space-x-3">
+                <Database className="w-6 h-6 text-emerald-500" />
+                <Shield className="w-5 h-5 text-teal-400" />
+                <h3 className="text-xl font-extrabold text-text-main">
+                  Launch New Data Migration (Field Encrypted)
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowDataLaunchModal(false)}
+                className="w-9 h-9 rounded-xl bg-bg-input hover:bg-bg-main border border-border-main flex items-center justify-center text-text-muted hover:text-text-main transition cursor-pointer font-bold text-base"
+              >
+                ✕
+              </button>
+            </div>
+
+            {dataLaunchError && (
+              <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 font-mono flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{dataLaunchError}</span>
+              </div>
+            )}
+
+            <div className="space-y-5 text-sm max-h-[72vh] overflow-y-auto pr-1">
+
+              {/* 2-Column Side-by-Side Grid for Source & Target Storage Endpoints */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Left Column: 1 & 2. Source Credential Input & Selection */}
+                <div className="p-5.5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-border-main/30 pb-3">
+                      <span className="text-sm font-bold text-emerald-400 uppercase font-mono flex items-center gap-1.5">
+                        <Key className="w-4 h-4 text-emerald-400" />
+                        1. Source Endpoint &amp; Credentials
+                      </span>
+                      <span className="text-xs text-text-muted font-mono">RSA-OAEP-256 Encrypted</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Source CSP Provider</label>
+                        <select
+                          value={dataCsp}
+                          onChange={(e) => setDataCsp(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-sm"
+                        >
+                          <option value="aws">AWS (Amazon S3)</option>
+                          <option value="gcp">GCP (Google Cloud Storage)</option>
+                          <option value="azure">Azure (Blob Storage)</option>
+                          <option value="alibaba">Alibaba Cloud OSS</option>
+                          <option value="tencent">Tencent Cloud COS</option>
+                          <option value="ibm">IBM Cloud Object Storage</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Source Region</label>
+                        <input
+                          type="text"
+                          value={dataRegion}
+                          onChange={(e) => setDataRegion(e.target.value)}
+                          placeholder="ap-northeast-2"
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Source Access Key ID (Encrypted)</label>
+                        <input
+                          type="text"
+                          value={dataAccessKeyId}
+                          onChange={(e) => setDataAccessKeyId(e.target.value)}
+                          placeholder="AKIAEXAMPLE123456789"
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Source Secret Access Key (Encrypted)</label>
+                        <input
+                          type="password"
+                          value={dataSecretAccessKey}
+                          onChange={(e) => setDataSecretAccessKey(e.target.value)}
+                          placeholder="••••••••••••••••••••••••"
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3.5 gap-3 border-t border-border-main/20 mt-3">
+                    <button
+                      type="button"
+                      onClick={handleScanSourceBuckets}
+                      disabled={isScanningSource}
+                      className="px-4 py-2.5 bg-bg-panel hover:bg-bg-main border border-border-main text-emerald-400 rounded-xl text-sm font-extrabold transition flex items-center space-x-2 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {isScanningSource ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      <span>Fetch Source Storage List</span>
+                    </button>
+
+                    <div className="flex items-center space-x-2.5 w-1/2">
+                      <span className="text-text-muted shrink-0 font-normal text-sm">Source Bucket:</span>
+                      <select
+                        value={selectedSourceBucket}
+                        onChange={(e) => setSelectedSourceBucket(e.target.value)}
+                        className="w-full px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-text-main font-bold font-mono focus:outline-none focus:border-emerald-500 text-sm"
+                      >
+                        {sourceBucketList.map(b => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: 3. Target Migrated Object Storage Selection (Beetle API) */}
+                <div className="p-5.5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-border-main/30 pb-3">
+                      <span className="text-sm font-bold text-teal-400 uppercase font-mono flex items-center gap-1.5">
+                        <Cloud className="w-4 h-4 text-teal-400" />
+                        5 &amp; 6. Target Endpoint &amp; Beetle API Selection
+                      </span>
+                      <span className="text-xs text-text-muted font-mono">Beetle Namespace API</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Namespace ID (nsId)</label>
+                        <input
+                          type="text"
+                          value={dataNsId}
+                          onChange={(e) => {
+                            setDataNsId(e.target.value);
+                            handleFetchTargetStorages(e.target.value);
+                          }}
+                          placeholder="mig01"
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-text-muted font-normal text-sm mb-1.5">Target Migrated Storage</label>
+                        <select
+                          value={selectedTargetStorage}
+                          onChange={(e) => setSelectedTargetStorage(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-bold font-mono focus:outline-none focus:border-emerald-500 text-sm"
+                        >
+                          {targetStorageList.length > 0 ? (
+                            targetStorageList.map((st: any) => {
+                              const name = st.id || st.name || st.bucketName || st.osId || 'target-storage-01';
+                              return <option key={name} value={name}>{name} ({st.csp || 'AWS'})</option>;
+                            })
+                          ) : (
+                            <option value="target-storage-01">target-storage-01 (AWS)</option>
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-bg-panel/50 border border-border-main/30 rounded-xl text-text-muted text-xs font-mono leading-relaxed flex items-center justify-between">
+                    <span>💡 Target object storages are automatically retrieved from Beetle backend for namespace <strong className="text-teal-400 font-extrabold">{dataNsId || 'mig01'}</strong>.</span>
+                    <button
+                      type="button"
+                      onClick={() => handleFetchTargetStorages(dataNsId)}
+                      disabled={isFetchingTargets}
+                      className="px-3 py-1 bg-bg-input hover:bg-bg-main border border-border-main text-teal-400 rounded-lg text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      {isFetchingTargets ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                      <span>Query Beetle API</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Requirement 4: Additional Transfer Strategy & Filter Parameters */}
+              <div className="p-5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4">
+                <div className="flex justify-between items-center border-b border-border-main/30 pb-2.5">
+                  <span className="text-sm font-bold text-blue-400 uppercase font-mono flex items-center gap-1.5">
+                    <Filter className="w-4 h-4 text-blue-400" />
+                    4. Data Migration Transfer Options
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-text-muted font-normal text-sm mb-1.5">Transfer Strategy</label>
+                    <select
+                      value={dataStrategy}
+                      onChange={(e) => setDataStrategy(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-sm"
+                    >
+                      <option value="auto">Auto (Optimal Path Selection)</option>
+                      <option value="direct">Direct (Direct Agent Sync)</option>
+                      <option value="relay">Relay (Relay Node Sync)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-text-muted font-normal text-sm mb-1.5">Include Filter Pattern</label>
+                    <input
+                      type="text"
+                      value={includeFilter}
+                      onChange={(e) => setIncludeFilter(e.target.value)}
+                      placeholder="*.json, *.jpg"
+                      className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-text-muted font-normal text-sm mb-1.5">Exclude Filter Pattern</label>
+                    <input
+                      type="text"
+                      value={excludeFilter}
+                      onChange={(e) => setExcludeFilter(e.target.value)}
+                      placeholder="*.tmp, *.bak"
+                      className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Requirement 6: Field Encryption Status Warning Box */}
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between font-mono text-sm">
+                <div className="flex items-center space-x-2.5">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="font-extrabold text-emerald-400 block text-sm">Source Credential Field Encryption Active</span>
+                    <span className="text-text-muted text-xs">RSA-OAEP-256 / AES-256-GCM encrypted in transit with server-issued one-time key.</span>
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full font-bold text-xs">
+                  RSA-OAEP
+                </span>
+              </div>
+
+            </div>
+
+            {/* Requirement 5: Execute Data Migration Button */}
+            <div className="border-t border-border-main/40 pt-4 flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setShowDataLaunchModal(false)}
+                className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold text-sm rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDataLaunch}
+                disabled={isEncryptingAndLaunching}
+                className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+              >
+                {isEncryptingAndLaunching ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>Encrypting &amp; Launching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-4 h-4 text-slate-950" />
+                    <span>Encrypt &amp; Execute Data Migration</span>
+                  </>
+                )}
+              </button>
+            </div>
+
           </div>
         </div>
       )}

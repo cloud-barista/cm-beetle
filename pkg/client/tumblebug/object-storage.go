@@ -67,6 +67,31 @@ func (s *Session) ListObjectStorages(nsId string, option string, filterKey strin
 	return resBody, nil
 }
 
+// ListObjectStorageIDs retrieves the list of all object storage IDs in a namespace
+func (s *Session) ListObjectStorageIDs(nsId string) (tbmodel.IdList, error) {
+	log.Debug().Msgf("Listing object storage IDs in namespace: %s", nsId)
+
+	var resBody tbmodel.IdList
+	resp, err := s.
+		SetQueryParam("option", "id").
+		SetResult(&resBody).
+		Get(fmt.Sprintf("/ns/%s/resources/objectStorage", nsId))
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list object storage IDs")
+		return tbmodel.IdList{}, err
+	}
+
+	if resp.IsError() {
+		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
+		log.Error().Err(err).Msg("Failed to list object storage IDs")
+		return tbmodel.IdList{}, err
+	}
+
+	log.Debug().Msgf("Listed %d object storage IDs successfully", len(resBody.IdList))
+	return resBody, nil
+}
+
 // CreateObjectStorage creates a new object storage (bucket)
 func (s *Session) CreateObjectStorage(nsId string, req tbmodel.ObjectStorageCreateRequest) (tbmodel.ObjectStorageInfo, error) {
 	log.Debug().Msgf("Creating object storage: %s in namespace: %s", req.BucketName, nsId)

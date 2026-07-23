@@ -930,8 +930,8 @@ export const SourceMetadataExtraction: React.FC<{ onNext?: () => void }> = ({ on
               </p>
             </div>
             <div className="flex-1 min-w-[280px] flex flex-col justify-center space-y-3">
-              <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-bold rounded-lg text-sm transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
-                <Save className="w-4 h-4" /> Save Source Infra Revision
+              <button onClick={() => setShowSaveModal(true)} disabled={!refinedSourceInfra} className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+                <Save className="w-4 h-4 text-slate-950" /> Save Source Infra Revision
               </button>
               <p className="text-xs text-text-muted text-center leading-relaxed">
                 Opens a popup to name, version, and save this collected model to Damselfly.

@@ -2145,34 +2145,6 @@ definitions:
     additionalProperties:
       type: string
     type: object
-  migration.MigratedObjectStorageInfo:
-    properties:
-      connectionName:
-        description: 'Connection identifier (format: "{csp}-{region}")'
-        type: string
-      creationDate:
-        description: Bucket creation date (RFC 3339)
-        type: string
-      description:
-        description: Description
-        type: string
-      id:
-        description: Bucket ID (unique identifier within the namespace)
-        type: string
-      name:
-        description: Bucket name in the target cloud
-        type: string
-      status:
-        description: Current status (e.g., "Available")
-        type: string
-    type: object
-  migration.MigratedObjectStorageListResponse:
-    properties:
-      objectStorages:
-        items:
-          $ref: '#/definitions/migration.MigratedObjectStorageInfo'
-        type: array
-    type: object
   migration.StorageObjectInfo:
     properties:
       eTag:
@@ -2566,44 +2538,6 @@ definitions:
         example: true
         type: boolean
     type: object
-  model.ApiResponse-migration_MigratedObjectStorageInfo:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/migration.MigratedObjectStorageInfo'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-migration_MigratedObjectStorageListResponse:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/migration.MigratedObjectStorageListResponse'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
   model.ApiResponse-migration_StorageObjectListResponse:
     properties:
       data:
@@ -2685,6 +2619,63 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/model.K8sNodeGroupReq'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-storagemodel_IdList:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/storagemodel.IdList'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-storagemodel_ObjectStorageInfo:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/storagemodel.ObjectStorageInfo'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-storagemodel_ObjectStorageListResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/storagemodel.ObjectStorageListResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -4109,6 +4100,147 @@ definitions:
         example: ap-northeast-2
         type: string
     type: object
+  storagemodel.Condition:
+    properties:
+      lastTransitionTime:
+        type: string
+      message:
+        type: string
+      reason:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  storagemodel.ConnConfig:
+    properties:
+      configName:
+        type: string
+      credentialHolder:
+        type: string
+      credentialName:
+        type: string
+      driverName:
+        type: string
+      providerName:
+        type: string
+      regionDetail:
+        $ref: '#/definitions/storagemodel.RegionDetail'
+      regionRepresentative:
+        type: boolean
+      regionZoneInfo:
+        $ref: '#/definitions/storagemodel.RegionZoneInfo'
+      regionZoneInfoName:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  storagemodel.IdList:
+    properties:
+      idList:
+        items:
+          type: string
+        type: array
+    type: object
+  storagemodel.Location:
+    properties:
+      display:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  storagemodel.Object:
+    properties:
+      eTag:
+        example: 9b2cf535f27731c974343645a3985328
+        type: string
+      key:
+        example: test-object.txt
+        type: string
+      lastModified:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      size:
+        example: 1024
+        type: integer
+      storageClass:
+        example: STANDARD
+        type: string
+    type: object
+  storagemodel.ObjectStorageInfo:
+    properties:
+      conditions:
+        items:
+          $ref: '#/definitions/storagemodel.Condition'
+        type: array
+      connectionConfig:
+        $ref: '#/definitions/storagemodel.ConnConfig'
+      connectionName:
+        description: Variables for management of Object Storage resource in CB-Tumblebug
+        type: string
+      contents:
+        items:
+          $ref: '#/definitions/storagemodel.Object'
+        type: array
+      creationDate:
+        example: "2025-09-04T04:18:06Z"
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: ""
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: ""
+        type: string
+      description:
+        example: this object storage is managed by CB-Tumblebug
+        type: string
+      id:
+        description: Id is unique identifier for the object
+        example: globally-unique-bucket-name-12345
+        type: string
+      isTruncated:
+        example: false
+        type: boolean
+      marker:
+        example: ""
+        type: string
+      maxKeys:
+        example: 1000
+        type: integer
+      name:
+        description: Name is human-readable string to represent the object
+        example: globally-unique-bucket-name-12345
+        type: string
+      prefix:
+        example: ""
+        type: string
+      resourceType:
+        description: ResourceType is the type of this resource
+        example: ObjectStorage
+        type: string
+      status:
+        type: string
+      systemMessage:
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+    type: object
+  storagemodel.ObjectStorageListResponse:
+    properties:
+      objectStorage:
+        items:
+          $ref: '#/definitions/storagemodel.ObjectStorageInfo'
+        type: array
+    type: object
   storagemodel.RecommendedObjectStorage:
     properties:
       description:
@@ -4128,6 +4260,30 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  storagemodel.RegionDetail:
+    properties:
+      description:
+        type: string
+      location:
+        $ref: '#/definitions/storagemodel.Location'
+      regionId:
+        type: string
+      regionName:
+        type: string
+      representativeZone:
+        type: string
+      zones:
+        items:
+          type: string
+        type: array
+    type: object
+  storagemodel.RegionZoneInfo:
+    properties:
+      assignedRegion:
+        type: string
+      assignedZone:
+        type: string
     type: object
   storagemodel.SourceObjectStorage:
     properties:
@@ -5981,6 +6137,12 @@ paths:
         name: nsId
         required: true
         type: string
+      - description: Option to filter list (e.g., 'id')
+        enum:
+        - id
+        in: query
+        name: option
+        type: string
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
         in: header
@@ -5990,9 +6152,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved object storage list
+          description: Successfully retrieved object storage ID list (option=id)
           schema:
-            $ref: '#/definitions/model.ApiResponse-migration_MigratedObjectStorageListResponse'
+            $ref: '#/definitions/model.ApiResponse-storagemodel_IdList'
         "400":
           description: Invalid request parameters
           schema:
@@ -6169,7 +6331,7 @@ paths:
         "200":
           description: Successfully retrieved object storage details
           schema:
-            $ref: '#/definitions/model.ApiResponse-migration_MigratedObjectStorageInfo'
+            $ref: '#/definitions/model.ApiResponse-storagemodel_ObjectStorageInfo'
         "400":
           description: Invalid request parameters
           schema:

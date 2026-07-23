@@ -1,0 +1,37 @@
+{
+  "namespaceId": "mig01",
+  "sourceObjectStorages": [
+    {
+      "accessFrequency": "frequent",
+      "bucketName": "datamold-aws-test",
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "*"
+          ],
+          "allowedMethod": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE"
+          ],
+          "allowedHeader": [
+            "*"
+          ],
+          "exposeHeader": [
+            "ETag"
+          ],
+          "maxAgeSeconds": 3600
+        }
+      ],
+      "creationDate": "",
+      "encryptionEnabled": false,
+      "isPublic": false,
+      "objectCount": 1000,
+      "tags": {},
+      "totalSizeBytes": 1072082344,
+      "versioningEnabled": false
+    }
+  ]
+}

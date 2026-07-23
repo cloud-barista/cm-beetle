@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useMigrationStore } from '@/store/migrationStore';
+import { CspCredentialForm } from '../common/CspCredentialForm';
 import { Key, Plus, Trash2, RefreshCw, CheckCircle2, Lock, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 
 interface CredentialProfile {
@@ -317,201 +318,25 @@ export const CredentialManagement: React.FC = () => {
                 />
               </div>
 
-              {/* Row 2: Target Cloud Provider (CSP) & Region Selection (Top Section) */}
-              <div className="p-4 rounded-xl border border-border-main bg-bg-main/40 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3 border-b border-border-main/50">
-                  <div>
-                    <label className="block text-text-muted font-bold mb-1">Target Cloud Provider (CSP)</label>
-                    <select
-                      value={csp}
-                      onChange={(e) => handleCspChange(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold uppercase focus:outline-none focus:border-emerald-500 cursor-pointer"
-                    >
-                      {tumblebugProviders.map((p) => (
-                        <option key={p} value={p}>
-                          {p.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-text-muted font-bold mb-1">Default Region</label>
-                    <select
-                      value={region}
-                      onChange={(e) => setRegion(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 cursor-pointer"
-                    >
-                      {getRegionsForCsp(csp).map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Row 3+: Dynamic Credential Input Fields per CSP (Bottom Section - Native CSP Labels) */}
-                <div>
-                  {csp === 'azure' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Application (Client) ID</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="00000000-0000-0000-0000-000000000000"
-                          value={accessKey}
-                          onChange={(e) => setAccessKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Client Secret Value</label>
-                        <input
-                          type="password"
-                          required
-                          placeholder="••••••••••••••••"
-                          value={secretKey}
-                          onChange={(e) => setSecretKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Directory (Tenant) ID</label>
-                        <input
-                          type="text"
-                          placeholder="Tenant GUID"
-                          value={tenantId}
-                          onChange={(e) => setTenantId(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Subscription ID</label>
-                        <input
-                          type="text"
-                          placeholder="Subscription GUID"
-                          value={subscriptionId}
-                          onChange={(e) => setSubscriptionId(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {csp === 'gcp' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Project ID</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="my-gcp-project-id"
-                          value={tenantId}
-                          onChange={(e) => setTenantId(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Client Email (Service Account)</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="sa-name@project-id.iam.gserviceaccount.com"
-                          value={accessKey}
-                          onChange={(e) => setAccessKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">Private Key (JSON / Key Content)</label>
-                        <input
-                          type="password"
-                          required
-                          placeholder="••••••••••••••••"
-                          value={secretKey}
-                          onChange={(e) => setSecretKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {csp !== 'azure' && csp !== 'gcp' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">
-                          {csp === 'tencent' ? 'SecretId' : csp === 'alibaba' ? 'AccessKey ID' : csp === 'ncp' ? 'Access Key ID' : 'Access Key ID'}
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder={csp === 'ncp' ? 'NCP Access Key' : csp === 'alibaba' ? 'LTAI...' : csp === 'tencent' ? 'AKID...' : 'AKIA...'}
-                          value={accessKey}
-                          onChange={(e) => setAccessKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-text-muted font-medium mb-1">
-                          {csp === 'tencent' ? 'SecretKey' : csp === 'alibaba' ? 'AccessKey Secret' : csp === 'ncp' ? 'Secret Key' : 'Secret Access Key'}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showSecret ? 'text' : 'password'}
-                            required
-                            placeholder="••••••••••••••••"
-                            value={secretKey}
-                            onChange={(e) => setSecretKey(e.target.value)}
-                            className="w-full px-3 py-2 pr-10 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowSecret(!showSecret)}
-                            className="absolute right-3 top-2.5 text-text-muted hover:text-text-main transition"
-                          >
-                            {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* S3 Interoperability Section for GCP, Azure, IBM, OpenStack, NHN, KT */}
-                  {['gcp', 'azure', 'ibm', 'openstack', 'nhn', 'nhncloud', 'kt', 'ktcloud'].includes(csp.toLowerCase()) && (
-                    <div className="pt-3 border-t border-border-main/40 mt-3.5 space-y-2">
-                      <div className="flex items-center space-x-1.5 text-text-muted">
-                        <span className="text-[11px] font-extrabold text-teal-400">S3 Interoperability Credentials (AWS S3-Compatible Interoperability)</span>
-                        <span className="text-[10px] text-text-muted">(S3AccessKey &amp; S3SecretKey for Object Storage API Control)</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        <div>
-                          <label className="block text-text-muted font-medium mb-1">S3 Access Key (S3AccessKey)</label>
-                          <input
-                            type="text"
-                            placeholder="S3 Interoperability Access Key"
-                            value={s3AccessKey}
-                            onChange={(e) => setS3AccessKey(e.target.value)}
-                            className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-text-muted font-medium mb-1">S3 Secret Key (S3SecretKey)</label>
-                          <input
-                            type="password"
-                            placeholder="••••••••••••••••"
-                            value={s3SecretKey}
-                            onChange={(e) => setS3SecretKey(e.target.value)}
-                            className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* Modular CSP Credential Form Component */}
+              <CspCredentialForm
+                csp={csp}
+                onCspChange={handleCspChange}
+                region={region}
+                onRegionChange={setRegion}
+                accessKey={accessKey}
+                onAccessKeyChange={setAccessKey}
+                secretKey={secretKey}
+                onSecretKeyChange={setSecretKey}
+                tenantId={tenantId}
+                onTenantIdChange={setTenantId}
+                subscriptionId={subscriptionId}
+                onSubscriptionIdChange={setSubscriptionId}
+                s3AccessKey={s3AccessKey}
+                onS3AccessKeyChange={setS3AccessKey}
+                s3SecretKey={s3SecretKey}
+                onS3SecretKeyChange={setS3SecretKey}
+              />
 
               {/* Modal Footer */}
               <div className="flex justify-end space-x-3 pt-3 border-t border-border-main">
