@@ -1,0 +1,38 @@
+{
+  "name": "target-storage-model-rev1",
+  "version": "1.0.0",
+  "status": "success",
+  "description": "Successfully recommended 1 object storage configuration(s)",
+  "targetCloud": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
+  "targetObjectStorages": [
+    {
+      "bucketName": "os101-x8f2",
+      "sourceBucketName": "datamold-aws-test",
+      "versioningEnabled": false,
+      "corsEnabled": true,
+      "corsRule": [
+        {
+          "allowedOrigin": [
+            "*"
+          ],
+          "allowedMethod": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE"
+          ],
+          "allowedHeader": [
+            "*"
+          ],
+          "exposeHeader": [
+            "ETag"
+          ],
+          "maxAgeSeconds": 3600
+        }
+      ]
+    }
+  ]
+}

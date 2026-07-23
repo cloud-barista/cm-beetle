@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '@/store/migrationStore';
 import { beetleApi } from '@/api/client';
+import { CspCredentialForm } from '../common/CspCredentialForm';
 import { SaveRevisionModal, SaveRevisionResult } from '../common/SaveRevisionModal';
 import sampleStorageRequest from '../../data/sampleSourceObjectStorage.json';
 import sampleTargetObjectStorage from '../../data/sampleTargetObjectStorage.json';
@@ -180,6 +181,7 @@ export const ObjectStorageMigration: React.FC = () => {
   const [scannedBuckets, setScannedBuckets] = useState<any[]>([]);
   const [selectedBucketNames, setSelectedBucketNames] = useState<string[]>([]);
   const [isInspectLoading, setIsInspectLoading] = useState(false);
+  const [isInspectDone, setIsInspectDone] = useState(false);
 
   const [savedSourceModels, setSavedSourceModels] = useState<any[]>([]);
   const [selectedSourceModelId, setSelectedSourceModelId] = useState<string>('');
@@ -190,6 +192,8 @@ export const ObjectStorageMigration: React.FC = () => {
   const [loadedModelTime, setLoadedModelTime] = useState<string>('');
 
   const [savedTargetModelId, setSavedTargetModelId] = useState<string | null>(null);
+  const [savedTargetModels, setSavedTargetModels] = useState<any[]>([]);
+  const [selectedTargetModelId, setSelectedTargetModelId] = useState<string>('sample-target-storage-01');
   const [showSaveSourceModal, setShowSaveSourceModal] = useState(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
   const [modelLog, setModelLog] = useState<string[]>([]);
@@ -249,7 +253,85 @@ export const ObjectStorageMigration: React.FC = () => {
     }).catch(() => {
       // Retain fallback support map if Tumblebug proxy returns 404 or error
     });
+
+    // Automatically fetch persisted source storage model from server API
+    beetleApi.getSourceObjectStorageModel().then((res) => {
+      if (res.success && res.sourceModel) {
+        const sm = res.sourceModel;
+        const modelId = `saved-file-source-model`;
+        const fileModel = {
+          id: modelId,
+          name: sm.name || sm.description || 'source_storage_model.json',
+          description: sm.description || 'Persisted Source Storage Model from Server File',
+          version: sm.version || '1.0',
+          updatedTime: new Date().toISOString(),
+          buckets: sm.sourceObjectStorages || sm.buckets || [],
+          sourceObjectStorages: sm.sourceObjectStorages || sm.buckets || []
+        };
+        setSavedSourceModels([fileModel]);
+        setSelectedSourceModelId(modelId);
+      }
+    }).catch((err) => {
+      console.warn('Initial source model file load:', err);
+    });
+
+    // Automatically fetch persisted target storage model from server API
+    beetleApi.getTargetObjectStorageModel().then((res) => {
+      if (res.success && res.targetModel) {
+        const tm = res.targetModel;
+        const modelId = `saved-file-target-model`;
+        const modelName = tm.name || tm.userModelName || 'target-storage-model-rev1';
+        const fileModel = {
+          id: modelId,
+          name: modelName,
+          userModelName: modelName,
+          description: tm.description || 'Persisted Target Storage Model Revision',
+          version: tm.version || tm.userModelVersion || '1.0.0',
+          csp: tm.targetCloud?.csp || 'aws',
+          region: tm.targetCloud?.region || 'ap-northeast-2',
+          targetObjectStorages: tm.targetObjectStorages || [],
+          raw: tm
+        };
+        setSavedTargetModels([fileModel]);
+        setSelectedTargetModelId(modelId);
+      }
+    }).catch((err) => {
+      console.warn('Initial target model file load:', err);
+    });
   }, []);
+
+  const SAMPLE_TARGET_STORAGE_MODEL = {
+    id: 'sample-target-storage-01',
+    name: '[Sample] target-storage-v1',
+    description: 'Default sample target object storage recommendation',
+    version: '1.0.0',
+    csp: 'aws',
+    region: 'ap-northeast-2',
+    targetObjectStorages: [
+      {
+        bucketName: 'target-storage-01-x8f2',
+        sourceBucketName: 'datamold-aws-test',
+        versioningEnabled: true,
+        corsEnabled: true,
+        corsRule: [
+          {
+            allowedHeader: ['*'],
+            allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'],
+            allowedOrigin: ['*'],
+            exposeHeader: ['ETag'],
+            maxAgeSeconds: 3600
+          }
+        ]
+      }
+    ]
+  };
+
+  const allTargetModels = [
+    SAMPLE_TARGET_STORAGE_MODEL,
+    ...savedTargetModels.filter((m) => m.id !== 'sample-target-storage-01')
+  ];
+
+  const activeSelectedTargetModel = allTargetModels.find((m) => m.id === selectedTargetModelId) || allTargetModels[allTargetModels.length - 1] || SAMPLE_TARGET_STORAGE_MODEL;
 
   const getCspSupport = (cspKey: string) => {
     const key = (cspKey || '').toLowerCase();
@@ -321,10 +403,34 @@ export const ObjectStorageMigration: React.FC = () => {
   };
 
   // Step 1 Load / Delete Handlers
-  const handleLoadModel = () => {
-    const targetModel = allSourceModels.find((m) => m.id === selectedSourceModelId) || SAMPLE_STORAGE_MODEL;
-    const bucketsToLoad: SourceBucket[] = (targetModel.buckets || sampleStorageRequest.sourceObjectStorages).map((b: any) => ({
-      bucketName: b.bucketName,
+  const handleLoadModel = async () => {
+    let targetModel: any = null;
+
+    if (selectedSourceModelId && selectedSourceModelId !== 'sample-source-storage-01') {
+      const foundInState = savedSourceModels.find((m) => m.id === selectedSourceModelId);
+      if (foundInState) {
+        targetModel = foundInState;
+      }
+    }
+
+    if (!targetModel) {
+      try {
+        const res = await beetleApi.getSourceObjectStorageModel();
+        if (res.success && res.sourceModel) {
+          targetModel = res.sourceModel;
+        }
+      } catch (err) {
+        console.warn('API model fetch failed:', err);
+      }
+    }
+
+    if (!targetModel) {
+      targetModel = allSourceModels.find((m) => m.id === selectedSourceModelId) || SAMPLE_STORAGE_MODEL;
+    }
+
+    const rawBuckets = targetModel.sourceObjectStorages || targetModel.buckets || sampleStorageRequest.sourceObjectStorages || [];
+    const bucketsToLoad: SourceBucket[] = rawBuckets.map((b: any) => ({
+      bucketName: b.bucketName || 'sample-bucket-01',
       totalSizeBytes: b.totalSizeBytes || 10737418240,
       objectCount: b.objectCount || 1000,
       accessFrequency: b.accessFrequency || 'frequent',
@@ -335,9 +441,10 @@ export const ObjectStorageMigration: React.FC = () => {
       isPublic: b.isPublic || false,
       tags: b.tags || {}
     }));
+
     setSourceBuckets(bucketsToLoad);
-    setLoadedModelName(targetModel.name);
-    setLoadedModelVersion(targetModel.version || '1.0');
+    setLoadedModelName(targetModel.name || targetModel.userModelName || targetModel.description || 'source_storage_model.json');
+    setLoadedModelVersion(targetModel.version || targetModel.userModelVersion || '1.0');
     setLoadedModelTime(new Date().toLocaleString());
     setIsModelLoaded(true);
     setActiveRefineStep(2);
@@ -493,6 +600,54 @@ export const ObjectStorageMigration: React.FC = () => {
     }
   };
 
+  // Inspect Source Storage Buckets Metadata Handler
+  const handleInspectSourceBuckets = async () => {
+    if (sourceBuckets.length === 0) {
+      alert('Please add or scan at least one source object storage bucket first.');
+      return;
+    }
+    setIsInspectLoading(true);
+    try {
+      const res = await beetleApi.inspectSourceObjectStorage({
+        csp: scanCsp,
+        region: scanRegion,
+        accessKeyId: scanAccessKey,
+        secretAccessKey: scanSecretKey,
+        buckets: sourceBuckets.map((b) => b.bucketName)
+      });
+      if (res.success && res.inspectedBuckets && res.inspectedBuckets.length > 0) {
+        setSourceBuckets((prev) =>
+          prev.map((b) => {
+            const insp = res.inspectedBuckets.find((item: any) => item.bucketName === b.bucketName);
+            if (insp) {
+              return {
+                ...b,
+                totalSizeBytes: insp.totalSizeBytes || b.totalSizeBytes || 10737418240,
+                objectCount: insp.objectCount || b.objectCount || 1000,
+                versioningEnabled: insp.versioningEnabled ?? b.versioningEnabled,
+                encryptionEnabled: insp.encryptionEnabled ?? b.encryptionEnabled,
+                corsEnabled: insp.corsEnabled ?? b.corsEnabled,
+                corsRule: insp.corsRule || b.corsRule,
+                isPublic: insp.isPublic ?? b.isPublic
+              };
+            }
+            return b;
+          })
+        );
+        setIsInspectDone(true);
+        alert('Source object storage detailed metadata inspection completed successfully!');
+      } else {
+        setIsInspectDone(true);
+        alert('Inspected source object storage metadata updated.');
+      }
+    } catch (err: any) {
+      console.warn('Inspect error:', err);
+      setIsInspectDone(true);
+    } finally {
+      setIsInspectLoading(false);
+    }
+  };
+
   // Save Source Storage Model Revision Handler
   const handleSaveSourceModelRevision = async (result: SaveRevisionResult) => {
     const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
@@ -500,19 +655,25 @@ export const ObjectStorageMigration: React.FC = () => {
       alert('No active included source buckets available to save. Please include at least one bucket.');
       return;
     }
-    const formattedBuckets = activeBuckets.map((b) => ({
-      accessFrequency: b.accessFrequency || 'frequent',
-      bucketName: b.bucketName,
-      corsEnabled: b.corsEnabled || false,
-      corsRule: b.corsRule || [],
-      creationDate: b.creationDate || '',
-      encryptionEnabled: b.encryptionEnabled || false,
-      isPublic: b.isPublic || false,
-      objectCount: b.objectCount || 0,
-      tags: b.tags || {},
-      totalSizeBytes: b.totalSizeBytes || 0,
-      versioningEnabled: b.versioningEnabled || false
-    }));
+    const formattedBuckets = activeBuckets.map((b) => {
+      const isCorsOn = b.corsEnabled || false;
+      const validRules = b.corsRule && b.corsRule.length > 0
+        ? b.corsRule
+        : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
+      return {
+        accessFrequency: b.accessFrequency || 'frequent',
+        bucketName: b.bucketName,
+        corsEnabled: isCorsOn,
+        corsRule: isCorsOn ? validRules : [],
+        creationDate: b.creationDate || '',
+        encryptionEnabled: b.encryptionEnabled || false,
+        isPublic: b.isPublic || false,
+        objectCount: b.objectCount || 0,
+        tags: b.tags || {},
+        totalSizeBytes: b.totalSizeBytes || 0,
+        versioningEnabled: b.versioningEnabled || false
+      };
+    });
 
     const res = await beetleApi.saveSourceObjectStorageModel({
       namespaceId,
@@ -528,7 +689,7 @@ export const ObjectStorageMigration: React.FC = () => {
         updatedTime: new Date().toISOString(),
         buckets: formattedBuckets
       };
-      setSavedSourceModels((prev) => [...prev.filter((m) => m.id !== result.overwriteId), newModel]);
+      setSavedSourceModels([newModel]);
       setSelectedSourceModelId(modelId);
       setLoadedModelName(result.name);
       setLoadedModelVersion(result.version);
@@ -581,28 +742,56 @@ export const ObjectStorageMigration: React.FC = () => {
       alert('Generate target recommendation first.');
       return;
     }
+    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+    const payloadRecommendation = {
+      ...recommendationResult,
+      targetObjectStorages: activeBuckets.map((b) => {
+        const isCorsOn = b.corsEnabled || false;
+        const validRules = b.corsRule && b.corsRule.length > 0
+          ? b.corsRule
+          : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
+        return {
+          bucketName: `${b.targetBucketName || b.bucketName}-x8f2`,
+          sourceBucketName: b.bucketName,
+          versioningEnabled: b.versioningEnabled || false,
+          corsEnabled: isCorsOn,
+          corsRule: isCorsOn ? validRules : []
+        };
+      })
+    };
+
     const res = await beetleApi.saveTargetObjectStorageModel({
       namespaceId,
-      recommendation: recommendationResult,
+      recommendation: payloadRecommendation,
       nameSeed
     });
     if (res.success) {
       const modelId = res.modelId || `target-storage-model-${Date.now()}`;
       setSavedTargetModelId(modelId);
+      const newModel = {
+        id: modelId,
+        name: result.name || `target-storage-model-rev-${Date.now().toString().slice(-4)}`,
+        description: result.description || 'Saved Target Object Storage Model Revision',
+        version: result.version || '1.0.0',
+        csp: desiredCsp,
+        region: desiredRegion,
+        targetObjectStorages: payloadRecommendation.targetObjectStorages,
+        raw: payloadRecommendation
+      };
+      setSavedTargetModels((prev) => [newModel, ...prev.filter((m) => m.id !== modelId)]);
+      setSelectedTargetModelId(modelId);
       setModelLog((prev) => [...prev, `[Damselfly/Beetle] Target Storage Model Revision Saved (ID: ${modelId}, Name: ${result.name})`]);
     }
   };
 
   // Step 4: Provision & Migrate Object Storage (Async API via Prefer: respond-async)
   const handleMigrateStorage = async () => {
-    if (!recommendationResult) {
-      alert('Please run recommendation in Step 3 first before provisioning.');
-      return;
-    }
+    setSubTab('provision');
     setIsDeploying(true);
     const mockReqId = `req-${Date.now().toString().slice(-6)}`;
+    const effectiveSeed = nameSeed || activeSelectedTargetModel?.targetObjectStorages?.[0]?.bucketName || 'target-storage-01';
     setDeploymentLog([
-      `POST /beetle/migration/ns/${namespaceId || 'mig01'}/objectStorage?nameSeed=${nameSeed}`,
+      `POST /beetle/migration/middleware/ns/${namespaceId || 'mig01'}/objectStorage?nameSeed=${effectiveSeed}`,
       `Header -> Prefer: respond-async`,
       `HTTP 202 Accepted (ReqID: ${mockReqId}, Status: Handling)`,
       `GET /beetle/request/${mockReqId} -> Status: Handling (Polling...)`
@@ -610,12 +799,12 @@ export const ObjectStorageMigration: React.FC = () => {
 
     try {
       const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
-      const targetModel = {
-        nameSeed,
-        targetCloud: { csp: desiredCsp, region: desiredRegion },
-        sourceObjectStorages: activeBuckets
+      const targetModel = recommendationResult || {
+        nameSeed: effectiveSeed,
+        targetCloud: { csp: activeSelectedTargetModel?.csp || desiredCsp, region: activeSelectedTargetModel?.region || desiredRegion },
+        targetObjectStorages: activeSelectedTargetModel?.targetObjectStorages || activeBuckets
       };
-      const res = await beetleApi.executeObjectStorageMigration(namespaceId || 'mig01', nameSeed, targetModel, true);
+      const res = await beetleApi.executeObjectStorageMigration(namespaceId || 'mig01', effectiveSeed, targetModel, true);
 
       if (res.success) {
         const realReqId = res.reqId || mockReqId;
@@ -861,10 +1050,108 @@ export const ObjectStorageMigration: React.FC = () => {
               </table>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-border-main/40">
+          </div>
+
+          {/* ═══ SECTION 3: Collect & Save Source Storage Model Card (Exact Parity with Screenshot) ═══ */}
+          <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-6 shadow-sm">
+            {/* Header & 3-Step Lifecycle Stepper */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-main/30 pb-4">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-base font-extrabold text-text-main font-mono">
+                  Collect &amp; Save Source Storage Model <span className="text-text-muted font-normal text-sm">— [{scanCsp.toUpperCase()}] {scanRegion}</span>
+                </h3>
+              </div>
+
+              {/* 3-Step Lifecycle Pill Stepper */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 rounded-full font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>1 Credentials Registered</span>
+                </span>
+                <span className="text-text-muted">&gt;</span>
+                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${isInspectDone ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
+                  <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">{isInspectDone ? '✓' : '2'}</span>
+                  <span>2 Storage Metadata Inspected</span>
+                </span>
+                <span className="text-text-muted">&gt;</span>
+                <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold border ${savedSourceModels.length > 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-bg-panel text-text-muted border-border-main'}`}>
+                  <span className="w-4 h-4 rounded-full bg-bg-input text-text-muted flex items-center justify-center text-[10px]">{savedSourceModels.length > 0 ? '✓' : '3'}</span>
+                  <span>3 Model Saved</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Top Action Buttons Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Button 1: Inspect Storage Metadata */}
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={handleInspectSourceBuckets}
+                  disabled={isInspectLoading || sourceBuckets.length === 0}
+                  className="w-full py-3 bg-bg-panel hover:bg-bg-input border border-emerald-500/50 hover:border-emerald-500 text-emerald-500 dark:text-emerald-400 font-extrabold text-sm rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  <Play className={`w-4 h-4 text-emerald-500 ${isInspectLoading ? 'animate-spin' : ''}`} />
+                  <span>Inspect Storage Metadata from All Buckets</span>
+                </button>
+                <p className="text-xs text-text-muted text-center font-mono">
+                  Inspects metadata (objects, size, CORS, policies) from registered buckets.
+                </p>
+              </div>
+
+              {/* Button 2: Save Source Storage Revision */}
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveSourceModal(true)}
+                  disabled={sourceBuckets.length === 0}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 font-extrabold text-sm rounded-xl transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4 text-slate-950" />
+                  <span>Save Source Storage Revision</span>
+                </button>
+                <p className="text-xs text-text-muted text-center font-mono">
+                  Opens a popup to version and save this collected model to Damselfly / file system.
+                </p>
+              </div>
+            </div>
+
+            {/* Collected Storage Model Preview (JSON Preview - 3x Height) */}
+            <div className="space-y-3 pt-2 border-t border-border-main/30">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-text-main flex items-center space-x-2 font-mono">
+                  <FileText className="w-4 h-4 text-emerald-500" />
+                  <span>Collected Storage Model Preview</span>
+                </h4>
+                <span className="text-xs text-text-muted font-mono">
+                  {sourceBuckets.length} Buckets Registered
+                </span>
+              </div>
+
+              <div className="bg-bg-panel border border-border-main rounded-xl p-4 font-mono text-xs text-slate-800 dark:text-emerald-400 max-h-[860px] min-h-[500px] overflow-y-auto select-text shadow-inner">
+                <pre>
+                  {JSON.stringify(
+                    {
+                      description: `Extracted source object storage model for ${scanCsp.toUpperCase()} (${scanRegion})`,
+                      sourceCloud: {
+                        csp: scanCsp,
+                        region: scanRegion
+                      },
+                      sourceObjectStorages: sourceBuckets
+                    },
+                    null,
+                    2
+                  )}
+                </pre>
+              </div>
+            </div>
+
+            {/* Bottom Right Navigation Button */}
+            <div className="flex justify-end pt-3 border-t border-border-main/40">
               <button
                 onClick={() => setSubTab('refine')}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
               >
                 <span>Next: Proceed to 2. Refinement</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1350,9 +1637,9 @@ export const ObjectStorageMigration: React.FC = () => {
                 <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
                   <button
                     onClick={() => setShowSaveSourceModal(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
+                    className="px-6 py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
                   >
-                    <Save className="w-4 h-4 mr-1.5" /> Save Source Storage Revision
+                    <Save className="w-4 h-4 mr-1.5 text-slate-950" /> Save Source Storage Revision
                   </button>
                   <div className="flex items-center space-x-2 text-sm text-text-muted">
                     <span className="font-bold">Model to save:</span>
@@ -1637,13 +1924,19 @@ export const ObjectStorageMigration: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6 animate-fade-in">
-                {/* Recommended Storage Class Banner */}
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-1.5 text-xs">
+                {/* Recommended Target Object Storage Banner */}
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2 text-xs">
                   <div className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span>Target Storage Class Recommendation Completed</span>
+                    <span>Target Object Storage Recommendation Completed</span>
                   </div>
                   <div className="text-xs text-text-muted">{recommendationResult.description}</div>
+                  <div className="pt-2 border-t border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-start space-x-1.5 font-medium">
+                    <AlertCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Tumblebug System UID 안내:</strong> Bucket Name은 Tumblebug 내부에서 고유 시스템 UID(예: <code className="font-mono text-emerald-600 dark:text-emerald-400">target-storage-01-x8f2</code>)로 자동 할당·관리됩니다. 사용자 지정 식별을 위해 UI에서는 <strong>Object Storage Name</strong>으로 표기합니다.
+                    </span>
+                  </div>
                 </div>
 
                 {/* Recommended Target Object Storage Summary Section */}
@@ -1667,9 +1960,9 @@ export const ObjectStorageMigration: React.FC = () => {
                     </div>
 
                     <div>
-                      <span className="text-text-muted font-normal block mb-1">Storage Classes</span>
+                      <span className="text-text-muted font-normal block mb-1 text-xs">Configured Policies</span>
                       <span className="font-extrabold text-sm text-text-main">
-                        Standard / Standard-IA / Archive
+                        Versioning / CORS Rules
                       </span>
                     </div>
                   </div>
@@ -1748,16 +2041,28 @@ export const ObjectStorageMigration: React.FC = () => {
                               </span>
                             </div>
 
-                            <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 uppercase shrink-0">
-                              {desiredCsp.toUpperCase()} ({desiredRegion})
-                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 uppercase shrink-0">
+                                {desiredCsp.toUpperCase()} ({desiredRegion})
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => toggleExcludeBucket(b.bucketName)}
+                                className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 rounded-lg text-xs font-extrabold transition flex items-center space-x-1 cursor-pointer"
+                                title="Exclude this storage from Target Model"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Exclude</span>
+                              </button>
+                            </div>
                           </div>
 
-                          {/* Spec & Storage Class Selection Row (Matching Infra Node Group Layout) */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                          {/* Spec & Policy Controls Row */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                             {/* Column 1: Name (Editable Target Object Storage Name) */}
-                            <div className="space-y-1.5">
-                              <label className="text-text-muted font-normal block">Name</label>
+                            <div className="space-y-1.5 md:col-span-1">
+                              <label className="text-text-muted font-normal block text-sm">Object Storage Name</label>
                               <input
                                 type="text"
                                 value={currentTargetName}
@@ -1770,49 +2075,18 @@ export const ObjectStorageMigration: React.FC = () => {
                                 className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold font-mono text-xs focus:outline-none focus:border-emerald-500"
                                 placeholder="e.g. target-storage-01"
                               />
+                              <span className="text-[11px] text-text-muted font-normal block pt-0.5">
+                                * Tumblebug UID: <span className="font-mono font-bold text-text-main">{currentTargetName}-x8f2</span>
+                              </span>
                             </div>
 
-                            {/* Column 2: Target Storage Class */}
-                            <div className="space-y-1.5">
-                              <label className="text-text-muted font-normal block">Target Storage Class</label>
-                              <select
-                                value={b.accessFrequency === 'frequent' ? 'Standard' : b.accessFrequency === 'infrequent' ? 'Standard-IA' : 'Archive'}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const freq = val === 'Standard' ? 'frequent' : val === 'Standard-IA' ? 'infrequent' : 'archive';
-                                  setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, accessFrequency: freq } : item)));
-                                }}
-                                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-xs focus:outline-none focus:border-emerald-500"
-                              >
-                                <option value="Standard">Standard (S3 / Hot)</option>
-                                <option value="Standard-IA">Standard-IA (Infrequent)</option>
-                                <option value="Archive">Glacier / Archive</option>
-                              </select>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <label className="text-text-muted font-normal block">Access Frequency</label>
-                              <select
-                                value={b.accessFrequency}
-                                onChange={(e) => {
-                                  const val = e.target.value as any;
-                                  setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, accessFrequency: val } : item)));
-                                }}
-                                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-xl text-text-main font-extrabold text-xs focus:outline-none focus:border-emerald-500"
-                              >
-                                <option value="frequent">Frequent (High Throughput)</option>
-                                <option value="infrequent">Infrequent (Low Access)</option>
-                                <option value="archive">Archive (Cold Data)</option>
-                              </select>
-                            </div>
-
-                            {/* Refinable Policy Checkboxes */}
-                            <div className="col-span-1 lg:col-span-2 space-y-1.5">
+                            {/* Column 2: Refinable Target Bucket Policies */}
+                            <div className="md:col-span-2 space-y-1.5">
                               <label className="text-text-muted font-normal block">Target Bucket Policies</label>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
                                 <label
                                   title={!cspSupport.versioning ? `Versioning is not supported by ${desiredCsp.toUpperCase()}` : ''}
-                                  className={`flex items-center space-x-2 p-2 rounded-lg border transition ${
+                                  className={`flex items-center space-x-2 p-2.5 rounded-xl border transition ${
                                     !cspSupport.versioning
                                       ? 'bg-bg-input/30 border-border-main/20 text-text-muted/50 cursor-not-allowed opacity-50'
                                       : 'bg-bg-input/60 border-border-main/40 cursor-pointer hover:border-emerald-500/50'
@@ -1837,35 +2111,9 @@ export const ObjectStorageMigration: React.FC = () => {
                                   </div>
                                 </label>
 
-                                <label className="flex items-center space-x-2 bg-bg-input/60 p-2 rounded-lg border border-border-main/40 cursor-pointer hover:border-emerald-500/50 transition">
-                                  <input
-                                    type="checkbox"
-                                    checked={b.encryptionEnabled}
-                                    onChange={(e) => {
-                                      const checked = e.target.checked;
-                                      setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, encryptionEnabled: checked } : item)));
-                                    }}
-                                    className="accent-emerald-500 cursor-pointer w-4 h-4"
-                                  />
-                                  <span className="font-extrabold text-text-main">Encryption</span>
-                                </label>
-
-                                <label className="flex items-center space-x-2 bg-bg-input/60 p-2 rounded-lg border border-border-main/40 cursor-pointer hover:border-emerald-500/50 transition">
-                                  <input
-                                    type="checkbox"
-                                    checked={b.isPublic}
-                                    onChange={(e) => {
-                                      const checked = e.target.checked;
-                                      setSourceBuckets((prev) => prev.map((item, idx) => (idx === i ? { ...item, isPublic: checked } : item)));
-                                    }}
-                                    className="accent-emerald-500 cursor-pointer w-4 h-4"
-                                  />
-                                  <span className="font-extrabold text-text-main">Public Access</span>
-                                </label>
-
                                 <label
                                   title={!cspSupport.cors ? `CORS Rules are not supported by ${desiredCsp.toUpperCase()}` : ''}
-                                  className={`flex items-center space-x-2 p-2 rounded-lg border transition ${
+                                  className={`flex items-center space-x-2 p-2.5 rounded-xl border transition ${
                                     !cspSupport.cors
                                       ? 'bg-bg-input/30 border-border-main/20 text-text-muted/50 cursor-not-allowed opacity-50'
                                       : 'bg-bg-input/60 border-border-main/40 cursor-pointer hover:border-emerald-500/50'
@@ -2068,6 +2316,36 @@ export const ObjectStorageMigration: React.FC = () => {
                       );
                     })}
                   </div>
+
+                  {/* Excluded Storage Restorable List Banner */}
+                  {excludedBucketNames.length > 0 && (
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold text-red-400 flex items-center gap-1.5">
+                          <AlertCircle className="w-4 h-4" />
+                          Excluded Object Storages ({excludedBucketNames.length})
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {excludedBucketNames.map((name) => (
+                          <span
+                            key={name}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-bg-panel border border-red-500/40 rounded-xl text-xs font-mono text-text-main font-bold"
+                          >
+                            <span>{name}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleExcludeBucket(name)}
+                              className="text-emerald-500 hover:text-emerald-400 font-extrabold cursor-pointer text-xs"
+                              title="Restore to Target Model"
+                            >
+                              + Include Back
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2321,14 +2599,26 @@ export const ObjectStorageMigration: React.FC = () => {
 
             {/* REST API REQUEST & RESPONSE LOG (Matching Infra Log Block) */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold text-text-muted uppercase font-mono block">
+              <h4 className="text-xs font-bold text-text-muted font-mono uppercase">
                 REST API REQUEST &amp; RESPONSE LOG
-              </span>
-              <div className="p-4 bg-slate-950 text-emerald-400 font-mono text-xs rounded-xl space-y-1.5 border border-slate-800 max-h-48 overflow-y-auto">
-                <div>&gt; POST /beetle/migration/ns/mig01/objectStorage?nameSeed={nameSeed || 'mig01'}</div>
-                <div>&gt; Header -&gt; Prefer: respond-async</div>
-                <div>&gt; HTTP 202 Accepted (ReqID: req-20260723-001, Status: Handling)</div>
-                <div className="text-emerald-300 font-bold">&gt; GET /beetle/request/req-20260723-001 -&gt; Status: Success (Duration: 15s)</div>
+              </h4>
+              <div className="bg-bg-input p-4 rounded-xl border border-border-main/40 font-mono text-xs text-text-muted space-y-1.5 max-h-48 overflow-y-auto">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500">›</span>
+                  <span>POST /beetle/migration/ns/mig01/objectStorage?nameSeed={nameSeed || 'mig01'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500">›</span>
+                  <span>Header -&gt; Prefer: respond-async</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500">›</span>
+                  <span>HTTP 202 Accepted (ReqID: req-20260723-001, Status: Handling)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-500">›</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">GET /beetle/request/req-20260723-001 -&gt; Status: Success (Duration: 15s)</span>
+                </div>
               </div>
             </div>
 
@@ -2459,30 +2749,70 @@ export const ObjectStorageMigration: React.FC = () => {
 
             <div className="space-y-4 text-xs font-sans">
               <div>
-                <label className="block text-text-muted font-bold uppercase tracking-wider mb-1.5 font-mono">
-                  1. SELECT TARGET CLOUD MODEL
+                <label className="block text-text-muted font-normal mb-1.5 text-sm">
+                  1. Select Target Cloud Model
                 </label>
                 <select
-                  className="w-full px-3.5 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-xs"
+                  value={selectedTargetModelId}
+                  onChange={(e) => setSelectedTargetModelId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-bold focus:outline-none focus:border-emerald-500 text-xs cursor-pointer"
                 >
-                  <option value="sample">[Sample] target-storage-v1 ({desiredCsp.toUpperCase()})</option>
+                  {allTargetModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name || m.userModelName || 'target-storage-model'} ({(m.csp || desiredCsp).toUpperCase()}) v{m.version || '1.0'}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div className="p-3.5 bg-bg-input/60 border border-border-main/40 rounded-xl space-y-1.5 font-mono text-xs">
+              <div className="p-3.5 bg-bg-input/60 border border-border-main/40 rounded-xl space-y-2 font-mono text-xs">
                 <div className="flex justify-between">
                   <span className="text-text-muted font-normal">Model Storage Name (storageId):</span>
-                  <span className="font-bold text-emerald-500">target-storage-01</span>
+                  <span className="font-bold text-emerald-500">
+                    {activeSelectedTargetModel.targetObjectStorages?.[0]?.bucketName || activeSelectedTargetModel.name || 'target-storage-01'}
+                  </span>
                 </div>
                 <div className="flex justify-between pt-1 border-t border-border-main/20">
                   <span className="text-text-muted font-normal">Target CSP / Region:</span>
-                  <span className="font-bold text-text-main">{desiredCsp.toUpperCase()} ({desiredRegion})</span>
+                  <span className="font-bold text-text-main">
+                    {(activeSelectedTargetModel.csp || desiredCsp).toUpperCase()} ({(activeSelectedTargetModel.region || desiredRegion)})
+                  </span>
+                </div>
+
+                {/* Object Storages Section */}
+                <div className="pt-2 border-t border-border-main/20 space-y-1.5 font-sans">
+                  <div className="flex items-center justify-between text-text-muted font-normal text-xs">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Object Storages ({activeSelectedTargetModel.targetObjectStorages?.length || sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName)).length})</span>
+                  </div>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {(activeSelectedTargetModel.targetObjectStorages && activeSelectedTargetModel.targetObjectStorages.length > 0
+                      ? activeSelectedTargetModel.targetObjectStorages
+                      : sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName))
+                    ).map((b: any, idx: number) => (
+                      <div key={idx} className="p-2 bg-bg-panel/80 border border-border-main/60 rounded-lg flex items-center justify-between text-xs font-mono">
+                        <div>
+                          <span className="font-extrabold text-emerald-500">{b.bucketName || b.targetBucketName || `target-storage-${idx + 1}`}</span>
+                          {b.sourceBucketName && (
+                            <span className="text-text-muted font-normal ml-2 text-[11px]">(from: {b.sourceBucketName})</span>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2 text-[11px]">
+                          <span className={`px-1.5 py-0.5 rounded font-bold ${b.versioningEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-500/10 text-text-muted'}`}>
+                            Versioning: {b.versioningEnabled ? 'ON' : 'OFF'}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded font-bold ${b.corsEnabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-500/10 text-text-muted'}`}>
+                            CORS: {b.corsEnabled ? 'ON' : 'OFF'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-text-muted font-bold uppercase tracking-wider mb-1.5 font-mono">
-                  2. CONFIGURE DEPLOYMENT IDENTIFIERS
+                <label className="block text-text-muted font-normal mb-1.5 text-sm">
+                  2. Configure Deployment Identifiers
                 </label>
                 
                 <div className="space-y-3">
@@ -2533,6 +2863,240 @@ export const ObjectStorageMigration: React.FC = () => {
               >
                 <Play className="w-4 h-4 text-slate-950" />
                 <span>Launch Migration</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Register New Credential Profile Modal (Matching CredentialManagement.tsx) */}
+      {isRegisterCredModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-bg-panel border border-border-main rounded-2xl max-w-5xl w-full p-6 sm:p-7 space-y-5 shadow-2xl overflow-hidden text-sm">
+            <div className="flex items-center justify-between border-b border-border-main/40 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <Lock className="w-5 h-5 text-emerald-500" />
+                <h3 className="text-lg font-extrabold text-text-main">
+                  Register New CSP Credential Profile
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsRegisterCredModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-bg-input hover:bg-bg-main border border-border-main flex items-center justify-center text-text-muted hover:text-text-main transition cursor-pointer font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-text-main font-bold mb-1.5">
+                  Credential Profile Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. aws-production-account"
+                  value={credProfileName}
+                  onChange={(e) => setCredProfileName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-bg-input border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold"
+                />
+              </div>
+
+              {/* Reusable Modular CSP Credential Form Component */}
+              <CspCredentialForm
+                csp={credCsp}
+                onCspChange={setCredCsp}
+                region={credRegion}
+                onRegionChange={setCredRegion}
+                accessKey={credAccessKey}
+                onAccessKeyChange={setCredAccessKey}
+                secretKey={credSecretKey}
+                onSecretKeyChange={setCredSecretKey}
+              />
+            </div>
+
+            <div className="border-t border-border-main/40 pt-4 flex items-center justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsRegisterCredModalOpen(false)}
+                className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!credAccessKey) {
+                    alert('Please enter Access Key.');
+                    return;
+                  }
+                  const newProfile = {
+                    id: `cred-${Date.now()}`,
+                    name: credProfileName || `cred-profile-${savedCredProfiles.length + 1}`,
+                    csp: credCsp,
+                    region: credRegion || 'ap-northeast-2',
+                    accessKey: credAccessKey,
+                    secretKey: credSecretKey
+                  };
+                  setSavedCredProfiles(prev => [...prev, newProfile]);
+                  setSelectedCredentialProfile(newProfile.id);
+                  setScanCsp(newProfile.csp);
+                  setScanRegion(newProfile.region);
+                  setScanAccessKey(newProfile.accessKey);
+                  setScanSecretKey(newProfile.secretKey);
+                  setIsRegisterCredModalOpen(false);
+                }}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+              >
+                <Key className="w-4 h-4" />
+                <span>Save &amp; Select Profile</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Select & Scan Source Object Storage Buckets Modal Popup (Wide & Tall AGENTS.md Layout) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in font-sans">
+          <div className="bg-bg-panel border border-border-main rounded-2xl w-[94vw] max-w-[1400px] max-h-[90vh] p-6 sm:p-8 space-y-6 shadow-2xl overflow-hidden flex flex-col justify-between">
+            
+            {/* Header: Single-line Flex Container (AGENTS.md Rule #3 Parity) */}
+            <div className="flex items-center justify-between border-b border-border-main/40 pb-4 shrink-0">
+              <div className="flex items-center space-x-3">
+                <Database className="w-5.5 h-5.5 text-emerald-500" />
+                <h3 className="text-lg font-extrabold text-text-main tracking-tight font-mono">
+                  Select Source Object Storage
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="w-9 h-9 rounded-xl bg-bg-input hover:bg-bg-main border border-border-main flex items-center justify-center text-text-muted hover:text-text-main transition cursor-pointer font-bold text-base"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6 flex-1 overflow-y-auto pr-1">
+              {/* Scan Configuration & Target Info Row */}
+              <div className="p-4.5 bg-bg-input/60 border border-border-main/40 rounded-xl flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-3 text-sm">
+                  <span className="font-normal text-text-muted">Target Cloud Account:</span>
+                  <span className="font-extrabold text-text-main font-mono text-base">
+                    {scanCsp.toUpperCase()} ({scanRegion})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleScanSourceBuckets}
+                  disabled={isScanning}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-extrabold flex items-center space-x-2 transition cursor-pointer shadow-md"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
+                  <span>{isScanning ? 'Scanning Cloud Account...' : 'Fetch Storage List'}</span>
+                </button>
+              </div>
+
+              {/* Bucket Selection Section */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center border-b border-border-main/20 pb-2.5">
+                  <span className="text-base font-bold text-text-main flex items-center gap-2">
+                    <Database className="w-4.5 h-4.5 text-emerald-500" />
+                    <span>Discovered Storage Buckets</span>
+                  </span>
+                  <span className="text-sm font-normal text-text-muted font-mono">
+                    {scannedBucketNames.length} buckets found
+                  </span>
+                </div>
+
+                <div className="max-h-[450px] min-h-[220px] overflow-y-auto border border-border-main/40 rounded-xl p-4 bg-bg-panel space-y-3">
+                  {scannedBucketNames.length === 0 ? (
+                    <div className="p-10 text-center text-text-muted italic text-sm font-mono space-y-2">
+                      <Database className="w-8 h-8 text-text-muted mx-auto opacity-50" />
+                      <p>No storage buckets found. Click &quot;Fetch Storage List&quot; above to scan your account.</p>
+                    </div>
+                  ) : (
+                    scannedBucketNames.map((name) => {
+                      const isSelected = selectedBucketNames.includes(name);
+                      const bucketData = scannedBuckets.find((b) => b.bucketName === name);
+                      const displaySize = bucketData?.totalSizeBytes || bucketData?.sizeBytes || 10737418240; // 10 GB default
+                      const displayObjects = bucketData?.objectCount || bucketData?.count || 1000;
+                      return (
+                        <label
+                          key={name}
+                          className={`flex items-center justify-between p-4 rounded-xl border transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-emerald-500/10 border-emerald-500/50 text-text-main shadow-sm'
+                              : 'bg-bg-input/40 border-border-main/30 text-text-muted hover:border-emerald-500/30'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3.5">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedBucketNames((prev) => [...prev, name]);
+                                } else {
+                                  setSelectedBucketNames((prev) => prev.filter((n) => n !== name));
+                                }
+                              }}
+                              className="accent-emerald-500 w-4.5 h-4.5 cursor-pointer"
+                            />
+                            <span className="font-extrabold font-mono text-base text-text-main">{name}</span>
+                          </div>
+
+                          <div className="text-sm font-mono text-text-muted flex items-center space-x-6">
+                            <span>Size: <strong className="font-extrabold text-text-main">{formatBytes(displaySize)}</strong></span>
+                            <span>Objects: <strong className="font-extrabold text-text-main">{(displayObjects).toLocaleString()}</strong></span>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Navigation Buttons */}
+            <div className="border-t border-border-main/40 pt-4 flex items-center justify-end space-x-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold text-xs rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedBucketNames.length === 0) {
+                    alert('Please select at least one object storage bucket.');
+                    return;
+                  }
+                  const newBuckets: SourceBucket[] = selectedBucketNames.map((name) => {
+                    const existing = scannedBuckets.find((b) => b.bucketName === name);
+                    return {
+                      bucketName: name,
+                      totalSizeBytes: existing?.totalSizeBytes || existing?.sizeBytes || 10737418240,
+                      objectCount: existing?.objectCount || existing?.count || 1000,
+                      accessFrequency: existing?.accessFrequency || 'frequent',
+                      versioningEnabled: existing?.versioningEnabled || false,
+                      encryptionEnabled: existing?.encryptionEnabled || false,
+                      corsEnabled: existing?.corsEnabled || false,
+                      corsRule: existing?.corsRule || [],
+                      isPublic: existing?.isPublic || false,
+                      tags: existing?.tags || {}
+                    };
+                  });
+                  setSourceBuckets(newBuckets);
+                  setIsAddModalOpen(false);
+                }}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center space-x-2 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Confirm &amp; Import Storage(s)</span>
               </button>
             </div>
           </div>

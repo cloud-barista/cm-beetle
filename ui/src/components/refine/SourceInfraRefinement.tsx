@@ -718,9 +718,9 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
                   <div className="flex flex-row items-center justify-start pt-4 border-t border-border-main/20 mt-4 space-x-4">
                     <button
                       onClick={() => setShowSaveModal(true)}
-                      className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
+                      className="px-6 py-3 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-600 hover:from-emerald-500 hover:to-blue-700 text-slate-950 rounded-xl text-sm font-extrabold flex items-center transition cursor-pointer shadow-lg shadow-emerald-500/10 shrink-0"
                     >
-                      <Save className="w-4 h-4 mr-1.5" /> Save Source Infra Revision
+                      <Save className="w-4 h-4 mr-1.5 text-slate-950" /> Save Source Infra Revision
                     </button>
                     <div className="flex items-center space-x-2 text-sm text-text-muted">
                       <span className="font-bold">Model to save:</span>

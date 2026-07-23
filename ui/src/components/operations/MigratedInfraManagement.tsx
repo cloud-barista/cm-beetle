@@ -26,10 +26,74 @@ import {
   List,
   Shield,
   Network,
-  Radio
+  Radio,
+  Database,
+  Sliders
 } from 'lucide-react';
 
 const SAMPLE_INFRA_ID = 'sample-aws-infra-01';
+
+const SAMPLE_STORAGE_ID = 'sample-aws-object-storage-01';
+
+const SAMPLE_STORAGE_DETAIL = {
+  resourceType: 'ObjectStorage',
+  id: 'sample-aws-object-storage-01',
+  uid: 'sample-aws-object-storage-01-uid-001',
+  name: 'sample-aws-object-storage-01',
+  connectionName: 'aws-ap-northeast-2',
+  connectionConfig: {
+    configName: 'aws-ap-northeast-2',
+    providerName: 'AWS',
+    driverName: 'aws-driver-v1.0',
+    credentialName: 'aws-credential',
+    credentialHolder: 'admin',
+    regionZoneInfo: {
+      assignedRegion: 'ap-northeast-2',
+      assignedZone: 'ap-northeast-2a'
+    }
+  },
+  description: 'Sample object storage for UI demo',
+  status: 'Available',
+  creationDate: '2026-07-23T10:00:00Z',
+  contents: [
+    { key: 'sample-data-01.csv', size: 1024500, storageClass: 'STANDARD', eTag: '9b2cf535f27731c974343645a3985328', lastModified: '2026-07-23T10:05:00Z' },
+    { key: 'backup-config.json', size: 45200, storageClass: 'STANDARD', eTag: '4a1bf535f27731c974343645a3989912', lastModified: '2026-07-23T10:10:00Z' }
+  ]
+};
+
+const MIGRATED_STORAGE_DEMO = {
+  resourceType: 'ObjectStorage',
+  id: 'os101-x8f2-os101-x8f2',
+  uid: 'os101-x8f2-os101-x8f2',
+  name: 'os101-x8f2-os101-x8f2',
+  connectionName: 'aws-ap-northeast-2',
+  connectionConfig: {
+    configName: 'aws-ap-northeast-2',
+    providerName: 'AWS',
+    driverName: 'aws-driver-v1.0',
+    credentialName: 'aws-credential',
+    credentialHolder: 'admin',
+    regionZoneInfo: {
+      assignedRegion: 'ap-northeast-2',
+      assignedZone: 'ap-northeast-2a'
+    }
+  },
+  description: 'Created by CM-Beetle',
+  status: 'Available',
+  creationDate: '2026-07-23T12:00:00Z',
+  contents: []
+};
+
+const extractCspAndRegionFromConnection = (connName?: string) => {
+  if (!connName) return { csp: 'AWS', region: 'ap-northeast-2' };
+  const parts = connName.split('-');
+  if (parts.length >= 2) {
+    const csp = parts[0].toUpperCase();
+    const region = parts.slice(1).join('-');
+    return { csp, region };
+  }
+  return { csp: connName.toUpperCase(), region: 'ap-northeast-2' };
+};
 
 const SAMPLE_INFRA_DETAIL = {
   name: 'sample-aws-infra-01',
@@ -104,10 +168,74 @@ export const MigratedInfraManagement: React.FC = () => {
   const [selectedInfraId, setSelectedInfraId] = useState<string>('');
   const [catalogViewMode, setCatalogViewMode] = useState<'grid' | 'table'>('grid');
   const [activeSubTab, setActiveSubTab] = useState<'vms' | 'vnets' | 'sgs' | 'ssh' | 'nlb'>('vms');
+  const [overviewCategory, setOverviewCategory] = useState<'infra' | 'storage'>('infra');
+
+  const [migratedStorages, setMigratedStorages] = useState<any[]>([]);
+  const [isLoadingStorages, setIsLoadingStorages] = useState<boolean>(false);
+  const [storageCatalogViewMode, setStorageCatalogViewMode] = useState<'grid' | 'table'>('grid');
+  const [selectedStorageId, setSelectedStorageId] = useState<string>('os101-x8f2');
+
+  const loadMigratedStorages = async () => {
+    setIsLoadingStorages(true);
+    try {
+      const ns = namespaceId || 'mig01';
+      const list = await beetleApi.getMigratedObjectStorages(ns);
+      const storageList = Array.isArray(list) ? list : [];
+      
+      const map = new Map<string, any>();
+      map.set(SAMPLE_STORAGE_ID, SAMPLE_STORAGE_DETAIL);
+      map.set(MIGRATED_STORAGE_DEMO.id, MIGRATED_STORAGE_DEMO);
+
+      storageList.forEach((s: any) => {
+        const key = s.name || s.bucketName || s.id;
+        if (key) map.set(key, s);
+      });
+
+      const combined = Array.from(map.values());
+      setMigratedStorages(combined);
+      if (!selectedStorageId) {
+        setSelectedStorageId(MIGRATED_STORAGE_DEMO.id);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch migrated object storages:', err);
+      setMigratedStorages([SAMPLE_STORAGE_DETAIL, MIGRATED_STORAGE_DEMO]);
+      if (!selectedStorageId) {
+        setSelectedStorageId(MIGRATED_STORAGE_DEMO.id);
+      }
+    } finally {
+      setIsLoadingStorages(false);
+    }
+  };
 
   // Detailed infra object fetched from GET /beetle/migration/ns/{nsId}/infra/{infraId}
   const [loadedInfraDetail, setLoadedInfraDetail] = useState<any | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
+  // Detailed storage object fetched from GET /beetle/migration/middleware/ns/{nsId}/objectStorage/{osId}
+  const [loadedStorageDetail, setLoadedStorageDetail] = useState<any | null>(null);
+  const [isLoadingStorageDetail, setIsLoadingStorageDetail] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!selectedStorageId || selectedStorageId === SAMPLE_STORAGE_ID) {
+      setLoadedStorageDetail(null);
+      return;
+    }
+    const fetchDetail = async () => {
+      setIsLoadingStorageDetail(true);
+      try {
+        const ns = namespaceId || 'mig01';
+        const detail = await beetleApi.getMigratedObjectStorageDetail(ns, selectedStorageId);
+        if (detail) {
+          setLoadedStorageDetail(detail);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch storage detail:', err);
+      } finally {
+        setIsLoadingStorageDetail(false);
+      }
+    };
+    fetchDetail();
+  }, [selectedStorageId, namespaceId]);
 
   const fetchMigratedInfraIds = async () => {
     setIsLoadingIds(true);
@@ -209,6 +337,7 @@ export const MigratedInfraManagement: React.FC = () => {
 
   useEffect(() => {
     fetchMigratedInfraIds();
+    loadMigratedStorages();
   }, [namespaceId]);
 
   // Combine backend migrated infras, completed migration jobs from store, and saved models
@@ -385,13 +514,42 @@ export const MigratedInfraManagement: React.FC = () => {
         </span>
       </div>
 
-      {/* 2. Deployed Infrastructures (Cards vs Table Toggle) */}
-      <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-4">
-        <div className="flex flex-wrap justify-between items-center gap-3 border-b border-border-main/20 pb-3">
-          <h3 className="text-sm font-extrabold text-text-main flex items-center gap-2">
-            <Server className="w-4 h-4 text-emerald-500" />
-            Deployed Infrastructures ({migratedInfraIds.length})
-          </h3>
+      {/* 2. Overview Category Sub-Tabs (Cloud Infrastructures vs Object Storages) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setOverviewCategory('infra')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+            overviewCategory === 'infra'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+              : 'bg-bg-panel border border-border-main text-text-muted hover:text-text-main'
+          }`}
+        >
+          <Server className="w-4 h-4" />
+          <span>Cloud Infrastructures ({migratedInfraIds.length})</span>
+        </button>
+
+        <button
+          onClick={() => setOverviewCategory('storage')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition cursor-pointer ${
+            overviewCategory === 'storage'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+              : 'bg-bg-panel border border-border-main text-text-muted hover:text-text-main'
+          }`}
+        >
+          <HardDrive className="w-4 h-4" />
+          <span>Object Storages ({migratedStorages.length})</span>
+        </button>
+      </div>
+
+      {overviewCategory === 'infra' && (
+        <div className="space-y-6">
+          {/* 3. Cloud Infrastructures Section (Cards vs Table Toggle) */}
+          <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-4">
+            <div className="flex flex-wrap justify-between items-center gap-3 border-b border-border-main/20 pb-3">
+              <h3 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                <Server className="w-4 h-4 text-emerald-500" />
+                Cloud Infrastructures ({migratedInfraIds.length})
+              </h3>
 
           <div className="flex items-center gap-2">
             {/* View Switcher Toggle (Cards vs Table) */}
@@ -623,13 +781,14 @@ export const MigratedInfraManagement: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          )
-        ) : (
-          <div className="py-8 text-center text-text-muted text-xs font-mono italic">
-            No deployed infrastructures found. Execute a migration in Tab 4 to deploy new infrastructure.
-          </div>
-        )}
-      </div>
+          )) : (
+            <div className="py-8 text-center text-text-muted text-xs font-mono italic">
+              No deployed infrastructures found. Execute a migration in Tab 4 to deploy new infrastructure.
+            </div>
+          )}
+        </div>
+
+
 
       {deleteSuccessMsg && (
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl text-sm font-bold flex items-center gap-2">
@@ -1024,6 +1183,404 @@ export const MigratedInfraManagement: React.FC = () => {
           </p>
         </div>
       )}
+      </div>
+      )}
+
+      {overviewCategory === 'storage' && (() => {
+        const activeSelectedStorage = (loadedStorageDetail?.name || loadedStorageDetail?.id) === selectedStorageId
+          ? loadedStorageDetail
+          : (migratedStorages.find((s: any) => (s.name || s.bucketName || s.id) === selectedStorageId) || migratedStorages[0] || SAMPLE_STORAGE_DETAIL);
+
+        return (
+          <div className="space-y-6 animate-fade-in">
+            {/* 4. Object Storages Section */}
+            <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-4">
+              <div className="flex flex-wrap justify-between items-center gap-3 border-b border-border-main/20 pb-3">
+                <h3 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-emerald-500" />
+                  <span>Object Storages ({migratedStorages.length})</span>
+                </h3>
+
+                <div className="flex items-center gap-2">
+                  {/* View Switcher Toggle (Cards vs Table) */}
+                  <div className="flex items-center bg-bg-panel/80 p-0.5 rounded-lg border border-border-main">
+                    <button
+                      onClick={() => setStorageCatalogViewMode('grid')}
+                      className={`p-1.5 px-2.5 rounded-md transition cursor-pointer text-xs flex items-center gap-1 font-bold font-mono ${
+                        storageCatalogViewMode === 'grid'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                      title="Cards Grid View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Cards</span>
+                    </button>
+                    <button
+                      onClick={() => setStorageCatalogViewMode('table')}
+                      className={`p-1.5 px-2.5 rounded-md transition cursor-pointer text-xs flex items-center gap-1 font-bold font-mono ${
+                        storageCatalogViewMode === 'table'
+                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                          : 'text-text-muted hover:text-text-main'
+                      }`}
+                      title="Compact Table Row View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>Table</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={loadMigratedStorages}
+                    disabled={isLoadingStorages}
+                    className="px-3 py-1.5 bg-bg-panel hover:bg-border-main/20 text-emerald-500 rounded-lg border border-border-main text-xs font-bold transition cursor-pointer flex items-center gap-1.5 font-mono"
+                    title="Refresh object storages list"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingStorages ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              {migratedStorages.length > 0 ? (
+                storageCatalogViewMode === 'grid' ? (
+                  /* Cards Grid View */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {migratedStorages.map((storage, idx) => {
+                      const sName = storage.name || storage.bucketName || storage.id || `storage-${idx + 1}`;
+                      const isSelected = (selectedStorageId === sName) || (selectedStorageId === '' && idx === 0);
+                      const connInfo = extractCspAndRegionFromConnection(storage.connectionName);
+                      const csp = (storage.csp || storage.targetCloud?.csp || connInfo.csp).toUpperCase();
+                      const region = storage.region || storage.targetCloud?.region || connInfo.region;
+
+                      return (
+                        <div
+                          key={storage.id || idx}
+                          onClick={() => setSelectedStorageId(sName)}
+                          className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between space-y-3 cursor-pointer relative overflow-hidden ${
+                            isSelected
+                              ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40'
+                              : 'bg-bg-panel/40 border-border-main/40 hover:bg-bg-panel/80 hover:border-border-main'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {sName === SAMPLE_STORAGE_ID && (
+                                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 font-mono shadow-sm">
+                                    [Sample]
+                                  </span>
+                                )}
+                                <span className="text-xs font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono">
+                                  {csp}
+                                </span>
+                                <span className="text-xs font-bold text-text-muted font-mono truncate max-w-[120px]">
+                                  {region}
+                                </span>
+                              </div>
+                              <h4 className="font-extrabold text-sm text-text-main truncate max-w-[200px]" title={sName}>
+                                {sName}
+                              </h4>
+                            </div>
+
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1 font-mono shrink-0">
+                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                              Available
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-main/20">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStorageId(sName);
+                              }}
+                              className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer font-mono ${
+                                isSelected
+                                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                                  : 'bg-bg-input hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-border-main'
+                              }`}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
+                            </button>
+
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (sName === SAMPLE_STORAGE_ID) return;
+                                if (!confirm(`Delete object storage '${sName}'?`)) return;
+                                try {
+                                  await beetleApi.deleteMigratedObjectStorage(namespaceId || 'mig01', sName);
+                                  await loadMigratedStorages();
+                                } catch (err) {
+                                  console.warn('Failed to delete storage', err);
+                                }
+                              }}
+                              disabled={sName === SAMPLE_STORAGE_ID}
+                              className="py-1.5 px-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer font-mono disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : `Delete object storage ${sName}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Compact Table Row View */
+                  <div className="overflow-x-auto rounded-xl border border-border-main/40 bg-bg-panel/20">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead>
+                        <tr className="border-b border-border-main/40 bg-bg-panel/80 text-text-muted font-normal">
+                          <th className="py-2.5 px-4 w-12 text-center font-normal">#</th>
+                          <th className="py-2.5 px-4 font-normal">Object Storage Name</th>
+                          <th className="py-2.5 px-4 font-normal">Target CSP / Region</th>
+                          <th className="py-2.5 px-4 font-normal">Source Bucket</th>
+                          <th className="py-2.5 px-4 font-normal">Status</th>
+                          <th className="py-2.5 px-4 text-right font-normal">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/20">
+                        {migratedStorages.map((storage, idx) => {
+                          const sName = storage.name || storage.bucketName || storage.id || `storage-${idx + 1}`;
+                          const isSelected = (selectedStorageId === sName) || (selectedStorageId === '' && idx === 0);
+                          const connInfo = extractCspAndRegionFromConnection(storage.connectionName);
+                          const csp = (storage.csp || storage.targetCloud?.csp || connInfo.csp).toUpperCase();
+                          const region = storage.region || storage.targetCloud?.region || connInfo.region;
+                          const srcBucket = storage.sourceBucketName || 'datamold-aws-test';
+
+                          return (
+                            <tr
+                              key={storage.id || idx}
+                              onClick={() => setSelectedStorageId(sName)}
+                              className={`transition hover:bg-bg-panel/60 cursor-pointer ${
+                                isSelected ? 'bg-emerald-500/10 font-bold' : ''
+                              }`}
+                            >
+                              <td className="py-3 px-4 text-center text-text-muted">{idx + 1}</td>
+                              <td className="py-3 px-4 font-extrabold text-text-main flex items-center gap-2">
+                                <HardDrive className="w-4 h-4 text-emerald-500 shrink-0" />
+                                {sName === SAMPLE_STORAGE_ID && (
+                                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 font-mono shadow-sm">
+                                    [Sample]
+                                  </span>
+                                )}
+                                <span>{sName}</span>
+                              </td>
+                              <td className="py-3 px-4 text-text-main font-bold">
+                                {csp} <span className="text-text-muted font-normal">({region})</span>
+                              </td>
+                              <td className="py-3 px-4 text-text-muted font-normal">
+                                {srcBucket}
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                  <span>Available</span>
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedStorageId(sName);
+                                    }}
+                                    className={`py-1 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                                        : 'bg-bg-input hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-border-main'
+                                    }`}
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>{isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (sName === SAMPLE_STORAGE_ID) return;
+                                      if (!confirm(`Delete object storage '${sName}'?`)) return;
+                                      try {
+                                        await beetleApi.deleteMigratedObjectStorage(namespaceId || 'mig01', sName);
+                                        await loadMigratedStorages();
+                                      } catch (err) {
+                                        console.warn('Failed to delete storage', err);
+                                      }
+                                    }}
+                                    disabled={sName === SAMPLE_STORAGE_ID}
+                                    className="py-1 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : `Delete object storage ${sName}`}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 inline mr-1" />
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                <div className="py-8 text-center text-text-muted text-xs font-mono italic">
+                  No deployed object storages found.
+                </div>
+              )}
+            </div>
+
+            {/* Detailed Storage Information Block */}
+            {activeSelectedStorage && (
+              <div className="space-y-6 animate-fade-in">
+                {/* Resource Metrics Bar (4 API Resource Cards) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 font-sans">
+                  {/* 1. Target CSP & Region */}
+                  <div className="glass-panel p-5 rounded-2xl border border-border-main/60 space-y-2 flex flex-col justify-center">
+                    <span className="text-xs font-normal text-text-muted">Target CSP &amp; Region</span>
+                    <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-2 truncate">
+                      <Cloud className="w-4 h-4 shrink-0 text-emerald-500" />
+                      <span className="truncate">{(activeSelectedStorage.connectionConfig?.providerName || activeSelectedStorage.csp || 'AWS').toUpperCase()} ({activeSelectedStorage.connectionConfig?.regionZoneInfo?.assignedRegion || activeSelectedStorage.region || 'ap-northeast-2'})</span>
+                    </div>
+                  </div>
+
+                  {/* 2. Object Storage Name */}
+                  <div className="glass-panel p-5 rounded-2xl border border-border-main/60 space-y-2 flex flex-col justify-center">
+                    <span className="text-xs font-normal text-text-muted">Object Storage Name</span>
+                    <div className="text-sm font-extrabold text-text-main flex items-center gap-2 truncate font-mono">
+                      <HardDrive className="w-4 h-4 shrink-0 text-emerald-500" />
+                      <span className="truncate">{activeSelectedStorage.name || activeSelectedStorage.id}</span>
+                    </div>
+                  </div>
+
+                  {/* 3. Objects Count */}
+                  <div className="glass-panel p-5 rounded-2xl border border-border-main/60 space-y-2 flex flex-col justify-center">
+                    <span className="text-xs font-normal text-text-muted">Total Objects</span>
+                    <div className="text-sm font-extrabold text-text-main flex items-center gap-2 truncate">
+                      <Database className="w-4 h-4 shrink-0 text-emerald-500" />
+                      <span className="truncate">{Array.isArray(activeSelectedStorage.contents) ? activeSelectedStorage.contents.length : 0} Object(s)</span>
+                    </div>
+                  </div>
+
+                  {/* 4. Lifecycle Status */}
+                  <div className="glass-panel p-5 rounded-2xl border border-border-main/60 space-y-2 flex flex-col justify-center">
+                    <span className="text-xs font-normal text-text-muted">Lifecycle Status</span>
+                    <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>{activeSelectedStorage.status || 'Available'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Spec Configuration Panel */}
+                <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-6">
+                  <div className="flex items-center justify-between border-b border-border-main/30 pb-3">
+                    <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                      <Sliders className="w-5 h-5 text-emerald-500" />
+                      <span>Object Storage Identifiers &amp; Spec Details</span>
+                    </h3>
+                    <span className="text-sm font-mono text-text-muted">
+                      Storage ID: <strong className="text-emerald-500 font-extrabold">{activeSelectedStorage.name || activeSelectedStorage.id}</strong>
+                    </span>
+                  </div>
+
+                  {/* Resource Identifiers Grid (API Returned Fields Only) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-sm">
+                    {/* Object Storage Name (Tumblebug Managed) */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">Object Storage Name (Tumblebug)</span>
+                      <div className="font-extrabold text-text-main font-mono break-all text-sm">
+                        {activeSelectedStorage.name || activeSelectedStorage.id}
+                      </div>
+                    </div>
+
+                    {/* CSP Bucket Name (Assigned via UID) */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">CSP Bucket Name (UID Assigned)</span>
+                      <div className="font-extrabold text-emerald-500 font-mono break-all text-sm">
+                        {activeSelectedStorage.uid || activeSelectedStorage.id}
+                      </div>
+                    </div>
+
+                    {/* Connection Config & Driver */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">Connection &amp; Driver</span>
+                      <div className="font-extrabold text-text-main font-mono text-sm">
+                        {activeSelectedStorage.connectionConfig?.configName || activeSelectedStorage.connectionName || 'aws-ap-northeast-2'}
+                      </div>
+                    </div>
+
+                    {/* Credential & Holder */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">Credential &amp; Holder</span>
+                      <div className="font-extrabold text-text-main font-mono text-sm">
+                        {activeSelectedStorage.connectionConfig?.credentialName || 'aws-credential'} <span className="text-text-muted font-normal">({activeSelectedStorage.connectionConfig?.credentialHolder || 'admin'})</span>
+                      </div>
+                    </div>
+
+                    {/* Resource Creation Timestamp */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">Creation Date</span>
+                      <div className="font-extrabold text-text-main font-mono text-sm">
+                        {activeSelectedStorage.creationDate || 'N/A'}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="p-4 bg-bg-panel/60 border border-border-main rounded-xl space-y-1.5">
+                      <span className="text-text-muted font-normal block">Description</span>
+                      <div className="font-extrabold text-text-main font-mono text-sm truncate">
+                        {activeSelectedStorage.description || 'Created by CM-Beetle'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bucket Objects List (Contents) */}
+                  {Array.isArray(activeSelectedStorage.contents) && activeSelectedStorage.contents.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-border-main/30">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
+                          <Database className="w-4 h-4 text-emerald-500" />
+                          <span>Bucket Contents &amp; Objects ({activeSelectedStorage.contents.length})</span>
+                        </h4>
+                      </div>
+
+                      <div className="overflow-x-auto rounded-xl border border-border-main/50 bg-bg-panel/40">
+                        <table className="w-full text-left text-sm font-mono">
+                          <thead className="bg-bg-panel/90 text-text-muted font-normal border-b border-border-main/50">
+                            <tr>
+                              <th className="p-3.5 font-normal">Object Key</th>
+                              <th className="p-3.5 font-normal">Size (Bytes)</th>
+                              <th className="p-3.5 font-normal">Storage Class</th>
+                              <th className="p-3.5 font-normal">ETag</th>
+                              <th className="p-3.5 font-normal">Last Modified</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border-main/20 text-text-main">
+                            {activeSelectedStorage.contents.map((obj: any, oIdx: number) => (
+                              <tr key={oIdx} className="hover:bg-bg-panel/60 transition">
+                                <td className="p-3.5 font-extrabold text-emerald-500">{obj.key}</td>
+                                <td className="p-3.5 font-extrabold">{obj.size} B</td>
+                                <td className="p-3.5 text-text-muted">{obj.storageClass || 'STANDARD'}</td>
+                                <td className="p-3.5 text-text-muted font-mono">{obj.eTag || '-'}</td>
+                                <td className="p-3.5 text-text-main">{obj.lastModified || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && selectedInfraId && (
