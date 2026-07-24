@@ -2,6 +2,9 @@ package transx
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // ============================================================================
@@ -25,6 +28,16 @@ type Step struct {
 
 // Execute runs all steps in the pipeline sequentially.
 func (p *Pipeline) Execute() error {
+	// Clean up and prepare local staging paths if any step uses local filesystem staging
+	for _, step := range p.Steps {
+		if step.Destination.IsLocal() && strings.HasPrefix(step.Destination.Path, DefaultStagingPath) {
+			_ = os.RemoveAll(step.Destination.Path)
+			if err := os.MkdirAll(step.Destination.Path, 0755); err != nil {
+				return fmt.Errorf("failed to prepare staging directory %s: %w", step.Destination.Path, err)
+			}
+		}
+	}
+
 	for i, step := range p.Steps {
 		if err := step.Executor.Execute(step.Source, step.Destination); err != nil {
 			return fmt.Errorf("step %d (%s) failed: %w", i+1, step.Name, err)
@@ -108,7 +121,7 @@ func planFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 // Step 2: Push from local staging to remote destination
 func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 	// Create local staging location
-	stagingLoc := createLocalStagingLocation()
+	stagingLoc := createLocalStagingLocation(model.Source.Path)
 
 	// Step 1: Pull (SSH source → local staging)
 	pullExec, err := NewRsyncExecutor(model.Source, stagingLoc)
@@ -150,7 +163,7 @@ func planRelayFilesystemTransfer(model DataMigrationModel) (*Pipeline, error) {
 // Always uses relay via local staging: S3 → local → S3
 func planObjectStorageTransfer(model DataMigrationModel) (*Pipeline, error) {
 	// Create staging location
-	stagingLoc := createLocalStagingLocation()
+	stagingLoc := createLocalStagingLocation(model.Source.Path)
 
 	// Create providers for source and destination
 	srcProvider, err := NewS3Provider(model.Source)
@@ -229,7 +242,7 @@ func planFilesystemToObjectStorage(model DataMigrationModel) (*Pipeline, error) 
 	}
 
 	// Relay transfer: ssh → local → s3
-	stagingLoc := createLocalStagingLocation()
+	stagingLoc := createLocalStagingLocation(model.Source.Path)
 	rsyncExec, err := NewRsyncExecutor(model.Source, stagingLoc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
@@ -282,7 +295,7 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 	}
 
 	// Relay transfer: s3 → local → ssh
-	stagingLoc := createLocalStagingLocation()
+	stagingLoc := createLocalStagingLocation(model.Source.Path)
 	rsyncExec, err := NewRsyncExecutor(stagingLoc, model.Destination)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rsync executor: %w", err)
@@ -312,11 +325,23 @@ func planObjectStorageToFilesystem(model DataMigrationModel) (*Pipeline, error) 
 // Helper Functions
 // ============================================================================
 
-// createLocalStagingLocation creates a local filesystem location for staging.
-func createLocalStagingLocation() DataLocation {
+// createLocalStagingLocation creates a local filesystem location for staging, isolated by source bucket or path.
+func createLocalStagingLocation(sourcePath string) DataLocation {
+	stagingPath := DefaultStagingPath
+	if bucket, _ := ParseBucketAndKey(sourcePath); bucket != "" {
+		cleanBucket := filepath.Base(bucket)
+		if cleanBucket != "." && cleanBucket != "/" {
+			stagingPath = filepath.Join(DefaultStagingPath, cleanBucket)
+		}
+	} else if sourcePath != "" {
+		cleanPath := filepath.Base(sourcePath)
+		if cleanPath != "." && cleanPath != "/" {
+			stagingPath = filepath.Join(DefaultStagingPath, cleanPath)
+		}
+	}
 	return DataLocation{
 		StorageType: StorageTypeFilesystem,
-		Path:        DefaultStagingPath,
+		Path:        stagingPath,
 		Filesystem: &FilesystemAccess{
 			AccessType: AccessTypeLocal,
 		},

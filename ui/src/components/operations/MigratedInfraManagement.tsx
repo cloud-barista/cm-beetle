@@ -173,7 +173,7 @@ export const MigratedInfraManagement: React.FC = () => {
   const [migratedStorages, setMigratedStorages] = useState<any[]>([]);
   const [isLoadingStorages, setIsLoadingStorages] = useState<boolean>(false);
   const [storageCatalogViewMode, setStorageCatalogViewMode] = useState<'grid' | 'table'>('grid');
-  const [selectedStorageId, setSelectedStorageId] = useState<string>('os101-x8f2');
+  const [selectedStorageId, setSelectedStorageId] = useState<string>('');
 
   const loadMigratedStorages = async () => {
     setIsLoadingStorages(true);
@@ -184,24 +184,26 @@ export const MigratedInfraManagement: React.FC = () => {
       
       const map = new Map<string, any>();
       map.set(SAMPLE_STORAGE_ID, SAMPLE_STORAGE_DETAIL);
-      map.set(MIGRATED_STORAGE_DEMO.id, MIGRATED_STORAGE_DEMO);
 
       storageList.forEach((s: any) => {
-        const key = s.name || s.bucketName || s.id;
+        const key = s.id || s.name || s.bucketName;
         if (key) map.set(key, s);
       });
 
       const combined = Array.from(map.values());
       setMigratedStorages(combined);
-      if (!selectedStorageId) {
-        setSelectedStorageId(MIGRATED_STORAGE_DEMO.id);
+
+      // Auto-select first real storage if available, otherwise sample
+      const realItem = combined.find((s: any) => s.id !== SAMPLE_STORAGE_ID);
+      if (realItem) {
+        setSelectedStorageId(realItem.id || realItem.name || realItem.bucketName);
+      } else {
+        setSelectedStorageId(SAMPLE_STORAGE_ID);
       }
     } catch (err) {
       console.warn('Failed to fetch migrated object storages:', err);
-      setMigratedStorages([SAMPLE_STORAGE_DETAIL, MIGRATED_STORAGE_DEMO]);
-      if (!selectedStorageId) {
-        setSelectedStorageId(MIGRATED_STORAGE_DEMO.id);
-      }
+      setMigratedStorages([SAMPLE_STORAGE_DETAIL]);
+      setSelectedStorageId(SAMPLE_STORAGE_ID);
     } finally {
       setIsLoadingStorages(false);
     }

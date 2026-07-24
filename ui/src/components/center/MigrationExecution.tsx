@@ -84,6 +84,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const [dataSecretAccessKey, setDataSecretAccessKey] = useState('');
   const [dataEndpoint, setDataEndpoint] = useState('');
   const [dataRegion, setDataRegion] = useState('ap-northeast-2');
+  const [dataUseSSL, setDataUseSSL] = useState(true);
   const [dataNsId, setDataNsId] = useState(namespaceId || 'mig01');
   const [sourceBucketList, setSourceBucketList] = useState<string[]>(['source-bucket-01', 'source-bucket-02']);
   const [selectedSourceBucket, setSelectedSourceBucket] = useState('source-bucket-01');
@@ -98,6 +99,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const [excludeFilter, setExcludeFilter] = useState('*.tmp, *.bak');
   const [isEncryptingAndLaunching, setIsEncryptingAndLaunching] = useState(false);
   const [dataLaunchError, setDataLaunchError] = useState<string | null>(null);
+
+  // Custom Tumblebug Endpoint State
+  const [useCustomTumblebug, setUseCustomTumblebug] = useState(false);
+  const [customTumblebugEndpoint, setCustomTumblebugEndpoint] = useState('');
+  const [customTumblebugUser, setCustomTumblebugUser] = useState('');
+  const [customTumblebugPassword, setCustomTumblebugPassword] = useState('');
 
   // Auto fetch migrated target storages when opening data launch modal or changing nsId
   const handleFetchTargetStorages = async (nsIdToFetch: string) => {
@@ -119,6 +126,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     }
   };
 
+  // Scan Source Storage List via MinIO S3 SDK (POST /beetle/migration/middleware/objectStorage/scan)
   const handleScanSourceBuckets = async () => {
     if (!dataAccessKeyId || !dataSecretAccessKey) {
       alert('Please enter Source Access Key ID and Secret Access Key.');
@@ -131,17 +139,16 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         csp: dataCsp,
         accessKeyId: dataAccessKeyId,
         secretAccessKey: dataSecretAccessKey,
-        endpoint: dataEndpoint,
         region: dataRegion
       });
-      if (res.success && res.bucketNames && res.bucketNames.length > 0) {
+      if (res.success && Array.isArray(res.bucketNames) && res.bucketNames.length > 0) {
         setSourceBucketList(res.bucketNames);
         setSelectedSourceBucket(res.bucketNames[0]);
       } else if (res.error) {
         setDataLaunchError(res.error);
       }
     } catch (err: any) {
-      setDataLaunchError(err.message || 'Failed to scan source buckets.');
+      setDataLaunchError(err.message || 'Failed to scan source buckets via MinIO S3 SDK.');
     } finally {
       setIsScanningSource(false);
     }
@@ -176,10 +183,11 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           objectStorage: {
             accessType: 'minio',
             minio: {
-              endpoint: dataEndpoint || `https://s3.${dataRegion}.amazonaws.com`,
+              endpoint: dataEndpoint || `s3.${dataRegion}.amazonaws.com`,
               accessKeyId: dataAccessKeyId || 'AKIAEXAMPLE123456789',
               secretAccessKey: dataSecretAccessKey || 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
-              region: dataRegion
+              region: dataRegion,
+              useSSL: dataUseSSL
             }
           }
         },
@@ -189,9 +197,19 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           objectStorage: {
             accessType: 'tumblebug',
             tumblebug: {
-              endpoint: 'http://localhost:1323/tumblebug',
+              ...(useCustomTumblebug && customTumblebugEndpoint ? { endpoint: customTumblebugEndpoint } : {}),
               nsId: dataNsId || 'mig01',
-              osId: selectedTargetStorage || 'target-storage-01'
+              osId: selectedTargetStorage || 'target-storage-01',
+              expires: 3600,
+              ...(useCustomTumblebug && customTumblebugUser ? {
+                auth: {
+                  authType: 'basic',
+                  basic: {
+                    username: customTumblebugUser,
+                    password: customTumblebugPassword
+                  }
+                }
+              } : {})
             }
           }
         },
@@ -1301,6 +1319,69 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                       className="w-full px-3.5 py-2.5 bg-bg-panel border border-border-main rounded-xl text-text-main font-mono focus:outline-none focus:border-emerald-500 font-bold text-sm"
                     />
                   </div>
+                </div>
+
+                {/* MinIO Direct S3 Protocol Connection Options */}
+                <div className="pt-3 border-t border-border-main/20 flex items-center justify-between">
+                  <span className="text-xs text-text-muted font-normal">MinIO S3 SDK Security Protocol:</span>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-text-main">
+                    <input
+                      type="checkbox"
+                      checked={dataUseSSL}
+                      onChange={(e) => setDataUseSSL(e.target.checked)}
+                      className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-border-main bg-bg-panel"
+                    />
+                    <span>Use SSL / TLS (HTTPS)</span>
+                  </label>
+                </div>
+
+                {/* Custom Tumblebug Connection Options */}
+                <div className="pt-3 border-t border-border-main/20">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useCustomTumblebug}
+                      onChange={(e) => setUseCustomTumblebug(e.target.checked)}
+                      className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-border-main bg-bg-panel"
+                    />
+                    <span className="text-sm font-normal text-text-muted">Custom Tumblebug Connection (Optional)</span>
+                  </label>
+                  {useCustomTumblebug && (
+                    <div className="space-y-3 mt-3 p-3 bg-bg-panel/50 border border-border-main/30 rounded-xl">
+                      <div>
+                        <label className="block text-text-muted font-normal text-xs mb-1">Custom Endpoint URL</label>
+                        <input
+                          type="text"
+                          placeholder="http://cb-tumblebug:1323/tumblebug"
+                          value={customTumblebugEndpoint}
+                          onChange={(e) => setCustomTumblebugEndpoint(e.target.value)}
+                          className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-emerald-500 font-mono"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-text-muted font-normal text-xs mb-1">Basic Auth Username</label>
+                          <input
+                            type="text"
+                            placeholder="default"
+                            value={customTumblebugUser}
+                            onChange={(e) => setCustomTumblebugUser(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-text-muted font-normal text-xs mb-1">Basic Auth Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={customTumblebugPassword}
+                            onChange={(e) => setCustomTumblebugPassword(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

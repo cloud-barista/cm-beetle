@@ -21,9 +21,6 @@ export interface CspCredentialFormProps {
   onS3AccessKeyChange?: (val: string) => void;
   s3SecretKey?: string;
   onS3SecretKeyChange?: (val: string) => void;
-  endpoint?: string;
-  onEndpointChange?: (val: string) => void;
-  showEndpoint?: boolean;
   isEncryptedLabel?: boolean;
   className?: string;
 }
@@ -47,9 +44,6 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
   onS3AccessKeyChange,
   s3SecretKey = '',
   onS3SecretKeyChange,
-  endpoint = '',
-  onEndpointChange,
-  showEndpoint = false,
   isEncryptedLabel = false,
   className = ''
 }) => {
@@ -337,19 +331,6 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
           </div>
         )}
 
-        {/* Optional Custom S3 Endpoint URL */}
-        {showEndpoint && onEndpointChange && (
-          <div className="mt-3">
-            <label className="block text-text-muted font-medium mb-1">Custom S3 Endpoint URL (Optional)</label>
-            <input
-              type="text"
-              placeholder={`https://s3.${region || 'ap-northeast-2'}.amazonaws.com`}
-              value={endpoint}
-              onChange={(e) => onEndpointChange(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-            />
-          </div>
-        )}
       </div>
 
     </div>
