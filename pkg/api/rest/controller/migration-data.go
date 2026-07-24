@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
+	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/labstack/echo/v4"
@@ -154,6 +155,9 @@ func MigrateData(c echo.Context) error {
 		log.Info().Msg("Request decrypted successfully")
 		req = &decryptedModel
 	}
+
+	// Enrich system default Tumblebug endpoint and credentials if omitted by client/UI
+	enrichTumblebugDefaults(req)
 
 	err := transx.Validate(*req)
 	if err != nil {
@@ -375,4 +379,35 @@ func TestDecryptData(c echo.Context) error {
 		Msg("Decryption test passed")
 
 	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(decryptedModel, "Decryption successful"))
+}
+
+// enrichTumblebugDefaults fills system default Tumblebug endpoint and credentials if omitted by UI/client.
+func enrichTumblebugDefaults(req *transx.DataMigrationModel) {
+	if req == nil {
+		return
+	}
+	for _, loc := range []*transx.DataLocation{&req.Source, &req.Destination} {
+		if loc.IsObjectStorage() && loc.ObjectStorage != nil && loc.ObjectStorage.AccessType == transx.AccessTypeTumblebug {
+			if loc.ObjectStorage.Tumblebug == nil {
+				loc.ObjectStorage.Tumblebug = &transx.TumblebugConfig{}
+			}
+			tbCfg := loc.ObjectStorage.Tumblebug
+			if strings.TrimSpace(tbCfg.Endpoint) == "" {
+				endpoint := config.Beetle.Tumblebug.RestUrl
+				if endpoint == "" {
+					endpoint = config.Beetle.Tumblebug.Endpoint + "/tumblebug"
+				}
+				tbCfg.Endpoint = endpoint
+			}
+			if tbCfg.Auth == nil && config.Beetle.Tumblebug.API.Username != "" {
+				tbCfg.Auth = &transx.AuthConfig{
+					AuthType: transx.AuthTypeBasic,
+					Basic: &transx.BasicAuthConfig{
+						Username: config.Beetle.Tumblebug.API.Username,
+						Password: config.Beetle.Tumblebug.API.Password,
+					},
+				}
+			}
+		}
+	}
 }

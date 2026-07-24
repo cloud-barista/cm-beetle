@@ -3,6 +3,7 @@ package transx
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -18,14 +19,35 @@ type MinioProvider struct {
 	useSSL   bool
 }
 
+// CleanMinioEndpoint sanitizes the endpoint string for minio-go SDK,
+// removing schemes (http://, https://) and path segments, and determining SSL usage.
+func CleanMinioEndpoint(raw string, defaultUseSSL bool) (endpoint string, useSSL bool) {
+	ep := strings.TrimSpace(raw)
+	useSSL = defaultUseSSL
+
+	if strings.HasPrefix(strings.ToLower(ep), "https://") {
+		useSSL = true
+		ep = ep[8:]
+	} else if strings.HasPrefix(strings.ToLower(ep), "http://") {
+		useSSL = false
+		ep = ep[7:]
+	}
+
+	if idx := strings.Index(ep, "/"); idx != -1 {
+		ep = ep[:idx]
+	}
+
+	return strings.TrimSpace(ep), useSSL
+}
+
 // NewMinioProvider creates a new MinioProvider from MinioConfig.
 func NewMinioProvider(config *MinioConfig, bucket string) (*MinioProvider, error) {
 	if config == nil {
 		return nil, fmt.Errorf("minio config is required")
 	}
 
-	useSSL := config.UseSSL
-	client, err := minio.New(config.Endpoint, &minio.Options{
+	endpoint, useSSL := CleanMinioEndpoint(config.Endpoint, config.UseSSL)
+	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(config.AccessKeyId, config.SecretAccessKey, ""),
 		Secure: useSSL,
 		Region: config.Region,
@@ -37,7 +59,7 @@ func NewMinioProvider(config *MinioConfig, bucket string) (*MinioProvider, error
 	return &MinioProvider{
 		client:   client,
 		bucket:   bucket,
-		endpoint: config.Endpoint,
+		endpoint: endpoint,
 		useSSL:   useSSL,
 	}, nil
 }

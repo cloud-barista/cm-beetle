@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -29,11 +30,20 @@ type TumblebugProvider struct {
 // NewTumblebugProvider creates a new TumblebugProvider.
 func NewTumblebugProvider(config *TumblebugConfig) (*TumblebugProvider, error) {
 	if config == nil {
-		return nil, fmt.Errorf("tumblebug config is required")
+		config = &TumblebugConfig{}
 	}
-	if strings.TrimSpace(config.Endpoint) == "" {
+
+	endpoint := strings.TrimSpace(config.Endpoint)
+	if endpoint == "" {
+		endpoint = os.Getenv("BEETLE_TUMBLEBUG_ENDPOINT")
+		if endpoint != "" && !strings.HasSuffix(endpoint, "/tumblebug") {
+			endpoint = endpoint + "/tumblebug"
+		}
+	}
+	if endpoint == "" {
 		return nil, fmt.Errorf("tumblebug endpoint is required")
 	}
+
 	if strings.TrimSpace(config.NsId) == "" {
 		return nil, fmt.Errorf("tumblebug nsId is required")
 	}
@@ -57,8 +67,14 @@ func NewTumblebugProvider(config *TumblebugConfig) (*TumblebugProvider, error) {
 		}
 	}
 
+	// Environment variable auth fallback
+	if username == "" && password == "" && jwtToken == "" {
+		username = os.Getenv("BEETLE_TUMBLEBUG_API_USERNAME")
+		password = os.Getenv("BEETLE_TUMBLEBUG_API_PASSWORD")
+	}
+
 	p := &TumblebugProvider{
-		endpoint: strings.TrimSuffix(config.Endpoint, "/"),
+		endpoint: strings.TrimSuffix(endpoint, "/"),
 		nsId:     config.NsId,
 		osId:     config.OsId,
 		expires:  expires,

@@ -125,8 +125,16 @@ export const DataTransferCenter: React.FC = () => {
   const [dataSecretAccessKey, setDataSecretAccessKey] = useState('');
   const [dataTenantId, setDataTenantId] = useState('');
   const [dataSubscriptionId, setDataSubscriptionId] = useState('');
-  const [dataEndpoint, setDataEndpoint] = useState('https://s3.ap-northeast-2.amazonaws.com');
+  const [dataEndpoint, setDataEndpoint] = useState('s3.ap-northeast-2.amazonaws.com');
   const [dataRegion, setDataRegion] = useState('ap-northeast-2');
+  const [sourceUseSSL, setSourceUseSSL] = useState(true);
+  const [targetUseSSL, setTargetUseSSL] = useState(true);
+
+  // Custom Tumblebug Endpoint State
+  const [useCustomTumblebug, setUseCustomTumblebug] = useState(false);
+  const [customTumblebugEndpoint, setCustomTumblebugEndpoint] = useState('');
+  const [customTumblebugUser, setCustomTumblebugUser] = useState('');
+  const [customTumblebugPassword, setCustomTumblebugPassword] = useState('');
 
   // Source SSH Fields
   const [sourceSshHost, setSourceSshHost] = useState('');
@@ -311,11 +319,11 @@ export const DataTransferCenter: React.FC = () => {
     }
   };
 
-  // Scan Source Storage List (Object Storage or SSH)
+  // Scan Source Storage List via MinIO S3 SDK (POST /beetle/migration/middleware/objectStorage/scan)
   const handleScanSourceBuckets = async () => {
     if (sourceAccessType === 'object-storage') {
       if (!dataAccessKeyId || !dataSecretAccessKey) {
-        alert(`Please enter Access Key / Client Email for ${dataCsp.toUpperCase()}.`);
+        alert(`Please enter Access Key / Secret Key for ${dataCsp.toUpperCase()}.`);
         return;
       }
       setIsScanningSource(true);
@@ -325,17 +333,16 @@ export const DataTransferCenter: React.FC = () => {
           csp: dataCsp,
           accessKeyId: dataAccessKeyId,
           secretAccessKey: dataSecretAccessKey,
-          endpoint: dataEndpoint,
           region: dataRegion
         });
-        if (res.success && res.bucketNames && res.bucketNames.length > 0) {
+        if (res.success && Array.isArray(res.bucketNames) && res.bucketNames.length > 0) {
           setSourceBucketList(res.bucketNames);
           setSelectedSourceBucket(res.bucketNames[0]);
         } else if (res.error) {
           setModalError(res.error);
         }
       } catch (err: any) {
-        setModalError(err.message || 'Failed to scan source buckets.');
+        setModalError(err.message || 'Failed to scan source buckets via MinIO S3 SDK.');
       } finally {
         setIsScanningSource(false);
       }
@@ -391,7 +398,7 @@ export const DataTransferCenter: React.FC = () => {
                 accessKeyId: dataAccessKeyId || 'AKIAEXAMPLE123456789',
                 secretAccessKey: dataSecretAccessKey || 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                 region: dataRegion,
-                useSSL: true
+                useSSL: sourceUseSSL
               }
             }
           } : {
@@ -418,14 +425,23 @@ export const DataTransferCenter: React.FC = () => {
                   accessKeyId: targetAccessKeyId || 'AKIAEXAMPLE123456789',
                   secretAccessKey: targetSecretAccessKey || 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                   region: targetRegion,
-                  useSSL: true
+                  useSSL: targetUseSSL
                 }
               } : {
                 tumblebug: {
-                  endpoint: 'http://localhost:1323/tumblebug',
+                  ...(useCustomTumblebug && customTumblebugEndpoint ? { endpoint: customTumblebugEndpoint } : {}),
                   nsId: dataNsId || 'mig01',
                   osId: selectedTargetStorage || 'target-storage-01',
-                  expires: 3600
+                  expires: 3600,
+                  ...(useCustomTumblebug && customTumblebugUser ? {
+                    auth: {
+                      authType: 'basic',
+                      basic: {
+                        username: customTumblebugUser,
+                        password: customTumblebugPassword
+                      }
+                    }
+                  } : {})
                 }
               })
             }
@@ -831,6 +847,20 @@ export const DataTransferCenter: React.FC = () => {
                             onSubscriptionIdChange={setDataSubscriptionId}
                             isEncryptedLabel={true}
                           />
+
+                          {/* MinIO S3 SDK Connection Options */}
+                          <div className="pt-2 border-t border-border-main/20 flex items-center justify-between">
+                            <span className="text-xs text-text-muted font-normal">MinIO S3 Connection Options:</span>
+                            <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-text-main">
+                              <input
+                                type="checkbox"
+                                checked={sourceUseSSL}
+                                onChange={(e) => setSourceUseSSL(e.target.checked)}
+                                className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-border-main bg-bg-panel"
+                              />
+                              <span>Use SSL / TLS (HTTPS)</span>
+                            </label>
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -1031,6 +1061,20 @@ export const DataTransferCenter: React.FC = () => {
                               onSubscriptionIdChange={setTargetSubscriptionId}
                               isEncryptedLabel={true}
                             />
+
+                            {/* MinIO Direct S3 Protocol SSL Settings */}
+                            <div className="pt-2 border-t border-border-main/20 flex items-center justify-between">
+                              <span className="text-xs text-text-muted font-normal">MinIO Direct S3 Options:</span>
+                              <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-text-main">
+                                <input
+                                  type="checkbox"
+                                  checked={targetUseSSL}
+                                  onChange={(e) => setTargetUseSSL(e.target.checked)}
+                                  className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 border-border-main bg-bg-panel"
+                                />
+                                <span>Use SSL / TLS (HTTPS)</span>
+                              </label>
+                            </div>
                           </div>
                         )
                       ) : (
@@ -1144,6 +1188,56 @@ export const DataTransferCenter: React.FC = () => {
                             </select>
                           </div>
                         </div>
+
+                        {targetAccessEngine === 'tumblebug' && (
+                          <div className="mt-4 pt-3 border-t border-border-main/20">
+                            <label className="flex items-center gap-2 cursor-pointer mb-2">
+                              <input
+                                type="checkbox"
+                                checked={useCustomTumblebug}
+                                onChange={(e) => setUseCustomTumblebug(e.target.checked)}
+                                className="w-4 h-4 rounded border-border-main text-teal-600 focus:ring-teal-500"
+                              />
+                              <span className="text-sm font-normal text-text-muted">Custom Tumblebug Connection (Optional)</span>
+                            </label>
+                            {useCustomTumblebug && (
+                              <div className="space-y-3 mt-3 p-3 bg-bg-panel/50 border border-border-main/30 rounded-xl">
+                                <div>
+                                  <label className="block text-text-muted font-normal text-xs mb-1">Custom Endpoint URL</label>
+                                  <input
+                                    type="text"
+                                    placeholder="http://cb-tumblebug:1323/tumblebug"
+                                    value={customTumblebugEndpoint}
+                                    onChange={(e) => setCustomTumblebugEndpoint(e.target.value)}
+                                    className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-teal-400"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-text-muted font-normal text-xs mb-1">Basic Auth Username</label>
+                                    <input
+                                      type="text"
+                                      placeholder="default"
+                                      value={customTumblebugUser}
+                                      onChange={(e) => setCustomTumblebugUser(e.target.value)}
+                                      className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-teal-400"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-text-muted font-normal text-xs mb-1">Basic Auth Password</label>
+                                    <input
+                                      type="password"
+                                      placeholder="••••••••"
+                                      value={customTumblebugPassword}
+                                      onChange={(e) => setCustomTumblebugPassword(e.target.value)}
+                                      className="w-full px-3 py-1.5 bg-bg-panel border border-border-main rounded-lg text-text-main text-xs focus:outline-none focus:border-teal-400"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 

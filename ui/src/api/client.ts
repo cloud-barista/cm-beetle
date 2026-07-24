@@ -440,6 +440,8 @@ export const beetleApi = {
       if (Array.isArray(resObj?.objectStorages)) return resObj.objectStorages;
       if (Array.isArray(resObj?.objectStorage)) return resObj.objectStorage;
       if (Array.isArray(response.data?.objectStorages)) return response.data.objectStorages;
+      if (Array.isArray(response.data?.objectStorage)) return response.data.objectStorage;
+      if (Array.isArray(response.data?.data?.objectStorage)) return response.data.data.objectStorage;
       return [];
     } catch (err: any) {
       console.warn(`getMigratedObjectStorages failed for ns ${nsId}:`, err);
