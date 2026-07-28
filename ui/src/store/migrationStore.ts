@@ -524,10 +524,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   selectCloudModel: (model) => {
+    let infra = model ? (model.cloudInfraModel || (model as any).cloud_infra_model || (model as any).recommendedInfra) : null;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
     set({ 
       selectedCloudModel: model,
-      editedCandidate: model ? model.cloudInfraModel : null,
-      recommendationCandidates: model ? [model.cloudInfraModel] : []
+      editedCandidate: infra,
+      recommendationCandidates: infra ? [infra] : [],
+      selectedCandidateIndex: 0
     });
   },
 

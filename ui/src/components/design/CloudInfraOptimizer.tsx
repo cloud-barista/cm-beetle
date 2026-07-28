@@ -214,6 +214,24 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
 
   const handleLoadDesign = () => {
     if (!selectedCloudModel) return;
+    let infra = selectedCloudModel.cloudInfraModel || (selectedCloudModel as any).cloud_infra_model || (selectedCloudModel as any).recommendedInfra;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
+    if (infra) {
+      updateEditedCandidate(infra);
+      useMigrationStore.setState({
+        recommendationCandidates: [infra],
+        selectedCandidateIndex: 0
+      });
+      if (infra.targetCloud?.csp || (infra as any).csp) {
+        setDesiredCsp(infra.targetCloud?.csp || (infra as any).csp);
+      }
+      if (infra.targetCloud?.region || (infra as any).region) {
+        setDesiredRegion(infra.targetCloud?.region || (infra as any).region);
+      }
+    }
+    setIsModelLoaded(true);
     setActiveStep(2);
   };
 

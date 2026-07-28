@@ -217,23 +217,34 @@ export const damselflyApi = {
   getCloudModels: async (): Promise<CloudModelEnvelope[]> => {
     const response = await api.get('/damselfly/infra-model?modelType=cloud&isTargetModel=true');
     const dataList = Array.isArray(response.data) ? response.data : (response.data ? [response.data] : []);
-    return dataList.map((m: any) => ({
-      ...m,
-      id: m.id || m.uid,
-      name: m.name || m.userModelName || 'Unnamed Design',
-      description: m.description,
-      cloudInfraModel: m.cloudInfraModel,
-      version: m.version || m.userModelVersion || '1.0.0'
-    }));
+    return dataList.map((m: any) => {
+      let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra;
+      if (typeof infra === 'string') {
+        try { infra = JSON.parse(infra); } catch (e) {}
+      }
+      return {
+        ...m,
+        id: m.id || m.uid,
+        name: m.name || m.userModelName || 'Unnamed Design',
+        description: m.description,
+        cloudInfraModel: infra,
+        version: m.version || m.userModelVersion || '1.0.0'
+      };
+    });
   },
 
   getCloudModel: async (id: string): Promise<CloudModelEnvelope> => {
     const response = await api.get(`/damselfly/infra-model/${id}?modelType=cloud&isTargetModel=true`);
     const m = response.data;
+    let infra = m.cloudInfraModel || m.cloud_infra_model || m.recommendedInfra;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
     return {
       ...m,
       id: m.id || m.uid || id,
       name: m.name || m.userModelName,
+      cloudInfraModel: infra,
       version: m.version || m.userModelVersion || '1.0.0'
     };
   },
