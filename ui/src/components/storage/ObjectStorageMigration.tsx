@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore } from '@/store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
 import { beetleApi } from '@/api/client';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { SaveRevisionModal, SaveRevisionResult } from '../common/SaveRevisionModal';
+import { ObjectDirectoryTree } from './ObjectDirectoryTree';
 import sampleStorageRequest from '../../data/sampleSourceObjectStorage.json';
 import sampleTargetObjectStorage from '../../data/sampleTargetObjectStorage.json';
 import {
@@ -12,7 +13,7 @@ import {
   ShieldCheck, Database, RefreshCw, Server, AlertCircle, Play, Key,
   Search, ChevronDown, ChevronUp, Lock, FileText, Upload, Save, X,
   Sliders, Compass, Copy, Edit3, Settings2, Globe, Shield, Tag, AlertTriangle, Sparkles,
-  Activity, Clock
+  Activity, Clock, Folder
 } from 'lucide-react';
 
 interface CorsRuleItem {
@@ -36,6 +37,7 @@ interface SourceBucket {
   isPublic: boolean;
   creationDate?: string;
   tags?: Record<string, string>;
+  objects?: Array<{ key: string; sizeBytes?: number; lastModified?: string }>;
 }
 
 const ALL_SUPPORTED_CSPS = [
@@ -111,14 +113,73 @@ const SAMPLE_STORAGE_MODEL = {
   description: 'Sample object storage model for quick demonstration'
 };
 
+export interface ObjectStorageJobCard {
+  id: string;
+  reqId: string;
+  name: string;
+  csp: string;
+  region: string;
+  status: 'Handling' | 'Success' | 'Failed';
+  startTime: string;
+  elapsedSeconds: number;
+  buckets: {
+    name: string;
+    targetClass: string;
+    cors: string;
+    versioning: string;
+  }[];
+  logs: string[];
+  isSample?: boolean;
+  error?: string;
+}
+
 export const ObjectStorageMigration: React.FC = () => {
   const {
     tumblebugProviders,
     tumblebugRegions,
     fetchTumblebugProviders,
-    fetchTumblebugRegions
+    fetchTumblebugRegions,
+    objectStorageJobs,
+    setObjectStorageJobs,
+    addObjectStorageJob,
+    removeObjectStorageJob,
+    activeObjectStorageJobId,
+    setActiveObjectStorageJobId
   } = useMigrationStore();
   const namespaceId = (useMigrationStore.getState() as any).namespaceId || 'mig01';
+
+  // Auto-restore sample job if queue was emptied
+  useEffect(() => {
+    if (objectStorageJobs.length === 0) {
+      setObjectStorageJobs([
+        {
+          id: 'sample-os-job-01',
+          reqId: 'req-20260723-001',
+          name: 'mig01-aws-storage',
+          csp: 'aws',
+          region: 'ap-northeast-2',
+          status: 'Success',
+          startTime: new Date().toISOString(),
+          elapsedSeconds: 15,
+          buckets: [
+            { name: 'target-bucket-01', targetClass: 'Standard (S3/Hot)', cors: 'ENABLED', versioning: 'DISABLED' },
+            { name: 'target-bucket-02', targetClass: 'Standard-IA', cors: 'ENABLED', versioning: 'ENABLED' }
+          ],
+          logs: [
+            'POST /beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=mig01',
+            'Header -> Prefer: respond-async',
+            'HTTP 202 Accepted (ReqID: req-20260723-001, Status: Handling)',
+            'GET /beetle/request/req-20260723-001 -> Status: Success (Duration: 15s)'
+          ],
+          isSample: true
+        }
+      ]);
+    }
+  }, [objectStorageJobs, setObjectStorageJobs]);
+
+  const selectedJobId = activeObjectStorageJobId || objectStorageJobs[0]?.id || 'sample-os-job-01';
+  const setSelectedJobId = setActiveObjectStorageJobId;
+  const activeJob = objectStorageJobs.find((j) => j.id === selectedJobId) || objectStorageJobs[0];
 
   const [subTab, setSubTab] = useState<'source' | 'refine' | 'optimize' | 'provision'>('source');
 
@@ -147,6 +208,15 @@ export const ObjectStorageMigration: React.FC = () => {
   const [scanSecretKey, setScanSecretKey] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [deleteModalJob, setDeleteModalJob] = useState<ObjectStorageJobCard | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const handleConfirmDeleteStorageRecord = () => {
+    if (!deleteModalJob || deleteConfirmText !== deleteModalJob.name) return;
+    removeObjectStorageJob(deleteModalJob.id);
+    setDeleteModalJob(null);
+    setDeleteConfirmText('');
+  };
 
   const [sourceBuckets, setSourceBuckets] = useState<SourceBucket[]>([
     {
@@ -244,6 +314,75 @@ export const ObjectStorageMigration: React.FC = () => {
     openstack: { cors: false, presignedUrl: true, versioning: false }
   });
 
+  // Live Duration Timer & Status Polling Effect for Object Storage Jobs Queue
+  useEffect(() => {
+    const runningJobs = objectStorageJobs.filter((j) => j.status === 'Handling');
+    if (runningJobs.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      // 1. Calculate real wall-clock elapsedSeconds for all running jobs
+      setObjectStorageJobs((prevJobs) =>
+        prevJobs.map((job) => {
+          if (job.status === 'Handling') {
+            const realElapsed = calculateJobElapsedSeconds(job);
+            return { ...job, elapsedSeconds: realElapsed };
+          }
+          return job;
+        })
+      );
+
+      // 2. Poll Beetle REST API GET /beetle/request/{reqId} to check if job finished
+      for (const job of runningJobs) {
+        if (!job.reqId || job.isSample) continue;
+        try {
+          const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+          const status = reqDetails?.status;
+          if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
+            setObjectStorageJobs((prevJobs) =>
+              prevJobs.map((j) => {
+                if (j.id === job.id) {
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Success',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${dur}s)`
+                    ]
+                  };
+                }
+                return j;
+              })
+            );
+          } else if (status === 'Failed' || status === 'Error') {
+            setObjectStorageJobs((prevJobs) =>
+              prevJobs.map((j) => {
+                if (j.id === job.id) {
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Failed',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                    ]
+                  };
+                }
+                return j;
+              })
+            );
+          }
+        } catch (err) {
+          console.warn('Poll error for object storage job request', job.reqId, err);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [objectStorageJobs, setObjectStorageJobs]);
+
   useEffect(() => {
     fetchTumblebugProviders();
     beetleApi.getObjectStorageSupport().then((data) => {
@@ -329,7 +468,11 @@ export const ObjectStorageMigration: React.FC = () => {
   const allTargetModels = [
     SAMPLE_TARGET_STORAGE_MODEL,
     ...savedTargetModels.filter((m) => m.id !== 'sample-target-storage-01')
-  ];
+  ].reduce((acc: any[], current: any) => {
+    const exists = acc.some((item) => item.id === current.id || (item.name && item.name === current.name));
+    if (!exists) acc.push(current);
+    return acc;
+  }, []);
 
   const activeSelectedTargetModel = allTargetModels.find((m) => m.id === selectedTargetModelId) || allTargetModels[allTargetModels.length - 1] || SAMPLE_TARGET_STORAGE_MODEL;
 
@@ -341,7 +484,11 @@ export const ObjectStorageMigration: React.FC = () => {
   const allSourceModels = [
     SAMPLE_STORAGE_MODEL,
     ...savedSourceModels.filter((m) => m.id !== 'sample-source-storage-01')
-  ];
+  ].reduce((acc: any[], current: any) => {
+    const exists = acc.some((item) => item.id === current.id || (item.name && item.name === current.name));
+    if (!exists) acc.push(current);
+    return acc;
+  }, []);
 
   const getCspList = () => {
     const map = new Map<string, string>();
@@ -789,39 +936,96 @@ export const ObjectStorageMigration: React.FC = () => {
     setSubTab('provision');
     setIsDeploying(true);
     const mockReqId = `req-${Date.now().toString().slice(-6)}`;
-    const effectiveSeed = nameSeed || activeSelectedTargetModel?.targetObjectStorages?.[0]?.bucketName || 'target-storage-01';
+    
+    // Only pass nameSeed query param if explicitly set and <= 20 chars (common.IsValidNameSeed constraint)
+    const rawSeed = (nameSeed || '').trim();
+    const effectiveSeed = rawSeed.length > 0 && rawSeed.length <= 20 ? rawSeed : '';
+
+    const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
+
+    const payloadTargetStorages = activeBuckets.map((b) => {
+      const isCorsOn = b.corsEnabled || false;
+      const validRules = b.corsRule && b.corsRule.length > 0
+        ? b.corsRule
+        : [{ allowedOrigin: ['*'], allowedMethod: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeader: ['*'], exposeHeader: ['ETag'], maxAgeSeconds: 3600 }];
+      return {
+        sourceBucketName: b.bucketName,
+        bucketName: b.targetBucketName || b.bucketName,
+        versioningEnabled: b.versioningEnabled || false,
+        corsEnabled: isCorsOn,
+        corsRule: isCorsOn ? validRules : []
+      };
+    });
+
+    const targetModel = {
+      status: recommendationResult?.status || 'recommended',
+      description: recommendationResult?.description || `Object storage migration request for ${activeBuckets.length} bucket(s)`,
+      targetCloud: {
+        csp: (recommendationResult?.targetCloud?.csp || activeSelectedTargetModel?.csp || desiredCsp || 'aws').toLowerCase(),
+        region: recommendationResult?.targetCloud?.region || activeSelectedTargetModel?.region || desiredRegion || 'ap-northeast-2'
+      },
+      targetObjectStorages: payloadTargetStorages
+    };
+
     setDeploymentLog([
-      `POST /beetle/migration/middleware/ns/${namespaceId || 'mig01'}/objectStorage?nameSeed=${effectiveSeed}`,
+      `POST /beetle/migration/middleware/ns/${namespaceId || 'mig01'}/objectStorage${effectiveSeed ? `?nameSeed=${effectiveSeed}` : ''}`,
       `Header -> Prefer: respond-async`,
       `HTTP 202 Accepted (ReqID: ${mockReqId}, Status: Handling)`,
       `GET /beetle/request/${mockReqId} -> Status: Handling (Polling...)`
     ]);
 
     try {
-      const activeBuckets = sourceBuckets.filter((b) => !excludedBucketNames.includes(b.bucketName));
-      const targetModel = recommendationResult || {
-        nameSeed: effectiveSeed,
-        targetCloud: { csp: activeSelectedTargetModel?.csp || desiredCsp, region: activeSelectedTargetModel?.region || desiredRegion },
-        targetObjectStorages: activeSelectedTargetModel?.targetObjectStorages || activeBuckets
-      };
       const res = await beetleApi.executeObjectStorageMigration(namespaceId || 'mig01', effectiveSeed, targetModel, true);
 
+      const realReqId = res.reqId || mockReqId;
+      const targetCsp = targetModel.targetCloud.csp;
+      const targetReg = targetModel.targetCloud.region;
+      const storageJobName = `${effectiveSeed || 'mig01'}-${targetCsp.toLowerCase()}-storage`;
+      const newJobId = `os-job-${Date.now()}`;
+
+      const logsList = [
+        `POST /beetle/migration/middleware/ns/${namespaceId || 'mig01'}/objectStorage${effectiveSeed ? `?nameSeed=${effectiveSeed}` : ''}`,
+        `Header -> Prefer: respond-async`,
+        `HTTP 202 Accepted (ReqID: ${realReqId}, Status: Handling)`,
+        ...(res.success
+          ? [
+              `GET /beetle/request/${realReqId} -> Status: Handling (Background worker allocated)`,
+              `Dispatched target cloud bucket creation request to CB-Tumblebug backend.`,
+              `GET /beetle/request/${realReqId} -> Status: Handling (Elapsed: 0s)`
+            ]
+          : [`[Error] Object Storage migration request failed: ${res.error || 'Resource conflict or API timeout'}`])
+      ];
+
+      const newJobCard: ObjectStorageJobCard = {
+        id: newJobId,
+        reqId: realReqId,
+        name: storageJobName,
+        csp: targetCsp,
+        region: targetReg,
+        status: res.success ? 'Handling' : 'Failed',
+        startTime: new Date().toISOString(),
+        elapsedSeconds: 0,
+        buckets: payloadTargetStorages.map((b) => ({
+          name: b.bucketName,
+          targetClass: 'Standard (S3/Hot)',
+          cors: b.corsEnabled ? 'ENABLED' : 'DISABLED',
+          versioning: b.versioningEnabled ? 'ENABLED' : 'DISABLED'
+        })),
+        logs: logsList,
+        isSample: false,
+        error: res.success ? undefined : res.error
+      };
+
+      setObjectStorageJobs((prev) => [newJobCard, ...prev]);
+      setSelectedJobId(newJobId);
+
       if (res.success) {
-        const realReqId = res.reqId || mockReqId;
-        setDeploymentLog((prev) => [
-          ...prev,
-          `GET /beetle/request/${realReqId} -> Status: Handling (Background worker allocated)`,
-          `Dispatched target cloud bucket creation request to CB-Tumblebug backend.`,
-          `GET /beetle/request/${realReqId} -> Status: Success (Duration: 3s)`
-        ]);
+        setDeploymentLog(logsList);
         setTimeout(() => {
           loadMigratedStorages();
         }, 3000);
       } else {
-        setDeploymentLog((prev) => [
-          ...prev,
-          `[Error] Object Storage migration request failed: ${res.error || 'Resource conflict or API timeout'}`
-        ]);
+        setDeploymentLog(logsList);
       }
     } catch (err: any) {
       setDeploymentLog((prev) => [...prev, `[Error] ${err.message || 'Execution error'}`]);
@@ -1627,6 +1831,27 @@ export const ObjectStorageMigration: React.FC = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* Section C: High-Performance Object Directory Tree View */}
+                          <div className="pt-4 border-t border-border-main/40 space-y-2">
+                            <div className="flex items-center space-x-2 pb-1">
+                              <Folder className="w-4 h-4 text-emerald-500" />
+                              <span className="font-extrabold text-sm text-text-main font-mono">
+                                Bucket Directory &amp; Object Hierarchy Tree — {b.bucketName}
+                              </span>
+                            </div>
+                            <ObjectDirectoryTree
+                              bucketName={b.bucketName}
+                              objects={b.objects && b.objects.length > 0 ? b.objects : [
+                                { key: 'documents/2026/Q1_Report.pdf', sizeBytes: 2457600, lastModified: '2026-07-28 14:20:00' },
+                                { key: 'documents/2026/Q2_Draft.docx', sizeBytes: 1048576, lastModified: '2026-07-28 15:10:00' },
+                                { key: 'photos/uploads/banner_hero.png', sizeBytes: 4194304, lastModified: '2026-07-27 09:30:00' },
+                                { key: 'photos/uploads/logo_dark.svg', sizeBytes: 524288, lastModified: '2026-07-27 10:15:00' },
+                                { key: 'backup/db_dump_20260728.tar.gz', sizeBytes: 1073741824, lastModified: '2026-07-28 02:00:00' },
+                                { key: 'README.md', sizeBytes: 4096, lastModified: '2026-07-20 11:00:00' }
+                              ]}
+                            />
+                          </div>
                         </div>
                       );
                     })()}
@@ -1934,7 +2159,7 @@ export const ObjectStorageMigration: React.FC = () => {
                   <div className="pt-2 border-t border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-start space-x-1.5 font-medium">
                     <AlertCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                     <span>
-                      <strong>Tumblebug System UID 안내:</strong> Bucket Name은 Tumblebug 내부에서 고유 시스템 UID(예: <code className="font-mono text-emerald-600 dark:text-emerald-400">target-storage-01-x8f2</code>)로 자동 할당·관리됩니다. 사용자 지정 식별을 위해 UI에서는 <strong>Object Storage Name</strong>으로 표기합니다.
+                      <strong>CB-managed UID 안내:</strong> 클라우드 Bucket Name은 Cloud-Barista 내부에서 고유한 <strong>CB-managed UID</strong>로 자동 할당·관리됩니다. 사용자 지정 식별을 위해 UI에서는 <strong>Object Storage Name</strong>으로 표기합니다.
                     </span>
                   </div>
                 </div>
@@ -2022,7 +2247,7 @@ export const ObjectStorageMigration: React.FC = () => {
                       const isExcluded = excludedBucketNames.includes(b.bucketName);
                       if (isExcluded) return null;
                       const corsRule = ensureCorsRuleExists(b);
-                      const currentTargetName = b.targetBucketName || b.bucketName;
+                      const currentTargetName = b.targetBucketName !== undefined ? b.targetBucketName : b.bucketName;
                       const cspSupport = getCspSupport(desiredCsp);
 
                       return (
@@ -2076,7 +2301,7 @@ export const ObjectStorageMigration: React.FC = () => {
                                 placeholder="e.g. target-storage-01"
                               />
                               <span className="text-[11px] text-text-muted font-normal block pt-0.5">
-                                * Tumblebug UID: <span className="font-mono font-bold text-text-main">{currentTargetName}-x8f2</span>
+                                * Note: A unique <span className="font-bold text-text-main">CB-managed UID</span> is automatically assigned to the target bucket upon creation.
                               </span>
                             </div>
 
@@ -2426,7 +2651,7 @@ export const ObjectStorageMigration: React.FC = () => {
 
             <div className="px-3.5 py-2 bg-bg-panel border border-border-main rounded-xl text-xs font-bold font-mono text-text-main flex items-center gap-2">
               <Zap className="w-4 h-4 text-emerald-500" />
-              <span>Active Migration Jobs ({isDeploying ? '1 Running' : '0 Running'} / 1 Completed)</span>
+              <span>Active Migration Jobs ({objectStorageJobs.filter(j => j.status === 'Handling').length} Running / {objectStorageJobs.filter(j => j.status === 'Success').length} Completed)</span>
             </div>
           </div>
 
@@ -2435,7 +2660,7 @@ export const ObjectStorageMigration: React.FC = () => {
             <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
               <h3 className="text-sm font-extrabold text-text-main flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-500" />
-                Migration Jobs Queue (1)
+                Migration Jobs Queue ({objectStorageJobs.length})
               </h3>
               <span className="text-xs text-text-muted font-mono bg-bg-panel px-3 py-1 rounded-full border border-border-main">
                 Click card to view detailed progress &amp; results
@@ -2443,184 +2668,226 @@ export const ObjectStorageMigration: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 relative overflow-hidden bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40">
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-blue-500" />
+              {objectStorageJobs.map((job) => {
+                const isSelected = job.id === selectedJobId;
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => setSelectedJobId(job.id)}
+                    className={`p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 relative overflow-hidden ${
+                      isSelected
+                        ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40'
+                        : 'bg-bg-panel hover:bg-bg-input border-border-main/60'
+                    }`}
+                  >
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-blue-500" />
 
-                <div className="flex justify-between items-center gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-base shrink-0">
-                      {desiredCsp.toLowerCase() === 'aws' ? '🌩️' : desiredCsp.toLowerCase() === 'azure' ? '🔷' : '🟢'}
-                    </span>
-                    <span className="font-extrabold text-sm text-text-main font-mono truncate" title={`${desiredCsp.toUpperCase()} (${nameSeed === 'my-target-object-storage-01' ? 'mig01' : (nameSeed || 'mig01')}-${desiredCsp.toLowerCase()}-storage)`}>
-                      <span className="text-amber-500 font-bold mr-1">[Sample]</span>
-                      {`${desiredCsp.toUpperCase()} (${nameSeed === 'my-target-object-storage-01' ? 'mig01' : (nameSeed || 'mig01')}-${desiredCsp.toLowerCase()}-storage)`}
-                    </span>
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">
+                          {job.csp.toLowerCase() === 'aws' ? '🌩️' : job.csp.toLowerCase() === 'azure' ? '🔷' : '🟢'}
+                        </span>
+                        <span className="font-extrabold text-sm text-text-main font-mono truncate" title={job.name}>
+                          {job.isSample && <span className="text-amber-500 font-bold mr-1">[Sample]</span>}
+                          {job.name}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 shrink-0 ${
+                          job.status === 'Success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                          job.status === 'Handling' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                          'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}>
+                          {job.status === 'Success' && <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />}
+                          {job.status === 'Handling' && <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />}
+                          {job.status === 'Failed' && <X className="w-3.5 h-3.5 text-red-400" />}
+                          <span>{job.status === 'Success' ? '✓ Success' : job.status}</span>
+                        </span>
+
+                        {!job.isSample && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteModalJob(job);
+                              setDeleteConfirmText('');
+                            }}
+                            className="p-1 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition cursor-pointer"
+                            title="Delete job from queue history"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs font-mono text-text-muted pt-1 border-t border-border-main/20">
+                      <span>Region: {job.region}</span>
+                      <span className="flex items-center gap-1 font-bold text-text-main">
+                        <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                        Time: {job.elapsedSeconds}s ({job.status === 'Handling' ? 'Running' : 'Done'})
+                      </span>
+                    </div>
                   </div>
-
-                  <span className="px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-bold flex items-center gap-1 shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
-                    <span>✓ Success</span>
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center text-xs font-mono text-text-muted pt-1 border-t border-border-main/20">
-                  <span>Region: {desiredRegion}</span>
-                  <span className="flex items-center gap-1 font-bold text-text-main">
-                    <Clock className="w-3.5 h-3.5 text-emerald-500" />
-                    Time: 15s (Done)
-                  </span>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
           {/* SECTION 2: Selected Job Detail Panel */}
-          <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-6 animate-fade-in shadow-sm">
-            {/* Selected Job Header */}
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border-main/20 pb-4">
-              <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
-                <span className="text-lg">
-                  {desiredCsp.toLowerCase() === 'aws' ? '🌩️' : desiredCsp.toLowerCase() === 'azure' ? '🔷' : '🟢'}
-                </span>
-                <span>
-                  Selected Job Detail: <span className="text-amber-500 font-bold mr-1">[Sample]</span>[{`${desiredCsp.toUpperCase()} (${nameSeed === 'my-target-object-storage-01' ? 'mig01' : (nameSeed || 'mig01')}-${desiredCsp.toLowerCase()}-storage)`}]
-                </span>
-              </h3>
+          {activeJob && (
+            <div className="glass-panel p-6 rounded-2xl border border-border-main space-y-6 animate-fade-in shadow-sm">
+                {/* Selected Job Header */}
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border-main/20 pb-4">
+                  <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                    <span className="text-lg">
+                      {(activeJob?.csp || desiredCsp).toLowerCase() === 'aws' ? '🌩️' : (activeJob?.csp || desiredCsp).toLowerCase() === 'azure' ? '🔷' : '🟢'}
+                    </span>
+                    <span>
+                      Selected Job Detail: {activeJob?.isSample && <span className="text-amber-500 font-bold mr-1">[Sample]</span>}[{activeJob?.name}]
+                    </span>
+                  </h3>
 
-              <div className="flex items-center gap-3 text-xs font-mono text-text-muted">
-                <span>Namespace: <strong className="text-text-main">mig01</strong></span>
-                <span>Req ID: <strong className="text-emerald-500">req-20260723-001</strong></span>
-                <span>Elapsed: <strong className="text-teal-400">15s</strong></span>
-              </div>
-            </div>
-
-            {/* Simplified 3-Stage API Status Flow (Matching Infra Stepper) */}
-            <div className="bg-bg-panel/50 border border-border-main/40 p-5 rounded-xl space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase font-mono">
-                  API MIGRATION EXECUTION STATUS
-                </span>
-                <span className="text-xs font-bold text-text-muted font-mono">
-                  API Status: <strong className="text-green-400">Success</strong>
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                {/* Step 1: Request Accepted */}
-                <div className="bg-bg-input/60 border border-emerald-500/30 p-3.5 rounded-xl flex items-center space-x-3">
-                  <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
-                  <div>
-                    <h4 className="text-xs font-bold text-text-main">1. Request Accepted</h4>
-                    <p className="text-[11px] text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-text-muted">
+                    <span>Namespace: <strong className="text-text-main">{namespaceId || 'mig01'}</strong></span>
+                    <span>Req ID: <strong className="text-emerald-500">{activeJob?.reqId || 'req-20260723-001'}</strong></span>
+                    <span>Elapsed: <strong className="text-teal-400">{activeJob?.elapsedSeconds ?? 0}s</strong></span>
+                    {!activeJob?.isSample && (
+                      <button
+                        onClick={() => {
+                          setDeleteModalJob(activeJob);
+                          setDeleteConfirmText('');
+                        }}
+                        className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                        title="Delete job history from queue"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete History</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Step 2: Migrating */}
-                <div className="bg-bg-input/60 border border-emerald-500/30 p-3.5 rounded-xl flex items-center space-x-3">
-                  <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
-                  <div>
-                    <h4 className="text-xs font-bold text-text-main">2. Migrating</h4>
-                    <p className="text-[11px] text-text-muted font-mono">Finished Processing</p>
+                {/* Simplified 3-Stage API Status Flow (Matching Infra Stepper) */}
+                <div className="bg-bg-panel/50 border border-border-main/40 p-5 rounded-xl space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase font-mono">
+                      API MIGRATION EXECUTION STATUS
+                    </span>
+                    <span className="text-xs font-bold text-text-muted font-mono">
+                      API Status: <strong className={activeJob?.status === 'Success' ? 'text-green-400' : activeJob?.status === 'Handling' ? 'text-amber-400' : 'text-red-400'}>{activeJob?.status || 'Success'}</strong>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                    {/* Step 1: Request Accepted */}
+                    <div className="bg-bg-input/60 border border-emerald-500/30 p-3.5 rounded-xl flex items-center space-x-3">
+                      <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
+                      <div>
+                        <h4 className="text-xs font-bold text-text-main">1. Request Accepted</h4>
+                        <p className="text-[11px] text-text-muted font-mono">HTTP 202 (ReqID Issued)</p>
+                      </div>
+                    </div>
+
+                    {/* Step 2: Migrating */}
+                    <div className="bg-bg-input/60 border border-emerald-500/30 p-3.5 rounded-xl flex items-center space-x-3">
+                      <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg font-bold text-xs">✓</div>
+                      <div>
+                        <h4 className="text-xs font-bold text-text-main">2. Migrating</h4>
+                        <p className="text-[11px] text-text-muted font-mono">Finished Processing</p>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Completed */}
+                    <div className={`p-3.5 rounded-xl flex items-center space-x-3 ${activeJob?.status === 'Success' ? 'bg-green-500/10 border border-green-500/40' : 'bg-bg-input/60 border border-border-main/30'}`}>
+                      <div className="p-2 bg-green-500/20 text-green-400 rounded-lg font-bold text-xs">✓</div>
+                      <div>
+                        <h4 className="text-xs font-bold text-text-main">3. Completed</h4>
+                        <p className="text-[11px] text-text-muted font-mono">Object Storage Active &amp; Ready</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Step 3: Completed */}
-                <div className="bg-green-500/10 border border-green-500/40 p-3.5 rounded-xl flex items-center space-x-3">
-                  <div className="p-2 bg-green-500/20 text-green-400 rounded-lg font-bold text-xs">✓</div>
-                  <div>
-                    <h4 className="text-xs font-bold text-text-main">3. Completed</h4>
-                    <p className="text-[11px] text-text-muted font-mono">Object Storage Active &amp; Ready</p>
+                {/* Provisioned Cloud Storage Buckets & Access Points Verification Table */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-extrabold text-text-main flex items-center space-x-2">
+                      <Globe className="w-4 h-4 text-emerald-500" />
+                      <span>Provisioned Cloud Storage Buckets &amp; Connectivity Verification</span>
+                    </h4>
+                    <button
+                      onClick={loadMigratedStorages}
+                      className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center space-x-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Check Storage Access Points</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-bg-panel border border-border-main/60 rounded-xl overflow-hidden shadow-sm">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-bg-input/60 border-b border-border-main/40 text-text-muted uppercase font-mono">
+                        <tr>
+                          <th className="p-3.5 font-bold">Bucket Name</th>
+                          <th className="p-3.5 font-bold">Target Storage Class</th>
+                          <th className="p-3.5 font-bold">CORS Status</th>
+                          <th className="p-3.5 font-bold">Versioning</th>
+                          <th className="p-3.5 font-bold">Storage Access Check</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-main/30 font-mono">
+                        {(activeJob?.buckets || []).map((b, idx) => (
+                          <tr key={idx} className="hover:bg-bg-main/30 transition">
+                            <td className="p-3.5 font-extrabold text-text-main">
+                              {b.name}
+                            </td>
+                            <td className="p-3.5 font-bold text-emerald-500">
+                              {b.targetClass}
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded font-bold ${b.cors === 'ENABLED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                {b.cors}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded font-bold ${b.versioning === 'ENABLED' ? 'bg-teal-500/20 text-teal-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                {b.versioning}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <button
+                                onClick={() => alert(`[OK] Storage Access Point reachable for '${b.name}' on ${(activeJob?.csp || 'aws').toUpperCase()} (${activeJob?.region || 'ap-northeast-2'})`)}
+                                className="px-3 py-1 bg-bg-input hover:bg-bg-main border border-border-main text-emerald-600 dark:text-emerald-400 rounded-lg font-bold transition flex items-center space-x-1.5 cursor-pointer text-xs"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>Check Bucket Access</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Provisioned Cloud Storage Buckets & Access Points Verification Table */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-extrabold text-text-main flex items-center space-x-2">
-                  <Globe className="w-4 h-4 text-emerald-500" />
-                  <span>Provisioned Cloud Storage Buckets &amp; Connectivity Verification</span>
-                </h4>
-                <button
-                  onClick={loadMigratedStorages}
-                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center space-x-1"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Check Storage Access Points</span>
-                </button>
-              </div>
-
-              <div className="bg-bg-panel border border-border-main/60 rounded-xl overflow-hidden shadow-sm">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-bg-input/60 border-b border-border-main/40 text-text-muted uppercase font-mono">
-                    <tr>
-                      <th className="p-3.5 font-bold">Bucket Name</th>
-                      <th className="p-3.5 font-bold">Target Storage Class</th>
-                      <th className="p-3.5 font-bold">CORS Status</th>
-                      <th className="p-3.5 font-bold">Versioning</th>
-                      <th className="p-3.5 font-bold">Storage Access Check</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-main/30 font-mono">
-                    {sourceBuckets.map((b, idx) => (
-                      <tr key={idx} className="hover:bg-bg-main/30 transition">
-                        <td className="p-3.5 font-extrabold text-text-main">
-                          {b.targetBucketName || b.bucketName}
-                        </td>
-                        <td className="p-3.5 font-bold text-emerald-500">
-                          {b.accessFrequency === 'frequent' ? 'Standard (S3/Hot)' : b.accessFrequency === 'infrequent' ? 'Standard-IA' : 'Glacier/Archive'}
-                        </td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded font-bold ${b.corsEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                            {b.corsEnabled ? 'ENABLED' : 'DISABLED'}
-                          </span>
-                        </td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded font-bold ${b.versioningEnabled ? 'bg-teal-500/20 text-teal-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                            {b.versioningEnabled ? 'ENABLED' : 'DISABLED'}
-                          </span>
-                        </td>
-                        <td className="p-3.5">
-                          <button
-                            onClick={() => alert(`[OK] Storage Access Point reachable for '${b.targetBucketName || b.bucketName}' on ${desiredCsp.toUpperCase()} (${desiredRegion})`)}
-                            className="px-3 py-1 bg-bg-input hover:bg-bg-main border border-border-main text-emerald-600 dark:text-emerald-400 rounded-lg font-bold transition flex items-center space-x-1.5 cursor-pointer text-xs"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                            <span>Check Bucket Access</span>
-                          </button>
-                        </td>
-                      </tr>
+                {/* REST API REQUEST & RESPONSE LOG (Matching Infra Log Block) */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-text-muted font-mono uppercase">
+                    REST API REQUEST &amp; RESPONSE LOG
+                  </h4>
+                  <div className="bg-bg-input p-4 rounded-xl border border-border-main/40 font-mono text-xs text-text-muted space-y-1.5 max-h-48 overflow-y-auto">
+                    {(activeJob?.logs || deploymentLog).map((line, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-emerald-500">›</span>
+                        <span className={line.includes('Error') ? 'text-red-400 font-bold' : line.includes('Success') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : ''}>
+                          {line}
+                        </span>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* REST API REQUEST & RESPONSE LOG (Matching Infra Log Block) */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-text-muted font-mono uppercase">
-                REST API REQUEST &amp; RESPONSE LOG
-              </h4>
-              <div className="bg-bg-input p-4 rounded-xl border border-border-main/40 font-mono text-xs text-text-muted space-y-1.5 max-h-48 overflow-y-auto">
-                <div className="flex items-start gap-2">
-                  <span className="text-emerald-500">›</span>
-                  <span>POST /beetle/migration/ns/mig01/objectStorage?nameSeed={nameSeed || 'mig01'}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-emerald-500">›</span>
-                  <span>Header -&gt; Prefer: respond-async</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-emerald-500">›</span>
-                  <span>HTTP 202 Accepted (ReqID: req-20260723-001, Status: Handling)</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-emerald-500">›</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">GET /beetle/request/req-20260723-001 -&gt; Status: Success (Duration: 15s)</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Bottom Navigation Buttons Row (Matching Infra Parity) */}
             <div className="flex items-center justify-between pt-4 border-t border-border-main/30 mt-4">
@@ -2638,8 +2905,7 @@ export const ObjectStorageMigration: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Save Source Model Revision Modal */}
       <SaveRevisionModal
@@ -3098,6 +3364,70 @@ export const ObjectStorageMigration: React.FC = () => {
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Confirm &amp; Import Storage(s)</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Record Confirmation Modal with Text Pattern Matching */}
+      {deleteModalJob && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up space-y-4">
+            <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" />
+                <span>Delete Object Storage Migration Record</span>
+              </h3>
+              <button
+                onClick={() => { setDeleteModalJob(null); setDeleteConfirmText(''); }}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs text-text-muted leading-relaxed">
+                Are you sure you want to remove the object storage migration record for <strong className="text-text-main">"{deleteModalJob.name}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.reqId}</span>) from the Queue?
+              </p>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-400 font-mono">
+                ⚠️ Note: This action only removes the UI queue request record. Physical cloud storage resources will NOT be deleted.
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-bold text-text-muted">
+                  To confirm deletion, type <span className="font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/60 text-emerald-400 select-all">{deleteModalJob.name}</span> below:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={`Type "${deleteModalJob.name}" to confirm`}
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setDeleteModalJob(null); setDeleteConfirmText(''); }}
+                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-xs font-semibold hover:bg-bg-input transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteStorageRecord}
+                  disabled={deleteConfirmText !== deleteModalJob.name}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    deleteConfirmText !== deleteModalJob.name
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Confirm Delete</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

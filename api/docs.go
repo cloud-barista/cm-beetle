@@ -859,7 +859,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a specific object storage (bucket).\n\nDeletion behavior is controlled by the ` + "`" + `option` + "`" + ` query parameter (mutually exclusive):\n- (none): Standard delete — fails if the bucket is not empty.\n- ` + "`" + `empty` + "`" + `: Empty the bucket first, then delete.\n- ` + "`" + `force` + "`" + `: Force-delete with all contents (passed to Spider as force=true).\n- ` + "`" + `reconcile` + "`" + `: Remove only Tumblebug metadata without calling the CSP delete API.",
+                "description": "Delete a specific object storage (bucket).\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously (RFC 7240). Check progress via GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\nDeletion behavior is controlled by the ` + "`" + `option` + "`" + ` query parameter (mutually exclusive):\n- (none): Standard delete — fails if the bucket is not empty.\n- ` + "`" + `empty` + "`" + `: Empty the bucket first, then delete.\n- ` + "`" + `force` + "`" + `: Force-delete with all contents (passed to Spider as force=true).\n- ` + "`" + `reconcile` + "`" + `: Remove only Tumblebug metadata without calling the CSP delete API.",
                 "consumes": [
                     "application/json"
                 ],
@@ -899,6 +899,15 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
+                    },
+                    {
                         "type": "string",
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
@@ -906,8 +915,14 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
+                    "202": {
+                        "description": "Object storage deletion started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
                     "204": {
-                        "description": "Object storage deleted successfully"
+                        "description": "Object storage deleted successfully (synchronous)"
                     },
                     "400": {
                         "description": "Invalid request parameters",
@@ -923,6 +938,12 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error during deletion",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -9448,14 +9469,14 @@ const docTemplate = `{
             ],
             "properties": {
                 "available": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer"
                 },
                 "label": {
                     "type": "string"
                 },
                 "totalSize": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer",
                     "example": 1024
                 },
@@ -9465,7 +9486,7 @@ const docTemplate = `{
                     "example": "SSD"
                 },
                 "used": {
-                    "description": "Unit GiB",
+                    "description": "Unit GB",
                     "type": "integer"
                 }
             }

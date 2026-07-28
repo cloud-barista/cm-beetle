@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useMigrationStore } from '@/store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds } from '@/store/migrationStore';
 import { beetleApi, tumblebugApi } from '@/api/client';
 import { CspCredentialForm } from '../common/CspCredentialForm';
 import { 
@@ -26,7 +26,8 @@ import {
   Sparkles,
   ArrowRight,
   Folder,
-  Globe
+  Globe,
+  Clock
 } from 'lucide-react';
 
 interface DataMigrationJob {
@@ -40,6 +41,7 @@ interface DataMigrationJob {
   strategy: string;
   status: 'Handling' | 'Success' | 'Failed';
   startTime: string;
+  createdAtMs?: number;
   elapsedSeconds: number;
   encryptionKeyId: string;
   isSample?: boolean;
@@ -47,33 +49,48 @@ interface DataMigrationJob {
 }
 
 export const DataTransferCenter: React.FC = () => {
-  const { namespaceId } = useMigrationStore();
+  const {
+    namespaceId,
+    dataJobs,
+    setDataJobs,
+    addDataJob,
+    removeDataJob,
+    activeDataJobId,
+    setActiveDataJobId
+  } = useMigrationStore();
 
-  // Active Job Queue State
-  const [dataJobs, setDataJobs] = useState<DataMigrationJob[]>([
-    {
-      id: 'req-data-101',
-      reqId: 'req-data-101',
-      sourceBucket: 'source-bucket-01/data/',
-      targetStorage: 'target-storage-v1/imports/',
-      nsId: 'mig01',
-      csp: 'AWS',
-      region: 'ap-northeast-2',
-      strategy: 'auto',
-      status: 'Success',
-      startTime: new Date(Date.now() - 300000).toLocaleTimeString(),
-      elapsedSeconds: 42,
-      encryptionKeyId: 'key-rsa-2026-0723',
-      isSample: true,
-      logs: [
-        'GET /beetle/migration/data/encryptionKey -> Issued RSA Public Key (KeyID: key-rsa-2026-0723)',
-        'Encrypting sensitive fields (AccessKeyId, SecretAccessKey) client-side via RSA-OAEP-256...',
-        'POST /beetle/migration/data -> 202 Accepted (ReqID: req-data-101)',
-        'Data migration completed successfully (Duration: 42s)'
-      ]
+  // Auto-restore sample job if queue was emptied
+  useEffect(() => {
+    if (dataJobs.length === 0) {
+      setDataJobs([
+        {
+          id: 'req-data-101',
+          reqId: 'req-data-20260724-001',
+          nsId: 'mig01',
+          csp: 'AWS',
+          region: 'ap-northeast-2',
+          sourceBucket: 'source-s3-bucket-production',
+          targetStorage: 'target-s3-bucket-migrated',
+          encryptionKeyId: 'KMS-AES256-GCM-KEY-9982',
+          strategy: 'Full Migration + AES256 Payload Encryption',
+          status: 'Success',
+          startTime: new Date().toISOString(),
+          elapsedSeconds: 24,
+          logs: [
+            'POST /beetle/migration/data (Prefer: respond-async)',
+            'HTTP 202 Accepted (ReqID: req-data-20260724-001)',
+            'Initializing AES256-GCM Envelope Encryption...',
+            'Transferring 1,024 S3 Objects (10.5 GB)...',
+            'Data Transfer & Integrity Verification Completed Successfully (Duration: 24s)'
+          ],
+          isSample: true
+        }
+      ]);
     }
-  ]);
-  const [activeJobId, setActiveJobId] = useState<string>('req-data-101');
+  }, [dataJobs, setDataJobs]);
+
+  const activeJobId = activeDataJobId || dataJobs[0]?.id || 'req-data-101';
+  const setActiveJobId = setActiveDataJobId;
 
   // Launch Modal State
   const [showLaunchModal, setShowLaunchModal] = useState(false);
@@ -168,6 +185,7 @@ export const DataTransferCenter: React.FC = () => {
   const [includeFilter, setIncludeFilter] = useState('');
   const [excludeFilter, setExcludeFilter] = useState('');
   const [isEncryptingAndLaunching, setIsEncryptingAndLaunching] = useState(false);
+  const [preferAsync, setPreferAsync] = useState(true);
   const [modalError, setModalError] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -478,7 +496,7 @@ export const DataTransferCenter: React.FC = () => {
       }
 
       // Step 4: Dispatch Data Migration API Call
-      const res = await beetleApi.migrateData(modelToSend);
+      const res = await beetleApi.migrateData(modelToSend, preferAsync);
 
       if (!res.success && res.error) {
         setModalError(res.error);
@@ -487,6 +505,7 @@ export const DataTransferCenter: React.FC = () => {
       }
 
       const reqId = res.reqId || `req-data-${Date.now().toString().slice(-6)}`;
+      const nowMs = Date.now();
       const newJob: DataMigrationJob = {
         id: reqId,
         reqId,
@@ -497,7 +516,8 @@ export const DataTransferCenter: React.FC = () => {
         region: dataRegion,
         strategy: dataStrategy,
         status: 'Handling',
-        startTime: new Date().toLocaleTimeString(),
+        startTime: new Date(nowMs).toISOString(),
+        createdAtMs: nowMs,
         elapsedSeconds: 0,
         encryptionKeyId: usedKeyId,
         logs: [
@@ -520,13 +540,88 @@ export const DataTransferCenter: React.FC = () => {
     }
   };
 
-  const handleRemoveJob = (id: string) => {
-    setDataJobs(prev => prev.filter(j => j.id !== id));
+  const [deleteModalJob, setDeleteModalJob] = useState<DataMigrationJob | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const handleConfirmDeleteDataRecord = () => {
+    if (!deleteModalJob || deleteConfirmText !== deleteModalJob.reqId) return;
+    removeDataJob(deleteModalJob.id);
+    setDeleteModalJob(null);
+    setDeleteConfirmText('');
   };
 
   const activeJob = dataJobs.find(j => j.id === activeJobId) || dataJobs[0];
   const runningJobsCount = dataJobs.filter(j => j.status === 'Handling').length;
   const completedJobsCount = dataJobs.filter(j => j.status === 'Success').length;
+
+  // Live Duration Timer & Status Polling Effect for Data Migration Jobs Queue
+  useEffect(() => {
+    const runningJobs = dataJobs.filter((j) => j.status === 'Handling');
+    if (runningJobs.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      // 1. Calculate real wall-clock elapsedSeconds for all running jobs
+      setDataJobs((prevJobs) =>
+        prevJobs.map((job) => {
+          if (job.status === 'Handling') {
+            const realElapsed = calculateJobElapsedSeconds(job);
+            return { ...job, elapsedSeconds: realElapsed };
+          }
+          return job;
+        })
+      );
+
+      // 2. Poll Beetle REST API GET /beetle/request/{reqId} to check if job finished
+      for (const job of runningJobs) {
+        if (!job.reqId || job.isSample) continue;
+        try {
+          const reqDetails = await beetleApi.getRequestDetails(job.reqId);
+          const status = reqDetails?.status;
+          if (status === 'Completed' || status === 'Succeeded' || status === 'Success') {
+            setDataJobs((prevJobs) =>
+              prevJobs.map((j) => {
+                if (j.id === job.id) {
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Success',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Success (Duration: ${dur}s)`
+                    ]
+                  };
+                }
+                return j;
+              })
+            );
+          } else if (status === 'Failed' || status === 'Error') {
+            setDataJobs((prevJobs) =>
+              prevJobs.map((j) => {
+                if (j.id === job.id) {
+                  const dur = calculateJobElapsedSeconds(j);
+                  return {
+                    ...j,
+                    status: 'Failed',
+                    elapsedSeconds: dur,
+                    logs: [
+                      ...j.logs.filter((l) => !l.includes('GET /beetle/request/')),
+                      `GET /beetle/request/${job.reqId} -> Status: Failed (${reqDetails?.errorResponse || 'Execution Error'}) (Duration: ${dur}s)`
+                    ]
+                  };
+                }
+                return j;
+              })
+            );
+          }
+        } catch (err) {
+          console.warn('Poll error for data job request', job.reqId, err);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [dataJobs, setDataJobs]);
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
@@ -592,66 +687,62 @@ export const DataTransferCenter: React.FC = () => {
                   onClick={() => setActiveJobId(job.id)}
                   role="button"
                   tabIndex={0}
-                  className={`p-4.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 relative overflow-hidden ${
+                  className={`p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-3 relative overflow-hidden ${
                     isSelected
                       ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40'
-                      : 'bg-bg-panel/40 border-border-main/50 hover:bg-bg-panel hover:border-border-main'
+                      : 'bg-bg-panel hover:bg-bg-input border-border-main/60'
                   }`}
                 >
+                  {/* Top Glowing indicator for active card */}
                   {isSelected && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-blue-500 animate-pulse" />
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500 to-blue-500" />
                   )}
 
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono font-extrabold text-emerald-500">{job.reqId}</span>
-                      <span className="px-2.5 py-0.5 rounded text-xs font-bold font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {job.csp}
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0">
+                        {job.csp.toLowerCase() === 'aws' ? '🌩️' : job.csp.toLowerCase() === 'azure' ? '🔷' : '🟢'}
+                      </span>
+                      <span className="font-extrabold text-sm text-text-main font-mono truncate" title={`${job.sourceBucket} ➔ ${job.targetStorage}`}>
+                        {job.isSample && <span className="text-amber-500 font-bold mr-1">[Sample]</span>}
+                        {job.sourceBucket} ➔ {job.targetStorage}
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-1.5">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          job.status === 'Success'
-                            ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50'
-                            : job.status === 'Failed'
-                            ? 'bg-red-400 shadow-sm shadow-red-400/50'
-                            : 'bg-amber-400 animate-ping'
-                        }`}
-                      />
-                      <span
-                        className={`text-sm font-mono font-extrabold uppercase ${
-                          job.status === 'Success'
-                            ? 'text-emerald-400'
-                            : job.status === 'Failed'
-                            ? 'text-red-400'
-                            : 'text-amber-400'
-                        }`}
-                      >
-                        {job.status}
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 shrink-0 ${
+                        job.status === 'Success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                        job.status === 'Handling' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                        'bg-red-500/10 text-red-400 border border-red-500/20'
+                      }`}>
+                        {job.status === 'Success' && <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />}
+                        {job.status === 'Handling' && <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />}
+                        {job.status === 'Failed' && <X className="w-3.5 h-3.5 text-red-400" />}
+                        <span>{job.status === 'Success' ? '✓ Success' : job.status}</span>
                       </span>
+
+                      {!job.isSample && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteModalJob(job);
+                            setDeleteConfirmText('');
+                          }}
+                          className="p-1 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition cursor-pointer"
+                          title="Delete job from history queue"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-extrabold text-text-main flex items-center gap-1.5 truncate">
-                      {job.isSample && <span className="text-amber-500 font-bold mr-1">[Sample]</span>}
-                      <span>{job.sourceBucket}</span>
-                      <ArrowRight className="w-4 h-4 text-text-muted shrink-0" />
-                      <span className="text-emerald-400">{job.targetStorage}</span>
-                    </h4>
-                    <p className="text-sm text-text-muted font-mono truncate">
-                      NS: {job.nsId} | Region: {job.region}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-border-main/20 flex items-center justify-between text-sm font-mono">
-                    <span className="text-text-muted flex items-center gap-1">
-                      <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>RSA-OAEP-256</span>
+                  <div className="flex justify-between items-center text-xs font-mono text-text-muted pt-1 border-t border-border-main/20">
+                    <span>Region: {job.region}</span>
+                    <span className="flex items-center gap-1 font-bold text-text-main">
+                      <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                      Time: {job.elapsedSeconds}s ({job.status === 'Handling' ? 'Running' : 'Done'})
                     </span>
-                    <span className="text-text-main font-bold">Duration: {job.elapsedSeconds}s</span>
                   </div>
                 </div>
               );
@@ -673,10 +764,10 @@ export const DataTransferCenter: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center space-x-2.5">
                 <Database className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-lg font-extrabold text-text-main tracking-tight font-mono">
+                <h3 className="text-base font-extrabold text-text-main font-mono">
                   Job Detail: {activeJob.isSample && <span className="text-amber-500 font-bold mr-1">[Sample]</span>}{activeJob.reqId}
                 </h3>
-                <span className="px-3 py-1 rounded-full text-sm font-mono font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className="px-2.5 py-0.5 rounded text-xs font-bold font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   {activeJob.csp} ({activeJob.region})
                 </span>
               </div>
@@ -690,13 +781,18 @@ export const DataTransferCenter: React.FC = () => {
                 <Lock className="w-4 h-4 text-emerald-400" />
                 <span>Field Encrypted</span>
               </div>
-              <button
-                onClick={() => handleRemoveJob(activeJob.id)}
-                className="px-4 py-2 bg-bg-panel hover:bg-red-500/10 border border-border-main hover:border-red-500/30 text-text-muted hover:text-red-400 rounded-xl text-sm font-bold transition flex items-center space-x-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete Record</span>
-              </button>
+              {!activeJob.isSample && (
+                <button
+                  onClick={() => {
+                    setDeleteModalJob(activeJob);
+                    setDeleteConfirmText('');
+                  }}
+                  className="px-4 py-2 bg-bg-panel hover:bg-red-500/10 border border-border-main hover:border-red-500/30 text-text-muted hover:text-red-400 rounded-xl text-sm font-bold transition flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Record</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -1467,31 +1563,46 @@ export const DataTransferCenter: React.FC = () => {
 
             </div>
 
-            {/* Execute Data Migration Button */}
-            <div className="border-t border-border-main/40 pt-4 flex items-center justify-end space-x-3">
-              <button
-                onClick={() => setShowLaunchModal(false)}
-                className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold text-sm rounded-xl transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmLaunchDataMigration}
-                disabled={isEncryptingAndLaunching}
-                className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
-              >
-                {isEncryptingAndLaunching ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
-                    <span>Encrypting &amp; Executing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-4 h-4 text-slate-950" />
-                    <span>Encrypt &amp; Execute Data Migration</span>
-                  </>
-                )}
-              </button>
+            {/* Execute Data Migration Button & Prefer respond-async Toggle */}
+            <div className="border-t border-border-main/40 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 font-sans">
+              {/* Left Side: Prefer respond-async Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-text-main p-2 px-3.5 bg-bg-panel/60 hover:bg-bg-input border border-border-main/40 rounded-xl shrink-0 transition">
+                <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="font-mono">Prefer: respond-async</span>
+                <input
+                  type="checkbox"
+                  checked={preferAsync}
+                  onChange={(e) => setPreferAsync(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer rounded ml-1"
+                />
+              </label>
+
+              {/* Right Side: Cancel & Launch Migration Buttons */}
+              <div className="flex items-center justify-end space-x-3 shrink-0">
+                <button
+                  onClick={() => setShowLaunchModal(false)}
+                  className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold text-sm rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmLaunchDataMigration}
+                  disabled={isEncryptingAndLaunching}
+                  className="px-6 py-2.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-blue-600 hover:from-teal-500 hover:to-blue-700 disabled:opacity-40 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2 cursor-pointer"
+                >
+                  {isEncryptingAndLaunching ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Encrypting &amp; Executing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 text-slate-950" />
+                      <span>Encrypt &amp; Execute Data Migration</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1588,6 +1699,70 @@ export const DataTransferCenter: React.FC = () => {
                 <Key className="w-4 h-4" />
                 <span>Save &amp; Select Profile</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Record Confirmation Modal with Text Pattern Matching */}
+      {deleteModalJob && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-md border border-border-main animate-scale-up space-y-4">
+            <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
+              <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" />
+                <span>Delete Data Migration Record</span>
+              </h3>
+              <button
+                onClick={() => { setDeleteModalJob(null); setDeleteConfirmText(''); }}
+                className="text-text-muted hover:text-text-main transition p-1 hover:bg-bg-input rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs text-text-muted leading-relaxed">
+                Are you sure you want to remove the data migration record for <strong className="text-text-main">"{deleteModalJob.reqId}"</strong> (<span className="font-mono text-emerald-400">{deleteModalJob.sourceBucket} ➔ {deleteModalJob.targetStorage}</span>) from the Queue?
+              </p>
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-400 font-mono">
+                ⚠️ Note: This action only removes the UI queue request record. Transferred data objects in cloud storage will NOT be deleted.
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="block text-xs font-bold text-text-muted">
+                  To confirm deletion, type <span className="font-mono bg-bg-panel px-1.5 py-0.5 rounded border border-border-main/60 text-emerald-400 select-all">{deleteModalJob.reqId}</span> below:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={`Type "${deleteModalJob.reqId}" to confirm`}
+                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-red-500 font-bold font-mono"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setDeleteModalJob(null); setDeleteConfirmText(''); }}
+                  className="px-4 py-2 bg-bg-panel border border-border-main text-text-main rounded-xl text-xs font-semibold hover:bg-bg-input transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDeleteDataRecord}
+                  disabled={deleteConfirmText !== deleteModalJob.reqId}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                    deleteConfirmText !== deleteModalJob.reqId
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md shadow-red-500/20'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Confirm Delete</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -510,10 +510,23 @@ export const beetleApi = {
     }
   },
 
-  deleteMigratedObjectStorage: async (nsId: string, osId: string): Promise<{ success: boolean; error?: string }> => {
+  deleteMigratedObjectStorage: async (
+    nsId: string,
+    osId: string,
+    option: string = '',
+    useAsync: boolean = true
+  ): Promise<{ success: boolean; reqId?: string; error?: string }> => {
     try {
-      await api.delete(`/beetle/migration/middleware/ns/${nsId}/objectStorage/${osId}`);
-      return { success: true };
+      const headers: Record<string, string> = {};
+      if (useAsync) {
+        headers['Prefer'] = 'respond-async';
+      }
+      const query = option ? `?option=${encodeURIComponent(option)}` : '';
+      const response = await api.delete(`/beetle/migration/middleware/ns/${nsId}/objectStorage/${osId}${query}`, {
+        headers
+      });
+      const reqId = response.data?.data?.reqId || response.headers['x-request-id'];
+      return { success: true, reqId };
     } catch (err: any) {
       return { success: false, error: err.response?.data?.error || err.message };
     }
@@ -527,9 +540,13 @@ export const beetleApi = {
     return response.data?.data || response.data;
   },
 
-  migrateData: async (dataMigrationModel: any): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
+  migrateData: async (dataMigrationModel: any, preferAsync: boolean = true): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
     try {
-      const response = await api.post('/beetle/migration/data', dataMigrationModel);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (preferAsync) {
+        headers['Prefer'] = 'respond-async';
+      }
+      const response = await api.post('/beetle/migration/data', dataMigrationModel, { headers });
       const reqId = response.data?.data?.reqId || response.headers['x-request-id'] || response.data?.reqId;
       return { success: true, reqId, data: response.data };
     } catch (err: any) {
@@ -679,7 +696,10 @@ export const beetleApi = {
       if (preferAsync) {
         headers['Prefer'] = 'respond-async';
       }
-      const response = await api.post(`/beetle/migration/middleware/ns/${nsId}/objectStorage?nameSeed=${nameSeed}`, requestBody, { headers });
+      const url = nameSeed && nameSeed.trim().length > 0
+        ? `/beetle/migration/middleware/ns/${nsId}/objectStorage?nameSeed=${encodeURIComponent(nameSeed.trim())}`
+        : `/beetle/migration/middleware/ns/${nsId}/objectStorage`;
+      const response = await api.post(url, requestBody, { headers });
       
       if (response.status === 202) {
         const reqId = response.data?.data?.reqId || response.data?.reqId || `req-${Date.now()}`;

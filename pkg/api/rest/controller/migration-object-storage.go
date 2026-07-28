@@ -279,6 +279,10 @@ func ExistObjectStorage(c echo.Context) error {
 // @Summary Delete object storage (bucket)
 // @Description Delete a specific object storage (bucket).
 // @Description
+// @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+// @Description asynchronously (RFC 7240). Check progress via GET /request/{reqId}
+// @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+// @Description
 // @Description Deletion behavior is controlled by the `option` query parameter (mutually exclusive):
 // @Description - (none): Standard delete — fails if the bucket is not empty.
 // @Description - `empty`: Empty the bucket first, then delete.
@@ -290,11 +294,14 @@ func ExistObjectStorage(c echo.Context) error {
 // @Param nsId path string true "Namespace ID" default(mig01)
 // @Param osId path string true "Object Storage ID (bucket ID)"
 // @Param option query string false "Delete option" Enums(empty, force, reconcile)
+// @Param Prefer header string false "Set to 'respond-async' to run this deletion asynchronously (RFC 7240)" Enums(respond-async)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 204 "Object storage deleted successfully"
+// @Success 204 "Object storage deleted successfully (synchronous)"
+// @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Object storage deletion started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during deletion"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [delete]
 func DeleteObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -310,6 +317,29 @@ func DeleteObjectStorage(c echo.Context) error {
 	}
 
 	option := c.QueryParam("option") // "", "empty", "force", "reconcile"
+
+	if preferRespondAsync(c) {
+		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
+		started := common.RunAsync(reqID, func() (map[string]any, error) {
+			if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
+				return nil, err
+			}
+			return map[string]any{"message": fmt.Sprintf("Object storage '%s' deleted successfully", osId)}, nil
+		})
+		if !started {
+			c.Response().Header().Set("Retry-After", "5")
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many async jobs in progress; retry shortly, or retry without Prefer: respond-async"))
+		}
+		c.Response().Header().Set("Preference-Applied", "respond-async")
+		return c.JSON(http.StatusAccepted, model.SuccessResponseWithMessage(
+			model.AsyncJobResponse{
+				ReqID:     reqID,
+				Status:    common.RequestStatusHandling,
+				StatusURL: fmt.Sprintf("/beetle/request/%s", reqID),
+			},
+			fmt.Sprintf("Object storage '%s' deletion started. Use GET /request/{reqId} to check status.", osId)))
+	}
 
 	if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Failed to delete object storage")

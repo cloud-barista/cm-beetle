@@ -3689,12 +3689,12 @@ definitions:
   onpremisemodel.DiskProperty:
     properties:
       available:
-        description: Unit GiB
+        description: Unit GB
         type: integer
       label:
         type: string
       totalSize:
-        description: Unit GiB
+        description: Unit GB
         example: 1024
         type: integer
       type:
@@ -3702,7 +3702,7 @@ definitions:
         example: SSD
         type: string
       used:
-        description: Unit GiB
+        description: Unit GB
         type: integer
     required:
     - label
@@ -6335,6 +6335,10 @@ paths:
       description: |-
         Delete a specific object storage (bucket).
 
+        By default this API runs synchronously. Send header `Prefer: respond-async` to run it
+        asynchronously (RFC 7240). Check progress via GET /request/{reqId}
+        (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+
         Deletion behavior is controlled by the `option` query parameter (mutually exclusive):
         - (none): Standard delete — fails if the bucket is not empty.
         - `empty`: Empty the bucket first, then delete.
@@ -6361,6 +6365,13 @@ paths:
         in: query
         name: option
         type: string
+      - description: Set to 'respond-async' to run this deletion asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
       - description: Unique request ID (auto-generated if not provided). Used for
           tracking request status and correlating logs.
         in: header
@@ -6369,8 +6380,13 @@ paths:
       produces:
       - application/json
       responses:
+        "202":
+          description: Object storage deletion started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
         "204":
-          description: Object storage deleted successfully
+          description: Object storage deleted successfully (synchronous)
         "400":
           description: Invalid request parameters
           schema:
@@ -6381,6 +6397,11 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during deletion
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete object storage (bucket)

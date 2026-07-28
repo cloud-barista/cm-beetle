@@ -4,27 +4,8 @@
     {
       "accessFrequency": "frequent",
       "bucketName": "datamold-aws-test",
-      "corsEnabled": true,
-      "corsRule": [
-        {
-          "allowedOrigin": [
-            "*"
-          ],
-          "allowedMethod": [
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE"
-          ],
-          "allowedHeader": [
-            "*"
-          ],
-          "exposeHeader": [
-            "ETag"
-          ],
-          "maxAgeSeconds": 3600
-        }
-      ],
+      "corsEnabled": false,
+      "corsRule": [],
       "creationDate": "",
       "encryptionEnabled": false,
       "isPublic": false,

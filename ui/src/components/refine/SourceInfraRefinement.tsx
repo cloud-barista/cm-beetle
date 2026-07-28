@@ -1505,9 +1505,9 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         title="Save Source Infra Revision"
-        defaultName={selectedSourceModel?.name || ''}
-        defaultDescription={selectedSourceModel?.description || ''}
-        defaultVersion={selectedSourceModel?.version || '1.0.0'}
+        defaultName={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? selectedSourceModel.name : ''}
+        defaultDescription={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? (selectedSourceModel.description || '') : ''}
+        defaultVersion={selectedSourceModel && selectedSourceModel.id !== 'sample-source-infra-1' ? (selectedSourceModel.version || '1.0.0') : '1.0.0'}
         existingRevisions={savedSourceModels
           .filter(m => m.id !== 'sample-source-infra-1')
           .map(m => ({ id: m.id, name: m.name, version: m.version }))}

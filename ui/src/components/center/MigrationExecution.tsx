@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useMigrationStore } from '../../store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
 import { beetleApi, tumblebugApi } from '../../api/client';
 import { 
   Play, 
@@ -331,7 +331,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         prevJobs.map(job => {
           if (job.status === 'Success' || job.status === 'Failed') return job;
 
-          const newElapsed = job.elapsedSeconds + 3;
+          const newElapsed = calculateJobElapsedSeconds(job);
 
           // A. REAL BACKEND JOB LOGIC (Strict 1-to-1 API State)
           if (!job.isSample) {
@@ -351,12 +351,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 error: errorMsg,
                 logs: [
                   ...cleanedLogs,
-                  `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg})`
+                  `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
                 ]
               };
             }
 
-            if (realStatus === 'Success') {
+            if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
               setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
               setTimeout(() => setToastMsg(null), 5000);
 
@@ -432,7 +432,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           };
         })
       );
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);

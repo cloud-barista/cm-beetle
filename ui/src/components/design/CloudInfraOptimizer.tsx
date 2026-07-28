@@ -2018,10 +2018,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
         isOpen={showSaveTargetModal}
         onClose={() => setShowSaveTargetModal(false)}
         title="Save Target Cloud Infra Model"
-        defaultName={selectedCloudModel?.name || ''}
-        defaultDescription={selectedCloudModel?.description || ''}
-        defaultVersion={selectedCloudModel?.version || '1.0.0'}
-        existingRevisions={savedCloudModels.map(m => ({ id: m.id, name: m.name, version: m.version }))}
+        defaultName={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? selectedCloudModel.name : ''}
+        defaultDescription={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.description || '') : ''}
+        defaultVersion={selectedCloudModel && selectedCloudModel.id !== 'cloud-demo-1' ? (selectedCloudModel.version || '1.0.0') : '1.0.0'}
+        existingRevisions={savedCloudModels.filter(m => m.id !== 'cloud-demo-1').map(m => ({ id: m.id, name: m.name, version: m.version }))}
         onSave={handleSaveToDamselfly}
         successMessage="Target Cloud Infrastructure Model saved to Damselfly Repository successfully."
       />
