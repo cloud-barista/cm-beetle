@@ -50,7 +50,11 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
   const [cspList, setCspList] = useState<string[]>(DEFAULT_CSPS);
   const [regions, setRegions] = useState<{ id: string; name: string }[]>([]);
   const [isLoadingRegions, setIsLoadingRegions] = useState(false);
+  const [showAccessKey, setShowAccessKey] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [showTenant, setShowTenant] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [showS3AccessKey, setShowS3AccessKey] = useState(false);
   const [showS3Secret, setShowS3Secret] = useState(false);
 
   // Fetch Providers on Initial Mount
@@ -158,13 +162,22 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div>
               <label className="block text-text-muted font-medium mb-1">Application (Client) ID{encSuffix}</label>
-              <input
-                type="text"
-                placeholder="00000000-0000-0000-0000-000000000000"
-                value={accessKey}
-                onChange={(e) => onAccessKeyChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showAccessKey ? 'text' : 'password'}
+                  placeholder="00000000-0000-0000-0000-000000000000"
+                  value={accessKey}
+                  onChange={(e) => onAccessKeyChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessKey(!showAccessKey)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showAccessKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">Client Secret Value{encSuffix}</label>
@@ -187,46 +200,82 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">Directory (Tenant) ID</label>
-              <input
-                type="text"
-                placeholder="Tenant GUID"
-                value={tenantId}
-                onChange={(e) => onTenantIdChange && onTenantIdChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showTenant ? 'text' : 'password'}
+                  placeholder="Tenant GUID"
+                  value={tenantId}
+                  onChange={(e) => onTenantIdChange && onTenantIdChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowTenant(!showTenant)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showTenant ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">Subscription ID</label>
-              <input
-                type="text"
-                placeholder="Subscription GUID"
-                value={subscriptionId}
-                onChange={(e) => onSubscriptionIdChange && onSubscriptionIdChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showSubscription ? 'text' : 'password'}
+                  placeholder="Subscription GUID"
+                  value={subscriptionId}
+                  onChange={(e) => onSubscriptionIdChange && onSubscriptionIdChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSubscription(!showSubscription)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showSubscription ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
         ) : activeCsp === 'gcp' ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div>
               <label className="block text-text-muted font-medium mb-1">Project ID</label>
-              <input
-                type="text"
-                placeholder="my-gcp-project-id"
-                value={tenantId}
-                onChange={(e) => onTenantIdChange && onTenantIdChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showTenant ? 'text' : 'password'}
+                  placeholder="my-gcp-project-id"
+                  value={tenantId}
+                  onChange={(e) => onTenantIdChange && onTenantIdChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowTenant(!showTenant)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showTenant ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">Client Email (Service Account){encSuffix}</label>
-              <input
-                type="text"
-                placeholder="sa-name@project-id.iam.gserviceaccount.com"
-                value={accessKey}
-                onChange={(e) => onAccessKeyChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showAccessKey ? 'text' : 'password'}
+                  placeholder="sa-name@project-id.iam.gserviceaccount.com"
+                  value={accessKey}
+                  onChange={(e) => onAccessKeyChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessKey(!showAccessKey)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showAccessKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">Private Key (JSON / Key Content){encSuffix}</label>
@@ -254,13 +303,22 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
               <label className="block text-text-muted font-medium mb-1">
                 {activeCsp === 'tencent' ? 'SecretId' : activeCsp === 'alibaba' ? 'AccessKey ID' : activeCsp === 'ncp' ? 'Access Key ID' : 'Access Key ID'}{encSuffix}
               </label>
-              <input
-                type="text"
-                placeholder={activeCsp === 'ncp' ? 'ncloud_access_key_...' : activeCsp === 'alibaba' ? 'LTAI...' : activeCsp === 'tencent' ? 'AKID...' : 'AKIA...'}
-                value={accessKey}
-                onChange={(e) => onAccessKeyChange(e.target.value)}
-                className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-              />
+              <div className="relative">
+                <input
+                  type={showAccessKey ? 'text' : 'password'}
+                  placeholder={activeCsp === 'ncp' ? 'ncloud_access_key_...' : activeCsp === 'alibaba' ? 'LTAI...' : activeCsp === 'tencent' ? 'AKID...' : 'AKIA...'}
+                  value={accessKey}
+                  onChange={(e) => onAccessKeyChange(e.target.value)}
+                  className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAccessKey(!showAccessKey)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                >
+                  {showAccessKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-text-muted font-medium mb-1">
@@ -300,13 +358,22 @@ export const CspCredentialForm: React.FC<CspCredentialFormProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-text-muted font-medium mb-1">S3 Access Key (S3AccessKey)</label>
-                <input
-                  type="text"
-                  placeholder="S3 Interoperability Access Key"
-                  value={s3AccessKey}
-                  onChange={(e) => onS3AccessKeyChange && onS3AccessKeyChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
-                />
+                <div className="relative">
+                  <input
+                    type={showS3AccessKey ? 'text' : 'password'}
+                    placeholder="S3 Interoperability Access Key"
+                    value={s3AccessKey}
+                    onChange={(e) => onS3AccessKeyChange && onS3AccessKeyChange(e.target.value)}
+                    className="w-full px-3 py-2 pr-9 bg-bg-input border border-border-main rounded-lg text-text-main font-mono focus:outline-none focus:border-emerald-500 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowS3AccessKey(!showS3AccessKey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition cursor-pointer"
+                  >
+                    {showS3AccessKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-text-muted font-medium mb-1">S3 Secret Key (S3SecretKey)</label>

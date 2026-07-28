@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useMigrationStore } from '../../store/migrationStore';
+import { useMigrationStore, calculateJobElapsedSeconds } from '../../store/migrationStore';
 import { beetleApi, tumblebugApi } from '../../api/client';
 import { 
   Play, 
@@ -76,6 +76,14 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
   const [customInfraId, setCustomInfraId] = useState('');
   const [customNameSeed, setCustomNameSeed] = useState(nameSeed || '');
   const [preferAsync, setPreferAsync] = useState(true);
+  const [useExistingValidation, setUseExistingValidation] = useState(true);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    checked: boolean;
+    valid?: boolean;
+    issues?: Array<{ code: string; severity: string; path: string; message: string }>;
+    error?: string;
+  } | null>(null);
 
   // Launch Modal State (Data Migration with Field Encryption)
   const [showDataLaunchModal, setShowDataLaunchModal] = useState(false);
@@ -323,7 +331,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
         prevJobs.map(job => {
           if (job.status === 'Success' || job.status === 'Failed') return job;
 
-          const newElapsed = job.elapsedSeconds + 3;
+          const newElapsed = calculateJobElapsedSeconds(job);
 
           // A. REAL BACKEND JOB LOGIC (Strict 1-to-1 API State)
           if (!job.isSample) {
@@ -343,12 +351,12 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 error: errorMsg,
                 logs: [
                   ...cleanedLogs,
-                  `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg})`
+                  `GET /beetle/request/${job.reqId} -> Status: Error (${errorMsg}) (Duration: ${newElapsed}s)`
                 ]
               };
             }
 
-            if (realStatus === 'Success') {
+            if (realStatus === 'Success' || realStatus === 'Completed' || realStatus === 'Succeeded') {
               setToastMsg(`🎉 [${job.infraId}] Infrastructure Migration Succeeded!`);
               setTimeout(() => setToastMsg(null), 5000);
 
@@ -424,7 +432,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
           };
         })
       );
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -433,7 +441,39 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
     if (savedCloudModels.length > 0 && !selectedCloudModel) {
       selectCloudModel(savedCloudModels[0]);
     }
+    setValidationResult(null);
     setShowLaunchModal(true);
+  };
+
+  const handleValidateInfra = async () => {
+    if (!selectedCloudModel) {
+      alert('Please select a Target Cloud Infra Model first.');
+      return;
+    }
+    setIsValidating(true);
+    setValidationResult(null);
+    try {
+      const res = await beetleApi.validateInfra(
+        customNsId || 'mig01',
+        selectedCloudModel.cloudInfraModel,
+        useExistingValidation
+      );
+      setValidationResult({
+        checked: true,
+        valid: res.valid,
+        issues: res.issues || [],
+        error: res.error
+      });
+    } catch (err: any) {
+      setValidationResult({
+        checked: true,
+        valid: false,
+        issues: [],
+        error: err.message || 'Validation failed due to an unexpected error.'
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const handleConfirmLaunch = async () => {
@@ -964,7 +1004,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       {/* Modal for "+ Launch New Migration" */}
       {showLaunchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="glass-panel p-6 rounded-2xl w-full max-w-xl border border-border-main animate-scale-up space-y-5">
+          <div className="glass-panel p-6 sm:p-8 rounded-2xl w-full max-w-4xl border border-border-main animate-scale-up space-y-6">
             <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
               <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
                 <Plus className="w-5 h-5 text-emerald-500" />
@@ -981,12 +1021,13 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
             <div className="space-y-4">
               {/* Target Model Selector */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-text-muted uppercase font-mono">1. Select Target Cloud Model</label>
+                <label className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">1. Select Target Cloud Model</label>
                 <select
                   value={selectedCloudModel?.id || ''}
                   onChange={(e) => {
                     const model = savedCloudModels.find(m => m.id === e.target.value) || null;
                     selectCloudModel(model);
+                    setValidationResult(null);
                   }}
                   className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                 >
@@ -1019,14 +1060,17 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
 
               {/* Identifiers Editing */}
               <div className="space-y-3 pt-2 border-t border-border-main/20">
-                <span className="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase font-mono">2. Configure Deployment Identifiers</span>
+                <span className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">2. Configure Deployment Identifiers</span>
 
                 <div>
                   <label className="block text-xs font-semibold text-text-muted mb-1">Namespace ID (nsId)</label>
                   <input
                     type="text"
                     value={customNsId}
-                    onChange={(e) => setCustomNsId(e.target.value)}
+                    onChange={(e) => {
+                      setCustomNsId(e.target.value);
+                      setValidationResult(null);
+                    }}
                     className="w-full bg-bg-input border border-border-main/50 text-text-main rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500/40"
                   />
                 </div>
@@ -1054,37 +1098,140 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 </div>
               </div>
 
-              {/* Prefer Async Header Toggle */}
-              <div className="flex items-center justify-between p-3 bg-bg-panel border border-border-main/40 rounded-xl text-xs">
-                <div className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-emerald-500" />
-                  <span className="font-bold text-text-main">Prefer: respond-async</span>
+              {/* Pre-flight Infrastructure Validation Section */}
+              <div className="space-y-3.5 pt-3 border-t border-border-main/20">
+                {/* 1. Section Header */}
+                <span className="block text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans">
+                  3. Target Infrastructure Model Validation
+                </span>
+
+                {/* 2. Validation Options & Trigger Button Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-bg-panel/50 border border-border-main/40 rounded-xl">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-normal text-text-muted">
+                    <input
+                      type="checkbox"
+                      checked={useExistingValidation}
+                      onChange={(e) => {
+                        setUseExistingValidation(e.target.checked);
+                        setValidationResult(null);
+                      }}
+                      className="w-4 h-4 accent-emerald-500 cursor-pointer rounded"
+                    />
+                    <span>Re-use Existing Resources (`useExisting`)</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={handleValidateInfra}
+                    disabled={!selectedCloudModel || isValidating}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/40 disabled:opacity-40 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 shadow-md shadow-emerald-500/20"
+                  >
+                    {isValidating ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                        <span>Validating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                        <span>Validate Infrastructure</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={preferAsync}
-                  onChange={(e) => setPreferAsync(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500 cursor-pointer"
-                />
+
+                {/* 3. Validation Status Result Box */}
+                {validationResult && (
+                  <div className="space-y-2 animate-fade-in">
+                    {validationResult.error ? (
+                      <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-400 font-mono space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                          <span>Validation Request Error</span>
+                        </div>
+                        <p className="text-text-muted">{validationResult.error}</p>
+                      </div>
+                    ) : validationResult.valid ? (
+                      <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs space-y-1.5">
+                        <div className="flex items-center gap-2 font-extrabold text-emerald-700 dark:text-emerald-400 font-sans text-sm">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>Validation Passed (Infrastructure Model Valid)</span>
+                        </div>
+                        <p className="text-text-muted text-xs">
+                          Target cloud model, required fields, and referential integrity have been verified without errors.
+                        </p>
+                        {validationResult.issues && validationResult.issues.length > 0 && (
+                          <div className="pt-1.5 border-t border-emerald-500/20 space-y-1 font-mono">
+                            <span className="text-amber-600 dark:text-amber-400 font-bold text-xs">Warnings ({validationResult.issues.length}):</span>
+                            {validationResult.issues.map((iss, i) => (
+                              <div key={i} className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1">
+                                <span className="font-bold">• [{iss.code}]</span>
+                                <span>{iss.path ? `(${iss.path})` : ''} {iss.message}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs space-y-2">
+                        <div className="flex items-center gap-2 font-extrabold text-red-600 dark:text-red-400 font-sans text-sm">
+                          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                          <span>Validation Failed ({validationResult.issues?.length || 0} issue(s) detected)</span>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 font-mono">
+                          {validationResult.issues?.map((iss, i) => (
+                            <div key={i} className={`p-2 rounded-lg border text-xs space-y-0.5 ${
+                              iss.severity === 'error'
+                                ? 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300'
+                                : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300'
+                            }`}>
+                              <div className="flex items-center justify-between font-bold">
+                                <span>[{iss.code}]</span>
+                                <span className="uppercase text-[10px] px-1.5 py-0.5 rounded font-sans bg-bg-panel">{iss.severity}</span>
+                              </div>
+                              {iss.path && <div className="text-[11px] opacity-80">Path: {iss.path}</div>}
+                              <div className="font-sans font-normal text-text-main">{iss.message}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="flex justify-end gap-3 pt-3 border-t border-border-main/20">
-              <button
-                onClick={() => setShowLaunchModal(false)}
-                className="px-4 py-2.5 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-bold hover:bg-bg-input transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmLaunch}
-                disabled={!selectedCloudModel}
-                className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-40 text-slate-950 rounded-xl text-sm font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20"
-              >
-                <Play className="w-4 h-4" />
-                <span>Launch Migration</span>
-              </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border-main/20">
+              {/* Left Side: Prefer respond-async Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-text-main p-2 px-3.5 bg-bg-panel/60 hover:bg-bg-input border border-border-main/40 rounded-xl shrink-0 transition">
+                <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="font-mono">Prefer: respond-async</span>
+                <input
+                  type="checkbox"
+                  checked={preferAsync}
+                  onChange={(e) => setPreferAsync(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer rounded ml-1"
+                />
+              </label>
+
+              {/* Right Side: Cancel & Launch Migration Buttons */}
+              <div className="flex items-center justify-end gap-3 shrink-0">
+                <button
+                  onClick={() => setShowLaunchModal(false)}
+                  className="px-4 py-2.5 bg-bg-panel border border-border-main text-text-main rounded-xl text-sm font-bold hover:bg-bg-input transition cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmLaunch}
+                  disabled={!selectedCloudModel}
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-40 text-slate-950 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-emerald-500/20 whitespace-nowrap shrink-0"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Launch Migration</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1128,8 +1275,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <div className="p-5.5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-border-main/30 pb-3">
-                      <span className="text-sm font-bold text-emerald-400 uppercase font-mono flex items-center gap-1.5">
-                        <Key className="w-4 h-4 text-emerald-400" />
+                      <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans flex items-center gap-1.5">
+                        <Key className="w-4 h-4 text-emerald-500" />
                         1. Source Endpoint &amp; Credentials
                       </span>
                       <span className="text-xs text-text-muted font-mono">RSA-OAEP-256 Encrypted</span>
@@ -1217,7 +1364,7 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
                 <div className="p-5.5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4 flex flex-col justify-between">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-border-main/30 pb-3">
-                      <span className="text-sm font-bold text-teal-400 uppercase font-mono flex items-center gap-1.5">
+                      <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans flex items-center gap-1.5">
                         <Cloud className="w-4 h-4 text-teal-400" />
                         5 &amp; 6. Target Endpoint &amp; Beetle API Selection
                       </span>
@@ -1278,8 +1425,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
               {/* Requirement 4: Additional Transfer Strategy & Filter Parameters */}
               <div className="p-5 bg-bg-input/60 border border-border-main/40 rounded-2xl space-y-4">
                 <div className="flex justify-between items-center border-b border-border-main/30 pb-2.5">
-                  <span className="text-sm font-bold text-blue-400 uppercase font-mono flex items-center gap-1.5">
-                    <Filter className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-extrabold text-teal-600 dark:text-teal-400 font-sans flex items-center gap-1.5">
+                    <Filter className="w-4 h-4 text-teal-500" />
                     4. Data Migration Transfer Options
                   </span>
                 </div>

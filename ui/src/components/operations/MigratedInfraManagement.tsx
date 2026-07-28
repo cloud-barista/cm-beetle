@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from '../design/TopologyMap';
 import { damselflyApi, beetleApi, tumblebugApi } from '../../api/client';
+import { ObjectDirectoryTree } from '../storage/ObjectDirectoryTree';
 import { 
   Server, 
   Trash2, 
@@ -28,7 +29,8 @@ import {
   Network,
   Radio,
   Database,
-  Sliders
+  Sliders,
+  Zap
 } from 'lucide-react';
 
 const SAMPLE_INFRA_ID = 'sample-aws-infra-01';
@@ -142,6 +144,7 @@ const SAMPLE_INFRA_DETAIL = {
 export const MigratedInfraManagement: React.FC = () => {
   const {
     jobs,
+    objectStorageJobs,
     savedCloudModels,
     selectedCloudModel,
     fetchSavedCloudModels,
@@ -152,7 +155,11 @@ export const MigratedInfraManagement: React.FC = () => {
     deletingInfrasMap,
     startInfraTeardown,
     removeInfraTeardown,
-    pollInfraTeardownStatus
+    pollInfraTeardownStatus,
+    deletingStoragesMap,
+    startStorageTeardown,
+    removeStorageTeardown,
+    pollStorageTeardownStatus
   } = useMigrationStore();
 
   const [copiedIp, setCopiedIp] = useState<string | null>(null);
@@ -174,6 +181,57 @@ export const MigratedInfraManagement: React.FC = () => {
   const [isLoadingStorages, setIsLoadingStorages] = useState<boolean>(false);
   const [storageCatalogViewMode, setStorageCatalogViewMode] = useState<'grid' | 'table'>('grid');
   const [selectedStorageId, setSelectedStorageId] = useState<string>('');
+  const [showStorageDeleteConfirm, setShowStorageDeleteConfirm] = useState(false);
+  const [targetStorageToDelete, setTargetStorageToDelete] = useState<string>('');
+  const [storageDeleteConfirmText, setStorageDeleteConfirmText] = useState('');
+  const [forceDeleteStorage, setForceDeleteStorage] = useState(false);
+  const [preferAsyncStorageDelete, setPreferAsyncStorageDelete] = useState(true);
+  const [isDeletingStorage, setIsDeletingStorage] = useState(false);
+  const [storageDeleteError, setStorageDeleteError] = useState('');
+
+  const handleOpenStorageDeleteModal = (sName: string) => {
+    if (sName === SAMPLE_STORAGE_ID) {
+      alert('Sample object storage is protected and cannot be deleted.');
+      return;
+    }
+    setTargetStorageToDelete(sName);
+    setStorageDeleteConfirmText('');
+    setForceDeleteStorage(false);
+    setPreferAsyncStorageDelete(true);
+    setStorageDeleteError('');
+    setShowStorageDeleteConfirm(true);
+  };
+
+  const handleConfirmStorageDelete = async () => {
+    if (!targetStorageToDelete || storageDeleteConfirmText !== targetStorageToDelete) return;
+    setIsDeletingStorage(true);
+    setStorageDeleteError('');
+
+    try {
+      const ns = namespaceId || 'mig01';
+      const option = forceDeleteStorage ? 'force' : '';
+      const res = await beetleApi.deleteMigratedObjectStorage(ns, targetStorageToDelete, option, preferAsyncStorageDelete);
+      if (res.success) {
+        setShowStorageDeleteConfirm(false);
+        const reqId = res.reqId || `req-del-storage-${Date.now()}`;
+        startStorageTeardown(targetStorageToDelete, reqId);
+
+        if (preferAsyncStorageDelete) {
+          setDeleteSuccessMsg(`⚡ Object storage "${targetStorageToDelete}" deletion task initiated asynchronously (ReqID: ${reqId}).`);
+        } else {
+          setDeleteSuccessMsg(`Object storage "${targetStorageToDelete}" deleted successfully.`);
+        }
+        setTimeout(() => setDeleteSuccessMsg(''), 6000);
+        await loadMigratedStorages();
+      } else {
+        setStorageDeleteError(res.error || 'Failed to delete object storage.');
+      }
+    } catch (err: any) {
+      setStorageDeleteError(err.message || 'Failed to delete object storage.');
+    } finally {
+      setIsDeletingStorage(false);
+    }
+  };
 
   const loadMigratedStorages = async () => {
     setIsLoadingStorages(true);
@@ -291,6 +349,33 @@ export const MigratedInfraManagement: React.FC = () => {
 
     return () => clearInterval(intervalId);
   }, [deletingInfrasMap, namespaceId, selectedInfraId]);
+
+  // Persistent Object Storage teardown polling effect (runs across tab navigation!)
+  useEffect(() => {
+    const activeDeletingEntries = Object.entries(deletingStoragesMap);
+    if (activeDeletingEntries.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      const ns = namespaceId || 'mig01';
+      for (const [storageId, info] of Object.entries(deletingStoragesMap)) {
+        if (!info.reqId) continue;
+        const res = await pollStorageTeardownStatus(ns, storageId, info.reqId);
+        if (res.completed) {
+          if (res.success) {
+            setDeleteSuccessMsg(`Object storage "${storageId}" was completely deleted.`);
+          } else {
+            setDeleteError(`Object storage "${storageId}" deletion failed: ${res.error || 'Unknown error'}`);
+          }
+          await loadMigratedStorages();
+          if (selectedStorageId === storageId) {
+            setSelectedStorageId('');
+          }
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [deletingStoragesMap, namespaceId, selectedStorageId]);
 
   const [infraReportHtml, setInfraReportHtml] = useState<string>('');
 
@@ -601,7 +686,9 @@ export const MigratedInfraManagement: React.FC = () => {
               {migratedInfraIds.map((infraId) => {
                 const isSelected = selectedInfraId === infraId;
                 const isTerminating = !!deletingInfrasMap[infraId];
-                const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId);
+                const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && j.status === 'Handling');
+                const isMigrating = !!matchingActiveJob;
+                const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId) || jobs.find(j => j.infraId === infraId || j.id === infraId);
                 const csp = matchingJob?.csp || (infraId.toLowerCase().includes('aws') ? 'AWS' : infraId.toLowerCase().includes('azure') ? 'AZURE' : 'GCP');
                 const region = matchingJob?.region || 'ap-northeast-2';
 
@@ -609,7 +696,7 @@ export const MigratedInfraManagement: React.FC = () => {
                   <div
                     key={infraId}
                     className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between space-y-3 relative overflow-hidden ${
-                      isTerminating
+                      isTerminating || isMigrating
                         ? 'bg-amber-500/5 border-amber-500/40'
                         : isSelected
                         ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40'
@@ -641,6 +728,11 @@ export const MigratedInfraManagement: React.FC = () => {
                           <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
                           Terminating...
                         </span>
+                      ) : isMigrating ? (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1 font-mono shrink-0">
+                          <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                          Migrating...
+                        </span>
                       ) : (
                         <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1 font-mono shrink-0">
                           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -653,31 +745,33 @@ export const MigratedInfraManagement: React.FC = () => {
                     <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-main/20">
                       <button
                         onClick={() => handleLoadInfraDetail(infraId)}
-                        disabled={isTerminating || (isLoadingDetail && selectedInfraId === infraId)}
+                        disabled={isTerminating || isMigrating || (isLoadingDetail && selectedInfraId === infraId)}
                         className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer font-mono ${
-                          isTerminating
+                          isTerminating || isMigrating
                             ? 'bg-bg-input text-text-muted border border-border-main opacity-50 cursor-not-allowed'
                             : isSelected
                             ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                             : 'bg-bg-input hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-border-main'
                         }`}
-                        title={isTerminating ? 'Infrastructure is currently terminating' : `Load detail for ${infraId}`}
+                        title={isTerminating ? 'Infrastructure is currently terminating' : isMigrating ? 'Infrastructure migration in progress' : `Load detail for ${infraId}`}
                       >
                         {isTerminating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                        ) : isMigrating ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
                         ) : isLoadingDetail && selectedInfraId === infraId ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <Eye className="w-3.5 h-3.5" />
                         )}
-                        <span>{isTerminating ? 'Terminating...' : isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
+                        <span>{isTerminating ? 'Terminating...' : isMigrating ? 'Migrating...' : isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
                       </button>
 
                       <button
                         onClick={() => handleOpenDeleteModalForInfra(infraId)}
-                        disabled={isTerminating || infraId === SAMPLE_INFRA_ID}
+                        disabled={isTerminating || isMigrating || infraId === SAMPLE_INFRA_ID}
                         className="py-1.5 px-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer font-mono disabled:opacity-30 disabled:cursor-not-allowed"
-                        title={infraId === SAMPLE_INFRA_ID ? 'Sample infrastructure cannot be deleted' : isTerminating ? 'Termination already in progress' : `Delete infrastructure ${infraId}`}
+                        title={infraId === SAMPLE_INFRA_ID ? 'Sample infrastructure cannot be deleted' : isTerminating ? 'Termination already in progress' : isMigrating ? 'Migration in progress' : `Delete infrastructure ${infraId}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete</span>
@@ -704,7 +798,9 @@ export const MigratedInfraManagement: React.FC = () => {
                   {migratedInfraIds.map((infraId, idx) => {
                     const isSelected = selectedInfraId === infraId;
                     const isTerminating = !!deletingInfrasMap[infraId];
-                    const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId);
+                    const matchingActiveJob = jobs.find(j => (j.infraId === infraId || j.id === infraId || (j.reqId && j.reqId === infraId)) && j.status === 'Handling');
+                    const isMigrating = !!matchingActiveJob;
+                    const matchingJob = completedJobs.find(j => j.infraId === infraId || j.id === infraId) || jobs.find(j => j.infraId === infraId || j.id === infraId);
                     const csp = matchingJob?.csp || (infraId.toLowerCase().includes('aws') ? 'AWS' : infraId.toLowerCase().includes('azure') ? 'AZURE' : 'GCP');
                     const region = matchingJob?.region || 'ap-northeast-2';
 
@@ -736,6 +832,11 @@ export const MigratedInfraManagement: React.FC = () => {
                               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
                               Terminating...
                             </span>
+                          ) : isMigrating ? (
+                            <span className="inline-flex items-center gap-1 text-amber-500 font-bold">
+                              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                              Migrating...
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -747,9 +848,9 @@ export const MigratedInfraManagement: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleLoadInfraDetail(infraId)}
-                              disabled={isTerminating || (isLoadingDetail && selectedInfraId === infraId)}
+                              disabled={isTerminating || isMigrating || (isLoadingDetail && selectedInfraId === infraId)}
                               className={`py-1 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                                isTerminating
+                                isTerminating || isMigrating
                                   ? 'bg-bg-input text-text-muted border border-border-main opacity-50 cursor-not-allowed'
                                   : isSelected
                                   ? 'bg-emerald-500 text-slate-950 shadow-sm'
@@ -758,19 +859,21 @@ export const MigratedInfraManagement: React.FC = () => {
                             >
                               {isTerminating ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                              ) : isMigrating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
                               ) : isLoadingDetail && selectedInfraId === infraId ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
                                 <Eye className="w-3.5 h-3.5" />
                               )}
-                              <span>{isTerminating ? 'Terminating...' : isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
+                              <span>{isTerminating ? 'Terminating...' : isMigrating ? 'Migrating...' : isSelected ? 'Loaded ✓' : 'Load Detail'}</span>
                             </button>
 
                             <button
                               onClick={() => handleOpenDeleteModalForInfra(infraId)}
-                              disabled={isTerminating || infraId === SAMPLE_INFRA_ID}
+                              disabled={isTerminating || isMigrating || infraId === SAMPLE_INFRA_ID}
                               className="py-1 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                              title={infraId === SAMPLE_INFRA_ID ? 'Sample infrastructure cannot be deleted' : isTerminating ? 'Termination already in progress' : `Delete infrastructure ${infraId}`}
+                              title={infraId === SAMPLE_INFRA_ID ? 'Sample infrastructure cannot be deleted' : isTerminating ? 'Termination already in progress' : isMigrating ? 'Migration in progress' : `Delete infrastructure ${infraId}`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Delete</span>
@@ -1251,6 +1354,8 @@ export const MigratedInfraManagement: React.FC = () => {
                     {migratedStorages.map((storage, idx) => {
                       const sName = storage.name || storage.bucketName || storage.id || `storage-${idx + 1}`;
                       const isSelected = (selectedStorageId === sName) || (selectedStorageId === '' && idx === 0);
+                      const isDeleting = !!deletingStoragesMap[sName];
+                      const isProvisioning = objectStorageJobs.some(j => (j.name === sName || j.id === sName || j.reqId === sName) && j.status === 'Handling');
                       const connInfo = extractCspAndRegionFromConnection(storage.connectionName);
                       const csp = (storage.csp || storage.targetCloud?.csp || connInfo.csp).toUpperCase();
                       const region = storage.region || storage.targetCloud?.region || connInfo.region;
@@ -1260,7 +1365,9 @@ export const MigratedInfraManagement: React.FC = () => {
                           key={storage.id || idx}
                           onClick={() => setSelectedStorageId(sName)}
                           className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between space-y-3 cursor-pointer relative overflow-hidden ${
-                            isSelected
+                            isDeleting || isProvisioning
+                              ? 'bg-amber-500/5 border-amber-500/40'
+                              : isSelected
                               ? 'bg-emerald-500/10 border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/40'
                               : 'bg-bg-panel/40 border-border-main/40 hover:bg-bg-panel/80 hover:border-border-main'
                           }`}
@@ -1285,10 +1392,22 @@ export const MigratedInfraManagement: React.FC = () => {
                               </h4>
                             </div>
 
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1 font-mono shrink-0">
-                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                              Available
-                            </span>
+                            {isDeleting ? (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1 font-mono shrink-0">
+                                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                                Deleting...
+                              </span>
+                            ) : isProvisioning ? (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 flex items-center gap-1 font-mono shrink-0">
+                                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping" />
+                                Migrating...
+                              </span>
+                            ) : (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1 font-mono shrink-0">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                Available
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-main/20">
@@ -1297,8 +1416,11 @@ export const MigratedInfraManagement: React.FC = () => {
                                 e.stopPropagation();
                                 setSelectedStorageId(sName);
                               }}
+                              disabled={isDeleting}
                               className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer font-mono ${
-                                isSelected
+                                isDeleting
+                                  ? 'bg-bg-input text-text-muted border border-border-main opacity-50 cursor-not-allowed'
+                                  : isSelected
                                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                                   : 'bg-bg-input hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-border-main'
                               }`}
@@ -1308,24 +1430,26 @@ export const MigratedInfraManagement: React.FC = () => {
                             </button>
 
                             <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (sName === SAMPLE_STORAGE_ID) return;
-                                if (!confirm(`Delete object storage '${sName}'?`)) return;
-                                try {
-                                  await beetleApi.deleteMigratedObjectStorage(namespaceId || 'mig01', sName);
-                                  await loadMigratedStorages();
-                                } catch (err) {
-                                  console.warn('Failed to delete storage', err);
-                                }
-                              }}
-                              disabled={sName === SAMPLE_STORAGE_ID}
-                              className="py-1.5 px-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer font-mono disabled:opacity-30 disabled:cursor-not-allowed"
-                              title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : `Delete object storage ${sName}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </button>
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleOpenStorageDeleteModal(sName);
+                               }}
+                               disabled={isDeleting || sName === SAMPLE_STORAGE_ID}
+                               className="py-1.5 px-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition cursor-pointer font-mono disabled:opacity-30 disabled:cursor-not-allowed"
+                               title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : isDeleting ? 'Storage deletion in progress' : `Delete object storage ${sName}`}
+                             >
+                               {isDeleting ? (
+                                 <>
+                                   <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />
+                                   <span>Deleting...</span>
+                                 </>
+                               ) : (
+                                 <>
+                                   <Trash2 className="w-3.5 h-3.5" />
+                                   <span>Delete</span>
+                                 </>
+                               )}
+                             </button>
                           </div>
                         </div>
                       );
@@ -1349,6 +1473,7 @@ export const MigratedInfraManagement: React.FC = () => {
                         {migratedStorages.map((storage, idx) => {
                           const sName = storage.name || storage.bucketName || storage.id || `storage-${idx + 1}`;
                           const isSelected = (selectedStorageId === sName) || (selectedStorageId === '' && idx === 0);
+                          const isDeleting = !!deletingStoragesMap[sName];
                           const connInfo = extractCspAndRegionFromConnection(storage.connectionName);
                           const csp = (storage.csp || storage.targetCloud?.csp || connInfo.csp).toUpperCase();
                           const region = storage.region || storage.targetCloud?.region || connInfo.region;
@@ -1359,7 +1484,11 @@ export const MigratedInfraManagement: React.FC = () => {
                               key={storage.id || idx}
                               onClick={() => setSelectedStorageId(sName)}
                               className={`transition hover:bg-bg-panel/60 cursor-pointer ${
-                                isSelected ? 'bg-emerald-500/10 font-bold' : ''
+                                isDeleting
+                                  ? 'bg-amber-500/5'
+                                  : isSelected
+                                  ? 'bg-emerald-500/10 font-bold'
+                                  : ''
                               }`}
                             >
                               <td className="py-3 px-4 text-center text-text-muted">{idx + 1}</td>
@@ -1379,10 +1508,17 @@ export const MigratedInfraManagement: React.FC = () => {
                                 {srcBucket}
                               </td>
                               <td className="py-3 px-4">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                  <span>Available</span>
-                                </span>
+                                {isDeleting ? (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                    <span>Deleting...</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span>Available</span>
+                                  </span>
+                                )}
                               </td>
                               <td className="py-3 px-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
@@ -1391,8 +1527,11 @@ export const MigratedInfraManagement: React.FC = () => {
                                       e.stopPropagation();
                                       setSelectedStorageId(sName);
                                     }}
+                                    disabled={isDeleting}
                                     className={`py-1 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                                      isSelected
+                                      isDeleting
+                                        ? 'bg-bg-input text-text-muted border border-border-main opacity-50 cursor-not-allowed'
+                                        : isSelected
                                         ? 'bg-emerald-500 text-slate-950 shadow-sm'
                                         : 'bg-bg-input hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-border-main'
                                     }`}
@@ -1402,24 +1541,26 @@ export const MigratedInfraManagement: React.FC = () => {
                                   </button>
 
                                   <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      if (sName === SAMPLE_STORAGE_ID) return;
-                                      if (!confirm(`Delete object storage '${sName}'?`)) return;
-                                      try {
-                                        await beetleApi.deleteMigratedObjectStorage(namespaceId || 'mig01', sName);
-                                        await loadMigratedStorages();
-                                      } catch (err) {
-                                        console.warn('Failed to delete storage', err);
-                                      }
-                                    }}
-                                    disabled={sName === SAMPLE_STORAGE_ID}
-                                    className="py-1 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : `Delete object storage ${sName}`}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 inline mr-1" />
-                                    <span>Delete</span>
-                                  </button>
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleOpenStorageDeleteModal(sName);
+                                     }}
+                                     disabled={isDeleting || sName === SAMPLE_STORAGE_ID}
+                                     className="py-1 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-bold transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                     title={sName === SAMPLE_STORAGE_ID ? 'Sample object storage cannot be deleted' : isDeleting ? 'Storage deletion in progress' : `Delete object storage ${sName}`}
+                                   >
+                                     {isDeleting ? (
+                                       <>
+                                         <Loader2 className="w-3.5 h-3.5 inline mr-1 animate-spin text-amber-500" />
+                                         <span>Deleting...</span>
+                                       </>
+                                     ) : (
+                                       <>
+                                         <Trash2 className="w-3.5 h-3.5 inline mr-1" />
+                                         <span>Delete</span>
+                                       </>
+                                     )}
+                                   </button>
                                 </div>
                               </td>
                             </tr>
@@ -1541,40 +1682,20 @@ export const MigratedInfraManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Bucket Objects List (Contents) */}
+                  {/* Bucket Objects List (Directory Tree View) */}
                   {Array.isArray(activeSelectedStorage.contents) && activeSelectedStorage.contents.length > 0 && (
                     <div className="space-y-3 pt-4 border-t border-border-main/30">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-extrabold text-text-main flex items-center gap-2">
                           <Database className="w-4 h-4 text-emerald-500" />
-                          <span>Bucket Contents &amp; Objects ({activeSelectedStorage.contents.length})</span>
+                          <span>Bucket Contents &amp; Objects Directory ({activeSelectedStorage.contents.length})</span>
                         </h4>
                       </div>
 
-                      <div className="overflow-x-auto rounded-xl border border-border-main/50 bg-bg-panel/40">
-                        <table className="w-full text-left text-sm font-mono">
-                          <thead className="bg-bg-panel/90 text-text-muted font-normal border-b border-border-main/50">
-                            <tr>
-                              <th className="p-3.5 font-normal">Object Key</th>
-                              <th className="p-3.5 font-normal">Size (Bytes)</th>
-                              <th className="p-3.5 font-normal">Storage Class</th>
-                              <th className="p-3.5 font-normal">ETag</th>
-                              <th className="p-3.5 font-normal">Last Modified</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border-main/20 text-text-main">
-                            {activeSelectedStorage.contents.map((obj: any, oIdx: number) => (
-                              <tr key={oIdx} className="hover:bg-bg-panel/60 transition">
-                                <td className="p-3.5 font-extrabold text-emerald-500">{obj.key}</td>
-                                <td className="p-3.5 font-extrabold">{obj.size} B</td>
-                                <td className="p-3.5 text-text-muted">{obj.storageClass || 'STANDARD'}</td>
-                                <td className="p-3.5 text-text-muted font-mono">{obj.eTag || '-'}</td>
-                                <td className="p-3.5 text-text-main">{obj.lastModified || '-'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <ObjectDirectoryTree
+                        bucketName={activeSelectedStorage.name || activeSelectedStorage.id || 'target-bucket'}
+                        objects={activeSelectedStorage.contents}
+                      />
                     </div>
                   )}
                 </div>
@@ -1646,6 +1767,109 @@ export const MigratedInfraManagement: React.FC = () => {
                 {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Confirm Delete
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Object Storage Delete Confirmation Modal */}
+      {showStorageDeleteConfirm && targetStorageToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="glass-panel p-6 rounded-2xl w-full max-w-3xl border border-border-main animate-scale-up space-y-5 font-sans shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center border-b border-border-main/20 pb-3">
+              <h3 className="text-base font-extrabold text-text-main flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-red-500" />
+                Delete Object Storage
+              </h3>
+              <button
+                onClick={() => setShowStorageDeleteConfirm(false)}
+                disabled={isDeletingStorage}
+                className="text-text-muted hover:text-text-main transition p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-text-muted leading-relaxed">
+              Are you sure you want to delete Object Storage <strong className="text-text-main font-mono">"{targetStorageToDelete}"</strong>? This will permanently release the bucket resource and its metadata.
+            </p>
+
+            {/* Deletion Confirmation Text Input Box */}
+            <div className="space-y-1.5 p-4 bg-bg-panel/50 border border-border-main/40 rounded-xl">
+              <label className="block text-xs font-bold text-text-muted">
+                To confirm deletion, type <span className="font-mono bg-bg-input px-1.5 py-0.5 rounded text-emerald-600 dark:text-emerald-400 font-extrabold">{targetStorageToDelete}</span> in the box below:
+              </label>
+              <input
+                type="text"
+                value={storageDeleteConfirmText}
+                onChange={(e) => setStorageDeleteConfirmText(e.target.value)}
+                placeholder="Type the object storage name to delete"
+                className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-2.5 text-sm font-bold font-mono focus:outline-none focus:ring-1 focus:ring-red-500"
+                disabled={isDeletingStorage}
+              />
+            </div>
+
+            {/* Force Delete Toggle Option (CSP Console Standard: Checkbox on Left) */}
+            <div className="p-4 bg-bg-panel/50 border border-border-main/40 rounded-xl">
+              <label className="flex items-start gap-3.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={forceDeleteStorage}
+                  onChange={(e) => setForceDeleteStorage(e.target.checked)}
+                  className="w-4.5 h-4.5 accent-red-500 cursor-pointer rounded shrink-0 mt-0.5"
+                />
+                <div className="text-xs font-mono">
+                  <span className="font-extrabold text-text-main block">Force Delete (option=force)</span>
+                  <span className="text-text-muted font-sans text-xs block mt-0.5">Forcefully delete bucket along with all stored objects. (Uncheck for standard empty bucket deletion)</span>
+                </div>
+              </label>
+            </div>
+
+            {storageDeleteError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold rounded-xl">
+                {storageDeleteError}
+              </div>
+            )}
+
+            {/* Footer: Prefer respond-async on Left, Cancel & Confirm Delete Buttons on Right */}
+            <div className="border-t border-border-main/40 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 font-sans">
+              {/* Left Side: Prefer respond-async Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-text-main p-2 px-3.5 bg-bg-panel/60 hover:bg-bg-input border border-border-main/40 rounded-xl shrink-0 transition">
+                <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span className="font-mono">Prefer: respond-async</span>
+                <input
+                  type="checkbox"
+                  checked={preferAsyncStorageDelete}
+                  onChange={(e) => setPreferAsyncStorageDelete(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer rounded ml-1"
+                />
+              </label>
+
+              {/* Right Side: Cancel & Confirm Delete Buttons */}
+              <div className="flex items-center justify-end space-x-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowStorageDeleteConfirm(false)}
+                  disabled={isDeletingStorage}
+                  className="px-5 py-2.5 bg-bg-input hover:bg-bg-main border border-border-main text-text-main font-bold text-sm rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmStorageDelete}
+                  disabled={isDeletingStorage || storageDeleteConfirmText !== targetStorageToDelete}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-extrabold flex items-center gap-2 transition ${
+                    isDeletingStorage || storageDeleteConfirmText !== targetStorageToDelete
+                      ? 'bg-bg-panel border border-border-main text-text-muted cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-lg shadow-red-500/20'
+                  }`}
+                >
+                  {isDeletingStorage && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirm Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>

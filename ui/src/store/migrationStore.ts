@@ -223,6 +223,28 @@ interface MigrationState {
   removeInfraTeardown: (infraId: string) => void;
   pollInfraTeardownStatus: (nsId: string, infraId: string, reqId: string) => Promise<{ completed: boolean; success: boolean; error?: string }>;
 
+  // Object Storage Deletion Request Tracking (Persisted across tab navigation)
+  deletingStoragesMap: Record<string, { reqId: string; status: string }>;
+  startStorageTeardown: (storageId: string, reqId: string) => void;
+  removeStorageTeardown: (storageId: string) => void;
+  pollStorageTeardownStatus: (nsId: string, storageId: string, reqId: string) => Promise<{ completed: boolean; success: boolean; error?: string }>;
+
+  // Object Storage Jobs Queue (Persisted across tab navigation)
+  objectStorageJobs: ObjectStorageJobCard[];
+  activeObjectStorageJobId: string;
+  setObjectStorageJobs: (jobs: ObjectStorageJobCard[] | ((prev: ObjectStorageJobCard[]) => ObjectStorageJobCard[])) => void;
+  addObjectStorageJob: (job: ObjectStorageJobCard) => void;
+  removeObjectStorageJob: (id: string) => void;
+  setActiveObjectStorageJobId: (id: string) => void;
+
+  // Data Migration Jobs Queue (Persisted across tab navigation)
+  dataJobs: DataMigrationJob[];
+  activeDataJobId: string;
+  setDataJobs: (jobs: DataMigrationJob[] | ((prev: DataMigrationJob[]) => DataMigrationJob[])) => void;
+  addDataJob: (job: DataMigrationJob) => void;
+  removeDataJob: (id: string) => void;
+  setActiveDataJobId: (id: string) => void;
+
   setJobs: (jobs: MigrationJob[] | ((prev: MigrationJob[]) => MigrationJob[])) => void;
   setActiveJobId: (id: string) => void;
   addJob: (job: MigrationJob) => void;
@@ -244,6 +266,7 @@ export interface MigrationJob {
   region: string;
   status: 'Handling' | 'Success' | 'Failed';
   startTime: string;
+  createdAtMs?: number;
   elapsedSeconds: number;
   nodeGroupsCount: number;
   totalVms: number;
@@ -251,6 +274,64 @@ export interface MigrationJob {
   vms?: { publicIp: string; privateIp: string; specId: string; name: string }[];
   error?: string;
   isSample?: boolean;
+}
+
+export interface ObjectStorageJobCard {
+  id: string;
+  reqId: string;
+  name: string;
+  csp: string;
+  region: string;
+  status: 'Handling' | 'Success' | 'Failed';
+  startTime: string;
+  createdAtMs?: number;
+  elapsedSeconds: number;
+  buckets: {
+    name: string;
+    targetClass: string;
+    cors: string;
+    versioning: string;
+  }[];
+  logs: string[];
+  isSample?: boolean;
+  error?: string;
+}
+
+export interface DataMigrationJob {
+  id: string;
+  reqId: string;
+  nsId: string;
+  csp: string;
+  region: string;
+  sourceBucket: string;
+  targetStorage: string;
+  encryptionKeyId: string;
+  strategy: string;
+  status: 'Handling' | 'Success' | 'Failed';
+  startTime: string;
+  createdAtMs?: number;
+  elapsedSeconds: number;
+  logs: string[];
+  isSample?: boolean;
+}
+
+export function calculateJobElapsedSeconds(job: { startTime?: string; elapsedSeconds: number; createdAtMs?: number }): number {
+  if (job.createdAtMs && typeof job.createdAtMs === 'number' && !isNaN(job.createdAtMs)) {
+    return Math.max(0, Math.floor((Date.now() - job.createdAtMs) / 1000));
+  }
+  if (job.startTime) {
+    const parsed = new Date(job.startTime).getTime();
+    if (!isNaN(parsed)) {
+      return Math.max(0, Math.floor((Date.now() - parsed) / 1000));
+    }
+    // Handle time-only strings like "19:25:10" or "07:25:10 PM"
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateParsed = new Date(`${todayStr}T${job.startTime}`).getTime();
+    if (!isNaN(dateParsed)) {
+      return Math.max(0, Math.floor((Date.now() - dateParsed) / 1000));
+    }
+  }
+  return job.elapsedSeconds || 0;
 }
 
 const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
@@ -524,10 +605,15 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   },
 
   selectCloudModel: (model) => {
+    let infra = model ? (model.cloudInfraModel || (model as any).cloud_infra_model || (model as any).recommendedInfra) : null;
+    if (typeof infra === 'string') {
+      try { infra = JSON.parse(infra); } catch (e) {}
+    }
     set({ 
       selectedCloudModel: model,
-      editedCandidate: model ? model.cloudInfraModel : null,
-      recommendationCandidates: model ? [model.cloudInfraModel] : []
+      editedCandidate: infra,
+      recommendationCandidates: infra ? [infra] : [],
+      selectedCandidateIndex: 0
     });
   },
 
@@ -629,6 +715,8 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   setActiveJobId: (id) => set({ activeJobId: id }),
   addJob: (job) => set((state) => ({ jobs: [job, ...state.jobs], activeJobId: job.id })),
   removeJob: (id) => set((state) => {
+    const target = state.jobs.find(j => j.id === id);
+    if (target?.isSample) return state;
     const updatedJobs = state.jobs.filter(j => j.id !== id);
     const nextActiveId = state.activeJobId === id ? (updatedJobs[0]?.id || '') : state.activeJobId;
     return { jobs: updatedJobs, activeJobId: nextActiveId };
@@ -705,6 +793,114 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
       return { deletingInfrasMap: updated };
     });
   },
+  // Object Storage Jobs Queue (Persisted across tab navigation)
+  objectStorageJobs: [
+    {
+      id: 'sample-os-job-01',
+      reqId: 'req-20260723-001',
+      name: 'mig01-aws-storage',
+      csp: 'aws',
+      region: 'ap-northeast-2',
+      status: 'Success',
+      startTime: new Date().toISOString(),
+      elapsedSeconds: 15,
+      buckets: [
+        { name: 'target-bucket-01', targetClass: 'Standard (S3/Hot)', cors: 'ENABLED', versioning: 'DISABLED' },
+        { name: 'target-bucket-02', targetClass: 'Standard-IA', cors: 'ENABLED', versioning: 'ENABLED' }
+      ],
+      logs: [
+        'POST /beetle/migration/middleware/ns/mig01/objectStorage?nameSeed=mig01',
+        'Header -> Prefer: respond-async',
+        'HTTP 202 Accepted (ReqID: req-20260723-001, Status: Handling)',
+        'GET /beetle/request/req-20260723-001 -> Status: Success (Duration: 15s)'
+      ],
+      isSample: true
+    }
+  ],
+  activeObjectStorageJobId: 'sample-os-job-01',
+  setObjectStorageJobs: (fn) => set((state) => ({ objectStorageJobs: typeof fn === 'function' ? fn(state.objectStorageJobs) : fn })),
+  addObjectStorageJob: (job) => set((state) => ({ objectStorageJobs: [job, ...state.objectStorageJobs], activeObjectStorageJobId: job.id })),
+  removeObjectStorageJob: (id) => set((state) => {
+    const target = state.objectStorageJobs.find(j => j.id === id);
+    if (target?.isSample) return state;
+    const updated = state.objectStorageJobs.filter((j) => j.id !== id);
+    const nextId = state.activeObjectStorageJobId === id ? (updated[0]?.id || '') : state.activeObjectStorageJobId;
+    return { objectStorageJobs: updated, activeObjectStorageJobId: nextId };
+  }),
+  setActiveObjectStorageJobId: (id) => set({ activeObjectStorageJobId: id }),
+
+  // Data Migration Jobs Queue (Persisted across tab navigation)
+  dataJobs: [
+    {
+      id: 'req-data-101',
+      reqId: 'req-data-20260724-001',
+      nsId: 'mig01',
+      csp: 'AWS',
+      region: 'ap-northeast-2',
+      sourceBucket: 'source-s3-bucket-production',
+      targetStorage: 'target-s3-bucket-migrated',
+      encryptionKeyId: 'KMS-AES256-GCM-KEY-9982',
+      strategy: 'Full Migration + AES256 Payload Encryption',
+      status: 'Success',
+      startTime: new Date().toISOString(),
+      elapsedSeconds: 24,
+      logs: [
+        'POST /beetle/migration/data (Prefer: respond-async)',
+        'HTTP 202 Accepted (ReqID: req-data-20260724-001)',
+        'Initializing AES256-GCM Envelope Encryption...',
+        'Transferring 1,024 S3 Objects (10.5 GB)...',
+        'Data Transfer & Integrity Verification Completed Successfully (Duration: 24s)'
+      ],
+      isSample: true
+    }
+  ],
+  activeDataJobId: 'req-data-101',
+  setDataJobs: (fn) => set((state) => ({ dataJobs: typeof fn === 'function' ? fn(state.dataJobs) : fn })),
+  addDataJob: (job) => set((state) => ({ dataJobs: [job, ...state.dataJobs], activeDataJobId: job.id })),
+  removeDataJob: (id) => set((state) => {
+    const target = state.dataJobs.find(j => j.id === id);
+    if (target?.isSample) return state;
+    const updated = state.dataJobs.filter((j) => j.id !== id);
+    const nextId = state.activeDataJobId === id ? (updated[0]?.id || '') : state.activeDataJobId;
+    return { dataJobs: updated, activeDataJobId: nextId };
+  }),
+  setActiveDataJobId: (id) => set({ activeDataJobId: id }),
+
+  // Object Storage Deletion Request Tracking
+  deletingStoragesMap: {},
+  startStorageTeardown: (storageId: string, reqId: string) => {
+    set((state) => ({
+      deletingStoragesMap: {
+        ...state.deletingStoragesMap,
+        [storageId]: { reqId, status: 'Deleting' }
+      }
+    }));
+  },
+  removeStorageTeardown: (storageId: string) => {
+    set((state) => {
+      const updated = { ...state.deletingStoragesMap };
+      delete updated[storageId];
+      return { deletingStoragesMap: updated };
+    });
+  },
+  pollStorageTeardownStatus: async (nsId: string, storageId: string, reqId: string) => {
+    try {
+      const reqDetails = await beetleApi.getRequestDetails(reqId);
+      const reqStatus = reqDetails?.status;
+      if (reqStatus === 'Completed' || reqStatus === 'Succeeded' || reqStatus === 'Success') {
+        get().removeStorageTeardown(storageId);
+        return { completed: true, success: true };
+      } else if (reqStatus === 'Failed' || reqStatus === 'Error') {
+        get().removeStorageTeardown(storageId);
+        return { completed: true, success: false, error: reqDetails?.errorResponse || 'Deletion failed' };
+      }
+      return { completed: false, success: true };
+    } catch (err: any) {
+      console.warn('Poll error for storage teardown request', reqId, err);
+      return { completed: false, success: false };
+    }
+  },
+
   pollInfraTeardownStatus: async (nsId: string, infraId: string, reqId: string) => {
     try {
       const reqDetails = await beetleApi.getRequestDetails(reqId);
@@ -730,6 +926,10 @@ export const useMigrationStore = create<MigrationState>()(
     partialize: (state) => ({
       jobs: state.jobs,
       activeJobId: state.activeJobId,
+      objectStorageJobs: state.objectStorageJobs,
+      activeObjectStorageJobId: state.activeObjectStorageJobId,
+      dataJobs: state.dataJobs,
+      activeDataJobId: state.activeDataJobId,
       savedCloudModels: state.savedCloudModels,
       selectedCloudModel: state.selectedCloudModel,
       savedSourceModels: state.savedSourceModels,
@@ -737,7 +937,8 @@ export const useMigrationStore = create<MigrationState>()(
       namespaceId: state.namespaceId,
       nameSeed: state.nameSeed,
       themeMode: state.themeMode,
-      deletingInfrasMap: state.deletingInfrasMap
+      deletingInfrasMap: state.deletingInfrasMap,
+      deletingStoragesMap: state.deletingStoragesMap
     })
   })
 );

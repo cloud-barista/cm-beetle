@@ -37,9 +37,9 @@ type MemoryProperty struct {
 type DiskProperty struct { // note: reference command `df -h`
 	Label     string `json:"label" validate:"required"`
 	Type      string `json:"type" validate:"required" example:"SSD"`       // SSD, HDD
-	TotalSize uint64 `json:"totalSize" validate:"required" example:"1024"` // Unit GiB
-	Available uint64 `json:"available,omitempty"`                          // Unit GiB
-	Used      uint64 `json:"used,omitempty"`                               // Unit GiB
+	TotalSize uint64 `json:"totalSize" validate:"required" example:"1024"` // Unit GB
+	Available uint64 `json:"available,omitempty"`                          // Unit GB
+	Used      uint64 `json:"used,omitempty"`                               // Unit GB
 }
 
 type NetworkInterfaceProperty struct { // note: reference command `ifconfig`
