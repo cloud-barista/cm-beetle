@@ -24,21 +24,22 @@ This CLI automates testing of CM-Beetle's infrastructure recommendation and migr
 - **CM-Beetle Readiness Check**: `GET /beetle/readyz` — Verify CM-Beetle is available
 - **Source Infrastructure Summary**: `POST /beetle/summary/source` — Summarize the on-premise source infrastructure
 
-#### Per CSP-Region Pair (9 Tests)
+#### Per CSP-Region Pair (10 Tests)
 
 | #   | API / Description                                                                              |
 | --- | ---------------------------------------------------------------------------------------------- |
 | 1   | `POST /beetle/recommendation/infra` — Recommend target infrastructure (uses first candidate)   |
-| 2   | `POST /beetle/migration/ns/{nsId}/infra` — Migrate infrastructure                              |
-| 3   | `GET /beetle/migration/ns/{nsId}/infra` — List all infras                                      |
-| 4   | `GET /beetle/migration/ns/{nsId}/infra?option=id` — List infra IDs                             |
-| 5   | `GET /beetle/migration/ns/{nsId}/infra/{infraId}` — Get specific infra                         |
-| 6   | Remote Command Test — SSH connectivity check for all migrated VMs                              |
-| 7   | `GET /beetle/summary/target/ns/{nsId}/infra/{infraId}` — Target infrastructure summary         |
-| 8   | `POST /beetle/report/migration/ns/{nsId}/infra/{infraId}` — Migration report                   |
-| 9   | `DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate` — Delete infra (cleanup) |
+| 2   | `POST /beetle/validation/ns/{nsId}/infra` — Validate the recommended target model              |
+| 3   | `POST /beetle/migration/ns/{nsId}/infra` — Migrate infrastructure                              |
+| 4   | `GET /beetle/migration/ns/{nsId}/infra` — List all infras                                      |
+| 5   | `GET /beetle/migration/ns/{nsId}/infra?option=id` — List infra IDs                             |
+| 6   | `GET /beetle/migration/ns/{nsId}/infra/{infraId}` — Get specific infra                         |
+| 7   | Remote Command Test — SSH connectivity check for all migrated VMs                              |
+| 8   | `GET /beetle/summary/target/ns/{nsId}/infra/{infraId}` — Target infrastructure summary         |
+| 9   | `POST /beetle/report/migration/ns/{nsId}/infra/{infraId}` — Migration report                   |
+| 10  | `DELETE /beetle/migration/ns/{nsId}/infra/{infraId}?option=terminate` — Delete infra (cleanup) |
 
-> If any test from 1–8 fails, subsequent tests for that CSP-Region pair are skipped. Test 9 (cleanup) always runs when an `infraId` is available.
+> If any test from 1–9 fails, subsequent tests for that CSP-Region pair are skipped. Test 10 (cleanup) always runs when an `infraId` is available.
 
 ## Quick Start
 
@@ -111,7 +112,7 @@ beetle:
 | Field                                           | Description                                                      |
 | ----------------------------------------------- | ---------------------------------------------------------------- |
 | `beetleApiUsername` / `beetleApiPassword`       | Credentials for CM-Beetle REST API (Basic Auth)                  |
-| `tumblebugApiUsername` / `tumblebugApiPassword` | Credentials for CB-Tumblebug REST API (used in Test 6 SSH check) |
+| `tumblebugApiUsername` / `tumblebugApiPassword` | Credentials for CB-Tumblebug REST API (used in Test 7 SSH check) |
 | `tumblebugEndpoint`                             | CB-Tumblebug base URL                                            |
 
 ### Request Body (On-Premise Infra Model)
@@ -145,37 +146,40 @@ Testing CSP-Region Pair 1/1: AWS-Seoul
 --- Test 1: POST /beetle/recommendation/infra ---
 ✅ Test 1 passed
 
---- Test 2: POST /beetle/migration/ns/mig01/infra ---
+--- Test 2: POST /beetle/validation/ns/mig01/infra ---
 ✅ Test 2 passed
 
---- Test 3: GET /beetle/migration/ns/mig01/infra ---
+--- Test 3: POST /beetle/migration/ns/mig01/infra ---
 ✅ Test 3 passed
 
---- Test 4: GET /beetle/migration/ns/mig01/infra?option=id ---
+--- Test 4: GET /beetle/migration/ns/mig01/infra ---
 ✅ Test 4 passed
 
---- Test 5: GET /beetle/migration/ns/mig01/infra/{infraId} ---
+--- Test 5: GET /beetle/migration/ns/mig01/infra?option=id ---
 ✅ Test 5 passed
 
---- Test 6: Remote Command Accessibility Check ---
+--- Test 6: GET /beetle/migration/ns/mig01/infra/{infraId} ---
 ✅ Test 6 passed
 
---- Test 7: Target Infrastructure Summary ---
+--- Test 7: Remote Command Accessibility Check ---
 ✅ Test 7 passed
 
---- Test 8: Migration Report ---
+--- Test 8: Target Infrastructure Summary ---
 ✅ Test 8 passed
 
---- Test 9: DELETE /beetle/migration/ns/mig01/infra/{infraId} ---
+--- Test 9: Migration Report ---
 ✅ Test 9 passed
+
+--- Test 10: DELETE /beetle/migration/ns/mig01/infra/{infraId} ---
+✅ Test 10 passed
 
 ============================================================
 OVERALL TEST SUMMARY
 ============================================================
 Total CSP-Region Pairs: 1
 Successful Pairs: 1
-Total Tests: 9
-Passed Tests: 9
+Total Tests: 10
+Passed Tests: 10
 ```
 
 ### Generated Report Files
@@ -225,7 +229,7 @@ Create custom config file:
 3. CSP credentials configured for each cloud provider
 4. Network connectivity to CM-Beetle and cloud providers
 5. **Authentication setup**: Copy `testconf/template-auth-config.json` to `testconf/auth-config.json` and configure credentials
-6. **SSH access**: Ensure VMs can be accessed via SSH for Test 6 (Remote Command Test)
+6. **SSH access**: Ensure VMs can be accessed via SSH for Test 7 (Remote Command Test)
 
 ## Troubleshooting
 

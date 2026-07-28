@@ -2141,6 +2141,37 @@ definitions:
       versioningEnabled:
         type: boolean
     type: object
+  controller.ValidateInfraRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+    type: object
   map_string_string:
     additionalProperties:
       type: string
@@ -2808,6 +2839,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/transx.PublicKeyBundle'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-validation_ValidationResult:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/validation.ValidationResult'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -5567,6 +5617,39 @@ definitions:
     - endpoint
     - nsId
     - osId
+    type: object
+  validation.Severity:
+    enum:
+    - error
+    - warning
+    type: string
+    x-enum-varnames:
+    - SeverityError
+    - SeverityWarning
+  validation.ValidationIssue:
+    properties:
+      code:
+        description: stable machine-readable identifier, one of the Code* constants
+        type: string
+      message:
+        description: human-readable detail
+        type: string
+      path:
+        description: location of the offending field, e.g. "targetInfra.nodeGroups[0].imageId"
+        type: string
+      severity:
+        allOf:
+        - $ref: '#/definitions/validation.Severity'
+        description: error | warning
+    type: object
+  validation.ValidationResult:
+    properties:
+      issues:
+        items:
+          $ref: '#/definitions/validation.ValidationIssue'
+        type: array
+      valid:
+        type: boolean
     type: object
 externalDocs:
   description: ▶▶▶ CB-Tumblebug REST API (access via Beetle's reverse proxy)
@@ -9048,6 +9131,80 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       tags:
       - '[Test] Utilities'
+  /validation/ns/{nsId}/infra:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Runs, without creating or modifying any resource, the same checks
+        migration execution performs immediately before provisioning:
+
+        - **Naming & referential integrity**: names must be 3-63 alphanumeric/hyphen
+        characters, and internal references must resolve within the submitted model
+        (e.g. a NodeGroup's `securityGroupIds` must match a `name` in `targetSecurityGroupList`).
+        - **Required fields**, which differ by `useExisting`:
+        - `true`: each NodeGroup's `vNetId`, `sshKeyId`, `securityGroupIds` must be set.
+        - `false`: `targetVNet.name`, `targetSshKey.name`, and each security group's `name` must be set.
+        - **Resource name collision / availability** against Tumblebug, which also differs by `useExisting`:
+        - `false`: the VNet/SSH key/security groups to be created must NOT already exist in the
+        namespace (e.g. `targetVNet.name: "vnet-01"` fails if a VNet named `vnet-01` already exists).
+        - `true`: an existing resource must be under the same CSP/region connection the NodeGroup
+        requests (e.g. reusing a VNet provisioned under connection `aws-ap-northeast-2` while the
+        NodeGroup's `connectionName` is `gcp-asia-northeast3` fails); a resource that doesn't exist
+        yet must have enough data alongside it to create it instead (e.g. `targetVNet.cidrBlock`).
+        - **VM spec/image compatibility** per NodeGroup: `specId`, `imageId`, and `connectionName` must
+        be set, `connectionName` must be in `csp-region` format (e.g. `aws-ap-northeast-2`), and the
+        resolved spec/image pair must be compatible for that CSP (e.g. an `x86_64` spec paired with
+        an `arm64` image fails).
+        - **Infra (MCI) name collision**: `targetInfra.name` must not already exist in the namespace.
+
+        Always returns HTTP 200: the response body's `valid` field and
+        `issues` list carry the outcome, since a failed check is a normal,
+        successfully-answered result rather than a malformed request.
+        400 is reserved for request body/parameter errors.
+
+        Because Tumblebug/CSP state can change afterward, a `valid: true`
+        result is a best-effort snapshot, not a guarantee - the migration
+        API re-runs this same validation immediately before provisioning.
+      operationId: ValidateInfra
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: 'Validate as if reusing existing resources (VNet, SSH Key, Security
+          Group) instead of creating new ones (default: true); should match the `useExisting`
+          value intended for the actual migration call'
+        in: query
+        name: useExisting
+        type: boolean
+      - description: The target infrastructure model to validate
+        in: body
+        name: infraInfo
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ValidateInfraRequest'
+      - description: Unique request ID
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Validation outcome: valid flag plus zero or more issues'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-validation_ValidationResult'
+        "400":
+          description: Invalid request body or parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: (Preview) Validate a target infrastructure model before migration
+      tags:
+      - '[Validation] Target Cloud Configuration (Preview)'
+      - '[Migration] Infrastructure'
 security:
 - BasicAuth: []
 - BearerAuth: []
