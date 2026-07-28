@@ -282,6 +282,35 @@ export const beetleApi = {
     return Array.isArray(response.data) ? response.data : [];
   },
 
+  // Validate target infrastructure model before migration
+  validateInfra: async (
+    nsId: string,
+    cloudModel: RecommendedInfra,
+    useExisting: boolean = true
+  ): Promise<{
+    success: boolean;
+    valid?: boolean;
+    issues?: Array<{ code: string; severity: string; path: string; message: string }>;
+    error?: string;
+  }> => {
+    try {
+      const response = await api.post(`/beetle/validation/ns/${nsId}/infra?useExisting=${useExisting}`, cloudModel);
+      const resData = response.data?.data || response.data;
+      return {
+        success: response.data?.success ?? true,
+        valid: resData?.valid,
+        issues: Array.isArray(resData?.issues) ? resData.issues : []
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        valid: false,
+        issues: [],
+        error: err.response?.data?.error || err.response?.data?.message || err.message
+      };
+    }
+  },
+
   // Execute actual physical cloud migration deployment (with Prefer: respond-async header)
   executeMigration: async (nsId: string, nameSeed: string, cloudModel: RecommendedInfra): Promise<{ success: boolean; reqId?: string; data?: any; error?: string }> => {
     try {
