@@ -32,6 +32,7 @@ import (
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
 	"github.com/cloud-barista/cm-beetle/pkg/logger"
 )
 
@@ -48,6 +49,8 @@ type CSPTestReport struct {
 	OnpremiseInfraModel    onpremmodel.OnpremInfra
 	RecommendationRequest  controller.RecommendInfraRequest
 	RecommendationResponse *model.ApiResponse[[]cloudmodel.RecommendedInfra]
+	ValidationRequest      *controller.ValidateInfraRequest
+	ValidationResponse     *validation.ValidationResult
 	MigrationResponse      *controller.MigrateInfraResponse
 	ListMCIResponse        *cloudmodel.InfraInfoList
 	ListMCIIDsResponse     *cloudmodel.IdList
@@ -242,7 +245,7 @@ func main() {
 		Config:        config,
 		Results:       make([]TestResults, 0),
 		CspResults:    make(map[string]TestResults),
-		TotalTests:    9, // Total number of API tests per CSP-Region pair
+		TotalTests:    10, // Total number of API tests per CSP-Region pair
 		TotalCspPairs: len(config.Test.Cases),
 	}
 
@@ -437,7 +440,42 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 2: POST /beetle/migration/ns/{nsId}/infra
+	 * Test 2: POST /beetle/validation/ns/{nsId}/infra
+	 */
+	var validationResult TestResults
+	if !stopTesting {
+		validationRequest := controller.ValidateInfraRequest{
+			RecommendedInfra: recommendationApiResponse.Data[0],
+		}
+		cspReport.ValidationRequest = &validationRequest
+		validationResult = runValidationTest(client, config, validationRequest, displayName)
+		if structuredResponse, err := convertMapToValidationResult(validationResult.Response); err == nil {
+			cspReport.ValidationResponse = structuredResponse
+		}
+		recordResult(validationResult)
+
+		if !validationResult.Success {
+			stopTesting = true
+		}
+	} else {
+		validationResult = TestResults{
+			TestName:     "Test 2: POST /beetle/validation/ns/{nsId}/infra",
+			StartTime:    time.Now(),
+			EndTime:      time.Now(),
+			Duration:     0,
+			Success:      false,
+			Skipped:      true,
+			StatusCode:   0,
+			Response:     map[string]interface{}{},
+			Error:        "Test skipped due to previous test failure",
+			ErrorMessage: "Test skipped due to previous test failure",
+			RequestURL:   fmt.Sprintf("%s/beetle/validation/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID),
+		}
+		recordResult(validationResult)
+	}
+
+	/*
+	 * Test 3: POST /beetle/migration/ns/{nsId}/infra
 	 */
 	var result2 TestResults
 	if !stopTesting {
@@ -461,7 +499,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result2 = TestResults{
-			TestName:     "Test 2: POST /beetle/migration/ns/{nsId}/infra",
+			TestName:     "Test 3: POST /beetle/migration/ns/{nsId}/infra",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -477,7 +515,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 3: GET /beetle/migration/ns/{nsId}/infra
+	 * Test 4: GET /beetle/migration/ns/{nsId}/infra
 	 */
 	var result3 TestResults
 	if !stopTesting {
@@ -495,7 +533,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result3 = TestResults{
-			TestName:     "Test 3: GET /beetle/migration/ns/{nsId}/infra",
+			TestName:     "Test 4: GET /beetle/migration/ns/{nsId}/infra",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -511,7 +549,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id
+	 * Test 5: GET /beetle/migration/ns/{nsId}/infra?option=id
 	 */
 	var result4 TestResults
 	if !stopTesting {
@@ -537,7 +575,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 		}
 	} else {
 		result4 = TestResults{
-			TestName:     "Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id",
+			TestName:     "Test 5: GET /beetle/migration/ns/{nsId}/infra?option=id",
 			StartTime:    time.Now(),
 			EndTime:      time.Now(),
 			Duration:     0,
@@ -553,7 +591,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 5: GET /beetle/migration/ns/{nsId}/infra/{infraId}
+	 * Test 6: GET /beetle/migration/ns/{nsId}/infra/{infraId}
 	 */
 	if !stopTesting && infraId != "" {
 		result5, _ := runGetInfraTest(client, config, infraId, displayName)
@@ -569,7 +607,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 6: Remote Command Accessibility Check
+	 * Test 7: Remote Command Accessibility Check
 	 */
 	if !stopTesting {
 		result6 := runRemoteCommandTest(client, config, infraId, displayName, authConfig)
@@ -582,7 +620,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 7: Target Infrastructure Summary
+	 * Test 8: Target Infrastructure Summary
 	 */
 	if !stopTesting && infraId != "" {
 		resultTargetSummary := runTargetSummaryTest(client, config, infraId, cspPair.Csp, displayName)
@@ -603,7 +641,7 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 8: Migration Report
+	 * Test 9: Migration Report
 	 */
 	if !stopTesting && infraId != "" {
 		resultMigrationReport := runMigrationReportTest(client, config, onpremInfraModel, infraId, cspPair.Csp, displayName)
@@ -624,8 +662,8 @@ func runTestCase(i int, cspPair TestCase, config TestConfig, onpremInfraModel on
 	}
 
 	/*
-	 * Test 9: DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (CLEANUP)
-	 * Ensure resource cleanup (Test 9) runs even on failure of Tests 1-8
+	 * Test 10: DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (CLEANUP)
+	 * Ensure resource cleanup (Test 10) runs even on failure of Tests 1-9
 	 */
 	if infraId != "" {
 		result9, _ := runDeleteInfraTest(client, config, infraId, displayName)
@@ -791,6 +829,26 @@ func convertMapToMigrateInfraResponse(responseMap interface{}) (*controller.Migr
 	return &apiResp.Data, nil
 }
 
+// convertMapToValidationResult converts interface{} to validation.ValidationResult
+func convertMapToValidationResult(responseMap interface{}) (*validation.ValidationResult, error) {
+	jsonBytes, err := json.Marshal(responseMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var apiResp model.ApiResponse[validation.ValidationResult]
+	if err := json.Unmarshal(jsonBytes, &apiResp); err != nil {
+		// Fallback for direct unmarshal if not wrapped
+		var response validation.ValidationResult
+		if err := json.Unmarshal(jsonBytes, &response); err != nil {
+			return nil, err
+		}
+		return &response, nil
+	}
+
+	return &apiResp.Data, nil
+}
+
 // convertMapToInfraInfoList converts interface{} to InfraInfoList
 func convertMapToInfraInfoList(responseMap interface{}) (*cloudmodel.InfraInfoList, error) {
 	jsonBytes, err := json.Marshal(responseMap)
@@ -928,9 +986,78 @@ func runRecommendationTest(client *resty.Client, config TestConfig, cspPair clou
 	return apiResponse, result
 }
 
-// runMigrationTest performs Test 2: POST /beetle/migration/ns/{nsId}/infra
+// runValidationTest performs Test 2: POST /beetle/validation/ns/{nsId}/infra
+func runValidationTest(client *resty.Client, config TestConfig, validationRequestBody controller.ValidateInfraRequest, displayName string) TestResults {
+	fmt.Printf("\n--- Test 2: POST /beetle/validation/ns/%s/infra ---\n", config.Beetle.NamespaceID)
+
+	// Wait before API call for stability with animation
+	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
+
+	result := TestResults{
+		TestName:  fmt.Sprintf("Test 2: POST /beetle/validation/ns/{nsId}/infra (%s)", displayName),
+		StartTime: time.Now(),
+	}
+
+	var apiResponse model.ApiResponse[validation.ValidationResult]
+
+	// Log API call details
+	url := fmt.Sprintf("%s/beetle/validation/ns/%s/infra", config.Beetle.Endpoint, config.Beetle.NamespaceID)
+	log.Debug().Msgf("API Request URL: %s", url)
+	log.Debug().Msgf("API Request Body: %+v", validationRequestBody)
+
+	err := common.ExecuteHttpRequest(
+		client,
+		"POST",
+		url,
+		nil,
+		true,
+		&validationRequestBody,
+		&apiResponse,
+		0,
+	)
+
+	// Log response body
+	log.Debug().Msgf("API Response Body: %+v", apiResponse.Data)
+
+	result.EndTime = time.Now()
+	result.Duration = result.EndTime.Sub(result.StartTime)
+	result.RequestURL = url
+	result.RequestBody = validationRequestBody
+
+	if err != nil {
+		result.Success = false
+		result.Error = err.Error()
+		result.StatusCode = 0
+		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
+		return result
+	}
+
+	result.StatusCode = 200
+	// Convert struct response to map for TestResults compatibility
+	responseMap := make(map[string]interface{})
+	jsonBytes, _ := json.Marshal(apiResponse)
+	json.Unmarshal(jsonBytes, &responseMap)
+	result.Response = responseMap
+
+	if !apiResponse.Data.Valid {
+		issueMessages := make([]string, 0, len(apiResponse.Data.Issues))
+		for _, issue := range apiResponse.Data.Issues {
+			issueMessages = append(issueMessages, fmt.Sprintf("[%s] %s: %s", issue.Code, issue.Path, issue.Message))
+		}
+		result.Success = false
+		result.Error = fmt.Sprintf("target infra model failed validation: %s", strings.Join(issueMessages, "; "))
+		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
+		return result
+	}
+
+	result.Success = true
+	fmt.Println("✅ Test 2 passed")
+	return result
+}
+
+// runMigrationTest performs Test 3: POST /beetle/migration/ns/{nsId}/infra
 func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestBody controller.MigrateInfraRequest, nameSeed, displayName string) TestResults {
-	fmt.Printf("\n--- Test 2: POST /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
+	fmt.Printf("\n--- Test 3: POST /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability (migration needs more time) with spinner
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -975,7 +1102,7 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		result.Success = false
 		result.Error = err.Error()
 		result.StatusCode = 0
-		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
+		fmt.Printf("❌ Test 3 failed: %s\n", result.Error)
 	} else if strings.Contains(strings.ToLower(vmInfraInfo.Status), "failed") {
 		result.Success = false
 		result.Error = fmt.Errorf("failed to migrate infra (MCI status: %s)", vmInfraInfo.Status).Error()
@@ -984,7 +1111,7 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
-		fmt.Printf("❌ Test 2 failed: %s\n", result.Error)
+		fmt.Printf("❌ Test 3 failed: %s\n", result.Error)
 	} else {
 		result.Success = true
 		result.StatusCode = 200
@@ -993,15 +1120,15 @@ func runMigrationTest(client *resty.Client, config TestConfig, migrationRequestB
 		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
-		fmt.Println("✅ Test 2 passed")
+		fmt.Println("✅ Test 3 passed")
 	}
 
 	return result
 }
 
-// runListInfraTest performs Test 3: GET /beetle/migration/ns/{nsId}/infra
+// runListInfraTest performs Test 4: GET /beetle/migration/ns/{nsId}/infra
 func runListInfraTest(client *resty.Client, config TestConfig, displayName string) TestResults {
-	fmt.Printf("\n--- Test 3: GET /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
+	fmt.Printf("\n--- Test 4: GET /beetle/migration/ns/%s/infra ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -1040,7 +1167,7 @@ func runListInfraTest(client *resty.Client, config TestConfig, displayName strin
 		result.Success = false
 		result.Error = err.Error()
 		result.StatusCode = 0
-		fmt.Printf("❌ Test 3 failed: %s\n", result.Error)
+		fmt.Printf("❌ Test 4 failed: %s\n", result.Error)
 	} else {
 		result.Success = true
 		result.StatusCode = 200
@@ -1049,15 +1176,15 @@ func runListInfraTest(client *resty.Client, config TestConfig, displayName strin
 		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
-		fmt.Println("✅ Test 3 passed")
+		fmt.Println("✅ Test 4 passed")
 	}
 
 	return result
 }
 
-// runListInfraIdsTest performs Test 4: GET /beetle/migration/ns/{nsId}/infra?option=id
+// runListInfraIdsTest performs Test 5: GET /beetle/migration/ns/{nsId}/infra?option=id
 func runListInfraIdsTest(client *resty.Client, config TestConfig, displayName string) TestResults {
-	fmt.Printf("\n--- Test 4: GET /beetle/migration/ns/%s/infra?option=id ---\n", config.Beetle.NamespaceID)
+	fmt.Printf("\n--- Test 5: GET /beetle/migration/ns/%s/infra?option=id ---\n", config.Beetle.NamespaceID)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -1096,7 +1223,7 @@ func runListInfraIdsTest(client *resty.Client, config TestConfig, displayName st
 		result.Success = false
 		result.Error = err.Error()
 		result.StatusCode = 0
-		fmt.Printf("❌ Test 4 failed: %s\n", result.Error)
+		fmt.Printf("❌ Test 5 failed: %s\n", result.Error)
 	} else {
 		result.Success = true
 		result.StatusCode = 200
@@ -1105,16 +1232,16 @@ func runListInfraIdsTest(client *resty.Client, config TestConfig, displayName st
 		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
-		fmt.Println("✅ Test 4 passed")
+		fmt.Println("✅ Test 5 passed")
 	}
 
 	return result
 }
 
-// runGetInfraTest performs Test 5: GET /beetle/migration/ns/{nsId}/infra/{infraId}
+// runGetInfraTest performs Test 6: GET /beetle/migration/ns/{nsId}/infra/{infraId}
 func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayName string) (TestResults, bool) {
 	if infraId == "" {
-		fmt.Println("⚠️  Test 5 skipped: No Infra ID available")
+		fmt.Println("⚠️  Test 6 skipped: No Infra ID available")
 		return TestResults{
 			TestName: fmt.Sprintf("GET /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 			Success:  false,
@@ -1123,7 +1250,7 @@ func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayNa
 		}, false
 	}
 
-	fmt.Printf("\n--- Test 5: GET /beetle/migration/ns/%s/infra/%s ---\n", config.Beetle.NamespaceID, infraId)
+	fmt.Printf("\n--- Test 6: GET /beetle/migration/ns/%s/infra/%s ---\n", config.Beetle.NamespaceID, infraId)
 
 	// Wait before API call for stability with animation
 	animatedSleep(5*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -1162,7 +1289,7 @@ func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayNa
 		result.Success = false
 		result.Error = err.Error()
 		result.StatusCode = 0
-		fmt.Printf("❌ Test 5 failed: %s\n", result.Error)
+		fmt.Printf("❌ Test 6 failed: %s\n", result.Error)
 	} else {
 		result.Success = true
 		result.StatusCode = 200
@@ -1171,16 +1298,16 @@ func runGetInfraTest(client *resty.Client, config TestConfig, infraId, displayNa
 		jsonBytes, _ := json.Marshal(apiResponse)
 		json.Unmarshal(jsonBytes, &responseMap)
 		result.Response = responseMap
-		fmt.Println("✅ Test 5 passed")
+		fmt.Println("✅ Test 6 passed")
 	}
 
 	return result, true
 }
 
-// runDeleteInfraTest performs Test 7: DELETE /beetle/migration/ns/{nsId}/infra/{infraId}
+// runDeleteInfraTest performs Test 10: DELETE /beetle/migration/ns/{nsId}/infra/{infraId}
 func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displayName string) (TestResults, bool) {
 	if infraId == "" {
-		fmt.Println("⚠️  Test 7 skipped: No Infra ID available")
+		fmt.Println("⚠️  Test 10 skipped: No Infra ID available")
 		return TestResults{
 			TestName: fmt.Sprintf("DELETE /beetle/migration/ns/{nsId}/infra/{infraId} (%s)", displayName),
 			Success:  false,
@@ -1189,7 +1316,7 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 		}, false
 	}
 
-	fmt.Printf("\n--- Test 7: DELETE /beetle/migration/ns/%s/infra/%s?option=terminate ---\n", config.Beetle.NamespaceID, infraId)
+	fmt.Printf("\n--- Test 10: DELETE /beetle/migration/ns/%s/infra/%s?option=terminate ---\n", config.Beetle.NamespaceID, infraId)
 
 	// Wait before API call for stability with animation
 	animatedSleep(30*time.Second, "Waiting for a while for the previous task to be completed safely")
@@ -1241,10 +1368,10 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 
 			if attempt > 1 {
 				log.Info().Str("infraId", infraId).Int("attempt", attempt).Msg("✅ Infra deletion succeeded after retry")
-				fmt.Printf("✅ Test 7 passed (after %d attempt(s))\n", attempt)
+				fmt.Printf("✅ Test 10 passed (after %d attempt(s))\n", attempt)
 			} else {
 				log.Info().Str("infraId", infraId).Msg("✅ Infra deletion succeeded")
-				fmt.Println("✅ Test 7 passed")
+				fmt.Println("✅ Test 10 passed")
 			}
 			return result, true
 		}
@@ -1257,7 +1384,7 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 		// If resource is already gone (404), no need to retry
 		if statusCode == http.StatusNotFound {
 			log.Info().Str("infraId", infraId).Msg("✅ Infra deletion skipped: Resource already deleted (404)")
-			fmt.Println("✅ Test 7 passed (Resource already gone)")
+			fmt.Println("✅ Test 10 passed (Resource already gone)")
 
 			result.EndTime = time.Now()
 			result.Duration = result.EndTime.Sub(result.StartTime)
@@ -1305,7 +1432,7 @@ func runDeleteInfraTest(client *resty.Client, config TestConfig, infraId, displa
 		result.Response = response
 	}
 
-	fmt.Printf("❌ Test 7 failed after %d attempt(s): %s\n", maxRetries, result.ErrorMessage)
+	fmt.Printf("❌ Test 10 failed after %d attempt(s): %s\n", maxRetries, result.ErrorMessage)
 	return result, false
 }
 
@@ -1579,6 +1706,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	sb.WriteString("### Scenario\n\n")
 	sb.WriteString("1. Recommend a target model for computing infra via Beetle\n")
+	sb.WriteString("1. Validate the target model for computing infra via Beetle\n")
 	sb.WriteString("1. Migrate the computing infra as defined in the target model via Beetle\n")
 	sb.WriteString("1. List all MCIs via Beetle\n")
 	sb.WriteString("1. List MCI IDs via Beetle\n")
@@ -1616,20 +1744,22 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		case 0:
 			endpoint = "`POST /beetle/recommendation/infra`"
 		case 1:
-			endpoint = fmt.Sprintf("`POST /beetle/migration/ns/%s/infra`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`POST /beetle/validation/ns/%s/infra`", report.NamespaceID)
 		case 2:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`POST /beetle/migration/ns/%s/infra`", report.NamespaceID)
 		case 3:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra?option=id`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra`", report.NamespaceID)
 		case 4:
-			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra?option=id`", report.NamespaceID)
 		case 5:
-			endpoint = "Remote Command Accessibility Check"
+			endpoint = fmt.Sprintf("`GET /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		case 6:
-			endpoint = fmt.Sprintf("`GET /beetle/summary/target/ns/%s/infra/{{infraId}}`", report.NamespaceID)
+			endpoint = "Remote Command Accessibility Check"
 		case 7:
-			endpoint = fmt.Sprintf("`POST /beetle/report/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
+			endpoint = fmt.Sprintf("`GET /beetle/summary/target/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		case 8:
+			endpoint = fmt.Sprintf("`POST /beetle/report/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
+		case 9:
 			endpoint = fmt.Sprintf("`DELETE /beetle/migration/ns/%s/infra/{{infraId}}`", report.NamespaceID)
 		default:
 			endpoint = ""
@@ -1739,18 +1869,73 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		}
 	}
 
-	// Test Case 2: Migration
-	sb.WriteString("### Test Case 2: Migrate the computing infra as defined in the target model\n\n")
+	// Test Case 2: Validation
+	sb.WriteString("### Test Case 2: Validate the target model for computing infra\n\n")
 
 	// API request information
 	sb.WriteString("#### 2.1 API Request Information\n\n")
+	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/validation/ns/%s/infra`\n", report.NamespaceID))
+	sb.WriteString("- **Purpose**: Validate the recommended target model before migration (name collisions, spec/image compatibility, resource availability)\n\n")
+
+	sb.WriteString("**Request Body**:\n\n")
+	sb.WriteString("<details>\n")
+	sb.WriteString("  <summary> <ins>Click to see the request body </ins> </summary>\n\n")
+	sb.WriteString("```json\n")
+	validationReqJSON, _ := json.MarshalIndent(report.ValidationRequest, "", "  ")
+	sb.WriteString(string(validationReqJSON))
+	sb.WriteString("\n```\n\n")
+	sb.WriteString("</details>\n\n")
+
+	// API response information
+	sb.WriteString("#### 2.2 API Response Information\n\n")
+	if report.ValidationResponse != nil {
+		if report.ValidationResponse.Valid {
+			sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
+			sb.WriteString("- **Response**: Target model is valid, no issues found\n\n")
+		} else {
+			sb.WriteString("- **Status**: ❌ **FAILED**\n")
+			sb.WriteString(fmt.Sprintf("- **Response**: Target model failed validation with %d issue(s)\n\n", len(report.ValidationResponse.Issues)))
+		}
+		sb.WriteString("**Response Body**:\n\n")
+		sb.WriteString("<details>\n")
+		sb.WriteString("  <summary> <ins>Click to see the response body</ins> </summary>\n\n")
+		sb.WriteString("```json\n")
+		validationRespJSON, _ := json.MarshalIndent(report.ValidationResponse, "", "  ")
+		sb.WriteString(string(validationRespJSON))
+		sb.WriteString("\n```\n\n")
+		sb.WriteString("</details>\n\n")
+	} else {
+		sb.WriteString("- **Status**: ❌ **FAILED**\n")
+		sb.WriteString("- **Error**: No response received\n\n")
+		// Add detailed error information if available
+		if len(report.TestResults) > 1 {
+			result := report.TestResults[1] // Second test is validation
+			if result.ErrorMessage != "" {
+				sb.WriteString("**Error Message**:\n\n```\n")
+				sb.WriteString(result.ErrorMessage)
+				sb.WriteString("\n```\n\n")
+			}
+			if result.ErrorDetails != "" {
+				sb.WriteString(fmt.Sprintf("**Error Details**: %s\n\n", result.ErrorDetails))
+			}
+			if result.RequestURL != "" {
+				sb.WriteString(fmt.Sprintf("**Request URL**: `%s`\n\n", result.RequestURL))
+			}
+		}
+	}
+
+	// Test Case 3: Migration
+	sb.WriteString("### Test Case 3: Migrate the computing infra as defined in the target model\n\n")
+
+	// API request information
+	sb.WriteString("#### 3.1 API Request Information\n\n")
 	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/migration/ns/%s/infra`\n", report.NamespaceID))
 	sb.WriteString("- **Purpose**: Create and migrate infrastructure based on recommendation\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 	sb.WriteString("- **Request Body**: Uses the response from the previous recommendation step\n\n")
 
 	// API response information
-	sb.WriteString("#### 2.2 API Response Information\n\n")
+	sb.WriteString("#### 3.2 API Response Information\n\n")
 	if report.MigrationResponse != nil {
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 		sb.WriteString("- **Response**: Infrastructure migration completed successfully\n\n")
@@ -1783,17 +1968,17 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	}
 
 	// Test Case 3: List Infras
-	sb.WriteString("### Test Case 3: Get a list of infras\n\n")
+	sb.WriteString("### Test Case 4: Get a list of infras\n\n")
 
 	// API request information
-	sb.WriteString("#### 3.1 API Request Information\n\n")
+	sb.WriteString("#### 4.1 API Request Information\n\n")
 	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra`\n", report.NamespaceID))
 	sb.WriteString("- **Purpose**: Retrieve all migrated cloud infrastructure instances\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 	sb.WriteString("- **Request Body**: None (GET request)\n\n")
 
 	// API response information
-	sb.WriteString("#### 3.2 API Response Information\n\n")
+	sb.WriteString("#### 4.2 API Response Information\n\n")
 	if report.ListMCIResponse != nil {
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 		sb.WriteString("- **Response**: Infra list retrieved successfully\n\n")
@@ -1820,10 +2005,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	}
 
 	// Test Case 4: List Infra IDs
-	sb.WriteString("### Test Case 4: Get a list of infra IDs\n\n")
+	sb.WriteString("### Test Case 5: Get a list of infra IDs\n\n")
 
 	// API request information
-	sb.WriteString("#### 4.1 API Request Information\n\n")
+	sb.WriteString("#### 5.1 API Request Information\n\n")
 	sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra?option=id`\n", report.NamespaceID))
 	sb.WriteString("- **Purpose**: Retrieve infra IDs only (lightweight response)\n")
 	sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
@@ -1831,7 +2016,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 	sb.WriteString("- **Request Body**: None (GET request)\n\n")
 
 	// API response information
-	sb.WriteString("#### 4.2 API Response Information\n\n")
+	sb.WriteString("#### 5.2 API Response Information\n\n")
 	if report.ListMCIIDsResponse != nil {
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 		sb.WriteString("- **Response**: Infra IDs retrieved successfully\n\n")
@@ -1859,10 +2044,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 5: Get specific MCI (if available)
 	if report.GetMCIResponse != nil {
-		sb.WriteString("### Test Case 5: Get a specific infra\n\n")
+		sb.WriteString("### Test Case 6: Get a specific infra\n\n")
 
 		// API request information
-		sb.WriteString("#### 5.1 API Request Information\n\n")
+		sb.WriteString("#### 6.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Retrieve detailed information for a specific infra\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
@@ -1870,7 +2055,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Request Body**: None (GET request)\n\n")
 
 		// API response information
-		sb.WriteString("#### 5.2 API Response Information\n\n")
+		sb.WriteString("#### 6.2 API Response Information\n\n")
 		sb.WriteString("- **Status**: ✅ **SUCCESS**\n")
 		sb.WriteString("- **Response**: Infra details retrieved successfully\n\n")
 		sb.WriteString("**Response Body**:\n\n")
@@ -1885,10 +2070,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 6: Remote Command Accessibility Check
 	if len(report.TestResults) > 5 && report.TestResults[5].TestName != "" {
-		sb.WriteString("### Test Case 6: Remote Command Accessibility Check\n\n")
+		sb.WriteString("### Test Case 7: Remote Command Accessibility Check\n\n")
 
 		// API request information
-		sb.WriteString("#### 6.1 Test Information\n\n")
+		sb.WriteString("#### 7.1 Test Information\n\n")
 		sb.WriteString("- **Test Type**: SSH Connectivity Test for All VMs\n")
 		sb.WriteString("- **Purpose**: Verify that all migrated VMs are accessible via SSH\n")
 		sb.WriteString("- **Method**: Extract public IP and SSH key from MCI access info for each VM, then execute remote command\n")
@@ -1897,7 +2082,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Scope**: Tests all VMs across all subgroups in the MCI\n\n")
 
 		// Test result information
-		sb.WriteString("#### 6.2 Test Result Information\n\n")
+		sb.WriteString("#### 7.2 Test Result Information\n\n")
 		remoteResult := report.TestResults[5] // 6th test is remote command
 		if remoteResult.Success {
 			// Success case - show detailed results for all VMs
@@ -2100,10 +2285,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 7: Target Infrastructure Summary
 	if len(report.TestResults) > 6 && report.TestResults[6].TestName != "" {
-		sb.WriteString("### Test Case 7: Target Infrastructure Summary\n\n")
+		sb.WriteString("### Test Case 8: Target Infrastructure Summary\n\n")
 
 		// API request information
-		sb.WriteString("#### 7.1 API Request Information\n\n")
+		sb.WriteString("#### 8.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `GET /beetle/summary/target/ns/%s/infra/{{infraId}}?format=md`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Get a summary of the migrated target infrastructure in Markdown format\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
@@ -2111,7 +2296,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Query Parameter**: `format=md`\n\n")
 
 		// API response information
-		sb.WriteString("#### 7.2 API Response Information\n\n")
+		sb.WriteString("#### 8.2 API Response Information\n\n")
 		targetSummaryResult := report.TestResults[6]
 		if targetSummaryResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
@@ -2135,17 +2320,17 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 8: Migration Report
 	if len(report.TestResults) > 7 && report.TestResults[7].TestName != "" {
-		sb.WriteString("### Test Case 8: Migration Report\n\n")
+		sb.WriteString("### Test Case 9: Migration Report\n\n")
 
 		// API request information
-		sb.WriteString("#### 8.1 API Request Information\n\n")
+		sb.WriteString("#### 9.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `POST /beetle/report/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Generate a comprehensive migration report matching source to target\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
 		sb.WriteString("- **Path Parameter**: `{{infraId}}` - The infra identifier\n\n")
 
 		// API response information
-		sb.WriteString("#### 8.2 API Response Information\n\n")
+		sb.WriteString("#### 9.2 API Response Information\n\n")
 		migrationReportResult := report.TestResults[7]
 		if migrationReportResult.Success {
 			sb.WriteString("- **Status**: ✅ **SUCCESS**\n\n")
@@ -2169,10 +2354,10 @@ func generateMarkdownContent(report *CSPTestReport) string {
 
 	// Test Case 9: Delete MCI (always show if test was attempted)
 	if len(report.TestResults) > 8 && report.TestResults[8].TestName != "" {
-		sb.WriteString("### Test Case 9: Delete the migrated computing infra\n\n")
+		sb.WriteString("### Test Case 10: Delete the migrated computing infra\n\n")
 
 		// API request information
-		sb.WriteString("#### 9.1 API Request Information\n\n")
+		sb.WriteString("#### 10.1 API Request Information\n\n")
 		sb.WriteString(fmt.Sprintf("- **API Endpoint**: `DELETE /beetle/migration/ns/%s/infra/{{infraId}}`\n", report.NamespaceID))
 		sb.WriteString("- **Purpose**: Delete the migrated infrastructure and clean up resources\n")
 		sb.WriteString(fmt.Sprintf("- **Namespace ID**: `%s`\n", report.NamespaceID))
@@ -2181,7 +2366,7 @@ func generateMarkdownContent(report *CSPTestReport) string {
 		sb.WriteString("- **Request Body**: None (DELETE request)\n\n")
 
 		// API response information
-		sb.WriteString("#### 9.2 API Response Information\n\n")
+		sb.WriteString("#### 10.2 API Response Information\n\n")
 		deleteResult := report.TestResults[8] // 9th test is delete
 		if deleteResult.Success && report.DeleteMCIResponse != nil {
 			// Success case - show response
@@ -2696,15 +2881,15 @@ func runMigrationReportTest(client *resty.Client, config TestConfig, onpremInfra
 	return result
 }
 
-// runRemoteCommandTest performs Test 6: Remote Command to check accessibility of migrated VM
+// runRemoteCommandTest performs Test 7: Remote Command to check accessibility of migrated VM
 func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, displayName string, authConfig AuthConfig) (result TestResults) {
-	log.Info().Msg("\n--- Test 6: Remote Command Accessibility Check ---")
+	log.Info().Msg("\n--- Test 7: Remote Command Accessibility Check ---")
 
 	// Wait before test for stability with animation
 	animatedSleep(5*time.Second, "Waiting before VM accessibility test")
 
 	result = TestResults{
-		TestName:   fmt.Sprintf("Test 6: Remote Command Accessibility Check (%s)", displayName),
+		TestName:   fmt.Sprintf("Test 7: Remote Command Accessibility Check (%s)", displayName),
 		StartTime:  time.Now(),
 		RequestURL: "N/A (SSH command)",
 	}
@@ -2923,10 +3108,10 @@ func runRemoteCommandTest(client *resty.Client, config TestConfig, infraId, disp
 
 	if overallSuccess {
 		log.Info().Int("successful", successfulTests).Int("total", totalVMs).Msg("✅ All VMs passed SSH connectivity test")
-		fmt.Println("✅ Test 6 passed")
+		fmt.Println("✅ Test 7 passed")
 	} else {
 		log.Warn().Int("successful", successfulTests).Int("failed", failedTests).Int("total", totalVMs).Msg("⚠️ Some VMs failed SSH connectivity test")
-		fmt.Printf("❌ Test 6 failed: %d/%d VMs failed SSH connectivity\n", failedTests, totalVMs)
+		fmt.Printf("❌ Test 7 failed: %d/%d VMs failed SSH connectivity\n", failedTests, totalVMs)
 	}
 
 	return result

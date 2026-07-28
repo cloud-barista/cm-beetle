@@ -26,6 +26,7 @@ import (
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
+	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
@@ -129,7 +130,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	 * [Input] Receive and validate the target infrastructure model
 	 */
 
-	err := validateTargeInfraModel(nsId, targetInfraModel)
+	err := validation.ValidateTargetInfra(nsId, targetInfraModel, false).Err()
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to validate the target infrastructure model (nsId: %s)", nsId)
 		return emptyRet, err
@@ -222,7 +223,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 
 		// Check if SSH access rule exists and add if missing
 		sgReq = checkAndSupportSSHAccessRule(sgReq)
-		
+
 		// Deduplicate firewall rules before sending to Tumblebug
 		if sgReq.FirewallRules != nil {
 			originalCount := len(*sgReq.FirewallRules)
@@ -328,7 +329,7 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 	/*
 	 * [Input] Receive and validate the target infrastructure model
 	 */
-	err := validateTargeInfraModelWithExisting(nsId, targetInfraModel)
+	err := validation.ValidateTargetInfra(nsId, targetInfraModel, true).Err()
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to validate the target infrastructure model (nsId: %s)", nsId)
 		return emptyRet, err
@@ -367,31 +368,31 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 	// * Skip: No need to regenerate vmOsImage in namespace
 
 	// 4. Use/Create virtual networks (vNet, Subnets)
-	netReqs := deriveNetworkIds(targetInfraModel.TargetInfra.NodeGroups)
-	for _, netReq := range netReqs {
-		err = useOrCreateNetwork(nsId, netReq, targetInfraModel.TargetVNet)
+	netRequirements := validation.DeriveNetworkRequirements(targetInfraModel.TargetInfra.NodeGroups)
+	for _, netRequirement := range netRequirements {
+		err = useOrCreateNetwork(nsId, netRequirement, targetInfraModel.TargetVNet)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to use or create virtual network %s (nsId: %s)", netReq.VNetId, nsId)
+			log.Error().Err(err).Msgf("failed to use or create virtual network %s (nsId: %s)", netRequirement.VNetId, nsId)
 			return emptyRet, err
 		}
 	}
 
 	// 5. Use/Create SSH key pairs (sshKey)
-	sshKeyReqs := deriveSshKeyIds(targetInfraModel.TargetInfra.NodeGroups)
-	for _, sshKeyReq := range sshKeyReqs {
-		err = useOrCreateSshKey(nsId, sshKeyReq, targetInfraModel.TargetSshKey)
+	sshKeyRequirements := validation.DeriveSshKeyRequirements(targetInfraModel.TargetInfra.NodeGroups)
+	for _, sshKeyRequirement := range sshKeyRequirements {
+		err = useOrCreateSshKey(nsId, sshKeyRequirement, targetInfraModel.TargetSshKey)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to use or create SSH key %s (nsId: %s)", sshKeyReq.SshKeyId, nsId)
+			log.Error().Err(err).Msgf("failed to use or create SSH key %s (nsId: %s)", sshKeyRequirement.SshKeyId, nsId)
 			return emptyRet, err
 		}
 	}
 
 	// 6. Use/Create security groups (sg)
-	sgReqs := deriveSecurityGroupIds(targetInfraModel.TargetInfra.NodeGroups)
-	for _, sgReq := range sgReqs {
-		err = useOrCreateSecurityGroup(nsId, sgReq, targetInfraModel.TargetSecurityGroupList)
+	sgRequirements := validation.DeriveSecurityGroupRequirements(targetInfraModel.TargetInfra.NodeGroups)
+	for _, sgRequirement := range sgRequirements {
+		err = useOrCreateSecurityGroup(nsId, sgRequirement, targetInfraModel.TargetSecurityGroupList)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to use or create security group %s (nsId: %s)", sgReq.SecurityGroupId, nsId)
+			log.Error().Err(err).Msgf("failed to use or create security group %s (nsId: %s)", sgRequirement.SecurityGroupId, nsId)
 			return emptyRet, err
 		}
 	}
@@ -684,93 +685,25 @@ func preflightCheckCspProvisioning(nsId string, nodeGroups []cloudmodel.CreateNo
 	return nil
 }
 
-// NetworkRequirement represents the virtual network and subnets required by the NodeGroups
-type NetworkRequirement struct {
-	VNetId         string
-	SubnetIds      []string
-	ConnectionName string
-}
-
-// deriveNetworkIds groups and extracts virtual network requirements from NodeGroups
-func deriveNetworkIds(nodeGroups []cloudmodel.CreateNodeGroupReq) []NetworkRequirement {
-	vNetSubnets := make(map[string][]string)
-	vNetConnection := make(map[string]string)
-	var orderedVNets []string
-	seenVNets := make(map[string]bool)
-
-	for _, ng := range nodeGroups {
-		if ng.VNetId == "" {
-			continue
-		}
-		if !seenVNets[ng.VNetId] {
-			seenVNets[ng.VNetId] = true
-			orderedVNets = append(orderedVNets, ng.VNetId)
-		}
-		if ng.ConnectionName != "" && vNetConnection[ng.VNetId] == "" {
-			vNetConnection[ng.VNetId] = ng.ConnectionName
-		}
-		if ng.SubnetId != "" {
-			exists := false
-			for _, sub := range vNetSubnets[ng.VNetId] {
-				if sub == ng.SubnetId {
-					exists = true
-					break
-				}
-			}
-			if !exists {
-				vNetSubnets[ng.VNetId] = append(vNetSubnets[ng.VNetId], ng.SubnetId)
-			}
-		}
-	}
-
-	var reqs []NetworkRequirement
-	for _, vNetId := range orderedVNets {
-		reqs = append(reqs, NetworkRequirement{
-			VNetId:         vNetId,
-			SubnetIds:      vNetSubnets[vNetId],
-			ConnectionName: vNetConnection[vNetId],
-		})
-	}
-	return reqs
-}
-
 // useOrCreateNetwork checks if VNet and required subnets exist, and creates them from the creation request if missing
-func useOrCreateNetwork(nsId string, netReq NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) error {
-	vNetInfo, err := tbclient.NewSession().ReadVNet(nsId, netReq.VNetId)
-	vNetExists := (err == nil && vNetInfo.Id != "")
-	allSubnetsExist := true
-
-	if vNetExists {
-		existingSubnets := make(map[string]bool)
-		for _, sub := range vNetInfo.SubnetInfoList {
-			existingSubnets[sub.Name] = true
-		}
-		for _, reqSubnet := range netReq.SubnetIds {
-			if !existingSubnets[reqSubnet] {
-				allSubnetsExist = false
-				log.Warn().Msgf("subnet %s is missing in existing vNet %s", reqSubnet, netReq.VNetId)
-				break
-			}
-		}
+func useOrCreateNetwork(nsId string, netRequirement validation.NetworkRequirement, vNetCreationReq cloudmodel.VNetReq) error {
+	needsCreate, issue := validation.CheckNetworkAvailability(nsId, netRequirement, vNetCreationReq)
+	if issue != nil {
+		return fmt.Errorf("%s", issue.Message)
 	}
-
-	if vNetExists && allSubnetsExist {
-		log.Info().Msgf("vNet %s and all required subnets already exist. CM-Beetle will reuse it.", netReq.VNetId)
+	if !needsCreate {
+		log.Info().Msgf("vNet %s and all required subnets already exist. CM-Beetle will reuse it.", netRequirement.VNetId)
 		return nil
 	}
 
-	if vNetCreationReq.CidrBlock == "" {
-		return fmt.Errorf("vNet %s (or its subnets) does not exist, and VNet creation request is missing or invalid", netReq.VNetId)
-	}
-
 	vNetReq := vNetCreationReq
-	vNetReq.Name = netReq.VNetId
-	if netReq.ConnectionName != "" {
-		vNetReq.ConnectionName = netReq.ConnectionName
+	vNetReq.Name = netRequirement.VNetId
+	if netRequirement.ConnectionName != "" {
+		vNetReq.ConnectionName = netRequirement.ConnectionName
 	}
 
 	var newSubnetList []cloudmodel.SubnetReq
-	for idx, subnetName := range netReq.SubnetIds {
+	for idx, subnetName := range netRequirement.SubnetIds {
 		var subReq cloudmodel.SubnetReq
 		if idx < len(vNetCreationReq.SubnetInfoList) {
 			subReq = vNetCreationReq.SubnetInfoList[idx]
@@ -799,45 +732,21 @@ func useOrCreateNetwork(nsId string, netReq NetworkRequirement, vNetCreationReq 
 	return nil
 }
 
-// SshKeyRequirement represents the SSH key required by the NodeGroups
-type SshKeyRequirement struct {
-	SshKeyId       string
-	ConnectionName string
-}
-
-// deriveSshKeyIds extracts unique SSH key requirements from NodeGroups
-func deriveSshKeyIds(nodeGroups []cloudmodel.CreateNodeGroupReq) []SshKeyRequirement {
-	var reqs []SshKeyRequirement
-	seenSshKeys := make(map[string]bool)
-	for _, ng := range nodeGroups {
-		if ng.SshKeyId == "" || seenSshKeys[ng.SshKeyId] {
-			continue
-		}
-		seenSshKeys[ng.SshKeyId] = true
-		reqs = append(reqs, SshKeyRequirement{
-			SshKeyId:       ng.SshKeyId,
-			ConnectionName: ng.ConnectionName,
-		})
-	}
-	return reqs
-}
-
 // useOrCreateSshKey checks if SSH key exists, and creates it from the creation request if missing
-func useOrCreateSshKey(nsId string, sshKeyReq SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) error {
-	sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, sshKeyReq.SshKeyId)
-	if err == nil && sshKeyInfo.Id != "" {
-		log.Info().Msgf("SSH key %s already exists. CM-Beetle will reuse it.", sshKeyReq.SshKeyId)
+func useOrCreateSshKey(nsId string, sshKeyRequirement validation.SshKeyRequirement, sshKeyCreationReq cloudmodel.SshKeyReq) error {
+	needsCreate, issue := validation.CheckSshKeyAvailability(nsId, sshKeyRequirement, sshKeyCreationReq)
+	if issue != nil {
+		return fmt.Errorf("%s", issue.Message)
+	}
+	if !needsCreate {
+		log.Info().Msgf("SSH key %s already exists. CM-Beetle will reuse it.", sshKeyRequirement.SshKeyId)
 		return nil
 	}
 
-	if sshKeyCreationReq.Name == "" {
-		return fmt.Errorf("SSH key %s does not exist, and SSH key creation request is missing or invalid", sshKeyReq.SshKeyId)
-	}
-
 	req := sshKeyCreationReq
-	req.Name = sshKeyReq.SshKeyId
-	if sshKeyReq.ConnectionName != "" {
-		req.ConnectionName = sshKeyReq.ConnectionName
+	req.Name = sshKeyRequirement.SshKeyId
+	if sshKeyRequirement.ConnectionName != "" {
+		req.ConnectionName = sshKeyRequirement.ConnectionName
 	}
 
 	log.Debug().Msgf("Creating a SSH key (nsId: %s, sshKeyName: %s)", nsId, req.Name)
@@ -854,67 +763,39 @@ func useOrCreateSshKey(nsId string, sshKeyReq SshKeyRequirement, sshKeyCreationR
 	return nil
 }
 
-// SecurityGroupRequirement represents the security group required by the NodeGroups
-type SecurityGroupRequirement struct {
-	SecurityGroupId string
-	VNetId          string
-	ConnectionName  string
-}
-
-// deriveSecurityGroupIds extracts unique security group requirements from NodeGroups
-func deriveSecurityGroupIds(nodeGroups []cloudmodel.CreateNodeGroupReq) []SecurityGroupRequirement {
-	var reqs []SecurityGroupRequirement
-	seenSgs := make(map[string]bool)
-	for _, ng := range nodeGroups {
-		for _, sgId := range ng.SecurityGroupIds {
-			if sgId == "" || seenSgs[sgId] {
-				continue
-			}
-			seenSgs[sgId] = true
-			reqs = append(reqs, SecurityGroupRequirement{
-				SecurityGroupId: sgId,
-				VNetId:          ng.VNetId,
-				ConnectionName:  ng.ConnectionName,
-			})
-		}
-	}
-	return reqs
-}
-
 // useOrCreateSecurityGroup checks if security group exists, and creates it from the creation request list if missing
-func useOrCreateSecurityGroup(nsId string, sgReq SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
-	sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sgReq.SecurityGroupId)
-	if err == nil && sgInfo.Id != "" {
-		log.Info().Msgf("Security group %s already exists. CM-Beetle will reuse it.", sgReq.SecurityGroupId)
+func useOrCreateSecurityGroup(nsId string, sgRequirement validation.SecurityGroupRequirement, sgCreationReqList []cloudmodel.SecurityGroupReq) error {
+	needsCreate, issue := validation.CheckSecurityGroupAvailability(nsId, sgRequirement, sgCreationReqList)
+	if issue != nil {
+		return fmt.Errorf("%s", issue.Message)
+	}
+	if !needsCreate {
+		log.Info().Msgf("Security group %s already exists. CM-Beetle will reuse it.", sgRequirement.SecurityGroupId)
 		return nil
 	}
 
 	var sgCreationReq cloudmodel.SecurityGroupReq
 	found := false
 	for _, sg := range sgCreationReqList {
-		if sg.Name == sgReq.SecurityGroupId {
+		if sg.Name == sgRequirement.SecurityGroupId {
 			sgCreationReq = sg
 			found = true
 			break
 		}
 	}
 	if !found {
-		sgCreationReq = cloudmodel.SecurityGroupReq{Name: sgReq.SecurityGroupId}
+		sgCreationReq = cloudmodel.SecurityGroupReq{Name: sgRequirement.SecurityGroupId}
 	}
 
-	if sgCreationReq.ConnectionName == "" && sgReq.ConnectionName != "" {
-		sgCreationReq.ConnectionName = sgReq.ConnectionName
+	if sgCreationReq.ConnectionName == "" && sgRequirement.ConnectionName != "" {
+		sgCreationReq.ConnectionName = sgRequirement.ConnectionName
 	}
-	if sgCreationReq.VNetId == "" && sgReq.VNetId != "" {
-		sgCreationReq.VNetId = sgReq.VNetId
-	}
-
-	if sgCreationReq.ConnectionName == "" || sgCreationReq.VNetId == "" {
-		return fmt.Errorf("security group %s does not exist, and required ConnectionName or VNetId is missing", sgReq.SecurityGroupId)
+	if sgCreationReq.VNetId == "" && sgRequirement.VNetId != "" {
+		sgCreationReq.VNetId = sgRequirement.VNetId
 	}
 
 	sgCreationReq = checkAndSupportSSHAccessRule(sgCreationReq)
-	
+
 	// Deduplicate firewall rules before sending to Tumblebug
 	if sgCreationReq.FirewallRules != nil {
 		originalCount := len(*sgCreationReq.FirewallRules)
@@ -937,288 +818,6 @@ func useOrCreateSecurityGroup(nsId string, sgReq SecurityGroupRequirement, sgCre
 		return err
 	}
 	log.Debug().Msgf("security group created: %s", sgCreationReq.Name)
-	return nil
-}
-
-// validateTargeInfraModel validates the target infrastructure model for fresh creation (useExisting=false)
-func validateTargeInfraModel(nsId string, targetVmInfraModel *cloudmodel.RecommendedInfra) error {
-	// * 1. Validate that name fields are not empty
-	if targetVmInfraModel == nil {
-		log.Error().Msgf("target infrastructure model is nil (nsId: %s)", nsId)
-		return fmt.Errorf("target infrastructure model is nil")
-	}
-	if targetVmInfraModel.TargetInfra.Name == "" { // MCI name
-		log.Error().Msgf("target VM infrastructure name is empty (nsId: %s)", nsId)
-		return fmt.Errorf("target VM infrastructure name is empty")
-	}
-	if targetVmInfraModel.TargetVNet.Name == "" {
-		log.Error().Msgf("target VNet name is empty (nsId: %s)", nsId)
-		return fmt.Errorf("target VNet name is empty")
-	}
-	if targetVmInfraModel.TargetSshKey.Name == "" {
-		log.Error().Msgf("target SSH key name is empty (nsId: %s)", nsId)
-		return fmt.Errorf("target SSH key name is empty")
-	}
-	for _, sg := range targetVmInfraModel.TargetSecurityGroupList {
-		if sg.Name == "" {
-			log.Error().Msgf("target security group name is empty (nsId: %s)", nsId)
-			return fmt.Errorf("target security group name is empty")
-		}
-	}
-
-	// * 2. Validate that the names or IDs are matched in the model
-	// Check if each Node's vNetId matches the target VNet name
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		if nodegroup.VNetId != targetVmInfraModel.TargetVNet.Name {
-			log.Error().Msgf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
-				nodegroup.VNetId, targetVmInfraModel.TargetVNet.Name)
-			return fmt.Errorf("target VM infrastructure vNetId (%s) does not match target VNet name (%s)",
-				nodegroup.VNetId, targetVmInfraModel.TargetVNet.Name)
-		}
-	}
-
-	// Check if each Node's SshKeyId matches the target SSH key name
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		if nodegroup.SshKeyId != targetVmInfraModel.TargetSshKey.Name {
-			log.Error().Msgf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
-				nodegroup.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
-			return fmt.Errorf("target VM infrastructure SshKeyId (%s) does not match target SSH key name (%s)",
-				nodegroup.SshKeyId, targetVmInfraModel.TargetSshKey.Name)
-		}
-	}
-
-	// Check if each Node's spec and image are valid and compatible
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		specId := strings.TrimSpace(nodegroup.SpecId)
-		imageId := strings.TrimSpace(nodegroup.ImageId)
-		connectionName := strings.TrimSpace(nodegroup.ConnectionName)
-
-		// 1. Validate SpecId is not empty
-		if specId == "" || specId == "empty" {
-			err := fmt.Errorf("invalid SpecId '%s' in nodegroup '%s'", specId, nodegroup.Name)
-			log.Error().Err(err).Msgf("required SpecId (current SpecId is '%s' for nodegroup '%s')", specId, nodegroup.Name)
-			return err
-		}
-
-		// 2. Validate ImageId is not empty
-		if imageId == "" || imageId == "empty" {
-			err := fmt.Errorf("invalid ImageId '%s' in nodegroup '%s'", imageId, nodegroup.Name)
-			log.Error().Err(err).Msgf("required ImageId (current ImageId is '%s' for nodegroup '%s')", imageId, nodegroup.Name)
-			return err
-		}
-
-		// 3. Validate ConnectionName is not empty to extract CSP information
-		if connectionName == "" {
-			err := fmt.Errorf("invalid ConnectionName '%s' in nodegroup '%s'", connectionName, nodegroup.Name)
-			log.Error().Err(err).Msgf("required ConnectionName (current ConnectionName is '%s' for nodegroup '%s')", connectionName, nodegroup.Name)
-			return err
-		}
-
-		// 4. Extract CSP information from ConnectionName (format: "csp-region")
-		connectionParts := strings.Split(connectionName, "-")
-		if len(connectionParts) < 2 {
-			err := fmt.Errorf("invalid connection name format '%s' in nodegroup '%s'", connectionName, nodegroup.Name)
-			log.Error().Err(err).Msgf("invalid connection name format '%s' for nodegroup '%s', expected format: 'csp-region'",
-				connectionName, nodegroup.Name)
-			return err
-		}
-		csp := connectionParts[0]
-
-		// 5. Retrieve SpecInfo
-		specInfo, err := tbclient.NewSession().ReadVmSpec("system", specId)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to read VM spec (nsId: %s, vmSpecId: %s)", nsId, specId)
-			return fmt.Errorf("failed to read VM spec (nsId: %s, vmSpecId: %s): %w", nsId, specId, err)
-		}
-
-		// 6. Retrieve ImageInfo
-		// Note - current imageId format: csp+cspImageName (e.g., alibaba+ubuntu_22_04_x64_20G_alibase_20250722.vhd)
-		// ref: https://github.com/cloud-barista/cb-tumblebug/pull/2130#issuecomment-3243624048
-		// TODO: ImageId should be updated later as Tumblebug's/ns/{nsId}/resources/image/{imageId}` API changes.
-		imageKey := imageId
-		if !strings.Contains(imageKey, "+") {
-			// If ImageId doesn't contain '+', assume it needs CSP prefix
-			imageKey = fmt.Sprintf("%s+%s", csp, imageId)
-		}
-
-		imageInfo, err := tbclient.NewSession().ReadVmOsImage("system", imageKey)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s)", nsId, imageKey)
-			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s): %w", nsId, imageKey, err)
-		}
-
-		// 7. Convert models to cloudmodel format for compatibility check
-		specInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.SpecInfo, cloudmodel.SpecInfo](specInfo)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to convert spec info for compatibility check (specId: %s)", specId)
-			return fmt.Errorf("failed to convert spec info for compatibility check (specId: %s): %w", specId, err)
-		}
-
-		imageInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.ImageInfo, cloudmodel.ImageInfo](imageInfo)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to convert image info for compatibility check (imageId: %s)", imageId)
-			return fmt.Errorf("failed to convert image info for compatibility check (imageId: %s): %w", imageId, err)
-		}
-
-		// 8. Check compatibility between spec and image
-		isCompatible := recommendation.CheckSpecImageCompatibility(csp, specInfoConverted, imageInfoConverted)
-		if !isCompatible {
-			log.Error().Msgf("VM spec '%s' and image '%s' are incompatible for CSP '%s' in nodegroup '%s'",
-				specId, imageId, csp, nodegroup.Name)
-			return fmt.Errorf("VM spec '%s' and image '%s' are incompatible for CSP '%s' in nodegroup '%s'",
-				specId, imageId, csp, nodegroup.Name)
-		}
-
-		log.Debug().Msgf("VM spec '%s' and image '%s' are compatible for CSP '%s' in nodegroup '%s'",
-			specId, imageId, csp, nodegroup.Name)
-	}
-
-	// Check if each security group name is contained in the target security group list
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		found := false
-		for _, sgId := range nodegroup.SecurityGroupIds {
-			// Check if the security group name matches any target security group name
-			for _, targetSg := range targetVmInfraModel.TargetSecurityGroupList {
-				if sgId == targetSg.Name {
-					found = true
-					break
-				}
-			}
-			if !found {
-				log.Error().Msgf("target VM infrastructure security group name (%s) does not match any target security group name in the list",
-					sgId)
-				return fmt.Errorf("target VM infrastructure security group name (%s) does not match any target security group name in the list",
-					sgId)
-			}
-		}
-	}
-
-	// * 3. Validate that the vNet, VM specs, VM OS images, and security groups exist
-	// Validate that the vNet exists by the vNet name
-	// For VNet, it's normal if the resource doesn't exist
-	vNetInfo, err := tbclient.NewSession().ReadVNet(nsId, targetVmInfraModel.TargetVNet.Name)
-	if err != nil {
-		log.Debug().Msgf("the vNet not found (nsId: %s, vNet.Name: %s), which is normal case", nsId, targetVmInfraModel.TargetVNet.Name)
-	}
-	if vNetInfo.Id != "" {
-		log.Error().Msgf("the vNet already exists (nsId: %s, vNetInfo.Id: %s)", nsId, vNetInfo.Id)
-		return fmt.Errorf("the vNet already exists (nsId: %s, vNetInfo.Id: %s)", nsId, vNetInfo.Id)
-	}
-
-	// Validate that the SSH key exists by the SSH key name
-	// For SSH Key, it's normal if the resource doesn't exist
-	sshKeyInfo, err := tbclient.NewSession().ReadSshKey(nsId, targetVmInfraModel.TargetSshKey.Name)
-	if err != nil {
-		log.Debug().Err(err).Msgf("SSH key not found (nsId: %s, sshKey.Name: %s), which is normal case", nsId, targetVmInfraModel.TargetSshKey.Name)
-	}
-	if sshKeyInfo.Id != "" {
-		log.Error().Msgf("the SSH key already exists (nsId: %s, sshKey.Id: %s)", nsId, sshKeyInfo.Id)
-		return fmt.Errorf("the SSH key already exists (nsId: %s, sshKey.Id: %s)", nsId, sshKeyInfo.Id)
-	}
-
-	// Note: VM specs and VM OS images validation is now handled above in the spec-image compatibility check loop
-	// This provides better validation by checking both existence and compatibility together
-
-	// Validate that the security groups exist by the security group name
-	// For Security Groups, it's normal if the resources don't exist
-	for _, sg := range targetVmInfraModel.TargetSecurityGroupList {
-		sgInfo, err := tbclient.NewSession().ReadSecurityGroup(nsId, sg.Name)
-		if err != nil {
-			log.Debug().Msgf("the security group not found (nsId: %s, sg.Name: %s), which is normal case", nsId, sg.Name)
-		}
-		if sgInfo.Id != "" {
-			log.Error().Msgf("the security group already exists (nsId: %s, sgInfo.Id: %s)", nsId, sgInfo.Id)
-			return fmt.Errorf("the security group already exists (nsId: %s, sgInfo.Id: %s)", nsId, sgInfo.Id)
-		}
-	}
-
-	return nil
-}
-
-// validateTargeInfraModelWithExisting validates the target infrastructure model for resource reuse (useExisting=true)
-func validateTargeInfraModelWithExisting(nsId string, targetVmInfraModel *cloudmodel.RecommendedInfra) error {
-	// * 1. Validate that name fields are not empty
-	if targetVmInfraModel == nil {
-		log.Error().Msgf("target infrastructure model is nil (nsId: %s)", nsId)
-		return fmt.Errorf("target infrastructure model is nil")
-	}
-	if targetVmInfraModel.TargetInfra.Name == "" { // MCI name
-		log.Error().Msgf("target VM infrastructure name is empty (nsId: %s)", nsId)
-		return fmt.Errorf("target VM infrastructure name is empty")
-	}
-
-	// Verify required ID fields for NodeGroups in useExisting mode
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		if nodegroup.VNetId == "" {
-			log.Error().Msgf("VNet ID is empty for nodegroup %s in useExisting mode (nsId: %s)", nodegroup.Name, nsId)
-			return fmt.Errorf("VNet ID is empty for nodegroup %s in useExisting mode", nodegroup.Name)
-		}
-		if nodegroup.SshKeyId == "" {
-			log.Error().Msgf("SSH key ID is empty for nodegroup %s in useExisting mode (nsId: %s)", nodegroup.Name, nsId)
-			return fmt.Errorf("SSH key ID is empty for nodegroup %s in useExisting mode", nodegroup.Name)
-		}
-		if len(nodegroup.SecurityGroupIds) == 0 {
-			log.Error().Msgf("Security group IDs list is empty for nodegroup %s in useExisting mode (nsId: %s)", nodegroup.Name, nsId)
-			return fmt.Errorf("Security group IDs list is empty for nodegroup %s in useExisting mode", nodegroup.Name)
-		}
-	}
-
-	// Check if each Node's spec and image are valid and compatible (inlined spec/image compatibility check)
-	for _, nodegroup := range targetVmInfraModel.TargetInfra.NodeGroups {
-		specId := strings.TrimSpace(nodegroup.SpecId)
-		imageId := strings.TrimSpace(nodegroup.ImageId)
-		connectionName := strings.TrimSpace(nodegroup.ConnectionName)
-
-		if specId == "" || specId == "empty" {
-			err := fmt.Errorf("invalid SpecId '%s' in nodegroup '%s'", specId, nodegroup.Name)
-			return err
-		}
-		if imageId == "" || imageId == "empty" {
-			err := fmt.Errorf("invalid ImageId '%s' in nodegroup '%s'", imageId, nodegroup.Name)
-			return err
-		}
-		if connectionName == "" {
-			err := fmt.Errorf("invalid ConnectionName '%s' in nodegroup '%s'", connectionName, nodegroup.Name)
-			return err
-		}
-
-		connectionParts := strings.Split(connectionName, "-")
-		if len(connectionParts) < 2 {
-			err := fmt.Errorf("invalid connection name format '%s' in nodegroup '%s'", connectionName, nodegroup.Name)
-			return err
-		}
-		csp := connectionParts[0]
-
-		specInfo, err := tbclient.NewSession().ReadVmSpec("system", specId)
-		if err != nil {
-			return fmt.Errorf("failed to read VM spec (nsId: %s, vmSpecId: %s): %w", nsId, specId, err)
-		}
-
-		imageKey := imageId
-		if !strings.Contains(imageKey, "+") {
-			imageKey = fmt.Sprintf("%s+%s", csp, imageId)
-		}
-		imageInfo, err := tbclient.NewSession().ReadVmOsImage("system", imageKey)
-		if err != nil {
-			return fmt.Errorf("failed to read VM OS image (nsId: %s, vmOsImageKey: %s): %w", nsId, imageKey, err)
-		}
-
-		specInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.SpecInfo, cloudmodel.SpecInfo](specInfo)
-		if err != nil {
-			return err
-		}
-		imageInfoConverted, err := modelconv.ConvertWithValidation[tbmodel.ImageInfo, cloudmodel.ImageInfo](imageInfo)
-		if err != nil {
-			return err
-		}
-
-		isCompatible := recommendation.CheckSpecImageCompatibility(csp, specInfoConverted, imageInfoConverted)
-		if !isCompatible {
-			return fmt.Errorf("VM spec '%s' and image '%s' are incompatible for CSP '%s' in nodegroup '%s'",
-				specId, imageId, csp, nodegroup.Name)
-		}
-	}
-
 	return nil
 }
 

@@ -4422,6 +4422,68 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/validation/ns/{nsId}/infra": {
+            "post": {
+                "description": "Runs, without creating or modifying any resource, the same checks\nmigration execution performs immediately before provisioning:\n\n- **Naming \u0026 referential integrity**: names must be 3-63 alphanumeric/hyphen\ncharacters, and internal references must resolve within the submitted model\n(e.g. a NodeGroup's ` + "`" + `securityGroupIds` + "`" + ` must match a ` + "`" + `name` + "`" + ` in ` + "`" + `targetSecurityGroupList` + "`" + `).\n- **Required fields**, which differ by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `true` + "`" + `: each NodeGroup's ` + "`" + `vNetId` + "`" + `, ` + "`" + `sshKeyId` + "`" + `, ` + "`" + `securityGroupIds` + "`" + ` must be set.\n- ` + "`" + `false` + "`" + `: ` + "`" + `targetVNet.name` + "`" + `, ` + "`" + `targetSshKey.name` + "`" + `, and each security group's ` + "`" + `name` + "`" + ` must be set.\n- **Resource name collision / availability** against Tumblebug, which also differs by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `false` + "`" + `: the VNet/SSH key/security groups to be created must NOT already exist in the\nnamespace (e.g. ` + "`" + `targetVNet.name: \"vnet-01\"` + "`" + ` fails if a VNet named ` + "`" + `vnet-01` + "`" + ` already exists).\n- ` + "`" + `true` + "`" + `: an existing resource must be under the same CSP/region connection the NodeGroup\nrequests (e.g. reusing a VNet provisioned under connection ` + "`" + `aws-ap-northeast-2` + "`" + ` while the\nNodeGroup's ` + "`" + `connectionName` + "`" + ` is ` + "`" + `gcp-asia-northeast3` + "`" + ` fails); a resource that doesn't exist\nyet must have enough data alongside it to create it instead (e.g. ` + "`" + `targetVNet.cidrBlock` + "`" + `).\n- **VM spec/image compatibility** per NodeGroup: ` + "`" + `specId` + "`" + `, ` + "`" + `imageId` + "`" + `, and ` + "`" + `connectionName` + "`" + ` must\nbe set, ` + "`" + `connectionName` + "`" + ` must be in ` + "`" + `csp-region` + "`" + ` format (e.g. ` + "`" + `aws-ap-northeast-2` + "`" + `), and the\nresolved spec/image pair must be compatible for that CSP (e.g. an ` + "`" + `x86_64` + "`" + ` spec paired with\nan ` + "`" + `arm64` + "`" + ` image fails).\n- **Infra (MCI) name collision**: ` + "`" + `targetInfra.name` + "`" + ` must not already exist in the namespace.\n\nAlways returns HTTP 200: the response body's ` + "`" + `valid` + "`" + ` field and\n` + "`" + `issues` + "`" + ` list carry the outcome, since a failed check is a normal,\nsuccessfully-answered result rather than a malformed request.\n400 is reserved for request body/parameter errors.\n\nBecause Tumblebug/CSP state can change afterward, a ` + "`" + `valid: true` + "`" + `\nresult is a best-effort snapshot, not a guarantee - the migration\nAPI re-runs this same validation immediately before provisioning.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Validation] Target Cloud Configuration (Preview)",
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "(Preview) Validate a target infrastructure model before migration",
+                "operationId": "ValidateInfra",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Validate as if reusing existing resources (VNet, SSH Key, Security Group) instead of creating new ones (default: true); should match the ` + "`" + `useExisting` + "`" + ` value intended for the actual migration call",
+                        "name": "useExisting",
+                        "in": "query"
+                    },
+                    {
+                        "description": "The target infrastructure model to validate",
+                        "name": "infraInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.ValidateInfraRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation outcome: valid flag plus zero or more issues",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-validation_ValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -7237,6 +7299,53 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.ValidateInfraRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
         "map_string_string": {
             "type": "object",
             "additionalProperties": {
@@ -8205,6 +8314,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/transx.PublicKeyBundle"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-validation_ValidationResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/validation.ValidationResult"
                         }
                     ]
                 },
@@ -12019,6 +12156,56 @@ const docTemplate = `{
                 "osId": {
                     "description": "Object Storage ID",
                     "type": "string"
+                }
+            }
+        },
+        "validation.Severity": {
+            "type": "string",
+            "enum": [
+                "error",
+                "warning"
+            ],
+            "x-enum-varnames": [
+                "SeverityError",
+                "SeverityWarning"
+            ]
+        },
+        "validation.ValidationIssue": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "stable machine-readable identifier, one of the Code* constants",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "human-readable detail",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "location of the offending field, e.g. \"targetInfra.nodeGroups[0].imageId\"",
+                    "type": "string"
+                },
+                "severity": {
+                    "description": "error | warning",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/validation.Severity"
+                        }
+                    ]
+                }
+            }
+        },
+        "validation.ValidationResult": {
+            "type": "object",
+            "properties": {
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/validation.ValidationIssue"
+                    }
+                },
+                "valid": {
+                    "type": "boolean"
                 }
             }
         }

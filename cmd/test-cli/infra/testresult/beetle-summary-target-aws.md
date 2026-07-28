@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-24 09:53:53
+**Generated At:** 2026-07-28 06:06:40
 
 **Namespace:** mig01
 
-**Infra Name:** my01-infra101
+**Infra Name:** my-infra101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Infra Name** | my01-infra101 |
+| **Infra Name** | my-infra101 |
 | **Description** | Recommended VMs comprising multi-cloud infrastructure |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | AWS |
@@ -36,27 +36,27 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| ami-09a72717a566d88fa | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 | Ubuntu 22.04 | Linux/UNIX | x86_64 | ebs | - | 3 |
+| ami-0afe1fd15675c3f15 | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610 | Ubuntu 22.04 | Linux/UNIX | x86_64 | ebs | - | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my01-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-0c05b4a7f2ddc0c35 | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 43.203.209.215<br>**Private IP:** 10.0.1.222<br>**SGs:** my01-sg-01<br>**SSH:** my01-sshkey-01 |
-| my01-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-0b3db6a3bbb66ac75 | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 3.38.115.227<br>**Private IP:** 10.0.1.221<br>**SGs:** my01-sg-03<br>**SSH:** my01-sshkey-01 |
-| my01-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-0f3b1409385c0e416 | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260602) | **VNet:** my01-vnet-01<br>**Subnet:** my01-subnet-01<br>**Public IP:** 3.34.142.130<br>**Private IP:** 10.0.1.203<br>**SGs:** my01-sg-02<br>**SSH:** my01-sshkey-01 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-02a7e2a02eea81452 | Running | 2 vCPU, 2.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 43.203.228.126<br>**Private IP:** 10.0.1.163<br>**SGs:** my-sg-01<br>**SSH:** my-sshkey-01 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-074e6640bdee28e2f | Running | 2 vCPU, 8.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 43.203.220.145<br>**Private IP:** 10.0.1.118<br>**SGs:** my-sg-03<br>**SSH:** my-sshkey-01 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-09420b765ab5038df | Running | 4 vCPU, 16.0 GiB | ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610 (ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20260610) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 13.124.72.30<br>**Private IP:** 10.0.1.169<br>**SGs:** my-sg-02<br>**SSH:** my-sshkey-01 |
 
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: my01-vnet-01
+#### VNet: my-vnet-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my01-vnet-01 |
-| **CSP VNet ID** | vpc-0c13ad58d4523bac1 |
+| **Name** | my-vnet-01 |
+| **CSP VNet ID** | vpc-0b4f5582b82eccf46 |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | aws-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my01-subnet-01 | subnet-0f5a5ffac3a1bc368 | 10.0.1.0/24 | ap-northeast-2a |
+| my-subnet-01 | subnet-011789df773e38938 | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -74,17 +74,17 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my01-sshkey-01 | tb72gm5jdq558jd43kuh |  | e4:be:e2:1c:fb:ac:af:b6:b0:f6:e7:43:dd:d3:db:e8:b9:93:50:f1 |
+| my-sshkey-01 | tbt0i3te6lho9ssmpomn |  | 16:89:14:cb:5a:5b:49:b8:bf:c0:33:6d:94:ba:b8:e7:d5:85:06:c8 |
 
 ### Security Groups
 
-#### Security Group: my01-sg-01
+#### Security Group: my-sg-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my01-sg-01 |
-| **CSP Security Group ID** | sg-0de41a7d22971988c |
-| **VNet** | my01-vnet-01 |
+| **Name** | my-sg-01 |
+| **CSP Security Group ID** | sg-073cbe2dcd293baeb |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 14 rules |
 
 **Security Group Rules:**
@@ -106,13 +106,13 @@
 | outbound | UDP | 1-65535 | 0.0.0.0/0 |
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 
-#### Security Group: my01-sg-02
+#### Security Group: my-sg-02
 
 | Property | Value |
 |----------|-------|
-| **Name** | my01-sg-02 |
-| **CSP Security Group ID** | sg-090212b173a5125ab |
-| **VNet** | my01-vnet-01 |
+| **Name** | my-sg-02 |
+| **CSP Security Group ID** | sg-08e543377508a1e09 |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
 **Security Group Rules:**
@@ -139,13 +139,13 @@
 | outbound | UDP | 1-65535 | 0.0.0.0/0 |
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 
-#### Security Group: my01-sg-03
+#### Security Group: my-sg-03
 
 | Property | Value |
 |----------|-------|
-| **Name** | my01-sg-03 |
-| **CSP Security Group ID** | sg-06682789478d32123 |
-| **VNet** | my01-vnet-01 |
+| **Name** | my-sg-03 |
+| **CSP Security Group ID** | sg-007a83e9d20c795df |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
 **Security Group Rules:**
@@ -193,8 +193,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my01-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | t3a.small | $0.0234 | $16.85 |
-| my01-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | t3a.large | $0.0936 | $67.39 |
-| my01-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | t3a.xlarge | $0.1872 | $134.78 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | t3a.small | $0.0234 | $16.85 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | t3a.large | $0.0936 | $67.39 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | t3a.xlarge | $0.1872 | $134.78 |
 
 

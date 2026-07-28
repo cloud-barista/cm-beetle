@@ -311,6 +311,17 @@ func RunServer(port string) {
 	gNaming.POST("/validation", controller.ValidateNames)
 	gNaming.POST("/preview", controller.PreviewInfra)
 
+	/*
+	 * API group for pre-migration validation of target models
+	 * (name collisions, spec/image compatibility, resource availability, etc.)
+	 */
+	gValidation := gBeetle.Group("/validation")
+	// Custom middleware to check if the Tumblebug is initialized
+	gValidation.Use(middlewares.TumblebugInitChecker)
+
+	gValidationNs := gValidation.Group("/ns/:nsId")
+	gValidationNs.POST("/infra", controller.ValidateInfra)
+
 	// Recommendation APIs for K8s Cluster (new endpoints)
 	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)
 	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)
