@@ -1683,6 +1683,32 @@ definitions:
         example: Any message
         type: string
     type: object
+  controller.CheckSSHReadyResponse:
+    properties:
+      checkedAt:
+        description: Timestamp when check was performed
+        type: string
+      message:
+        description: Summary message
+        type: string
+      nextAllowedTime:
+        description: Next allowed check time (for rate limiting)
+        type: string
+      nodeStatus:
+        description: Detailed status for each node (only included when option=detail)
+        items:
+          $ref: '#/definitions/controller.NodeSSHStatus'
+        type: array
+      ready:
+        description: Overall readiness (true if all nodes are ready)
+        type: boolean
+      readyNodes:
+        description: Number of nodes that are SSH-ready
+        type: integer
+      totalNodes:
+        description: Total number of nodes in the infrastructure
+        type: integer
+    type: object
   controller.GenerateMigrationReportRequest:
     properties:
       onpremiseInfraModel:
@@ -2048,6 +2074,45 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  controller.NodeSSHStatus:
+    properties:
+      error:
+        description: Error message if SSH check failed
+        example: ""
+        type: string
+      id:
+        description: Node ID
+        example: node-01
+        type: string
+      name:
+        description: Node Name
+        example: node-01
+        type: string
+      privateIP:
+        description: Private IP address
+        example: 10.0.1.10
+        type: string
+      publicIP:
+        description: Public IP address
+        example: 1.2.3.4
+        type: string
+      sshPort:
+        description: SSH port number
+        example: 22
+        type: integer
+      sshReady:
+        description: Whether SSH port is accessible
+        example: true
+        type: boolean
+      status:
+        description: Node status (Running, Creating, etc.)
+        example: Running
+        type: string
+      username:
+        description: SSH username
+        example: cb-user
+        type: string
     type: object
   controller.RecommendInfraRequest:
     properties:
@@ -2479,6 +2544,25 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/common.RequestDetails'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_CheckSSHReadyResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.CheckSSHReadyResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -6779,7 +6863,7 @@ paths:
         Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
 
         **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
-        - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
+        - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
         - **Empty**: TumbleBug uses `imageId` for the standard DB lookup (may encounter stale images for some CSPs).
         - Recommended: pass the recommendation API response as-is to use the latest resolved image.
 
@@ -6870,9 +6954,8 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: my-infra101
-        description: Migrated Cloud Infrastructure ID (the actual ID returned by the
-          migration API; includes NameSeed prefix if used, e.g., 'my-infra101')
+      - description: Migrated Cloud Infrastructure ID (the actual ID returned by the
+          migration API; includes NameSeed prefix if used, e.g., 'test-infra101')
         in: path
         name: infraId
         required: true
@@ -6938,9 +7021,8 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: my-infra101
-        description: Migrated Cloud Infrastructure ID (the actual ID returned by the
-          migration API; includes NameSeed prefix if used, e.g., 'my-infra101')
+      - description: Migrated Cloud Infrastructure ID (the actual ID returned by the
+          migration API; includes NameSeed prefix if used, e.g., 'test-infra101')
         in: path
         name: infraId
         required: true
@@ -6966,6 +7048,78 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get the migrated multi-cloud infrastructure (MCI)
+      tags:
+      - '[Migration] Infrastructure'
+  /migration/ns/{nsId}/infra/{infraId}/ssh-ready:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Check if all nodes in the migrated infrastructure are SSH-accessible.
+
+        "Running" status doesn't mean cloud-init (SSH user setup) is done; timing varies by
+        CSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.
+
+        **Rate Limiting**: To prevent SSH server abuse, this API can only be called
+        once every 3 minutes for the same infrastructure. If called too soon, it returns
+        HTTP 429 with the time to wait before the next check is allowed.
+
+        **Check Method**: This API runs a lightweight command on each node via Tumblebug's
+        remote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's
+        existing SSH/bastion setup for the node's CSP.
+
+        **Response Options**:
+        - Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)
+        - option=detail: Returns summary + detailed node status array (nodeStatus) for troubleshooting (per-node SSH readiness)
+      operationId: CheckSSHReady
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Migrated Cloud Infrastructure ID
+        in: path
+        name: infraId
+        required: true
+        type: string
+      - default: ""
+        description: 'Response format (detail: include per-node SSH readiness information)'
+        enum:
+        - detail
+        in: query
+        name: option
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SSH readiness check completed
+          schema:
+            $ref: '#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "404":
+          description: Infrastructure not found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "429":
+          description: Rate limited - check too soon after previous check
+          schema:
+            $ref: '#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Check SSH readiness for migrated infrastructure nodes
       tags:
       - '[Migration] Infrastructure'
   /migration/ns/{nsId}/infraWithDefaults:
