@@ -366,6 +366,9 @@ func RunServer(port string) {
 	gMigration.GET("/ns/:nsId/infra", controller.ListInfra)
 	gMigration.GET("/ns/:nsId/infra/:infraId", controller.GetInfra)
 	gMigration.DELETE("/ns/:nsId/infra/:infraId", controller.DeleteInfra)
+	
+	// SSH readiness check API (for IBM Cloud VPC and other CSPs with delayed SSH setup)
+	gMigration.GET("/ns/:nsId/infra/:infraId/ssh-ready", controller.CheckSSHReady)
 
 	// Migration APIs for resources for VM infrastructure
 	// APIs for the VM spec resources

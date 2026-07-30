@@ -1382,7 +1382,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1499,8 +1499,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "my-infra101",
-                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
+                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'test-infra101')",
                         "name": "infraId",
                         "in": "path",
                         "required": true
@@ -1557,8 +1556,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "my-infra101",
-                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'my-infra101')",
+                        "description": "Migrated Cloud Infrastructure ID (the actual ID returned by the migration API; includes NameSeed prefix if used, e.g., 'test-infra101')",
                         "name": "infraId",
                         "in": "path",
                         "required": true
@@ -1617,6 +1615,87 @@ const docTemplate = `{
                     },
                     "503": {
                         "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/infra/{infraId}/ssh-ready": {
+            "get": {
+                "description": "Check if all nodes in the migrated infrastructure are SSH-accessible.\n\n\"Running\" status doesn't mean cloud-init (SSH user setup) is done; timing varies by\nCSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.\n\n**Rate Limiting**: To prevent SSH server abuse, this API can only be called\nonce every 3 minutes for the same infrastructure. If called too soon, it returns\nHTTP 429 with the time to wait before the next check is allowed.\n\n**Check Method**: This API runs a lightweight command on each node via Tumblebug's\nremote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's\nexisting SSH/bastion setup for the node's CSP.\n\n**Response Options**:\n- Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)\n- option=detail: Returns summary + detailed node status array (nodeStatus) for troubleshooting (per-node SSH readiness)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Infrastructure"
+                ],
+                "summary": "Check SSH readiness for migrated infrastructure nodes",
+                "operationId": "CheckSSHReady",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Migrated Cloud Infrastructure ID",
+                        "name": "infraId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "detail"
+                        ],
+                        "type": "string",
+                        "default": "",
+                        "description": "Response format (detail: include per-node SSH readiness information)",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSH readiness check completed",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "404": {
+                        "description": "Infrastructure not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limited - check too soon after previous check",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -6727,6 +6806,42 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.CheckSSHReadyResponse": {
+            "type": "object",
+            "properties": {
+                "checkedAt": {
+                    "description": "Timestamp when check was performed",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "Summary message",
+                    "type": "string"
+                },
+                "nextAllowedTime": {
+                    "description": "Next allowed check time (for rate limiting)",
+                    "type": "string"
+                },
+                "nodeStatus": {
+                    "description": "Detailed status for each node (only included when option=detail)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.NodeSSHStatus"
+                    }
+                },
+                "ready": {
+                    "description": "Overall readiness (true if all nodes are ready)",
+                    "type": "boolean"
+                },
+                "readyNodes": {
+                    "description": "Number of nodes that are SSH-ready",
+                    "type": "integer"
+                },
+                "totalNodes": {
+                    "description": "Total number of nodes in the infrastructure",
+                    "type": "integer"
+                }
+            }
+        },
         "controller.GenerateMigrationReportRequest": {
             "type": "object",
             "required": [
@@ -7178,6 +7293,56 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "controller.NodeSSHStatus": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message if SSH check failed",
+                    "type": "string",
+                    "example": ""
+                },
+                "id": {
+                    "description": "Node ID",
+                    "type": "string",
+                    "example": "node-01"
+                },
+                "name": {
+                    "description": "Node Name",
+                    "type": "string",
+                    "example": "node-01"
+                },
+                "privateIP": {
+                    "description": "Private IP address",
+                    "type": "string",
+                    "example": "10.0.1.10"
+                },
+                "publicIP": {
+                    "description": "Public IP address",
+                    "type": "string",
+                    "example": "1.2.3.4"
+                },
+                "sshPort": {
+                    "description": "SSH port number",
+                    "type": "integer",
+                    "example": 22
+                },
+                "sshReady": {
+                    "description": "Whether SSH port is accessible",
+                    "type": "boolean",
+                    "example": true
+                },
+                "status": {
+                    "description": "Node status (Running, Creating, etc.)",
+                    "type": "string",
+                    "example": "Running"
+                },
+                "username": {
+                    "description": "SSH username",
+                    "type": "string",
+                    "example": "cb-user"
                 }
             }
         },
@@ -7807,6 +7972,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/common.RequestDetails"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_CheckSSHReadyResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.CheckSSHReadyResponse"
                         }
                     ]
                 },

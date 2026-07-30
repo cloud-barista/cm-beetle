@@ -91,9 +91,9 @@ const (
 // DefaultSystemLabel is const for string to specify the Default System Label
 const DefaultSystemLabel string = "Managed by CM-Beetle"
 
-// CreateVMInfraWithDefaults Create a VM infrastructure with defaults for the computing infra migration
-func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq) (cloudmodel.VmInfraInfo, error) {
-	log.Info().Msg("Creating VM infrastructure with defaults")
+// CreateInfraWithDefaults Create an infrastructure with defaults for the computing infra migration
+func CreateInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicReq) (cloudmodel.VmInfraInfo, error) {
+	log.Info().Msg("Creating an infrastructure with defaults")
 
 	// Convert the request model from 'cloudmodel.InfraDynamicReq' to 'tbmodel.InfraDynamicReq'
 	infraModelConverted, err := modelconv.ConvertWithValidation[cloudmodel.InfraDynamicReq, tbmodel.InfraDynamicReq](*infraModel)
@@ -102,27 +102,27 @@ func CreateVMInfraWithDefaults(nsId string, infraModel *cloudmodel.InfraDynamicR
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	vmInfraInfo, err := tbclient.NewSession().CreateInfraDynamic(nsId, infraModelConverted)
+	infraInfo, err := tbclient.NewSession().CreateInfraDynamic(nsId, infraModelConverted)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to migrate the infrastructure (nsId: %s)", nsId)
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
 	// Convert the response model from 'tbmodel.InfraInfo' to 'cloudmodel.VmInfraInfo'
-	convertedVmInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.InfraInfo, cloudmodel.VmInfraInfo](vmInfraInfo)
+	convertedInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.InfraInfo, cloudmodel.VmInfraInfo](infraInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s)", nsId)
 		return cloudmodel.VmInfraInfo{}, err
 	}
 
-	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, infraName: %s)", nsId, convertedVmInfraInfo.Name)
+	log.Info().Msgf("Infrastructure created successfully (nsId: %s, infraName: %s)", nsId, convertedInfraInfo.Name)
 
-	return convertedVmInfraInfo, nil
+	return convertedInfraInfo, nil
 }
 
-// CreateInfra creates a VM infrastructure for the computing infra migration by creating fresh resources (useExisting=false)
+// CreateInfra creates an infrastructure for the computing infra migration by creating fresh resources (useExisting=false)
 func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
-	log.Info().Msg("Creating VM infrastructure")
+	log.Info().Msg("Creating an infrastructure")
 
 	emptyRet := cloudmodel.VmInfraInfo{}
 
@@ -148,7 +148,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	// tbSess := tbclient.NewSession()
 
 	/*
-	 * [Process] Create a VM infrastructure
+	 * [Process] Create an infrastructure
 	 */
 	// 1. Check if the namespace exists
 	log.Debug().Msgf("Checking if the namespace exists (nsId: %s)", nsId)
@@ -165,11 +165,11 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 		return emptyRet, err
 	}
 
-	// 2. Create a VM specification (vmSpec)
-	// * Skip: No need to regenerate vmSpec in namespace
+	// 2. Create a node specification (Spec)
+	// * Skip: No need to regenerate node spec in namespace
 
-	// 3. Create a VM OS image (vmOsImage)
-	// * Skip: No need to regenerate vmOsImage in namespace
+	// 3. Create a node image (OS)
+	// * Skip: No need to regenerate node image (OS) in namespace
 
 	// 4. Create a virtual network (vNet)
 	// Get vNet request body from the input infraModel
@@ -242,7 +242,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 		// Convert model from 'cloudmodel.SecurityGroupReq' to 'tbmodel.SecurityGroupReq'
 		tbSgReq, err := modelconv.ConvertWithValidation[cloudmodel.SecurityGroupReq, tbmodel.SecurityGroupReq](sgReq)
 		if err != nil {
-			log.Error().Err(err).Msgf("failed to convert SSH key request (nsId: %s)", nsId)
+			log.Error().Err(err).Msgf("failed to convert security group request (nsId: %s)", nsId)
 			return emptyRet, err
 		}
 
@@ -258,8 +258,8 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	log.Debug().Msgf("sgInfoList length: %d", len(sgInfoList))
 	log.Debug().Msgf("sgInfoList: %+v", sgInfoList)
 
-	// 7. Create a VM infrastructure (i.e., Infra)
-	// Get multi-cloud infrastructure (Infra) request body from the input infraModel
+	// 7. Create an infrastructure (infra)
+	// Get infrastructure (Infra) request body from the input infraModel
 	infraReq := targetInfraModel.TargetInfra
 	log.Debug().Msgf("Creating a multi-cloud infrastructure (nsId: %s, infraName: %s)", nsId, infraReq.Name)
 	log.Debug().Msgf("infraReq: %+v", infraReq)
@@ -314,16 +314,31 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	var temp cloudmodel.VmInfraInfo
 	temp.InfraInfo = infraInfoConverted
 
-	log.Debug().Msgf("Stabilizing newly created VM infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
+	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
 	time.Sleep(5 * time.Second)
 
-	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+	// Option A: Check SSH readiness for IBM Cloud
+	if strings.ToLower(targetInfraModel.TargetCloud.Csp) == "ibm" {
+		log.Info().Msgf("IBM Cloud detected - performing SSH readiness check (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+
+		const maxWaitTime = 3 * time.Minute
+		const checkInterval = 10 * time.Second
+
+		if _, err := CheckSSHReadinessWithDetails(nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
+			log.Warn().Err(err).Msgf("SSH readiness check incomplete - Nodes may need additional time (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+			// Warning only - migration itself succeeded
+		} else {
+			log.Info().Msgf("SSH readiness confirmed - Nodes are accessible (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+		}
+	}
+
+	log.Info().Msgf("Infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 	return temp, nil
 }
 
-// CreateInfraWithExisting creates a VM infrastructure by reusing/ensuring existing resources (useExisting=true)
+// CreateInfraWithExisting creates an infrastructure by reusing/ensuring existing resources (useExisting=true)
 func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cloudmodel.VmInfraInfo, error) {
-	log.Info().Msg("Creating VM infrastructure with existing resources")
+	log.Info().Msg("Creating infrastructure with existing resources")
 	emptyRet := cloudmodel.VmInfraInfo{}
 
 	/*
@@ -344,7 +359,7 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 	}
 
 	/*
-	 * [Process] Create a VM infrastructure
+	 * [Process] Create an infrastructure
 	 */
 	// 1. Check if the namespace exists
 	log.Debug().Msgf("Checking if the namespace exists (nsId: %s)", nsId)
@@ -361,11 +376,11 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 		return emptyRet, err
 	}
 
-	// 2. Create a VM specification (vmSpec)
-	// * Skip: No need to regenerate vmSpec in namespace
+	// 2. Create a node specification (spec)
+	// * Skip: No need to regenerate node spec in namespace
 
-	// 3. Create a VM OS image (vmOsImage)
-	// * Skip: No need to regenerate vmOsImage in namespace
+	// 3. Create a node image (OS)
+	// * Skip: No need to regenerate node image (OS) in namespace
 
 	// 4. Use/Create virtual networks (vNet, Subnets)
 	netRequirements := validation.DeriveNetworkRequirements(targetInfraModel.TargetInfra.NodeGroups)
@@ -429,16 +444,31 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 
 	var temp cloudmodel.VmInfraInfo
 	temp.InfraInfo = infraInfoConverted
-	log.Debug().Msgf("Stabilizing newly created VM infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
+	log.Debug().Msgf("Stabilizing newly created infrastructure (nsId: %s, infraName: %s)...", nsId, infraInfoConverted.Name)
 	time.Sleep(5 * time.Second)
 
-	log.Info().Msgf("VM infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+	// Option A: Check SSH readiness for IBM Cloud
+	if strings.ToLower(targetInfraModel.TargetCloud.Csp) == "ibm" {
+		log.Info().Msgf("IBM Cloud detected - performing SSH readiness check (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+
+		const maxWaitTime = 3 * time.Minute
+		const checkInterval = 10 * time.Second
+
+		if _, err := CheckSSHReadinessWithDetails(nsId, infraInfoConverted.Id, maxWaitTime, checkInterval); err != nil {
+			log.Warn().Err(err).Msgf("SSH readiness check incomplete - Nodes may need additional time (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+			// Warning only - migration itself succeeded
+		} else {
+			log.Info().Msgf("SSH readiness confirmed - Nodes are accessible (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
+		}
+	}
+
+	log.Info().Msgf("Infrastructure created successfully (nsId: %s, infraName: %s)", nsId, infraInfoConverted.Name)
 	return temp, nil
 }
 
-// List all migrated VM infrastructures
-func ListAllVMInfraInfo(nsId string) (cloudmodel.InfraInfoList, error) {
-	log.Info().Msg("Listing all migrated VM infrastructures")
+// List all migrated infrastructures
+func ListAllInfraInfo(nsId string) (cloudmodel.InfraInfoList, error) {
+	log.Info().Msg("Listing all migrated infrastructures")
 
 	var emptyRet cloudmodel.InfraInfoList
 	// var infraInfoList cloudmodel.InfraInfoList
@@ -448,24 +478,24 @@ func ListAllVMInfraInfo(nsId string) (cloudmodel.InfraInfoList, error) {
 
 	infraInfoList, err := tbSess.ReadAllInfra(nsId)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to retrieve all migrated VM infrastructures (nsId: %s)", nsId)
+		log.Error().Err(err).Msgf("failed to retrieve all migrated infrastructures (nsId: %s)", nsId)
 		return emptyRet, err
 	}
 
 	// Convert the response model from 'tbclient.TbInfraInfoList' to 'cloudmodel.InfraInfoList'
-	convertedVmInfraInfoList, err := modelconv.ConvertWithValidation[tbclient.TbInfraInfoList, cloudmodel.InfraInfoList](infraInfoList)
+	convertedInfraInfoList, err := modelconv.ConvertWithValidation[tbclient.TbInfraInfoList, cloudmodel.InfraInfoList](infraInfoList)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info list (nsId: %s)", nsId)
 		return emptyRet, err
 	}
 
-	log.Info().Msgf("Retrieved all migrated VM infrastructures (nsId: %s, count: %d) successfully", nsId, len(convertedVmInfraInfoList.Infra))
-	return convertedVmInfraInfoList, nil
+	log.Info().Msgf("Retrieved all migrated infrastructures (nsId: %s, count: %d) successfully", nsId, len(convertedInfraInfoList.Infra))
+	return convertedInfraInfoList, nil
 }
 
-// Get all migrated VM infrastructures
-func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
-	log.Info().Msg("Listing all migrated VM infrastructure IDs")
+// Get all migrated infrastructures
+func ListInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
+	log.Info().Msg("Listing all migrated infrastructure IDs")
 
 	var emptyRet cloudmodel.IdList
 	var idList cloudmodel.IdList
@@ -491,36 +521,36 @@ func ListVMInfraIDs(nsId string, option string) (cloudmodel.IdList, error) {
 	// Return the result
 	idList.IdList = append(idList.IdList, infraIdList.IdList...)
 
-	log.Info().Msgf("Retrieved all migrated VM infrastructure IDs (nsId: %s, count: %d) successfully", nsId, len(idList.IdList))
+	log.Info().Msgf("Retrieved all migrated infrastructure IDs (nsId: %s, count: %d) successfully", nsId, len(idList.IdList))
 	return idList, nil
 }
 
-// Get the migrated VM infrastructure
-func GetVMInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
-	log.Info().Msgf("Retrieving the migrated VM infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
+// Get the migrated infrastructure
+func GetInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
+	log.Info().Msgf("Retrieving the migrated infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
 	// Initialize Tumblebug session
 	tbSess := tbclient.NewSession()
-	vmInfraInfo, err := tbSess.ReadInfra(nsId, infraId)
+	infraInfo, err := tbSess.ReadInfra(nsId, infraId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to get the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 		return cloudmodel.InfraInfo{}, err
 	}
 
 	// Convert the response model from 'tbmodel.InfraInfo' to 'cloudmodel.InfraInfo'
-	convertedVmInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.InfraInfo, cloudmodel.InfraInfo](vmInfraInfo)
+	convertedInfraInfo, err := modelconv.ConvertWithValidation[tbmodel.InfraInfo, cloudmodel.InfraInfo](infraInfo)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to convert the multi-cloud infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 		return cloudmodel.InfraInfo{}, err
 	}
 
-	log.Info().Msgf("Retrieved the migrated VM infrastructure (nsId: %s, infraId: %s) successfully", nsId, infraId)
-	return convertedVmInfraInfo, nil
+	log.Info().Msgf("Retrieved the migrated infrastructure (nsId: %s, infraId: %s) successfully", nsId, infraId)
+	return convertedInfraInfo, nil
 }
 
-// Delete the migrated VM infrastructure
-func DeleteVMInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
-	log.Info().Msg("Deleting the migrated VM infrastructure")
+// Delete the migrated infrastructure
+func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
+	log.Info().Msg("Deleting the migrated infrastructure")
 
 	// Initialize Tumblebug session
 	// tbSess := tbclient.NewSession()
@@ -936,5 +966,130 @@ func isSSHPortCoveredInMigration(portSpec string) bool {
 		}
 	}
 
+	return false
+}
+
+// NodeSSHStatusDetail represents the SSH readiness status of a node (internal use)
+type NodeSSHStatusDetail struct {
+	ID        string
+	Name      string
+	PublicIP  string
+	PrivateIP string
+	Username  string
+	Status    string
+	SSHReady  bool
+	SSHPort   int
+	Error     string
+}
+
+// CheckSSHReadinessWithDetails checks if all Nodes in the infrastructure are SSH-accessible
+// and returns detailed status for each node. It works for any CSP; "Running" status doesn't mean
+// cloud-init (SSH user setup) is done (IBM Cloud VPC: up to ~3 min in testing), so this polls
+// until ready or maxWaitTime elapses.
+//
+// Parameters:
+//   - nsId: Namespace ID
+//   - infraId: Infrastructure ID
+//   - maxWaitTime: Maximum time to wait (e.g., 3*time.Minute)
+//   - checkInterval: Interval between checks (e.g., 10*time.Second)
+//
+// Returns:
+//   - []NodeSSHStatusDetail: Detailed status for each node
+//   - error: nil if all Nodes are SSH-ready, or error describing the issue
+func CheckSSHReadinessWithDetails(nsId string, infraId string, maxWaitTime time.Duration, checkInterval time.Duration) ([]NodeSSHStatusDetail, error) {
+	log.Info().Msgf("Starting SSH readiness check (nsId: %s, infraId: %s, maxWait: %v, interval: %v)",
+		nsId, infraId, maxWaitTime, checkInterval)
+
+	deadline := time.Now().Add(maxWaitTime)
+	attempt := 0
+	maxAttempts := int(maxWaitTime / checkInterval)
+	var nodeStatusList []NodeSSHStatusDetail
+
+	// Nodes already confirmed SSH-ready are never probed again, so Tumblebug doesn't
+	// keep re-running a remote command against Nodes that have already responded.
+	confirmedReady := make(map[string]bool)
+
+	for time.Now().Before(deadline) {
+		attempt++
+		log.Debug().Msgf("SSH readiness check attempt %d/%d (nsId: %s, infraId: %s)",
+			attempt, maxAttempts, nsId, infraId)
+
+		// Get current infra status from Tumblebug
+		infraInfo, err := tbclient.NewSession().ReadInfra(nsId, infraId)
+		if err != nil {
+			log.Error().Err(err).Msgf("Failed to read infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
+			return nil, fmt.Errorf("failed to read infrastructure info: %w", err)
+		}
+
+		// Build status list for each node
+		nodeStatusList = make([]NodeSSHStatusDetail, 0, len(infraInfo.Node))
+		readyNodes := 0
+
+		for _, node := range infraInfo.Node {
+			nodeStatus := NodeSSHStatusDetail{
+				ID:        node.Id,
+				Name:      node.Name,
+				PublicIP:  node.PublicIP,
+				PrivateIP: node.PrivateIP,
+				Username:  node.NodeUserName,
+				Status:    node.Status,
+				SSHPort:   22,
+			}
+
+			switch {
+			case strings.ToLower(node.Status) != "running":
+				nodeStatus.Error = fmt.Sprintf("Node not running yet (status: %s)", node.Status)
+			case confirmedReady[node.Id]:
+				nodeStatus.SSHReady = true
+				readyNodes++
+			case probeNodeSSHReachability(nsId, infraId, node.Id):
+				nodeStatus.SSHReady = true
+				confirmedReady[node.Id] = true
+				readyNodes++
+			default:
+				nodeStatus.Error = "SSH not reachable yet via Tumblebug remote command"
+			}
+
+			nodeStatusList = append(nodeStatusList, nodeStatus)
+		}
+
+		// Check if all Nodes are ready
+		totalNodes := len(infraInfo.Node)
+		if totalNodes > 0 && readyNodes == totalNodes {
+			log.Info().Msgf("All Nodes are SSH-ready (%d/%d) (nsId: %s, infraId: %s)",
+				readyNodes, totalNodes, nsId, infraId)
+			return nodeStatusList, nil
+		}
+
+		log.Debug().Msgf("SSH readiness: %d/%d Nodes ready (nsId: %s, infraId: %s)",
+			readyNodes, totalNodes, nsId, infraId)
+
+		// Wait before next attempt (unless this is the last attempt)
+		if attempt < maxAttempts && time.Now().Add(checkInterval).Before(deadline) {
+			time.Sleep(checkInterval)
+		}
+	}
+
+	return nodeStatusList, fmt.Errorf("SSH readiness timeout after %v: not all Nodes became accessible", maxWaitTime)
+}
+
+// probeNodeSSHReachability checks SSH reachability for a single Node by running a lightweight
+// command on it via Tumblebug's remote command API, scoped to that Node only (nodeId), instead of
+// connecting to the node directly or targeting the whole Infra (which would make Tumblebug re-run
+// the command against every Node, including ones already confirmed ready or not running yet).
+func probeNodeSSHReachability(nsId, infraId, nodeId string) bool {
+	cmdReq := tbmodel.InfraCmdReq{Command: []string{"echo ready"}, TimeoutMinutes: 1}
+
+	result, err := tbclient.NewSession().RemoteCommandToInfra(nsId, infraId, "", nodeId, cmdReq)
+	if err != nil {
+		log.Debug().Err(err).Msgf("SSH reachability probe failed (nsId: %s, infraId: %s, nodeId: %s)", nsId, infraId, nodeId)
+		return false
+	}
+
+	for _, r := range result.Results {
+		if r.NodeId == nodeId && r.Error == "" {
+			return true
+		}
+	}
 	return false
 }
