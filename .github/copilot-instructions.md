@@ -99,6 +99,7 @@ This repository contains the source code for **CM-Beetle** (Computing Infrastruc
 - Write all code comments and documentation in English.
 - Use English for struct field comments, function comments, inline comments, and TODO/FIXME notes.
 - Ensure consistency and accessibility for international contributors.
+- For detailed Go comment formatting guidelines, see `.github/instructions/go.instructions.md`.
 
 ### API Response Messages
 
@@ -275,14 +276,12 @@ Always use the `Makefile` for build and run tasks.
 ## Common Tasks
 
 - **Adding a new API endpoint:**
-
   1. Define the handler in `pkg/api/rest/`.
   2. Add the route in `cmd/cm-beetle/main.go` (or relevant router setup).
   3. Add Swagger comments to the handler.
   4. Run `make swag`.
 
 - **Running locally:**
-
   1. Ensure `conf/setup.env` and `conf/config.yaml` are configured.
   2. Run `make run`.
 
