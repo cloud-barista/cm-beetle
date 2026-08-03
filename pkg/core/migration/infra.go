@@ -550,15 +550,55 @@ func GetInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
 
 // Delete the migrated infrastructure
 func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
-	log.Info().Msg("Deleting the migrated infrastructure")
+	log.Info().Msgf("Deleting the migrated infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
-	// Initialize Tumblebug session
-	// tbSess := tbclient.NewSession()
+	rateLimiter := GetDeleteRateLimiter()
 
-	// 1. Read Infra info
-	infraInfo, err := tbclient.NewSession().ReadInfra(nsId, infraId)
+	// 1. Read Infra info with rate limiting and retry on rate limit
+	var infraInfo tbmodel.InfraInfo
+	var err error
+
+	const maxReadRetries = 3
+	for attempt := 1; attempt <= maxReadRetries; attempt++ {
+		// Wait for rate limiter slot (queue + time-based pacing)
+		if queueErr := rateLimiter.WaitForSlot(); queueErr != nil {
+			// Queue is full - return error immediately
+			log.Error().Err(queueErr).Msgf("Delete rate limiter queue full (nsId: %s, infraId: %s)", nsId, infraId)
+			return common.SimpleMsg{}, queueErr
+		}
+
+		// Attempt ReadInfra call
+		infraInfo, err = tbclient.NewSession().ReadInfra(nsId, infraId)
+
+		if err == nil {
+			// Success - report to rate limiter for adaptive adjustment
+			rateLimiter.ReportSuccess()
+			log.Debug().Msgf("ReadInfra succeeded (nsId: %s, infraId: %s, attempt: %d)", nsId, infraId, attempt)
+			break
+		}
+
+		// Check if rate limit error (429 or "rate" in error message)
+		if isRateLimitError(err) {
+			rateLimiter.ReportFailure()
+			if attempt < maxReadRetries {
+				backoffDuration := time.Duration(attempt) * time.Second
+				log.Warn().Err(err).Msgf("Rate limit hit on ReadInfra, retrying after %v (nsId: %s, infraId: %s, attempt: %d/%d)",
+					backoffDuration, nsId, infraId, attempt, maxReadRetries)
+				time.Sleep(backoffDuration)
+				continue
+			}
+		}
+
+		// Non-rate-limit error or max retries exceeded
+		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s, attempt: %d/%d)",
+			nsId, infraId, attempt, maxReadRetries)
+		return common.SimpleMsg{}, err
+	}
+
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
+		// All retries exhausted
+		log.Error().Err(err).Msgf("failed to read the infrastructure info after %d attempts (nsId: %s, infraId: %s)",
+			maxReadRetries, nsId, infraId)
 		return common.SimpleMsg{}, err
 	}
 
@@ -571,10 +611,10 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	log.Debug().Msgf("Infra deleted (nsId: %s, infraId: %s, IdList: %s)", nsId, infraId, idList.IdList)
 
 	// Sleep for a while to ensure previous deletions are completed
-	log.Debug().Msgf("Sleeping for 3 seconds to ensure Infra is deleted (nsId: %s)", nsId)
-	time.Sleep(3 * time.Second)
+	log.Debug().Msgf("Waiting for CSP to complete Infra deletion (nsId: %s)", nsId)
+	time.Sleep(2 * time.Second)
 
-	//3. Delete security groups
+	// 3. Delete security groups
 	// Collect unique security group IDs from all Nodes
 	sgIdMap := make(map[string]struct{})
 	for _, node := range infraInfo.Node {
@@ -596,8 +636,8 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 
 	// Sleep for a while to ensure previous deletions are completed
-	log.Debug().Msgf("Sleeping for 3 seconds to ensure security groups are deleted (nsId: %s)", nsId)
-	time.Sleep(3 * time.Second)
+	log.Debug().Msgf("Waiting for CSP to complete security group deletion (nsId: %s)", nsId)
+	time.Sleep(2 * time.Second)
 
 	// 4. Delete SSH Key
 	// Collect unique SSH Key IDs from all Nodes
@@ -621,8 +661,8 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 
 	// Sleep for a while to ensure previous deletions are completed
-	log.Debug().Msgf("Sleeping for 3 seconds to ensure SSH keys are deleted (nsId: %s)", nsId)
-	time.Sleep(3 * time.Second)
+	log.Debug().Msgf("Waiting for CSP to complete SSH key deletion (nsId: %s)", nsId)
+	time.Sleep(2 * time.Second)
 
 	// 5. Delete vNets
 	// Collect unique vNet IDs from all Nodes
@@ -634,8 +674,8 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 
 	// Delete all vNet
 
-	const vNetDeleteMaxRetries = 10
-	const vNetDeleteRetryInterval = 10 * time.Second
+	const vNetDeleteMaxRetries = 5
+	const vNetDeleteRetryInterval = 6 * time.Second
 
 	for vNetId := range vNetIdMap {
 		var deleteErr error
@@ -662,27 +702,30 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 		}
 	}
 
-	// Sleep for a while to ensure all resources are deleted
-	log.Debug().Msgf("Sleeping for 3 seconds to ensure VNets are deleted (nsId: %s)", nsId)
-	time.Sleep(3 * time.Second)
-
-	// 6. Delete shared resources
-	idList, err = tbclient.NewSession().DeleteSharedResources(nsId)
-	if err != nil {
-		log.Error().Err(err).Msgf("failed to delete shared resources (nsId: %s, infraId: %s)", nsId, infraId)
-		return common.SimpleMsg{}, err
-	}
-	log.Debug().Msgf("Shared resources deleted (nsId: %s, infraId: %s, IdList: %s)", nsId, infraId, idList.IdList)
+	log.Debug().Msgf("VNet deletion completed (nsId: %s)", nsId)
 
 	/*
 	 * [Output] Return the result
 	 */
 
 	ret := common.SimpleMsg{
-		Message: fmt.Sprintf("Successfully deleted the infrastructure and resources (nsId: %s, infraId: %s)", nsId, infraId),
+		Message: fmt.Sprintf("Infrastructure and resources deleted successfully (nsId: %s, infraId: %s)", nsId, infraId),
 	}
-	log.Info().Msgf("Successfully deleted the infrastructure and resources (nsId: %s, infraId: %s)", nsId, infraId)
+	log.Info().Msgf("Infrastructure deletion completed (nsId: %s, infraId: %s)", nsId, infraId)
 	return ret, nil
+}
+
+// isRateLimitError checks if an error is due to rate limiting.
+// It detects common rate limit error patterns from TB/CSP APIs.
+func isRateLimitError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errMsg := strings.ToLower(err.Error())
+	return strings.Contains(errMsg, "rate limit") ||
+		strings.Contains(errMsg, "429") ||
+		strings.Contains(errMsg, "too many requests") ||
+		strings.Contains(errMsg, "throttle")
 }
 
 // preflightCheckCspProvisioning resolves the latest CSP image and confirms available system disk per nodegroup
