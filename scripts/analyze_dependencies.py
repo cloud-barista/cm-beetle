@@ -63,7 +63,7 @@ def read_cloudmodel_files(project_root):
     all_types = set()
 
     # Files to analyze in the cloudmodel package
-    target_files = [("copied-tb-model.go", "CB-Tumblebug models"), ("model.go", "CM-Model types"), ("vm-infra-info.go", "VM infrastructure info")]
+    target_files = [("copied-tb-model.go", "CB-Tumblebug models"), ("model.go", "CM-Model types"), ("vm-infra-info.go", "Infrastructure info")]
 
     for filename, description in target_files:
         file_path = cloud_model_dir / filename

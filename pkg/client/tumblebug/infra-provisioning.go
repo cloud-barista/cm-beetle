@@ -91,10 +91,17 @@ type TbInfraInfoList struct {
 	Infra []tbmodel.InfraInfo `json:"infra"`
 }
 
-// ReadAllInfra retrieves all Infras (Infrastructure) in the specified namespace
+// ReadAllInfra retrieves all Infras (Infrastructure) in the specified namespace.
+// This call is paced against TB's 2 req/s limit; set a deadline via Session.SetContext
+// to bound how long it waits for a slot.
 func (s *Session) ReadAllInfra(nsId string) (TbInfraInfoList, error) {
 	log.Debug().Msg("Retrieving all Infras")
 	var emptyRet = TbInfraInfoList{}
+
+	if err := s.pace(fmt.Sprintf("ReadAllInfra ns=%s", nsId)); err != nil {
+		log.Warn().Err(err).Msgf("Pacing budget exhausted: ReadAllInfra (nsId: %s)", nsId)
+		return emptyRet, err
+	}
 
 	url := fmt.Sprintf("/ns/%s/infra", nsId)
 	resBody := TbInfraInfoList{}
@@ -115,11 +122,18 @@ func (s *Session) ReadAllInfra(nsId string) (TbInfraInfoList, error) {
 	return resBody, nil
 }
 
-// ReadInfra retrieves information about a specific Infra (Infrastructure) in the specified namespace
+// ReadInfra retrieves information about a specific Infra (Infrastructure) in the specified namespace.
+// This call is paced against TB's 2 req/s limit; set a deadline via Session.SetContext
+// to bound how long it waits for a slot.
 func (s *Session) ReadInfra(nsId, infraId string) (tbmodel.InfraInfo, error) {
 	log.Debug().Msg("Retrieving Infra")
 
 	var emptyRet = tbmodel.InfraInfo{}
+
+	if err := s.pace(fmt.Sprintf("ReadInfra ns=%s infra=%s", nsId, infraId)); err != nil {
+		log.Warn().Err(err).Msgf("Pacing budget exhausted: ReadInfra (nsId: %s, infraId: %s)", nsId, infraId)
+		return emptyRet, err
+	}
 
 	url := fmt.Sprintf("/ns/%s/infra/%s", nsId, infraId)
 	resBody := tbmodel.InfraInfo{}
@@ -171,10 +185,18 @@ func (s *Session) ReadInfraAccessInfo(nsId, infraId, option, accessInfoOption st
 	return resBody, nil
 }
 
+// ReadInfraIDs retrieves all Infra IDs in the specified namespace.
+// This call is paced against TB's 2 req/s limit; set a deadline via Session.SetContext
+// to bound how long it waits for a slot.
 func (s *Session) ReadInfraIDs(nsId string) (tbmodel.IdList, error) {
 	log.Debug().Msg("Retrieving Infra IDs")
 
 	emptyRet := tbmodel.IdList{}
+
+	if err := s.pace(fmt.Sprintf("ReadInfraIDs ns=%s", nsId)); err != nil {
+		log.Warn().Err(err).Msgf("Pacing budget exhausted: ReadInfraIDs (nsId: %s)", nsId)
+		return emptyRet, err
+	}
 
 	url := fmt.Sprintf("/ns/%s/infra", nsId)
 

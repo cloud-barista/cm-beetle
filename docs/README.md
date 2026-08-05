@@ -33,4 +33,5 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 
 ## Developer Resources
 
+- [Tumblebug Call Pacer](tumblebug-call-pacer.md) – How CM-Beetle stays under CB-Tumblebug's rate limit, and how to maintain it.
 - [AI Context](ai-context-for-us.md) – Context information for AI-assisted development.

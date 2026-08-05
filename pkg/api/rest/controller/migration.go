@@ -27,6 +27,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/labstack/echo/v4"
 
 	"github.com/rs/zerolog/log"
@@ -45,8 +46,8 @@ type MigrateInfraWithDefaultsResponse struct {
 
 // MigrateInfraWithDefaults godoc
 // @ID MigrateInfraWithDefaults
-// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)
-// @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+// @Summary Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults (sync by default; async via Prefer: respond-async)
+// @Description Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.
 // @Description
 // @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
 // @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
@@ -55,7 +56,7 @@ type MigrateInfraWithDefaultsResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciInfo body MigrateInfraWithDefaultsRequest true "Specify the information for the targeted mulci-cloud infrastructure (MCI)"
+// @Param infraInfo body MigrateInfraWithDefaultsRequest true "Specify the information for the targeted multi-cloud infrastructure (Infra)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
 // @Success 201 {object} model.ApiResponse[MigrateInfraWithDefaultsResponse] "Successfully migrated to the multi-cloud infrastructure"
@@ -130,8 +131,8 @@ type MigrateInfraResponse struct {
 
 // MigrateInfra godoc
 // @ID MigrateInfra
-// @Summary Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)
-// @Description Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+// @Summary Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults (sync by default; async via Prefer: respond-async)
+// @Description Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.
 // @Description
 // @Description **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
 // @Description - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
@@ -141,6 +142,11 @@ type MigrateInfraResponse struct {
 // @Description By default this API runs synchronously. Send header `Prefer: respond-async` to run it
 // @Description asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
 // @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+// @Description
+// @Description **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+// @Description under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+// @Description in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+// @Description defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -154,7 +160,7 @@ type MigrateInfraResponse struct {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs, or no pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After"
 // @Router /migration/ns/{nsId}/infra [post]
 func MigrateInfra(c echo.Context) error {
 
@@ -232,8 +238,14 @@ func MigrateInfra(c echo.Context) error {
 
 	// [Output]
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create the infrastructure")
+		// Pacer backpressure, not a server error; the pacer already logged it as a warning.
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 
+		log.Error().Err(err).Msg("failed to create the infrastructure")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
@@ -242,8 +254,13 @@ func MigrateInfra(c echo.Context) error {
 
 // ListInfra godoc
 // @ID ListInfra
-// @Summary Get the migrated multi-cloud infrastructure (MCI)
-// @Description Get the migrated multi-cloud infrastructure (MCI)
+// @Summary Get the migrated multi-cloud infrastructure (Infra)
+// @Description Get the migrated multi-cloud infrastructure (Infra)
+// @Description
+// @Description **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+// @Description under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+// @Description in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+// @Description defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -254,6 +271,7 @@ func MigrateInfra(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[cloudmodel.IdList] "The ID list of The migrated multi-cloud infrastructure (Infra)"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "No pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After"
 // @Router /migration/ns/{nsId}/infra [get]
 func ListInfra(c echo.Context) error {
 
@@ -278,6 +296,13 @@ func ListInfra(c echo.Context) error {
 	case "id":
 		idList, err := migration.ListInfraIDs(nsId, option)
 		if err != nil {
+			// Pacer backpressure, not a server error; the pacer already logged it as a warning.
+			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+				c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+				return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+					"Too many requests to the underlying infrastructure provider; retry after the given time"))
+			}
+
 			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure IDs")
 			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 		}
@@ -286,6 +311,13 @@ func ListInfra(c echo.Context) error {
 	default:
 		infraInfoList, err := migration.ListAllInfraInfo(nsId)
 		if err != nil {
+			// Pacer backpressure, not a server error; the pacer already logged it as a warning.
+			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+				c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+				return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+					"Too many requests to the underlying infrastructure provider; retry after the given time"))
+			}
+
 			log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructures")
 			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 		}
@@ -296,8 +328,13 @@ func ListInfra(c echo.Context) error {
 
 // GetInfra godoc
 // @ID GetInfra
-// @Summary Get the migrated multi-cloud infrastructure (MCI)
-// @Description Get the migrated multi-cloud infrastructure (MCI)
+// @Summary Get the migrated multi-cloud infrastructure (Infra)
+// @Description Get the migrated multi-cloud infrastructure (Infra)
+// @Description
+// @Description **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+// @Description under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+// @Description in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+// @Description defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -307,6 +344,7 @@ func ListInfra(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[MigrateInfraResponse] "The migrated multi-cloud infrastructure information"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "No pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After"
 // @Router /migration/ns/{nsId}/infra/{infraId} [get]
 func GetInfra(c echo.Context) error {
 
@@ -329,8 +367,14 @@ func GetInfra(c echo.Context) error {
 	// [Process]
 	infraInfo, err := migration.GetInfra(nsId, infraId)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure")
+		// Pacer backpressure, not a server error; the pacer already logged it as a warning.
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 
+		log.Error().Err(err).Msg("failed to get the migrated multi-cloud infrastructure")
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
 		}
@@ -344,13 +388,18 @@ func GetInfra(c echo.Context) error {
 
 // DeleteInfra godoc
 // @ID DeleteInfra
-// @Summary Delete the migrated mult-cloud infrastructure (MCI) (sync by default; async via Prefer: respond-async)
-// @Description Delete the migrated mult-cloud infrastructure (MCI).
+// @Summary Delete the migrated multi-cloud infrastructure (Infra) (sync by default; async via Prefer: respond-async)
+// @Description Delete the migrated multi-cloud infrastructure (Infra).
 // @Description
 // @Description This operation can take a long time (multiple settle-time waits and vNet-deletion
 // @Description retries). By default it runs synchronously. Send header `Prefer: respond-async` to run
 // @Description it asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
 // @Description (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+// @Description
+// @Description **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+// @Description under its **2 req/s per-client-IP** limit. This operation allows its paced read up to **30 s**
+// @Description for a slot, rather than the usual 8 s, because deletion tolerates a longer wait. On timeout the
+// @Description response is **`503`** with a **`Retry-After`** header in seconds.
 // @Tags [Migration] Infrastructure
 // @Accept  json
 // @Produce  json
@@ -363,7 +412,7 @@ func GetInfra(c echo.Context) error {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Deletion started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 404 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs, or no pacing slot within the 30 s wait budget; retry after the seconds given in Retry-After"
 // @Router /migration/ns/{nsId}/infra/{infraId} [delete]
 func DeleteInfra(c echo.Context) error {
 
@@ -414,8 +463,14 @@ func DeleteInfra(c echo.Context) error {
 	retMsg, err := migration.DeleteInfra(nsId, infraId, option)
 
 	if err != nil {
-		log.Error().Err(err).Msg("failed to delete the migrated multi-cloud infrastructure")
+		// Pacer backpressure, not a server error; the pacer already logged it as a warning.
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 
+		log.Error().Err(err).Msg("failed to delete the migrated multi-cloud infrastructure")
 		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "does not exist") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Infrastructure not found"))
 		}
@@ -459,13 +514,17 @@ type CheckSSHReadyResponse struct {
 // @Description "Running" status doesn't mean cloud-init (SSH user setup) is done; timing varies by
 // @Description CSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.
 // @Description
-// @Description **Rate Limiting**: To prevent SSH server abuse, this API can only be called
-// @Description once every 3 minutes for the same infrastructure. If called too soon, it returns
-// @Description HTTP 429 with the time to wait before the next check is allowed.
+// @Description **Rate limiting**: At most **1 check per 30 seconds per infrastructure**, counted per
+// @Description `nsId:infraId` rather than per caller, because the protected resource is the nodes' own SSH
+// @Description servers. The window matches this API's own **30 s** runtime, so only one check per
+// @Description infrastructure runs at a time. An early or concurrent call is rejected with **`429`** plus a
+// @Description **`Retry-After`** header in seconds, and performs no SSH activity. A client that awaits each
+// @Description response is never rate limited: a not-ready check runs the full 30 s before answering.
 // @Description
 // @Description **Check Method**: This API runs a lightweight command on each node via Tumblebug's
 // @Description remote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's
-// @Description existing SSH/bastion setup for the node's CSP.
+// @Description existing SSH/bastion setup for the node's CSP. It re-probes every **10 s** for up to
+// @Description **30 s**, returning as soon as every node responds.
 // @Description
 // @Description **Response Options**:
 // @Description - Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)
@@ -480,7 +539,7 @@ type CheckSSHReadyResponse struct {
 // @Success 200 {object} model.ApiResponse[CheckSSHReadyResponse] "SSH readiness check completed"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Infrastructure not found"
-// @Failure 429 {object} model.ApiResponse[CheckSSHReadyResponse] "Rate limited - check too soon after previous check"
+// @Failure 429 {object} model.ApiResponse[any] "Checked less than 30 s after the previous check for this infrastructure; retry after the seconds given in Retry-After"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /migration/ns/{nsId}/infra/{infraId}/ssh-ready [get]
 func CheckSSHReady(c echo.Context) error {
@@ -508,35 +567,10 @@ func CheckSSHReady(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
 	}
 
-	// Check rate limiting
-	limiter := migration.GetSSHCheckRateLimiter()
-	allowed, retryAfter, err := limiter.CheckAllowed(nsId, infraId)
-	if err != nil {
-		log.Error().Err(err).Msg("Rate limiter error")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
-	}
-
-	if !allowed {
-		// Rate limited
-		retryAfterSeconds := int(retryAfter.Seconds())
-		c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", retryAfterSeconds))
-
-		response := CheckSSHReadyResponse{
-			Ready:           false,
-			Message:         fmt.Sprintf("Rate limited - please wait %v before checking again", retryAfter.Round(time.Second)),
-			NextAllowedTime: time.Now().Add(retryAfter).Format(time.RFC3339),
-		}
-
-		return c.JSON(http.StatusTooManyRequests, model.SuccessResponseWithMessage(
-			response,
-			fmt.Sprintf("Rate limited - SSH readiness check for this infrastructure can only be performed once every 3 minutes. Please wait %v.", retryAfter.Round(time.Second)),
-		))
-	}
-
 	// [Process] Perform SSH readiness check
 	log.Info().Msgf("Performing SSH readiness check (nsId: %s, infraId: %s)", nsId, infraId)
 
-	// Check with 30 second timeout (single attempt)
+	// sshCheckMinInterval (ssh-check-cooldown.go) mirrors checkTimeout; change both together.
 	const checkTimeout = 30 * time.Second
 	const checkInterval = 10 * time.Second
 

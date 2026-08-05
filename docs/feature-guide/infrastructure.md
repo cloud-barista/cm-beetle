@@ -1,6 +1,6 @@
-# VM Infrastructure
+# Infrastructure
 
-This document covers recommendation and migration support for VM infrastructure resources by target CSP.
+This document covers recommendation and migration support for infrastructure resources by target CSP.
 
 ## Support Status
 

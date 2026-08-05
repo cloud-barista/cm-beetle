@@ -25,10 +25,10 @@ type CompatibleSpecImagePair struct {
 // 	Region string `json:"region" example:"ap-northeast-2"`
 // }
 
-// * Note: The models for VM infrastructure is moved to cm-model repo for sharing and use with other subsystems.
+// * Note: The models for infrastructure is moved to cm-model repo for sharing and use with other subsystems.
 
 /*
- * Models for VM infrastructure
+ * Models for infrastructure
  */
 
 // // RecommendedVmInfra represents the recommended virtual machine infrastructure information.
@@ -126,7 +126,7 @@ type CompatibleSpecImagePair struct {
  * Models for Container Infrastructure (i.e., an infrastructure for Kubernetes)
  */
 type RecommendedInfraInfo struct {
-	Status      string                `json:"status"`
-	Description string                `json:"description"`
+	Status      string                  `json:"status"`
+	Description string                  `json:"description"`
 	TargetInfra tbmodel.InfraDynamicReq `json:"targetInfra"`
 }

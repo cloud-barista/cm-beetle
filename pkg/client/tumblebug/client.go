@@ -17,6 +17,7 @@ package tbclient
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -77,6 +78,24 @@ func NewClient(cfg ApiConfig) *TumblebugClient {
 	} else {
 		r.SetTimeout(30 * time.Minute)
 	}
+
+	// Beetle paces its own calls (see call-pacer.go), but TB is shared, so another
+	// client's load can still earn a 429. Retry that request rather than penalizing
+	// every later one.
+	r.SetRetryCount(retryOn429Count).
+		SetRetryWaitTime(retryOn429Wait).
+		SetRetryMaxWaitTime(retryOn429MaxWait).
+		AddRetryCondition(func(resp *resty.Response, _ error) bool {
+			return resp != nil && resp.StatusCode() == http.StatusTooManyRequests
+		}).
+		SetRetryAfter(func(_ *resty.Client, resp *resty.Response) (time.Duration, error) {
+			if resp != nil {
+				if secs, err := strconv.Atoi(resp.Header().Get("Retry-After")); err == nil && secs > 0 {
+					return time.Duration(secs) * time.Second, nil
+				}
+			}
+			return retryOn429Wait, nil
+		})
 
 	// Set Transport
 	if cfg.HttpTransport != nil {

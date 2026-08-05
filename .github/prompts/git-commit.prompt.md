@@ -122,7 +122,7 @@ feat(migration): add proximity-based VM sorting
 
 - Sort by vCPU/memory distance for all machine types
 - Add Azure hypervisor generation compatibility
-- Improve VM infrastructure creation workflow
+- Improve infrastructure creation workflow
 ```
 
 ### Bug Fix

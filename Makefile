@@ -103,7 +103,7 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/object-storage && $(GO) clean
 	@cd cmd/test-cli/data && $(GO) clean
 	@cd cmd/test-cli/async && $(GO) clean
-	@cd cmd/test-cli/concurrent-delete && $(GO) clean
+	@cd cmd/test-cli/rate-limiting && $(GO) clean
 	@echo "Cleaned!"
 
 test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
@@ -146,13 +146,13 @@ test-async: ## Run the async response test CLI (recommend -> poll -> get -> migr
 	fi
 	@cd cmd/test-cli/async && $(GO) run main.go -config testconf/test-config.yaml
 
-test-bulk-delete: ## Run the concurrent deletion test CLI (tests rate limiting with bulk deletions)
-	@echo "Running concurrent deletion test CLI..."
-	@if [ ! -f cmd/test-cli/concurrent-delete/testconf/test-config.yaml ]; then \
-		cp cmd/test-cli/concurrent-delete/testconf/template-test-config.yaml cmd/test-cli/concurrent-delete/testconf/test-config.yaml; \
+test-rate-limiting: ## Run the rate limiting test CLI (retrieval burst + concurrent deletion)
+	@echo "Running rate limiting test CLI..."
+	@if [ ! -f cmd/test-cli/rate-limiting/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/rate-limiting/testconf/template-test-config.yaml cmd/test-cli/rate-limiting/testconf/test-config.yaml; \
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
-	@cd cmd/test-cli/concurrent-delete && $(GO) run main.go -config testconf/test-config.yaml
+	@cd cmd/test-cli/rate-limiting && $(GO) run main.go -config testconf/test-config.yaml
 
 test-data-clean: ## Clean up data migration test artifacts
 	@echo "Cleaning data migration test artifacts..."

@@ -6818,7 +6818,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get the migrated multi-cloud infrastructure (MCI)
+      description: |-
+        Get the migrated multi-cloud infrastructure (Infra)
+
+        **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+        under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+        in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+        defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
       operationId: ListInfra
       parameters:
       - default: mig01
@@ -6853,14 +6859,19 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Get the migrated multi-cloud infrastructure (MCI)
+        "503":
+          description: No pacing slot within the 8 s wait budget; retry after the
+            seconds given in Retry-After
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get the migrated multi-cloud infrastructure (Infra)
       tags:
       - '[Migration] Infrastructure'
     post:
       consumes:
       - application/json
       description: |-
-        Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+        Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.
 
         **[Request Field: `nodeGroups[].cspImageName`]** Optional CSP-native image identifier.
         - **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).
@@ -6870,6 +6881,11 @@ paths:
         By default this API runs synchronously. Send header `Prefer: respond-async` to run it
         asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
         (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+
+        **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+        under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+        in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+        defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
       operationId: MigrateInfra
       parameters:
       - default: mig01
@@ -6927,11 +6943,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many concurrent async jobs, or no pacing slot within the
+            8 s wait budget; retry after the seconds given in Retry-After
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (Infra)
         with defaults (sync by default; async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
@@ -6940,12 +6956,17 @@ paths:
       consumes:
       - application/json
       description: |-
-        Delete the migrated mult-cloud infrastructure (MCI).
+        Delete the migrated multi-cloud infrastructure (Infra).
 
         This operation can take a long time (multiple settle-time waits and vNet-deletion
         retries). By default it runs synchronously. Send header `Prefer: respond-async` to run
         it asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
         (status flow: Handling → Success / Error). Only the "respond-async" token is recognized.
+
+        **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+        under its **2 req/s per-client-IP** limit. This operation allows its paced read up to **30 s**
+        for a slot, rather than the usual 8 s, because deletion tolerates a longer wait. On timeout the
+        response is **`503`** with a **`Retry-After`** header in seconds.
       operationId: DeleteInfra
       parameters:
       - default: mig01
@@ -7001,18 +7022,24 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many concurrent async jobs, or no pacing slot within the
+            30 s wait budget; retry after the seconds given in Retry-After
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: 'Delete the migrated mult-cloud infrastructure (MCI) (sync by default;
+      summary: 'Delete the migrated multi-cloud infrastructure (Infra) (sync by default;
         async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
     get:
       consumes:
       - application/json
-      description: Get the migrated multi-cloud infrastructure (MCI)
+      description: |-
+        Get the migrated multi-cloud infrastructure (Infra)
+
+        **Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay
+        under its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up
+        in time the response is **`503`** with a **`Retry-After`** header in seconds. Those are the
+        defaults; operators tune them via `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` and `_MAX_WAIT_SEC`.
       operationId: GetInfra
       parameters:
       - default: mig01
@@ -7047,7 +7074,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Get the migrated multi-cloud infrastructure (MCI)
+        "503":
+          description: No pacing slot within the 8 s wait budget; retry after the
+            seconds given in Retry-After
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get the migrated multi-cloud infrastructure (Infra)
       tags:
       - '[Migration] Infrastructure'
   /migration/ns/{nsId}/infra/{infraId}/ssh-ready:
@@ -7060,13 +7092,17 @@ paths:
         "Running" status doesn't mean cloud-init (SSH user setup) is done; timing varies by
         CSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.
 
-        **Rate Limiting**: To prevent SSH server abuse, this API can only be called
-        once every 3 minutes for the same infrastructure. If called too soon, it returns
-        HTTP 429 with the time to wait before the next check is allowed.
+        **Rate limiting**: At most **1 check per 30 seconds per infrastructure**, counted per
+        `nsId:infraId` rather than per caller, because the protected resource is the nodes' own SSH
+        servers. The window matches this API's own **30 s** runtime, so only one check per
+        infrastructure runs at a time. An early or concurrent call is rejected with **`429`** plus a
+        **`Retry-After`** header in seconds, and performs no SSH activity. A client that awaits each
+        response is never rate limited: a not-ready check runs the full 30 s before answering.
 
         **Check Method**: This API runs a lightweight command on each node via Tumblebug's
         remote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's
-        existing SSH/bastion setup for the node's CSP.
+        existing SSH/bastion setup for the node's CSP. It re-probes every **10 s** for up to
+        **30 s**, returning as soon as every node responds.
 
         **Response Options**:
         - Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)
@@ -7112,9 +7148,10 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "429":
-          description: Rate limited - check too soon after previous check
+          description: Checked less than 30 s after the previous check for this infrastructure;
+            retry after the seconds given in Retry-After
           schema:
-            $ref: '#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse'
+            $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
           schema:
@@ -7127,7 +7164,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.
+        Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.
 
         By default this API runs synchronously. Send header `Prefer: respond-async` to run it
         asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}
@@ -7140,10 +7177,10 @@ paths:
         name: nsId
         required: true
         type: string
-      - description: Specify the information for the targeted mulci-cloud infrastructure
-          (MCI)
+      - description: Specify the information for the targeted multi-cloud infrastructure
+          (Infra)
         in: body
-        name: mciInfo
+        name: infraInfo
         required: true
         schema:
           $ref: '#/definitions/controller.MigrateInfraWithDefaultsRequest'
@@ -7180,7 +7217,7 @@ paths:
             respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (MCI)
+      summary: 'Migrate an infrastructure to the multi-cloud infrastructure (Infra)
         with defaults (sync by default; async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
@@ -7224,7 +7261,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete multiple migrated security groups
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7284,7 +7321,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated security groups
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     post:
       consumes:
       - application/json
@@ -7336,7 +7373,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated security group
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/ns/{nsId}/resources/securityGroup/{sgId}:
     delete:
       consumes:
@@ -7382,7 +7419,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated security group
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7427,7 +7464,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated security group
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/ns/{nsId}/resources/sshKey:
     delete:
       consumes:
@@ -7468,7 +7505,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete multiple migrated SSH keys
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7528,7 +7565,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated SSH keys
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     post:
       consumes:
       - application/json
@@ -7580,7 +7617,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated SSH key
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/ns/{nsId}/resources/sshKey/{sshKeyId}:
     delete:
       consumes:
@@ -7626,7 +7663,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated SSH key
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7671,7 +7708,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated SSH key
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/ns/{nsId}/resources/vNet:
     delete:
       consumes:
@@ -7712,7 +7749,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete multiple migrated virtual networks
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7772,7 +7809,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: List all migrated virtual networks
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     post:
       consumes:
       - application/json
@@ -7821,7 +7858,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Create a migrated virtual network
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/ns/{nsId}/resources/vNet/{vNetId}:
     delete:
       consumes:
@@ -7874,7 +7911,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Delete a migrated virtual network
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
     get:
       consumes:
       - application/json
@@ -7919,7 +7956,7 @@ paths:
             $ref: '#/definitions/model.SimpleMsg'
       summary: Get a specific migrated virtual network
       tags:
-      - '[Migration] Resources for VM infrastructure'
+      - '[Migration] Resources for infrastructure'
   /migration/security/publicKey:
     get:
       consumes:
@@ -8114,7 +8151,7 @@ paths:
       consumes:
       - application/json
       description: |
-        Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
+        Recommend best-effort infrastructure (Infra) candidates for migrating on-premise workloads to cloud environments.
 
         - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
 
@@ -8206,7 +8243,7 @@ paths:
             respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: Recommend multiple VM infrastructure candidates for cloud migration
+      summary: Recommend multiple infrastructure candidates for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
   /recommendation/infraWithDefaults:
@@ -8214,7 +8251,7 @@ paths:
       consumes:
       - application/json
       description: |-
-        Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
+        Recommend an appropriate infrastructure (i.e., Infra, multi-cloud infrastructure) with defaults for cloud migration
 
         [Note] `desiredCsp` and `desiredRegion` are required.
         - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
@@ -8285,7 +8322,7 @@ paths:
             respond-async'
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-      summary: (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI,
+      summary: (To be updated) Recommend an appropriate infrastructure (i.e., Infra,
         multi-cloud infrastructure) with defaults for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
@@ -8651,7 +8688,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate OS image for cloud migration
       tags:
-      - '[Recommendation] Resources for VM infrastructure'
+      - '[Recommendation] Resources for infrastructure'
   /recommendation/resources/securityGroups:
     post:
       consumes:
@@ -8709,7 +8746,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate security group for cloud migration
       tags:
-      - '[Recommendation] Resources for VM infrastructure'
+      - '[Recommendation] Resources for infrastructure'
   /recommendation/resources/specs:
     post:
       consumes:
@@ -8772,7 +8809,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate VM specification for cloud migration
       tags:
-      - '[Recommendation] Resources for VM infrastructure'
+      - '[Recommendation] Resources for infrastructure'
   /recommendation/resources/vNet:
     post:
       consumes:
@@ -8830,7 +8867,7 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate virtual network for cloud migration
       tags:
-      - '[Recommendation] Resources for VM infrastructure'
+      - '[Recommendation] Resources for infrastructure'
   /report/migration/ns/{nsId}/infra/{infraId}:
     post:
       consumes:
@@ -9169,10 +9206,10 @@ paths:
         name: nsId
         required: true
         type: string
-      - default: mci101
-        description: Multi-Cloud Infrastructure (MCI) ID
+      - default: infra101
+        description: Infra ID
         in: path
-        name: mciId
+        name: infraId
         required: true
         type: string
       - default: md
@@ -9331,7 +9368,7 @@ paths:
         be set, `connectionName` must be in `csp-region` format (e.g. `aws-ap-northeast-2`), and the
         resolved spec/image pair must be compatible for that CSP (e.g. an `x86_64` spec paired with
         an `arm64` image fails).
-        - **Infra (MCI) name collision**: `targetInfra.name` must not already exist in the namespace.
+        - **Infra name collision**: `targetInfra.name` must not already exist in the namespace.
 
         Always returns HTTP 200: the response body's `valid` field and
         `issues` list carry the outcome, since a failed check is a normal,
@@ -9402,17 +9439,17 @@ tags:
   name: '[Recommendation] Infrastructure'
 - description: APIs for recommending optimal Kubernetes clusters (prototype)
   name: '[Recommendation] K8s Cluster (prototype)'
-- description: APIs for recommending resources for VM infrastructure (VNet, Security
+- description: APIs for recommending resources for infrastructure (VNet, Security
     Group, etc.)
-  name: '[Recommendation] Resources for VM infrastructure'
+  name: '[Recommendation] Resources for infrastructure'
 - description: APIs for aligning and validating multi-cloud resource names
   name: '[Infrastructure] Resource Naming'
 - description: APIs for migrating on-premise infrastructure to cloud (VMs, VNets,
     etc.)
   name: '[Migration] Infrastructure'
-- description: APIs for migrating resources for VM infrastructure (VNet, Security
-    Group, etc.)
-  name: '[Migration] Resources for VM infrastructure'
+- description: APIs for migrating resources for infrastructure (VNet, Security Group,
+    etc.)
+  name: '[Migration] Resources for infrastructure'
 - description: APIs for summarizing and reporting infrastructure analysis results
   name: '[Summary/Report] Infrastructure Analysis for Migration'
 - description: APIs for recommending managed object storage (e.g., AWS S3)

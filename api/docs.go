@@ -1323,7 +1323,7 @@ const docTemplate = `{
         },
         "/migration/ns/{nsId}/infra": {
             "get": {
-                "description": "Get the migrated multi-cloud infrastructure (MCI)",
+                "description": "Get the migrated multi-cloud infrastructure (Infra)\n\n**Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay\nunder its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up\nin time the response is **` + "`" + `503` + "`" + `** with a **` + "`" + `Retry-After` + "`" + `** header in seconds. Those are the\ndefaults; operators tune them via ` + "`" + `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` + "`" + ` and ` + "`" + `_MAX_WAIT_SEC` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1333,7 +1333,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Get the migrated multi-cloud infrastructure (MCI)",
+                "summary": "Get the migrated multi-cloud infrastructure (Infra)",
                 "operationId": "ListInfra",
                 "parameters": [
                     {
@@ -1378,11 +1378,17 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "No pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
                     }
                 }
             },
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.\n\n**[Request Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Optional CSP-native image identifier.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-node image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup (may encounter stale images for some CSPs).\n- Recommended: pass the recommendation API response as-is to use the latest resolved image.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\n**Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay\nunder its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up\nin time the response is **` + "`" + `503` + "`" + `** with a **` + "`" + `Retry-After` + "`" + `** header in seconds. Those are the\ndefaults; operators tune them via ` + "`" + `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` + "`" + ` and ` + "`" + `_MAX_WAIT_SEC` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1392,7 +1398,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults (sync by default; async via Prefer: respond-async)",
                 "operationId": "MigrateInfra",
                 "parameters": [
                     {
@@ -1466,7 +1472,7 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many concurrent async jobs, or no pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1476,7 +1482,7 @@ const docTemplate = `{
         },
         "/migration/ns/{nsId}/infra/{infraId}": {
             "get": {
-                "description": "Get the migrated multi-cloud infrastructure (MCI)",
+                "description": "Get the migrated multi-cloud infrastructure (Infra)\n\n**Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay\nunder its **2 req/s per-client-IP** limit, and wait up to **8 s** for a slot. If none frees up\nin time the response is **` + "`" + `503` + "`" + `** with a **` + "`" + `Retry-After` + "`" + `** header in seconds. Those are the\ndefaults; operators tune them via ` + "`" + `BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC` + "`" + ` and ` + "`" + `_MAX_WAIT_SEC` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1486,7 +1492,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Get the migrated multi-cloud infrastructure (MCI)",
+                "summary": "Get the migrated multi-cloud infrastructure (Infra)",
                 "operationId": "GetInfra",
                 "parameters": [
                     {
@@ -1529,11 +1535,17 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "No pacing slot within the 8 s wait budget; retry after the seconds given in Retry-After",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
                     }
                 }
             },
             "delete": {
-                "description": "Delete the migrated mult-cloud infrastructure (MCI).\n\nThis operation can take a long time (multiple settle-time waits and vNet-deletion\nretries). By default it runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run\nit asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
+                "description": "Delete the migrated multi-cloud infrastructure (Infra).\n\nThis operation can take a long time (multiple settle-time waits and vNet-deletion\nretries). By default it runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run\nit asynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\n**Rate limiting** — Calls to CB-Tumblebug are paced at **~1.6 req/s (one per 625 ms)** to stay\nunder its **2 req/s per-client-IP** limit. This operation allows its paced read up to **30 s**\nfor a slot, rather than the usual 8 s, because deletion tolerates a longer wait. On timeout the\nresponse is **` + "`" + `503` + "`" + `** with a **` + "`" + `Retry-After` + "`" + `** header in seconds.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1543,7 +1555,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Delete the migrated mult-cloud infrastructure (MCI) (sync by default; async via Prefer: respond-async)",
+                "summary": "Delete the migrated multi-cloud infrastructure (Infra) (sync by default; async via Prefer: respond-async)",
                 "operationId": "DeleteInfra",
                 "parameters": [
                     {
@@ -1614,7 +1626,7 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many concurrent async jobs, or no pacing slot within the 30 s wait budget; retry after the seconds given in Retry-After",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -1624,7 +1636,7 @@ const docTemplate = `{
         },
         "/migration/ns/{nsId}/infra/{infraId}/ssh-ready": {
             "get": {
-                "description": "Check if all nodes in the migrated infrastructure are SSH-accessible.\n\n\"Running\" status doesn't mean cloud-init (SSH user setup) is done; timing varies by\nCSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.\n\n**Rate Limiting**: To prevent SSH server abuse, this API can only be called\nonce every 3 minutes for the same infrastructure. If called too soon, it returns\nHTTP 429 with the time to wait before the next check is allowed.\n\n**Check Method**: This API runs a lightweight command on each node via Tumblebug's\nremote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's\nexisting SSH/bastion setup for the node's CSP.\n\n**Response Options**:\n- Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)\n- option=detail: Returns summary + detailed node status array (nodeStatus) for troubleshooting (per-node SSH readiness)",
+                "description": "Check if all nodes in the migrated infrastructure are SSH-accessible.\n\n\"Running\" status doesn't mean cloud-init (SSH user setup) is done; timing varies by\nCSP (IBM Cloud VPC: up to ~3 min in testing). Works for any CSP.\n\n**Rate limiting**: At most **1 check per 30 seconds per infrastructure**, counted per\n` + "`" + `nsId:infraId` + "`" + ` rather than per caller, because the protected resource is the nodes' own SSH\nservers. The window matches this API's own **30 s** runtime, so only one check per\ninfrastructure runs at a time. An early or concurrent call is rejected with **` + "`" + `429` + "`" + `** plus a\n**` + "`" + `Retry-After` + "`" + `** header in seconds, and performs no SSH activity. A client that awaits each\nresponse is never rate limited: a not-ready check runs the full 30 s before answering.\n\n**Check Method**: This API runs a lightweight command on each node via Tumblebug's\nremote command API (not a direct connection from CM-Beetle), so it reuses Tumblebug's\nexisting SSH/bastion setup for the node's CSP. It re-probes every **10 s** for up to\n**30 s**, returning as soon as every node responds.\n\n**Response Options**:\n- Default (no option): Returns summary information (ready, totalNodes, readyNodes, message)\n- option=detail: Returns summary + detailed node status array (nodeStatus) for troubleshooting (per-node SSH readiness)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1689,9 +1701,9 @@ const docTemplate = `{
                         }
                     },
                     "429": {
-                        "description": "Rate limited - check too soon after previous check",
+                        "description": "Checked less than 30 s after the previous check for this infrastructure; retry after the seconds given in Retry-After",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_CheckSSHReadyResponse"
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
@@ -1705,7 +1717,7 @@ const docTemplate = `{
         },
         "/migration/ns/{nsId}/infraWithDefaults": {
             "post": {
-                "description": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
+                "description": "Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1715,7 +1727,7 @@ const docTemplate = `{
                 "tags": [
                     "[Migration] Infrastructure"
                 ],
-                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (MCI) with defaults (sync by default; async via Prefer: respond-async)",
+                "summary": "Migrate an infrastructure to the multi-cloud infrastructure (Infra) with defaults (sync by default; async via Prefer: respond-async)",
                 "operationId": "MigrateInfraWithDefaults",
                 "parameters": [
                     {
@@ -1727,8 +1739,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Specify the information for the targeted mulci-cloud infrastructure (MCI)",
-                        "name": "mciInfo",
+                        "description": "Specify the information for the targeted multi-cloud infrastructure (Infra)",
+                        "name": "infraInfo",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -1789,7 +1801,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "List all migrated security groups",
                 "operationId": "ListMigratedSecurityGroups",
@@ -1881,7 +1893,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Create a migrated security group",
                 "operationId": "CreateMigratedSecurityGroup",
@@ -1955,7 +1967,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete multiple migrated security groups",
                 "operationId": "DeleteMigratedSecurityGroups",
@@ -2014,7 +2026,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Get a specific migrated security group",
                 "operationId": "GetMigratedSecurityGroup",
@@ -2078,7 +2090,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete a migrated security group",
                 "operationId": "DeleteMigratedSecurityGroup",
@@ -2144,7 +2156,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "List all migrated SSH keys",
                 "operationId": "ListMigratedSSHKeys",
@@ -2236,7 +2248,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Create a migrated SSH key",
                 "operationId": "CreateMigratedSSHKey",
@@ -2310,7 +2322,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete multiple migrated SSH keys",
                 "operationId": "DeleteMigratedSSHKeys",
@@ -2369,7 +2381,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Get a specific migrated SSH key",
                 "operationId": "GetMigratedSSHKey",
@@ -2433,7 +2445,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete a migrated SSH key",
                 "operationId": "DeleteMigratedSSHKey",
@@ -2499,7 +2511,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "List all migrated virtual networks",
                 "operationId": "ListMigratedVNets",
@@ -2591,7 +2603,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Create a migrated virtual network",
                 "operationId": "CreateVNet",
@@ -2662,7 +2674,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete multiple migrated virtual networks",
                 "operationId": "DeleteMigratedVNets",
@@ -2721,7 +2733,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Get a specific migrated virtual network",
                 "operationId": "GetMigratedVNet",
@@ -2785,7 +2797,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] Resources for VM infrastructure"
+                    "[Migration] Resources for infrastructure"
                 ],
                 "summary": "Delete a migrated virtual network",
                 "operationId": "DeleteMigratedVNet",
@@ -3094,7 +3106,7 @@ const docTemplate = `{
         },
         "/recommendation/infra": {
             "post": {
-                "description": "Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Response Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup path.\n- Pass the recommendation response as-is to the migration API to ensure the resolved image is used.\n",
+                "description": "Recommend best-effort infrastructure (Infra) candidates for migrating on-premise workloads to cloud environments.\n\n- See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256\n\n**[Required Parameters: ` + "`" + `desiredCsp` + "`" + `, ` + "`" + `desiredRegion` + "`" + `]** The desired cloud service provider and region for the recommended infrastructure.\n- if **desiredCsp** and **desiredRegion** are set on request body, the values in the query parameter will be ignored.\n\n**[Optional Parameters: ` + "`" + `limit` + "`" + `]** Maximum number of recommended infrastructures to return (default: 3)\n\n**[Optional Parameters: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n**[Response Field: ` + "`" + `status` + "`" + `]** Candidate status based on the match rate threshold\n- **highly-matched**: Candidates meet or exceed the match rate threshold\n- **partially-matched**: Valid candidates below the match rate threshold\n\n**[Response Field: ` + "`" + `description` + "`" + `]** Summary containing Candidate ID, status, match rate statistics (Min/Max/Avg), and VM counts\n- Example: \"Candidate #1 | partially-matched | Overall Match Rate: Min=88.9% Max=100.0% Avg=98.7% | VMs: 3 total, 2 matched, 1 acceptable\"\n\n**[Response Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup path.\n- Pass the recommendation response as-is to the migration API to ensure the resolved image is used.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -3104,7 +3116,7 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "Recommend multiple VM infrastructure candidates for cloud migration",
+                "summary": "Recommend multiple infrastructure candidates for cloud migration",
                 "operationId": "RecommendVmInfraCandidates",
                 "parameters": [
                     {
@@ -3201,7 +3213,7 @@ const docTemplate = `{
         },
         "/recommendation/infraWithDefaults": {
             "post": {
-                "description": "Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n**[Response Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup path.",
+                "description": "Recommend an appropriate infrastructure (i.e., Infra, multi-cloud infrastructure) with defaults for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredCsp and desiredRegion are set on request body, the values in the query parameter will be ignored.\n\n**[Response Field: ` + "`" + `nodeGroups[].cspImageName` + "`" + `]** Set only when the spec-image review resolved a newer image than the DB cache.\n- **Non-empty**: TumbleBug sends this to Spider directly, bypassing the per-VM image DB lookup (prevents stale image failures, e.g., Alibaba alibase images).\n- **Empty**: TumbleBug uses ` + "`" + `imageId` + "`" + ` for the standard DB lookup path.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3211,7 +3223,7 @@ const docTemplate = `{
                 "tags": [
                     "[Recommendation] Infrastructure"
                 ],
-                "summary": "(To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration",
+                "summary": "(To be updated) Recommend an appropriate infrastructure (i.e., Infra, multi-cloud infrastructure) with defaults for cloud migration",
                 "operationId": "RecommendVMInfraWithDefaults",
                 "parameters": [
                     {
@@ -3658,7 +3670,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
+                    "[Recommendation] Resources for infrastructure"
                 ],
                 "summary": "Recommend an appropriate OS image for cloud migration",
                 "operationId": "RecommendVmOsImages",
@@ -3732,7 +3744,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
+                    "[Recommendation] Resources for infrastructure"
                 ],
                 "summary": "Recommend an appropriate security group for cloud migration",
                 "operationId": "RecommendSecurityGroups",
@@ -3806,7 +3818,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
+                    "[Recommendation] Resources for infrastructure"
                 ],
                 "summary": "Recommend an appropriate VM specification for cloud migration",
                 "operationId": "RecommendVmSpecs",
@@ -3886,7 +3898,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] Resources for VM infrastructure"
+                    "[Recommendation] Resources for infrastructure"
                 ],
                 "summary": "Recommend an appropriate virtual network for cloud migration",
                 "operationId": "RecommendVNet",
@@ -4347,9 +4359,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "default": "mci101",
-                        "description": "Multi-Cloud Infrastructure (MCI) ID",
-                        "name": "mciId",
+                        "default": "infra101",
+                        "description": "Infra ID",
+                        "name": "infraId",
                         "in": "path",
                         "required": true
                     },
@@ -4525,7 +4537,7 @@ const docTemplate = `{
         },
         "/validation/ns/{nsId}/infra": {
             "post": {
-                "description": "Runs, without creating or modifying any resource, the same checks\nmigration execution performs immediately before provisioning:\n\n- **Naming \u0026 referential integrity**: names must be 3-63 alphanumeric/hyphen\ncharacters, and internal references must resolve within the submitted model\n(e.g. a NodeGroup's ` + "`" + `securityGroupIds` + "`" + ` must match a ` + "`" + `name` + "`" + ` in ` + "`" + `targetSecurityGroupList` + "`" + `).\n- **Required fields**, which differ by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `true` + "`" + `: each NodeGroup's ` + "`" + `vNetId` + "`" + `, ` + "`" + `sshKeyId` + "`" + `, ` + "`" + `securityGroupIds` + "`" + ` must be set.\n- ` + "`" + `false` + "`" + `: ` + "`" + `targetVNet.name` + "`" + `, ` + "`" + `targetSshKey.name` + "`" + `, and each security group's ` + "`" + `name` + "`" + ` must be set.\n- **Resource name collision / availability** against Tumblebug, which also differs by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `false` + "`" + `: the VNet/SSH key/security groups to be created must NOT already exist in the\nnamespace (e.g. ` + "`" + `targetVNet.name: \"vnet-01\"` + "`" + ` fails if a VNet named ` + "`" + `vnet-01` + "`" + ` already exists).\n- ` + "`" + `true` + "`" + `: an existing resource must be under the same CSP/region connection the NodeGroup\nrequests (e.g. reusing a VNet provisioned under connection ` + "`" + `aws-ap-northeast-2` + "`" + ` while the\nNodeGroup's ` + "`" + `connectionName` + "`" + ` is ` + "`" + `gcp-asia-northeast3` + "`" + ` fails); a resource that doesn't exist\nyet must have enough data alongside it to create it instead (e.g. ` + "`" + `targetVNet.cidrBlock` + "`" + `).\n- **VM spec/image compatibility** per NodeGroup: ` + "`" + `specId` + "`" + `, ` + "`" + `imageId` + "`" + `, and ` + "`" + `connectionName` + "`" + ` must\nbe set, ` + "`" + `connectionName` + "`" + ` must be in ` + "`" + `csp-region` + "`" + ` format (e.g. ` + "`" + `aws-ap-northeast-2` + "`" + `), and the\nresolved spec/image pair must be compatible for that CSP (e.g. an ` + "`" + `x86_64` + "`" + ` spec paired with\nan ` + "`" + `arm64` + "`" + ` image fails).\n- **Infra (MCI) name collision**: ` + "`" + `targetInfra.name` + "`" + ` must not already exist in the namespace.\n\nAlways returns HTTP 200: the response body's ` + "`" + `valid` + "`" + ` field and\n` + "`" + `issues` + "`" + ` list carry the outcome, since a failed check is a normal,\nsuccessfully-answered result rather than a malformed request.\n400 is reserved for request body/parameter errors.\n\nBecause Tumblebug/CSP state can change afterward, a ` + "`" + `valid: true` + "`" + `\nresult is a best-effort snapshot, not a guarantee - the migration\nAPI re-runs this same validation immediately before provisioning.",
+                "description": "Runs, without creating or modifying any resource, the same checks\nmigration execution performs immediately before provisioning:\n\n- **Naming \u0026 referential integrity**: names must be 3-63 alphanumeric/hyphen\ncharacters, and internal references must resolve within the submitted model\n(e.g. a NodeGroup's ` + "`" + `securityGroupIds` + "`" + ` must match a ` + "`" + `name` + "`" + ` in ` + "`" + `targetSecurityGroupList` + "`" + `).\n- **Required fields**, which differ by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `true` + "`" + `: each NodeGroup's ` + "`" + `vNetId` + "`" + `, ` + "`" + `sshKeyId` + "`" + `, ` + "`" + `securityGroupIds` + "`" + ` must be set.\n- ` + "`" + `false` + "`" + `: ` + "`" + `targetVNet.name` + "`" + `, ` + "`" + `targetSshKey.name` + "`" + `, and each security group's ` + "`" + `name` + "`" + ` must be set.\n- **Resource name collision / availability** against Tumblebug, which also differs by ` + "`" + `useExisting` + "`" + `:\n- ` + "`" + `false` + "`" + `: the VNet/SSH key/security groups to be created must NOT already exist in the\nnamespace (e.g. ` + "`" + `targetVNet.name: \"vnet-01\"` + "`" + ` fails if a VNet named ` + "`" + `vnet-01` + "`" + ` already exists).\n- ` + "`" + `true` + "`" + `: an existing resource must be under the same CSP/region connection the NodeGroup\nrequests (e.g. reusing a VNet provisioned under connection ` + "`" + `aws-ap-northeast-2` + "`" + ` while the\nNodeGroup's ` + "`" + `connectionName` + "`" + ` is ` + "`" + `gcp-asia-northeast3` + "`" + ` fails); a resource that doesn't exist\nyet must have enough data alongside it to create it instead (e.g. ` + "`" + `targetVNet.cidrBlock` + "`" + `).\n- **VM spec/image compatibility** per NodeGroup: ` + "`" + `specId` + "`" + `, ` + "`" + `imageId` + "`" + `, and ` + "`" + `connectionName` + "`" + ` must\nbe set, ` + "`" + `connectionName` + "`" + ` must be in ` + "`" + `csp-region` + "`" + ` format (e.g. ` + "`" + `aws-ap-northeast-2` + "`" + `), and the\nresolved spec/image pair must be compatible for that CSP (e.g. an ` + "`" + `x86_64` + "`" + ` spec paired with\nan ` + "`" + `arm64` + "`" + ` image fails).\n- **Infra name collision**: ` + "`" + `targetInfra.name` + "`" + ` must not already exist in the namespace.\n\nAlways returns HTTP 200: the response body's ` + "`" + `valid` + "`" + ` field and\n` + "`" + `issues` + "`" + ` list carry the outcome, since a failed check is a normal,\nsuccessfully-answered result rather than a malformed request.\n400 is reserved for request body/parameter errors.\n\nBecause Tumblebug/CSP state can change afterward, a ` + "`" + `valid: true` + "`" + `\nresult is a best-effort snapshot, not a guarantee - the migration\nAPI re-runs this same validation immediately before provisioning.",
                 "consumes": [
                     "application/json"
                 ],
@@ -12461,8 +12473,8 @@ const docTemplate = `{
             "name": "[Recommendation] K8s Cluster (prototype)"
         },
         {
-            "description": "APIs for recommending resources for VM infrastructure (VNet, Security Group, etc.)",
-            "name": "[Recommendation] Resources for VM infrastructure"
+            "description": "APIs for recommending resources for infrastructure (VNet, Security Group, etc.)",
+            "name": "[Recommendation] Resources for infrastructure"
         },
         {
             "description": "APIs for aligning and validating multi-cloud resource names",
@@ -12473,8 +12485,8 @@ const docTemplate = `{
             "name": "[Migration] Infrastructure"
         },
         {
-            "description": "APIs for migrating resources for VM infrastructure (VNet, Security Group, etc.)",
-            "name": "[Migration] Resources for VM infrastructure"
+            "description": "APIs for migrating resources for infrastructure (VNet, Security Group, etc.)",
+            "name": "[Migration] Resources for infrastructure"
         },
         {
             "description": "APIs for summarizing and reporting infrastructure analysis results",

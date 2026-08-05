@@ -36,7 +36,7 @@ import (
 )
 
 /*
- * VM Infrastructure Recommendation
+ * Infrastructure Recommendation
  */
 
 type RecommendInfraWithDefaultsRequest struct {
@@ -50,8 +50,8 @@ type RecommendInfraWithDefaultsResponse struct {
 
 // RecommendVMInfraWithDefaults godoc
 // @ID RecommendVMInfraWithDefaults
-// @Summary (To be updated) Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
-// @Description Recommend an appropriate VM infrastructure (i.e., MCI, multi-cloud infrastructure) with defaults for cloud migration
+// @Summary (To be updated) Recommend an appropriate infrastructure (i.e., Infra, multi-cloud infrastructure) with defaults for cloud migration
+// @Description Recommend an appropriate infrastructure (i.e., Infra, multi-cloud infrastructure) with defaults for cloud migration
 // @Description
 // @Description [Note] `desiredCsp` and `desiredRegion` are required.
 // @Description - `desiredCsp` and `desiredRegion` can set on the query parameter or the request body.
@@ -139,7 +139,7 @@ func RecommendVMInfraWithDefaults(c echo.Context) error {
 
 	// [Ouput]
 	if err != nil {
-		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (MCI) for cloud migration")
+		log.Error().Err(err).Msg("failed to recommend an appropriate multi-cloud infrastructure (Infra) for cloud migration")
 		return c.JSON(http.StatusNotFound, model.SimpleErrorResponse("Recommendation failed"))
 	}
 
@@ -157,8 +157,8 @@ type RecommendInfraResponse struct {
 
 // RecommendVmInfraCandidates godoc
 // @ID RecommendVmInfraCandidates
-// @Summary Recommend multiple VM infrastructure candidates for cloud migration
-// @Description Recommend best-effort VM infrastructure (MCI) candidates for migrating on-premise workloads to cloud environments.
+// @Summary Recommend multiple infrastructure candidates for cloud migration
+// @Description Recommend best-effort infrastructure (Infra) candidates for migrating on-premise workloads to cloud environments.
 // @Description
 // @Description - See overview and examples on https://github.com/cloud-barista/cm-beetle/discussions/256
 // @Description
@@ -277,7 +277,7 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	// [Process]
 	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (MCI) for cloud migration")
+		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (Infra) for cloud migration")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Recommendation failed"))
 	}
 

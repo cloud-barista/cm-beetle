@@ -44,13 +44,13 @@ applyTo: "**/*.go"
 
 ```go
 // ✅ Good: Clear and concise
-// GetDeleteRateLimiter returns the singleton instance (thread-safe, initialized once).
-func GetDeleteRateLimiter() *DeleteInfraRateLimiter { ... }
+// getPacer returns the process-wide pacer for TB's rate-limited read APIs.
+var getPacer = sync.OnceValue(func() *ratelimit.Pacer { ... })
 
 // ❌ Bad: Verbose and repetitive
-// GetDeleteRateLimiter returns the singleton DeleteInfraRateLimiter instance.
-// It is thread-safe and initialized only once using sync.Once.
-func GetDeleteRateLimiter() *DeleteInfraRateLimiter { ... }
+// getPacer returns the process-wide ratelimit.Pacer instance for TB's read APIs.
+// It is thread-safe and initialized only once using sync.OnceValue.
+var getPacer = sync.OnceValue(func() *ratelimit.Pacer { ... })
 ```
 
 ### Type Comments
@@ -63,12 +63,11 @@ func GetDeleteRateLimiter() *DeleteInfraRateLimiter { ... }
 
 ```go
 // ✅ Good: Architecture visible at a glance
-// DeleteInfraRateLimiter prevents TB's rate limit (2 req/s) by queueing and pacing requests.
+// Pacer spaces out calls to a resource with a fixed, known rate limit. Callers wait
+// their turn rather than being rejected, so a burst is spread over time.
 //
-// Architecture: [Goroutines] → [Queue: 50 max] → [Pacer: 600ms] → [TB API]
-// - Queue full: Reject immediately
-// - Rate exceeded: Slow down adaptively
-type DeleteInfraRateLimiter struct { ... }
+// Architecture: [callers] → [token bucket: one call per interval] → [resource]
+type Pacer struct { ... }
 ```
 
 ### Constant & Variable Comments
@@ -81,16 +80,16 @@ type DeleteInfraRateLimiter struct { ... }
 ```go
 // ✅ Good: Inline with technical details
 const (
-    maxQueueSize       = 50                      // Max concurrent requests (~30s wait)
-    defaultInterval    = 600 * time.Millisecond  // 1.67 req/s (20% below TB's 2 req/s)
-    minAllowedInterval = 550 * time.Millisecond  // Speed limit: 1.82 req/s
+    pacingInterval    = 600 * time.Millisecond  // 1.67 req/s (20% below TB's 2 req/s)
+    defaultPacingWait = 8 * time.Second         // Wait budget when the context has no deadline
+    maxPacingWait     = 120 * time.Second       // Upper clamp on the configurable budget
 )
 
 // ❌ Bad: Verbose separate comments
-// maxQueueSize limits the number of delete requests that can wait concurrently.
-// This prevents unbounded goroutine accumulation and potential OOM.
-// With 600ms interval, 50 requests = ~30 seconds max wait time.
-const maxQueueSize = 50
+// defaultPacingWait is how long a call waits for a slot when its context
+// carries no deadline of its own. It keeps callers from blocking forever
+// when an operator has not configured a budget.
+const defaultPacingWait = 8 * time.Second
 ```
 
 ### Inline Comments

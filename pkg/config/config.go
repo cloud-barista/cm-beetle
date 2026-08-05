@@ -80,14 +80,25 @@ type AutoControlConfig struct {
 }
 
 type TumblebugConfig struct {
-	Endpoint string             `mapstructure:"endpoint"`
-	RestUrl  string             `mapstructure:"resturl"`
-	API      TumblebugApiConfig `mapstructure:"api"`
+	Endpoint  string             `mapstructure:"endpoint"`
+	RestUrl   string             `mapstructure:"resturl"`
+	API       TumblebugApiConfig `mapstructure:"api"`
+	Retrieval RetrievalConfig    `mapstructure:"retrieval"`
 }
 
 type TumblebugApiConfig struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+}
+
+// RetrievalConfig describes the rate limit CB-Tumblebug enforces on its retrieval APIs, so Beetle
+// can pace its own calls to stay under it. This is not TB's global limit: TB caps those routes far
+// more tightly. TB applies it per client IP, so it governs the whole Beetle process. State TB's
+// actual limit in RequestsPerSec; Beetle subtracts its own margin. MaxWaitSec is how long a call
+// may wait for a slot before giving up with 503. See pkg/client/tumblebug/call-pacer.go.
+type RetrievalConfig struct {
+	RequestsPerSec float64 `mapstructure:"requests_per_sec"`
+	MaxWaitSec     int     `mapstructure:"max_wait_sec"`
 }
 
 func Init() {
@@ -211,6 +222,8 @@ func bindEnvironmentVariables() {
 	viper.BindEnv("beetle.tumblebug.resturl", "BEETLE_TUMBLEBUG_REST_URL")
 	viper.BindEnv("beetle.tumblebug.api.username", "BEETLE_TUMBLEBUG_API_USERNAME")
 	viper.BindEnv("beetle.tumblebug.api.password", "BEETLE_TUMBLEBUG_API_PASSWORD")
+	viper.BindEnv("beetle.tumblebug.retrieval.requests_per_sec", "BEETLE_TUMBLEBUG_RETRIEVAL_REQUESTS_PER_SEC")
+	viper.BindEnv("beetle.tumblebug.retrieval.max_wait_sec", "BEETLE_TUMBLEBUG_RETRIEVAL_MAX_WAIT_SEC")
 }
 
 // TODO: Implement security validation for authentication configuration

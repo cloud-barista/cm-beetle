@@ -26,7 +26,7 @@ imdl/
 ├── cloud-model/              # Cloud infrastructure models (source)
 │   ├── model.go              # Recommended cloud infrastructure models
 │   ├── copied-tb-model.go    # CB-Tumblebug models (synchronized with specific TB versions)
-│   └── vm-infra-info.go      # VM infrastructure information models
+│   └── infra-info.go         # Infrastructure information models
 ├── on-premise-model/         # On-premise infrastructure models (source)
 │   ├── model.go              # Main on-premise infrastructure models
 │   ├── server.go             # Server hardware and OS models
@@ -40,13 +40,13 @@ imdl/
 
 ### 1. Cloud Models (`cloud-model/`)
 
-**Purpose**: Model recommended cloud infrastructure configurations and VM infrastructure information.
+**Purpose**: Model recommended cloud infrastructure configurations and infrastructure information.
 
 **Key Types**:
 
-- `RecommendedVmInfraModel`: Recommended VM infrastructure configuration
+- `RecommendedVmInfraModel`: Recommended infrastructure configuration
 - `RecommendedVNet`, `RecommendedSecurityGroup`, `RecommendedVmSpec`: Cloud resource recommendations
-- `VmInfraInfo`: VM infrastructure information
+- `VmInfraInfo`: Infrastructure information
 - TB-prefixed types (e.g., `TbMciReq`, `TbVmReq`): CB-Tumblebug framework models
 
 **CB-Tumblebug Integration**:

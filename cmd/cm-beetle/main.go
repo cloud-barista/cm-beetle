@@ -166,8 +166,8 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Recommendation] K8s Cluster (prototype)
 // @tag.description APIs for recommending optimal Kubernetes clusters (prototype)
 
-// @tag.name [Recommendation] Resources for VM infrastructure
-// @tag.description APIs for recommending resources for VM infrastructure (VNet, Security Group, etc.)
+// @tag.name [Recommendation] Resources for infrastructure
+// @tag.description APIs for recommending resources for infrastructure (VNet, Security Group, etc.)
 
 // @tag.name [Infrastructure] Resource Naming
 // @tag.description APIs for aligning and validating multi-cloud resource names
@@ -175,8 +175,8 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Migration] Infrastructure
 // @tag.description APIs for migrating on-premise infrastructure to cloud (VMs, VNets, etc.)
 
-// @tag.name [Migration] Resources for VM infrastructure
-// @tag.description APIs for migrating resources for VM infrastructure (VNet, Security Group, etc.)
+// @tag.name [Migration] Resources for infrastructure
+// @tag.description APIs for migrating resources for infrastructure (VNet, Security Group, etc.)
 
 // @tag.name [Summary/Report] Infrastructure Analysis for Migration
 // @tag.description APIs for summarizing and reporting infrastructure analysis results

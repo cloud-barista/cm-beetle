@@ -35,7 +35,7 @@ import (
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Resources for VM infrastructure
+// @Tags [Recommendation] Resources for infrastructure
 // @Accept json
 // @Produce	json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
@@ -106,7 +106,7 @@ func RecommendVNet(c echo.Context) error {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Resources for VM infrastructure
+// @Tags [Recommendation] Resources for infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
@@ -169,7 +169,7 @@ type RecommendVmSpecResponse struct {
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
 // @Description - If `targetMachineId` is provided, only that specific machine will be processed.
-// @Tags [Recommendation] Resources for VM infrastructure
+// @Tags [Recommendation] Resources for infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
@@ -360,7 +360,7 @@ func RecommendVmSpecs(c echo.Context) error {
 // @Description - `desiredProvider` and `desiredRegion` can set on the query parameter or the request body.
 // @Description
 // @Description - If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.
-// @Tags [Recommendation] Resources for VM infrastructure
+// @Tags [Recommendation] Resources for infrastructure
 // @Accept  json
 // @Produce  json
 // @Param UserInfra body RecommendInfraRequest true "Specify the your infrastructure to be migrated"
