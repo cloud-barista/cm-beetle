@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
+import { useGlobalJobPolling } from '../../hooks/useGlobalJobPolling';
 import { Database, Cpu, Compass, HardDrive, Sun, Moon, Maximize2, Sliders, Server, Key } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -10,6 +11,9 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { activeTab, setActiveTab, themeMode, toggleTheme } = useMigrationStore();
+
+  // Global background polling for active migration jobs across all tabs
+  useGlobalJobPolling();
 
   // Synchronize documentElement theme class with themeMode on mount & updates
   React.useEffect(() => {
