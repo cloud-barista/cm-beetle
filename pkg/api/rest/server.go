@@ -301,7 +301,7 @@ func RunServer(port string) {
 	// Custom middleware to check if the Tumblebug is initialized
 	gRecommendation.Use(middlewares.TumblebugInitChecker)
 
-	// Recommendation APIs for VM infrastructure
+	// Recommendation APIs for infrastructure
 	gRecommendation.POST("/infra", controller.RecommendVmInfraCandidates)
 	gRecommendation.POST("/infraWithDefaults", controller.RecommendVMInfraWithDefaults)
 
@@ -328,7 +328,7 @@ func RunServer(port string) {
 
 	// Deprecated: Use /k8sControlPlane and /k8sNodeGroup instead
 
-	// Recommedation APIs for resources for VM infrastructure
+	// Recommendation APIs for resources for infrastructure
 	gRecommendation.POST("/resources/vNet", controller.RecommendVNet)
 	gRecommendation.POST("/resources/securityGroups", controller.RecommendSecurityGroups)
 	gRecommendation.POST("/resources/osImages", controller.RecommendVmOsImages)
@@ -360,17 +360,19 @@ func RunServer(port string) {
 	// gNamespace.GET("/:nsId", controller.RestGetNs)
 	// gNamespace.DELETE("/:nsId", controller.RestDeleteNs)
 
-	// Migration APIs for VM infrastructure
+	// Migration APIs for infrastructure
 	gMigration.POST("/ns/:nsId/infraWithDefaults", controller.MigrateInfraWithDefaults)
 	gMigration.POST("/ns/:nsId/infra", controller.MigrateInfra)
 	gMigration.GET("/ns/:nsId/infra", controller.ListInfra)
 	gMigration.GET("/ns/:nsId/infra/:infraId", controller.GetInfra)
 	gMigration.DELETE("/ns/:nsId/infra/:infraId", controller.DeleteInfra)
-	
-	// SSH readiness check API (for IBM Cloud VPC and other CSPs with delayed SSH setup)
-	gMigration.GET("/ns/:nsId/infra/:infraId/ssh-ready", controller.CheckSSHReady)
 
-	// Migration APIs for resources for VM infrastructure
+	// SSH readiness check API (for IBM Cloud VPC and other CSPs with delayed SSH setup)
+	// Route-level cooldown, independent of the server-wide rate limiter: each check opens
+	// real SSH connections to every node.
+	gMigration.GET("/ns/:nsId/infra/:infraId/ssh-ready", controller.CheckSSHReady, middlewares.SSHCheckCooldown())
+
+	// Migration APIs for resources for infrastructure
 	// APIs for the VM spec resources
 	// gMigration.GET("/ns/:nsId/resources/spec", controller.ListMigratedSpec)
 	// gMigration.POST("/ns/:nsId/resources/spec", controller.CreateMigratedSpec)

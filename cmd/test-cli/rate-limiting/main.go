@@ -1,10 +1,12 @@
-// Package main tests concurrent infrastructure deletion with rate limiting
+// Package main tests Beetle's rate limiting: the Tumblebug call pacer under a retrieval burst,
+// and concurrent infrastructure deletion.
 package main
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -24,7 +26,13 @@ import (
 
 var (
 	configFile = flag.String("config", "testconf/test-config.yaml", "Path to test configuration file")
+	// Beetle's edge limiter admits 20 at once, and of those the 8s wait budget paces in ~13,
+	// so 30 exercises all three outcomes: admitted, paced out (503), edge limited (429).
+	retrievalBurst = flag.Int("retrieval-burst", 30, "Simultaneous retrieval requests used to probe the Tumblebug call pacer")
 )
+
+// A refusal costs no Tumblebug call, so it should come back in milliseconds.
+const immediateRefusal = 1 * time.Second
 
 // NoOpLogger suppresses resty client logs (including Basic Auth warnings)
 type NoOpLogger struct{}
@@ -86,7 +94,7 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "15:04:05"})
 
 	log.Info().Msg("========================================")
-	log.Info().Msg("Concurrent Delete Test (5 Infra)")
+	log.Info().Msg("Rate Limiting Test (retrieval burst + concurrent delete)")
 	log.Info().Msg("========================================")
 
 	// Load configuration
@@ -183,9 +191,18 @@ func main() {
 	log.Info().Msgf("Phase 2: Waiting %v for infrastructure stabilization...", waitTime)
 	time.Sleep(waitTime)
 
-	// Phase 3: Concurrent Delete
+	// Phase 3: Retrieval burst
 	log.Info().Msg("")
-	log.Info().Msg("Phase 3: Concurrent Deletion")
+	log.Info().Msg("Phase 3: Retrieval Burst")
+	log.Info().Msg("----------------------------------------")
+	probeRetrievalPacing(config, infraList, authConfig, *retrievalBurst)
+
+	// Let the burst's last pacer slot age out, so Phase 4 measures deletion pacing alone.
+	time.Sleep(2 * time.Second)
+
+	// Phase 4: Concurrent Delete
+	log.Info().Msg("")
+	log.Info().Msg("Phase 4: Concurrent Deletion")
 	log.Info().Msg("----------------------------------------")
 	log.Info().Msgf("Deleting %d infrastructure(s) concurrently...", len(infraList))
 
@@ -205,14 +222,14 @@ func main() {
 				log.Error().
 					Str("infraId", info.InfraID).
 					Str("csp", info.CSP).
-					Dur("duration", duration).
+					Str("duration", duration.Round(time.Millisecond).String()).
 					Err(err).
 					Msgf("❌ [%d] Failed to delete %s", idx+1, info.DisplayName)
 			} else {
 				log.Info().
 					Str("infraId", info.InfraID).
 					Str("csp", info.CSP).
-					Dur("duration", duration).
+					Str("duration", duration.Round(time.Millisecond).String()).
 					Msgf("✅ [%d] Deleted %s", idx+1, info.DisplayName)
 			}
 		}(i, infra)
@@ -227,14 +244,99 @@ func main() {
 	log.Info().Msg("Test Completed")
 	log.Info().Msg("========================================")
 	log.Info().Msgf("Total infrastructure: %d", len(infraList))
-	log.Info().Msgf("Concurrent deletion time: %v", totalDuration)
-	log.Info().Msgf("Expected time (with rate limiting): ~%v",
-		time.Duration(len(infraList)*600)*time.Millisecond)
+	log.Info().Msgf("Concurrent deletion time: %v (dominated by CSP teardown)", totalDuration.Round(time.Second))
+	log.Info().Msgf("Pacer stagger included in that: ~%v",
+		time.Duration(len(infraList)*625)*time.Millisecond)
 	log.Info().Msg("")
-	log.Info().Msg("Check logs for rate limiter messages:")
-	log.Info().Msg("  - 'Entered delete rate limiter queue'")
-	log.Info().Msg("  - 'Rate limiting ReadInfra call'")
-	log.Info().Msg("  - 'Rate limiter speeding up/slowing down'")
+	log.Info().Msg("Check logs for pacer messages:")
+	log.Info().Msg("  - 'Tumblebug call pacer initialized'")
+	log.Info().Msg("  - 'Paced Tumblebug call'")
+	log.Info().Msg("  - 'Tumblebug call pacer refused a slot'")
+}
+
+// probeRetrievalPacing fires n simultaneous retrievals at the paced API. The pacer admits callers
+// one interval apart while that still fits the wait budget and refuses the rest without calling
+// Tumblebug, so the excess must come back as 503 almost instantly.
+func probeRetrievalPacing(config TestConfig, infraList []InfraInfo, authConfig AuthConfig, n int) {
+	client := resty.New().SetTimeout(2 * time.Minute)
+	client.SetLogger(&NoOpLogger{})
+	if authConfig.BeetleApiUsername != "" && authConfig.BeetleApiPassword != "" {
+		client.SetBasicAuth(authConfig.BeetleApiUsername, authConfig.BeetleApiPassword)
+	}
+
+	log.Info().Msgf("Sending %d simultaneous retrievals across %d infrastructure(s)...", n, len(infraList))
+
+	type result struct {
+		status     int
+		elapsed    time.Duration
+		retryAfter string
+	}
+	results := make([]result, n)
+
+	start := make(chan struct{}) // Release every goroutine at once
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			url := fmt.Sprintf("%s/beetle/migration/ns/%s/infra/%s",
+				config.Beetle.Endpoint, config.Beetle.NamespaceID, infraList[idx%len(infraList)].InfraID)
+
+			<-start
+			begin := time.Now()
+			resp, err := client.R().Get(url)
+			results[idx].elapsed = time.Since(begin)
+			if err != nil {
+				results[idx].status = -1
+				return
+			}
+			results[idx].status = resp.StatusCode()
+			results[idx].retryAfter = resp.Header().Get("Retry-After")
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	var admitted, refused, edgeLimited, other int
+	var slowestAdmitted, slowestRefused time.Duration
+	retryAfter := ""
+	for _, r := range results {
+		switch {
+		case r.status == http.StatusServiceUnavailable:
+			refused++
+			if r.elapsed > slowestRefused {
+				slowestRefused = r.elapsed
+			}
+			if retryAfter == "" {
+				retryAfter = r.retryAfter
+			}
+		case r.status == http.StatusTooManyRequests:
+			edgeLimited++
+		case r.status >= 200 && r.status < 300:
+			admitted++
+			if r.elapsed > slowestAdmitted {
+				slowestAdmitted = r.elapsed
+			}
+		default:
+			other++
+		}
+	}
+
+	log.Info().Msgf("  Admitted     (2xx): %2d, slowest %v", admitted, slowestAdmitted.Round(time.Millisecond))
+	log.Info().Msgf("  Paced out    (503): %2d, slowest %v, Retry-After: %s", refused, slowestRefused.Round(time.Millisecond), retryAfter)
+	log.Info().Msgf("  Edge limited (429): %2d (Beetle's own 20 req/s limiter, never reached the pacer)", edgeLimited)
+	if other > 0 {
+		log.Warn().Msgf("  Other             : %2d", other)
+	}
+
+	switch {
+	case refused == 0:
+		log.Warn().Msgf("⚠️  No 503: all %d fit the wait budget or were edge limited. Raise -retrieval-burst.", n)
+	case slowestRefused < immediateRefusal:
+		log.Info().Msgf("✅ Refusals returned immediately (within %v)", immediateRefusal)
+	default:
+		log.Warn().Msgf("⚠️  Refusals took up to %v; expected near-instant", slowestRefused.Round(time.Millisecond))
+	}
 }
 
 func loadConfig(filename string) (TestConfig, error) {

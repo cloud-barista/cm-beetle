@@ -54,7 +54,7 @@ type ValidateInfraRequest struct {
 // @Description   be set, `connectionName` must be in `csp-region` format (e.g. `aws-ap-northeast-2`), and the
 // @Description   resolved spec/image pair must be compatible for that CSP (e.g. an `x86_64` spec paired with
 // @Description   an `arm64` image fails).
-// @Description - **Infra (MCI) name collision**: `targetInfra.name` must not already exist in the namespace.
+// @Description - **Infra name collision**: `targetInfra.name` must not already exist in the namespace.
 // @Description
 // @Description Always returns HTTP 200: the response body's `valid` field and
 // @Description `issues` list carry the outcome, since a failed check is a normal,

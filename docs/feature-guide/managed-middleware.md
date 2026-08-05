@@ -33,7 +33,7 @@ See also: [Object Storage Migration Feature Guide](object-storage-migration-feat
 | Migration      | ✅  |  ✅   | ✅  |   ✅    |   📅    | ✅  |     📅      | ✅  |  📅   |  📅  |
 
 > - Recommendation groups source nodes by NLB backend topology (N:1) and returns Pareto-frontier spec candidates.
-> - Migration provisions NLBs on the target cloud after VM infrastructure is deployed.
+> - Migration provisions NLBs on the target cloud after infrastructure is deployed.
 
 ### CSP-Specific Characteristics and Constraints
 

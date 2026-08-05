@@ -52,3 +52,11 @@ beetle:
     api:
       username: default
       password: default
+
+    ## Paces Beetle's calls under CB-Tumblebug's per-client-IP rate limit on retrieval APIs,
+    ## which is far tighter than TB's global limit. requests_per_sec: TB's own limit; Beetle
+    ## paces itself below it. max_wait_sec: wait for a slot before giving up with 503.
+    ## See docs/tumblebug-call-pacer.md.
+    retrieval:
+      requests_per_sec: 2
+      max_wait_sec: 8

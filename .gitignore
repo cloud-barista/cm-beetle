@@ -49,9 +49,9 @@ cmd/test-cli/data/testconf/test-config.yaml
 cmd/test-cli/async/test-async
 cmd/test-cli/async/testconf/auth-config.json
 cmd/test-cli/async/testconf/test-config.yaml
-cmd/test-cli/concurrent-delete/test-concurrent-delete
-cmd/test-cli/concurrent-delete/testconf/auth-config.json
-cmd/test-cli/concurrent-delete/testconf/test-config.yaml
+cmd/test-cli/rate-limiting/test-rate-limiting
+cmd/test-cli/rate-limiting/testconf/auth-config.json
+cmd/test-cli/rate-limiting/testconf/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*

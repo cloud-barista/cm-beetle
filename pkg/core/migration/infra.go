@@ -15,6 +15,7 @@ limitations under the License.
 package migration
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -155,13 +156,6 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 	_, err = tbclient.NewSession().ReadNamespace(nsId)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to read the namespace (nsId: %s)", nsId)
-		return emptyRet, err
-	}
-
-	log.Debug().Msgf("Checking if the Infra (%s) exists in the namespace (%s)", targetInfraModel.TargetInfra.Name, nsId)
-	tempInfraInfo, err := tbclient.NewSession().ReadInfra(nsId, targetInfraModel.TargetInfra.Name)
-	if tempInfraInfo.Id != "" {
-		log.Error().Err(err).Msgf("the Infra already exist (nsId: %s, infraName: %s)", nsId, targetInfraModel.TargetInfra.Name)
 		return emptyRet, err
 	}
 
@@ -369,13 +363,6 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 		return emptyRet, err
 	}
 
-	log.Debug().Msgf("Checking if the Infra (%s) exists in the namespace (%s)", targetInfraModel.TargetInfra.Name, nsId)
-	tempInfraInfo, err := tbclient.NewSession().ReadInfra(nsId, targetInfraModel.TargetInfra.Name)
-	if tempInfraInfo.Id != "" {
-		log.Error().Err(err).Msgf("the Infra already exist (nsId: %s, infraName: %s)", nsId, targetInfraModel.TargetInfra.Name)
-		return emptyRet, err
-	}
-
 	// 2. Create a node specification (spec)
 	// * Skip: No need to regenerate node spec in namespace
 
@@ -552,53 +539,13 @@ func GetInfra(nsId, infraId string) (cloudmodel.InfraInfo, error) {
 func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	log.Info().Msgf("Deleting the migrated infrastructure (nsId: %s, infraId: %s)", nsId, infraId)
 
-	rateLimiter := GetDeleteRateLimiter()
-
-	// 1. Read Infra info with rate limiting and retry on rate limit
-	var infraInfo tbmodel.InfraInfo
-	var err error
-
-	const maxReadRetries = 3
-	for attempt := 1; attempt <= maxReadRetries; attempt++ {
-		// Wait for rate limiter slot (queue + time-based pacing)
-		if queueErr := rateLimiter.WaitForSlot(); queueErr != nil {
-			// Queue is full - return error immediately
-			log.Error().Err(queueErr).Msgf("Delete rate limiter queue full (nsId: %s, infraId: %s)", nsId, infraId)
-			return common.SimpleMsg{}, queueErr
-		}
-
-		// Attempt ReadInfra call
-		infraInfo, err = tbclient.NewSession().ReadInfra(nsId, infraId)
-
-		if err == nil {
-			// Success - report to rate limiter for adaptive adjustment
-			rateLimiter.ReportSuccess()
-			log.Debug().Msgf("ReadInfra succeeded (nsId: %s, infraId: %s, attempt: %d)", nsId, infraId, attempt)
-			break
-		}
-
-		// Check if rate limit error (429 or "rate" in error message)
-		if isRateLimitError(err) {
-			rateLimiter.ReportFailure()
-			if attempt < maxReadRetries {
-				backoffDuration := time.Duration(attempt) * time.Second
-				log.Warn().Err(err).Msgf("Rate limit hit on ReadInfra, retrying after %v (nsId: %s, infraId: %s, attempt: %d/%d)",
-					backoffDuration, nsId, infraId, attempt, maxReadRetries)
-				time.Sleep(backoffDuration)
-				continue
-			}
-		}
-
-		// Non-rate-limit error or max retries exceeded
-		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s, attempt: %d/%d)",
-			nsId, infraId, attempt, maxReadRetries)
-		return common.SimpleMsg{}, err
-	}
-
+	// 1. Read Infra info. This call is paced by the client-side TB rate limiter
+	// (pkg/client/tumblebug); deletion tolerates a longer wait than interactive reads.
+	readCtx, cancelRead := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancelRead()
+	infraInfo, err := tbclient.NewSession().SetContext(readCtx).ReadInfra(nsId, infraId)
 	if err != nil {
-		// All retries exhausted
-		log.Error().Err(err).Msgf("failed to read the infrastructure info after %d attempts (nsId: %s, infraId: %s)",
-			maxReadRetries, nsId, infraId)
+		log.Error().Err(err).Msgf("failed to read the infrastructure info (nsId: %s, infraId: %s)", nsId, infraId)
 		return common.SimpleMsg{}, err
 	}
 
@@ -713,19 +660,6 @@ func DeleteInfra(nsId, infraId, option string) (common.SimpleMsg, error) {
 	}
 	log.Info().Msgf("Infrastructure deletion completed (nsId: %s, infraId: %s)", nsId, infraId)
 	return ret, nil
-}
-
-// isRateLimitError checks if an error is due to rate limiting.
-// It detects common rate limit error patterns from TB/CSP APIs.
-func isRateLimitError(err error) bool {
-	if err == nil {
-		return false
-	}
-	errMsg := strings.ToLower(err.Error())
-	return strings.Contains(errMsg, "rate limit") ||
-		strings.Contains(errMsg, "429") ||
-		strings.Contains(errMsg, "too many requests") ||
-		strings.Contains(errMsg, "throttle")
 }
 
 // preflightCheckCspProvisioning resolves the latest CSP image and confirms available system disk per nodegroup

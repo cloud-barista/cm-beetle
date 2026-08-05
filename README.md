@@ -60,7 +60,7 @@ Data migration transfers data between storage endpoints regardless of which CSP 
 
 ### Feature Guides
 
-- [VM Infrastructure](docs/feature-guide/vm-infrastructure.md)
+- [Infrastructure](docs/feature-guide/infrastructure.md)
 - [Kubernetes Infrastructure](docs/feature-guide/kubernetes-infrastructure.md)
 - [Managed Middleware](docs/feature-guide/managed-middleware.md)
 - [Object Storage Migration](docs/feature-guide/object-storage-migration-feature-guide.md)

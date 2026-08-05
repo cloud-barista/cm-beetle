@@ -49,7 +49,7 @@ import (
 // @Produce  text/markdown
 // @Produce  text/html
 // @Param nsId path string true "Namespace ID" default(mig01)
-// @Param mciId path string true "Multi-Cloud Infrastructure (MCI) ID" default(mci101)
+// @Param infraId path string true "Infra ID" default(infra101)
 // @Param format query string false "Summary format: md, html, or json" Enums(md,html,json) default(md)
 // @Param download query string false "Download as file: true for file download, false for inline display (only affects browsers/Swagger UI, not curl)" Enums(true,false) default(false)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."

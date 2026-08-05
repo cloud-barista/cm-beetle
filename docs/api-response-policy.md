@@ -11,8 +11,9 @@ This document outlines the policies for API response codes, success messages, an
 | **202 Accepted** | Async job accepted | Reserved repo-wide for async responses (see [Async Responses](#async-responses)). Never return 202 for any other reason. |
 | **400 Bad Request** | Bad Request | Invalid input parameters or request body. |
 | **404 Not Found** | Not Found | Resource does not exist. Used for GET, DELETE, etc., when the target ID is invalid. |
+| **429 Too Many Requests** | Client throttled | The caller's own request rate exceeded a per-client/per-resource quota, and backing off resolves it (e.g. the SSH readiness check cooldown). Include a `Retry-After` header. |
 | **500 Internal Server Error** | Server Error | Unexpected server-side errors. |
-| **503 Service Unavailable** | At capacity | Returned by async-capable endpoints when too many async jobs are already running (see [Async Responses](#async-responses)). |
+| **503 Service Unavailable** | At capacity | The server or a dependency is out of capacity and the caller is a bystander. Include a `Retry-After` header. Covers: too many async jobs already running (see [Async Responses](#async-responses)); Beetle's own admission control rejecting a Tumblebug call because no paced slot is available in time; and Tumblebug still returning `429` after client retries are exhausted. |
 
 ## Response Body
 
@@ -29,6 +30,10 @@ This document outlines the policies for API response codes, success messages, an
 ## Proxy Behavior
 - **Status Code Preservation**: When proxying requests to Tumblebug or other services, the proxy **must** preserve the upstream HTTP status code.
 - **Transparency**: Do not override specific upstream codes (like `404`) with generic codes (like `500`) unless it is a true internal proxy error.
+- **Exception — upstream throttling**: This rule applies to endpoints that forward a request 1:1. Endpoints that
+  fan one client request out into many upstream calls (e.g. migration endpoints) must **not** relay an upstream
+  `429`: the client did not exceed any quota of its own and cannot fix it by slowing down. Report `503` with a
+  `Retry-After` header instead.
 
 ## Async Responses
 

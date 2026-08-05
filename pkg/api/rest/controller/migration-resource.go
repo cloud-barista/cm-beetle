@@ -97,7 +97,7 @@ func createTumblebugProxyHandler(sourcePattern string, targetPattern string) ech
 // @ID ListMigratedVNets
 // @Summary List all migrated virtual networks
 // @Description Get the list of all migrated virtual networks in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -124,7 +124,7 @@ func ListMigratedVNets(c echo.Context) error {
 // @ID GetMigratedVNet
 // @Summary Get a specific migrated virtual network
 // @Description Get details of a specific virtual network in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -149,7 +149,7 @@ func GetMigratedVNet(c echo.Context) error {
 // @ID CreateVNet
 // @Summary Create a migrated virtual network
 // @Description Create a new migrated virtual network in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -175,7 +175,7 @@ func CreateVNet(c echo.Context) error {
 // @ID DeleteMigratedVNet
 // @Summary Delete a migrated virtual network
 // @Description Delete a specific migrated virtual network in the namespace. Action options: withsubnets (delete with subnets), reconcile (sync metadata with CSP state), force (force-delete on CSP)
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -200,7 +200,7 @@ func DeleteMigratedVNet(c echo.Context) error {
 // @ID DeleteMigratedVNets
 // @Summary Delete multiple migrated virtual networks
 // @Description Delete multiple migrated virtual networks in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -225,7 +225,7 @@ func DeleteMigratedVNets(c echo.Context) error {
 // @ID ListMigratedSSHKeys
 // @Summary List all migrated SSH keys
 // @Description Get the list of all migrated SSH keys in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -252,7 +252,7 @@ func ListMigratedSSHKeys(c echo.Context) error {
 // @ID GetMigratedSSHKey
 // @Summary Get a specific migrated SSH key
 // @Description Get details of a specific migrated SSH key in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -277,7 +277,7 @@ func GetMigratedSSHKey(c echo.Context) error {
 // @ID CreateMigratedSSHKey
 // @Summary Create a migrated SSH key
 // @Description Create a new migrated SSH key in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -303,7 +303,7 @@ func CreateMigratedSSHKey(c echo.Context) error {
 // @ID DeleteMigratedSSHKey
 // @Summary Delete a migrated SSH key
 // @Description Delete a specific migrated SSH key in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -328,7 +328,7 @@ func DeleteMigratedSSHKey(c echo.Context) error {
 // @ID DeleteMigratedSSHKeys
 // @Summary Delete multiple migrated SSH keys
 // @Description Delete multiple migrated SSH keys in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -353,7 +353,7 @@ func DeleteMigratedSSHKeys(c echo.Context) error {
 // @ID ListMigratedSecurityGroups
 // @Summary List all migrated security groups
 // @Description Get the list of all migrated security groups in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -380,7 +380,7 @@ func ListMigratedSecurityGroups(c echo.Context) error {
 // @ID GetMigratedSecurityGroup
 // @Summary Get a specific migrated security group
 // @Description Get details of a specific migrated security group in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -405,7 +405,7 @@ func GetMigratedSecurityGroup(c echo.Context) error {
 // @ID CreateMigratedSecurityGroup
 // @Summary Create a migrated security group
 // @Description Create a new migrated security group in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -431,7 +431,7 @@ func CreateMigratedSecurityGroup(c echo.Context) error {
 // @ID DeleteMigratedSecurityGroup
 // @Summary Delete a migrated security group
 // @Description Delete a specific migrated security group in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
@@ -456,7 +456,7 @@ func DeleteMigratedSecurityGroup(c echo.Context) error {
 // @ID DeleteMigratedSecurityGroups
 // @Summary Delete multiple migrated security groups
 // @Description Delete multiple migrated security groups in the namespace
-// @Tags [Migration] Resources for VM infrastructure
+// @Tags [Migration] Resources for infrastructure
 // @Accept json
 // @Produce json
 // @Param nsId path string true "Namespace ID" default(mig01)
