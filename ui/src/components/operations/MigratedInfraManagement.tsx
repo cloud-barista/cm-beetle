@@ -422,10 +422,13 @@ export const MigratedInfraManagement: React.FC = () => {
     setDeleteError('');
   };
 
+  const completedJobsCount = jobs.filter(j => j.status === 'Success').length;
+  const completedStoragesCount = objectStorageJobs.filter(j => j.status === 'Success').length;
+
   useEffect(() => {
     fetchMigratedInfraIds();
     loadMigratedStorages();
-  }, [namespaceId]);
+  }, [namespaceId, completedJobsCount, completedStoragesCount]);
 
   // Combine backend migrated infras, completed migration jobs from store, and saved models
   const completedJobs = jobs.filter(j => j.status === 'Success');
