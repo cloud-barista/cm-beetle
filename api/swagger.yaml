@@ -1652,6 +1652,10 @@ definitions:
         description: Extracted information about the request.
       responseData:
         description: The data sent back in response to the request.
+      retry:
+        allOf:
+        - $ref: '#/definitions/common.RetryProperty'
+        description: Retry information (present only for retriable errors).
       startTime:
         description: The time when the request was received by the server.
         type: string
@@ -1676,6 +1680,19 @@ definitions:
       url:
         description: The URL the request is made to.
         type: string
+    type: object
+  common.RetryProperty:
+    properties:
+      retryAfter:
+        description: Suggested retry delay in seconds.
+        type: integer
+      retryReason:
+        description: 'Optional: reason for retry requirement (e.g., "rate_limit",
+          "service_busy").'
+        type: string
+      retryable:
+        description: Whether the failed request can be retried.
+        type: boolean
     type: object
   common.SimpleMessage:
     properties:
@@ -5852,8 +5869,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: 'Migrate data from source to target (sync by default; async via Prefer:
@@ -6037,6 +6057,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: List NLBs in a cloud infra
       tags:
       - '[Migration] Managed Network Load Balancer (NLB) - preview'
@@ -6115,8 +6143,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (Preview) Migrate NLBs to a cloud infra
@@ -6184,8 +6215,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete an NLB
@@ -6234,6 +6268,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get NLB details
@@ -6288,6 +6330,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Get NLB health status (live CSP check)
       tags:
       - '[Migration] Managed Network Load Balancer (NLB) - preview'
@@ -6328,6 +6378,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during list operation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: List object storages (buckets)
@@ -6405,8 +6463,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Migrate object storages to cloud
@@ -6484,8 +6545,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete object storage (bucket)
@@ -6530,6 +6594,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during get operation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get object storage (bucket) details
@@ -6578,6 +6650,14 @@ paths:
           description: Internal server error during existence check
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Check object storage (bucket) existence
       tags:
       - '[Migration] Managed Object Storage'
@@ -6622,6 +6702,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during list operation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: List objects in an object storage bucket
@@ -6675,6 +6763,14 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Delete an object from an object storage bucket
       tags:
       - '[Migration] Managed Object Storage'
@@ -6725,6 +6821,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Get metadata of an object in an object storage bucket
@@ -8239,8 +8343,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend multiple infrastructure candidates for cloud migration
@@ -8434,8 +8541,11 @@ paths:
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
         "503":
-          description: 'Too many concurrent async jobs; retry later or without Prefer:
-            respond-async'
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: (Preview) Recommend infrastructure candidates with NLB for cloud migration
@@ -8489,6 +8599,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend K8s control plane configuration
       tags:
       - '[Recommendation] K8s Cluster (prototype)'
@@ -8539,6 +8657,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend K8s worker node group configuration
@@ -8744,6 +8870,14 @@ paths:
           description: Internal server error during recommendation
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate security group for cloud migration
       tags:
       - '[Recommendation] Resources for infrastructure'
@@ -8863,6 +8997,14 @@ paths:
             $ref: '#/definitions/model.ApiResponse-any'
         "500":
           description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: Too many requests - retry after the given time
+          headers:
+            Retry-After:
+              description: Seconds until client should retry
+              type: string
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
       summary: Recommend an appropriate virtual network for cloud migration
@@ -8988,6 +9130,11 @@ paths:
         - Handling: Request is currently being processed
         - Success: Request completed successfully
         - Error: Request failed with an error
+
+        [Retry Information]
+        - retry.retryable: Whether the failed request can be retried (present only for retriable errors)
+        - retry.retryAfter: Suggested retry delay in seconds
+        - retry.retryReason: Human-readable reason for retry requirement (e.g., "Rate Limit Exceeded")
       operationId: GetRequest
       parameters:
       - description: Request ID (from X-Request-Id header of a previous Beetle API
@@ -9049,6 +9196,11 @@ paths:
         - Handling: Request is currently being processed
         - Success: Request completed successfully
         - Error: Request failed with an error
+
+        [Retry Information]
+        - retry.retryable: Whether the failed request can be retried (present only for retriable errors)
+        - retry.retryAfter: Suggested retry delay in seconds
+        - retry.retryReason: Human-readable reason for retry requirement (e.g., "Rate Limit Exceeded")
       operationId: GetAllRequests
       parameters:
       - default: ""

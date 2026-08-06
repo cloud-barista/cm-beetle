@@ -23,6 +23,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -72,7 +73,8 @@ type MigrateObjectStorageRequest struct {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during object storage creation"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [post]
 func MigrateObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -126,6 +128,11 @@ func MigrateObjectStorage(c echo.Context) error {
 	}
 
 	if err := migration.CreateObjectStorage(nsId, req.RecommendedObjectStorage, nameSeed); err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("Object storage migration failed")
 		if strings.Contains(err.Error(), "invalid cloud configuration") {
 			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
@@ -154,6 +161,8 @@ func MigrateObjectStorage(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[storagemodel.IdList] "Successfully retrieved object storage ID list (option=id)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage [get]
 func ListObjectStorages(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -172,6 +181,11 @@ func ListObjectStorages(c echo.Context) error {
 	if option == "id" {
 		idList, err := migration.ListObjectStorageIDs(nsId)
 		if err != nil {
+			if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+				c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+				return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+					"Too many requests to the underlying infrastructure provider; retry after the given time"))
+			}
 			log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storage IDs")
 			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list object storage IDs: %v", err)))
 		}
@@ -180,6 +194,11 @@ func ListObjectStorages(c echo.Context) error {
 
 	result, err := migration.ListObjectStorages(nsId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Msg("Failed to list object storages")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list object storages: %v", err)))
 	}
@@ -201,6 +220,8 @@ func ListObjectStorages(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during get operation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [get]
 func GetObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -217,6 +238,11 @@ func GetObjectStorage(c echo.Context) error {
 
 	result, err := migration.GetObjectStorage(nsId, osId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to get object storage")
 		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
@@ -244,6 +270,8 @@ func GetObjectStorage(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during existence check"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [head]
 func ExistObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -260,6 +288,11 @@ func ExistObjectStorage(c echo.Context) error {
 
 	exists, err := migration.ExistObjectStorage(nsId, osId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to check object storage existence")
 		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
@@ -301,7 +334,8 @@ func ExistObjectStorage(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during deletion"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId} [delete]
 func DeleteObjectStorage(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -342,6 +376,11 @@ func DeleteObjectStorage(c echo.Context) error {
 	}
 
 	if err := migration.DeleteObjectStorage(nsId, osId, option); err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("option", option).Msg("Failed to delete object storage")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
@@ -363,6 +402,8 @@ func DeleteObjectStorage(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object storage not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during list operation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object [get]
 func ListObjectStorageObjects(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -379,6 +420,11 @@ func ListObjectStorageObjects(c echo.Context) error {
 
 	result, err := migration.ListObjectStorageObjects(nsId, osId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Msg("Failed to list objects in object storage")
 		if strings.Contains(strings.ToLower(err.Error()), "not found") || strings.Contains(strings.ToLower(err.Error()), "does not exist") {
 			return c.JSON(http.StatusNotFound, model.SimpleErrorResponse(fmt.Sprintf("Object storage '%s' not found", osId)))
@@ -406,6 +452,8 @@ func ListObjectStorageObjects(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey} [head]
 func GetStorageObject(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -428,6 +476,11 @@ func GetStorageObject(c echo.Context) error {
 
 	result, err := migration.GetStorageObject(nsId, osId, objectKey)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to get object metadata")
 		errLower := strings.ToLower(err.Error())
 		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {
@@ -456,6 +509,8 @@ func GetStorageObject(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "Object not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/objectStorage/{osId}/object/{objectKey} [delete]
 func DeleteStorageObject(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -477,6 +532,11 @@ func DeleteStorageObject(c echo.Context) error {
 	}
 
 	if err := migration.DeleteStorageObject(nsId, osId, objectKey); err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("osId", osId).Str("objectKey", objectKey).Msg("Failed to delete object")
 		errLower := strings.ToLower(err.Error())
 		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {

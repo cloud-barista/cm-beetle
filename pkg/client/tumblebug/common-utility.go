@@ -16,7 +16,10 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -45,6 +48,11 @@ func (s *Session) DeleteSharedResources(nsId string) (tbmodel.IdList, error) {
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -70,6 +78,11 @@ func (s *Session) GetConnConfig(connectionConfigName string) (tbmodel.ConnConfig
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 

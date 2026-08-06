@@ -18,8 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -48,6 +50,11 @@ func (s *Session) CreateInfra(nsId string, reqBody tbmodel.InfraReq) (tbmodel.In
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -79,6 +86,11 @@ func (s *Session) CreateInfraDynamic(nsId string, reqBody tbmodel.InfraDynamicRe
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -115,6 +127,11 @@ func (s *Session) ReadAllInfra(nsId string) (TbInfraInfoList, error) {
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -147,6 +164,11 @@ func (s *Session) ReadInfra(nsId, infraId string) (tbmodel.InfraInfo, error) {
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -178,6 +200,11 @@ func (s *Session) ReadInfraAccessInfo(nsId, infraId, option, accessInfoOption st
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -216,6 +243,11 @@ func (s *Session) ReadInfraIDs(nsId string) (tbmodel.IdList, error) {
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -252,6 +284,11 @@ func (s *Session) DeleteInfra(nsId, infraId, option string) (tbmodel.IdList, err
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -289,6 +326,11 @@ func (s *Session) InfraRecommendSpec(planToSearchProperVm string) ([]tbmodel.Spe
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 

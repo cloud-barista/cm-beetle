@@ -126,9 +126,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -327,6 +333,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             },
@@ -416,9 +434,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -491,6 +515,18 @@ const docTemplate = `{
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -570,9 +606,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -646,6 +688,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             }
@@ -706,6 +760,18 @@ const docTemplate = `{
                         "description": "Internal server error during list operation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -786,9 +852,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -854,6 +926,18 @@ const docTemplate = `{
                         "description": "Internal server error during get operation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -943,9 +1027,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -1006,6 +1096,18 @@ const docTemplate = `{
                         "description": "Internal server error during existence check",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -1071,6 +1173,18 @@ const docTemplate = `{
                         "description": "Internal server error during list operation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -1141,6 +1255,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             },
@@ -1210,6 +1336,18 @@ const docTemplate = `{
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -3203,9 +3341,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -3407,9 +3551,15 @@ const docTemplate = `{
                         }
                     },
                     "503": {
-                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "description": "Too many requests - retry after the given time",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -3482,6 +3632,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             }
@@ -3552,6 +3714,18 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
                         }
                     }
                 }
@@ -3804,6 +3978,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             }
@@ -3958,6 +4144,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
+                    },
+                    "503": {
+                        "description": "Too many requests - retry after the given time",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        },
+                        "headers": {
+                            "Retry-After": {
+                                "type": "string",
+                                "description": "Seconds until client should retry"
+                            }
+                        }
                     }
                 }
             }
@@ -4062,7 +4260,7 @@ const docTemplate = `{
         },
         "/request/{reqId}": {
             "get": {
-                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error",
+                "description": "Retrieves the details of a specific API request tracked by Beetle.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- The reqId corresponds to the X-Request-Id header value from a previous API call.\n- Do NOT call Tumblebug's /request/{reqId} API with this reqId; each system manages its own request tracking.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
                 "consumes": [
                     "application/json"
                 ],
@@ -4144,7 +4342,7 @@ const docTemplate = `{
         },
         "/requests": {
             "get": {
-                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error",
+                "description": "Retrieves all API requests tracked by Beetle with optional filters.\n\n[Note]\n- Request tracking is managed independently by Beetle (not shared with Tumblebug).\n- This API only returns requests made to Beetle, not to Tumblebug.\n\n[Status Values]\n- Handling: Request is currently being processed\n- Success: Request completed successfully\n- Error: Request failed with an error\n\n[Retry Information]\n- retry.retryable: Whether the failed request can be retried (present only for retriable errors)\n- retry.retryAfter: Suggested retry delay in seconds\n- retry.retryReason: Human-readable reason for retry requirement (e.g., \"Rate Limit Exceeded\")",
                 "consumes": [
                     "application/json"
                 ],
@@ -6776,6 +6974,14 @@ const docTemplate = `{
                 "responseData": {
                     "description": "The data sent back in response to the request."
                 },
+                "retry": {
+                    "description": "Retry information (present only for retriable errors).",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/common.RetryProperty"
+                        }
+                    ]
+                },
                 "startTime": {
                     "description": "The time when the request was received by the server.",
                     "type": "string"
@@ -6806,6 +7012,23 @@ const docTemplate = `{
                 "url": {
                     "description": "The URL the request is made to.",
                     "type": "string"
+                }
+            }
+        },
+        "common.RetryProperty": {
+            "type": "object",
+            "properties": {
+                "retryAfter": {
+                    "description": "Suggested retry delay in seconds.",
+                    "type": "integer"
+                },
+                "retryReason": {
+                    "description": "Optional: reason for retry requirement (e.g., \"rate_limit\", \"service_busy\").",
+                    "type": "string"
+                },
+                "retryable": {
+                    "description": "Whether the failed request can be retried.",
+                    "type": "boolean"
                 }
             }
         },

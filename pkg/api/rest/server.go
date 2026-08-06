@@ -28,6 +28,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/controller"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/docs"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/middlewares"
+	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 
@@ -109,7 +110,14 @@ func RunServer(port string) {
 
 	e.Use(middleware.Recover())
 	// limit the application to 20 requests/sec using the default in-memory store
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20)))
+	rateLimiterConfig := middleware.RateLimiterConfig{
+		Store: middleware.NewRateLimiterMemoryStore(20),
+		DenyHandler: func(c echo.Context, identifier string, err error) error {
+			c.Response().Header().Set("Retry-After", "3") // Fixed 3-second retry window for global rate limit
+			return c.JSON(http.StatusTooManyRequests, model.SimpleErrorResponse("Rate limit exceeded"))
+		},
+	}
+	e.Use(middleware.RateLimiterWithConfig(rateLimiterConfig))
 
 	// Custom middleware to issue request ID and details
 	e.Use(middlewares.RequestIdAndDetailsIssuer)

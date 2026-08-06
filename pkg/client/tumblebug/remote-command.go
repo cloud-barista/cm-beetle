@@ -16,8 +16,11 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
 
@@ -44,6 +47,11 @@ func (s *Session) RemoteCommandToInfra(nsId, infraId, nodeGroupId, nodeId string
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 

@@ -16,8 +16,11 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
 
@@ -40,6 +43,11 @@ func (s *Session) CreateNlb(nsId, infraId string, req tbmodel.NLBReq) (tbmodel.N
 		return tbmodel.NLBInfo{}, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.NLBInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
 		log.Error().Err(err).Msg("Failed to create NLB")
 		return tbmodel.NLBInfo{}, err
@@ -68,6 +76,11 @@ func (s *Session) ListNlbs(nsId, infraId string) (NLBListResponse, error) {
 		return NLBListResponse{}, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return NLBListResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
 		log.Error().Err(err).Msg("Failed to list NLBs")
 		return NLBListResponse{}, err
@@ -91,6 +104,11 @@ func (s *Session) GetNlb(nsId, infraId, nlbId string) (tbmodel.NLBInfo, error) {
 		return tbmodel.NLBInfo{}, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.NLBInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
 		log.Error().Err(err).Msg("Failed to get NLB")
 		return tbmodel.NLBInfo{}, err
@@ -114,6 +132,11 @@ func (s *Session) GetNlbHealth(nsId, infraId, nlbId string) (tbmodel.NLBInfo, er
 		return tbmodel.NLBInfo{}, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.NLBInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
 		log.Error().Err(err).Msg("Failed to get NLB health")
 		return tbmodel.NLBInfo{}, err
@@ -133,6 +156,11 @@ func (s *Session) DeleteNlb(nsId, infraId, nlbId string) error {
 		return err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API error %s: %s", resp.Status(), resp.Body())
 		log.Error().Err(err).Msg("Failed to delete NLB")
 		return err

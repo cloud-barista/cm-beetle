@@ -22,6 +22,7 @@ import (
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -45,6 +46,8 @@ import (
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedVNetList] "Successfully recommended vNet(s)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/resources/vNet [post]
 func RecommendVNet(c echo.Context) error {
 
@@ -72,6 +75,11 @@ func RecommendVNet(c echo.Context) error {
 	// [Process]
 	ret, err := recommendation.RecommendVNet(desiredProvider, desiredRegion, req.OnpremiseInfraModel)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("failed to recommend vNet")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("VNet recommendation failed"))
 	}
@@ -116,6 +124,8 @@ func RecommendVNet(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedSecurityGroupList] "Successfully recommended security group(s)"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/resources/securityGroups [post]
 func RecommendSecurityGroups(c echo.Context) error {
 
@@ -143,6 +153,11 @@ func RecommendSecurityGroups(c echo.Context) error {
 	// [Process]
 	ret, err := recommendation.RecommendSecurityGroups(desiredProvider, desiredRegion, req.OnpremiseInfraModel.Nodes)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("failed to recommend security groups")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Security group recommendation failed"))
 	}

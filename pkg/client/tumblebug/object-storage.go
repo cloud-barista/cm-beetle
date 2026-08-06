@@ -16,8 +16,11 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 )
 
@@ -58,6 +61,11 @@ func (s *Session) ListObjectStorages(nsId string, option string, filterKey strin
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageListResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to list object storages")
 		return tbmodel.ObjectStorageListResponse{}, err
@@ -83,6 +91,11 @@ func (s *Session) ListObjectStorageIDs(nsId string) (tbmodel.IdList, error) {
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.IdList{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to list object storage IDs")
 		return tbmodel.IdList{}, err
@@ -108,6 +121,11 @@ func (s *Session) CreateObjectStorage(nsId string, req tbmodel.ObjectStorageCrea
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to create object storage: %s", req.BucketName)
 		return tbmodel.ObjectStorageInfo{}, err
@@ -132,6 +150,11 @@ func (s *Session) GetObjectStorage(nsId string, osId string) (tbmodel.ObjectStor
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve object storage: %s", osId)
 		return tbmodel.ObjectStorageInfo{}, err
@@ -179,6 +202,11 @@ func (s *Session) DeleteObjectStorage(nsId string, osId string, option string) e
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to delete object storage: %s", osId)
 		return err
@@ -203,6 +231,11 @@ func (s *Session) ListObjectStorageObjects(nsId string, osId string) (tbmodel.Ob
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageListObjectsResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to list objects in object storage: %s", osId)
 		return tbmodel.ObjectStorageListObjectsResponse{}, err
@@ -227,6 +260,11 @@ func (s *Session) GetStorageObject(nsId, osId, objectKey string) (tbmodel.Object
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.Object{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to get object metadata: %s", objectKey)
 		return tbmodel.Object{}, err
@@ -255,6 +293,11 @@ func (s *Session) DeleteStorageObject(nsId, osId, objectKey string) error {
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to delete object: %s", objectKey)
 		return err
@@ -283,6 +326,11 @@ func (s *Session) GetObjectStorageCORS(nsId string, osId string) (tbmodel.Object
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageGetCorsResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve CORS configuration for object storage: %s", osId)
 		return tbmodel.ObjectStorageGetCorsResponse{}, err
@@ -306,6 +354,11 @@ func (s *Session) SetObjectStorageCORS(nsId string, osId string, req tbmodel.Obj
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to set CORS configuration for object storage: %s", osId)
 		return err
@@ -327,6 +380,11 @@ func (s *Session) DeleteObjectStorageCORS(nsId string, osId string) error {
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to delete CORS configuration for object storage: %s", osId)
 		return err
@@ -355,6 +413,11 @@ func (s *Session) GetObjectStorageVersioning(nsId string, osId string) (tbmodel.
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageGetVersioningResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve versioning configuration for object storage: %s", osId)
 		return tbmodel.ObjectStorageGetVersioningResponse{}, err
@@ -378,6 +441,11 @@ func (s *Session) SetObjectStorageVersioning(nsId string, osId string, req tbmod
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to set versioning configuration for object storage: %s", osId)
 		return err
@@ -406,6 +474,11 @@ func (s *Session) GetObjectStorageLocation(nsId string, osId string) (tbmodel.Ob
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageLocationResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msgf("Failed to retrieve location of object storage: %s", osId)
 		return tbmodel.ObjectStorageLocationResponse{}, err
@@ -440,6 +513,11 @@ func (s *Session) GetObjectStorageSupport(cspType string) (tbmodel.ObjectStorage
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.ObjectStorageSupportResponse{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to retrieve object storage support information")
 		return tbmodel.ObjectStorageSupportResponse{}, err

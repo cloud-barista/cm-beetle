@@ -23,6 +23,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/migration"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 )
@@ -62,7 +63,8 @@ import (
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during NLB creation"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb [post]
 func MigrateNlbs(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -119,6 +121,11 @@ func MigrateNlbs(c echo.Context) error {
 
 	result, err := migration.CreateNlbs(nsId, infraId, req, useExisting)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("NLB migration failed")
 		if strings.Contains(err.Error(), "all NLB migrations failed") {
 			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -146,6 +153,8 @@ func MigrateNlbs(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[[]cloudmodel.NLBInfo] "NLB list"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb [get]
 func ListNlbs(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -160,6 +169,11 @@ func ListNlbs(c echo.Context) error {
 
 	infos, err := migration.ListNlbs(nsId, infraId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nsId", nsId).Str("infraId", infraId).Msg("Failed to list NLBs")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to list NLBs: %v", err)))
 	}
@@ -183,6 +197,8 @@ func ListNlbs(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "NLB not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId} [get]
 func GetNlb(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -202,6 +218,11 @@ func GetNlb(c echo.Context) error {
 
 	info, err := migration.GetNlb(nsId, infraId, nlbId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB")
 		errLower := strings.ToLower(err.Error())
 		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {
@@ -230,6 +251,8 @@ func GetNlb(c echo.Context) error {
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 404 {object} model.ApiResponse[any] "NLB not found"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId}/healthz [get]
 func GetNlbHealth(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -249,6 +272,11 @@ func GetNlbHealth(c echo.Context) error {
 
 	info, err := migration.GetNlbHealth(nsId, infraId, nlbId)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to get NLB health")
 		errLower := strings.ToLower(err.Error())
 		if strings.Contains(errLower, "not found") || strings.Contains(errLower, "does not exist") {
@@ -284,7 +312,8 @@ func GetNlbHealth(c echo.Context) error {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Deletion started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/middleware/ns/{nsId}/infra/{infraId}/nlb/{nlbId} [delete]
 func DeleteNlb(c echo.Context) error {
 	nsId := c.Param("nsId")
@@ -326,6 +355,11 @@ func DeleteNlb(c echo.Context) error {
 	}
 
 	if err := migration.DeleteNlb(nsId, infraId, nlbId); err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Str("nlbId", nlbId).Msg("Failed to delete NLB")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}

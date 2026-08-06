@@ -16,7 +16,10 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -44,6 +47,11 @@ func (s *Session) IsReady() (bool, *string, error) {
 		return false, nil, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return false, nil, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return false, nil, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 

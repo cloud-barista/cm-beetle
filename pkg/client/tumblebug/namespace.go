@@ -16,7 +16,10 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -43,6 +46,11 @@ func (s *Session) CreateNamespace(nsReq tbmodel.NsReq) (tbmodel.NsInfo, error) {
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.NsInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to create namespace")
 		return tbmodel.NsInfo{}, err
@@ -67,6 +75,11 @@ func (s *Session) ReadNamespace(nsId string) (tbmodel.NsInfo, error) {
 	}
 
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return tbmodel.NsInfo{}, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		err := fmt.Errorf("API Error: %s (Body: %s)", resp.Status(), string(resp.Body()))
 		log.Error().Err(err).Msg("Failed to retrieve namespace")
 		return tbmodel.NsInfo{}, err

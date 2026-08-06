@@ -30,6 +30,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
 	"github.com/cloud-barista/cm-beetle/pkg/core/recommendation"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/labstack/echo/v4"
 
 	"github.com/rs/zerolog/log"
@@ -195,7 +196,8 @@ type RecommendInfraResponse struct {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/infra [post]
 func RecommendVmInfraCandidates(c echo.Context) error {
 
@@ -277,6 +279,11 @@ func RecommendVmInfraCandidates(c echo.Context) error {
 	// [Process]
 	recommendedInfraCandidates, err := recommendation.RecommendVmInfraCandidates(csp, region, sourceInfra, limit, minMatchRate)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("failed to recommend multiple candidates of appropriate multi-cloud infrastructure (Infra) for cloud migration")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("Recommendation failed"))
 	}
@@ -351,7 +358,8 @@ type RecommendInfraWithNlbRequest struct {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Recommendation started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request"
 // @Failure 500 {object} model.ApiResponse[any] "Internal server error"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/infraWithNlb [post]
 func RecommendInfraWithNlbCandidates(c echo.Context) error {
 
@@ -432,6 +440,11 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 		req.DesiredCsp, req.DesiredRegion, req.SourceInfra, limit, minMatchRate,
 	)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("infraWithNlb recommendation failed")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
@@ -479,6 +492,8 @@ type RecommendK8sClusterResponse struct {
 // @Success 200 {object} model.ApiResponse[tbmodel.K8sClusterDynamicReq] "K8s control plane recommendation (ready for cb-tumblebug API)"
 // @Failure 400 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/k8sControlPlane [post]
 func RecommendK8sControlPlane(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
@@ -510,6 +525,11 @@ func RecommendK8sControlPlane(c echo.Context) error {
 
 	result, err := recommendation.RecommendK8sControlPlane(desiredProvider, desiredRegion, k8sInfoList)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("failed to recommend K8s control plane")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s control plane recommendation failed"))
 	}
@@ -532,6 +552,8 @@ func RecommendK8sControlPlane(c echo.Context) error {
 // @Success 200 {object} model.ApiResponse[tbmodel.K8sNodeGroupReq] "K8s worker node group recommendation (ready for cb-tumblebug API)"
 // @Failure 400 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /recommendation/k8sNodeGroup [post]
 func RecommendK8sNodeGroup(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
@@ -563,6 +585,11 @@ func RecommendK8sNodeGroup(c echo.Context) error {
 
 	result, err := recommendation.RecommendK8sNodeGroup(desiredProvider, desiredRegion, k8sInfoList)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("failed to recommend K8s node group")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s node group recommendation failed"))
 	}
