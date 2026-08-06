@@ -65,6 +65,11 @@ func CheckHTTPVersion(c echo.Context) error {
 // @Description - Handling: Request is currently being processed
 // @Description - Success: Request completed successfully
 // @Description - Error: Request failed with an error
+// @Description
+// @Description [Retry Information]
+// @Description - retry.retryable: Whether the failed request can be retried (present only for retriable errors)
+// @Description - retry.retryAfter: Suggested retry delay in seconds
+// @Description - retry.retryReason: Human-readable reason for retry requirement (e.g., "Rate Limit Exceeded")
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json
@@ -96,6 +101,11 @@ func RestGetRequest(c echo.Context) error {
 // @Description - Handling: Request is currently being processed
 // @Description - Success: Request completed successfully
 // @Description - Error: Request failed with an error
+// @Description
+// @Description [Retry Information]
+// @Description - retry.retryable: Whether the failed request can be retried (present only for retriable errors)
+// @Description - retry.retryAfter: Suggested retry delay in seconds
+// @Description - retry.retryReason: Human-readable reason for retry requirement (e.g., "Rate Limit Exceeded")
 // @Tags [Admin] API Request Management
 // @Accept  json
 // @Produce  json

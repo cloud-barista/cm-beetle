@@ -16,8 +16,11 @@ package tbclient
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
+	"time"
 
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/rs/zerolog/log"
 
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
@@ -49,6 +52,11 @@ func (s *Session) ReadVmOsImage(nsId, vmOsImageId string) (tbmodel.ImageInfo, er
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -77,6 +85,11 @@ func (s *Session) SearchVmOsImage(nsId string, searchImageReq tbmodel.SearchImag
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -104,6 +117,11 @@ func (s *Session) ReviewSpecImagePair(req tbmodel.SpecImagePairReviewReq) (tbmod
 		return emptyRet, err
 	}
 	if resp.IsError() {
+		if resp.StatusCode() == http.StatusTooManyRequests {
+			return emptyRet, &ratelimit.ErrLimited{
+				RetryAfter: 2 * time.Second,
+			}
+		}
 		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
 	}
 
@@ -112,5 +130,3 @@ func (s *Session) ReviewSpecImagePair(req tbmodel.SpecImagePairReviewReq) (tbmod
 
 	return resBody, nil
 }
-
-

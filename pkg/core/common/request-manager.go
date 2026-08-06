@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/cloud-barista/cm-beetle/pkg/lkvstore"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -51,12 +52,20 @@ type RequestInfo struct {
 
 // RequestDetails contains detailed information about an HTTP request and its processing status.
 type RequestDetails struct {
-	StartTime     time.Time   `json:"startTime"`     // The time when the request was received by the server.
-	EndTime       time.Time   `json:"endTime"`       // The time when the request was fully processed.
-	Status        string      `json:"status"`        // The current status of the request (e.g., "Handling", "Error", "Success").
-	RequestInfo   RequestInfo `json:"requestInfo"`   // Extracted information about the request.
-	ResponseData  any         `json:"responseData"`  // The data sent back in response to the request.
-	ErrorResponse string      `json:"errorResponse"` // A message describing any error that occurred during request processing.
+	StartTime     time.Time      `json:"startTime"`               // The time when the request was received by the server.
+	EndTime       time.Time      `json:"endTime"`                 // The time when the request was fully processed.
+	Status        string         `json:"status"`                  // The current status of the request (e.g., "Handling", "Error", "Success").
+	RequestInfo   RequestInfo    `json:"requestInfo"`             // Extracted information about the request.
+	ResponseData  any            `json:"responseData,omitempty"`  // The data sent back in response to the request.
+	ErrorResponse string         `json:"errorResponse,omitempty"` // A message describing any error that occurred during request processing.
+	Retry         *RetryProperty `json:"retry,omitempty"`         // Retry information (present only for retriable errors).
+}
+
+// RetryProperty contains retry-related information for a failed request.
+type RetryProperty struct {
+	Retryable   bool   `json:"retryable"`             // Whether the failed request can be retried.
+	RetryAfter  int    `json:"retryAfter"`            // Suggested retry delay in seconds.
+	RetryReason string `json:"retryReason,omitempty"` // Optional: reason for retry requirement (e.g., "rate_limit", "service_busy").
 }
 
 // ProgressInfo contains the progress information of a request.
@@ -85,6 +94,16 @@ const (
 	// RequestStatusInProgress = "in-progress"
 	// RequestStatusCompleted  = "completed"
 	// RequestStatusFailed     = "failed"
+)
+
+// Retry reason constants for RequestDetails.Retry.RetryReason field.
+// These human-readable values follow HTTP RFC style (Title Case) and can be displayed directly in Portal UI.
+const (
+	// RetryReasonRateLimitExceeded indicates the request failed due to rate limiting.
+	RetryReasonRateLimitExceeded = "Rate Limit Exceeded"
+	// Future retry reasons can be added here:
+	// RetryReasonServiceUnavailable = "Service Temporarily Unavailable"
+	// RetryReasonUpstreamError = "Upstream Service Error"
 )
 
 // requestKeyPrefix is the key prefix for request details in lkvstore
@@ -409,6 +428,20 @@ func finalizeRequest[T any](reqID string, result T, err error) {
 // finalizeError marks a request as failed (e.g. after a panic recovery, with no result value).
 func finalizeError(reqID string, err error) {
 	finalizeRequest[any](reqID, nil, err)
+
+	// Extract retry information from rate limit errors
+	if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+		if details, exists := GetRequest(reqID); exists {
+			details.Retry = &RetryProperty{
+				Retryable:   true,
+				RetryAfter:  int(retryAfter.Seconds()),
+				RetryReason: RetryReasonRateLimitExceeded,
+			}
+			if setErr := SetRequest(reqID, details); setErr != nil {
+				log.Error().Err(setErr).Str("reqId", reqID).Msg("Failed to update retry info")
+			}
+		}
+	}
 }
 
 // ============================================================================

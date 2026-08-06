@@ -23,6 +23,7 @@ import (
 	"github.com/cloud-barista/cm-beetle/pkg/api/rest/model"
 	"github.com/cloud-barista/cm-beetle/pkg/config"
 	"github.com/cloud-barista/cm-beetle/pkg/core/common"
+	"github.com/cloud-barista/cm-beetle/pkg/ratelimit"
 	"github.com/cloud-barista/cm-beetle/transx"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -122,7 +123,8 @@ func GetDataMigrationEncryptionKey(c echo.Context) error {
 // @Success 202 {object} model.ApiResponse[model.AsyncJobResponse] "Migration started asynchronously - use GET /request/{reqId} to check status"
 // @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters or decryption failed"
 // @Failure 500 {object} model.ApiResponse[any] "Migration failed"
-// @Failure 503 {object} model.ApiResponse[any] "Too many concurrent async jobs; retry later or without Prefer: respond-async"
+// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
+// @Header 503 {string} Retry-After "Seconds until client should retry"
 // @Router /migration/data [post]
 func MigrateData(c echo.Context) error {
 
@@ -210,6 +212,11 @@ func MigrateData(c echo.Context) error {
 	// Synchronous path
 	result, err := runDataMigration(*req)
 	if err != nil {
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
+			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
+				"Too many requests to the underlying infrastructure provider; retry after the given time"))
+		}
 		log.Error().Err(err).Msg("Data migration failed")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
