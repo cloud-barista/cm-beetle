@@ -416,6 +416,15 @@ func finalizeRequest[T any](reqID string, result T, err error) {
 	if err != nil {
 		details.Status = RequestStatusError
 		details.ErrorResponse = err.Error()
+
+		// Extract retry information from rate limit errors
+		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
+			details.Retry = &RetryProperty{
+				Retryable:   true,
+				RetryAfter:  ratelimit.RetryAfterSeconds(retryAfter),
+				RetryReason: RetryReasonRateLimitExceeded,
+			}
+		}
 	} else {
 		details.Status = RequestStatusSuccess
 		details.ResponseData = result
@@ -428,20 +437,6 @@ func finalizeRequest[T any](reqID string, result T, err error) {
 // finalizeError marks a request as failed (e.g. after a panic recovery, with no result value).
 func finalizeError(reqID string, err error) {
 	finalizeRequest[any](reqID, nil, err)
-
-	// Extract retry information from rate limit errors
-	if retryAfter, ok := ratelimit.RetryAfter(err); ok {
-		if details, exists := GetRequest(reqID); exists {
-			details.Retry = &RetryProperty{
-				Retryable:   true,
-				RetryAfter:  int(retryAfter.Seconds()),
-				RetryReason: RetryReasonRateLimitExceeded,
-			}
-			if setErr := SetRequest(reqID, details); setErr != nil {
-				log.Error().Err(setErr).Str("reqId", reqID).Msg("Failed to update retry info")
-			}
-		}
-	}
 }
 
 // ============================================================================
