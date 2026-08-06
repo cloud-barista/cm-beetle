@@ -1,9 +1,7 @@
 package compat
 
 import (
-	"regexp"
 	"strings"
-	"unicode"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	"github.com/rs/zerolog/log"
@@ -26,7 +24,7 @@ func CheckNcp(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 
 // === NCP Image Compatibility Functions ===
 
-// isNcpImageCompatible checks if NCP image is compatible with spec using CorrespondingImageIds
+// isNcpImageCompatible checks if the image's CspImageName exactly matches one of the spec's CorrespondingImageIds.
 func isNcpImageCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	// Extract CorrespondingImageIds from spec details
 	correspondingImageIds := extractNcpCorrespondingImageIds(spec)
@@ -35,23 +33,16 @@ func isNcpImageCompatible(spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) 
 		return true // If no corresponding image IDs specified, allow all images
 	}
 
-	// Extract image ID from image (could be in CspImageName or other fields)
-	imageId := extractNcpImageId(image)
-	if imageId == "" {
-		log.Trace().Msgf("Could not extract image ID from NCP image: %s", image.CspImageName)
-		return true // If we can't extract image ID, be permissive
-	}
-
-	// Check if image ID is in the corresponding image IDs list
+	// Check if the image's CspImageName is in the corresponding image IDs list
 	for _, correspondingId := range correspondingImageIds {
-		if imageId == correspondingId {
-			log.Trace().Msgf("NCP image ID %s matches corresponding image ID for spec %s", imageId, spec.CspSpecName)
+		if image.CspImageName == correspondingId {
+			log.Trace().Msgf("NCP image %s matches corresponding image ID for spec %s", image.CspImageName, spec.CspSpecName)
 			return true
 		}
 	}
 
-	log.Trace().Msgf("NCP image ID %s not found in corresponding image IDs %v for spec %s",
-		imageId, correspondingImageIds, spec.CspSpecName)
+	log.Trace().Msgf("NCP image %s not found in corresponding image IDs %v for spec %s",
+		image.CspImageName, correspondingImageIds, spec.CspSpecName)
 	return false
 }
 
@@ -73,66 +64,6 @@ func extractNcpCorrespondingImageIds(spec cloudmodel.SpecInfo) []string {
 		}
 	}
 	return []string{}
-}
-
-// extractNcpImageId extracts image ID from NCP image info
-func extractNcpImageId(image cloudmodel.ImageInfo) string {
-	// Try to extract from CspImageName first (might contain the ID directly)
-	if image.CspImageName != "" {
-		log.Trace().Msgf("NCP image CspImageName: %s", image.CspImageName)
-		// If CspImageName is numeric, use it directly
-		if isNumeric(image.CspImageName) {
-			return image.CspImageName
-		}
-	}
-
-	// Try to extract from Details
-	for _, detail := range image.Details {
-		if strings.EqualFold(detail.Key, "ImageId") ||
-			strings.EqualFold(detail.Key, "Id") ||
-			strings.EqualFold(detail.Key, "NcpImageId") {
-			if detail.Value != "" && isNumeric(detail.Value) {
-				log.Trace().Msgf("Extracted NCP image ID from Details[%s]: %s", detail.Key, detail.Value)
-				return detail.Value
-			}
-		}
-	}
-
-	// Fallback: try to extract numeric part from CspImageName
-	if image.CspImageName != "" {
-		// Look for numeric patterns in the image name
-		re := regexp.MustCompile(`\d+`)
-		matches := re.FindAllString(image.CspImageName, -1)
-		if len(matches) > 0 {
-			// Use the first (or longest) numeric match
-			longestMatch := ""
-			for _, match := range matches {
-				if len(match) > len(longestMatch) {
-					longestMatch = match
-				}
-			}
-			if longestMatch != "" {
-				log.Trace().Msgf("Extracted NCP image ID from CspImageName pattern: %s", longestMatch)
-				return longestMatch
-			}
-		}
-	}
-
-	log.Trace().Msgf("Could not extract numeric image ID from NCP image: %s", image.CspImageName)
-	return ""
-}
-
-// isNumeric checks if a string contains only digits
-func isNumeric(s string) bool {
-	if s == "" {
-		return false
-	}
-	for _, r := range s {
-		if !unicode.IsDigit(r) {
-			return false
-		}
-	}
-	return true
 }
 
 // === NCP VM Spec Filtering Functions ===
