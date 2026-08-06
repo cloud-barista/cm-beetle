@@ -17,6 +17,7 @@ on:
       - "scripts/**"
       - "src/testclient/scripts/**"
       - "docs/**"
+      - "deployments/**"
       - "deepdiffgo/**"
       - "imdl/**"
       - "ui/**"
