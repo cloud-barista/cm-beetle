@@ -3834,6 +3834,166 @@ const docTemplate = `{
                 }
             }
         },
+        "/recommendation/multiInfra": {
+            "post": {
+                "description": "Recommend a single best-effort infrastructure candidate for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse ` + "`" + `POST /recommendation/infra` + "`" + ` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: ` + "`" + `desiredCspAndRegionPairs` + "`" + `]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).\nDuplicate pairs are rejected.\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(` + "`" + `len(data) == len(desiredCspAndRegionPairs)` + "`" + `), so items map back to targets via ` + "`" + `targetCloud` + "`" + `\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with ` + "`" + `status` + "`" + ` set to ` + "`" + `failed` + "`" + ` or\n` + "`" + `nothing-to-recommend` + "`" + ` and ` + "`" + `targetInfra` + "`" + ` left empty.\n\n**[Optional Parameter: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one ` + "`" + `/recommendation/infra` + "`" + ` call; requests with\nseveral targets can take a while. ` + "`" + `Prefer: respond-async` + "`" + ` is strongly recommended.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "Recommend the best-match infrastructure per target cloud, for cross-CSP comparison",
+                "operationId": "RecommendMultiInfraCandidates",
+                "parameters": [
+                    {
+                        "description": "Target CSP/region pairs and the source infrastructure to be migrated",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendMultiInfraRequest"
+                        }
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "name": "minMatchRate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "One recommended (or failed/nothing-to-recommend) candidate per target, in request order",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/multiInfraWithNlb": {
+            "post": {
+                "description": "NLB-aware counterpart of ` + "`" + `POST /recommendation/multiInfra` + "`" + `. Recommends a single best-effort\ninfrastructure candidate (including NLB mapping) for each of several target CSP/region pairs.\n\nUse this API to compare candidate clouds before committing to one; once a target is chosen,\nuse ` + "`" + `POST /recommendation/infraWithNlb` + "`" + ` against that single CSP/region to explore multiple candidates.\n\n**[Required Parameter: ` + "`" + `desiredCspAndRegionPairs` + "`" + `]** 2 to 10 target CSP/region pairs (project scope: 10 supported CSPs).\nDuplicate pairs are rejected.\n\n[Note] ` + "`" + `sourceInfra.nlbs` + "`" + ` must be populated (HAProxy frontend-backend pairs from cm-honeybee).\n\n**[Response]** Always returns exactly one item per requested target, in request order\n(` + "`" + `len(data) == len(desiredCspAndRegionPairs)` + "`" + `), so items map back to targets via ` + "`" + `targetCloud` + "`" + `\nwithout needing to be re-sorted or grouped. A target that fails validation or yields no\ncompatible infrastructure still produces one item, with ` + "`" + `status` + "`" + ` set to ` + "`" + `failed` + "`" + ` or\n` + "`" + `nothing-to-recommend` + "`" + ` and ` + "`" + `targetInfra` + "`" + ` left empty.\n\n**[Optional Parameter: ` + "`" + `minMatchRate` + "`" + `]** Minimum match rate threshold for highly-matched classification (default: 90.0, range: 0-100)\n\n[Note] Each target costs roughly as much as one ` + "`" + `/recommendation/infraWithNlb` + "`" + ` call; requests with\nseveral targets can take a while. ` + "`" + `Prefer: respond-async` + "`" + ` is strongly recommended.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Infrastructure"
+                ],
+                "summary": "(Preview) Recommend the best-match NLB-aware infrastructure per target cloud, for cross-CSP comparison",
+                "operationId": "RecommendMultiInfraWithNlbCandidates",
+                "parameters": [
+                    {
+                        "description": "Target CSP/region pairs and the source infra including NLBs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendMultiInfraWithNlbRequest"
+                        }
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum match rate for highly-matched classification (default: 90.0, range: 0-100)",
+                        "name": "minMatchRate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this recommendation asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "One recommended (or failed/nothing-to-recommend) candidate per target, in request order",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_cloudmodel_RecommendedInfra"
+                        }
+                    },
+                    "202": {
+                        "description": "Recommendation started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/recommendation/resources/osImages": {
             "post": {
                 "description": "Recommend an appropriate OS image for cloud migration\n\n[Note] ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredProvider` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can set on the query parameter or the request body.\n\n- If desiredProvider and desiredRegion are set on request body, the values in the query parameter will be ignored.",
@@ -7633,6 +7793,46 @@ const docTemplate = `{
                 "desiredRegion": {
                     "description": "Target region (e.g., \"ap-northeast-2\")",
                     "type": "string"
+                },
+                "sourceInfra": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendMultiInfraRequest": {
+            "type": "object",
+            "required": [
+                "desiredCspAndRegionPairs",
+                "sourceInfra"
+            ],
+            "properties": {
+                "desiredCspAndRegionPairs": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CloudProperty"
+                    }
+                },
+                "sourceInfra": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendMultiInfraWithNlbRequest": {
+            "type": "object",
+            "required": [
+                "desiredCspAndRegionPairs",
+                "sourceInfra"
+            ],
+            "properties": {
+                "desiredCspAndRegionPairs": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.CloudProperty"
+                    }
                 },
                 "sourceInfra": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
