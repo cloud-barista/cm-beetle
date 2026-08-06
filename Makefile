@@ -104,6 +104,7 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/data && $(GO) clean
 	@cd cmd/test-cli/async && $(GO) clean
 	@cd cmd/test-cli/rate-limiting && $(GO) clean
+	@cd cmd/test-cli/multi-infra-recommendation && $(GO) clean
 	@echo "Cleaned!"
 
 test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
@@ -153,6 +154,14 @@ test-rate-limiting: ## Run the rate limiting test CLI (retrieval burst + concurr
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
 	@cd cmd/test-cli/rate-limiting && $(GO) run main.go -config testconf/test-config.yaml
+
+test-multi-infra-recommendation: ## Run the multi-target infra recommendation test CLI (multiInfra / multiInfraWithNlb)
+	@echo "Running multi-infra recommendation test CLI..."
+	@if [ ! -f cmd/test-cli/multi-infra-recommendation/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/multi-infra-recommendation/testconf/template-test-config.yaml cmd/test-cli/multi-infra-recommendation/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/multi-infra-recommendation && $(GO) run main.go -config testconf/test-config.yaml
 
 test-data-clean: ## Clean up data migration test artifacts
 	@echo "Cleaning data migration test artifacts..."

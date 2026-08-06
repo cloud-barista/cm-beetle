@@ -313,6 +313,10 @@ func RunServer(port string) {
 	gRecommendation.POST("/infra", controller.RecommendVmInfraCandidates)
 	gRecommendation.POST("/infraWithDefaults", controller.RecommendVMInfraWithDefaults)
 
+	// Recommendation APIs for infrastructure across multiple target clouds (cross-CSP comparison)
+	gRecommendation.POST("/multiInfra", controller.RecommendMultiInfraCandidates)
+	gRecommendation.POST("/multiInfraWithNlb", controller.RecommendMultiInfraWithNlbCandidates)
+
 	// Naming and validation utility APIs
 	gNaming := gBeetle.Group("/naming")
 	gNaming.POST("/alignment", controller.AlignNames)

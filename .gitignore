@@ -52,6 +52,9 @@ cmd/test-cli/async/testconf/test-config.yaml
 cmd/test-cli/rate-limiting/test-rate-limiting
 cmd/test-cli/rate-limiting/testconf/auth-config.json
 cmd/test-cli/rate-limiting/testconf/test-config.yaml
+cmd/test-cli/multi-infra-recommendation/test-multi-infra-recommendation
+cmd/test-cli/multi-infra-recommendation/testconf/auth-config.json
+cmd/test-cli/multi-infra-recommendation/testconf/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*

@@ -1,0 +1,28 @@
+test:
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: true
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: true
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: false
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: false
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: false
+
+beetle:
+  endpoint: http://localhost:8056
+  requestBodyFile: testconf/source-infra.json
+  requestBodyFileWithNlb: testconf/source-infra-with-nlb.json
+  authConfigFile: testconf/auth-config.json
