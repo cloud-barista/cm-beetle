@@ -11,11 +11,11 @@ x-default-healthcheck: &default-healthcheck
 services:
   # cm-beetle
   cm-beetle:
-    image: cloudbaristaorg/cm-beetle:0.5.7
+    image: cloudbaristaorg/cm-beetle:0.5.9
     container_name: cm-beetle
-    build:
-      context: ${PROJECT_ROOT}
-      dockerfile: Dockerfile
+    # build:
+    #   context: ${PROJECT_ROOT}
+    #   dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - cloud-barista
@@ -42,7 +42,7 @@ services:
       # - BEETLE_LOGFILE_MAXBACKUPS=3
       # - BEETLE_LOGFILE_MAXAGE=30
       # - BEETLE_LOGFILE_COMPRESS=false
-      - BEETLE_LOGLEVEL=debug
+      # - BEETLE_LOGLEVEL=debug
       # - BEETLE_LOGWRITER=both
       - BEETLE_NODE_ENV=development
       # - BEETLE_AUTOCONTROL_DURATION_MS=10000
