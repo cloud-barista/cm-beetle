@@ -33,6 +33,27 @@ applyTo: "**/*.go"
 - **Be precise**: Include technical details (numbers, limits, ratios) when relevant.
 - **Be actionable**: Focus on **what** the code does, not how (implementation is in the code).
 - **Avoid redundancy**: Don't comment on obvious code behavior.
+- **No history/rationale narratives**: Never explain what a prior version did, why it was
+  wrong, or "do not reintroduce X" warnings in code comments. That belongs in the commit
+  message or PR description, not the source file. A comment describes the current code,
+  not its diff.
+
+**Example:**
+
+```go
+// ✅ Good: describes current behavior only
+// isNcpImageCompatible checks if the image's CspImageName exactly matches one of the spec's CorrespondingImageIds.
+func isNcpImageCompatible(spec SpecInfo, image ImageInfo) bool { ... }
+
+// ❌ Bad: explains history and rationale instead of the code
+// isNcpImageCompatible checks if NCP image is compatible with spec using CorrespondingImageIds.
+// Matching mirrors CB-Tumblebug's own reference implementation (filterImagesByCorrespondingIds
+// in src/core/resource/image.go): an exact equality check, with no permissive fallback.
+// A prior version of this function tried to "recover" an ID via regex/Details lookups and
+// treated extraction failures as compatible, which let unrelated pairs pass; do not
+// reintroduce that behavior.
+func isNcpImageCompatible(spec SpecInfo, image ImageInfo) bool { ... }
+```
 
 ### Function Comments
 
