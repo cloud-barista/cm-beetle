@@ -19,11 +19,6 @@ import (
 	"net/http"
 	"strconv"
 
-	// cloudmodel "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/cloud/infra"
-	// "github.com/cloud-barista/cm-beetle/pkg/api/rest/model/onprem/infra"
-
-	// "github.com/cloud-barista/cm-honeybee/agent/pkg/api/rest/model/onprem/infra"
-	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 
@@ -470,128 +465,72 @@ func RecommendInfraWithNlbCandidates(c echo.Context) error {
 }
 
 /*
- * K8s Cluster Control Plane and Node Group Recommendation
+ * K8s Cluster Recommendation
  */
 
+type RecommendK8sClusterRequest struct {
+	cloudmodel.CloudProperty
+	onpremmodel.OnpremiseInfraModel
+}
+
 type RecommendK8sClusterResponse struct {
-	tbmodel.K8sClusterDynamicReq
+	cloudmodel.RecommendedInfra
 }
 
-// RecommendK8sControlPlane godoc
-// @ID RecommendK8sControlPlane
-// @Summary Recommend K8s control plane configuration
-// @Description Get recommendation for K8s control plane based on honeybee source cluster data
-// @Description Returns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API
-// @Tags [Recommendation] K8s Cluster (prototype)
+// RecommendK8sCluster godoc
+// @ID RecommendK8sCluster
+// @Summary Recommend a K8s cluster configuration for cloud migration
+// @Description Recommend a complete K8s cluster configuration based on on-premise infra data from cm-honeybee.
+// @Description Returns a RecommendedK8sInfra that can be passed directly to the K8s migration API.
+// @Description
+// @Description **Required Parameters**: `desiredProvider`, `desiredRegion`
+// @Description **Input**: On-premise infra model (from honeybee /infra/refined) with K8s cluster info and node roles
+// @Tags [Recommendation] K8s Cluster
 // @Accept  json
 // @Produce  json
-// @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
-// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
+// @Param UserInfra body RecommendK8sClusterRequest true "Source on-premise infra (must include k8sCluster and nodes with role=worker)"
+// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp)
 // @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbmodel.K8sClusterDynamicReq] "K8s control plane recommendation (ready for cb-tumblebug API)"
+// @Success 200 {object} model.ApiResponse[RecommendK8sClusterResponse] "K8s cluster recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)"
 // @Failure 400 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
-// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
-// @Header 503 {string} Retry-After "Seconds until client should retry"
-// @Router /recommendation/k8sControlPlane [post]
-func RecommendK8sControlPlane(c echo.Context) error {
+// @Router /recommendation/k8sCluster [post]
+func RecommendK8sCluster(c echo.Context) error {
 	desiredProvider := c.QueryParam("desiredProvider")
 	desiredRegion := c.QueryParam("desiredRegion")
 
-	if desiredProvider == "" || desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredProvider' and 'desiredRegion' query parameters are required"))
-	}
-
-	reqt := &recommendation.KubernetesInfoList{}
+	reqt := &RecommendK8sClusterRequest{}
 	if err := c.Bind(reqt); err != nil {
-		log.Error().Err(err).Msg("failed to bind request body")
+		log.Warn().Err(err).Msg("failed to bind request body")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
 	}
 
-	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one cluster required"))
+	// Query params override request body if body fields are empty
+	if reqt.Csp == "" {
+		reqt.Csp = desiredProvider
+	}
+	if reqt.Region == "" {
+		reqt.Region = desiredRegion
 	}
 
-	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
+	if reqt.Csp == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
+	}
+	if reqt.Region == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
+	}
+
+	ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region)
 	if !ok {
 		log.Error().Err(err).Msg("invalid provider or region")
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
 	}
 
-	k8sInfoList := recommendation.KubernetesInfoList{
-		Servers: reqt.Servers,
-	}
-
-	result, err := recommendation.RecommendK8sControlPlane(desiredProvider, desiredRegion, k8sInfoList)
+	result, err := recommendation.RecommendK8sCluster(reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel.OnpremiseInfraModel)
 	if err != nil {
-		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
-			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
-			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
-				"Too many requests to the underlying infrastructure provider; retry after the given time"))
-		}
-		log.Error().Err(err).Msg("failed to recommend K8s control plane")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s control plane recommendation failed"))
-	}
-
-	return c.JSON(http.StatusOK, model.SuccessResponse(result))
-}
-
-// RecommendK8sNodeGroup godoc
-// @ID RecommendK8sNodeGroup
-// @Summary Recommend K8s worker node group configuration
-// @Description Get recommendation for K8s worker node group based on honeybee source cluster data
-// @Description Returns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API
-// @Tags [Recommendation] K8s Cluster (prototype)
-// @Accept  json
-// @Produce  json
-// @Param UserK8sInfra body recommendation.KubernetesInfoList true "Source cluster information from honeybee"
-// @Param desiredProvider query string true "Provider (e.g., aws)" Enums(aws)
-// @Param desiredRegion query string true "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
-// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[tbmodel.K8sNodeGroupReq] "K8s worker node group recommendation (ready for cb-tumblebug API)"
-// @Failure 400 {object} model.ApiResponse[any]
-// @Failure 500 {object} model.ApiResponse[any]
-// @Failure 503 {object} model.ApiResponse[any] "Too many requests - retry after the given time"
-// @Header 503 {string} Retry-After "Seconds until client should retry"
-// @Router /recommendation/k8sNodeGroup [post]
-func RecommendK8sNodeGroup(c echo.Context) error {
-	desiredProvider := c.QueryParam("desiredProvider")
-	desiredRegion := c.QueryParam("desiredRegion")
-
-	if desiredProvider == "" || desiredRegion == "" {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("'desiredProvider' and 'desiredRegion' query parameters are required"))
-	}
-
-	reqt := &recommendation.KubernetesInfoList{}
-	if err := c.Bind(reqt); err != nil {
-		log.Error().Err(err).Msg("failed to bind request body")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
-	}
-
-	if len(reqt.Servers) == 0 {
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("At least one cluster required"))
-	}
-
-	ok, err := recommendation.IsValidCspAndRegion(desiredProvider, desiredRegion)
-	if !ok {
-		log.Error().Err(err).Msg("invalid provider or region")
-		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
-	}
-
-	k8sInfoList := recommendation.KubernetesInfoList{
-		Servers: reqt.Servers,
-	}
-
-	result, err := recommendation.RecommendK8sNodeGroup(desiredProvider, desiredRegion, k8sInfoList)
-	if err != nil {
-		if retryAfter, ok := ratelimit.RetryAfter(err); ok {
-			c.Response().Header().Set("Retry-After", fmt.Sprintf("%d", ratelimit.RetryAfterSeconds(retryAfter)))
-			return c.JSON(http.StatusServiceUnavailable, model.SimpleErrorResponse(
-				"Too many requests to the underlying infrastructure provider; retry after the given time"))
-		}
-		log.Error().Err(err).Msg("failed to recommend K8s node group")
-		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse("K8s node group recommendation failed"))
+		log.Error().Err(err).Msg("failed to recommend K8s cluster")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, model.SuccessResponse(result))
