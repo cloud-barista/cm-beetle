@@ -65,6 +65,35 @@ func (s *Session) CreateSecurityGroup(nsId string, reqBody tbmodel.SecurityGroup
 	return resBody, nil
 }
 
+// AddFirewallRules adds firewall rules to an existing Security Group.
+// Used to apply rules that cannot be included in the create request for some CSPs
+// (e.g., Tencent rejects ingress+egress in a single create call).
+func (s *Session) AddFirewallRules(nsId, securityGroupId string, rules []tbmodel.FirewallRuleReq) (tbmodel.SecurityGroupInfo, error) {
+	log.Debug().Str("securityGroupId", securityGroupId).Int("ruleCount", len(rules)).Msg("Adding firewall rules")
+
+	var emptyRet = tbmodel.SecurityGroupInfo{}
+
+	url := fmt.Sprintf("/ns/%s/resources/securityGroup/%s/rules", nsId, securityGroupId)
+	reqBody := tbmodel.SecurityGroupUpdateReq{FirewallRules: rules}
+
+	var resBody tbmodel.SecurityGroupInfo
+	resp, err := s.
+		SetBody(&reqBody).
+		SetResult(&resBody).
+		Post(url)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to add firewall rules")
+		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+
+	log.Debug().Str("securityGroupId", securityGroupId).Msg("Added firewall rules successfully")
+	return resBody, nil
+}
+
 // ReadSecurityGroup retrieves information about a specific Security Group in the specified namespace
 func (s *Session) ReadSecurityGroup(nsId, securityGroupId string) (tbmodel.SecurityGroupInfo, error) {
 	log.Debug().Msg("Retrieving Security Group")

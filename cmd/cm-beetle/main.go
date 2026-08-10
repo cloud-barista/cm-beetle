@@ -163,8 +163,14 @@ func checkReadiness(url string) (bool, error) {
 // @tag.name [Recommendation] Infrastructure
 // @tag.description APIs for recommending optimal cloud infrastructure (VM specs, OS images, etc.) and NLBs (Managed Network Load Balancers)
 
-// @tag.name [Recommendation] K8s Cluster (prototype)
-// @tag.description APIs for recommending optimal Kubernetes clusters (prototype)
+// @tag.name [Recommendation] K8s Cluster
+// @tag.description APIs for recommending optimal Kubernetes cluster configuration for cloud migration
+
+// @tag.name [Migration] K8s Cluster
+// @tag.description APIs for migrating on-premise Kubernetes clusters to managed K8s services (EKS, AKS, GKE)
+
+// @tag.name [Recommendation] Resources for K8s cluster
+// @tag.description APIs for recommending resources for K8s cluster (node group specs, node images, etc.)
 
 // @tag.name [Recommendation] Resources for infrastructure
 // @tag.description APIs for recommending resources for infrastructure (VNet, Security Group, etc.)

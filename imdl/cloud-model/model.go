@@ -19,6 +19,8 @@ type RecommendedInfra struct {
 	TargetOsImageList       []ImageInfo        `json:"targetOsImageList"`
 	TargetSecurityGroupList []SecurityGroupReq `json:"targetSecurityGroupList"`
 	TargetNlbList           []NlbReq           `json:"targetNlbList,omitempty"`
+
+	TargetK8sCluster K8sClusterReq `json:"targetK8sCluster,omitempty"`
 }
 
 // RecommendedNlb is the request body for POST /migration/middleware/ns/{nsId}/infra/{infraId}/nlb.

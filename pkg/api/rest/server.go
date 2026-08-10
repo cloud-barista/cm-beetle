@@ -334,13 +334,14 @@ func RunServer(port string) {
 	gValidationNs := gValidation.Group("/ns/:nsId")
 	gValidationNs.POST("/infra", controller.ValidateInfra)
 
-	// Recommendation APIs for K8s Cluster (new endpoints)
-	gRecommendation.POST("/k8sControlPlane", controller.RecommendK8sControlPlane)
-	gRecommendation.POST("/k8sNodeGroup", controller.RecommendK8sNodeGroup)
+	// Recommendation APIs for K8s Cluster
+	gRecommendation.POST("/k8sCluster", controller.RecommendK8sCluster)
 
-	// Deprecated: Use /k8sControlPlane and /k8sNodeGroup instead
+	// Recommendation APIs for resources for K8s cluster
+	gRecommendation.POST("/resources/k8sNodeGroupSpecs", controller.RecommendK8sNodeGroupSpecs)
+	gRecommendation.POST("/resources/k8sNodeGroupImages", controller.RecommendK8sNodeGroupImages)
 
-	// Recommendation APIs for resources for infrastructure
+	// Recommendation APIs for resources for VM infrastructure
 	gRecommendation.POST("/resources/vNet", controller.RecommendVNet)
 	gRecommendation.POST("/resources/securityGroups", controller.RecommendSecurityGroups)
 	gRecommendation.POST("/resources/osImages", controller.RecommendVmOsImages)
@@ -384,7 +385,13 @@ func RunServer(port string) {
 	// real SSH connections to every node.
 	gMigration.GET("/ns/:nsId/infra/:infraId/ssh-ready", controller.CheckSSHReady, middlewares.SSHCheckCooldown())
 
-	// Migration APIs for resources for infrastructure
+	// Migration APIs for K8s Cluster
+	gMigration.POST("/ns/:nsId/k8sCluster", controller.MigrateK8sCluster)
+	gMigration.GET("/ns/:nsId/k8sCluster", controller.ListK8sClusters)
+	gMigration.GET("/ns/:nsId/k8sCluster/:k8sClusterId", controller.GetK8sCluster)
+	gMigration.DELETE("/ns/:nsId/k8sCluster/:k8sClusterId", controller.DeleteK8sCluster)
+
+	// Migration APIs for resources for VM infrastructure
 	// APIs for the VM spec resources
 	// gMigration.GET("/ns/:nsId/resources/spec", controller.ListMigratedSpec)
 	// gMigration.POST("/ns/:nsId/resources/spec", controller.CreateMigratedSpec)

@@ -17,6 +17,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
@@ -503,4 +504,159 @@ func RecommendVmOsImages(c echo.Context) error {
 	res := model.SuccessResponseWithMessage(recommendedOsImageList, successMsg)
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// RecommendK8sNodeGroupSpecsRequest is the request body for K8s worker node spec recommendation.
+//
+// CloudProperty is embedded (no name collision, so reqt.Csp / reqt.Region read directly), while the
+// infra is a named field rather than the onpremmodel.OnpremiseInfraModel wrapper — embedding that
+// wrapper would require reqt.OnpremiseInfraModel.OnpremiseInfraModel to reach the data.
+type RecommendK8sNodeGroupSpecsRequest struct {
+	cloudmodel.CloudProperty
+	OnpremiseInfraModel onpremmodel.OnpremInfra `json:"onpremiseInfraModel"`
+}
+
+// RecommendK8sNodeGroupSpecs godoc
+// @ID RecommendK8sNodeGroupSpecs
+// @Summary Recommend K8s worker node specs for cloud migration
+// @Description Recommend worker node specs for each node group derived from the source infrastructure.
+// @Description
+// @Description Source workers are grouped by spec signature (vCPU/memory/architecture) because managed
+// @Description K8s node groups are homogeneous; one recommendation set is produced per group, and the
+// @Description group's source machines are listed in `sourceServers`.
+// @Description
+// @Description [Note] Only nodes with `role=worker` are considered. `k8sCluster` is not required.
+// @Description [Note] Specs below the target's K8s node minimum are upscaled, and the adjustment is
+// @Description reported in the entry's `description`.
+// @Tags [Recommendation] Resources for K8s cluster
+// @Accept json
+// @Produce json
+// @Param UserInfra body RecommendK8sNodeGroupSpecsRequest true "Source on-premise infra (must include nodes with role=worker)"
+// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp,nhn,tencent,ibm) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param limit query int false "Max spec candidates per node group (default: 3, max: 30)" default(3)
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedSpecList] "Successfully recommended K8s worker node spec(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Router /recommendation/resources/k8sNodeGroupSpecs [post]
+func RecommendK8sNodeGroupSpecs(c echo.Context) error {
+
+	// [Input] Query params fill in when the body omits them, same precedence as RecommendK8sCluster.
+	reqt := &RecommendK8sNodeGroupSpecsRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	limit := 3
+	if s := c.QueryParam("limit"); s != "" {
+		n, err := strconv.Atoi(s)
+		if err != nil || n < 1 {
+			return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("limit must be a positive integer"))
+		}
+		limit = n
+	}
+
+	if reqt.Csp == "" {
+		reqt.Csp = c.QueryParam("desiredProvider")
+	}
+	if reqt.Region == "" {
+		reqt.Region = c.QueryParam("desiredRegion")
+	}
+	if reqt.Csp == "" {
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
+	}
+	if reqt.Region == "" {
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
+	}
+	if ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region); !ok {
+		log.Error().Err(err).Msg("failed to validate provider and region")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
+	}
+
+	// [Process]
+	// The loop over node groups lives in the core: grouping produces an unexported type, so
+	// iterating here would mean exporting internal representation to the API layer.
+	recommendedSpecList, err := recommendation.RecommendK8sNodeGroupSpecs(
+		reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel, limit)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend K8s worker node specs")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// [Output]
+	log.Debug().Msgf("recommendedK8sNodeGroupSpecList: %+v", recommendedSpecList)
+
+	successMsg := fmt.Sprintf("Recommended K8s worker node spec(s) for %s %s", reqt.Csp, reqt.Region)
+	res := model.SuccessResponseWithMessage(recommendedSpecList, successMsg)
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// RecommendK8sNodeGroupImages godoc
+// @ID RecommendK8sNodeGroupImages
+// @Summary Recommend K8s worker node images for cloud migration
+// @Description Recommend a node image for each worker node group derived from the source infrastructure.
+// @Description
+// @Description Unlike VM OS image recommendation, K8s node images are selected from a provider-curated
+// @Description list (k8sclusterinfo.yaml) rather than the image DB. The selection is architecture-based:
+// @Description x86_64 groups receive "default"; arm64 groups receive the provider ARM image when
+// @Description NodeImageDesignation=true for the target provider.
+// @Description
+// @Description [Note] Only nodes with `role=worker` are considered. `k8sCluster` is not required.
+// @Description [Note] Only `targetOsImage.id` is populated in each entry; other ImageInfo fields are empty.
+// @Tags [Recommendation] Resources for K8s cluster
+// @Accept json
+// @Produce json
+// @Param UserInfra body RecommendK8sNodeGroupSpecsRequest true "Source on-premise infra (must include nodes with role=worker)"
+// @Param desiredProvider query string false "Provider (e.g., aws)" Enums(aws,azure,gcp,alibaba,ncp,nhn,tencent,ibm) default(aws)
+// @Param desiredRegion query string false "Region (e.g., ap-northeast-2)" default(ap-northeast-2)
+// @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
+// @Success 200 {object} model.ApiResponse[cloudmodel.RecommendedOsImageList] "Successfully recommended K8s worker node image(s)"
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error during recommendation"
+// @Router /recommendation/resources/k8sNodeGroupImages [post]
+func RecommendK8sNodeGroupImages(c echo.Context) error {
+
+	reqt := &RecommendK8sNodeGroupSpecsRequest{}
+	if err := c.Bind(reqt); err != nil {
+		log.Warn().Err(err).Msg("failed to bind request body")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid request format"))
+	}
+
+	if reqt.Csp == "" {
+		reqt.Csp = c.QueryParam("desiredProvider")
+	}
+	if reqt.Region == "" {
+		reqt.Region = c.QueryParam("desiredRegion")
+	}
+	if reqt.Csp == "" {
+		log.Warn().Msg("desiredProvider is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Provider required"))
+	}
+	if reqt.Region == "" {
+		log.Warn().Msg("desiredRegion is required")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Region required"))
+	}
+	if ok, err := recommendation.IsValidCspAndRegion(reqt.Csp, reqt.Region); !ok {
+		log.Error().Err(err).Msg("failed to validate provider and region")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid provider or region"))
+	}
+
+	// [Process]
+	recommendedImageList, err := recommendation.RecommendK8sNodeGroupImages(
+		reqt.Csp, reqt.Region, reqt.OnpremiseInfraModel)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to recommend K8s worker node images")
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(err.Error()))
+	}
+
+	// [Output]
+	log.Debug().Msgf("recommendedK8sNodeGroupImageList: %+v", recommendedImageList)
+
+	successMsg := fmt.Sprintf("Recommended K8s worker node image(s) for %s %s", reqt.Csp, reqt.Region)
+	return c.JSON(http.StatusOK, model.SuccessResponseWithMessage(recommendedImageList, successMsg))
 }
