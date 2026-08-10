@@ -1929,6 +1929,242 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/ns/{nsId}/k8sCluster": {
+            "get": {
+                "description": "List all K8s clusters created in the namespace via cm-beetle migration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] K8s Cluster"
+                ],
+                "summary": "List all migrated K8s clusters",
+                "operationId": "ListK8sClusters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of migrated K8s clusters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_model_K8sClusterInfo"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).\n\n**Workflow**:\n1. Call POST /recommendation/k8sCluster to get a RecommendedK8sInfra.\n2. Pass the recommendation result as-is to this endpoint.\n\n**Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups\n\nBy default this API runs synchronously (EKS takes ~10-20 min). Send header\n` + "`" + `Prefer: respond-async` + "`" + ` to run it asynchronously: receive 202 Accepted with a\nreqId, then poll GET /request/{reqId} to check status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] K8s Cluster"
+                ],
+                "summary": "Migrate an on-premise K8s cluster to the target CSP",
+                "operationId": "MigrateK8sCluster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "K8s cluster recommendation (from POST /recommendation/k8sCluster)",
+                        "name": "k8sClusterInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateK8sClusterRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously (RFC 7240)",
+                        "name": "Prefer",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "K8s cluster migrated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse"
+                        }
+                    },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/ns/{nsId}/k8sCluster/{k8sClusterId}": {
+            "get": {
+                "description": "Retrieve information about a specific K8s cluster created via cm-beetle migration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] K8s Cluster"
+                ],
+                "summary": "Get a migrated K8s cluster",
+                "operationId": "GetK8sCluster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "K8s Cluster ID",
+                        "name": "k8sClusterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "K8s cluster information",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a K8s cluster created via cm-beetle migration. This removes the cluster and all its node groups.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] K8s Cluster"
+                ],
+                "summary": "Delete a migrated K8s cluster",
+                "operationId": "DeleteK8sCluster",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "K8s Cluster ID",
+                        "name": "k8sClusterId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "K8s cluster deleted",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/migration/ns/{nsId}/resources/securityGroup": {
             "get": {
                 "description": "Get the list of all migrated security groups in the namespace",
@@ -3565,9 +3801,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommendation/k8sControlPlane": {
+        "/recommendation/k8sCluster": {
             "post": {
-                "description": "Get recommendation for K8s control plane based on honeybee source cluster data\nReturns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API",
+                "description": "Recommend a complete K8s cluster configuration based on on-premise infra data from cm-honeybee.\nReturns a RecommendedK8sInfra that can be passed directly to the K8s migration API.\n\n**Required Parameters**: ` + "`" + `desiredProvider` + "`" + `, ` + "`" + `desiredRegion` + "`" + `\n**Input**: On-premise infra model (from honeybee /infra/refined) with K8s cluster info and node roles",
                 "consumes": [
                     "application/json"
                 ],
@@ -3575,23 +3811,27 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] K8s Cluster (prototype)"
+                    "[Recommendation] K8s Cluster"
                 ],
-                "summary": "Recommend K8s control plane configuration",
-                "operationId": "RecommendK8sControlPlane",
+                "summary": "Recommend a K8s cluster configuration for cloud migration",
+                "operationId": "RecommendK8sCluster",
                 "parameters": [
                     {
-                        "description": "Source cluster information from honeybee",
-                        "name": "UserK8sInfra",
+                        "description": "Source on-premise infra (must include k8sCluster and nodes with role=worker)",
+                        "name": "UserInfra",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/recommendation.KubernetesInfoList"
+                            "$ref": "#/definitions/controller.RecommendK8sClusterRequest"
                         }
                     },
                     {
                         "enum": [
-                            "aws"
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp"
                         ],
                         "type": "string",
                         "description": "Provider (e.g., aws)",
@@ -3616,9 +3856,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "K8s control plane recommendation (ready for cb-tumblebug API)",
+                        "description": "K8s cluster recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-model_K8sClusterDynamicReq"
+                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendK8sClusterResponse"
                         }
                     },
                     "400": {
@@ -3631,101 +3871,6 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "503": {
-                        "description": "Too many requests - retry after the given time",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        },
-                        "headers": {
-                            "Retry-After": {
-                                "type": "string",
-                                "description": "Seconds until client should retry"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/recommendation/k8sNodeGroup": {
-            "post": {
-                "description": "Get recommendation for K8s worker node group based on honeybee source cluster data\nReturns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "[Recommendation] K8s Cluster (prototype)"
-                ],
-                "summary": "Recommend K8s worker node group configuration",
-                "operationId": "RecommendK8sNodeGroup",
-                "parameters": [
-                    {
-                        "description": "Source cluster information from honeybee",
-                        "name": "UserK8sInfra",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/recommendation.KubernetesInfoList"
-                        }
-                    },
-                    {
-                        "enum": [
-                            "aws"
-                        ],
-                        "type": "string",
-                        "description": "Provider (e.g., aws)",
-                        "name": "desiredProvider",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "ap-northeast-2",
-                        "description": "Region (e.g., ap-northeast-2)",
-                        "name": "desiredRegion",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
-                        "name": "X-Request-Id",
-                        "in": "header"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "K8s worker node group recommendation (ready for cb-tumblebug API)",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-model_K8sNodeGroupReq"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        }
-                    },
-                    "503": {
-                        "description": "Too many requests - retry after the given time",
-                        "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-any"
-                        },
-                        "headers": {
-                            "Retry-After": {
-                                "type": "string",
-                                "description": "Seconds until client should retry"
-                            }
                         }
                     }
                 }
@@ -3987,6 +4132,167 @@ const docTemplate = `{
                     },
                     "503": {
                         "description": "Too many concurrent async jobs; retry later or without Prefer: respond-async",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/resources/k8sNodeGroupImages": {
+            "post": {
+                "description": "Recommend a node image for each worker node group derived from the source infrastructure.\n\nUnlike VM OS image recommendation, K8s node images are selected from a provider-curated\nlist (k8sclusterinfo.yaml) rather than the image DB. The selection is architecture-based:\nx86_64 groups receive \"default\"; arm64 groups receive the provider ARM image when\nNodeImageDesignation=true for the target provider.\n\n[Note] Only nodes with ` + "`" + `role=worker` + "`" + ` are considered. ` + "`" + `k8sCluster` + "`" + ` is not required.\n[Note] Only ` + "`" + `targetOsImage.id` + "`" + ` is populated in each entry; other ImageInfo fields are empty.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for K8s cluster"
+                ],
+                "summary": "Recommend K8s worker node images for cloud migration",
+                "operationId": "RecommendK8sNodeGroupImages",
+                "parameters": [
+                    {
+                        "description": "Source on-premise infra (must include nodes with role=worker)",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendK8sNodeGroupSpecsRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp",
+                            "nhn",
+                            "tencent",
+                            "ibm"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended K8s worker node image(s)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedOsImageList"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/resources/k8sNodeGroupSpecs": {
+            "post": {
+                "description": "Recommend worker node specs for each node group derived from the source infrastructure.\n\nSource workers are grouped by spec signature (vCPU/memory/architecture) because managed\nK8s node groups are homogeneous; one recommendation set is produced per group, and the\ngroup's source machines are listed in ` + "`" + `sourceServers` + "`" + `.\n\n[Note] Only nodes with ` + "`" + `role=worker` + "`" + ` are considered. ` + "`" + `k8sCluster` + "`" + ` is not required.\n[Note] Specs below the target's K8s node minimum are upscaled, and the adjustment is\nreported in the entry's ` + "`" + `description` + "`" + `.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Resources for K8s cluster"
+                ],
+                "summary": "Recommend K8s worker node specs for cloud migration",
+                "operationId": "RecommendK8sNodeGroupSpecs",
+                "parameters": [
+                    {
+                        "description": "Source on-premise infra (must include nodes with role=worker)",
+                        "name": "UserInfra",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendK8sNodeGroupSpecsRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "ncp",
+                            "nhn",
+                            "tencent",
+                            "ibm"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "Provider (e.g., aws)",
+                        "name": "desiredProvider",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 3,
+                        "description": "Max spec candidates per node group (default: 3, max: 30)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended K8s worker node spec(s)",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-cloudmodel_RecommendedSpecList"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-any"
                         }
@@ -5889,6 +6195,142 @@ const docTemplate = `{
                 }
             }
         },
+        "cloudmodel.K8sClusterReq": {
+            "type": "object",
+            "required": [
+                "connectionName",
+                "name",
+                "securityGroupIds",
+                "subnetIds",
+                "vNetId"
+            ],
+            "properties": {
+                "connectionName": {
+                    "description": "Namespace      string ` + "`" + `json:\"namespace\" validate:\"required\" example:\"default\"` + "`" + `",
+                    "type": "string",
+                    "example": "alibaba-ap-northeast-2"
+                },
+                "cspResourceId": {
+                    "description": "Fields for \"Register existing K8sCluster\" feature\n@description CspResourceId is required to register a k8s cluster from CSP (option=register)",
+                    "type": "string",
+                    "example": "required when option is register"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "My K8sCluster"
+                },
+                "k8sNodeGroupList": {
+                    "description": "(3) NodeGroupInfo List",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.K8sNodeGroupReq"
+                    }
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "(1) K8sCluster Info",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "sg-01"
+                    ]
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "subnet-01"
+                    ]
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the k8scluster in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": ""
+                },
+                "vNetId": {
+                    "description": "(2) Network Info",
+                    "type": "string",
+                    "example": "vpc-01"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.30.1-aliyun.1"
+                }
+            }
+        },
+        "cloudmodel.K8sNodeGroupReq": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Description"
+                },
+                "desiredNodeSize": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "imageId": {
+                    "type": "string",
+                    "example": "image-01"
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "maxNodeSize": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "minNodeSize": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "k8sng01"
+                },
+                "onAutoScaling": {
+                    "description": "autoscale config.",
+                    "type": "string",
+                    "example": "true"
+                },
+                "rootDiskSize": {
+                    "description": "Root disk size in GB. 0 = use CSP default.",
+                    "type": "integer",
+                    "example": 40
+                },
+                "rootDiskType": {
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "type": "string",
+                    "example": "cloud_essd"
+                },
+                "specId": {
+                    "type": "string",
+                    "example": "spec-01"
+                },
+                "sshKeyId": {
+                    "type": "string",
+                    "example": "sshkey-01"
+                }
+            }
+        },
         "cloudmodel.KeyValue": {
             "type": "object",
             "properties": {
@@ -6427,6 +6869,9 @@ const docTemplate = `{
                 },
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
                 },
                 "targetNlbList": {
                     "type": "array",
@@ -7319,6 +7764,9 @@ const docTemplate = `{
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
                 },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
+                },
                 "targetNlbList": {
                     "type": "array",
                     "items": {
@@ -7662,6 +8110,171 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.MigrateK8sClusterRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
+                },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "controller.MigrateK8sClusterResponse": {
+            "type": "object",
+            "properties": {
+                "accessInfo": {
+                    "$ref": "#/definitions/model.K8sAccessInfo"
+                },
+                "addons": {
+                    "$ref": "#/definitions/model.K8sAddonsInfo"
+                },
+                "connectionConfig": {
+                    "description": "ConnectionConfig shows connection info to cloud service provider",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ConnConfig"
+                        }
+                    ]
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "alibaba-ap-northeast-2"
+                },
+                "createdTime": {
+                    "type": "string",
+                    "example": "1970-01-01T00:00:00.00Z"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "My K8sCluster"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object, same as Name",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "k8sNodeGroupList": {
+                    "description": "K8sNodeGroupList is for describing network information about the cluster",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sNodeGroupInfo"
+                    }
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "label": {
+                    "description": "Label is for describing the object by keywords",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "network": {
+                    "description": "Network is for describing network information about the cluster",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterNetworkInfo"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "spiderViewK8sClusterDetail": {
+                    "$ref": "#/definitions/model.SpiderClusterInfo"
+                },
+                "status": {
+                    "description": "Creating, Active, Inactive, Updating, Deleting",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterStatus"
+                        }
+                    ],
+                    "example": "Active"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "version": {
+                    "description": "Version is for kubernetes version",
+                    "type": "string",
+                    "example": "1.30.1"
+                }
+            }
+        },
         "controller.MigrateObjectStorageRequest": {
             "type": "object",
             "properties": {
@@ -7796,6 +8409,91 @@ const docTemplate = `{
                 },
                 "sourceInfra": {
                     "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                }
+            }
+        },
+        "controller.RecommendK8sClusterRequest": {
+            "type": "object",
+            "required": [
+                "onpremiseInfraModel"
+            ],
+            "properties": {
+                "csp": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                }
+            }
+        },
+        "controller.RecommendK8sClusterResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/cloudmodel.CloudProperty"
+                },
+                "targetInfra": {
+                    "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
+                },
+                "targetNlbList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.NlbReq"
+                    }
+                },
+                "targetOsImageList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.ImageInfo"
+                    }
+                },
+                "targetSecurityGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SecurityGroupReq"
+                    }
+                },
+                "targetSpecList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.SpecInfo"
+                    }
+                },
+                "targetSshKey": {
+                    "$ref": "#/definitions/cloudmodel.SshKeyReq"
+                },
+                "targetVNet": {
+                    "$ref": "#/definitions/cloudmodel.VNetReq"
+                }
+            }
+        },
+        "controller.RecommendK8sNodeGroupSpecsRequest": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "onpremiseInfraModel": {
+                    "$ref": "#/definitions/onpremisemodel.OnpremInfra"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
                 }
             }
         },
@@ -7934,6 +8632,9 @@ const docTemplate = `{
                 },
                 "targetInfra": {
                     "$ref": "#/definitions/cloudmodel.InfraReq"
+                },
+                "targetK8sCluster": {
+                    "$ref": "#/definitions/cloudmodel.K8sClusterReq"
                 },
                 "targetNlbList": {
                     "type": "array",
@@ -8128,6 +8829,33 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/controller.ScannedBucketSummary"
+                    }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-array_model_K8sClusterInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sClusterInfo"
                     }
                 },
                 "error": {
@@ -8511,6 +9239,34 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ApiResponse-controller_MigrateK8sClusterResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.MigrateK8sClusterResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "model.ApiResponse-controller_RecommendInfraWithDefaultsResponse": {
             "type": "object",
             "properties": {
@@ -8519,6 +9275,34 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/controller.RecommendInfraWithDefaultsResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-controller_RecommendK8sClusterResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/controller.RecommendK8sClusterResponse"
                         }
                     ]
                 },
@@ -8631,62 +9415,6 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/model.AsyncJobResponse"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-model_K8sClusterDynamicReq": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.K8sClusterDynamicReq"
-                        }
-                    ]
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "model.ApiResponse-model_K8sNodeGroupReq": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.K8sNodeGroupReq"
                         }
                     ]
                 },
@@ -9224,6 +9952,23 @@ const docTemplate = `{
                 }
             }
         },
+        "model.IID": {
+            "type": "object",
+            "required": [
+                "NameId",
+                "SystemId"
+            ],
+            "properties": {
+                "NameId": {
+                    "type": "string",
+                    "example": "user-defined-name"
+                },
+                "SystemId": {
+                    "type": "string",
+                    "example": "csp-defined-id"
+                }
+            }
+        },
         "model.IdList": {
             "type": "object",
             "properties": {
@@ -9271,98 +10016,86 @@ const docTemplate = `{
                 "ImageNA"
             ]
         },
-        "model.K8sClusterDynamicReq": {
+        "model.K8sAccessInfo": {
             "type": "object",
-            "required": [
-                "imageId",
-                "specId"
-            ],
             "properties": {
-                "connectionName": {
-                    "description": "if ConnectionName is given, the VM tries to use associtated credential.\nif not, it will use predefined ConnectionName in Spec objects",
+                "endpoint": {
                     "type": "string",
-                    "default": "tencent-ap-seoul"
+                    "example": "http://1.2.3.4:6443"
                 },
-                "description": {
+                "kubeconfig": {
                     "type": "string",
-                    "example": "Description"
-                },
-                "desiredNodeSize": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "imageId": {
-                    "description": "ImageId is field for id of a image in common namespace",
-                    "type": "string",
-                    "example": "default, tencent+ap-seoul+ubuntu20.04"
-                },
-                "label": {
-                    "description": "Label is for describing the object by keywords",
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "maxNodeSize": {
-                    "type": "integer",
-                    "example": 3
-                },
-                "minNodeSize": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "name": {
-                    "description": "K8sCluster name if it is not empty. Optional when used with namePrefix in multi-cluster creation.",
-                    "type": "string",
-                    "example": "k8scluster01"
-                },
-                "nodeGroupName": {
-                    "description": "NodeGroup name if it is not empty",
-                    "type": "string",
-                    "example": "k8sng01"
-                },
-                "onAutoScaling": {
-                    "type": "string",
-                    "default": "true",
-                    "example": "true"
-                },
-                "rootDiskSize": {
-                    "description": "Root disk size in GB. 0 = use CSP default.",
-                    "type": "integer",
-                    "example": 30
-                },
-                "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "default": "default",
-                    "example": "default, TYPE1, ..."
-                },
-                "specId": {
-                    "description": "SpecId is field for id of a spec in common namespace",
-                    "type": "string",
-                    "example": "tencent+ap-seoul+S2.MEDIUM4"
-                },
-                "version": {
-                    "description": "K8s Clsuter version",
-                    "type": "string",
-                    "example": "1.29"
+                    "example": "apiVersion: v1\nclusters:\n- cluster:\n certificate-authority-data: LS0..."
                 }
             }
         },
-        "model.K8sNodeGroupReq": {
+        "model.K8sAddonsInfo": {
             "type": "object",
             "properties": {
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                }
+            }
+        },
+        "model.K8sClusterInfo": {
+            "type": "object",
+            "properties": {
+                "accessInfo": {
+                    "$ref": "#/definitions/model.K8sAccessInfo"
+                },
+                "addons": {
+                    "$ref": "#/definitions/model.K8sAddonsInfo"
+                },
+                "connectionConfig": {
+                    "description": "ConnectionConfig shows connection info to cloud service provider",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ConnConfig"
+                        }
+                    ]
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "alibaba-ap-northeast-2"
+                },
+                "createdTime": {
+                    "type": "string",
+                    "example": "1970-01-01T00:00:00.00Z"
+                },
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
                 "description": {
                     "type": "string",
-                    "example": "Description"
+                    "example": "My K8sCluster"
                 },
-                "desiredNodeSize": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "imageId": {
+                "id": {
+                    "description": "Id is unique identifier for the object, same as Name",
                     "type": "string",
-                    "example": "image-01"
+                    "example": "k8scluster01"
+                },
+                "k8sNodeGroupList": {
+                    "description": "K8sNodeGroupList is for describing network information about the cluster",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sNodeGroupInfo"
+                    }
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
                 },
                 "label": {
                     "description": "Label is for describing the object by keywords",
@@ -9371,40 +10104,216 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "name": {
+                    "description": "Name is human-readable string to represent the object",
+                    "type": "string",
+                    "example": "k8scluster01"
+                },
+                "network": {
+                    "description": "Network is for describing network information about the cluster",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterNetworkInfo"
+                        }
+                    ]
+                },
+                "resourceType": {
+                    "description": "ResourceType is the type of the resource",
+                    "type": "string"
+                },
+                "spiderViewK8sClusterDetail": {
+                    "$ref": "#/definitions/model.SpiderClusterInfo"
+                },
+                "status": {
+                    "description": "Creating, Active, Inactive, Updating, Deleting",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sClusterStatus"
+                        }
+                    ],
+                    "example": "Active"
+                },
+                "systemLabel": {
+                    "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
+                    "type": "string",
+                    "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "description": "Latest system message such as error message",
+                    "type": "string",
+                    "example": "Failed because ..."
+                },
+                "uid": {
+                    "description": "Uid is universally unique identifier for the object, used for labelSelector",
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "version": {
+                    "description": "Version is for kubernetes version",
+                    "type": "string",
+                    "example": "1.30.1"
+                }
+            }
+        },
+        "model.K8sClusterNetworkInfo": {
+            "type": "object",
+            "properties": {
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "sg-01"
+                    ]
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "subnet-01"
+                    ]
+                },
+                "vNetId": {
+                    "type": "string",
+                    "example": "vpc-01"
+                }
+            }
+        },
+        "model.K8sClusterStatus": {
+            "type": "string",
+            "enum": [
+                "Creating",
+                "Active",
+                "Inactive",
+                "Updating",
+                "Deleting"
+            ],
+            "x-enum-varnames": [
+                "K8sClusterCreating",
+                "K8sClusterActive",
+                "K8sClusterInactive",
+                "K8sClusterUpdating",
+                "K8sClusterDeleting"
+            ]
+        },
+        "model.K8sNodeGroupInfo": {
+            "type": "object",
+            "properties": {
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
+                    "type": "string",
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
+                },
+                "desiredNodeSize": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "Id is unique identifier for the object",
+                    "type": "string",
+                    "example": "aws-ap-southeast-1"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "isInitialNodeGroup": {
+                    "description": "IsInitialNodeGroup indicates whether this node group was created during cluster creation.\nFor some CSPs (Alibaba ACK, Tencent TKE), this node group cannot be deleted independently;\nit is automatically removed when the cluster is deleted.",
+                    "type": "boolean"
+                },
+                "k8sNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.K8sNodeInfo"
+                    }
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
                 "maxNodeSize": {
-                    "type": "integer",
-                    "example": 3
+                    "type": "integer"
                 },
                 "minNodeSize": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "integer"
                 },
                 "name": {
+                    "description": "Name is human-readable string to represent the object",
                     "type": "string",
-                    "example": "k8sng01"
+                    "example": "aws-ap-southeast-1"
                 },
                 "onAutoScaling": {
-                    "description": "autoscale config.",
-                    "type": "string",
-                    "example": "true"
+                    "type": "boolean"
                 },
                 "rootDiskSize": {
-                    "description": "Root disk size in GB. 0 = use CSP default.",
-                    "type": "integer",
-                    "example": 40
+                    "type": "integer"
                 },
                 "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
-                    "type": "string",
-                    "example": "cloud_essd"
+                    "type": "string"
                 },
                 "specId": {
-                    "type": "string",
-                    "example": "spec-01"
+                    "type": "string"
+                },
+                "spiderViewK8sNodeGroupDetail": {
+                    "$ref": "#/definitions/model.SpiderNodeGroupInfo"
                 },
                 "sshKeyId": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Creating, Active, Inactive, Updating, Deleting",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.K8sNodeGroupStatus"
+                        }
+                    ],
+                    "example": "Active"
+                }
+            }
+        },
+        "model.K8sNodeGroupStatus": {
+            "type": "string",
+            "enum": [
+                "Creating",
+                "Active",
+                "Inactive",
+                "Updating",
+                "Deleting"
+            ],
+            "x-enum-varnames": [
+                "K8sNodeGroupCreating",
+                "K8sNodeGroupActive",
+                "K8sNodeGroupInactive",
+                "K8sNodeGroupUpdating",
+                "K8sNodeGroupDeleting"
+            ]
+        },
+        "model.K8sNodeInfo": {
+            "type": "object",
+            "properties": {
+                "cspResourceId": {
+                    "description": "CspResourceId is resource identifier managed by CSP",
                     "type": "string",
-                    "example": "sshkey-01"
+                    "example": "csp-06eb41e14121c550a"
+                },
+                "cspResourceName": {
+                    "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
+                    "type": "string",
+                    "example": "we12fawefadf1221edcf"
                 }
             }
         },
@@ -9708,6 +10617,223 @@ const docTemplate = `{
                     "example": "Any message"
                 }
             }
+        },
+        "model.SpiderAccessInfo": {
+            "type": "object",
+            "properties": {
+                "endpoint": {
+                    "description": "ex) https://1.2.3.4:6443",
+                    "type": "string"
+                },
+                "kubeconfig": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SpiderAddonsInfo": {
+            "type": "object",
+            "properties": {
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                }
+            }
+        },
+        "model.SpiderClusterInfo": {
+            "type": "object",
+            "properties": {
+                "accessInfo": {
+                    "$ref": "#/definitions/model.SpiderAccessInfo"
+                },
+                "addons": {
+                    "$ref": "#/definitions/model.SpiderAddonsInfo"
+                },
+                "createdTime": {
+                    "type": "string"
+                },
+                "iid": {
+                    "description": "{NameId, SystemId}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.IID"
+                        }
+                    ]
+                },
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "network": {
+                    "$ref": "#/definitions/model.SpiderNetworkInfo"
+                },
+                "nodeGroupList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SpiderNodeGroupInfo"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/model.SpiderClusterStatus"
+                },
+                "version": {
+                    "description": "Kubernetes Version, ex) 1.23.3",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SpiderClusterStatus": {
+            "type": "string",
+            "enum": [
+                "Creating",
+                "Active",
+                "Inactive",
+                "Updating",
+                "Deleting"
+            ],
+            "x-enum-varnames": [
+                "SpiderClusterCreating",
+                "SpiderClusterActive",
+                "SpiderClusterInactive",
+                "SpiderClusterUpdating",
+                "SpiderClusterDeleting"
+            ]
+        },
+        "model.SpiderNetworkInfo": {
+            "type": "object",
+            "properties": {
+                "keyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "securityGroupIIDs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.IID"
+                    }
+                },
+                "subnetIIDs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.IID"
+                    }
+                },
+                "vpcIID": {
+                    "description": "{NameId, SystemId}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.IID"
+                        }
+                    ]
+                }
+            }
+        },
+        "model.SpiderNodeGroupInfo": {
+            "type": "object",
+            "required": [
+                "DesiredNodeSize",
+                "IId",
+                "ImageIID",
+                "KeyPairIID",
+                "MaxNodeSize",
+                "MinNodeSize",
+                "OnAutoScaling",
+                "Status",
+                "VMSpecName"
+            ],
+            "properties": {
+                "DesiredNodeSize": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "IId": {
+                    "description": "{NameId, SystemId}",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.IID"
+                        }
+                    ]
+                },
+                "ImageIID": {
+                    "description": "VM config.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.IID"
+                        }
+                    ]
+                },
+                "KeyPairIID": {
+                    "$ref": "#/definitions/model.IID"
+                },
+                "KeyValueList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.KeyValue"
+                    }
+                },
+                "MaxNodeSize": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "MinNodeSize": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "Nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.IID"
+                    }
+                },
+                "OnAutoScaling": {
+                    "description": "Scaling config.",
+                    "type": "boolean",
+                    "example": true
+                },
+                "RootDiskSize": {
+                    "description": "\"\", \"default\", \"50\", \"1000\" (GB)",
+                    "type": "string",
+                    "example": "50"
+                },
+                "RootDiskType": {
+                    "description": "\"SSD(gp2)\", \"Premium SSD\", ...",
+                    "type": "string"
+                },
+                "Status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.SpiderNodeGroupStatus"
+                        }
+                    ],
+                    "example": "Active"
+                },
+                "VMSpecName": {
+                    "type": "string",
+                    "example": "t3.medium"
+                }
+            }
+        },
+        "model.SpiderNodeGroupStatus": {
+            "type": "string",
+            "enum": [
+                "Creating",
+                "Active",
+                "Inactive",
+                "Updating",
+                "Deleting"
+            ],
+            "x-enum-varnames": [
+                "SpiderNodeGroupCreating",
+                "SpiderNodeGroupActive",
+                "SpiderNodeGroupInactive",
+                "SpiderNodeGroupUpdating",
+                "SpiderNodeGroupDeleting"
+            ]
         },
         "model.SshKeyInfo": {
             "type": "object",
@@ -10568,95 +11694,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "recommendation.Kubernetes": {
-            "type": "object",
-            "properties": {
-                "node_count": {
-                    "$ref": "#/definitions/recommendation.NodeCount"
-                },
-                "nodes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/recommendation.Node"
-                    }
-                },
-                "workloads": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
-        "recommendation.KubernetesInfoList": {
-            "type": "object",
-            "required": [
-                "servers"
-            ],
-            "properties": {
-                "servers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/recommendation.Kubernetes"
-                    }
-                }
-            }
-        },
-        "recommendation.Node": {
-            "type": "object",
-            "properties": {
-                "addresses": {},
-                "labels": {},
-                "name": {},
-                "node_info": {},
-                "node_spec": {
-                    "$ref": "#/definitions/recommendation.NodeSpec"
-                },
-                "type": {
-                    "$ref": "#/definitions/recommendation.NodeType"
-                }
-            }
-        },
-        "recommendation.NodeCount": {
-            "type": "object",
-            "properties": {
-                "control_plane": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                },
-                "worker": {
-                    "type": "integer"
-                }
-            }
-        },
-        "recommendation.NodeSpec": {
-            "type": "object",
-            "properties": {
-                "cpu": {
-                    "description": "cores",
-                    "type": "integer"
-                },
-                "ephemeral_storage": {
-                    "description": "MiB",
-                    "type": "integer"
-                },
-                "memory": {
-                    "description": "MiB",
-                    "type": "integer"
-                }
-            }
-        },
-        "recommendation.NodeType": {
-            "type": "string",
-            "enum": [
-                "control-plane",
-                "worker"
-            ],
-            "x-enum-varnames": [
-                "NodeTypeControlPlane",
-                "NodeTypeWorker"
-            ]
         },
         "resource.RestGetAllSecurityGroupResponse": {
             "type": "object",
@@ -12892,8 +13929,16 @@ const docTemplate = `{
             "name": "[Recommendation] Infrastructure"
         },
         {
-            "description": "APIs for recommending optimal Kubernetes clusters (prototype)",
-            "name": "[Recommendation] K8s Cluster (prototype)"
+            "description": "APIs for recommending optimal Kubernetes cluster configuration for cloud migration",
+            "name": "[Recommendation] K8s Cluster"
+        },
+        {
+            "description": "APIs for migrating on-premise Kubernetes clusters to managed K8s services (EKS, AKS, GKE)",
+            "name": "[Migration] K8s Cluster"
+        },
+        {
+            "description": "APIs for recommending resources for K8s cluster (node group specs, node images, etc.)",
+            "name": "[Recommendation] Resources for K8s cluster"
         },
         {
             "description": "APIs for recommending resources for infrastructure (VNet, Security Group, etc.)",
