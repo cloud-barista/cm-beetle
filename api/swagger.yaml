@@ -787,6 +787,113 @@ definitions:
           $ref: '#/definitions/cloudmodel.SshCmdResult'
         type: array
     type: object
+  cloudmodel.K8sClusterReq:
+    properties:
+      connectionName:
+        description: Namespace      string `json:"namespace" validate:"required" example:"default"`
+        example: alibaba-ap-northeast-2
+        type: string
+      cspResourceId:
+        description: |-
+          Fields for "Register existing K8sCluster" feature
+          @description CspResourceId is required to register a k8s cluster from CSP (option=register)
+        example: required when option is register
+        type: string
+      description:
+        example: My K8sCluster
+        type: string
+      k8sNodeGroupList:
+        description: (3) NodeGroupInfo List
+        items:
+          $ref: '#/definitions/cloudmodel.K8sNodeGroupReq'
+        type: array
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: (1) K8sCluster Info
+        example: k8scluster01
+        type: string
+      securityGroupIds:
+        example:
+        - sg-01
+        items:
+          type: string
+        type: array
+      subnetIds:
+        example:
+        - subnet-01
+        items:
+          type: string
+        type: array
+      systemLabel:
+        description: SystemLabel is for describing the k8scluster in a keyword (any
+          string can be used) for special System purpose
+        example: ""
+        type: string
+      vNetId:
+        description: (2) Network Info
+        example: vpc-01
+        type: string
+      version:
+        example: 1.30.1-aliyun.1
+        type: string
+    required:
+    - connectionName
+    - name
+    - securityGroupIds
+    - subnetIds
+    - vNetId
+    type: object
+  cloudmodel.K8sNodeGroupReq:
+    properties:
+      description:
+        example: Description
+        type: string
+      desiredNodeSize:
+        example: 1
+        type: integer
+      imageId:
+        example: image-01
+        type: string
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      maxNodeSize:
+        example: 3
+        type: integer
+      minNodeSize:
+        example: 1
+        type: integer
+      name:
+        example: k8sng01
+        type: string
+      onAutoScaling:
+        description: autoscale config.
+        example: "true"
+        type: string
+      rootDiskSize:
+        description: Root disk size in GB. 0 = use CSP default.
+        example: 40
+        type: integer
+      rootDiskType:
+        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
+          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
+          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
+          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
+        example: cloud_essd
+        type: string
+      specId:
+        example: spec-01
+        type: string
+      sshKeyId:
+        example: sshkey-01
+        type: string
+    type: object
   cloudmodel.KeyValue:
     properties:
       key:
@@ -1163,6 +1270,8 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
       targetNlbList:
         items:
           $ref: '#/definitions/cloudmodel.NlbReq'
@@ -1780,6 +1889,8 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
       targetNlbList:
         items:
           $ref: '#/definitions/cloudmodel.NlbReq'
@@ -2072,6 +2183,123 @@ definitions:
         example: wef12awefadf1221edcf
         type: string
     type: object
+  controller.MigrateK8sClusterRequest:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+    type: object
+  controller.MigrateK8sClusterResponse:
+    properties:
+      accessInfo:
+        $ref: '#/definitions/model.K8sAccessInfo'
+      addons:
+        $ref: '#/definitions/model.K8sAddonsInfo'
+      connectionConfig:
+        allOf:
+        - $ref: '#/definitions/model.ConnConfig'
+        description: ConnectionConfig shows connection info to cloud service provider
+      connectionName:
+        example: alibaba-ap-northeast-2
+        type: string
+      createdTime:
+        example: "1970-01-01T00:00:00.00Z"
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      description:
+        example: My K8sCluster
+        type: string
+      id:
+        description: Id is unique identifier for the object, same as Name
+        example: k8scluster01
+        type: string
+      k8sNodeGroupList:
+        description: K8sNodeGroupList is for describing network information about
+          the cluster
+        items:
+          $ref: '#/definitions/model.K8sNodeGroupInfo'
+        type: array
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      label:
+        additionalProperties:
+          type: string
+        description: Label is for describing the object by keywords
+        type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: k8scluster01
+        type: string
+      network:
+        allOf:
+        - $ref: '#/definitions/model.K8sClusterNetworkInfo'
+        description: Network is for describing network information about the cluster
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      spiderViewK8sClusterDetail:
+        $ref: '#/definitions/model.SpiderClusterInfo'
+      status:
+        allOf:
+        - $ref: '#/definitions/model.K8sClusterStatus'
+        description: Creating, Active, Inactive, Updating, Deleting
+        example: Active
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      version:
+        description: Version is for kubernetes version
+        example: 1.30.1
+        type: string
+    type: object
   controller.MigrateObjectStorageRequest:
     properties:
       description:
@@ -2169,6 +2397,63 @@ definitions:
     required:
     - sourceInfra
     type: object
+  controller.RecommendK8sClusterRequest:
+    properties:
+      csp:
+        example: aws
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      region:
+        example: ap-northeast-2
+        type: string
+    required:
+    - onpremiseInfraModel
+    type: object
+  controller.RecommendK8sClusterResponse:
+    properties:
+      description:
+        type: string
+      status:
+        type: string
+      targetCloud:
+        $ref: '#/definitions/cloudmodel.CloudProperty'
+      targetInfra:
+        $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
+      targetNlbList:
+        items:
+          $ref: '#/definitions/cloudmodel.NlbReq'
+        type: array
+      targetOsImageList:
+        items:
+          $ref: '#/definitions/cloudmodel.ImageInfo'
+        type: array
+      targetSecurityGroupList:
+        items:
+          $ref: '#/definitions/cloudmodel.SecurityGroupReq'
+        type: array
+      targetSpecList:
+        items:
+          $ref: '#/definitions/cloudmodel.SpecInfo'
+        type: array
+      targetSshKey:
+        $ref: '#/definitions/cloudmodel.SshKeyReq'
+      targetVNet:
+        $ref: '#/definitions/cloudmodel.VNetReq'
+    type: object
+  controller.RecommendK8sNodeGroupSpecsRequest:
+    properties:
+      csp:
+        example: aws
+        type: string
+      onpremiseInfraModel:
+        $ref: '#/definitions/onpremisemodel.OnpremInfra'
+      region:
+        example: ap-northeast-2
+        type: string
+    type: object
   controller.RecommendMultiInfraRequest:
     properties:
       desiredCspAndRegionPairs:
@@ -2261,6 +2546,8 @@ definitions:
         $ref: '#/definitions/cloudmodel.CloudProperty'
       targetInfra:
         $ref: '#/definitions/cloudmodel.InfraReq'
+      targetK8sCluster:
+        $ref: '#/definitions/cloudmodel.K8sClusterReq'
       targetNlbList:
         items:
           $ref: '#/definitions/cloudmodel.NlbReq'
@@ -2399,6 +2686,26 @@ definitions:
         description: Contains the actual response data (single object, list, or page)
         items:
           $ref: '#/definitions/controller.ScannedBucketSummary'
+        type: array
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-array_model_K8sClusterInfo:
+    properties:
+      data:
+        description: Contains the actual response data (single object, list, or page)
+        items:
+          $ref: '#/definitions/model.K8sClusterInfo'
         type: array
       error:
         description: Error message for failed responses
@@ -2660,11 +2967,49 @@ definitions:
         example: true
         type: boolean
     type: object
+  model.ApiResponse-controller_MigrateK8sClusterResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.MigrateK8sClusterResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
   model.ApiResponse-controller_RecommendInfraWithDefaultsResponse:
     properties:
       data:
         allOf:
         - $ref: '#/definitions/controller.RecommendInfraWithDefaultsResponse'
+        description: Contains the actual response data (single object, list, or page)
+      error:
+        description: Error message for failed responses
+        example: Error message if failure
+        type: string
+      message:
+        description: Optional message for additional context
+        example: Operation successful
+        type: string
+      success:
+        description: Indicates whether the API call was successful
+        example: true
+        type: boolean
+    type: object
+  model.ApiResponse-controller_RecommendK8sClusterResponse:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/controller.RecommendK8sClusterResponse'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -2741,44 +3086,6 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/model.AsyncJobResponse'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-model_K8sClusterDynamicReq:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/model.K8sClusterDynamicReq'
-        description: Contains the actual response data (single object, list, or page)
-      error:
-        description: Error message for failed responses
-        example: Error message if failure
-        type: string
-      message:
-        description: Optional message for additional context
-        example: Operation successful
-        type: string
-      success:
-        description: Indicates whether the API call was successful
-        example: true
-        type: boolean
-    type: object
-  model.ApiResponse-model_K8sNodeGroupReq:
-    properties:
-      data:
-        allOf:
-        - $ref: '#/definitions/model.K8sNodeGroupReq'
         description: Contains the actual response data (single object, list, or page)
       error:
         description: Error message for failed responses
@@ -3160,6 +3467,18 @@ definitions:
     - Direction
     - Protocol
     type: object
+  model.IID:
+    properties:
+      NameId:
+        example: user-defined-name
+        type: string
+      SystemId:
+        example: csp-defined-id
+        type: string
+    required:
+    - NameId
+    - SystemId
+    type: object
   model.IdList:
     properties:
       output:
@@ -3198,117 +3517,229 @@ definitions:
     - ImageDeleting
     - ImageDeprecated
     - ImageNA
-  model.K8sClusterDynamicReq:
+  model.K8sAccessInfo:
     properties:
+      endpoint:
+        example: http://1.2.3.4:6443
+        type: string
+      kubeconfig:
+        example: |-
+          apiVersion: v1
+          clusters:
+          - cluster:
+           certificate-authority-data: LS0...
+        type: string
+    type: object
+  model.K8sAddonsInfo:
+    properties:
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+    type: object
+  model.K8sClusterInfo:
+    properties:
+      accessInfo:
+        $ref: '#/definitions/model.K8sAccessInfo'
+      addons:
+        $ref: '#/definitions/model.K8sAddonsInfo'
+      connectionConfig:
+        allOf:
+        - $ref: '#/definitions/model.ConnConfig'
+        description: ConnectionConfig shows connection info to cloud service provider
       connectionName:
-        default: tencent-ap-seoul
-        description: |-
-          if ConnectionName is given, the VM tries to use associtated credential.
-          if not, it will use predefined ConnectionName in Spec objects
+        example: alibaba-ap-northeast-2
+        type: string
+      createdTime:
+        example: "1970-01-01T00:00:00.00Z"
+        type: string
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
         type: string
       description:
-        example: Description
+        example: My K8sCluster
         type: string
-      desiredNodeSize:
-        example: 1
-        type: integer
-      imageId:
-        description: ImageId is field for id of a image in common namespace
-        example: default, tencent+ap-seoul+ubuntu20.04
-        type: string
-      label:
-        additionalProperties:
-          type: string
-        description: Label is for describing the object by keywords
-        type: object
-      maxNodeSize:
-        example: 3
-        type: integer
-      minNodeSize:
-        example: 1
-        type: integer
-      name:
-        description: K8sCluster name if it is not empty. Optional when used with namePrefix
-          in multi-cluster creation.
+      id:
+        description: Id is unique identifier for the object, same as Name
         example: k8scluster01
         type: string
-      nodeGroupName:
-        description: NodeGroup name if it is not empty
-        example: k8sng01
-        type: string
-      onAutoScaling:
-        default: "true"
-        example: "true"
-        type: string
-      rootDiskSize:
-        description: Root disk size in GB. 0 = use CSP default.
-        example: 30
-        type: integer
-      rootDiskType:
-        default: default
-        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
-          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"],
-          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: default, TYPE1, ...
-        type: string
-      specId:
-        description: SpecId is field for id of a spec in common namespace
-        example: tencent+ap-seoul+S2.MEDIUM4
-        type: string
-      version:
-        description: K8s Clsuter version
-        example: "1.29"
-        type: string
-    required:
-    - imageId
-    - specId
-    type: object
-  model.K8sNodeGroupReq:
-    properties:
-      description:
-        example: Description
-        type: string
-      desiredNodeSize:
-        example: 1
-        type: integer
-      imageId:
-        example: image-01
-        type: string
+      k8sNodeGroupList:
+        description: K8sNodeGroupList is for describing network information about
+          the cluster
+        items:
+          $ref: '#/definitions/model.K8sNodeGroupInfo'
+        type: array
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
       label:
         additionalProperties:
           type: string
         description: Label is for describing the object by keywords
         type: object
+      name:
+        description: Name is human-readable string to represent the object
+        example: k8scluster01
+        type: string
+      network:
+        allOf:
+        - $ref: '#/definitions/model.K8sClusterNetworkInfo'
+        description: Network is for describing network information about the cluster
+      resourceType:
+        description: ResourceType is the type of the resource
+        type: string
+      spiderViewK8sClusterDetail:
+        $ref: '#/definitions/model.SpiderClusterInfo'
+      status:
+        allOf:
+        - $ref: '#/definitions/model.K8sClusterStatus'
+        description: Creating, Active, Inactive, Updating, Deleting
+        example: Active
+      systemLabel:
+        description: SystemLabel is for describing the Resource in a keyword (any
+          string can be used) for special System purpose
+        example: Managed by CB-Tumblebug
+        type: string
+      systemMessage:
+        description: Latest system message such as error message
+        example: Failed because ...
+        type: string
+      uid:
+        description: Uid is universally unique identifier for the object, used for
+          labelSelector
+        example: wef12awefadf1221edcf
+        type: string
+      version:
+        description: Version is for kubernetes version
+        example: 1.30.1
+        type: string
+    type: object
+  model.K8sClusterNetworkInfo:
+    properties:
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      securityGroupIds:
+        example:
+        - sg-01
+        items:
+          type: string
+        type: array
+      subnetIds:
+        example:
+        - subnet-01
+        items:
+          type: string
+        type: array
+      vNetId:
+        example: vpc-01
+        type: string
+    type: object
+  model.K8sClusterStatus:
+    enum:
+    - Creating
+    - Active
+    - Inactive
+    - Updating
+    - Deleting
+    type: string
+    x-enum-varnames:
+    - K8sClusterCreating
+    - K8sClusterActive
+    - K8sClusterInactive
+    - K8sClusterUpdating
+    - K8sClusterDeleting
+  model.K8sNodeGroupInfo:
+    properties:
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
+        type: string
+      desiredNodeSize:
+        type: integer
+      id:
+        description: Id is unique identifier for the object
+        example: aws-ap-southeast-1
+        type: string
+      imageId:
+        type: string
+      isInitialNodeGroup:
+        description: |-
+          IsInitialNodeGroup indicates whether this node group was created during cluster creation.
+          For some CSPs (Alibaba ACK, Tencent TKE), this node group cannot be deleted independently;
+          it is automatically removed when the cluster is deleted.
+        type: boolean
+      k8sNodes:
+        items:
+          $ref: '#/definitions/model.K8sNodeInfo'
+        type: array
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
       maxNodeSize:
-        example: 3
         type: integer
       minNodeSize:
-        example: 1
         type: integer
       name:
-        example: k8sng01
+        description: Name is human-readable string to represent the object
+        example: aws-ap-southeast-1
         type: string
       onAutoScaling:
-        description: autoscale config.
-        example: "true"
-        type: string
+        type: boolean
       rootDiskSize:
-        description: Root disk size in GB. 0 = use CSP default.
-        example: 40
         type: integer
       rootDiskType:
-        description: '"", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure:
-          ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced",
-          "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_ssd"],
-          TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]'
-        example: cloud_essd
         type: string
       specId:
-        example: spec-01
         type: string
+      spiderViewK8sNodeGroupDetail:
+        $ref: '#/definitions/model.SpiderNodeGroupInfo'
       sshKeyId:
-        example: sshkey-01
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/model.K8sNodeGroupStatus'
+        description: Creating, Active, Inactive, Updating, Deleting
+        example: Active
+    type: object
+  model.K8sNodeGroupStatus:
+    enum:
+    - Creating
+    - Active
+    - Inactive
+    - Updating
+    - Deleting
+    type: string
+    x-enum-varnames:
+    - K8sNodeGroupCreating
+    - K8sNodeGroupActive
+    - K8sNodeGroupInactive
+    - K8sNodeGroupUpdating
+    - K8sNodeGroupDeleting
+  model.K8sNodeInfo:
+    properties:
+      cspResourceId:
+        description: CspResourceId is resource identifier managed by CSP
+        example: csp-06eb41e14121c550a
+        type: string
+      cspResourceName:
+        description: CspResourceName is name assigned to the CSP resource. This name
+          is internally used to handle the resource.
+        example: we12fawefadf1221edcf
         type: string
     type: object
   model.KeyValue:
@@ -3532,6 +3963,154 @@ definitions:
         example: Any message
         type: string
     type: object
+  model.SpiderAccessInfo:
+    properties:
+      endpoint:
+        description: ex) https://1.2.3.4:6443
+        type: string
+      kubeconfig:
+        type: string
+    type: object
+  model.SpiderAddonsInfo:
+    properties:
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+    type: object
+  model.SpiderClusterInfo:
+    properties:
+      accessInfo:
+        $ref: '#/definitions/model.SpiderAccessInfo'
+      addons:
+        $ref: '#/definitions/model.SpiderAddonsInfo'
+      createdTime:
+        type: string
+      iid:
+        allOf:
+        - $ref: '#/definitions/model.IID'
+        description: '{NameId, SystemId}'
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      network:
+        $ref: '#/definitions/model.SpiderNetworkInfo'
+      nodeGroupList:
+        items:
+          $ref: '#/definitions/model.SpiderNodeGroupInfo'
+        type: array
+      status:
+        $ref: '#/definitions/model.SpiderClusterStatus'
+      version:
+        description: Kubernetes Version, ex) 1.23.3
+        type: string
+    type: object
+  model.SpiderClusterStatus:
+    enum:
+    - Creating
+    - Active
+    - Inactive
+    - Updating
+    - Deleting
+    type: string
+    x-enum-varnames:
+    - SpiderClusterCreating
+    - SpiderClusterActive
+    - SpiderClusterInactive
+    - SpiderClusterUpdating
+    - SpiderClusterDeleting
+  model.SpiderNetworkInfo:
+    properties:
+      keyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      securityGroupIIDs:
+        items:
+          $ref: '#/definitions/model.IID'
+        type: array
+      subnetIIDs:
+        items:
+          $ref: '#/definitions/model.IID'
+        type: array
+      vpcIID:
+        allOf:
+        - $ref: '#/definitions/model.IID'
+        description: '{NameId, SystemId}'
+    type: object
+  model.SpiderNodeGroupInfo:
+    properties:
+      DesiredNodeSize:
+        example: 2
+        type: integer
+      IId:
+        allOf:
+        - $ref: '#/definitions/model.IID'
+        description: '{NameId, SystemId}'
+      ImageIID:
+        allOf:
+        - $ref: '#/definitions/model.IID'
+        description: VM config.
+      KeyPairIID:
+        $ref: '#/definitions/model.IID'
+      KeyValueList:
+        items:
+          $ref: '#/definitions/model.KeyValue'
+        type: array
+      MaxNodeSize:
+        example: 3
+        type: integer
+      MinNodeSize:
+        example: 1
+        type: integer
+      Nodes:
+        items:
+          $ref: '#/definitions/model.IID'
+        type: array
+      OnAutoScaling:
+        description: Scaling config.
+        example: true
+        type: boolean
+      RootDiskSize:
+        description: '"", "default", "50", "1000" (GB)'
+        example: "50"
+        type: string
+      RootDiskType:
+        description: '"SSD(gp2)", "Premium SSD", ...'
+        type: string
+      Status:
+        allOf:
+        - $ref: '#/definitions/model.SpiderNodeGroupStatus'
+        example: Active
+      VMSpecName:
+        example: t3.medium
+        type: string
+    required:
+    - DesiredNodeSize
+    - IId
+    - ImageIID
+    - KeyPairIID
+    - MaxNodeSize
+    - MinNodeSize
+    - OnAutoScaling
+    - Status
+    - VMSpecName
+    type: object
+  model.SpiderNodeGroupStatus:
+    enum:
+    - Creating
+    - Active
+    - Inactive
+    - Updating
+    - Deleting
+    type: string
+    x-enum-varnames:
+    - SpiderNodeGroupCreating
+    - SpiderNodeGroupActive
+    - SpiderNodeGroupInactive
+    - SpiderNodeGroupUpdating
+    - SpiderNodeGroupDeleting
   model.SshKeyInfo:
     properties:
       associatedObjectList:
@@ -4157,67 +4736,6 @@ definitions:
         description: Optionally stores the source address (used for policy-based routing)
         type: string
     type: object
-  recommendation.Kubernetes:
-    properties:
-      node_count:
-        $ref: '#/definitions/recommendation.NodeCount'
-      nodes:
-        items:
-          $ref: '#/definitions/recommendation.Node'
-        type: array
-      workloads:
-        additionalProperties: true
-        type: object
-    type: object
-  recommendation.KubernetesInfoList:
-    properties:
-      servers:
-        items:
-          $ref: '#/definitions/recommendation.Kubernetes'
-        type: array
-    required:
-    - servers
-    type: object
-  recommendation.Node:
-    properties:
-      addresses: {}
-      labels: {}
-      name: {}
-      node_info: {}
-      node_spec:
-        $ref: '#/definitions/recommendation.NodeSpec'
-      type:
-        $ref: '#/definitions/recommendation.NodeType'
-    type: object
-  recommendation.NodeCount:
-    properties:
-      control_plane:
-        type: integer
-      total:
-        type: integer
-      worker:
-        type: integer
-    type: object
-  recommendation.NodeSpec:
-    properties:
-      cpu:
-        description: cores
-        type: integer
-      ephemeral_storage:
-        description: MiB
-        type: integer
-      memory:
-        description: MiB
-        type: integer
-    type: object
-  recommendation.NodeType:
-    enum:
-    - control-plane
-    - worker
-    type: string
-    x-enum-varnames:
-    - NodeTypeControlPlane
-    - NodeTypeWorker
   resource.RestGetAllSecurityGroupResponse:
     properties:
       securityGroup:
@@ -7353,6 +7871,186 @@ paths:
         with defaults (sync by default; async via Prefer: respond-async)'
       tags:
       - '[Migration] Infrastructure'
+  /migration/ns/{nsId}/k8sCluster:
+    get:
+      consumes:
+      - application/json
+      description: List all K8s clusters created in the namespace via cm-beetle migration.
+      operationId: ListK8sClusters
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of migrated K8s clusters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-array_model_K8sClusterInfo'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: List all migrated K8s clusters
+      tags:
+      - '[Migration] K8s Cluster'
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).
+
+        **Workflow**:
+        1. Call POST /recommendation/k8sCluster to get a RecommendedK8sInfra.
+        2. Pass the recommendation result as-is to this endpoint.
+
+        **Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups
+
+        By default this API runs synchronously (EKS takes ~10-20 min). Send header
+        `Prefer: respond-async` to run it asynchronously: receive 202 Accepted with a
+        reqId, then poll GET /request/{reqId} to check status.
+      operationId: MigrateK8sCluster
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: K8s cluster recommendation (from POST /recommendation/k8sCluster)
+        in: body
+        name: k8sClusterInfo
+        required: true
+        schema:
+          $ref: '#/definitions/controller.MigrateK8sClusterRequest'
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      - description: Set to 'respond-async' to run this migration asynchronously (RFC
+          7240)
+        enum:
+        - respond-async
+        in: header
+        name: Prefer
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: K8s cluster migrated successfully
+          schema:
+            $ref: '#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse'
+        "202":
+          description: Migration started asynchronously - use GET /request/{reqId}
+            to check status
+          schema:
+            $ref: '#/definitions/model.ApiResponse-model_AsyncJobResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "503":
+          description: 'Too many concurrent async jobs; retry later or without Prefer:
+            respond-async'
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Migrate an on-premise K8s cluster to the target CSP
+      tags:
+      - '[Migration] K8s Cluster'
+  /migration/ns/{nsId}/k8sCluster/{k8sClusterId}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a K8s cluster created via cm-beetle migration. This removes
+        the cluster and all its node groups.
+      operationId: DeleteK8sCluster
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: K8s Cluster ID
+        in: path
+        name: k8sClusterId
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: K8s cluster deleted
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Delete a migrated K8s cluster
+      tags:
+      - '[Migration] K8s Cluster'
+    get:
+      consumes:
+      - application/json
+      description: Retrieve information about a specific K8s cluster created via cm-beetle
+        migration.
+      operationId: GetK8sCluster
+      parameters:
+      - default: mig01
+        description: Namespace ID
+        in: path
+        name: nsId
+        required: true
+        type: string
+      - description: K8s Cluster ID
+        in: path
+        name: k8sClusterId
+        required: true
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: K8s cluster information
+          schema:
+            $ref: '#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Get a migrated K8s cluster
+      tags:
+      - '[Migration] K8s Cluster'
   /migration/ns/{nsId}/resources/securityGroup:
     delete:
       consumes:
@@ -8579,24 +9277,32 @@ paths:
       summary: (Preview) Recommend infrastructure candidates with NLB for cloud migration
       tags:
       - '[Recommendation] Infrastructure'
-  /recommendation/k8sControlPlane:
+  /recommendation/k8sCluster:
     post:
       consumes:
       - application/json
       description: |-
-        Get recommendation for K8s control plane based on honeybee source cluster data
-        Returns configuration that can be directly used with cb-tumblebug k8sClusterDynamic API
-      operationId: RecommendK8sControlPlane
+        Recommend a complete K8s cluster configuration based on on-premise infra data from cm-honeybee.
+        Returns a RecommendedK8sInfra that can be passed directly to the K8s migration API.
+
+        **Required Parameters**: `desiredProvider`, `desiredRegion`
+        **Input**: On-premise infra model (from honeybee /infra/refined) with K8s cluster info and node roles
+      operationId: RecommendK8sCluster
       parameters:
-      - description: Source cluster information from honeybee
+      - description: Source on-premise infra (must include k8sCluster and nodes with
+          role=worker)
         in: body
-        name: UserK8sInfra
+        name: UserInfra
         required: true
         schema:
-          $ref: '#/definitions/recommendation.KubernetesInfoList'
+          $ref: '#/definitions/controller.RecommendK8sClusterRequest'
       - description: Provider (e.g., aws)
         enum:
         - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
         in: query
         name: desiredProvider
         required: true
@@ -8616,9 +9322,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: K8s control plane recommendation (ready for cb-tumblebug API)
+          description: K8s cluster recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)
           schema:
-            $ref: '#/definitions/model.ApiResponse-model_K8sClusterDynamicReq'
+            $ref: '#/definitions/model.ApiResponse-controller_RecommendK8sClusterResponse'
         "400":
           description: Bad Request
           schema:
@@ -8627,77 +9333,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ApiResponse-any'
-        "503":
-          description: Too many requests - retry after the given time
-          headers:
-            Retry-After:
-              description: Seconds until client should retry
-              type: string
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-      summary: Recommend K8s control plane configuration
+      summary: Recommend a K8s cluster configuration for cloud migration
       tags:
-      - '[Recommendation] K8s Cluster (prototype)'
-  /recommendation/k8sNodeGroup:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Get recommendation for K8s worker node group based on honeybee source cluster data
-        Returns configuration that can be directly used with cb-tumblebug k8sNodeGroupDynamic API
-      operationId: RecommendK8sNodeGroup
-      parameters:
-      - description: Source cluster information from honeybee
-        in: body
-        name: UserK8sInfra
-        required: true
-        schema:
-          $ref: '#/definitions/recommendation.KubernetesInfoList'
-      - description: Provider (e.g., aws)
-        enum:
-        - aws
-        in: query
-        name: desiredProvider
-        required: true
-        type: string
-      - default: ap-northeast-2
-        description: Region (e.g., ap-northeast-2)
-        in: query
-        name: desiredRegion
-        required: true
-        type: string
-      - description: Unique request ID (auto-generated if not provided). Used for
-          tracking request status and correlating logs.
-        in: header
-        name: X-Request-Id
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: K8s worker node group recommendation (ready for cb-tumblebug
-            API)
-          schema:
-            $ref: '#/definitions/model.ApiResponse-model_K8sNodeGroupReq'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-        "503":
-          description: Too many requests - retry after the given time
-          headers:
-            Retry-After:
-              description: Seconds until client should retry
-              type: string
-          schema:
-            $ref: '#/definitions/model.ApiResponse-any'
-      summary: Recommend K8s worker node group configuration
-      tags:
-      - '[Recommendation] K8s Cluster (prototype)'
+      - '[Recommendation] K8s Cluster'
   /recommendation/middleware/objectStorage:
     post:
       consumes:
@@ -8944,6 +9582,139 @@ paths:
         cloud, for cross-CSP comparison
       tags:
       - '[Recommendation] Infrastructure'
+  /recommendation/resources/k8sNodeGroupImages:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recommend a node image for each worker node group derived from the source infrastructure.
+
+        Unlike VM OS image recommendation, K8s node images are selected from a provider-curated
+        list (k8sclusterinfo.yaml) rather than the image DB. The selection is architecture-based:
+        x86_64 groups receive "default"; arm64 groups receive the provider ARM image when
+        NodeImageDesignation=true for the target provider.
+
+        [Note] Only nodes with `role=worker` are considered. `k8sCluster` is not required.
+        [Note] Only `targetOsImage.id` is populated in each entry; other ImageInfo fields are empty.
+      operationId: RecommendK8sNodeGroupImages
+      parameters:
+      - description: Source on-premise infra (must include nodes with role=worker)
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendK8sNodeGroupSpecsRequest'
+      - default: aws
+        description: Provider (e.g., aws)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        - nhn
+        - tencent
+        - ibm
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully recommended K8s worker node image(s)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedOsImageList'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Recommend K8s worker node images for cloud migration
+      tags:
+      - '[Recommendation] Resources for K8s cluster'
+  /recommendation/resources/k8sNodeGroupSpecs:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recommend worker node specs for each node group derived from the source infrastructure.
+
+        Source workers are grouped by spec signature (vCPU/memory/architecture) because managed
+        K8s node groups are homogeneous; one recommendation set is produced per group, and the
+        group's source machines are listed in `sourceServers`.
+
+        [Note] Only nodes with `role=worker` are considered. `k8sCluster` is not required.
+        [Note] Specs below the target's K8s node minimum are upscaled, and the adjustment is
+        reported in the entry's `description`.
+      operationId: RecommendK8sNodeGroupSpecs
+      parameters:
+      - description: Source on-premise infra (must include nodes with role=worker)
+        in: body
+        name: UserInfra
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RecommendK8sNodeGroupSpecsRequest'
+      - default: aws
+        description: Provider (e.g., aws)
+        enum:
+        - aws
+        - azure
+        - gcp
+        - alibaba
+        - ncp
+        - nhn
+        - tencent
+        - ibm
+        in: query
+        name: desiredProvider
+        type: string
+      - default: ap-northeast-2
+        description: Region (e.g., ap-northeast-2)
+        in: query
+        name: desiredRegion
+        type: string
+      - default: 3
+        description: 'Max spec candidates per node group (default: 3, max: 30)'
+        in: query
+        name: limit
+        type: integer
+      - description: Unique request ID (auto-generated if not provided). Used for
+          tracking request status and correlating logs.
+        in: header
+        name: X-Request-Id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully recommended K8s worker node spec(s)
+          schema:
+            $ref: '#/definitions/model.ApiResponse-cloudmodel_RecommendedSpecList'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+        "500":
+          description: Internal server error during recommendation
+          schema:
+            $ref: '#/definitions/model.ApiResponse-any'
+      summary: Recommend K8s worker node specs for cloud migration
+      tags:
+      - '[Recommendation] Resources for K8s cluster'
   /recommendation/resources/osImages:
     post:
       consumes:
@@ -9776,8 +10547,15 @@ tags:
 - description: APIs for recommending optimal cloud infrastructure (VM specs, OS images,
     etc.) and NLBs (Managed Network Load Balancers)
   name: '[Recommendation] Infrastructure'
-- description: APIs for recommending optimal Kubernetes clusters (prototype)
-  name: '[Recommendation] K8s Cluster (prototype)'
+- description: APIs for recommending optimal Kubernetes cluster configuration for
+    cloud migration
+  name: '[Recommendation] K8s Cluster'
+- description: APIs for migrating on-premise Kubernetes clusters to managed K8s services
+    (EKS, AKS, GKE)
+  name: '[Migration] K8s Cluster'
+- description: APIs for recommending resources for K8s cluster (node group specs,
+    node images, etc.)
+  name: '[Recommendation] Resources for K8s cluster'
 - description: APIs for recommending resources for infrastructure (VNet, Security
     Group, etc.)
   name: '[Recommendation] Resources for infrastructure'
