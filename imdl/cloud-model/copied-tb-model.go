@@ -4,8 +4,8 @@ import "time"
 
 // * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug v0.12.25 (commit: a032bfd359eec305370e8b7434a18109854f4cb2)
-// * Synchronized: 2026-07-13 (Added RepeatCount and LastOccurredTime to CommandStatusInfo)
+// * Version: CB-Tumblebug v0.12.30 (commit: c2c4e76b3cc7ba158a6f61918fe061470f039c6b)
+// * Synchronized: 2026-08-07 (VerifiedMessage, NodeInfoInNs, NLBInfoInNs for namespace-wide listing)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -25,8 +25,11 @@ type InfraReq struct {
 
 	NodeGroups []CreateNodeGroupReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommand is for the command to bootstrap the Nodes
-	PostCommand InfraCmdReq `json:"postCommand" validate:"omitempty"`
+	// PostCommands are sequential post-deployment command phases that bootstrap the Nodes
+	PostCommands []PostCommandReq `json:"postCommands,omitempty" validate:"omitempty"`
+
+	// PostCommandAsync runs post-deployment commands in the background
+	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
 
 	// PolicyOnPartialFailure determines how to handle Node creation failures
 	// - "continue": Continue with partial Infra creation (default)
@@ -60,9 +63,14 @@ type CreateNodeGroupReq struct {
 	// and the image is not a custom image, CreateNode skips the redundant per-VM GetImage
 	// DB call, significantly reducing concurrent DB load during large infra creation.
 	// Custom images always go through the full GetImage path (this field stays empty for them).
-	CspImageName     string   `json:"cspImageName,omitempty"`
-	VNetId           string   `json:"vNetId" validate:"required"`
-	SubnetId         string   `json:"subnetId" validate:"required"`
+	CspImageName string `json:"cspImageName,omitempty"`
+	VNetId       string `json:"vNetId" validate:"required"`
+	SubnetId     string `json:"subnetId" validate:"required"`
+	// SubnetIds, when non-empty, spreads this NodeGroup's VMs across these subnets
+	// (round-robin by VM index). SubnetId above is the primary/fallback (first subnet).
+	// Populated by dynamic provisioning when DistributeSubnets is requested; empty means
+	// all VMs use the single SubnetId (default behavior).
+	SubnetIds        []string `json:"subnetIds,omitempty"`
 	SecurityGroupIds []string `json:"securityGroupIds" validate:"required"`
 	SshKeyId         string   `json:"sshKeyId" validate:"required"`
 	NodeUserName     string   `json:"nodeUserName,omitempty"`
@@ -115,8 +123,17 @@ type InfraDynamicReq struct {
 	// ]
 	NodeGroups []CreateNodeGroupDynamicReq `json:"nodeGroups" validate:"required"`
 
-	// PostCommand is for the command to bootstrap the Nodes
-	PostCommand InfraCmdReq `json:"postCommand"`
+	// PostCommands are post-deployment command phases that bootstrap the Nodes.
+	// Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
+	// A single command set is simply one phase: [{"command": ["..."]}]
+	PostCommands []PostCommandReq `json:"postCommands,omitempty"`
+
+	// PostCommandAsync (default false) returns the response as soon as nodes are
+	// provisioned and runs post-deployment commands in the background. The response
+	// then carries postCommandStatus="Running" plus postCommandRequestId; observe with
+	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+	// or by polling GET /ns/{nsId}/infra/{infraId}.
+	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
 
 	// SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose
 	SystemLabel string `json:"systemLabel" example:"" default:""`
@@ -158,7 +175,10 @@ type CreateNodeGroupDynamicReq struct {
 	RootDiskType string `json:"rootDiskType,omitempty" example:"gp3" default:"default"` // "", "default", "TYPE1", AWS: ["standard", "gp2", "gp3"], Azure: ["PremiumSSD", "StandardSSD", "StandardHDD"], GCP: ["pd-standard", "pd-balanced", "pd-ssd", "pd-extreme"], ALIBABA: ["cloud_efficiency", "cloud", "cloud_essd"], TENCENT: ["CLOUD_PREMIUM", "CLOUD_SSD"]
 	RootDiskSize int    `json:"rootDiskSize,omitempty" example:"50"`                    // Root disk size in GB. 0 = use CSP default.
 
-	NodeUserPassword string `json:"nodeUserPassword,omitempty" example:"" default:""`
+	// NOTE: A node user password (i.e., NodeUserPassword) is intentionally NOT accepted here. Linux nodes are
+	// accessed via SSH key pairs, and a random password is generated internally for the
+	// CSP-side requirement (Windows). See CreateNode in core/infra/provisioning.go.
+
 	// if ConnectionName is given, the Node tries to use associated credential.
 	// if not, it will use predefined ConnectionName in Spec objects
 	ConnectionName string `json:"connectionName,omitempty" example:"aws-ap-northeast-2" default:""`
@@ -174,6 +194,13 @@ type CreateNodeGroupDynamicReq struct {
 	// SgTemplateId overrides the Infra-level SgTemplateId for this NodeGroup.
 	// If empty, inherits the SgTemplateId from the parent InfraDynamicReq.
 	SgTemplateId string `json:"sgTemplateId,omitempty" example:""`
+
+	// DistributeSubnets, when true, spreads this NodeGroup's VMs across the VNet's subnets
+	// (round-robin), which spreads them across availability zones for multi-zone VNets.
+	// Best-effort: subnets whose zone lacks the requested spec are excluded so VMs consolidate
+	// to zones that have it. Ignored when Zone is set (that pins a single subnet) or when the
+	// VNet has a single subnet. Default false (all VMs land in the first subnet).
+	DistributeSubnets bool `json:"distributeSubnets,omitempty" example:"false"`
 }
 
 // InfraCmdReq is struct for remote command
@@ -187,6 +214,111 @@ type InfraCmdReq struct {
 	// TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
 	// If not specified or set to 0, the default timeout (30 minutes) will be used
 	TimeoutMinutes int `json:"timeoutMinutes,omitempty" example:"30" default:"30"`
+}
+
+// PostCommandReq is struct for post-deployment command with targeting
+type PostCommandReq struct {
+	InfraCmdReq
+
+	// NodeGroupId limits execution to one nodeGroup
+	NodeGroupId string `json:"nodeGroupId,omitempty" example:"g1"`
+	// NodeId limits execution to a single node
+	NodeId string `json:"nodeId,omitempty" example:"g1-1"`
+	// LabelSelector limits execution to nodes matching the selector (e.g. "role=worker")
+	LabelSelector string `json:"labelSelector,omitempty" example:"role=worker"`
+	// ContinueOnError keeps running the remaining phases when this phase fails (default: false)
+	ContinueOnError bool `json:"continueOnError,omitempty" example:"false"`
+}
+
+// AddNodeGroupDynamicReq is the request body for adding a NodeGroup to an existing Infra.
+// It is CreateNodeGroupDynamicReq plus bootstrap fields; those fields are intentionally
+// absent from the nodeGroups[] elements of InfraDynamicReq, where Infra-level
+// postCommands (with per-phase targeting) is the single way to bootstrap.
+type AddNodeGroupDynamicReq struct {
+	CreateNodeGroupDynamicReq
+
+	// PostCommands are sequential bootstrap phases for the newly added nodes.
+	// Phases without an explicit target are scoped to this NodeGroup.
+	PostCommands []PostCommandReq `json:"postCommands,omitempty" validate:"omitempty"`
+
+	// PostCommandAsync returns the response as soon as the nodes are provisioned and
+	// runs the bootstrap commands in the background (observe via streaming/polling)
+	PostCommandAsync bool `json:"postCommandAsync,omitempty" example:"false"`
+}
+
+// PostCommandStatus summarizes a post-deployment command run across target nodes
+type PostCommandStatus string
+
+const (
+	// PostCommandStatusNone indicates no post-deployment command was requested
+	PostCommandStatusNone PostCommandStatus = "None"
+	// PostCommandStatusCompleted indicates all target nodes succeeded
+	PostCommandStatusCompleted PostCommandStatus = "Completed"
+	// PostCommandStatusCompletedWithErrors indicates some target nodes failed
+	PostCommandStatusCompletedWithErrors PostCommandStatus = "CompletedWithErrors"
+	// PostCommandStatusFailed indicates all target nodes failed (or execution could not start)
+	PostCommandStatusFailed PostCommandStatus = "Failed"
+	// PostCommandStatusSkipped indicates the phase did not run (a previous phase failed)
+	PostCommandStatusSkipped PostCommandStatus = "Skipped"
+	// PostCommandStatusRunning indicates post-deployment commands are still executing
+	// (async mode: the creation response returns before they finish)
+	PostCommandStatusRunning PostCommandStatus = "Running"
+)
+
+// SshCmdResultForAPI is struct for REST API response with error as string
+type SshCmdResultForAPI struct {
+	InfraId string         `json:"infraId"`
+	NodeId  string         `json:"nodeId"`
+	NodeIp  string         `json:"nodeIp"`
+	Command map[int]string `json:"command"`
+	Stdout  map[int]string `json:"stdout"`
+	Stderr  map[int]string `json:"stderr"`
+	Error   string         `json:"error"` // String representation of error for JSON serialization
+}
+
+// InfraSshCmdResultForAPI is struct for multiple SSH command results (API response)
+type InfraSshCmdResultForAPI struct {
+	Results []SshCmdResultForAPI `json:"results"`
+}
+
+// PostCommandPhaseResult is the outcome of a single post-command phase
+type PostCommandPhaseResult struct {
+	// Phase is the 1-based execution order
+	Phase int `json:"phase" example:"1"`
+	// Target echoes the scope this phase ran against
+	Target string `json:"target" example:"nodeGroupId=control"`
+	// Status is the aggregated outcome of this phase (Skipped when a previous phase stopped execution)
+	Status PostCommandStatus `json:"status" example:"Completed"`
+	// Results holds per-node command results
+	Results InfraSshCmdResultForAPI `json:"results"`
+}
+
+// ResourcePruneResult represents the outcome of pruning a single resource's orphaned metadata.
+type ResourcePruneResult struct {
+	// Resource type
+	ResourceType string `json:"resourceType" example:"objectStorage"`
+	// Resource ID
+	ResourceId string `json:"resourceId" example:"os01"`
+	// Connection name
+	ConnectionName string `json:"connectionName" example:"aws-ap-northeast-2"`
+	// Whether the prune operation was successful
+	Success bool `json:"success" example:"true"`
+	// Descriptive message about the prune outcome
+	Message string `json:"message,omitempty" example:"Orphaned metadata for ObjectStorage (os01) pruned successfully"`
+	// Error detail if prune failed
+	Error string `json:"error,omitempty" example:""`
+}
+
+// ResourcePruneResults represents the aggregated results of a batch resource prune operation.
+type ResourcePruneResults struct {
+	// Total number of pruned resources
+	TotalPruned int `json:"totalPruned" example:"2"`
+	// Number of successfully pruned resources
+	SuccessCount int `json:"successCount" example:"2"`
+	// Number of failed prune attempts
+	FailedCount int `json:"failedCount" example:"0"`
+	// Individual prune results per resource
+	Results []ResourcePruneResult `json:"results"`
 }
 
 // CommandExecutionStatus represents the status of command execution
@@ -397,8 +529,20 @@ type StatusCountInfo struct {
 	// CountRegistering is for counting Registering
 	CountRegistering int `json:"countRegistering"`
 
+	// CountReconciling is for counting Reconciling
+	CountReconciling int `json:"countReconciling"`
+
 	// CountUndefined is for counting Undefined
 	CountUndefined int `json:"countUndefined"`
+}
+
+// NodeInfoInNs is a Node together with the Infra it belongs to. Nodes are stored under
+// their Infra, so a namespace-wide listing has to carry the parent Infra id for the
+// caller to map each Node back to it.
+type NodeInfoInNs struct {
+	// InfraId is the Infra this Node belongs to
+	InfraId string `json:"infraId" example:"infra01"`
+	NodeInfo
 }
 
 type NodeInfo struct {
@@ -534,6 +678,8 @@ type ConnConfig struct {
 	RegionDetail         RegionDetail   `json:"regionDetail" gorm:"type:text;serializer:json"`
 	RegionRepresentative bool           `json:"regionRepresentative"`
 	Verified             bool           `json:"verified"`
+	// VerifiedMessage explains why verification failed (empty when verified)
+	VerifiedMessage string `json:"verifiedMessage,omitempty" gorm:"-"`
 }
 
 // RegionZoneInfo is struct for containing region struct
@@ -845,6 +991,15 @@ type NlbHealthCheckerReq struct {
 	Interval  int `json:"interval"`  // Health check interval in seconds
 	Threshold int `json:"threshold"` // Unhealthy threshold count
 	Timeout   int `json:"timeout"`   // Health check timeout in seconds
+}
+
+// NLBInfoInNs is an NLB together with the Infra it belongs to. NLBs are stored under
+// their Infra, so a namespace-wide listing has to carry the parent Infra id for the
+// caller to map each NLB back to it.
+type NLBInfoInNs struct {
+	// InfraId is the Infra this NLB belongs to
+	InfraId string `json:"infraId" example:"infra01"`
+	NLBInfo
 }
 
 // NLBInfo mirrors CB-Tumblebug's NLBInfo, returned after NLB creation/query.
