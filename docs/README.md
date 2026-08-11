@@ -29,7 +29,11 @@ Documentation site for CM-Beetle, computing infrastructure migration.
 ## Dependency Upgrade Guides
 
 - [API Upgrade Guide: TB v0.12.9](api-upgrade-guide-tb-v0.12.9.md) – API changes and upgrade steps for CB-Tumblebug v0.12.9.
-- [Sync TB v0.12.9 Breaking Changes](SYNC_TB_v0.12.9_BREAKING_CHANGES.md) – Breaking changes when syncing with CB-Tumblebug v0.12.9.
+
+## CM-Beetle Breaking Changes
+
+- **[Breaking Changes](changes/)** – CM-Beetle release notes for breaking changes affecting Beetle API/`imdl` consumers
+  - [v0.5.10 Breaking Changes](changes/BREAKING_CHANGES_v0.5.10.md) – `postCommand` → `postCommands`, `nodeUserPassword` removed from dynamic node groups
 
 ## Developer Resources
 
