@@ -5410,6 +5410,10 @@ const docTemplate = `{
                 },
                 "verified": {
                     "type": "boolean"
+                },
+                "verifiedMessage": {
+                    "description": "VerifiedMessage explains why verification failed (empty when verified)",
+                    "type": "string"
                 }
             }
         },
@@ -5428,6 +5432,11 @@ const docTemplate = `{
                 "description": {
                     "type": "string",
                     "example": "Created via CB-Tumblebug"
+                },
+                "distributeSubnets": {
+                    "description": "DistributeSubnets, when true, spreads this NodeGroup's VMs across the VNet's subnets\n(round-robin), which spreads them across availability zones for multi-zone VNets.\nBest-effort: subnets whose zone lacks the requested spec are excluded so VMs consolidate\nto zones that have it. Ignored when Zone is set (that pins a single subnet) or when the\nVNet has a single subnet. Default false (all VMs land in the first subnet).",
+                    "type": "boolean",
+                    "example": false
                 },
                 "imageId": {
                     "description": "ImageId is field for id of a image in common namespace",
@@ -5454,10 +5463,6 @@ const docTemplate = `{
                     "description": "NodeGroupSize is the number of Nodes to create in this NodeGroup. If \u003e 0, nodeGroup will be generated. Default is 1.",
                     "type": "integer",
                     "example": 3
-                },
-                "nodeUserPassword": {
-                    "type": "string",
-                    "example": ""
                 },
                 "rootDiskSize": {
                     "description": "Root disk size in GB. 0 = use CSP default.",
@@ -5579,6 +5584,13 @@ const docTemplate = `{
                 },
                 "subnetId": {
                     "type": "string"
+                },
+                "subnetIds": {
+                    "description": "SubnetIds, when non-empty, spreads this NodeGroup's VMs across these subnets\n(round-robin by VM index). SubnetId above is the primary/fallback (first subnet).\nPopulated by dynamic provisioning when DistributeSubnets is requested; empty means\nall VMs use the single SubnetId (default behavior).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "vNetId": {
                     "type": "string"
@@ -5963,13 +5975,17 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync (default false) returns the response as soon as nodes are\nprovisioned and runs post-deployment commands in the background. The response\nthen carries postCommandStatus=\"Running\" plus postCommandRequestId; observe with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor by polling GET /ns/{nsId}/infra/{infraId}.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "postCommands": {
+                    "description": "PostCommands are post-deployment command phases that bootstrap the Nodes.\nPhases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.\nA single command set is simply one phase: [{\"command\": [\"...\"]}]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
@@ -6169,13 +6185,17 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync runs post-deployment commands in the background",
+                    "type": "boolean",
+                    "example": false
+                },
+                "postCommands": {
+                    "description": "PostCommands are sequential post-deployment command phases that bootstrap the Nodes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the infra in a keyword (any string can be used) for special System purpose",
@@ -6855,6 +6875,55 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
+        "cloudmodel.PostCommandReq": {
+            "type": "object",
+            "required": [
+                "command"
+            ],
+            "properties": {
+                "command": {
+                    "description": "Command is the list of commands to execute",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
+                    ]
+                },
+                "continueOnError": {
+                    "description": "ContinueOnError keeps running the remaining phases when this phase fails (default: false)",
+                    "type": "boolean",
+                    "example": false
+                },
+                "labelSelector": {
+                    "description": "LabelSelector limits execution to nodes matching the selector (e.g. \"role=worker\")",
+                    "type": "string",
+                    "example": "role=worker"
+                },
+                "nodeGroupId": {
+                    "description": "NodeGroupId limits execution to one nodeGroup",
+                    "type": "string",
+                    "example": "g1"
+                },
+                "nodeId": {
+                    "description": "NodeId limits execution to a single node",
+                    "type": "string",
+                    "example": "g1-1"
+                },
+                "timeoutMinutes": {
+                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
+                    "type": "integer",
+                    "default": 30,
+                    "example": 30
+                },
+                "userName": {
+                    "description": "UserName is the SSH username to use for command execution",
+                    "type": "string",
+                    "example": "cb-user"
+                }
+            }
+        },
         "cloudmodel.RecommendedInfra": {
             "type": "object",
             "properties": {
@@ -7464,6 +7533,10 @@ const docTemplate = `{
                     "description": "CountRebooting is for counting Rebooting",
                     "type": "integer"
                 },
+                "countReconciling": {
+                    "description": "CountReconciling is for counting Reconciling",
+                    "type": "integer"
+                },
                 "countRegistering": {
                     "description": "CountRegistering is for counting Registering",
                     "type": "integer"
@@ -7967,13 +8040,17 @@ const docTemplate = `{
                     ],
                     "example": "continue"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync (default false) returns the response as soon as nodes are\nprovisioned and runs post-deployment commands in the background. The response\nthen carries postCommandStatus=\"Running\" plus postCommandRequestId; observe with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor by polling GET /ns/{nsId}/infra/{infraId}.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "postCommands": {
+                    "description": "PostCommands are post-deployment command phases that bootstrap the Nodes.\nPhases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.\nA single command set is simply one phase: [{\"command\": [\"...\"]}]",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "sgTemplateId": {
                     "description": "SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use\nwhen auto-creating shared SecurityGroup resources. Propagates to all NodeGroups unless\noverridden at the NodeGroup level. If empty, the default all-open behavior is used.",
@@ -9851,6 +9928,10 @@ const docTemplate = `{
                 },
                 "verified": {
                     "type": "boolean"
+                },
+                "verifiedMessage": {
+                    "description": "VerifiedMessage explains why verification failed (empty when verified)",
+                    "type": "string"
                 }
             }
         },
