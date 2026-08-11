@@ -61,46 +61,135 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
 
 ---
 
-## v0.12.25 Sync (2026-07-13)
+## v0.12.30 Sync (2026-08-07)
 
-Based on TB v0.12.25 `a032bfd3` (tagged release).
+Based on TB v0.12.30 `c2c4e76b` (tagged release). Upgrade path: **v0.12.25 → v0.12.30**.
 
-| File                                  | Action                                                                                                                                                          |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Model files (imdl/cloud-model/)**   |                                                                                                                                                                 |
-| `copied-tb-model.go`                  | **Updated** — Added `RepeatCount` and `LastOccurredTime` fields to `CommandStatusInfo` for tracking repeated command execution outcomes                        |
-| **go.mod**                            |                                                                                                                                                                 |
-| `go.mod`                              | **Updated** — cb-tumblebug `v0.12.22→v0.12.25`                                                                                                                  |
-| **docker-compose.yaml**               |                                                                                                                                                                 |
-| `docker-compose.yaml`                 | **Updated** — cb-tumblebug `0.12.22→0.12.25`, cb-spider `0.12.32→0.12.35`, cb-mapui `0.12.47→0.12.50`                                                          |
-| **Assets**                            |                                                                                                                                                                 |
-| `assets/*`                            | **No changes** — All asset files remain unchanged                                                                                                               |
-| **Init**                              |                                                                                                                                                                 |
-| `init/decCredential.sh`               | **Updated** — Added Docker bind-mount guard logic to handle phantom empty directories created by volume mounts                                                  |
-| `init/multi-init.sh`                  | **Updated** — OpenBao credential registration (Step 1) deprecated and commented out (Tumblebug now auto-registers during Step 2)                                |
-| `init/init.py`                        | **Not synced** — TB version adds OpenBao credential store preflight validation (not needed - beetle manages its own init flow)                                  |
-| `init/openbao/`                       | **New in TB** — OpenBao initialization files (not copied - not needed for beetle deployment)                                                                    |
-| `init/templates/*.json`               | **Changed in TB** — Many template files reorganized/renamed (not copied - beetle manages its own templates)                                                     |
-| **Config**                            |                                                                                                                                                                 |
-| `conf/setup.env`, `conf/traefik.yaml` | **TB-specific configs** — Not copied (not needed for beetle's deployment)                                                                                       |
-| **Scripts**                           |                                                                                                                                                                 |
-| `scripts/*`                           | **Many scripts in TB** — Operational scripts (not copied - TB-specific utilities)                                                                               |
-| **MCP Interface**                     |                                                                                                                                                                 |
-| `interface/mcp/*`                     | **No changes** — MCP interface files remain unchanged                                                                                                           |
+### Model Changes (v0.12.25→v0.12.30)
 
-**Summary of Changes:**
+| Change                               | Version  | Description                                             |
+| ------------------------------------ | -------- | ------------------------------------------------------- |
+| **PostCommand → PostCommands**       | v0.12.29 | Multi-phase bootstrap refactor (BREAKING)               |
+| **NodeUserPassword removal**         | v0.12.29 | Field removed from CreateNodeGroupDynamicReq (BREAKING) |
+| **DistributeSubnets**                | v0.12.29 | Multi-AZ subnet distribution feature                    |
+| **Resource Pruning structs**         | v0.12.29 | Added ResourcePruneResult, ResourcePruneResults         |
+| **PostCommandReq**                   | v0.12.29 | New struct for phase-based command targeting            |
+| **AddNodeGroupDynamicReq**           | v0.12.29 | New struct for adding nodes to existing infra           |
+| **PostCommandStatus**                | v0.12.29 | New enum for command execution status                   |
+| **PostCommandPhaseResult**           | v0.12.29 | New struct for phase execution results                  |
+| **SshCmdResultForAPI**               | v0.12.29 | New API response type for SSH results                   |
+| **InfraSshCmdResultForAPI**          | v0.12.29 | New wrapper for multiple SSH results                    |
+| **StatusCountInfo.CountReconciling** | v0.12.29 | Added reconciling status count                          |
+| **ConnConfig.VerifiedMessage**       | v0.12.30 | Credential verification error details                   |
+| **NodeInfoInNs**                     | v0.12.30 | Namespace-wide Node listing                             |
+| **NLBInfoInNs**                      | v0.12.30 | Namespace-wide NLB listing                              |
 
-- **Models**: Enhanced `CommandStatusInfo` with repeat tracking fields to handle retry storms efficiently (prevents unbounded history growth)
-- **Docker Compose**: Updated tumblebug, spider, and mapui versions to latest compatible releases
-- **Go Module**: Updated cb-tumblebug dependency to v0.12.25
-- **Init Scripts**: 
-  - `decCredential.sh`: Added Docker volume mount phantom directory cleanup
-  - `multi-init.sh`: OpenBao Step 1 deprecated (auto-registration during Step 2 simplifies workflow)
-- **Upstream additions not copied**: 
-  - `CredentialInfo.OpenBaoStatus` and new `OpenBaoStatusInfo` struct (credential store features not used in beetle)
-  - `ResourceCountOverview` and `ResourcesByManageType` fields for Spider-Tumblebug resource reconciliation (not needed in beetle)
-  - OpenBao-related initialization scripts and preflight checks
-  - TB-specific operational scripts and configuration files
+### Deployment File Changes
+
+| File                                  | Action                                                                                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Model files (imdl/cloud-model/)**   |                                                                                                                                    |
+| `copied-tb-model.go`                  | **Updated** — v0.12.25→v0.12.30 model synchronization (PostCommand→PostCommands, VerifiedMessage, NodeInfoInNs, NLBInfoInNs, etc.) |
+| **go.mod**                            |                                                                                                                                    |
+| `go.mod`                              | **Updated** — cb-tumblebug `v0.12.25→v0.12.30`                                                                                     |
+| **docker-compose.yaml**               |                                                                                                                                    |
+| `docker-compose.yaml`                 | **Updated** — cb-tumblebug `0.12.25→0.12.30`, cb-spider `0.12.35→0.12.42`, cb-mapui `0.12.50→0.12.56`                              |
+|                                       | **Added** — cb-spider-postgres service for Spider METADB (replaces SQLite)                                                         |
+| **.env**                              |                                                                                                                                    |
+| `.env`                                | **Updated** — Added SP_POSTGRES_USER, SP_POSTGRES_PASSWORD, SP_POSTGRES_DB for Spider PostgreSQL                                   |
+| **Assets**                            |                                                                                                                                    |
+| `assets/*`                            | **No changes** — All asset files remain unchanged from v0.12.25                                                                    |
+| **Config**                            |                                                                                                                                    |
+| `conf/cloud_conf.yaml`                | **Changed in TB** — Updated, but not synced (beetle manages its own cloud configuration)                                           |
+| `conf/setup.env`, `conf/traefik.yaml` | **TB-specific configs** — Not copied (not needed for beetle's deployment)                                                          |
+| **Init**                              |                                                                                                                                    |
+| `init/cleanDB.sh`                     | **Changed in TB** — Not synced (beetle manages its own init flow)                                                                  |
+| `init/init.py`                        | **Changed in TB** — Not synced (beetle manages its own init flow)                                                                  |
+| `init/init.sh`                        | **Changed in TB** — Not synced (beetle manages its own init flow)                                                                  |
+| `init/multi-init.sh`                  | **Changed in TB** — Not synced (beetle manages its own init flow)                                                                  |
+| `init/openbao/`                       | **TB-specific** — Not copied (not needed for beetle deployment)                                                                    |
+| `init/templates/*.json`               | **Reorganized in TB** — Many new templates added, beetle maintains its own templates                                               |
+| **Scripts**                           |                                                                                                                                    |
+| `scripts/restore-assets.sh`           | **Changed in TB** — Not synced (beetle manages its own scripts)                                                                    |
+| `scripts/*`                           | **Many new TB-specific scripts** — Not copied (operational utilities for TB)                                                       |
+
+### Infrastructure Changes
+
+#### CB-Spider PostgreSQL METADB
+
+**Major Change:** CB-Spider now uses PostgreSQL instead of SQLite for metadata storage (v0.12.30).
+
+**docker-compose.yaml additions:**
+
+```yaml
+cb-spider:
+  depends_on:
+    cb-spider-postgres:
+      condition: service_healthy
+  environment:
+    - SPIDER_METADB_ENDPOINT=cb-spider-postgres:5432
+    - SPIDER_METADB_USER=${SP_POSTGRES_USER}
+    - SPIDER_METADB_PASSWORD=${SP_POSTGRES_PASSWORD}
+    - SPIDER_METADB_DATABASE=${SP_POSTGRES_DB}
+
+cb-spider-postgres:
+  image: postgres:16-alpine
+  volumes:
+    - ./data/cb-spider-container/meta_db/postgres:/var/lib/postgresql/data
+```
+
+**.env additions:**
+
+```bash
+SP_POSTGRES_USER=spider
+SP_POSTGRES_PASSWORD=spider
+SP_POSTGRES_DB=cb_spider
+```
+
+**Migration Impact:**
+
+- Existing Spider SQLite data will be ignored
+- CSP credentials need to be re-registered after upgrade
+- Volume mount point changed: `meta_db/` → `meta_db/postgres/`
+
+### Key Features Summary (v0.12.25→v0.12.30)
+
+1. **Multi-Phase Bootstrap** (v0.12.29) - Sequential command execution with targeting
+2. **Multi-AZ Distribution** (v0.12.29) - DistributeSubnets for high availability
+3. **Resource Pruning** (v0.12.29) - Clean up orphaned metadata
+4. **Credential Diagnostics** (v0.12.30) - Detailed verification error messages
+5. **Namespace-Wide Listing** (v0.12.30) - Single-call resource queries across infras
+6. **Default Security Group SSH-Only** (v0.12.30) - Breaking change, all ports now closed by default except SSH
+
+**Comprehensive Upgrade Documentation:** See [docs/changes/BREAKING_CHANGES_v0.5.10.md](../../docs/changes/BREAKING_CHANGES_v0.5.10.md)
+
+**Note:** Previous version history is tracked through Git. This document shows only the latest sync status.
+
+- **CreateNodeGroupDynamicReq.DistributeSubnets**: Round-robin VM distribution across VNet subnets for multi-AZ spread
+- **CreateNodeGroupDynamicReq.NodeUserPassword**: Field removed (replaced with comment explaining SSH-based access)
+- **StatusCountInfo.CountReconciling**: New field for tracking reconciling status
+- **AddNodeGroupDynamicReq**: New request type for adding node groups to existing infra
+- **PostCommandStatus**: New type with constants (None, Completed, CompletedWithErrors, Failed, Skipped, Running)
+- **PostCommandPhaseResult**: Result type for post-command phase execution
+- **SshCmdResultForAPI / InfraSshCmdResultForAPI**: API response types for SSH command results
+- **ResourcePruneResult / ResourcePruneResults**: New structs for orphaned metadata cleanup operations
+
+- **Docker Compose**: Updated tumblebug (0.12.29), spider (0.12.40), and mapui (0.12.55) to latest compatible releases
+
+- **Go Module**: Updated cb-tumblebug dependency to v0.12.29
+
+- **Deployment Files**: Minor changes in conf/cloud_conf.yaml, init scripts, and templates not synced (beetle maintains independent deployment configuration)
+
+**Key Feature Changes (v0.12.25→v0.12.29)**:
+
+1. **Multi-phase Bootstrap**: PostCommands array replaces single PostCommand, enabling sequential bootstrap phases with per-phase targeting
+2. **Subnet Distribution**: DistributeSubnets flag enables automatic VM distribution across availability zones via subnet round-robin
+3. **Resource Pruning**: New API structures for cleaning up orphaned metadata entries
+4. **Async Execution**: PostCommandAsync enables background command execution for long-running bootstrap operations
+
+- `ResourceCountOverview` and `ResourcesByManageType` fields for Spider-Tumblebug resource reconciliation (not needed in beetle)
+- OpenBao-related initialization scripts and preflight checks
+- TB-specific operational scripts and configuration files
 
 **Note**: TB v0.12.25 introduces enhanced OpenBao credential store validation and resource reconciliation features. These structs and scripts were not synchronized as they have no dependency chains to beetle's existing copied structs and represent TB-specific operational concerns.
 

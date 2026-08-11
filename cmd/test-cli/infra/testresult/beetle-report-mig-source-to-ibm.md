@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-07-30 01:19:42*
+*Report generated: 2026-08-11 04:41:51*
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | nxf-2x2, bxf-2x8, bxf-4x16 |
+| 2 | **VM Spec** | 3 | ✅ Selected | bxf-2x8, bxf-4x16, nxf-2x2 |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_7cb7d68f-a4a5-4166-8512-df4115f4c450<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_67e33f45-6a8f-48ab-9096-8754e4d44c56<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3 | **VM Name:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_2b2e2194-5a77-4d14-8f9d-b62ef5e1f0bc<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 1 | **VM Name:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** 02h7_4b5bd22c-c51d-43c3-8a4d-946e949e216b<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** 02h7_e7f3fefd-274f-43b8-b3f2-3094baa5b1c1<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** 02h7_28866bb8-4b30-421d-bcc4-4d7884eca250<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-01
 
-**CSP ID:** r026-b6cdb1e3-8f19-4e7f-acd3-2a6d9b0a72bb | **VNet:** my-vnet-01 | **Rules:** 14
+**CSP ID:** r026-9bd29978-ac02-4cea-a031-bce1f4f64189 | **VNet:** my-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-02
 
-**CSP ID:** r026-9f6b756c-c57f-4d24-86be-32633c197efe | **VNet:** my-vnet-01 | **Rules:** 19
+**CSP ID:** r026-e337237b-892e-485c-ab73-15920661d4f9 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-03
 
-**CSP ID:** r026-6920486f-c8de-48ac-bf7c-ce35b1f4bde5 | **VNet:** my-vnet-01 | **Rules:** 19
+**CSP ID:** r026-9f907d23-dbfe-4ec2-937d-fa8f558ad960 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my-vnet-01<br>**ID:** r026-417f5571-d0c7-487c-b354-42b85989f3a0 | 10.0.0.0/21 |
+| 1 | **Name:** my-vnet-01<br>**ID:** r026-77fe3d8b-4a09-4841-8757-7b1a2f815f06 | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my-subnet-01<br>**ID:** 02h7-d8cffe55-1735-4724-819e-5c4a4cd0766f | 10.0.1.0/24 | my-vnet-01 |
+| 1 | **Name:** my-subnet-01<br>**ID:** 02h7-1dab2d1b-0df4-46ce-96c4-ece22b1dc825 | 10.0.1.0/24 | my-vnet-01 |
 
 ### Source Network Information
 
@@ -262,7 +262,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my-sshkey-01 | r026-6d8513e1-f27f-419b-b227-4038896760f2 | SHA256:h33RymjkE3ER05uVqIxxZk0OFimOkNu9hMBcScOqD8Q | Used by all 3 VMs |
+| 1 | my-sshkey-01 | r026-dcd9a530-8911-40bd-9d9c-4d1d2ede1e3b | SHA256:LoJrXJ257SVogVWm+HbONfKROwn+uNeeY0SjohTa664 | Used by all 3 VMs |
 
 ---
 

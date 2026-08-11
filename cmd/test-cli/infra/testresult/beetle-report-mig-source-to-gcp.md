@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-06-24 10:01:30*
+*Report generated: 2026-08-11 04:26:33*
 
 ---
 
@@ -12,7 +12,7 @@ This report provides a comprehensive summary of the infrastructure migration fro
 
 **Target Region:** asia-northeast3
 
-**Namespace:** mig01 | **Infra ID:** my03-infra101
+**Namespace:** mig01 | **Infra ID:** my-infra101
 
 **Migration Status:** Completed
 
@@ -31,10 +31,10 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | e2-standard-4, e2-highcpu-2, e2-standard-2 |
-| 3 | **VM OS Image** | 2 | ✅ Selected | Ubuntu 22.04 |
-| 4 | **VNet (VPC)** | 1 | ✅ Created | my03-vnet-01, CIDR: 10.0.0.0/21 |
-| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my03-vnet-01) |
+| 2 | **VM Spec** | 3 | ✅ Selected | e2-highcpu-2, e2-standard-2, e2-standard-4 |
+| 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
+| 4 | **VNet (VPC)** | 1 | ✅ Created | my-vnet-01, CIDR: 10.0.0.0/21 |
+| 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my-vnet-01) |
 | 6 | **Security Group** | 3 security groups | ✅ Created | Total 52 rules in 3 sgs |
 | 7 | **SSH Key** | 1 keys | ✅ Created | For VM access control |
 
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** tbo6uts6d1ehvopasug7<br>**Label(sourceMachineId):** vm-ec268ed7-821e-9d73-e79f | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f |
-| 2 | **VM Name:** my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** tb1ujrbucosc9tbr4q62<br>**Label(sourceMachineId):** vm-ec288dd0-c6fa-8a49-2f60 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 |
-| 3 | **VM Name:** my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** tb08jprf10qth747uerd<br>**Label(sourceMachineId):** vm-ec2d32b5-98fb-5a96-7913 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 |
+| 1 | **VM Name:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** tbb2us79heiktq3ob488<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** tbt3lbatmtt3tl0gja2u<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** tbu3ah1dbkptorqb9oi5<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -58,21 +58,21 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** e2-highcpu-2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 2 | my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** e2-standard-2<br>**vCPUs:** 2<br>**Memory:** 7.8 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
-| 3 | my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** e2-standard-4<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **CPUs:** N/A<br>**Threads:** N/A<br>**Memory:** N/A<br>**Root Disk:** N/A |
+| 1 | my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** e2-highcpu-2<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
+| 2 | my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** e2-standard-2<br>**vCPUs:** 2<br>**Memory:** 7.8 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
+| 3 | my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** e2-standard-4<br>**vCPUs:** 4<br>**Memory:** 15.6 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
 
 ---
 
 ## 💿 VM OS Images
 
-**Summary:** 2 OS image(s) have been selected and used for the migrated VMs.
+**Summary:** 1 OS image(s) have been selected and used for the migrated VMs.
 
 | No. | Migrated VM | VM OS Image Info | Source Server | Source OS |
 |-----|-------------|------------------|---------------|-----------|
-| 1 | my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-accel-2204-amd64-tpu-v5e-v5p-v6e-v20260530<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS TPU version(s): v5e/v5p/v6e, amd64 jammy image built on 2026-05-30 | **Hostname:** N/A<br>**Machine ID:** vm-ec268ed7-821e-9d73-e79f | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 2 | my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260530<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-30 | **Hostname:** N/A<br>**Machine ID:** vm-ec288dd0-c6fa-8a49-2f60 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
-| 3 | my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260530<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-05-30 | **Hostname:** N/A<br>**Machine ID:** vm-ec2d32b5-98fb-5a96-7913 | **PrettyName:** N/A<br>**Name:** N/A<br>**Version:** N/A |
+| 1 | my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 2 | my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
+| 3 | my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Image ID:** https://www.googleapis.com/compute/v1/projects/GCP_PROJECT_ID/global/images/ubuntu-2204-jammy-v20260623<br>**OS Type:** Ubuntu 22.04<br>**OS Distribution:** Canonical, Ubuntu, 22.04 LTS, amd64 jammy image built on 2026-06-23 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **PrettyName:** Ubuntu 22.04.3 LTS<br>**Name:** Ubuntu<br>**Version:** 22.04.3 LTS (Jammy Jellyfish) |
 
 ---
 
@@ -80,14 +80,14 @@ Summary of key infrastructure resources created or configured in the target clou
 
 **Summary:** 3 security group(s) with 52 security rule(s) have been created and configured for the migrated VMs.
 
-### Security Group: my03-sg-01
+### Security Group: my-sg-01
 
-**CSP ID:** tb9e8iv5thhhjrvnuned | **VNet:** my03-vnet-01 | **Rules:** 14
+**CSP ID:** tbg0dgj7fs23ald6d3h1 | **VNet:** my-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
-- **VM:** my03-vm-ec268ed7-821e-9d73-e79f-961262161624-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec268ed7-821e-9d73-e79f
+- **VM:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1
+  - **Source Server:** **Hostname:** ip-10-0-1-30, **Machine ID:** ec268ed7-821e-9d73-e79f-961262161624
 
 **Security Rules:**
 
@@ -108,14 +108,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | 13 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 | 14 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
-### Security Group: my03-sg-02
+### Security Group: my-sg-02
 
-**CSP ID:** tbcjns28gais7smh3fep | **VNet:** my03-vnet-01 | **Rules:** 19
+**CSP ID:** tbad4lrkikd7agjvj944 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** my03-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec2d32b5-98fb-5a96-7913
+- **VM:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1
+  - **Source Server:** **Hostname:** ip-10-0-1-221, **Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932
 
 **Security Rules:**
 
@@ -141,14 +141,14 @@ Summary of key infrastructure resources created or configured in the target clou
 | 18 | outbound | TCP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 | 19 | outbound | UDP | 1-65535 | 0.0.0.0/0 | - | Created by system |
 
-### Security Group: my03-sg-03
+### Security Group: my-sg-03
 
-**CSP ID:** tb7r72prvjkebonagd4r | **VNet:** my03-vnet-01 | **Rules:** 19
+**CSP ID:** tbd49adsltghd6rc3is3 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
-- **VM:** my03-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
-  - **Source Server:** **Hostname:** N/A, **Machine ID:** vm-ec288dd0-c6fa-8a49-2f60
+- **VM:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1
+  - **Source Server:** **Hostname:** ip-10-0-1-138, **Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf
 
 **Security Rules:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my03-vnet-01<br>**ID:** tbeqt6le87ga1gbubjed | 10.0.0.0/21 |
+| 1 | **Name:** my-vnet-01<br>**ID:** tb8cvocsl30p76r85miv | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my03-subnet-01<br>**ID:** tb8ssq9ivcrnus1quqjd | 10.0.1.0/24 | my03-vnet-01 |
+| 1 | **Name:** my-subnet-01<br>**ID:** tb2doh1m827n7bbd2vep | 10.0.1.0/24 | my-vnet-01 |
 
 ### Source Network Information
 
@@ -205,6 +205,16 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.30/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.0.2/32 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
+| 10.0.1.1/32 | 10.0.1.1 | ens5 |
 
 #### 2. ip-10-0-1-221
 
@@ -213,6 +223,16 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.221/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.0.2/32 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
+| 10.0.1.1/32 | 10.0.1.1 | ens5 |
 
 #### 3. ip-10-0-1-138
 
@@ -221,6 +241,16 @@ Summary of key infrastructure resources created or configured in the target clou
 | Interface | IP Address | State |
 |-----------|------------|-------|
 | lo | 127.0.0.1/8 | up |
+| ens5 | 10.0.1.138/24 | up |
+
+**Main Routes:**
+
+| Destination | Gateway | Interface |
+|-------------|---------|-----------|
+| 0.0.0.0/0 | 10.0.1.1 | ens5 |
+| 10.0.0.2/32 | 10.0.1.1 | ens5 |
+| 10.0.1.0/24 | 10.0.1.1 | ens5 |
+| 10.0.1.1/32 | 10.0.1.1 | ens5 |
 
 ---
 
@@ -232,7 +262,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my03-sshkey-01 | tbqdvm7cpfs9t0fdejsj |  | Used by all 3 VMs |
+| 1 | my-sshkey-01 | tbv35ke87t7qr6c98ip5 |  | Used by all 3 VMs |
 
 ---
 
