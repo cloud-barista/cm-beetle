@@ -128,6 +128,10 @@ definitions:
         type: string
       verified:
         type: boolean
+      verifiedMessage:
+        description: VerifiedMessage explains why verification failed (empty when
+          verified)
+        type: string
     type: object
   cloudmodel.CreateNodeGroupDynamicReq:
     properties:
@@ -140,6 +144,15 @@ definitions:
       description:
         example: Created via CB-Tumblebug
         type: string
+      distributeSubnets:
+        description: |-
+          DistributeSubnets, when true, spreads this NodeGroup's VMs across the VNet's subnets
+          (round-robin), which spreads them across availability zones for multi-zone VNets.
+          Best-effort: subnets whose zone lacks the requested spec are excluded so VMs consolidate
+          to zones that have it. Ignored when Zone is set (that pins a single subnet) or when the
+          VNet has a single subnet. Default false (all VMs land in the first subnet).
+        example: false
+        type: boolean
       imageId:
         description: ImageId is field for id of a image in common namespace
         example: ami-01f71f215b23ba262
@@ -161,9 +174,6 @@ definitions:
           If > 0, nodeGroup will be generated. Default is 1.
         example: 3
         type: integer
-      nodeUserPassword:
-        example: ""
-        type: string
       rootDiskSize:
         description: Root disk size in GB. 0 = use CSP default.
         example: 50
@@ -271,6 +281,15 @@ definitions:
         type: string
       subnetId:
         type: string
+      subnetIds:
+        description: |-
+          SubnetIds, when non-empty, spreads this NodeGroup's VMs across these subnets
+          (round-robin by VM index). SubnetId above is the primary/fallback (first subnet).
+          Populated by dynamic provisioning when DistributeSubnets is requested; empty means
+          all VMs use the single SubnetId (default behavior).
+        items:
+          type: string
+        type: array
       vNetId:
         type: string
     required:
@@ -604,10 +623,23 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
-        description: PostCommand is for the command to bootstrap the Nodes
+      postCommandAsync:
+        description: |-
+          PostCommandAsync (default false) returns the response as soon as nodes are
+          provisioned and runs post-deployment commands in the background. The response
+          then carries postCommandStatus="Running" plus postCommandRequestId; observe with
+          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+          or by polling GET /ns/{nsId}/infra/{infraId}.
+        example: false
+        type: boolean
+      postCommands:
+        description: |-
+          PostCommands are post-deployment command phases that bootstrap the Nodes.
+          Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
+          A single command set is simply one phase: [{"command": ["..."]}]
+        items:
+          $ref: '#/definitions/cloudmodel.PostCommandReq'
+        type: array
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
@@ -767,10 +799,16 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
-        description: PostCommand is for the command to bootstrap the Nodes
+      postCommandAsync:
+        description: PostCommandAsync runs post-deployment commands in the background
+        example: false
+        type: boolean
+      postCommands:
+        description: PostCommands are sequential post-deployment command phases that
+          bootstrap the Nodes
+        items:
+          $ref: '#/definitions/cloudmodel.PostCommandReq'
+        type: array
       systemLabel:
         description: SystemLabel is for describing the infra in a keyword (any string
           can be used) for special System purpose
@@ -1260,6 +1298,48 @@ definitions:
     - Linux_UNIX
     - Windows
     - PlatformNA
+  cloudmodel.PostCommandReq:
+    properties:
+      command:
+        description: Command is the list of commands to execute
+        example:
+        - 'client_ip=$(echo $SSH_CLIENT | awk ''{print $1}''); echo SSH client IP
+          is: $client_ip'
+        items:
+          type: string
+        type: array
+      continueOnError:
+        description: 'ContinueOnError keeps running the remaining phases when this
+          phase fails (default: false)'
+        example: false
+        type: boolean
+      labelSelector:
+        description: LabelSelector limits execution to nodes matching the selector
+          (e.g. "role=worker")
+        example: role=worker
+        type: string
+      nodeGroupId:
+        description: NodeGroupId limits execution to one nodeGroup
+        example: g1
+        type: string
+      nodeId:
+        description: NodeId limits execution to a single node
+        example: g1-1
+        type: string
+      timeoutMinutes:
+        default: 30
+        description: |-
+          TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)
+          If not specified or set to 0, the default timeout (30 minutes) will be used
+        example: 30
+        type: integer
+      userName:
+        description: UserName is the SSH username to use for command execution
+        example: cb-user
+        type: string
+    required:
+    - command
+    type: object
   cloudmodel.RecommendedInfra:
     properties:
       description:
@@ -1680,6 +1760,9 @@ definitions:
       countRebooting:
         description: CountRebooting is for counting Rebooting
         type: integer
+      countReconciling:
+        description: CountReconciling is for counting Reconciling
+        type: integer
       countRegistering:
         description: CountRegistering is for counting Registering
         type: integer
@@ -2068,10 +2151,23 @@ definitions:
         - refine
         example: continue
         type: string
-      postCommand:
-        allOf:
-        - $ref: '#/definitions/cloudmodel.InfraCmdReq'
-        description: PostCommand is for the command to bootstrap the Nodes
+      postCommandAsync:
+        description: |-
+          PostCommandAsync (default false) returns the response as soon as nodes are
+          provisioned and runs post-deployment commands in the background. The response
+          then carries postCommandStatus="Running" plus postCommandRequestId; observe with
+          GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+          or by polling GET /ns/{nsId}/infra/{infraId}.
+        example: false
+        type: boolean
+      postCommands:
+        description: |-
+          PostCommands are post-deployment command phases that bootstrap the Nodes.
+          Phases run sequentially; each may target a nodeGroupId, nodeId, or labelSelector.
+          A single command set is simply one phase: [{"command": ["..."]}]
+        items:
+          $ref: '#/definitions/cloudmodel.PostCommandReq'
+        type: array
       sgTemplateId:
         description: |-
           SgTemplateId specifies the SecurityGroup template ID (from system namespace) to use
@@ -3390,6 +3486,10 @@ definitions:
         type: string
       verified:
         type: boolean
+      verifiedMessage:
+        description: VerifiedMessage explains why verification failed (empty when
+          verified)
+        type: string
     type: object
   model.EncryptionTestRequest:
     properties:
