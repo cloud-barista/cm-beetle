@@ -1,10 +1,10 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-06-24 09:54:06
+**Generated At:** 2026-08-11 08:21:01
 
 **Namespace:** mig01
 
-**Infra Name:** my04-infra101
+**Infra Name:** my-infra101
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Property | Value |
 |----------|-------|
-| **Infra Name** | my04-infra101 |
+| **Infra Name** | my-infra101 |
 | **Description** | Recommended VMs comprising multi-cloud infrastructure |
 | **Status** | Running:3 (R:3/3) |
 | **Target Cloud** | ALIBABA |
@@ -36,27 +36,27 @@
 
 | Name | Distribution | OS Type | OS Platform | Architecture | Root Disk Type | Root Disk Size | VMs Using This Image |
 |------|--------------|---------|-------------|--------------|----------------|----------------|----------------------|
-| ubuntu_22_04_x64_20G_alibase_20260522.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
+| ubuntu_22_04_x64_20G_alibase_20260723.vhd | Ubuntu  22.04 64 bit | Ubuntu 22.04 | Linux/UNIX | x86_64 | NA | 20 GB | 3 |
 
 ### Virtual Machines
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj76g7t6horumlrh8jqr | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.243.103<br>**Private IP:** 10.0.1.167<br>**SGs:** my04-sg-01<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-mj75hkqxg5dkebz4y15g | Running | 2 vCPU, 8.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.248.40<br>**Private IP:** 10.0.1.168<br>**SGs:** my04-sg-03<br>**SSH:** my04-sshkey-01 |
-| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-mj74cfnqz1nex5jw7ht0 | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my04-vnet-01<br>**Subnet:** my04-subnet-01<br>**Public IP:** 47.80.240.246<br>**Private IP:** 10.0.1.166<br>**SGs:** my04-sg-02<br>**SSH:** my04-sshkey-01 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | i-mj78bzu6c398p7iuq9yh | Running | 2 vCPU, 2.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 8.220.242.41<br>**Private IP:** 10.0.1.124<br>**SGs:** my-sg-01<br>**SSH:** my-sshkey-01 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | i-mj7bv6g2wwmac58o734o | Running | 2 vCPU, 8.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 47.80.242.38<br>**Private IP:** 10.0.1.122<br>**SGs:** my-sg-03<br>**SSH:** my-sshkey-01 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | i-mj7atsp9lcb2gicz8xz9 | Running | 4 vCPU, 16.0 GiB | Ubuntu  22.04 64 bit (Ubuntu  22.04 64 bit) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 47.80.62.50<br>**Private IP:** 10.0.1.123<br>**SGs:** my-sg-02<br>**SSH:** my-sshkey-01 |
 
 
 ## Network Resources
 
 ### Virtual Networks (VPC/VNet)
 
-#### VNet: my04-vnet-01
+#### VNet: my-vnet-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-vnet-01 |
-| **CSP VNet ID** | vpc-mj7l1a6mut1tu1td4fuq1 |
+| **Name** | my-vnet-01 |
+| **CSP VNet ID** | vpc-mj72hn2mx8ui7qzp5ppvc |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | alibaba-ap-northeast-2 |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my04-subnet-01 | vsw-mj7v4h6nn4omm3n7py42c | 10.0.1.0/24 | ap-northeast-2a |
+| my-subnet-01 | vsw-mj7onkp9p0e3vhowfpltt | 10.0.1.0/24 | ap-northeast-2a |
 
 
 ## Security Resources
@@ -74,17 +74,17 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my04-sshkey-01 | tbv9lb3m8stb9iqo2tm0 |  | 0f10dfae12ad436b160238993907c348 |
+| my-sshkey-01 | tbvpanv5bs6r0bum84og |  | bdc27fe09ac1ac7dd2aa292b8ea3096c |
 
 ### Security Groups
 
-#### Security Group: my04-sg-01
+#### Security Group: my-sg-01
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-01 |
-| **CSP Security Group ID** | sg-mj796l1ifu2cvenzkhhe |
-| **VNet** | my04-vnet-01 |
+| **Name** | my-sg-01 |
+| **CSP Security Group ID** | sg-mj7is3khx6cy655s1nxd |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 14 rules |
 
 **Security Group Rules:**
@@ -106,13 +106,13 @@
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
 
-#### Security Group: my04-sg-02
+#### Security Group: my-sg-02
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-02 |
-| **CSP Security Group ID** | sg-mj79kw9pyp2iz82fy5qp |
-| **VNet** | my04-vnet-01 |
+| **Name** | my-sg-02 |
+| **CSP Security Group ID** | sg-mj715aija9pifwph4wgr |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
 **Security Group Rules:**
@@ -139,13 +139,13 @@
 | outbound | TCP | 1-65535 | 0.0.0.0/0 |
 | outbound | ALL |  | 0.0.0.0/0 |
 
-#### Security Group: my04-sg-03
+#### Security Group: my-sg-03
 
 | Property | Value |
 |----------|-------|
-| **Name** | my04-sg-03 |
-| **CSP Security Group ID** | sg-mj7ikoq6pum7f1i879us |
-| **VNet** | my04-vnet-01 |
+| **Name** | my-sg-03 |
+| **CSP Security Group ID** | sg-mj716hku0jtlsrxntpi2 |
+| **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
 **Security Group Rules:**
@@ -193,8 +193,8 @@
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my04-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ecs.e-c1m1.large | $0.0178 | $12.82 |
-| my04-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | ecs.e-c1m4.large | $0.0791 | $56.95 |
-| my04-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | ecs.e-c1m1.large | $0.0178 | $12.82 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | ecs.e-c1m4.large | $0.0791 | $56.95 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | ecs.e-c1m4.xlarge | $0.1582 | $113.90 |
 
 

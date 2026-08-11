@@ -24,58 +24,101 @@ This prompt will help synchronize CB-Tumblebug models by:
 6. **Version Files Update**: Update docker-compose.yaml and go.mod with target version
 7. **Docker-Compose Files Sync**: Compare and update docker-compose related files (assets, config, init scripts)
 8. **SYNC.md Documentation**: Update SYNC.md with detailed change summary for the target version
-9. **Cleanup**: Remove temporary repository and return to original directory
-10. **Validation**: Ensure compilation and proper serialization
+9. **CM-Beetle Breaking Changes Documentation**: If the sync introduces a breaking change for Beetle API/imdl consumers, document it in `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md`
+10. **Cleanup**: Remove temporary repository and return to original directory
+11. **Validation**: Ensure compilation and proper serialization
 
-## Synchronization Principles
+## Synchronization Rules
 
-**CRITICAL GUIDELINES**:
+**CRITICAL GUIDELINES** — this is the single source of truth for what to include, exclude, rename, and
+update. Do not duplicate these rules elsewhere in this prompt.
 
-### 1. Dependency-Based Synchronization Rule
+### 1. Dependency Chain Rule
 
-- **ALWAYS** synchronize ALL structs currently present in copied-tb-model.go
-- **ONLY** add new structs that are **direct or indirect dependencies** of existing structs
-- **NEVER** add standalone new structs that have no dependency chain to existing structs
-- **FOLLOW dependency chains**: If existing struct A uses new struct B, and B uses new struct C, include both B and C
+- **ALWAYS** synchronize ALL structs currently present in copied-tb-model.go that changed in git diff
+- **ONLY** add new structs that are **direct or indirect dependencies** of existing structs (trace the
+  chain: `ExistingStruct → NewDependency → SubDependency → ...`)
+- **NEVER** add standalone new structs that have no dependency chain to an existing struct
+- For each struct found in the git diff, decide with this process:
+  1. **Name Change Detection**: Is this an existing cm-model struct that was renamed (e.g., `TbMciReq` → `MciReq`)?
+  2. **Trace Back**: Can this struct be reached from any existing cm-model struct through field references?
+  3. **Decision**: Include ONLY if a dependency path exists or it's a renamed existing struct; otherwise EXCLUDE
 
-### 2. Struct Dependency Chain Analysis
+**Example Dependency Chain Analysis:**
 
-- Map ALL existing structs in copied-tb-model.go before synchronization
-- For each existing struct, identify ALL field types that reference other structs
-- Trace dependency chains: `ExistingStruct → NewDependency → SubDependency → ...`
-- **REJECT** new structs that cannot be traced back to any existing struct through dependency chains
+```go
+// ✅ INCLUDE: TbMciInfo (existing, renamed to MciInfo) → MciCreationErrors (existing) → VmCreationError (existing)
+// ✅ INCLUDE: Name change detected and dependency chain exists
 
-### 3. Operations Scope
+// ✅ INCLUDE: TbMciReq (existing, renamed to MciReq) → TbVmReq (existing, renamed to VmReq)
+// ✅ INCLUDE: Both structs renamed but dependency chain maintained
 
-- **HEADER UPDATE**: Always update the version header with target version, commit hash, and date, regardless of struct changes (MANDATORY)
-- **UPDATE**: Modify existing structs to match target version (always required)
-- **CREATE**: Add new structs ONLY if they are dependencies of existing/updated structs
-- **DELETE**: Remove structs that no longer exist in target version (with impact analysis)
-- **RENAME**: Handle struct name changes (e.g., Tb prefix removal) with complete replacement
-- **REMAP**: Update field type references when struct names change
+// ❌ EXCLUDE: ReviewMciDynamicReqInfo (standalone new struct)
+// ❌ EXCLUDE: No existing struct references this new struct
 
-### 4. Dependency Chain Filtering
+// ✅ INCLUDE: CreateSubGroupDynamicReq ← IF this is renamed TbVmDynamicReq (existing struct)
+// ❌ EXCLUDE: CreateSubGroupDynamicReq ← IF this is completely new struct with no dependency path
+```
 
-- **INCLUDE**: New structs referenced in fields of existing structs
-- **INCLUDE**: New structs referenced in fields of already-included dependency structs
-- **EXCLUDE**: New structs that exist in CB-Tumblebug but have no dependency path to existing cm-model structs
-- **EXCLUDE**: Standalone new functionality that doesn't integrate with existing structs
+### 2. Struct Rename Handling
 
-### 5. Struct Name Change Detection (CRITICAL)
+- **Detect** struct renames in CB-Tumblebug, especially Tb prefix removal: `type TbStructName` → `type StructName`
+- **Replace** the old struct definition entirely with the new name and content (not a partial edit)
+- **Update** ALL field type references in other structs when a referenced struct's name changes
+- **Preserve** all existing TB-sourced field documentation and examples during the rename
 
-**NEW REQUIREMENT**: Detect and handle struct name changes (especially Tb prefix removal):
-
-- **Pattern Recognition**: Identify when existing struct names have been renamed in CB-Tumblebug
-- **Mapping Strategy**: Create mapping between old names (e.g., `TbMciReq`) and new names (e.g., `MciReq`)
-- **Replacement Strategy**: Replace struct definitions entirely when name changes are detected
-- **Comment Preservation**: Maintain all existing TB-sourced field documentation during name changes
-- **Reference Updates**: Update all struct type references within other structs when names change
-
-#### Common Naming Patterns to Detect:
+**Common Naming Patterns to Detect:**
 
 - **Tb Prefix Removal**: `TbStructName` → `StructName`
 - **Functional Renaming**: `TbVmDynamicReq` → `CreateSubGroupDynamicReq`
 - **Field Renaming**: `CommonSpec` → `SpecId`, `CommonImage` → `ImageId`
+
+### 3. Operations Scope
+
+- **HEADER UPDATE** (MANDATORY, even with no struct changes): update the version header with target
+  version, commit hash, and date — see format in Section 4 below
+- **UPDATE**: modify every existing struct that changed in git diff — field additions, removals, type
+  changes, validation tag changes, JSON tag changes, and updated examples (no exceptions for
+  "complexity" or subjective necessity judgments)
+- **CREATE**: add new structs ONLY if they are dependencies of existing/updated structs (Rule 1)
+- **DELETE**: remove structs that no longer exist in the target version (with impact analysis)
+- **RENAME**: handle struct name changes per Rule 2
+- **NEVER DELETE** existing Tumblebug-synchronized field comments/examples — they are valuable
+  documentation from the TB source
+- **DO NOT** include "// \* Path:" comments — clear struct names and descriptions are enough
+
+### 4. Version Header Update Format
+
+Update the header comment in copied-tb-model.go to include the commit hash:
+
+```go
+// * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
+// TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
+// * Version: CB-Tumblebug ${input:version} (commit: [full_commit_hash])
+// * Synchronized: [YYYY-MM-DD] (include notable changes or PR references)
+```
+
+### 5. New Dependency Struct Addition
+
+For new structs referenced by existing structs (Rule 1) that appear in git diff:
+
+- Add the ENTIRE new struct definition from the CB-Tumblebug source, with ALL fields
+- Include ALL comments, examples, and validation tags from the TB source
+- Place it in logical order near the related structs
+
+### 6. Complete Field Synchronization Checklist
+
+For every struct that exists in copied-tb-model.go and appears in the git diff, using ONLY the git
+diff as the source of truth:
+
+- [ ] Add ALL new fields exactly as shown in git diff `+` lines
+- [ ] Remove ALL fields shown in git diff `-` lines
+- [ ] Update ALL field types, tags, and comments per the diff
+- [ ] Update field types when a referenced struct's name changed (Rule 2)
+- [ ] Apply ALL validation tag changes (`validate:"required"`, etc.)
+- [ ] Update ALL JSON serialization tags (`json:"fieldName"`, `omitempty`)
+- [ ] Update ALL struct tag examples to match the TB source
+- [ ] Preserve ALL existing Tumblebug field documentation and examples
 
 ## Tool Usage Guide
 
@@ -288,117 +331,79 @@ Document all docker-compose file changes in SYNC.md:
 
 - **Use `get_errors`**: Verify markdown syntax if possible
 
+### Step 7.5: CM-Beetle Breaking Changes Documentation
+
+Document breaking changes for Beetle API/imdl consumers under `docs/changes/`. Do not create or
+update files under `docs/sync/`.
+
+**Note on versioning**: `${input:version}` above refers to the CB-Tumblebug version. This step uses a
+separate, unrelated version — CM-Beetle's own release version, referred to below as
+`{cm_beetle_version}` (e.g., `v0.5.10`). Never write the TB version into the breaking-changes filename.
+
+First, determine whether this sync introduces a breaking change **from a CM-Beetle API/imdl consumer's
+perspective** (not from CB-Tumblebug's perspective):
+
+- A field renamed, removed, or retyped in a struct that Beetle's REST API exposes in a request or
+  response body (i.e., an `imdl/cloud-model` struct embedded by a request/response type in
+  `pkg/api/rest/controller/*.go`)
+- A CB-Tumblebug behavior change that changes what an existing Beetle endpoint does at runtime, even
+  without a field-level change (e.g., a changed default value)
+- A required deployment change (e.g., a new dependent service, a new required environment variable)
+
+**If none of the above apply** (the sync only adds new structs/fields with no impact on existing Beetle
+endpoints), **skip this step** — do not create a breaking-changes document for a purely additive sync.
+
+**Worked example:**
+
+```text
+// ✅ BREAKING: CreateNodeGroupDynamicReq.NodeUserPassword field removed
+// ✅ BREAKING: This struct is embedded in a Beetle request body → API consumers must update requests
+
+// ✅ BREAKING: TB's auto-generated security group now opens only TCP 22 (was all ports)
+// ✅ BREAKING: No field changed, but callers of an existing Beetle endpoint get different runtime
+//    behavior with the same request body → document as a Logic Change (see structure below)
+
+// ❌ NOT BREAKING: New `PostCommandStatus` enum added, referenced only by a new optional field
+// ❌ NOT BREAKING: Existing Beetle requests/responses are unaffected → skip this step
+```
+
+**If a breaking change is found:**
+
+- **Use `run_in_terminal`**: Check the current CM-Beetle release (`git describe --tags --abbrev=0`) and
+  confirm the target `{cm_beetle_version}` with the user (e.g., current `v0.5.9` → target `v0.5.10`)
+- **Use `file_search`**: Find the most recent file in `docs/changes/`
+- **Use `read_file`**: Read that file in full and use it as the concrete template for structure, tone,
+  and conventions (e.g., blank `Required Action` + `> **Note:**` for internal follow-ups) — do not rely
+  on the abstract structure description below as a substitute for reading an actual example
+- **Use `create_file`** (or edit, if a doc for `{cm_beetle_version}` already exists): Create
+  `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md`
+- **Verify Beetle's actual API surface before writing anything**: read `pkg/api/rest/server.go` for the
+  real route registrations and the matching controller file for the actual request/response types.
+  **Never assume CB-Tumblebug's route path or field names carry over unchanged** — Beetle may use a
+  different route name (e.g., `infraWithDefaults` instead of TB's `infraDynamic`) or expose only a
+  subset of a TB struct's fields
+- **Structure** (match the template file read above):
+  - Header: CM-Beetle release version range, release date, CB-Tumblebug dependency version range
+  - **Part 1 — Quick Reference** (for Beetle API users and `imdl/cloud-model` consumers):
+    - Breaking Changes Summary table with columns `Category` (API / Logic / Deployment / Model),
+      `Affected API / Model` (Beetle's actual route, not TB's), `Impact`, `Required Action`
+    - Leave `Required Action` blank (`-`) when there is nothing an API/imdl user needs to do; put
+      internal engineering follow-ups in a `> **Note:**` line below the table instead
+    - One `## ⚠️ Breaking Change #N` section per breaking item, with Before/After JSON for API
+      consumers and Before/After Go using actual `cloudmodel` type names for `imdl` consumers
+    - A separate `## ℹ️ Logic Change` section for runtime behavior changes that need no field-level
+      migration but still deserve a call-out
+    - A Migration Checklist grouped by audience (Code Changes, Deployment, Testing, Optional)
+  - **Part 2 — Technical Details & AI Reference**: endpoint/struct diff tables, full model diffs,
+    curl/Go examples, troubleshooting, and a Document Summary
+- **Use `get_errors`** and a follow-up `read_file` to confirm the doc is well-formed
+
 ### Step 8: Cleanup and Validation
 
 - **Use `run_in_terminal`**: Remove cloned CB-Tumblebug repository: `rm -rf /tmp/sync-tb-${input:version}/`
 - **Use `run_in_terminal`**: Return to cm-beetle directory
 - **Use `get_errors`**: Compile and validate synchronized models
 - **Use `run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
-
-## Synchronization Rules
-
-#### A. Mandatory Synchronization Rules
-
-**Rule 1: Update ALL Existing Structs**
-
-- **MUST** update every struct that exists in copied-tb-model.go if changed in git diff
-- **MUST** include all field additions, modifications, and deletions
-- **MUST** handle struct name changes (especially Tb prefix removal)
-- **NO** exceptions for "complexity" or subjective necessity judgments
-
-**Rule 2: Struct Name Change Handling (CRITICAL)**
-
-- **MUST** detect when existing struct names have changed in CB-Tumblebug
-- **PATTERN**: Look for `type TbStructName` → `type StructName` (Tb prefix removal)
-- **REPLACEMENT**: Completely replace old struct definition with new one
-- **REFERENCES**: Update ALL field type references when struct names change
-- **PRESERVE**: Maintain all existing TB-sourced documentation during name changes
-
-**Rule 3: Include ONLY Dependency Chain Structs**
-
-- **MUST** add new struct types referenced by existing structs (direct dependencies)
-- **MUST** add new struct types referenced by direct dependencies (indirect dependencies)
-- **MUST** include nested types, array element types, pointer target types only if they connect to existing structs
-- **EXCLUDE** new structs that have no dependency path to any existing struct
-
-**Rule 4: Dependency Chain Validation Process**
-
-For each struct found in CB-Tumblebug git diff:
-
-1. **Name Change Detection**: Check if existing cm-model struct has been renamed (e.g., `TbMciReq` → `MciReq`)
-2. **Trace Back**: Can this struct be reached from any existing cm-model struct through field references?
-3. **Dependency Path**: Is there a chain: `ExistingStruct → ... → NewStruct`?
-4. **Decision**: Include ONLY if dependency path exists or if it's a renamed existing struct, otherwise EXCLUDE
-
-**Example Dependency Chain Analysis:**
-
-```go
-// ✅ INCLUDE: TbMciInfo (existing, renamed to MciInfo) → MciCreationErrors (existing) → VmCreationError (existing)
-// ✅ INCLUDE: Name change detected and dependency chain exists
-
-// ✅ INCLUDE: TbMciReq (existing, renamed to MciReq) → TbVmReq (existing, renamed to VmReq)
-// ✅ INCLUDE: Both structs renamed but dependency chain maintained
-
-// ❌ EXCLUDE: ReviewMciDynamicReqInfo (standalone new struct)
-// ❌ EXCLUDE: No existing struct references this new struct
-
-// ✅ INCLUDE: CreateSubGroupDynamicReq ← IF this is renamed TbVmDynamicReq (existing struct)
-// ❌ EXCLUDE: CreateSubGroupDynamicReq ← IF this is completely new struct with no dependency path
-```
-
-#### B. Version Header Update
-
-**CRITICAL: This step is MANDATORY and must be performed even if no struct changes are detected.**
-
-Update the header comment in copied-tb-model.go to include commit hash:
-
-```go
-// * To avoid circular dependencies, the following structs are copied from the cb-tumblebug framework.
-// TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
-// * Version: CB-Tumblebug ${input:version} (commit: [full_commit_hash])
-// * Synchronized: [YYYY-MM-DD] (include notable changes or PR references)
-```
-
-**Note**: Do NOT include individual struct path comments. Focus on clear struct names and descriptions only.
-
-#### C. Complete Field Synchronization
-
-For EVERY struct that exists in copied-tb-model.go AND appears in git diff:
-
-1. **Git Diff as Source**: Use ONLY git diff output for struct changes (single source of truth)
-2. **Name Change Detection**: Check if struct name has changed (e.g., `TbMciReq` → `MciReq`)
-3. **Complete Replacement**: If name changed, replace entire struct definition with new name and content
-4. **Field Additions**: Add ALL new fields exactly as shown in git diff `+` lines
-5. **Field Removals**: Remove ALL fields shown in git diff `-` lines
-6. **Field Modifications**: Update ALL field types, tags, and comments based on diff changes
-7. **Type Reference Updates**: Update field types when referenced struct names change
-8. **Validation Tag Updates**: Apply ALL validation tag changes (`validate:"required"`, etc.)
-9. **JSON Tag Updates**: Update ALL JSON serialization tags (`json:"fieldName"`, `omitempty`)
-10. **Example Updates**: Update ALL struct tag examples to match TB source
-11. **Comment Preservation**: Maintain ALL existing Tumblebug field documentation and examples
-12. **Header Update**: Update version header with target version and commit hash
-13. **Documentation**: Preserve clear struct names and descriptions without path references
-
-#### D. Dependency Struct Addition
-
-For NEW structs referenced by existing structs that appear in git diff:
-
-1. **Complete Addition**: Add the ENTIRE new struct definition from CB-Tumblebug source
-2. **All Fields**: Include ALL fields with complete documentation
-3. **Proper Placement**: Add in logical order near related structs
-4. **Full Documentation**: Include ALL comments, examples, and validation tags from TB source
-
-#### E. File Operations
-
-Execute file editing operations using VS Code tools:
-
-- **Use `multi_replace_string_in_file`** to apply multiple struct changes from git diff simultaneously (PREFERRED)
-- **Use `replace_string_in_file`** for individual struct changes when needed
-- **Use `read_file`** to verify changes and ensure proper context
-- **Use `get_errors`** to validate Go compilation after changes
-- **Use `grep_search`** to verify all structs are properly synchronized
-- Maintain proper Go syntax and formatting
-- Preserve existing cm-model documentation patterns
 
 ## Final Validation Checklist
 
@@ -431,6 +436,9 @@ After synchronization (use appropriate tools for each validation):
 - [ ] **`read_file`**: Verify SYNC.md updated with new version only (old history removed)
 - [ ] **Docker-Compose Files**: Confirm all detected file changes documented in SYNC.md
 - [ ] **`get_errors`**: Check for any broken file references in docker-compose configuration
+- [ ] **Breaking Change Assessment**: Confirmed whether this sync affects Beetle's actual API endpoints or `imdl` consumers
+- [ ] **`read_file`**: If a breaking change was found, `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md` reflects Beetle's actual routes/structs (not raw TB routes/structs)
+- [ ] **`file_search`**: No new files were created under `docs/sync/`
 
 ## Files to Update
 
@@ -444,6 +452,10 @@ After synchronization (use appropriate tools for each validation):
   - `deployments/docker-compose/cb-tumblebug/init/*`
   - `deployments/docker-compose/cb-tumblebug/scripts/*`
   - `deployments/docker-compose/cb-tumblebug/interface/mcp/*`
+- `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md` (conditional — only when the sync introduces a
+  breaking change for Beetle API/imdl consumers; see Step 7.5)
+
+**Do not** create or update files under `docs/sync/` (e.g., `SYNC_TB_*.md`).
 
 ## Reference Guidelines
 
@@ -467,55 +479,11 @@ Follow the patterns and guidelines defined in:
 - **Documentation Critical**: Maintain comprehensive change documentation
 - **SYNC.md Policy**: Keep only the latest version in SYNC.md (delete old history), as Git provides version control
 - **Dependency Analysis**: Always run `python3 scripts/analyze_dependencies.py` for final validation
+- **Beetle Breaking Changes Doc**: Only create `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md` when the
+  sync actually breaks something for Beetle API/imdl consumers; skip it for purely additive syncs
+- **`docs/sync/` Is Off-Limits**: Never create files under `docs/sync/`
 - **🚨 CRITICAL SAFEGUARD**: **NEVER DELETE Tumblebug-synchronized field comments** - These contain valuable examples and documentation from CB-Tumblebug source that must be preserved
 - **🚨 CLEAN DOCUMENTATION**: **DO NOT** include "// \* Path:" comments - Focus on clear struct names and descriptions only
-
-## Execution Workflow
-
-### Phase 1: Dependency Chain Analysis
-
-1. **`read_file`**: Read current version from copied-tb-model.go header
-2. **`grep_search`**: Inventory ALL existing struct definitions in copied-tb-model.go
-3. **`create_directory`** + **`run_in_terminal`**: Create temporary directory and clone CB-Tumblebug repository
-4. **`run_in_terminal`**: Checkout target version in CB-Tumblebug repository
-5. **`run_in_terminal`** + **`get_terminal_output`**: Execute comprehensive git diff commands
-
-### Phase 2: Selective Synchronization
-
-6. **`grep_search`**: Analyze git diff output to identify ALL changes to existing structs
-7. **Struct Name Change Detection**: Identify struct renames (e.g., `TbMciReq` → `MciReq`)
-8. **Dependency Chain Tracing**: For each new struct in git diff, verify dependency path to existing structs OR check if it's a renamed existing struct
-9. **`read_file`**: **BEFORE EDITING** - Read current struct documentation to preserve existing comments
-10. **`multi_replace_string_in_file`**: Apply ALL struct changes simultaneously using batch editing (PREFERRED)
-11. **`multi_replace_string_in_file`**: Update all field type references when struct names change in one operation
-12. **`multi_replace_string_in_file`**: Add ONLY dependency-connected new structs with complete definitions
-13. **`replace_string_in_file`**: Update version header and ALL source path comments
-14. **`get_errors`**: Validate Go syntax and compilation after each major change
-
-### Phase 2.5: Version Files Update
-
-14.1. **`run_in_terminal`**: Extract cb-spider and cb-mapui versions from TB's docker-compose.yaml
-14.2. **`read_file`**: Read current version from go.mod
-14.3. **`replace_string_in_file`**: Update cb-tumblebug version in go.mod require section
-14.4. **`run_in_terminal`**: Run `go mod tidy` to update dependencies
-14.5. **`read_file`**: Read current versions from CM-Beetle's docker-compose.yaml
-14.6. **`replace_string_in_file`**: Update cb-tumblebug image version in docker-compose.yaml
-14.7. **`replace_string_in_file`**: Update cb-spider image version (using extracted version)
-14.8. **`replace_string_in_file`**: Update cb-mapui image version (using extracted version)
-14.9. **`get_errors`**: Verify no Go module errors after version update
-
-### Phase 3: Docker-Compose Sync & Documentation
-
-15. **`run_in_terminal`**: Compare docker-compose deployment files
-16. **`run_in_terminal`**: Copy updated files when changes detected
-17. **`replace_string_in_file`**: Replace SYNC.md content with new version (delete old history)
-
-### Phase 4: Cleanup & Validation
-
-18. **`run_in_terminal`**: Remove temporary CB-Tumblebug repository
-19. **`get_errors`**: Run final compilation validation
-20. **`grep_search`**: Verify NO orphaned structs exist
-21. **`run_in_terminal`**: Execute dependency analysis: `python3 scripts/analyze_dependencies.py`
 
 ## Dependency Analysis Script
 

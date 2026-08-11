@@ -261,7 +261,6 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 				RootDiskSize:     0,                                                       // TBD
 				RootDiskType:     "",                                                      // TBD
 				NodeGroupSize:    1,                                                       // TBD
-				NodeUserPassword: "",                                                      // TBD
 			}
 			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}

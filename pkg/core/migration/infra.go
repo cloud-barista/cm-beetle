@@ -268,7 +268,7 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 
 	// Set post-command for stable infra provisioning if a user didn't set it
 	// If a user already set it, use it as is
-	if len(tbInfraReq.PostCommand.Command) == 0 {
+	if len(tbInfraReq.PostCommands) == 0 {
 		log.Debug().Msgf("Setting default post-command `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
 
 		commands := []string{
@@ -276,9 +276,13 @@ func CreateInfra(nsId string, targetInfraModel *cloudmodel.RecommendedInfra) (cl
 		}
 		username := "cb-user"
 
-		tbInfraReq.PostCommand = tbmodel.InfraCmdReq{
-			UserName: username,
-			Command:  commands,
+		tbInfraReq.PostCommands = []tbmodel.PostCommandReq{
+			{
+				InfraCmdReq: tbmodel.InfraCmdReq{
+					UserName: username,
+					Command:  commands,
+				},
+			},
 		}
 	}
 
@@ -408,11 +412,15 @@ func CreateInfraWithExisting(nsId string, targetInfraModel *cloudmodel.Recommend
 		return emptyRet, err
 	}
 
-	if len(tbInfraReq.PostCommand.Command) == 0 {
+	if len(tbInfraReq.PostCommands) == 0 {
 		log.Debug().Msgf("Setting default post-command `uname -a` for stable Infra provisioning (nsId: %s)", nsId)
-		tbInfraReq.PostCommand = tbmodel.InfraCmdReq{
-			UserName: "cb-user",
-			Command:  []string{"uname -a"},
+		tbInfraReq.PostCommands = []tbmodel.PostCommandReq{
+			{
+				InfraCmdReq: tbmodel.InfraCmdReq{
+					UserName: "cb-user",
+					Command:  []string{"uname -a"},
+				},
+			},
 		}
 	}
 
