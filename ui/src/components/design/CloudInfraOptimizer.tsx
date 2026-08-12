@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useMigrationStore } from '../../store/migrationStore';
 import { TopologyMap } from './TopologyMap';
 import { OnpremNode, OnpremInfra, OnpremModelEnvelope } from '../../types/migration';
-import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Sparkles, GitBranch, Save, Layers, DollarSign, RefreshCw, Network, Server, Sliders, Cpu, ChevronDown, ChevronUp, Copy, HardDrive, X, FileText, Trash2, Loader2, Compass, ArrowRight, ArrowLeft, Plus, AlertTriangle } from 'lucide-react';
 import { SaveRevisionModal } from '../common/SaveRevisionModal';
+import { tumblebugApi } from '../../api/client';
 
 
 
@@ -15,6 +16,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     selectedSourceModel,
     desiredCsp,
     desiredRegion,
+    targetPairs,
     recommendationCandidates,
     selectedCandidateIndex,
     editedCandidate,
@@ -22,6 +24,10 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     selectSourceModel,
     setDesiredCsp,
     setDesiredRegion,
+    setTargetPairs,
+    addTargetPair,
+    removeTargetPair,
+    updateTargetPair,
     triggerRecommendation,
     selectCandidate,
     updateEditedCandidate,
@@ -41,6 +47,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
   const [activeTunedNodeId, setActiveTunedNodeId] = useState<string>('');
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
+  const [pairRegionsMap, setPairRegionsMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
   // Tuned nodes state for left spec editor
   const [tunedNodes, setTunedNodes] = useState<OnpremNode[]>([]);
@@ -82,6 +89,74 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     fetchSavedCloudModels();
     fetchTumblebugProviders();
   }, []);
+
+  // Auto-fetch regions for all target CSPs in targetPairs
+  useEffect(() => {
+    (targetPairs || []).forEach(async (pair) => {
+      if (pair.csp && !pairRegionsMap[pair.csp]) {
+        try {
+          const regions = await tumblebugApi.getRegions(pair.csp);
+          setPairRegionsMap(prev => ({ ...prev, [pair.csp]: regions }));
+        } catch (err) {
+          console.warn(`Failed to fetch regions for ${pair.csp}:`, err);
+        }
+      }
+    });
+  }, [targetPairs]);
+
+  const getCspDefaultRegion = async (csp: string): Promise<string> => {
+    const key = (csp || '').toLowerCase();
+    let regions = pairRegionsMap[key];
+    if (!regions || regions.length === 0) {
+      try {
+        regions = await tumblebugApi.getRegions(key);
+        if (regions && regions.length > 0) {
+          setPairRegionsMap(prev => ({ ...prev, [key]: regions }));
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch regions for ${key}:`, err);
+      }
+    }
+    if (regions && regions.length > 0) {
+      return regions[0].id;
+    }
+    if (key === 'aws') return 'ap-northeast-2';
+    if (key === 'azure') return 'koreacentral';
+    if (key === 'gcp') return 'asia-northeast3';
+    if (key === 'alibaba') return 'ap-northeast-1';
+    if (key === 'ncp' || key === 'ncloud') return 'kr';
+    if (key === 'ibm') return 'us-south';
+    if (key === 'tencent') return 'ap-seoul';
+    if (key === 'nhn' || key === 'nhncloud') return 'kr1';
+    if (key === 'kt') return 'kr-central';
+    return 'ap-northeast-2';
+  };
+
+  const handlePairCspChange = async (index: number, newCsp: string) => {
+    const defaultRegion = await getCspDefaultRegion(newCsp);
+    updateTargetPair(index, newCsp, defaultRegion);
+  };
+
+  const handleAddNextPair = async () => {
+    if ((targetPairs || []).length >= 10) return;
+    const availableCsps = tumblebugProviders && tumblebugProviders.length > 0
+      ? tumblebugProviders
+      : ['aws', 'azure', 'gcp', 'alibaba', 'ncp'];
+    const usedCsps = (targetPairs || []).map(p => p.csp.toLowerCase());
+    const nextCsp = availableCsps.find(c => !usedCsps.includes(c.toLowerCase())) || availableCsps[0];
+    const defaultRegion = await getCspDefaultRegion(nextCsp);
+    addTargetPair(nextCsp, defaultRegion);
+  };
+
+  const hasDuplicatePairs = (() => {
+    const seen = new Set<string>();
+    for (const pair of targetPairs || []) {
+      const key = `${pair.csp.toLowerCase()}/${pair.region.toLowerCase()}`;
+      if (seen.has(key)) return true;
+      seen.add(key);
+    }
+    return false;
+  })();
 
   // Auto-load tunedNodes from selectedSourceModel when tab is entered
   // (source model selection & tuning now happens in SourceInfraRefinement)
@@ -329,10 +404,14 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
     return '';
   };
 
-  // Human-readable memory: show GiB or MiB
+  // Human-readable memory: show GiB or MiB with field-standard rounding (max 2 decimal places for fractional GiB)
   const formatMemory = (gib: number) => {
     if (!gib && gib !== 0) return '—';
-    return gib < 1 ? `${Math.round(gib * 1024)} MiB` : `${gib} GiB`;
+    if (gib < 1) {
+      return `${Math.round(gib * 1024)} MiB`;
+    }
+    const rounded = Number.isInteger(gib) ? gib : Math.round(gib * 100) / 100;
+    return `${rounded} GiB`;
   };
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -669,59 +748,113 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-              <div>
-                <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired CSP</label>
-                <select
-                  value={desiredCsp}
-                  onChange={(e) => setDesiredCsp(e.target.value)}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+            {/* Target Cloud Pair(s) Selection Container */}
+            <div className="max-w-4xl space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <label className="block text-sm font-normal text-text-muted">Target Cloud Pair(s)</label>
+                  <span className="text-xs text-text-muted font-normal">
+                    Select 1 pair for candidate options or 2~10 pairs for multi-CSP comparison
+                  </span>
+                </div>
+                <button
+                  onClick={handleAddNextPair}
+                  disabled={(targetPairs || []).length >= 10}
+                  className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 disabled:opacity-40 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  {tumblebugProviders.map((csp: string) => {
-                    const prettyCsp =
-                      csp.toLowerCase() === 'aws' ? 'Amazon Web Services (AWS)' :
-                        csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
-                          csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
-                            csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
-                              csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
-                                csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
-                                  csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
-                                    csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
-                                      csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
-                                        csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
-                                          csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
-                                            csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
-                    return (
-                      <option key={csp} value={csp}>
-                        {prettyCsp}
-                      </option>
-                    );
-                  })}
-                </select>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Target Cloud Pair ({(targetPairs || []).length}/10)</span>
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Desired Region</label>
-                <select
-                  value={desiredRegion}
-                  onChange={(e) => setDesiredRegion(e.target.value)}
-                  className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
-                >
-                  {[...tumblebugRegions]
-                    .sort((a, b) => a.id.localeCompare(b.id))
-                    .map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name} ({r.id})
-                      </option>
-                    ))}
-                </select>
+
+              {hasDuplicatePairs && (targetPairs || []).length > 1 && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Duplicate target CSP & Region pair detected. Multi-CSP recommendation requires unique CSP/Region pairs.</span>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {(targetPairs || []).map((pair, idx) => {
+                  const availableRegions = pairRegionsMap[pair.csp] || tumblebugRegions;
+                  const sortedRegions = [...availableRegions].sort((a, b) => a.id.localeCompare(b.id));
+
+                  return (
+                    <div key={idx} className="bg-bg-panel/50 border border-border-main/50 p-4 rounded-xl flex flex-col md:flex-row items-stretch md:items-center gap-4 transition hover:border-emerald-500/30">
+                      <div className="flex items-center gap-2 shrink-0 md:w-28">
+                        <span className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-extrabold">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm font-normal text-text-muted">Target Pair</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                        <div>
+                          <label className="block text-xs font-normal text-text-muted mb-1">Provider (CSP)</label>
+                          <select
+                            value={pair.csp}
+                            onChange={(e) => handlePairCspChange(idx, e.target.value)}
+                            className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-3 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                          >
+                            {tumblebugProviders.map((csp: string) => {
+                              const prettyCsp =
+                                csp.toLowerCase() === 'aws' ? 'Amazon Web Services (AWS)' :
+                                  csp.toLowerCase() === 'azure' ? 'Microsoft Azure (Azure)' :
+                                    csp.toLowerCase() === 'gcp' ? 'Google Cloud Platform (GCP)' :
+                                      csp.toLowerCase() === 'alibaba' ? 'Alibaba Cloud (Alibaba)' :
+                                        csp.toLowerCase() === 'tencent' ? 'Tencent Cloud (Tencent)' :
+                                          csp.toLowerCase() === 'ibm' ? 'IBM Cloud (IBM)' :
+                                            csp.toLowerCase() === 'ncp' || csp.toLowerCase() === 'ncloud' ? 'Naver Cloud Platform (NCP)' :
+                                              csp.toLowerCase() === 'nhn' || csp.toLowerCase() === 'nhncloud' ? 'NHN Cloud (NHN)' :
+                                                csp.toLowerCase() === 'kt' ? 'KT Cloud (KT)' :
+                                                  csp.toLowerCase() === 'openstack' ? 'OpenStack (OpenStack)' :
+                                                    csp.toLowerCase() === 'cloudit' ? 'Cloudit (Cloudit)' :
+                                                      csp.toLowerCase() === 'outscale' ? 'Outscale' : csp.toUpperCase();
+                              return (
+                                <option key={csp} value={csp}>
+                                  {prettyCsp}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-normal text-text-muted mb-1">Region</label>
+                          <select
+                            value={pair.region}
+                            onChange={(e) => updateTargetPair(idx, pair.csp, e.target.value)}
+                            className="w-full bg-bg-input border border-border-main text-text-main rounded-xl px-3 py-2.5 text-sm font-extrabold focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                          >
+                            {sortedRegions.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.name} ({r.id})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {(targetPairs || []).length > 1 && (
+                        <button
+                          onClick={() => removeTargetPair(idx)}
+                          className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition cursor-pointer self-end md:self-center"
+                          title="Remove target pair"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="mt-6 flex justify-start">
               <button
                 onClick={handleRecommend}
-                disabled={isRecommending || tunedNodes.length === 0 || !desiredCsp || !desiredRegion}
-                className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-600 hover:to-blue-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
+                disabled={isRecommending || tunedNodes.length === 0 || (hasDuplicatePairs && (targetPairs || []).length > 1)}
+                className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-slate-950 font-extrabold rounded-xl text-sm tracking-wider transition shadow-lg shadow-emerald-500/10 flex items-center justify-center space-x-2 cursor-pointer"
               >
                 {isRecommending ? (
                   <>
@@ -731,7 +864,11 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    <span>Recommend Target Cloud Infrastructure</span>
+                    <span>
+                      {(targetPairs || []).length > 1
+                        ? `Recommend Cross-CSP Target Infrastructure (${(targetPairs || []).length} Pairs)`
+                        : 'Recommend Target Cloud Infrastructure'}
+                    </span>
                   </>
                 )}
               </button>
@@ -806,180 +943,194 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
           <div className="space-y-6">
 
             {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
+            {/* Row-based layout: Recommended Cloud Summary (Row 1) & Topology Visualization (Row 2) */}
             {editedCandidate && (
-              <div className="flex flex-col space-y-6 pt-4 border-t border-border-main/20">
-
-                {/* Row 1: Detailed specifications overview card (Recommended Cloud Summary) */}
-                <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-4 w-full">
-                  <div className="border-b border-border-main/30 pb-3 mb-2">
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 block font-mono">Recommended Cloud Summary</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    {/* 1. Estimation (Match Level & Est. Cost) */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
-
-                        <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="text-xs text-text-muted font-bold font-sans">Match</span>
-                            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs uppercase bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">{editedCandidate.status}</span>
-                          </div>
-                          <div className="flex items-center space-x-1.5 border-l border-border-main/20 pl-3">
-                            <span className="text-xs text-text-muted font-bold font-sans">Cost</span>
-                            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">
-                              ${getEstimatedMonthlyCost(editedCandidate)}/month
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 2. Network (VNet & Subnets) */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Network</span>
-
-                        {/* 1 VNet(s) X Subnet(s) */}
-                        <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                          1 VNet(s) {editedCandidate.targetVNet.subnetInfoList?.length || 0} Subnet(s)
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 3. Compute (Nodes) */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
-
-                        <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
-                          {/* Left Side: Total Nodes Count */}
-                          <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
-                            <div className="text-lg font-extrabold text-text-main font-sans tracking-tight">
-                              {editedCandidate.targetInfra.nodeGroups.reduce((acc, ng) => acc + ng.nodeGroupSize, 0)} Node(s)
-                            </div>
-                          </div>
-
-                          {/* Right Side: Per-NodeGroup list */}
-                          <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
-                            {editedCandidate.targetInfra.nodeGroups.map((ng, i) => (
-                              <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-2">
-                                <span className="text-text-muted font-bold whitespace-nowrap">Node Group {i + 1}</span>
-                                <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{ng.nodeGroupSize} Nodes</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 4. Security Groups */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security</span>
-
-                        <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
-                          {/* Left Side: Total SG Count */}
-                          <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
-                            <div className="text-lg font-extrabold text-text-main font-sans tracking-tight whitespace-nowrap">
-                              {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s)
-                            </div>
-                          </div>
-
-                          {/* Right Side: Per-SG Rules list */}
-                          <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
-                            {(editedCandidate.targetSecurityGroupList || []).map((sg, i) => (
-                              <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-1">
-                                <span className="text-text-muted font-bold">SG {i + 1}</span>
-                                <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{(sg?.firewallRules || []).length} Rules</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 5. SSH Key */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
-
-                        <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                          {editedCandidate.targetSshKey ? 1 : 0} SSH Key(s)
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 6. Load Balancer (NLB) */}
-                    <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
-                      <div className="space-y-2">
-                        <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
-
-                        <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
-                          {(editedCandidate.targetNlbList || []).length} NLB(s)
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
+              editedCandidate.status === 'failed' ||
+              editedCandidate.status === 'nothing-to-recommend' ||
+              !editedCandidate.targetInfra?.nodeGroups ||
+              !Array.isArray(editedCandidate.targetInfra.nodeGroups) ||
+              editedCandidate.targetInfra.nodeGroups.length === 0 ? (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 text-center space-y-3 my-4">
+                  <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
+                  <h4 className="text-base font-extrabold text-amber-600 dark:text-amber-400">
+                    No Infrastructure Recommended for {editedCandidate.targetCloud?.csp ? editedCandidate.targetCloud.csp.toUpperCase() : 'Target Cloud'} ({editedCandidate.targetCloud?.region || 'Region'})
+                  </h4>
+                  <p className="text-sm text-text-muted max-w-xl mx-auto">
+                    {editedCandidate.description || 'The target cloud provider or region could not find matching VM specifications/images for the requested source workloads.'}
+                  </p>
                 </div>
+              ) : (
+                <div className="flex flex-col space-y-6 pt-4 border-t border-border-main/20">
 
-                {/* Row 2: Topology Visualization */}
-
-                <div className="w-full bg-bg-panel/40 border border-border-main/50 rounded-2xl p-5 relative min-h-[300px] flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Topology Visualization</span>
-                      <span className="text-sm text-text-muted font-mono">{editedCandidate.targetCloud.region} ({editedCandidate.targetCloud.csp.toUpperCase()})</span>
+                  {/* Row 1: Detailed specifications overview card (Recommended Cloud Summary) */}
+                  <div className="bg-bg-panel/30 border border-border-main/50 rounded-2xl p-5 space-y-4 w-full">
+                    <div className="border-b border-border-main/30 pb-3 mb-2">
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 block font-mono">Recommended Cloud Summary</span>
                     </div>
-                    {/* Simulated Topology Drawing */}
-                    <div className="flex flex-col space-y-4 pt-4 text-sm">
 
-                      {/* VPC / VNet Container */}
-                      <div className="border border-emerald-400 dark:border-emerald-800/40 bg-emerald-500/5 rounded-2xl p-5 relative">
-                        <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4 border-b border-emerald-200 dark:border-emerald-800/20 pb-3">
-                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5 font-mono">
-                            <Network className="w-4 h-4 animate-pulse" />
-                            <span>VPC / VNet: {editedCandidate.targetVNet.name} ({editedCandidate.targetVNet.cidrBlock})</span>
-                          </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                          {/* Associated SSH Key & Security Group */}
-                          <div className="flex flex-wrap gap-2">
-                            {editedCandidate.targetSshKey && (
-                              <span className="bg-amber-100 dark:bg-yellow-950/40 border border-amber-300 dark:border-yellow-900/30 text-amber-600 dark:text-yellow-400 text-sm px-2 py-0.5 rounded font-extrabold flex items-center space-x-1 font-mono">
-                                <HardDrive className="w-3 h-3" />
-                                <span>Key: {editedCandidate.targetSshKey.name || 'default-key'}</span>
+                      {/* 1. Estimation (Match Level & Est. Cost) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Estimation</span>
+
+                          <div className="flex flex-row justify-between items-center pt-2 min-h-[45px] gap-2">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-xs text-text-muted font-bold font-sans">Match</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-xs uppercase bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded whitespace-nowrap">{editedCandidate.status}</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5 border-l border-border-main/20 pl-3">
+                              <span className="text-xs text-text-muted font-bold font-sans">Cost</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-lg font-mono whitespace-nowrap">
+                                ${getEstimatedMonthlyCost(editedCandidate)}/month
                               </span>
-                            )}
-                            {(editedCandidate.targetSecurityGroupList || []).map((sg, sgIdx) => {
-                              if (!sg) return null;
-                              return (
-                                <span key={sgIdx} className="bg-orange-100 dark:bg-orange-950/40 border border-orange-300 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-sm px-2 py-0.5 rounded font-extrabold flex items-center space-x-1 font-mono">
-                                  <Sliders className="w-3 h-3" />
-                                  <span>SG: {sg.name || 'default-sg'} ({(sg.firewallRules || []).length} Rules)</span>
-                                </span>
-                              );
-                            })}
+                            </div>
                           </div>
                         </div>
+                      </div>
 
-                        {/* NLB (If exists) - Located INSIDE the VPC container */}
-                        {editedCandidate.targetNlbList && editedCandidate.targetNlbList.length > 0 && (
-                          <div className="mb-4 relative z-10 flex flex-col items-center justify-center border-b border-border-main/20 pb-4">
-                            {editedCandidate.targetNlbList.map((nlb, nlbIdx) => {
-                              if (!nlb) return null;
+                      {/* 2. Network (VNet & Subnets) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Network</span>
 
-                              // Find matching NodeGroup in target infrastructure to calculate simulated instances
-                              // Fallback to first NodeGroup if name tuning mismatch occurs, or use original nodeGroupId
-                              const matchingNg = editedCandidate.targetInfra.nodeGroups.find(
-                                (ng) => ng.name === nlb.targetGroup?.nodeGroupId
-                              ) || editedCandidate.targetInfra.nodeGroups[0];
+                          {/* 1 VNet(s) X Subnet(s) */}
+                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                            1 VNet(s) {editedCandidate.targetVNet?.subnetInfoList?.length || 0} Subnet(s)
+                          </div>
+                        </div>
+                      </div>
 
-                              const namePrefix = matchingNg?.name || nlb.targetGroup?.nodeGroupId || 'target-node';
-                              const targetNodeCount = matchingNg?.nodeGroupSize || 1;
-                              const targetNodesArray = Array.from({ length: targetNodeCount });
+                      {/* 3. Compute (Nodes) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Compute</span>
+
+                          <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
+                            {/* Left Side: Total Nodes Count */}
+                            <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
+                              <div className="text-lg font-extrabold text-text-main font-sans tracking-tight">
+                                {(editedCandidate.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0)} Node(s)
+                              </div>
+                            </div>
+
+                            {/* Right Side: Per-NodeGroup list */}
+                            <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
+                              {(editedCandidate.targetInfra?.nodeGroups || []).map((ng, i) => (
+                                <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-2">
+                                  <span className="text-text-muted font-bold whitespace-nowrap">Node Group {i + 1}</span>
+                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{ng.nodeGroupSize} Nodes</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. Security Groups */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Security</span>
+
+                          <div className="grid grid-cols-2 gap-2 items-start pt-2 min-h-[65px]">
+                            {/* Left Side: Total SG Count */}
+                            <div className="flex flex-col justify-center border-r border-border-main/20 pr-2">
+                              <div className="text-lg font-extrabold text-text-main font-sans tracking-tight whitespace-nowrap">
+                                {(editedCandidate.targetSecurityGroupList || []).length} Security Group(s)
+                              </div>
+                            </div>
+
+                            {/* Right Side: Per-SG Rules list */}
+                            <div className="space-y-1.5 pl-2 max-h-[85px] overflow-y-auto w-full">
+                              {(editedCandidate.targetSecurityGroupList || []).map((sg, i) => (
+                                <div key={i} className="bg-bg-panel border border-border-main/50 px-2 py-1 rounded-lg text-xs font-sans flex justify-between items-center space-x-1">
+                                  <span className="text-text-muted font-bold">SG {i + 1}</span>
+                                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">{(sg?.firewallRules || []).length} Rules</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 5. SSH Key */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">SSH Key</span>
+
+                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                            {editedCandidate.targetSshKey ? 1 : 0} SSH Key(s)
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 6. Load Balancer (NLB) */}
+                      <div className="bg-bg-panel/50 border border-border-main/20 p-4 rounded-xl font-mono flex flex-col justify-center">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-bold text-emerald-500 font-sans border-b border-border-main/10 pb-1">Load Balancer</span>
+
+                          <div className="text-lg font-extrabold text-text-main font-sans tracking-tight py-2">
+                            {(editedCandidate.targetNlbList || []).length} NLB(s)
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Row 2: Topology Visualization */}
+
+                  <div className="w-full bg-bg-panel/40 border border-border-main/50 rounded-2xl p-5 relative min-h-[300px] flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">Topology Visualization</span>
+                        <span className="text-sm text-text-muted font-mono">{editedCandidate.targetCloud?.region} ({editedCandidate.targetCloud?.csp?.toUpperCase()})</span>
+                      </div>
+                      {/* Simulated Topology Drawing */}
+                      <div className="flex flex-col space-y-4 pt-4 text-sm">
+
+                        {/* VPC / VNet Container */}
+                        <div className="border border-emerald-400 dark:border-emerald-800/40 bg-emerald-500/5 rounded-2xl p-5 relative">
+                          <div className="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4 border-b border-emerald-200 dark:border-emerald-800/20 pb-3">
+                            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5 font-mono">
+                              <Network className="w-4 h-4 animate-pulse" />
+                              <span>VPC / VNet: {editedCandidate.targetVNet?.name || 'vnet'} ({editedCandidate.targetVNet?.cidrBlock || ''})</span>
+                            </span>
+
+                            {/* Associated SSH Key & Security Group */}
+                            <div className="flex flex-wrap gap-2">
+                              {editedCandidate.targetSshKey && (
+                                <span className="bg-amber-100 dark:bg-yellow-950/40 border border-amber-300 dark:border-yellow-900/30 text-amber-600 dark:text-yellow-400 text-sm px-2 py-0.5 rounded font-extrabold flex items-center space-x-1 font-mono">
+                                  <HardDrive className="w-3 h-3" />
+                                  <span>Key: {editedCandidate.targetSshKey.name || 'default-key'}</span>
+                                </span>
+                              )}
+                              {(editedCandidate.targetSecurityGroupList || []).map((sg, sgIdx) => {
+                                if (!sg) return null;
+                                return (
+                                  <span key={sgIdx} className="bg-orange-100 dark:bg-orange-950/40 border border-orange-300 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 text-sm px-2 py-0.5 rounded font-extrabold flex items-center space-x-1 font-mono">
+                                    <Sliders className="w-3 h-3" />
+                                    <span>SG: {sg.name || 'default-sg'} ({(sg.firewallRules || []).length} Rules)</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* NLB (If exists) - Located INSIDE the VPC container */}
+                          {editedCandidate.targetNlbList && editedCandidate.targetNlbList.length > 0 && (
+                            <div className="mb-4 relative z-10 flex flex-col items-center justify-center border-b border-border-main/20 pb-4">
+                              {editedCandidate.targetNlbList.map((nlb, nlbIdx) => {
+                                if (!nlb) return null;
+
+                                const matchingNg = (editedCandidate.targetInfra?.nodeGroups || []).find(
+                                  (ng) => ng.name === nlb.targetGroup?.nodeGroupId
+                                ) || (editedCandidate.targetInfra?.nodeGroups || [])[0];
+
+                                const namePrefix = matchingNg?.name || nlb.targetGroup?.nodeGroupId || 'target-node';
+                                const targetNodeCount = matchingNg?.nodeGroupSize || 1;
+                                const targetNodesArray = Array.from({ length: targetNodeCount });
 
                               return (
                                 <div key={nlbIdx} className="w-full max-w-lg bg-bg-panel border border-teal-300 dark:border-teal-800/40 rounded-xl p-4.5 space-y-3.5 shadow-md">
@@ -1238,36 +1389,47 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                                 </span>
                               )}
                               {selectedCloudModel ? (
-                                <span className="px-3.5 py-1.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 rounded-xl text-xs font-extrabold font-mono">
+                                <span className="px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-extrabold font-mono">
                                   Loaded Design: {selectedCloudModel.name} (v{selectedCloudModel.version})
                                 </span>
                               ) : (
                                 <>
-                                  <span className="text-xs font-bold text-text-muted">Alternatives:</span>
+                                  <span className="text-xs font-normal text-text-muted">Candidates:</span>
                                   {recommendationCandidates.map((c, idx) => {
                                     const isActive = selectedCandidateIndex === idx;
+                                    const cspName = c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '';
+                                    const regionName = c.targetCloud?.region || '';
                                     return (
                                       <button
                                         key={idx}
                                         onClick={() => {
                                           selectCandidate(idx);
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
                                           isActive
-                                            ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-extrabold'
+                                            ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold shadow-sm'
                                             : 'bg-bg-panel border-border-main text-text-muted hover:text-text-main'
                                         }`}
                                       >
-                                        Alt {idx + 1}
+                                        <span>c {idx + 1}</span>
+                                        {cspName && (
+                                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-extrabold ${
+                                            isActive ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-bg-input text-text-muted'
+                                          }`}>
+                                            {cspName}
+                                          </span>
+                                        )}
                                       </button>
                                     );
                                   })}
-                                  <button
-                                    onClick={() => setShowCompareModal(true)}
-                                    className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-cyan-500/10 hover:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 rounded-lg text-xs font-bold transition cursor-pointer"
-                                  >
-                                    Compare
-                                  </button>
+                                  {recommendationCandidates.length > 1 && (
+                                    <button
+                                      onClick={() => setShowCompareModal(true)}
+                                      className="px-3 py-1.5 bg-bg-panel border border-border-main hover:bg-emerald-500/10 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold transition cursor-pointer"
+                                    >
+                                      Compare
+                                    </button>
+                                  )}
                                 </>
                               )}
                             </div>
@@ -1911,7 +2073,7 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                 </div>
 
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -1944,12 +2106,20 @@ export const CloudInfraOptimizer: React.FC<{ onNext?: () => void; onBack?: () =>
                       <th className="py-3 px-4 min-w-[180px]">Metric</th>
                       {recommendationCandidates.map((c, idx) => (
                         <th key={idx} className="py-3 px-4 min-w-[200px]">
-                          Candidate {idx + 1}
+                          c {idx + 1} {c.targetCloud?.csp ? `(${c.targetCloud.csp.toUpperCase()})` : ''}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-main/40">
+                    <tr>
+                      <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Target Cloud</td>
+                      {recommendationCandidates.map((c, idx) => (
+                        <td key={idx} className="py-3.5 px-4 text-emerald-600 dark:text-emerald-400 font-extrabold font-mono text-sm">
+                          {c.targetCloud?.csp ? c.targetCloud.csp.toUpperCase() : '—'} / {c.targetCloud?.region || '—'}
+                        </td>
+                      ))}
+                    </tr>
                     <tr>
                       <td className="py-3.5 px-4 font-bold text-text-muted bg-bg-input/10">Match Level</td>
                       {recommendationCandidates.map((c, idx) => (

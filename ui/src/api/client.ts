@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
 
 // Shared Axios client with basic authentication pre-configured (standard Cloud-Barista settings)
 const api = axios.create({
@@ -287,6 +287,31 @@ export const beetleApi = {
     }
     
     // Beetle recommendation returns wrapping object: { success: true, data: RecommendedInfra[] }
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  // Get Multi-Cloud Recommendation candidates based on Source model input and multiple target CSP/Region pairs (2~10 pairs)
+  getMultiRecommendations: async (sourceInfra: OnpremInfra, targetPairs: CloudProperty[]): Promise<RecommendedInfra[]> => {
+    const hasNlbs = sourceInfra.nlbs && sourceInfra.nlbs.length > 0;
+    
+    let response;
+    if (hasNlbs) {
+      // Call NLB-aware multi-infra recommendation endpoint
+      response = await api.post('/beetle/recommendation/multiInfraWithNlb', {
+        desiredCspAndRegionPairs: targetPairs,
+        sourceInfra
+      });
+    } else {
+      // Call standard multi-infra recommendation endpoint
+      response = await api.post('/beetle/recommendation/multiInfra', {
+        desiredCspAndRegionPairs: targetPairs,
+        sourceInfra
+      });
+    }
+    
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }

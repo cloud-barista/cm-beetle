@@ -1,6 +1,6 @@
 import { create, StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope } from '../types/migration';
+import { OnpremInfra, OnpremModelEnvelope, RecommendedInfra, CloudModelEnvelope, CloudProperty } from '../types/migration';
 import { honeybeeApi, damselflyApi, beetleApi, tumblebugApi } from '../api/client';
 import recommendedInfraSample from '../data/sampleTargetInfra.json';
 
@@ -185,6 +185,7 @@ interface MigrationState {
   // Page 2: Target Cloud Optimizer State
   desiredCsp: string;
   desiredRegion: string;
+  targetPairs: CloudProperty[];
   recommendationCandidates: RecommendedInfra[];
   selectedCandidateIndex: number;
   editedCandidate: RecommendedInfra | null;
@@ -196,6 +197,10 @@ interface MigrationState {
   
   setDesiredCsp: (csp: string) => Promise<void>;
   setDesiredRegion: (region: string) => void;
+  setTargetPairs: (pairs: CloudProperty[]) => void;
+  addTargetPair: (csp?: string, region?: string) => void;
+  removeTargetPair: (index: number) => void;
+  updateTargetPair: (index: number, csp: string, region: string) => void;
   triggerRecommendation: (sourceInfra: OnpremInfra) => Promise<void>;
   selectCandidate: (index: number) => void;
   updateEditedCandidate: (updated: RecommendedInfra) => void;
@@ -524,6 +529,7 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
   // --------------------------------------------------------------------------
   desiredCsp: 'aws',
   desiredRegion: 'ap-northeast-2',
+  targetPairs: [{ csp: 'aws', region: 'ap-northeast-2' }],
   recommendationCandidates: [],
   selectedCandidateIndex: 0,
   editedCandidate: null,
@@ -544,12 +550,40 @@ const storeInitializer: StateCreator<MigrationState> = (set, get) => ({
     }
   },
   setDesiredRegion: (region) => set({ desiredRegion: region }),
+  setTargetPairs: (pairs) => set({ targetPairs: pairs }),
+  addTargetPair: (csp = 'aws', region = 'ap-northeast-2') => {
+    const current = get().targetPairs;
+    if (current.length >= 10) return;
+    set({ targetPairs: [...current, { csp, region }] });
+  },
+  removeTargetPair: (index) => {
+    const current = get().targetPairs;
+    if (current.length <= 1) return;
+    set({ targetPairs: current.filter((_, i) => i !== index) });
+  },
+  updateTargetPair: (index, csp, region) => {
+    const current = [...get().targetPairs];
+    if (index >= 0 && index < current.length) {
+      current[index] = { csp, region };
+      set({ targetPairs: current });
+    }
+  },
 
   triggerRecommendation: async (sourceInfra) => {
     set({ isRecommending: true, recommendationCandidates: [], editedCandidate: null });
     try {
-      // Direct live REST API request to Beetle with fully qualified JSON mapping
-      const candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion);
+      const pairs = get().targetPairs;
+      let candidates: RecommendedInfra[] = [];
+      if (pairs.length === 1) {
+        // Single target CSP & Region pair -> Call single infra recommendation API
+        candidates = await beetleApi.getRecommendations(sourceInfra, pairs[0].csp, pairs[0].region);
+      } else if (pairs.length >= 2) {
+        // Multiple target CSP & Region pairs (2~10) -> Call multiInfra recommendation API
+        candidates = await beetleApi.getMultiRecommendations(sourceInfra, pairs);
+      } else {
+        candidates = await beetleApi.getRecommendations(sourceInfra, get().desiredCsp, get().desiredRegion);
+      }
+
       set({ 
         recommendationCandidates: candidates, 
         selectedCandidateIndex: 0,

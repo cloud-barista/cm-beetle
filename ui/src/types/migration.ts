@@ -143,6 +143,8 @@ export interface TargetCloud {
   region: string;
 }
 
+export type CloudProperty = TargetCloud;
+
 export interface NodeGroup {
   name: string;
   nodeGroupSize: number;
@@ -221,7 +223,7 @@ export interface TargetNlb {
 
 // Recommended Candidate item
 export interface RecommendedInfra {
-  status: 'highly-matched' | 'partially-matched' | 'unacceptable';
+  status: 'highly-matched' | 'partially-matched' | 'unacceptable' | 'failed' | 'nothing-to-recommend' | string;
   description: string;
   targetCloud: TargetCloud;
   targetInfra: TargetInfra;

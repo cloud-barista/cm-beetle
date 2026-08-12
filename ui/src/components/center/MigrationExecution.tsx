@@ -497,8 +497,8 @@ export const MigrationExecution: React.FC<{ onBack?: () => void }> = ({ onBack }
       status: 'Handling',
       startTime: new Date().toLocaleTimeString(),
       elapsedSeconds: 0,
-      nodeGroupsCount: cloudModel.targetInfra.nodeGroups.length,
-      totalVms: cloudModel.targetInfra.nodeGroups.reduce((acc, ng) => acc + ng.nodeGroupSize, 0),
+      nodeGroupsCount: cloudModel?.targetInfra?.nodeGroups?.length || 0,
+      totalVms: (cloudModel?.targetInfra?.nodeGroups || []).reduce((acc, ng) => acc + (ng.nodeGroupSize || 0), 0),
       logs: [
         `POST /beetle/migration/ns/${customNsId}/infra?nameSeed=${customNameSeed}`,
         `HTTP 202 Accepted (ReqID: ${reqId}, Status: Handling)`,

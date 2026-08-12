@@ -87,7 +87,8 @@ export const SourceInfraRefinement: React.FC<{ onNext?: () => void; onBack?: () 
   // Unit helper functions conforming to Cloud-Barista standards (Memory: GiB, Disk: GB)
   const toGiB = (val: number): number => {
     if (!val) return 0;
-    return val > 1000000 ? Math.round(val / (1024 * 1024 * 1024)) : Math.round(val);
+    const raw = val > 1000000 ? val / (1024 * 1024 * 1024) : val;
+    return Math.round(raw * 100) / 100;
   };
 
   const toGB = (val: number): number => {

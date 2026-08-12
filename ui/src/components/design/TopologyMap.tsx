@@ -58,7 +58,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
   const targetInfra = data.targetInfra || { name: 'infra', nodeGroups: [] };
   const targetNlbList = data.targetNlbList || [];
 
-  const nodeGroups = targetInfra.nodeGroups || [];
+  const nodeGroups = (targetInfra && Array.isArray(targetInfra.nodeGroups)) ? targetInfra.nodeGroups : [];
   const subnets = (targetVNet.subnetInfoList && targetVNet.subnetInfoList.length > 0)
     ? targetVNet.subnetInfoList
     : [{ name: 'subnet-default', ipv4_CIDR: '10.0.1.0/24' }];
@@ -223,7 +223,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                               {vcpu} vCPU
                             </span>
                             <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
-                              {memGiB} GiB
+                              {typeof memGiB === 'number' ? (Number.isInteger(memGiB) ? memGiB : Math.round(memGiB * 100) / 100) : memGiB} GiB
                             </span>
                             <span className="text-xs font-mono text-text-muted">
                               {specId.split('-').pop() || specId}
@@ -269,7 +269,7 @@ export const TopologyMap: React.FC<TopologyMapProps> = ({ data }) => {
                                     {vcpu} vCPU
                                   </span>
                                   <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold px-1.5 py-0.5 rounded">
-                                    {memGiB} GiB
+                                    {typeof memGiB === 'number' ? (Number.isInteger(memGiB) ? memGiB : Math.round(memGiB * 100) / 100) : memGiB} GiB
                                   </span>
                                 </div>
                                 <span className="text-xs font-mono text-text-muted mt-1 block" title={specId}>
