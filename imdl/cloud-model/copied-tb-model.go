@@ -6,6 +6,9 @@ import "time"
 // TODO: When the cb-tumblebug framework is updated, we should synchronize these structs.
 // * Version: CB-Tumblebug v0.12.30 (commit: c2c4e76b3cc7ba158a6f61918fe061470f039c6b)
 // * Synchronized: 2026-08-07 (VerifiedMessage, NodeInfoInNs, NLBInfoInNs for namespace-wide listing)
+// * Synchronized: 2026-08-12 (InfraInfo: replaced stale PostCommand/PostCommandResult with
+//   PostCommands/PostCommandAsync/PostCommandResults/PostCommandStatus/PostCommandRequestId,
+//   added Cluster field and the InfraClusterInfo type)
 
 // InfraReq is struct for requirements to create Infra
 type InfraReq struct {
@@ -444,17 +447,76 @@ type InfraInfo struct {
 	Description   string     `json:"description"`
 	Node          []NodeInfo `json:"node"`
 
+	// Cluster is the list of implicit clusters synthesized at query-time from Nodes.
+	Cluster []InfraClusterInfo `json:"cluster,omitempty"`
+
 	// List of IDs for new nodes. Return IDs if the nodes are newly added. This field should be used for return body only.
 	NewNodeList []string `json:"newNodeList"`
 
-	// PostCommand is for the command to bootstrap the Nodes
-	PostCommand InfraCmdReq `json:"postCommand"`
+	// PostCommands are the requested post-deployment command phases
+	PostCommands []PostCommandReq `json:"postCommands,omitempty"`
 
-	// PostCommandResult is the result of the command for bootstraping the Nodes
-	PostCommandResult InfraSshCmdResult `json:"postCommandResult"`
+	// PostCommandAsync echoes whether the commands run in the background
+	PostCommandAsync bool `json:"postCommandAsync,omitempty"`
+
+	// PostCommandResults holds per-phase outcomes
+	PostCommandResults []PostCommandPhaseResult `json:"postCommandResults,omitempty"`
+
+	// PostCommandStatus summarizes the post-deployment command outcome.
+	// "Running" means execution is still in progress (async mode): stream it with
+	// GET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}
+	// or poll this object until the status becomes terminal.
+	PostCommandStatus PostCommandStatus `json:"postCommandStatus,omitempty" example:"Completed"`
+
+	// PostCommandRequestId is the streaming/tracking key of the post-deployment run
+	// (always set when post-deployment commands were requested, in both modes)
+	PostCommandRequestId string `json:"postCommandRequestId,omitempty" example:"pc-infra01-1a2b3c"`
 
 	// CreationErrors contains information about Node creation failures (if any)
 	CreationErrors *InfraCreationErrors `json:"creationErrors,omitempty"`
+}
+
+// InfraClusterInfo is a lightweight, on-demand cluster view synthesized from Infra NodeGroups and Nodes.
+// A cluster is implicitly formed by NodeGroups that share the same network boundary (currently VNet-centric grouping).
+type InfraClusterInfo struct {
+	// Id is a deterministic cluster identifier generated from grouping attributes.
+	Id string `json:"id"`
+
+	// Name is a human-readable cluster name. Currently same as Id.
+	Name string `json:"name"`
+
+	// InfraId is the parent Infra ID.
+	InfraId string `json:"infraId"`
+
+	// VNetId is the shared VNet boundary used for implicit clustering.
+	VNetId string `json:"vNetId,omitempty"`
+
+	// ConnectionNames are unique connection names included in this cluster.
+	ConnectionNames []string `json:"connectionNames"`
+
+	// ProviderNames are unique CSP providers included in this cluster.
+	ProviderNames []string `json:"providerNames"`
+
+	// RegionNames are unique regions included in this cluster.
+	RegionNames []string `json:"regionNames"`
+
+	// NodeGroupIds are NodeGroups that belong to this implicit cluster.
+	NodeGroupIds []string `json:"nodeGroupIds"`
+
+	// NodeIds are Nodes that belong to this implicit cluster.
+	NodeIds []string `json:"nodeIds"`
+
+	// NodeGroupCount is the number of NodeGroups in this cluster.
+	NodeGroupCount int `json:"nodeGroupCount"`
+
+	// NodeCount is the number of Nodes in this cluster.
+	NodeCount int `json:"nodeCount"`
+
+	// RepresentativeNodeGroupId is a representative NodeGroup ID for quick inspection.
+	RepresentativeNodeGroupId string `json:"representativeNodeGroupId,omitempty"`
+
+	// RepresentativeNodeId is a representative Node ID for quick inspection.
+	RepresentativeNodeId string `json:"representativeNodeId,omitempty"`
 }
 
 // InfraCreationErrors represents errors that occurred during Infra creation
