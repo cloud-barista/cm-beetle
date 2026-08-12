@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package migration contains the K8s cluster migration logic.
+// Package migration contains the K8s infra migration logic.
 package migration
 
 import (
@@ -26,11 +26,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// k8sPrereqs tracks the prerequisite resources (VNet, SshKey, SecurityGroups) that were
-// freshly created by a single CreateK8sCluster call. Only resources actually created in
+// k8sClusterPrereqs tracks the prerequisite resources (VNet, SshKey, SecurityGroups) that were
+// freshly created by a single CreateK8sInfra call. Only resources actually created in
 // this run are tracked; resources that already existed (idempotency case) are not included
 // so that rollback does not delete resources owned by other workloads.
-type k8sPrereqs struct {
+//
+// "Prereqs of the cluster" covers the cluster and its node groups: K8sClusterReq takes the VNet,
+// subnets and SecurityGroups, while the SshKey is referenced per node group (K8sNodeGroupReq.SshKeyId).
+// All three must exist before the cluster is created, and Beetle creates one SshKey per infra that
+// every node group shares — so they roll back as one unit. These three are also three of the four
+// components of a K8s infra; the fourth is the cluster itself, which is not tracked here because
+// Tumblebug removes its own record when cluster creation fails.
+type k8sClusterPrereqs struct {
 	nsId     string
 	vNetId   string
 	sshKeyId string
@@ -39,7 +46,7 @@ type k8sPrereqs struct {
 
 // rollback deletes the tracked resources in reverse creation order (SGs → SshKey → VNet).
 // Errors during rollback are logged as warnings but do not prevent subsequent deletions.
-func (p *k8sPrereqs) rollback() {
+func (p *k8sClusterPrereqs) rollback() {
 	for i := len(p.sgIds) - 1; i >= 0; i-- {
 		if _, err := tbclient.NewSession().DeleteSecurityGroup(p.nsId, p.sgIds[i]); err != nil {
 			log.Warn().Err(err).Str("sgId", p.sgIds[i]).Msg("Rollback: failed to delete SecurityGroup")
@@ -74,7 +81,7 @@ var cspRejectsCombinedIngressEgress = map[string]bool{"tencent": true}
 // reject combined ingress/egress in one request, it creates with the inbound rules first, then
 // adds the outbound rules via a separate call. It returns the create error unchanged so callers
 // can still detect the "already exists" idempotency case.
-func (p *k8sPrereqs) createSecurityGroup(provider string, sgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
+func (p *k8sClusterPrereqs) createSecurityGroup(provider string, sgReq tbmodel.SecurityGroupReq) (tbmodel.SecurityGroupInfo, error) {
 	if !cspRejectsCombinedIngressEgress[strings.ToLower(provider)] {
 		info, err := tbclient.NewSession().CreateSecurityGroup(p.nsId, sgReq, "")
 		if err != nil {
@@ -164,7 +171,8 @@ func validateNodeGroupSpecs(nodeGroups []cloudmodel.K8sNodeGroupReq) error {
 	return nil
 }
 
-// CreateK8sCluster provisions a K8s cluster on the target CSP from a recommendation result.
+// CreateK8sInfra provisions a K8s infra on the target CSP from a recommendation result:
+// the prerequisite resources (VNet, SshKey, SecurityGroups) plus the cluster and its node groups.
 // It follows the same pattern as CreateInfra for VM migration:
 //  1. Create VNet (with subnets)
 //  2. Create SSH Key
@@ -176,14 +184,14 @@ func validateNodeGroupSpecs(nodeGroups []cloudmodel.K8sNodeGroupReq) error {
 //     Create cluster first, poll for Active, then add NodeGroups separately.
 //
 // Both paths poll until the cluster is Active before returning, ensuring a consistent response.
-func CreateK8sCluster(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sClusterInfo, error) {
-	log.Info().Str("nsId", nsId).Msg("Creating K8s cluster")
+func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sClusterInfo, error) {
+	log.Info().Str("nsId", nsId).Msg("Creating K8s infra")
 
 	emptyRet := tbmodel.K8sClusterInfo{}
 
 	// prereqs tracks only resources created fresh in this call for rollback on failure.
 	// Resources that already existed (idempotency case) are not tracked.
-	prereqs := &k8sPrereqs{nsId: nsId}
+	prereqs := &k8sClusterPrereqs{nsId: nsId}
 
 	// 1. Verify namespace exists
 	_, err := tbclient.NewSession().ReadNamespace(nsId)
@@ -353,7 +361,7 @@ func CreateK8sCluster(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8
 
 	// For nodeGroupsOnCreation=true, NodeGroups are already part of the cluster — done.
 	if nodeGroupsOnCreation {
-		log.Info().Str("clusterId", clusterInfo.Id).Msg("K8s cluster migration completed (NodeGroups included at creation)")
+		log.Info().Str("clusterId", clusterInfo.Id).Msg("K8s infra migration completed (NodeGroups included at creation)")
 		return clusterInfo, nil
 	}
 
@@ -367,7 +375,7 @@ func CreateK8sCluster(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8
 		log.Info().Str("nodeGroup", tbNgReq.Name).Str("status", string(clusterInfo.Status)).Msg("Node group added")
 	}
 
-	log.Info().Str("clusterId", clusterInfo.Id).Msg("K8s cluster migration completed")
+	log.Info().Str("clusterId", clusterInfo.Id).Msg("K8s infra migration completed")
 	return clusterInfo, nil
 }
 

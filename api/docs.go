@@ -1939,7 +1939,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] K8s Cluster"
+                    "[Migration] K8s Infrastructure"
                 ],
                 "summary": "List all migrated K8s clusters",
                 "operationId": "ListK8sClusters",
@@ -1975,7 +1975,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).\n\n**Workflow**:\n1. Call POST /recommendation/k8sCluster to get a RecommendedK8sInfra.\n2. Pass the recommendation result as-is to this endpoint.\n\n**Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups\n\nBy default this API runs synchronously (EKS takes ~10-20 min). Send header\n` + "`" + `Prefer: respond-async` + "`" + ` to run it asynchronously: receive 202 Accepted with a\nreqId, then poll GET /request/{reqId} to check status.",
+                "description": "Migrate an on-premise Kubernetes cluster to a managed K8s service (e.g., AWS EKS).\n\n**Workflow**:\n1. Call POST /recommendation/k8sCluster to get a RecommendK8sInfraResponse.\n2. Pass the recommendation result as-is to this endpoint.\n\n**Internal steps**: VNet → SSH Key → Security Group → K8s Cluster → Node Groups\n\n**Long-running** — This API waits for the cluster to become Active, up to **40 min**\n(typically **~10-20 min** on EKS), then adds the node groups, so it can take longer still.\n\nBy default it runs synchronously, so configure your own HTTP client to wait that long —\nmost client defaults cut the connection first. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead: receive 202 Accepted with a reqId, then poll GET /request/{reqId}\n(status flow: Handling → Success / Error). Only the \"respond-async\" token is recognized.\n\nIf a synchronous connection drops the migration keeps running on the server; poll\nGET /migration/ns/{nsId}/k8sCluster/{k8sClusterId} with the cluster name you supplied.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1983,10 +1983,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] K8s Cluster"
+                    "[Migration] K8s Infrastructure"
                 ],
-                "summary": "Migrate an on-premise K8s cluster to the target CSP",
-                "operationId": "MigrateK8sCluster",
+                "summary": "Migrate an on-premise K8s cluster to a K8s infra on the target CSP (sync by default; async via Prefer: respond-async)",
+                "operationId": "MigrateK8sInfra",
                 "parameters": [
                     {
                         "type": "string",
@@ -1997,12 +1997,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "K8s cluster recommendation (from POST /recommendation/k8sCluster)",
-                        "name": "k8sClusterInfo",
+                        "description": "K8s infra recommendation (from POST /recommendation/k8sCluster)",
+                        "name": "k8sInfraInfo",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateK8sClusterRequest"
+                            "$ref": "#/definitions/controller.MigrateK8sInfraRequest"
                         }
                     },
                     {
@@ -2023,9 +2023,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "K8s cluster migrated successfully",
+                        "description": "K8s infra migrated successfully",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sInfraResponse"
                         }
                     },
                     "202": {
@@ -2065,7 +2065,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] K8s Cluster"
+                    "[Migration] K8s Infrastructure"
                 ],
                 "summary": "Get a migrated K8s cluster",
                 "operationId": "GetK8sCluster",
@@ -2096,7 +2096,7 @@ const docTemplate = `{
                     "200": {
                         "description": "K8s cluster information",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sClusterResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_MigrateK8sInfraResponse"
                         }
                     },
                     "404": {
@@ -2122,7 +2122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Migration] K8s Cluster"
+                    "[Migration] K8s Infrastructure"
                 ],
                 "summary": "Delete a migrated K8s cluster",
                 "operationId": "DeleteK8sCluster",
@@ -3803,7 +3803,7 @@ const docTemplate = `{
         },
         "/recommendation/k8sCluster": {
             "post": {
-                "description": "Recommend a complete K8s cluster configuration based on on-premise infra data from cm-honeybee.\nReturns a RecommendedK8sInfra that can be passed directly to the K8s migration API.\n\n**Required Parameters**: ` + "`" + `desiredProvider` + "`" + `, ` + "`" + `desiredRegion` + "`" + `\n**Input**: On-premise infra model (from honeybee /infra/refined) with K8s cluster info and node roles",
+                "description": "Recommend a complete K8s infra configuration based on on-premise infra data from cm-honeybee.\nReturns a RecommendK8sInfraResponse that can be passed directly to the K8s migration API.\n\n**Required Parameters**: ` + "`" + `desiredProvider` + "`" + `, ` + "`" + `desiredRegion` + "`" + `\n**Input**: On-premise infra model (from honeybee /infra/refined) with K8s cluster info and node roles",
                 "consumes": [
                     "application/json"
                 ],
@@ -3811,10 +3811,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "[Recommendation] K8s Cluster"
+                    "[Recommendation] K8s Infrastructure"
                 ],
-                "summary": "Recommend a K8s cluster configuration for cloud migration",
-                "operationId": "RecommendK8sCluster",
+                "summary": "Recommend a K8s infra configuration for cloud migration",
+                "operationId": "RecommendK8sInfra",
                 "parameters": [
                     {
                         "description": "Source on-premise infra (must include k8sCluster and nodes with role=worker)",
@@ -3822,7 +3822,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.RecommendK8sClusterRequest"
+                            "$ref": "#/definitions/controller.RecommendK8sInfraRequest"
                         }
                     },
                     {
@@ -3856,9 +3856,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "K8s cluster recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)",
+                        "description": "K8s infra recommendation (pass directly to POST /migration/ns/{nsId}/k8sCluster)",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendK8sClusterResponse"
+                            "$ref": "#/definitions/model.ApiResponse-controller_RecommendK8sInfraResponse"
                         }
                     },
                     "400": {
@@ -8353,7 +8353,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.MigrateK8sClusterRequest": {
+        "controller.MigrateK8sInfraRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -8403,7 +8403,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.MigrateK8sClusterResponse": {
+        "controller.MigrateK8sInfraResponse": {
             "type": "object",
             "properties": {
                 "accessInfo": {
@@ -8655,7 +8655,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.RecommendK8sClusterRequest": {
+        "controller.RecommendK8sInfraRequest": {
             "type": "object",
             "required": [
                 "onpremiseInfraModel"
@@ -8674,7 +8674,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.RecommendK8sClusterResponse": {
+        "controller.RecommendK8sInfraResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -9482,14 +9482,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-controller_MigrateK8sClusterResponse": {
+        "model.ApiResponse-controller_MigrateK8sInfraResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/controller.MigrateK8sClusterResponse"
+                            "$ref": "#/definitions/controller.MigrateK8sInfraResponse"
                         }
                     ]
                 },
@@ -9538,14 +9538,14 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ApiResponse-controller_RecommendK8sClusterResponse": {
+        "model.ApiResponse-controller_RecommendK8sInfraResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Contains the actual response data (single object, list, or page)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/controller.RecommendK8sClusterResponse"
+                            "$ref": "#/definitions/controller.RecommendK8sInfraResponse"
                         }
                     ]
                 },
