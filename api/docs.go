@@ -5861,32 +5861,75 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.InfraCmdReq": {
+        "cloudmodel.InfraClusterInfo": {
             "type": "object",
-            "required": [
-                "command"
-            ],
             "properties": {
-                "command": {
-                    "description": "Command is the list of commands to execute",
+                "connectionNames": {
+                    "description": "ConnectionNames are unique connection names included in this cluster.",
                     "type": "array",
                     "items": {
                         "type": "string"
-                    },
-                    "example": [
-                        "client_ip=$(echo $SSH_CLIENT | awk '{print $1}'); echo SSH client IP is: $client_ip"
-                    ]
+                    }
                 },
-                "timeoutMinutes": {
-                    "description": "TimeoutMinutes is the timeout for command execution in minutes (default: 30, min: 1, max: 120)\nIf not specified or set to 0, the default timeout (30 minutes) will be used",
-                    "type": "integer",
-                    "default": 30,
-                    "example": 30
+                "id": {
+                    "description": "Id is a deterministic cluster identifier generated from grouping attributes.",
+                    "type": "string"
                 },
-                "userName": {
-                    "description": "UserName is the SSH username to use for command execution",
-                    "type": "string",
-                    "example": "cb-user"
+                "infraId": {
+                    "description": "InfraId is the parent Infra ID.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is a human-readable cluster name. Currently same as Id.",
+                    "type": "string"
+                },
+                "nodeCount": {
+                    "description": "NodeCount is the number of Nodes in this cluster.",
+                    "type": "integer"
+                },
+                "nodeGroupCount": {
+                    "description": "NodeGroupCount is the number of NodeGroups in this cluster.",
+                    "type": "integer"
+                },
+                "nodeGroupIds": {
+                    "description": "NodeGroupIds are NodeGroups that belong to this implicit cluster.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "nodeIds": {
+                    "description": "NodeIds are Nodes that belong to this implicit cluster.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "providerNames": {
+                    "description": "ProviderNames are unique CSP providers included in this cluster.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "regionNames": {
+                    "description": "RegionNames are unique regions included in this cluster.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "representativeNodeGroupId": {
+                    "description": "RepresentativeNodeGroupId is a representative NodeGroup ID for quick inspection.",
+                    "type": "string"
+                },
+                "representativeNodeId": {
+                    "description": "RepresentativeNodeId is a representative Node ID for quick inspection.",
+                    "type": "string"
+                },
+                "vNetId": {
+                    "description": "VNetId is the shared VNet boundary used for implicit clustering.",
+                    "type": "string"
                 }
             }
         },
@@ -6007,6 +6050,13 @@ const docTemplate = `{
         "cloudmodel.InfraInfo": {
             "type": "object",
             "properties": {
+                "cluster": {
+                    "description": "Cluster is the list of implicit clusters synthesized at query-time from Nodes.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.InfraClusterInfo"
+                    }
+                },
                 "configureCloudAdaptiveNetwork": {
                     "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
                     "type": "string",
@@ -6071,21 +6121,37 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync echoes whether the commands run in the background",
+                    "type": "boolean"
                 },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
+                "postCommandRequestId": {
+                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
+                    "type": "string",
+                    "example": "pc-infra01-1a2b3c"
+                },
+                "postCommandResults": {
+                    "description": "PostCommandResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
+                    }
+                },
+                "postCommandStatus": {
+                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
                         }
-                    ]
+                    ],
+                    "example": "Completed"
+                },
+                "postCommands": {
+                    "description": "PostCommands are the requested post-deployment command phases",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
@@ -6204,13 +6270,13 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.InfraSshCmdResult": {
+        "cloudmodel.InfraSshCmdResultForAPI": {
             "type": "object",
             "properties": {
                 "results": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/cloudmodel.SshCmdResult"
+                        "$ref": "#/definitions/cloudmodel.SshCmdResultForAPI"
                     }
                 }
             }
@@ -6875,6 +6941,38 @@ const docTemplate = `{
                 "PlatformNA"
             ]
         },
+        "cloudmodel.PostCommandPhaseResult": {
+            "type": "object",
+            "properties": {
+                "phase": {
+                    "description": "Phase is the 1-based execution order",
+                    "type": "integer",
+                    "example": 1
+                },
+                "results": {
+                    "description": "Results holds per-node command results",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResultForAPI"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status is the aggregated outcome of this phase (Skipped when a previous phase stopped execution)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
+                        }
+                    ],
+                    "example": "Completed"
+                },
+                "target": {
+                    "description": "Target echoes the scope this phase ran against",
+                    "type": "string",
+                    "example": "nodeGroupId=control"
+                }
+            }
+        },
         "cloudmodel.PostCommandReq": {
             "type": "object",
             "required": [
@@ -6923,6 +7021,25 @@ const docTemplate = `{
                     "example": "cb-user"
                 }
             }
+        },
+        "cloudmodel.PostCommandStatus": {
+            "type": "string",
+            "enum": [
+                "None",
+                "Completed",
+                "CompletedWithErrors",
+                "Failed",
+                "Skipped",
+                "Running"
+            ],
+            "x-enum-varnames": [
+                "PostCommandStatusNone",
+                "PostCommandStatusCompleted",
+                "PostCommandStatusCompletedWithErrors",
+                "PostCommandStatusFailed",
+                "PostCommandStatusSkipped",
+                "PostCommandStatusRunning"
+            ]
         },
         "cloudmodel.RecommendedInfra": {
             "type": "object",
@@ -7424,7 +7541,7 @@ const docTemplate = `{
                 }
             }
         },
-        "cloudmodel.SshCmdResult": {
+        "cloudmodel.SshCmdResultForAPI": {
             "type": "object",
             "properties": {
                 "command": {
@@ -7433,7 +7550,10 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "err": {},
+                "error": {
+                    "description": "String representation of error for JSON serialization",
+                    "type": "string"
+                },
                 "infraId": {
                     "type": "string"
                 },
@@ -7875,6 +7995,13 @@ const docTemplate = `{
         "controller.MigrateInfraResponse": {
             "type": "object",
             "properties": {
+                "cluster": {
+                    "description": "Cluster is the list of implicit clusters synthesized at query-time from Nodes.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.InfraClusterInfo"
+                    }
+                },
                 "configureCloudAdaptiveNetwork": {
                     "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
                     "type": "string",
@@ -7939,21 +8066,37 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync echoes whether the commands run in the background",
+                    "type": "boolean"
                 },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
+                "postCommandRequestId": {
+                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
+                    "type": "string",
+                    "example": "pc-infra01-1a2b3c"
+                },
+                "postCommandResults": {
+                    "description": "PostCommandResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
+                    }
+                },
+                "postCommandStatus": {
+                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
                         }
-                    ]
+                    ],
+                    "example": "Completed"
+                },
+                "postCommands": {
+                    "description": "PostCommands are the requested post-deployment command phases",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
@@ -8072,6 +8215,13 @@ const docTemplate = `{
         "controller.MigrateInfraWithDefaultsResponse": {
             "type": "object",
             "properties": {
+                "cluster": {
+                    "description": "Cluster is the list of implicit clusters synthesized at query-time from Nodes.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.InfraClusterInfo"
+                    }
+                },
                 "configureCloudAdaptiveNetwork": {
                     "description": "ConfigureCloudAdaptiveNetwork is an option to configure Cloud Adaptive Network (CLADNet) ([yes/no] default:yes)",
                     "type": "string",
@@ -8136,21 +8286,37 @@ const docTemplate = `{
                 "placementAlgo": {
                     "type": "string"
                 },
-                "postCommand": {
-                    "description": "PostCommand is for the command to bootstrap the Nodes",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/cloudmodel.InfraCmdReq"
-                        }
-                    ]
+                "postCommandAsync": {
+                    "description": "PostCommandAsync echoes whether the commands run in the background",
+                    "type": "boolean"
                 },
-                "postCommandResult": {
-                    "description": "PostCommandResult is the result of the command for bootstraping the Nodes",
+                "postCommandRequestId": {
+                    "description": "PostCommandRequestId is the streaming/tracking key of the post-deployment run\n(always set when post-deployment commands were requested, in both modes)",
+                    "type": "string",
+                    "example": "pc-infra01-1a2b3c"
+                },
+                "postCommandResults": {
+                    "description": "PostCommandResults holds per-phase outcomes",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandPhaseResult"
+                    }
+                },
+                "postCommandStatus": {
+                    "description": "PostCommandStatus summarizes the post-deployment command outcome.\n\"Running\" means execution is still in progress (async mode): stream it with\nGET /ns/{nsId}/stream/cmd/infra/{infraId}?xRequestId={postCommandRequestId}\nor poll this object until the status becomes terminal.",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/cloudmodel.InfraSshCmdResult"
+                            "$ref": "#/definitions/cloudmodel.PostCommandStatus"
                         }
-                    ]
+                    ],
+                    "example": "Completed"
+                },
+                "postCommands": {
+                    "description": "PostCommands are the requested post-deployment command phases",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cloudmodel.PostCommandReq"
+                    }
                 },
                 "resourceType": {
                     "description": "ResourceType is the type of the resource",
