@@ -542,7 +542,7 @@ type RecommendK8sNodeGroupSpecsRequest struct {
 // @Router /recommendation/resources/k8sNodeGroupSpecs [post]
 func RecommendK8sNodeGroupSpecs(c echo.Context) error {
 
-	// [Input] Query params fill in when the body omits them, same precedence as RecommendK8sCluster.
+	// [Input] Query params fill in when the body omits them, same precedence as RecommendK8sInfra.
 	reqt := &RecommendK8sNodeGroupSpecsRequest{}
 	if err := c.Bind(reqt); err != nil {
 		log.Warn().Err(err).Msg("failed to bind request body")

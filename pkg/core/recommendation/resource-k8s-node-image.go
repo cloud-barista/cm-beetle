@@ -82,7 +82,7 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 }
 
 // ResolveK8sNodeImageId returns the node image ID appropriate for the given architecture.
-// Promoted from the unexported resolveNodeImageId used internally by RecommendK8sCluster.
+// Promoted from the unexported resolveNodeImageId used internally by RecommendK8sInfra.
 //
 // Behavior:
 //   - NodeImageDesignation=false (CSP manages the image) or x86_64 arch → "default".

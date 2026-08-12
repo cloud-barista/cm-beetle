@@ -35,7 +35,7 @@ const maxK8sSpecRangeWeight = 5
 // Source workers are grouped by spec signature because managed K8s node groups are homogeneous;
 // one recommendation set is produced per group, with the group's members reported in SourceServers.
 //
-// Unlike RecommendK8sCluster, this does NOT require srcInfra.K8sCluster — spec recommendation only
+// Unlike RecommendK8sInfra, this does NOT require srcInfra.K8sCluster — spec recommendation only
 // needs worker nodes. Cluster info is a version-selection input, not a spec input.
 func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.OnpremInfra, limit int) (cloudmodel.RecommendedSpecList, error) {
 

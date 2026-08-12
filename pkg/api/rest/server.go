@@ -334,10 +334,10 @@ func RunServer(port string) {
 	gValidationNs := gValidation.Group("/ns/:nsId")
 	gValidationNs.POST("/infra", controller.ValidateInfra)
 
-	// Recommendation APIs for K8s Cluster
-	gRecommendation.POST("/k8sCluster", controller.RecommendK8sCluster)
+	// Recommendation APIs for K8s infrastructure
+	gRecommendation.POST("/k8sCluster", controller.RecommendK8sInfra)
 
-	// Recommendation APIs for resources for K8s cluster
+	// Recommendation APIs for resources for K8s infrastructure
 	gRecommendation.POST("/resources/k8sNodeGroupSpecs", controller.RecommendK8sNodeGroupSpecs)
 	gRecommendation.POST("/resources/k8sNodeGroupImages", controller.RecommendK8sNodeGroupImages)
 
@@ -385,8 +385,8 @@ func RunServer(port string) {
 	// real SSH connections to every node.
 	gMigration.GET("/ns/:nsId/infra/:infraId/ssh-ready", controller.CheckSSHReady, middlewares.SSHCheckCooldown())
 
-	// Migration APIs for K8s Cluster
-	gMigration.POST("/ns/:nsId/k8sCluster", controller.MigrateK8sCluster)
+	// Migration APIs for K8s infrastructure
+	gMigration.POST("/ns/:nsId/k8sCluster", controller.MigrateK8sInfra)
 	gMigration.GET("/ns/:nsId/k8sCluster", controller.ListK8sClusters)
 	gMigration.GET("/ns/:nsId/k8sCluster/:k8sClusterId", controller.GetK8sCluster)
 	gMigration.DELETE("/ns/:nsId/k8sCluster/:k8sClusterId", controller.DeleteK8sCluster)

@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package recommendation contains the core logic for recommending K8s cluster configurations.
+// Package recommendation contains the core logic for recommending K8s infra configurations.
 package recommendation
 
 import (
@@ -27,8 +27,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// RecommendK8sCluster builds a complete K8s cluster recommendation from on-premise infra data.
-func RecommendK8sCluster(provider, region string, onpremInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
+// RecommendK8sInfra builds a complete K8s infra recommendation from on-premise infra data.
+func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremInfra) (cloudmodel.RecommendedInfra, error) {
 	emptyRet := cloudmodel.RecommendedInfra{}
 
 	if onpremInfra.K8sCluster == nil {
@@ -119,7 +119,7 @@ func RecommendK8sCluster(provider, region string, onpremInfra onpremmodel.Onprem
 		Str("version", version).
 		Int("nodeGroupCount", len(nodeGroupReqs)).
 		Int("workerCount", len(workerNodes)).
-		Msg("K8s cluster recommendation completed")
+		Msg("K8s infra recommendation completed")
 
 	return result, nil
 }
