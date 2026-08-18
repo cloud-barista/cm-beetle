@@ -406,3 +406,48 @@ func extractAwsBootModeFromImageDetails(image cloudmodel.ImageInfo) string {
 // === 6. AWS Xen-on-Nitro Compatibility ===
 // Note: Simplified approach - modern Nitro instances generally support Xen AMIs
 // with proper driver compatibility checks
+
+// === 7. CPU Vendor Detection ===
+
+// awsVendorFamilies lists AWS instance type family prefixes (the letters before the generation
+// digit) where the family+generation+vendor-letter naming convention is well-documented and
+// applies reliably: general purpose (m), compute optimized (c), memory optimized (r), burstable
+// (t). GPU/storage-optimized/HPC families (g, p, f, inf, trn, dl, vt, i, d, h1, x, z, u, hpc, ...)
+// are deliberately excluded - some (e.g. G5, which pairs an AMD EPYC CPU with no vendor letter in
+// the name) don't follow the same "no letter = Intel" convention, so guessing there would
+// misclassify them.
+var awsVendorFamilies = map[string]bool{"m": true, "c": true, "r": true, "t": true}
+
+var awsInstanceTypePattern = regexp.MustCompile(`^([a-z]+?)(\d+)([a-z]*)\.`)
+
+// getAwsCpuVendor classifies the CPU vendor of an AWS instance type from its name, for the
+// families in awsVendorFamilies only. Returns "amd", "intel", or "" (unclassified - includes
+// Graviton/ARM instances, since this function only distinguishes amd/intel, and every family
+// outside awsVendorFamilies).
+func getAwsCpuVendor(cspSpecName string) string {
+	name := strings.ToLower(cspSpecName)
+	matches := awsInstanceTypePattern.FindStringSubmatch(name)
+	if matches == nil {
+		return ""
+	}
+
+	family, suffix := matches[1], matches[3]
+	if !awsVendorFamilies[family] {
+		return ""
+	}
+
+	if suffix == "" {
+		return "intel" // older generation of a known family, e.g. m5/c5/r5/t3: Intel-only, no explicit marker
+	}
+
+	switch suffix[0] {
+	case 'a':
+		return "amd"
+	case 'i':
+		return "intel"
+	case 'g':
+		return "" // Graviton/ARM - out of scope for amd/intel classification
+	default:
+		return "intel" // modifier letter with no vendor marker (d/n/e/z/b/...) - still Intel by convention
+	}
+}

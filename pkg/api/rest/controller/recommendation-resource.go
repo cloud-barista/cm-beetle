@@ -258,7 +258,7 @@ func RecommendVmSpecs(c echo.Context) error {
 
 		specsLimit := recommendation.GetDefaultSpecsLimit()
 		// Recommend VM specs for the node
-		specList, count, err := recommendation.RecommendVmSpecs(desiredProvider, desiredRegion, node, specsLimit)
+		specList, count, err := recommendation.RecommendNodeSpecs(desiredProvider, desiredRegion, node, specsLimit)
 
 		// Handle errors and empty recommendations
 		if err != nil {

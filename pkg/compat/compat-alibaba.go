@@ -273,3 +273,25 @@ func extractAlibabaIoOptimizedFromImageDetails(image cloudmodel.ImageInfo) strin
 // - GPU instance type validation
 // - Network performance tier requirements
 // - Enhanced network features compatibility
+
+// === CPU Vendor Detection ===
+
+// getAlibabaCpuVendor classifies the CPU vendor of an Alibaba ECS instance type from the
+// structured "PhysicalProcessorModel" spec detail (e.g. "Intel Xeon(Ice Lake) Platinum 8369B" or
+// "AMD EPYC(Milan) 7T83"), which cb-spider passes straight through from the ECS API - no
+// name-guessing needed, unlike every other CSP. Returns "amd", "intel", or "" if the detail is
+// missing or doesn't mention either vendor.
+func getAlibabaCpuVendor(spec cloudmodel.SpecInfo) string {
+	for _, kv := range spec.Details {
+		if strings.EqualFold(kv.Key, "PhysicalProcessorModel") {
+			value := strings.ToLower(kv.Value)
+			switch {
+			case strings.Contains(value, "amd"):
+				return "amd"
+			case strings.Contains(value, "intel"):
+				return "intel"
+			}
+		}
+	}
+	return ""
+}

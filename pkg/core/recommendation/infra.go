@@ -190,7 +190,7 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 	for _, node := range srcInfra.Nodes {
 
 		// Lookup the appropriate VM specs for the node
-		vmSpecList, _, err := RecommendVmSpecs(desiredCsp, desiredRegion, node, defaultSpecsLimit)
+		vmSpecList, _, err := RecommendNodeSpecs(desiredCsp, desiredRegion, node, defaultSpecsLimit)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 			continue
@@ -253,14 +253,14 @@ func RecommendVmInfraWithDefaults(desiredCsp string, desiredRegion string, srcIn
 
 		for j, nodegroupInfo := range vmInfoList {
 			tempCreateNodegroupReq := cloudmodel.CreateNodeGroupDynamicReq{
-				ConnectionName:   fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
-				ImageId:          nodegroupInfo.vmOsImageId,
-				SpecId:           nodegroupInfo.vmSpecId,
-				Description:      "a recommended virtual machine",
-				Name:             fmt.Sprintf("migrated-%s", srcInfra.Nodes[j].MachineId), // Set MachineId to identify the source node
-				RootDiskSize:     0,                                                       // TBD
-				RootDiskType:     "",                                                      // TBD
-				NodeGroupSize:    1,                                                       // TBD
+				ConnectionName: fmt.Sprintf("%s-%s", desiredCsp, desiredRegion),
+				ImageId:        nodegroupInfo.vmOsImageId,
+				SpecId:         nodegroupInfo.vmSpecId,
+				Description:    "a recommended virtual machine",
+				Name:           fmt.Sprintf("migrated-%s", srcInfra.Nodes[j].MachineId), // Set MachineId to identify the source node
+				RootDiskSize:   0,                                                       // TBD
+				RootDiskType:   "",                                                      // TBD
+				NodeGroupSize:  1,                                                       // TBD
 			}
 			tempVmInfraInfo.TargetInfra.NodeGroups = append(tempVmInfraInfo.TargetInfra.NodeGroups, tempCreateNodegroupReq)
 		}
@@ -363,7 +363,7 @@ func RecommendVmInfra(desiredCsp string, desiredRegion string, srcInfra onpremmo
 		 */
 
 		// Lookup the appropriate VM specs for the node
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, node, limitSpecs)
+		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(csp, region, node, limitSpecs)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}
@@ -723,7 +723,7 @@ func RecommendVmInfraCandidates(desiredCsp string, desiredRegion string, srcInfr
 	for i, node := range srcInfra.Nodes {
 
 		// Lookup the appropriate VM specs for the node
-		recommendedVmSpecInfoList, _, err := RecommendVmSpecs(csp, region, node, limitSpecs)
+		recommendedVmSpecInfoList, _, err := RecommendNodeSpecs(csp, region, node, limitSpecs)
 		if err != nil {
 			log.Warn().Msgf("failed to recommend VM specs for node %s: %v", node.MachineId, err)
 		}

@@ -2,7 +2,7 @@
 
 This report provides a comprehensive summary of the infrastructure migration from on-premise to cloud environment, including detailed information about migrated resources, costs, and configurations.
 
-*Report generated: 2026-08-12 08:55:51*
+*Report generated: 2026-08-18 05:35:29*
 
 ---
 
@@ -20,7 +20,7 @@ This report provides a comprehensive summary of the infrastructure migration fro
 
 **Migrated Servers:** 3
 
-**💰 Estimated Monthly Cost:** $219.02 USD
+**💰 Estimated Monthly Cost:** $243.36 USD
 
 ---
 
@@ -31,7 +31,7 @@ Summary of key infrastructure resources created or configured in the target clou
 | # | Resource Type | Count | Status | Details |
 |---|---------------|-------|--------|----------|
 | 1 | **Virtual Machine** | 3 | ✅ Created | 3 running, 3 total |
-| 2 | **VM Spec** | 3 | ✅ Selected | t3a.large, t3a.xlarge, t3a.small |
+| 2 | **VM Spec** | 3 | ✅ Selected | t3.small, t3.large, t3.xlarge |
 | 3 | **VM OS Image** | 1 | ✅ Selected | Ubuntu 22.04 |
 | 4 | **VNet (VPC)** | 1 | ✅ Created | my-vnet-01, CIDR: 10.0.0.0/21 |
 | 5 | **Subnet** | 1 | ✅ Created | 10.0.1.0/24 (in my-vnet-01) |
@@ -46,9 +46,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | Source Server |
 |-----|-------------|---------------|
-| 1 | **VM Name:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-03794c804fc04805d<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
-| 2 | **VM Name:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-0b609e09647e4d6b3<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
-| 3 | **VM Name:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-0c7983d5f32f96a42<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
+| 1 | **VM Name:** my-vm-ec268ed7-821e-9d73-e79f-961262161624-1<br>**VM ID:** i-07f05aa99fcb96804<br>**Label(sourceMachineId):** ec268ed7-821e-9d73-e79f-961262161624 | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 |
+| 2 | **VM Name:** my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1<br>**VM ID:** i-04c3afcd53f21205d<br>**Label(sourceMachineId):** ec288dd0-c6fa-8a49-2f60-bc898311febf | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf |
+| 3 | **VM Name:** my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1<br>**VM ID:** i-0036128095af6be9f<br>**Label(sourceMachineId):** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 |
 
 ---
 
@@ -58,9 +58,9 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | Migrated VM | VM Spec | Source Server | Source Server Spec |
 |-----|-------------|---------|---------------|--------------------|
-| 1 | my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** t3a.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
-| 2 | my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** t3a.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
-| 3 | my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** t3a.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
+| 1 | my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | **Spec ID:** t3.small<br>**vCPUs:** 2<br>**Memory:** 2.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-30<br>**Machine ID:** ec268ed7-821e-9d73-e79f-961262161624 | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 2 GB<br>**Root Disk:** 0 GB |
+| 2 | my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | **Spec ID:** t3.large<br>**vCPUs:** 2<br>**Memory:** 8.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-138<br>**Machine ID:** ec288dd0-c6fa-8a49-2f60-bc898311febf | **CPUs:** 1<br>**Threads:** 2<br>**Memory:** 8 GB<br>**Root Disk:** 0 GB |
+| 3 | my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | **Spec ID:** t3.xlarge<br>**vCPUs:** 4<br>**Memory:** 16.0 GB<br>**Root Disk:** 50 GB | **Hostname:** ip-10-0-1-221<br>**Machine ID:** ec2d32b5-98fb-5a96-7913-d3db1ec18932 | **CPUs:** 1<br>**Threads:** 4<br>**Memory:** 16 GB<br>**Root Disk:** 0 GB |
 
 ---
 
@@ -82,7 +82,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-01
 
-**CSP ID:** sg-0b96be9a45fd5f13a | **VNet:** my-vnet-01 | **Rules:** 14
+**CSP ID:** sg-0782ef50dd82c3b02 | **VNet:** my-vnet-01 | **Rules:** 14
 
 **Assigned VMs:**
 
@@ -110,7 +110,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-02
 
-**CSP ID:** sg-0f33393996fd60809 | **VNet:** my-vnet-01 | **Rules:** 19
+**CSP ID:** sg-0dfd5bd8a22a9d5c2 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -143,7 +143,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 ### Security Group: my-sg-03
 
-**CSP ID:** sg-0488a252d03df34e7 | **VNet:** my-vnet-01 | **Rules:** 19
+**CSP ID:** sg-0ce3f6d3e7e62fb28 | **VNet:** my-vnet-01 | **Rules:** 19
 
 **Assigned VMs:**
 
@@ -184,13 +184,13 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | VPC(VNet) | CIDR Block |
 |-----|-----------|------------|
-| 1 | **Name:** my-vnet-01<br>**ID:** vpc-0132092b88b9bb71b | 10.0.0.0/21 |
+| 1 | **Name:** my-vnet-01<br>**ID:** vpc-08201eaaada1f8bdb | 10.0.0.0/21 |
 
 ### Subnets
 
 | No. | Subnet | CIDR Block | Associated VPC(VNet) |
 |-----|--------|------------|----------------------|
-| 1 | **Name:** my-subnet-01<br>**ID:** subnet-054b05ec88e60975e | 10.0.1.0/24 | my-vnet-01 |
+| 1 | **Name:** my-subnet-01<br>**ID:** subnet-01ee0f62b4a1a9203 | 10.0.1.0/24 | my-vnet-01 |
 
 ### Source Network Information
 
@@ -262,7 +262,7 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | No. | SSH Key Name | CSP Key ID | Fingerprint | Usage |
 |-----|--------------|------------|-------------|-------|
-| 1 | my-sshkey-01 | tbrlpek0612e0uu8p2ni | fd:5f:46:08:ee:a0:49:bb:b0:ae:89:94:4a:ef:6c:24:34:9f:8c:c4 | Used by all 3 VMs |
+| 1 | my-sshkey-01 | tba9h45uci687i1p2c5e | c9:2e:65:df:7c:77:3a:fb:85:b7:24:e4:65:65:d3:a7:b1:9e:f4:5b | Used by all 3 VMs |
 
 ---
 
@@ -272,18 +272,18 @@ Summary of key infrastructure resources created or configured in the target clou
 
 | Period | Cost (USD) |
 |--------|------------|
-| Hourly | $0.3042 |
-| Daily | $7.30 |
-| Monthly | $219.02 |
-| Yearly | $2628.29 |
+| Hourly | $0.3380 |
+| Daily | $8.11 |
+| Monthly | $243.36 |
+| Yearly | $2920.32 |
 
 ### Cost Breakdown by Component
 
 | Component | Spec | Monthly Cost | Percentage |
 |-----------|------|--------------|------------|
-| ip-10-0-1-30 (migrated) | t3a.small | $16.85 | 7.7% |
-| ip-10-0-1-221 (migrated) | t3a.xlarge | $134.78 | 61.5% |
-| ip-10-0-1-138 (migrated) | t3a.large | $67.39 | 30.8% |
+| ip-10-0-1-30 (migrated) | t3.small | $18.72 | 7.7% |
+| ip-10-0-1-221 (migrated) | t3.xlarge | $149.76 | 61.5% |
+| ip-10-0-1-138 (migrated) | t3.large | $74.88 | 30.8% |
 
 ---
 

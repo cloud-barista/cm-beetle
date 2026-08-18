@@ -129,7 +129,65 @@ func getAzureImageGeneration(image cloudmodel.ImageInfo) string {
 	return "V1"
 }
 
-// === 2. NVMe Support Compatibility (for v6 series and newer) ===
+// === 2. CPU Vendor Detection ===
+
+// azureAmdPatterns lists Azure VM size regex patterns for AMD EPYC-based series, identified by the
+// "a" additive-feature letter in the size name per Azure's VM naming convention
+// (https://learn.microsoft.com/en-us/azure/virtual-machines/vm-naming-conventions). Each pattern
+// requires a digit immediately after the family letter(s), so e.g. the D-series pattern can never
+// match a DC-series name (no digit follows "d" there) - the two lists below are disjoint by
+// construction, not by ordering.
+var azureAmdPatterns = []string{
+	`^standard_d\d+as_v\d+$`,   // Dasv3/4/5/6  - AMD general purpose
+	`^standard_d\d+ads_v\d+$`,  // Dadsv5/6     - AMD general purpose + local disk
+	`^standard_e\d+as_v\d+$`,   // Easv4/5/6    - AMD memory optimized
+	`^standard_e\d+ads_v\d+$`,  // Eadsv5/6     - AMD memory optimized + local disk
+	`^standard_f\d+as_v\d+$`,   // Fasv6        - AMD compute optimized
+	`^standard_dc\d+as_v\d+$`,  // DCasv5       - AMD confidential computing
+	`^standard_dc\d+ads_v\d+$`, // DCadsv5      - AMD confidential computing + local disk
+	`^standard_ec\d+as_v\d+$`,  // ECasv5       - AMD confidential memory optimized
+	`^standard_ec\d+ads_v\d+$`, // ECadsv5      - AMD confidential memory optimized + local disk
+}
+
+// azureIntelPatterns lists the Intel-equivalent sibling families of azureAmdPatterns (same
+// family/generation, without the "a" AMD additive letter).
+//
+// This is deliberately an explicit allow-list rather than "everything not matched as AMD is
+// Intel": families such as HBv2/HBv3 (HPC) are AMD EPYC-based without any "a" in the name, and
+// GPU/legacy/burstable/large-memory families haven't been analyzed here. A blanket
+// not-AMD-therefore-Intel fallback would silently mislabel those as Intel.
+var azureIntelPatterns = []string{
+	`^standard_d\d+s?_v\d+$`,  // Dv4/Dsv4, Dv5/Dsv5, Dv6/Dsv6 - Intel
+	`^standard_d\d+ds_v\d+$`,  // Ddsv4/Ddsv5/Ddsv6            - Intel + local disk
+	`^standard_e\d+s?_v\d+$`,  // Ev4/Esv4, Ev5/Esv5, Ev6/Esv6 - Intel
+	`^standard_e\d+ds_v\d+$`,  // Edsv4/Edsv5/Edsv6            - Intel + local disk
+	`^standard_f\d+s?_v\d+$`,  // Fsv2 and successors         - Intel compute optimized
+	`^standard_dc\d+s_v\d+$`,  // DCsv3+                      - Intel confidential computing
+	`^standard_dc\d+ds_v\d+$`, // DCdsv3+                     - Intel confidential + local disk
+	`^standard_ec\d+s_v\d+$`,  // ECsv5                       - Intel confidential memory optimized
+	`^standard_ec\d+ds_v\d+$`, // ECdsv5                      - Intel confidential + local disk
+}
+
+// getAzureCpuVendor classifies the CPU vendor of an Azure VM size from its CspSpecName. Returns
+// "amd", "intel", or "" if unclassified (e.g. classic A-series, M-series, HB/HC HPC series, GPU
+// series, or any family not enumerated above). "" means "not classified", never "assumed Intel" -
+// callers must treat it as unknown.
+func getAzureCpuVendor(cspSpecName string) string {
+	name := strings.ToLower(cspSpecName)
+	for _, p := range azureAmdPatterns {
+		if matched, _ := regexp.MatchString(p, name); matched {
+			return "amd"
+		}
+	}
+	for _, p := range azureIntelPatterns {
+		if matched, _ := regexp.MatchString(p, name); matched {
+			return "intel"
+		}
+	}
+	return ""
+}
+
+// === 3. NVMe Support Compatibility (for v6 series and newer) ===
 // TODO: Enable when Azure provides consistent NVMe support information in VM spec and image Details
 
 /*

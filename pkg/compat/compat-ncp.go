@@ -1,6 +1,7 @@
 package compat
 
 import (
+	"regexp"
 	"strings"
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
@@ -107,4 +108,37 @@ func FilterNcpVmSpecsByHypervisor(vmSpecs []cloudmodel.SpecInfo) []cloudmodel.Sp
 	}
 
 	return filteredSpecs
+}
+
+// === CPU Vendor Detection ===
+
+// ncpSpecCodePattern matches NCP VPC ServerSpecCode names like "c2-g3" (family "c", size "2",
+// generation "3", Intel) or "s4-g3a" (trailing "a" on the generation segment, AMD) - confirmed
+// against cb-spider's NCP driver (ServerSpecCode) and NCP's public docs, which state the "a" in
+// the spec code denotes an AMD processor.
+var ncpSpecCodePattern = regexp.MustCompile(`^([a-z]+)\d+-g\d+(a?)$`)
+
+// ncpVendorFamilies lists NCP VPC server spec families documented as running on this vendor
+// convention (Standard/High Memory/High CPU/CPU Intensive/Micro). Other families (e.g. GPU) aren't
+// documented either way and are left unclassified.
+var ncpVendorFamilies = map[string]bool{"s": true, "m": true, "c": true, "ci": true, "mi": true}
+
+// getNcpCpuVendor classifies the CPU vendor of an NCP VPC server spec from its ServerSpecCode.
+// Returns "amd", "intel", or "" if unclassified (unrecognized family or code format).
+func getNcpCpuVendor(cspSpecName string) string {
+	name := strings.ToLower(cspSpecName)
+
+	matches := ncpSpecCodePattern.FindStringSubmatch(name)
+	if matches == nil {
+		return ""
+	}
+
+	family, amdMarker := matches[1], matches[2]
+	if !ncpVendorFamilies[family] {
+		return ""
+	}
+	if amdMarker == "a" {
+		return "amd"
+	}
+	return "intel"
 }
