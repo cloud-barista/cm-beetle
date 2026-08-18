@@ -1,6 +1,6 @@
 # Target Cloud Infrastructure Summary
 
-**Generated At:** 2026-08-11 04:15:23
+**Generated At:** 2026-08-18 06:29:31
 
 **Namespace:** mig01
 
@@ -28,9 +28,9 @@
 
 | Name | vCPUs | Memory (GiB) | GPU | Architecture | Disk Type | Cost/Hour (USD) | VMs Using This Spec |
 |------|-------|--------------|-----|--------------|-----------|-----------------|---------------------|
-| Standard_B2als_v2 | 2 | 3.9 | - | x86_64 |  | $0.0432 | 1 |
-| Standard_B2as_v2 | 2 | 7.8 | - | x86_64 |  | $0.0865 | 1 |
-| Standard_B4as_v2 | 4 | 15.6 | - | x86_64 |  | $0.1730 | 1 |
+| Standard_D2s_v5 | 2 | 7.8 | - | x86_64 |  | $0.1100 | 1 |
+| Standard_D4s_v4 | 4 | 15.6 | - | x86_64 |  | $0.2210 | 1 |
+| Standard_F2s_v2 | 2 | 3.9 | - | x86_64 |  | $0.0961 | 1 |
 
 ### VM Images
 
@@ -42,9 +42,9 @@
 
 | VM Name | CSP VM ID | Status | Spec (vCPU, Memory GiB) | Image | Misc |
 |---------|-----------|--------|-------------------------|-------|------|
-| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb47rdbchrml8ed3m04o | Running | 2 vCPU, 3.9 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 52.231.152.188<br>**Private IP:** 10.0.1.5<br>**SGs:** my-sg-01<br>**SSH:** my-sshkey-01 |
-| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb764v6q5ovm4g4o6v0k | Running | 2 vCPU, 7.8 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 20.200.131.21<br>**Private IP:** 10.0.1.6<br>**SGs:** my-sg-03<br>**SSH:** my-sshkey-01 |
-| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb9adug1btujrrpl8oc6 | Running | 4 vCPU, 15.6 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 20.200.137.188<br>**Private IP:** 10.0.1.4<br>**SGs:** my-sg-02<br>**SSH:** my-sshkey-01 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbtqqu2g7bcd6jvo3h9s | Running | 2 vCPU, 3.9 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 20.214.42.215<br>**Private IP:** 10.0.1.6<br>**SGs:** my-sg-01<br>**SSH:** my-sshkey-01 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tbfpieio51omm9srsbtn | Running | 2 vCPU, 7.8 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 20.214.42.182<br>**Private IP:** 10.0.1.4<br>**SGs:** my-sg-03<br>**SSH:** my-sshkey-01 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Compute/virtualMachines/tb8cortvrqigps20ufjt | Running | 4 vCPU, 15.6 GiB | Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110 (Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:22.04.202606110) | **VNet:** my-vnet-01<br>**Subnet:** my-subnet-01<br>**Public IP:** 52.147.121.213<br>**Private IP:** 10.0.1.5<br>**SGs:** my-sg-02<br>**SSH:** my-sshkey-01 |
 
 
 ## Network Resources
@@ -56,7 +56,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-vnet-01 |
-| **CSP VNet ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb71ak3s50q2mhtvng8e |
+| **CSP VNet ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb3fktutddb76eju6pon |
 | **CIDR Block** | 10.0.0.0/21 |
 | **Connection** | azure-koreasouth |
 | **Subnet Count** | 1 |
@@ -65,7 +65,7 @@
 
 | Name | CSP Subnet ID | CIDR Block | Zone |
 |------|---------------|------------|------|
-| my-subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb71ak3s50q2mhtvng8e/subnets/tblvt7dndv3p4ij1t7p0 | 10.0.1.0/24 |  |
+| my-subnet-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/virtualNetworks/tb3fktutddb76eju6pon/subnets/tb20okckm9vtdu5ka1t1 | 10.0.1.0/24 |  |
 
 
 ## Security Resources
@@ -74,7 +74,7 @@
 
 | Name | CSP SSH Key ID | Username | Fingerprint |
 |------|----------------|----------|-------------|
-| my-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/tbcl499f2quf7f8rrenr |  |  |
+| my-sshkey-01 | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/KOREASOUTH/providers/Microsoft.Compute/sshPublicKeys/tbchu13qdua3ihhm38bh |  |  |
 
 ### Security Groups
 
@@ -83,7 +83,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-sg-01 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb4hht9gnvg1e6p3ubo9 |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tbm60ik8ar8mrom9g9km |
 | **VNet** | my-vnet-01 |
 | **Rule Count** | 14 rules |
 
@@ -111,7 +111,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-sg-02 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tbhehlg26acmcjei88hm |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb4qijfqr0884kcmv1rc |
 | **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -144,7 +144,7 @@
 | Property | Value |
 |----------|-------|
 | **Name** | my-sg-03 |
-| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tbu13bbjhkuuk2e5phft |
+| **CSP Security Group ID** | /subscriptions/AZURE_SUBSCRIPTION_ID/resourceGroups/koreasouth/providers/Microsoft.Network/networkSecurityGroups/tb63i3j8opcstkeknnds |
 | **VNet** | my-vnet-01 |
 | **Rule Count** | 19 rules |
 
@@ -179,22 +179,22 @@
 
 | Period | Cost (USD) |
 |--------|------------|
-| **Per Hour** | $0.3027 |
-| **Per Day** | $7.26 |
-| **Per Month (30 days)** | $217.94 |
+| **Per Hour** | $0.4271 |
+| **Per Day** | $10.25 |
+| **Per Month (30 days)** | $307.51 |
 
 ### Cost by Region
 
 | CSP | Region | VM Count | Cost/Hour (USD) | Cost/Month (USD) |
 |-----|--------|----------|-----------------|------------------|
-| AZURE | koreasouth | 3 | $0.3027 | $217.94 |
+| AZURE | koreasouth | 3 | $0.4271 | $307.51 |
 
 ### Cost by Virtual Machine
 
 | VM Name | Spec | Cost/Hour (USD) | Cost/Month (USD) |
 |---------|------|-----------------|------------------|
-| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | Standard_B2als_v2 | $0.0432 | $31.10 |
-| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | Standard_B2as_v2 | $0.0865 | $62.28 |
-| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | Standard_B4as_v2 | $0.1730 | $124.56 |
+| my-vm-ec268ed7-821e-9d73-e79f-961262161624-1 | Standard_F2s_v2 | $0.0961 | $69.19 |
+| my-vm-ec288dd0-c6fa-8a49-2f60-bc898311febf-1 | Standard_D2s_v5 | $0.1100 | $79.20 |
+| my-vm-ec2d32b5-98fb-5a96-7913-d3db1ec18932-1 | Standard_D4s_v4 | $0.2210 | $159.12 |
 
 

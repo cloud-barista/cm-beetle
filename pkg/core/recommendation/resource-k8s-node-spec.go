@@ -215,7 +215,7 @@ func RecommendK8sNodeSpecs(provider, region string, worker onpremmodel.NodePrope
 				return nil, upscaleNote, fmt.Errorf("failed to convert K8s worker spec list: %w", err)
 			}
 
-			sortByProximityWithCost(minVcpu, minMem, converted)
+			sortByProximityWithCost(converted, minVcpu, minMem, strings.ToLower(provider), extractCpuVendor(worker.CPU.Vendor))
 			if len(converted) > limit {
 				converted = converted[:limit]
 			}

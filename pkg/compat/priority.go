@@ -10,12 +10,12 @@ import (
 
 // List of keywords for image prioritization
 const (
-	PriorityStandard   = 0
-	PriorityMinimal    = 1
-	PriorityK8s        = 2
-	PriorityProMinimal = 3
-	PriorityPro        = 4
-	PriorityTest       = 5
+	PriorityStandard    = 0
+	PriorityMinimal     = 1
+	PriorityK8s         = 2
+	PriorityProMinimal  = 3
+	PriorityPro         = 4
+	PriorityTest        = 5
 	PriorityMarketplace = 10
 )
 
@@ -71,16 +71,16 @@ func isAzureMarketplaceImage(image cloudmodel.ImageInfo) bool {
 	if len(parts) >= 1 && parts[0] != "" {
 		publisher := parts[0]
 		standardPublishers := map[string]bool{
-			"canonical":               true,
-			"redhat":                  true,
-			"suse":                    true,
-			"openlogic":               true,
-			"debian":                  true,
-			"oracle":                  true,
-			"microsoftwindowsserver":  true,
-			"microsoftsqlserver":      true,
-			"almalinux":               true,
-			"rockylinux":              true,
+			"canonical":                        true,
+			"redhat":                           true,
+			"suse":                             true,
+			"openlogic":                        true,
+			"debian":                           true,
+			"oracle":                           true,
+			"microsoftwindowsserver":           true,
+			"microsoftsqlserver":               true,
+			"almalinux":                        true,
+			"rockylinux":                       true,
 			"center-for-internet-security-inc": true, // CIS images are often marketplace but sometimes well-known; we use keywords for CIS too
 		}
 
@@ -92,9 +92,9 @@ func isAzureMarketplaceImage(image cloudmodel.ImageInfo) bool {
 
 	// 2. Check for known Marketplace keywords in names and distribution
 	dist := strings.ToLower(image.OSDistribution)
-	
+
 	marketplaceKeywords := []string{
-		"hardened", "cis-", "checkpoint", "fortinet", "f5-", 
+		"hardened", "cis-", "checkpoint", "fortinet", "f5-",
 		"barracuda", "bitnami", "fips-", "byos",
 	}
 

@@ -294,7 +294,7 @@ func RecommendInfraWithNlbCandidates(desiredCsp, desiredRegion string, srcInfra 
 	// TODO: pass sizingPolicy as a user-configurable parameter when RecommendVmSpecs supports it.
 	pairsByGroup := make([][]CompatibleSpecImagePair, len(ngBlueprints))
 	for ngIdx, bp := range ngBlueprints {
-		specList, _, specErr := RecommendVmSpecs(csp, region, bp.representativeNode, limitSpecs)
+		specList, _, specErr := RecommendNodeSpecs(csp, region, bp.representativeNode, limitSpecs)
 		if specErr != nil {
 			log.Warn().Err(specErr).Str("machineId", bp.representativeNode.MachineId).Str("sizingPolicy", sizingPolicy).Msg("failed to recommend VM specs")
 		}

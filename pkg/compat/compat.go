@@ -50,6 +50,33 @@ func CheckCompatibility(csp string, spec cloudmodel.SpecInfo, image cloudmodel.I
 	}
 }
 
+// GetCpuVendor returns a normalized CPU vendor string ("amd", "intel", or "") for a CSP spec,
+// derived from whatever signal is available for that CSP (name convention or, for Alibaba,
+// structured spec Details). Returns "" for CSPs without a vendor detector or when the spec
+// doesn't match a known pattern. Callers must treat "" as unknown/unclassified, never as a
+// default vendor.
+func GetCpuVendor(csp string, spec cloudmodel.SpecInfo) string {
+	switch strings.ToLower(csp) {
+	case "aws":
+		return getAwsCpuVendor(spec.CspSpecName)
+	case "azure":
+		return getAzureCpuVendor(spec.CspSpecName)
+	case "gcp":
+		return getGcpCpuVendor(spec.CspSpecName)
+	case "alibaba":
+		return getAlibabaCpuVendor(spec)
+	case "ibm":
+		return getIbmCpuVendor(spec.CspSpecName)
+	case "ncp":
+		return getNcpCpuVendor(spec.CspSpecName)
+	default:
+		// tencent, nhn, kt, openstack: not currently enabled recommendation CSPs (see
+		// isSupportedCSP in pkg/core/recommendation/infra.go) and not researched - revisit if
+		// one of them is enabled.
+		return ""
+	}
+}
+
 // isArchitectureCompatible checks CPU architecture compatibility for all CSPs
 func isArchitectureCompatible(csp string, spec cloudmodel.SpecInfo, image cloudmodel.ImageInfo) bool {
 	if spec.Architecture != "" && string(image.OSArchitecture) != "" {
