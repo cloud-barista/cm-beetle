@@ -12,7 +12,7 @@
 
 - **Name:** Beetle UX Lab
 - **Tagline:** Cloud Infrastructure Migration Laboratory
-- **Version:** v0.5.6
+- **Version:** v0.6.0
 - **Concept:** Inspired by the iridescent emerald-teal colors of scarab beetles in nature
 
 ### Logo

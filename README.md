@@ -64,7 +64,11 @@ Data migration transfers data between storage endpoints regardless of which CSP 
 - [Kubernetes Infrastructure](docs/feature-guide/kubernetes-infrastructure.md)
 - [Managed Middleware](docs/feature-guide/managed-middleware.md)
 - [Object Storage Migration](docs/feature-guide/object-storage-migration-feature-guide.md)
+- [Network Load Balancer (NLB)](docs/feature-guide/nlb-feature-guide.md)
 - [Data Migration](docs/feature-guide/data-migration-feature-guide.md)
+- [Validation](docs/feature-guide/validation-feature-guide.md)
+- [Naming (NameSeed)](docs/feature-guide/naming-nameseed.md)
+- [Async Responses](docs/feature-guide/async-responses.md)
 
 ## Execution and development environment
 
@@ -78,7 +82,8 @@ Data migration transfers data between storage endpoints regardless of which CSP 
 
 ## How to run and use CM-Beetle
 
-1. [How to deploy CM-Beetle, along with its related components](https://github.com/cloud-barista/cm-beetle/discussions/105)
+1. [Installation and execution guide](docs/installation-and-execution.md)
+2. [How to deploy CM-Beetle, along with its related components](https://github.com/cloud-barista/cm-beetle/discussions/105)
 
 Note - Deprecated, [How to run and use the CM-Beetle](https://github.com/cloud-barista/cm-beetle/discussions/73)
 
