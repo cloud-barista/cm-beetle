@@ -92,7 +92,7 @@ func RunServer(port string) {
 
 	// Set dynamically Swagger info
 	apiDocs.SwaggerInfo.Host = config.Beetle.Self.Endpoint
-	apiDocs.SwaggerInfo.Version = "0.5.0"
+	apiDocs.SwaggerInfo.Version = "latest"
 
 	// Middleware
 	// e.Use(middleware.Logger()) // default logger middleware in echo
