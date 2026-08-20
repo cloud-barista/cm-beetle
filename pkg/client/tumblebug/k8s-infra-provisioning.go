@@ -277,6 +277,35 @@ func (s *Session) ReadAllK8sClusters(nsId string) (K8sClusterList, error) {
 	return resBody, nil
 }
 
+// ReadK8sClusterIds retrieves only the K8s cluster IDs in the namespace.
+//
+// Tumblebug's full cluster list refreshes every cluster's state through Spider, so its cost
+// grows with the number of clusters and can exceed Tumblebug's own 120 s request timeout.
+// The `option=id` variant reads IDs straight from Tumblebug's key-value store, which stays
+// cheap no matter how many clusters exist.
+func (s *Session) ReadK8sClusterIds(nsId string) (tbmodel.IdList, error) {
+	log.Debug().Str("nsId", nsId).Msg("Reading K8s cluster IDs")
+
+	emptyRet := tbmodel.IdList{}
+	url := fmt.Sprintf("/ns/%s/k8sCluster?option=id", nsId)
+	resBody := tbmodel.IdList{}
+
+	resp, err := s.
+		SetResult(&resBody).
+		Get(url)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read K8s cluster IDs")
+		return emptyRet, err
+	}
+	if resp.IsError() {
+		return emptyRet, fmt.Errorf("API request failed with status: %d, body: %s", resp.StatusCode(), resp.String())
+	}
+
+	log.Debug().Int("count", len(resBody.IdList)).Msg("Read K8s cluster IDs successfully")
+	return resBody, nil
+}
+
 // CheckK8sNodeGroupsOnCreation checks whether the given CSP requires NodeGroups
 // to be included in the K8s cluster creation request (nodeGroupsOnCreation=true),
 // or allows them to be added separately after cluster creation (nodeGroupsOnCreation=false).
