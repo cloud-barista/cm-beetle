@@ -1,0 +1,78 @@
+{
+  "servers": [
+    {
+      "node_count": {
+        "total": 3,
+        "control_plane": 1,
+        "worker": 2
+      },
+      "nodes": [
+        {
+          "type": "control-plane",
+          "name": "k8s-master-1",
+          "labels": {
+            "kubernetes.io/arch": "amd64",
+            "kubernetes.io/hostname": "k8s-master-1",
+            "kubernetes.io/os": "linux",
+            "node-role.kubernetes.io/control-plane": ""
+          },
+          "addresses": [
+            { "type": "InternalIP", "address": "10.0.0.10" },
+            { "type": "Hostname",   "address": "k8s-master-1" }
+          ],
+          "node_spec": {
+            "cpu": 4,
+            "memory": 8192,
+            "ephemeral_storage": 102400
+          },
+          "node_info": {
+            "machineID": "8bb703c5d378420db97f6636cf454530",
+            "osImage": "Ubuntu 22.04.3 LTS",
+            "containerRuntimeVersion": "containerd://1.7.2",
+            "kubeletVersion": "v1.32.3",
+            "kubeProxyVersion": "v1.32.3",
+            "operatingSystem": "linux",
+            "architecture": "amd64"
+          }
+        },
+        {
+          "type": "worker",
+          "name": "k8s-worker-1",
+          "node_spec": {
+            "cpu": 4,
+            "memory": 8192,
+            "ephemeral_storage": 102400
+          },
+          "node_info": {
+            "machineID": "a1b2c3d4e5f647809abcdef012345678",
+            "osImage": "Ubuntu 22.04.3 LTS",
+            "kubeletVersion": "v1.32.3",
+            "operatingSystem": "linux",
+            "architecture": "amd64"
+          }
+        },
+        {
+          "type": "worker",
+          "name": "k8s-worker-2",
+          "node_spec": {
+            "cpu": 4,
+            "memory": 8192,
+            "ephemeral_storage": 102400
+          },
+          "node_info": {
+            "machineID": "c3d4e5f6a7b849012cdef345678901ab",
+            "osImage": "Ubuntu 22.04.3 LTS",
+            "kubeletVersion": "v1.32.3",
+            "operatingSystem": "linux",
+            "architecture": "amd64"
+          }
+        }
+      ],
+      "workloads": {
+        "namespace_count": 5,
+        "pod_count": 18,
+        "deployment_count": 6
+      }
+    }
+  ]
+}

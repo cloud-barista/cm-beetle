@@ -55,6 +55,14 @@ cmd/test-cli/rate-limiting/testconf/test-config.yaml
 cmd/test-cli/multi-infra-recommendation/test-multi-infra-recommendation
 cmd/test-cli/multi-infra-recommendation/testconf/auth-config.json
 cmd/test-cli/multi-infra-recommendation/testconf/test-config.yaml
+cmd/test-cli/k8s-infra-recommendation/test-k8s-infra-recommendation
+cmd/test-cli/k8s-infra-recommendation/k8s-infra-recommendation
+cmd/test-cli/k8s-infra-recommendation/testconf/auth-config.json
+cmd/test-cli/k8s-infra-recommendation/testconf/test-config.yaml
+cmd/test-cli/k8s-infra-migration/test-k8s-infra-migration
+cmd/test-cli/k8s-infra-migration/k8s-infra-migration
+cmd/test-cli/k8s-infra-migration/testconf/auth-config.json
+cmd/test-cli/k8s-infra-migration/testconf/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*
@@ -102,6 +110,10 @@ deployments/docker-compose/data
 
 # Backup Files
 *_backup
+
+# Work-in-progress docs (personal notes, drafts, and material that must not be
+# published — e.g. patent drafts, whose disclosure in a public repo can destroy novelty)
+docs/_wip/
 
 # Specific Project Excludes
 transx/examples/object-storage/main

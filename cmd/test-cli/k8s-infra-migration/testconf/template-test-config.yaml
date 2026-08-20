@@ -1,0 +1,98 @@
+test:
+  set:
+    mode: parallel # parallel or sequential
+    # Stagger between parallel target starts, so concurrent runs do not burst
+    # Tumblebug's read APIs at once. See docs/tumblebug-call-pacer.md.
+    startDelaySeconds: 10
+
+  # WARNING: every enabled target provisions a real managed K8s cluster and incurs cost.
+  # Enable one CSP at a time until the flow is confirmed for it.
+  cases:
+    # Enable exactly the CSP you intend to provision. All disabled by default so that
+    # `make test-k8s-infra-migration` never provisions anything by accident.
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: false
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: false
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: false
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: false
+    - csp: tencent
+      region: ap-seoul
+      name: Tencent-Seoul
+      execute: false
+    - csp: ibm
+      region: au-syd
+      name: IBMCloud-Sydney
+      execute: false
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: false
+    - csp: nhn
+      region: kr1
+      name: NHNCloud-Pangyo
+      execute: false
+
+beetle:
+  endpoint: http://localhost:8056
+  namespaceId: mig01
+  authConfigFile: testconf/auth-config.json
+  requestBodyFile: testconf/recommendation-request.json
+  # Prefix for every resource name, with a per-target suffix appended (mig -> mig01, mig02...).
+  # Recommendations produce fixed names, so without a seed a second target would collide with
+  # the first. Leave empty to keep the raw names (single-target runs only). Max 20 chars.
+  nameSeed: mig
+
+migration:
+  # async (default): Prefer: respond-async -> 202 -> poll GET /request/{reqId}.
+  #                  Keeps the HTTP connection short and prints progress while waiting.
+  # sync:            hold the connection until the cluster is Active. Exercises the
+  #                  blocking path; needs timeoutSec to exceed Beetle's own 40 min budget.
+  mode: async
+  timeoutSec: 3600
+
+poll:
+  intervalSec: 30
+  timeoutSec: 3600 # 60 min > Beetle's 40 min Active-polling budget
+
+delete:
+  # Deletion has no async mode and Beetle waits for node group teardown (up to 20 min).
+  timeoutSec: 1800
+  # Some CSPs reject deletion for minutes after reporting Active (observed on NCP),
+  # so failures are retried on a fixed backoff rather than matched on error strings.
+  retryIntervalSec: 60
+  maxRetries: 10
+
+verify:
+  # Report whether VNet/SecurityGroup/SshKey survive cluster deletion. Informational only:
+  # leftover prerequisites are current known behaviour, tracked as a Beetle improvement.
+  # Requires tumblebugEndpoint in auth-config.json.
+  residualResources: true
+
+workload:
+  # Verify the cluster is actually usable: fetch its kubeconfig from CB-Tumblebug, reach the
+  # K8s API server directly, run an nginx Deployment, then remove it. Runs before deletion.
+  # The K8s counterpart of the SSH connectivity check cmd/test-cli/infra does for VMs.
+  # Requires tumblebugEndpoint in auth-config.json. No Docker or kubectl needed.
+  enabled: true
+  kubeconfigTimeoutSec: 600 # kubeconfig lags the Active status on some CSPs
+  kubeconfigPollSec: 60
+  podReadyTimeoutSec: 180
+  podPollSec: 10
+  # Publish nginx through a LoadBalancer Service and fetch it from outside the cluster.
+  # Scheduling a pod proves the cluster runs work; this proves the work is reachable — a
+  # distinct failure mode seen on some CSPs. Adds roughly 2-6 minutes per target.
+  loadBalancerEnabled: true
+  lbAddressTimeoutSec: 900 # CSP load balancer provisioning is slow
+  lbAccessTimeoutSec: 300  # health checks and DNS settle after the address appears
+  lbPollSec: 15
