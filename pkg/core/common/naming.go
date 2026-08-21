@@ -56,7 +56,36 @@ func ApplyNameSeed(infra cloudmodel.RecommendedInfra, seed string) cloudmodel.Re
 		}
 	}
 
-	// 4. Update Infra and NodeGroups
+	// 4. Update K8s cluster and its references to the seeded resources above.
+	//
+	// Node group names are deliberately left unseeded: they are scoped inside the cluster, so
+	// two clusters can both hold a "workers1" without colliding, and they are subject to
+	// per-CSP length limits (Azure allows 12 characters) that a prefix would overflow.
+	if infra.TargetK8sCluster.Name != "" {
+		result.TargetK8sCluster.Name = ComposeName(infra.TargetK8sCluster.Name, seed)
+		result.TargetK8sCluster.VNetId = ComposeName(infra.TargetK8sCluster.VNetId, seed)
+
+		newSubnetIds := make([]string, len(infra.TargetK8sCluster.SubnetIds))
+		for i, subnetId := range infra.TargetK8sCluster.SubnetIds {
+			newSubnetIds[i] = ComposeName(subnetId, seed)
+		}
+		result.TargetK8sCluster.SubnetIds = newSubnetIds
+
+		newSgIds := make([]string, len(infra.TargetK8sCluster.SecurityGroupIds))
+		for i, sgId := range infra.TargetK8sCluster.SecurityGroupIds {
+			newSgIds[i] = ComposeName(sgId, seed)
+		}
+		result.TargetK8sCluster.SecurityGroupIds = newSgIds
+
+		newNodeGroups := make([]cloudmodel.K8sNodeGroupReq, len(infra.TargetK8sCluster.K8sNodeGroupList))
+		copy(newNodeGroups, infra.TargetK8sCluster.K8sNodeGroupList)
+		for i, ng := range infra.TargetK8sCluster.K8sNodeGroupList {
+			newNodeGroups[i].SshKeyId = ComposeName(ng.SshKeyId, seed)
+		}
+		result.TargetK8sCluster.K8sNodeGroupList = newNodeGroups
+	}
+
+	// 5. Update Infra and NodeGroups
 	result.TargetInfra.Name = ComposeName(infra.TargetInfra.Name, seed)
 	for i, ng := range infra.TargetInfra.NodeGroups {
 		result.TargetInfra.NodeGroups[i].Name = ComposeName(ng.Name, seed)

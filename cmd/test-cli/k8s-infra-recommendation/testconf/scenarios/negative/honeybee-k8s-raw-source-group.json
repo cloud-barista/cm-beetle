@@ -1,0 +1,170 @@
+[
+  {
+    "connection_id": "7b5ce31d-a5dc-499b-83c0-e3b816c4d024",
+    "hostname": "k8s-master-1",
+    "kubernetes": {
+      "servers": [
+        {
+          "node_count": {
+            "total": 3,
+            "control_plane": 1,
+            "worker": 2
+          },
+          "nodes": [
+            {
+              "type": "control-plane",
+              "name": "k8s-master-1",
+              "labels": {
+                "beta.kubernetes.io/arch": "amd64",
+                "beta.kubernetes.io/os": "linux",
+                "kubernetes.io/arch": "amd64",
+                "kubernetes.io/hostname": "k8s-master-1",
+                "kubernetes.io/os": "linux",
+                "node-role.kubernetes.io/control-plane": "",
+                "node.kubernetes.io/exclude-from-external-load-balancers": ""
+              },
+              "addresses": [
+                {
+                  "type": "InternalIP",
+                  "address": "10.0.0.10"
+                },
+                {
+                  "type": "Hostname",
+                  "address": "k8s-master-1"
+                }
+              ],
+              "node_spec": {
+                "cpu": 4,
+                "memory": 8192,
+                "ephemeral_storage": 102400
+              },
+              "node_info": {
+                "machineID": "8bb703c5d378420db97f6636cf454530",
+                "systemUUID": "ec2a3c60-0000-1111-2222-3d4e5f6a7b8c",
+                "bootID": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "kernelVersion": "5.15.0-91-generic",
+                "osImage": "Ubuntu 22.04.3 LTS",
+                "containerRuntimeVersion": "containerd://1.7.2",
+                "kubeletVersion": "v1.32.3",
+                "kubeProxyVersion": "v1.32.3",
+                "operatingSystem": "linux",
+                "architecture": "amd64"
+              }
+            },
+            {
+              "type": "worker",
+              "name": "k8s-worker-1",
+              "labels": {
+                "beta.kubernetes.io/arch": "amd64",
+                "beta.kubernetes.io/os": "linux",
+                "kubernetes.io/arch": "amd64",
+                "kubernetes.io/hostname": "k8s-worker-1",
+                "kubernetes.io/os": "linux",
+                "node-role.kubernetes.io/worker": ""
+              },
+              "addresses": [
+                {
+                  "type": "InternalIP",
+                  "address": "10.0.0.11"
+                },
+                {
+                  "type": "Hostname",
+                  "address": "k8s-worker-1"
+                }
+              ],
+              "node_spec": {
+                "cpu": 4,
+                "memory": 8192,
+                "ephemeral_storage": 102400
+              },
+              "node_info": {
+                "machineID": "a1b2c3d4e5f647809abcdef012345678",
+                "systemUUID": "ec2a3c60-1111-2222-3333-4d5e6f7a8b9c",
+                "bootID": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                "kernelVersion": "5.15.0-91-generic",
+                "osImage": "Ubuntu 22.04.3 LTS",
+                "containerRuntimeVersion": "containerd://1.7.2",
+                "kubeletVersion": "v1.32.3",
+                "kubeProxyVersion": "v1.32.3",
+                "operatingSystem": "linux",
+                "architecture": "amd64"
+              }
+            },
+            {
+              "type": "worker",
+              "name": "k8s-worker-2",
+              "labels": {
+                "beta.kubernetes.io/arch": "amd64",
+                "beta.kubernetes.io/os": "linux",
+                "kubernetes.io/arch": "amd64",
+                "kubernetes.io/hostname": "k8s-worker-2",
+                "kubernetes.io/os": "linux",
+                "node-role.kubernetes.io/worker": ""
+              },
+              "addresses": [
+                {
+                  "type": "InternalIP",
+                  "address": "10.0.0.12"
+                },
+                {
+                  "type": "Hostname",
+                  "address": "k8s-worker-2"
+                }
+              ],
+              "node_spec": {
+                "cpu": 4,
+                "memory": 8192,
+                "ephemeral_storage": 102400
+              },
+              "node_info": {
+                "machineID": "c3d4e5f6a7b849012cdef345678901ab",
+                "systemUUID": "ec2a3c60-2222-3333-4444-5d6e7f8a9b0c",
+                "bootID": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+                "kernelVersion": "5.15.0-91-generic",
+                "osImage": "Ubuntu 22.04.3 LTS",
+                "containerRuntimeVersion": "containerd://1.7.2",
+                "kubeletVersion": "v1.32.3",
+                "kubeProxyVersion": "v1.32.3",
+                "operatingSystem": "linux",
+                "architecture": "amd64"
+              }
+            }
+          ],
+          "workloads": {
+            "namespace_count": 5,
+            "pod_count": 18,
+            "deployment_count": 6,
+            "statefulset_count": 2,
+            "daemonset_count": 3,
+            "service_count": 10,
+            "ingress_count": 1,
+            "configmap_count": 12,
+            "secret_count": 8,
+            "pvc_count": 3,
+            "namespaces": [
+              "default",
+              "kube-system",
+              "kube-public",
+              "kube-node-lease",
+              "monitoring"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "connection_id": "9c4df42e-b6ed-5a0c-94d1-f4c927d5e135",
+    "hostname": "k8s-worker-1",
+    "kubernetes": {
+      "servers": []
+    }
+  },
+  {
+    "connection_id": "ad5eg53f-c7fe-6b1d-a5e2-g5da38e6f246",
+    "hostname": "k8s-worker-2",
+    "kubernetes": {
+      "servers": []
+    }
+  }
+]

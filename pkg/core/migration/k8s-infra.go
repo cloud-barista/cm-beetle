@@ -22,6 +22,7 @@ import (
 	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
+	"github.com/cloud-barista/cm-beetle/pkg/core/validation"
 	"github.com/cloud-barista/cm-beetle/pkg/modelconv"
 	"github.com/rs/zerolog/log"
 )
@@ -105,6 +106,16 @@ func (p *k8sClusterPrereqs) createSecurityGroup(provider string, sgReq tbmodel.S
 		}
 	}
 	return info, nil
+}
+
+// subnetNamesOf lists the subnet names a VNet request asks for, which is what
+// CheckNetworkAvailability compares against an existing VNet's subnets.
+func subnetNamesOf(vNetReq cloudmodel.VNetReq) []string {
+	names := make([]string, 0, len(vNetReq.SubnetInfoList))
+	for _, sn := range vNetReq.SubnetInfoList {
+		names = append(names, sn.Name)
+	}
+	return names
 }
 
 // splitFirewallRulesByDirection separates a rule set into inbound and outbound rules.
@@ -193,6 +204,10 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 	// Resources that already existed (idempotency case) are not tracked.
 	prereqs := &k8sClusterPrereqs{nsId: nsId}
 
+	// connectionName pins the target CSP+region+credential. Prerequisite resources must belong
+	// to the same connection as the cluster, so it is the value every availability check compares.
+	connectionName := req.TargetK8sCluster.ConnectionName
+
 	// 1. Verify namespace exists
 	_, err := tbclient.NewSession().ReadNamespace(nsId)
 	if err != nil {
@@ -209,6 +224,17 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 	tbVNetReq, err := modelconv.ConvertWithValidation[cloudmodel.VNetReq, tbmodel.VNetReq](req.TargetVNet)
 	if err != nil {
 		return emptyRet, fmt.Errorf("failed to convert VNet request: %w", err)
+	}
+
+	// An existing resource with the same name may belong to a different CSP/region, in which
+	// case reusing it would attach the cluster to the wrong cloud. The VM migration path guards
+	// against this with validation.Check*Availability; K8s uses the same gate.
+	if _, issue := validation.CheckNetworkAvailability(nsId, validation.NetworkRequirement{
+		VNetId:         req.TargetVNet.Name,
+		SubnetIds:      subnetNamesOf(req.TargetVNet),
+		ConnectionName: connectionName,
+	}, req.TargetVNet); issue != nil {
+		return emptyRet, fmt.Errorf("%s", issue.Message)
 	}
 
 	vNetInfo, err := tbclient.NewSession().CreateVNet(nsId, tbVNetReq)
@@ -240,6 +266,14 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 		return emptyRet, fmt.Errorf("failed to convert SshKey request: %w", err)
 	}
 
+	if _, issue := validation.CheckSshKeyAvailability(nsId, validation.SshKeyRequirement{
+		SshKeyId:       req.TargetSshKey.Name,
+		ConnectionName: connectionName,
+	}, req.TargetSshKey); issue != nil {
+		prereqs.rollback()
+		return emptyRet, fmt.Errorf("%s", issue.Message)
+	}
+
 	sshKeyInfo, err := tbclient.NewSession().CreateSshKey(nsId, tbSshKeyReq)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
@@ -267,6 +301,15 @@ func CreateK8sInfra(nsId string, req *cloudmodel.RecommendedInfra) (tbmodel.K8sC
 		if err != nil {
 			prereqs.rollback()
 			return emptyRet, fmt.Errorf("failed to convert SecurityGroup request: %w", err)
+		}
+
+		if _, issue := validation.CheckSecurityGroupAvailability(nsId, validation.SecurityGroupRequirement{
+			SecurityGroupId: sg.Name,
+			VNetId:          vNetInfo.Id,
+			ConnectionName:  connectionName,
+		}, req.TargetSecurityGroupList); issue != nil {
+			prereqs.rollback()
+			return emptyRet, fmt.Errorf("%s", issue.Message)
 		}
 
 		sgInfo, err := prereqs.createSecurityGroup(req.TargetCloud.Csp, tbSgReq)
@@ -389,6 +432,22 @@ func ListK8sClusters(nsId string) ([]tbmodel.K8sClusterInfo, error) {
 		return []tbmodel.K8sClusterInfo{}, nil
 	}
 	return list.K8sClusters, nil
+}
+
+// ListK8sClusterIds returns only the IDs of the K8s clusters in the namespace. Callers that
+// merely need to know which clusters exist should prefer this over ListK8sClusters, whose
+// cost grows with the cluster count because Tumblebug refreshes each one through Spider.
+func ListK8sClusterIds(nsId string) (cloudmodel.IdList, error) {
+	idList := cloudmodel.IdList{IdList: []string{}}
+
+	list, err := tbclient.NewSession().ReadK8sClusterIds(nsId)
+	if err != nil {
+		return idList, err
+	}
+	if list.IdList != nil {
+		idList.IdList = list.IdList
+	}
+	return idList, nil
 }
 
 // GetK8sCluster returns the K8s cluster info for the given ID.

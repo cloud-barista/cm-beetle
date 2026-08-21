@@ -63,6 +63,7 @@ type MigrateK8sInfraResponse struct {
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param nameSeed query string false "Optional prefix for all resource names (e.g., 'blue' -> 'blue-k8s-vpc', 'blue-on-prem-k8s-cluster'). Node group names are left unprefixed because they are scoped inside the cluster and bound by per-CSP length limits. Applied at migration time."
 // @Param k8sInfraInfo body MigrateK8sInfraRequest true "K8s infra recommendation (from POST /recommendation/k8sCluster)"
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
 // @Param Prefer header string false "Set to 'respond-async' to run this migration asynchronously (RFC 7240)" Enums(respond-async)
@@ -88,10 +89,18 @@ func MigrateK8sInfra(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Cluster name required"))
 	}
 
+	// Late-binding names let several migrations share one namespace: without a seed every run
+	// would reuse the same fixed resource names and collide with the previous one.
+	nameSeed := c.QueryParam("nameSeed")
+	if ok, detail := common.IsValidNameSeed(nameSeed); !ok {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Invalid nameSeed: "+detail))
+	}
+	infraToMigrate := common.ApplyNameSeed(req.RecommendedInfra, nameSeed)
+
 	if preferRespondAsync(c) {
 		reqID := c.Request().Header.Get(echo.HeaderXRequestID)
 		started := common.RunAsync(reqID, func() (tbmodel.K8sClusterInfo, error) {
-			return migration.CreateK8sInfra(nsId, &req.RecommendedInfra)
+			return migration.CreateK8sInfra(nsId, &infraToMigrate)
 		})
 		if !started {
 			c.Response().Header().Set("Retry-After", "5")
@@ -108,7 +117,7 @@ func MigrateK8sInfra(c echo.Context) error {
 			"K8s infra migration started. Use GET /request/{reqId} to check status."))
 	}
 
-	clusterInfo, err := migration.CreateK8sInfra(nsId, &req.RecommendedInfra)
+	clusterInfo, err := migration.CreateK8sInfra(nsId, &infraToMigrate)
 	if err != nil {
 		log.Error().Err(err).Str("nsId", nsId).Msg("failed to migrate K8s infra")
 		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
@@ -121,18 +130,39 @@ func MigrateK8sInfra(c echo.Context) error {
 // @ID ListK8sClusters
 // @Summary List all migrated K8s clusters
 // @Description List all K8s clusters created in the namespace via cm-beetle migration.
+// @Description
+// @Description Use `option=id` to get only the cluster IDs. The full listing refreshes every
+// @Description cluster's state through the CSP, so its cost grows with the cluster count; the
+// @Description ID listing reads stored metadata only and stays cheap.
 // @Tags [Migration] K8s Infrastructure
 // @Accept  json
 // @Produce  json
 // @Param nsId path string true "Namespace ID" default(mig01)
+// @Param option query string false "Option for listing the migrated K8s clusters" Enums(id)
 // @Param X-Request-Id header string false "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs."
-// @Success 200 {object} model.ApiResponse[[]tbmodel.K8sClusterInfo] "List of migrated K8s clusters"
+// @Success 200 {object} model.ApiResponse[[]tbmodel.K8sClusterInfo] "List of migrated K8s clusters (or IDs when option=id)"
+// @Failure 400 {object} model.ApiResponse[any]
 // @Failure 500 {object} model.ApiResponse[any]
 // @Router /migration/ns/{nsId}/k8sCluster [get]
 func ListK8sClusters(c echo.Context) error {
 	nsId := c.Param("nsId")
 	if nsId == "" {
 		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("Namespace ID required"))
+	}
+
+	option := c.QueryParam("option")
+	if option != "" && option != "id" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse(
+			fmt.Sprintf("Invalid option: %s (only 'id' is supported)", option)))
+	}
+
+	if option == "id" {
+		idList, err := migration.ListK8sClusterIds(nsId)
+		if err != nil {
+			log.Error().Err(err).Str("nsId", nsId).Msg("failed to list K8s cluster IDs")
+			return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(err.Error()))
+		}
+		return c.JSON(http.StatusOK, model.SuccessResponse(idList))
 	}
 
 	clusters, err := migration.ListK8sClusters(nsId)

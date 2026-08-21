@@ -105,6 +105,8 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/async && $(GO) clean
 	@cd cmd/test-cli/rate-limiting && $(GO) clean
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) clean
+	@cd cmd/test-cli/k8s-infra-recommendation && $(GO) clean
+	@cd cmd/test-cli/k8s-infra-migration && $(GO) clean
 	@echo "Cleaned!"
 
 test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
@@ -162,6 +164,22 @@ test-multi-infra-recommendation: ## Run the multi-target infra recommendation te
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) run main.go -config testconf/test-config.yaml
+
+test-k8s-infra-recommendation: ## Run the K8s infra recommendation test CLI (scenario fixtures x CSP-Region pairs)
+	@echo "Running K8s infra recommendation test CLI..."
+	@if [ ! -f cmd/test-cli/k8s-infra-recommendation/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/k8s-infra-recommendation/testconf/template-test-config.yaml cmd/test-cli/k8s-infra-recommendation/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/k8s-infra-recommendation && $(GO) run main.go -config testconf/test-config.yaml
+
+test-k8s-infra-migration: ## Run the K8s infra migration test CLI (WARNING: provisions real clusters)
+	@echo "Running K8s infra migration test CLI..."
+	@if [ ! -f cmd/test-cli/k8s-infra-migration/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/k8s-infra-migration/testconf/template-test-config.yaml cmd/test-cli/k8s-infra-migration/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/k8s-infra-migration && $(GO) run . -config testconf/test-config.yaml
 
 test-data-clean: ## Clean up data migration test artifacts
 	@echo "Cleaning data migration test artifacts..."

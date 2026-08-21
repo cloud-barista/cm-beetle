@@ -1,0 +1,179 @@
+test:
+  set:
+    mode: parallel # parallel (per target) or sequential
+
+  # Target CSP/region pairs. Recommendation does not provision anything, so enabling
+  # several at once is cheap.
+  cases:
+    - csp: aws
+      region: ap-northeast-2
+      name: AWS-Seoul
+      execute: true
+    - csp: azure
+      region: koreasouth
+      name: Azure-Busan
+      execute: false
+    - csp: gcp
+      region: asia-northeast3
+      name: GCP-Seoul
+      execute: false
+    - csp: alibaba
+      region: ap-northeast-2
+      name: Alibaba-Seoul
+      execute: false
+    - csp: tencent
+      region: ap-seoul
+      name: Tencent-Seoul
+      execute: false
+    - csp: ibm
+      region: au-syd
+      name: IBMCloud-Sydney
+      execute: false
+    - csp: ncp
+      region: kr
+      name: NCP-Seoul
+      execute: false
+    - csp: nhn
+      region: kr1
+      name: NHNCloud-Pangyo
+      execute: false
+
+  # On-premise fixtures and what each must produce.
+  #
+  # expect.statusCode is required. The other expect fields are optional — omit one to skip
+  # that check. Structural checks (non-empty name/version/specId, desiredNodeSize >= 1) always
+  # run for statusCode 200.
+  scenarios:
+    - file: testconf/scenarios/honeybee-k8s-refined-infra.json
+      name: baseline
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-workers0.json
+      name: workers0
+      execute: true
+      expect:
+        statusCode: 400 # control-plane only: recommendation cannot be formed
+
+    - file: testconf/scenarios/honeybee-k8s-workers1.json
+      name: workers1
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 1
+
+    - file: testconf/scenarios/honeybee-k8s-workers5.json
+      name: workers5
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 5
+
+    - file: testconf/scenarios/honeybee-k8s-tiny.json
+      name: tiny-upscale
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 1
+
+    - file: testconf/scenarios/honeybee-k8s-3groups.json
+      name: three-groups
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 3
+        totalNodeSize: 3
+
+    - file: testconf/scenarios/honeybee-k8s-hetero.json
+      name: hetero-spec
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 2
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-mixed-arch.json
+      name: mixed-arch
+      execute: true
+      expect:
+        statusCode: 200
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-arm64.json
+      name: arm64
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-samecpu-diffdisk.json
+      name: samecpu-diffdisk
+      execute: true
+      expect:
+        statusCode: 200
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-spec-small.json
+      name: spec-small
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-spec-large.json
+      name: spec-large
+      execute: true
+      expect:
+        statusCode: 200
+        nodeGroupCount: 1
+        totalNodeSize: 2
+
+    - file: testconf/scenarios/honeybee-k8s-v134.json
+      name: version-1.34
+      execute: true
+      expect:
+        statusCode: 200
+
+    - file: testconf/scenarios/honeybee-k8s-v199.json
+      name: version-1.99-fallback
+      execute: true
+      expect:
+        statusCode: 200 # non-existent upstream version must fall back to the latest available
+
+    - file: testconf/scenarios/honeybee-k8s-norole.json
+      name: no-worker-role
+      execute: true
+      expect:
+        statusCode: 400
+
+    # Negative fixtures: cm-honeybee payloads captured before /infra/refined. Feeding these
+    # directly is a realistic user mistake, and the API must reject them cleanly.
+    - file: testconf/scenarios/negative/honeybee-k8s-raw-source-group.json
+      name: neg-raw-source-group
+      execute: true
+      expect:
+        statusCode: 400 # top-level JSON array: request binding fails
+
+    - file: testconf/scenarios/negative/honeybee-k8s-raw-connection-info.json
+      name: neg-raw-connection-info
+      execute: true
+      expect:
+        statusCode: 400
+
+    - file: testconf/scenarios/negative/beetle-k8s-recommendation-request.json
+      name: neg-unwrapped-servers
+      execute: true
+      expect:
+        statusCode: 400
+
+beetle:
+  endpoint: http://localhost:8056
+  authConfigFile: testconf/auth-config.json
