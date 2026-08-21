@@ -1931,7 +1931,7 @@ const docTemplate = `{
         },
         "/migration/ns/{nsId}/k8sCluster": {
             "get": {
-                "description": "List all K8s clusters created in the namespace via cm-beetle migration.",
+                "description": "List all K8s clusters created in the namespace via cm-beetle migration.\n\nUse ` + "`" + `option=id` + "`" + ` to get only the cluster IDs. The full listing refreshes every\ncluster's state through the CSP, so its cost grows with the cluster count; the\nID listing reads stored metadata only and stays cheap.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1953,6 +1953,15 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "enum": [
+                            "id"
+                        ],
+                        "type": "string",
+                        "description": "Option for listing the migrated K8s clusters",
+                        "name": "option",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Unique request ID (auto-generated if not provided). Used for tracking request status and correlating logs.",
                         "name": "X-Request-Id",
@@ -1961,9 +1970,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of migrated K8s clusters",
+                        "description": "List of migrated K8s clusters (or IDs when option=id)",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-array_model_K8sClusterInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     },
                     "500": {
@@ -1995,6 +2010,12 @@ const docTemplate = `{
                         "name": "nsId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional prefix for all resource names (e.g., 'blue' -\u003e 'blue-k8s-vpc', 'blue-on-prem-k8s-cluster'). Node group names are left unprefixed because they are scoped inside the cluster and bound by per-CSP length limits. Applied at migration time.",
+                        "name": "nameSeed",
+                        "in": "query"
                     },
                     {
                         "description": "K8s infra recommendation (from POST /recommendation/k8sCluster)",
