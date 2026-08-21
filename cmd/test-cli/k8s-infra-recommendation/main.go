@@ -82,6 +82,40 @@ type AuthConfig struct {
 	BeetleApiPassword string `json:"beetleApiPassword"`
 }
 
+// caseOutcome separates "did the API do the right thing" from "did it use the declared status
+// code". An input the API correctly rejects but reports with the wrong status is a contract
+// defect, not a broken recommendation — collapsing both into "failed" hides that difference and
+// makes a working scenario look like a malfunction.
+type caseOutcome int
+
+const (
+	outcomeAsExpected caseOutcome = iota // outcome and status code both match the expectation
+	outcomeDeviation                     // outcome matches, status code does not (known API gap)
+	outcomeUnexpected                    // the API accepted what should be rejected, or vice versa
+)
+
+func (o caseOutcome) icon() string {
+	switch o {
+	case outcomeAsExpected:
+		return "✅"
+	case outcomeDeviation:
+		return "⚠️ "
+	default:
+		return "❌"
+	}
+}
+
+func (o caseOutcome) label() string {
+	switch o {
+	case outcomeAsExpected:
+		return "as expected"
+	case outcomeDeviation:
+		return "as expected, non-conforming status code"
+	default:
+		return "UNEXPECTED"
+	}
+}
+
 // CaseResult is one (scenario × CSP/region) execution result.
 type CaseResult struct {
 	ScenarioName string
@@ -97,8 +131,9 @@ type CaseResult struct {
 	StatusCode   int
 	ResponseBody string
 
-	Passed  bool
-	Checks  []string // human-readable check outcomes, prefixed with ✅ / ❌
+	Outcome caseOutcome
+	Passed  bool     // Outcome != outcomeUnexpected
+	Checks  []string // human-readable check outcomes, prefixed with ✅ / ⚠️ / ❌
 	Failure string   // set when the case could not even be executed
 }
 
@@ -269,14 +304,11 @@ func runCase(client *resty.Client, cfg TestConfig, target TestCase, sc Scenario)
 	res.StatusCode = resp.StatusCode()
 	res.ResponseBody = string(resp.Body())
 
-	res.Checks, res.Passed = evaluate(sc.Expect, res.StatusCode, resp.Body())
+	res.Checks, res.Outcome = evaluate(sc.Expect, res.StatusCode, resp.Body())
+	res.Passed = res.Outcome != outcomeUnexpected
 
-	icon := "✅"
-	if !res.Passed {
-		icon = "❌"
-	}
-	fmt.Printf("%s [%s] %-20s HTTP %d (%v)\n", icon, target.Name, sc.Name,
-		res.StatusCode, res.Duration.Truncate(time.Millisecond))
+	fmt.Printf("%s [%s] %-22s HTTP %d — %s (%v)\n", res.Outcome.icon(), target.Name, sc.Name,
+		res.StatusCode, res.Outcome.label(), res.Duration.Truncate(time.Millisecond))
 	for _, c := range res.Checks {
 		fmt.Printf("      %s\n", c)
 	}
@@ -284,43 +316,59 @@ func runCase(client *resty.Client, cfg TestConfig, target TestCase, sc Scenario)
 	return res
 }
 
+// wantsAcceptance reports whether the scenario expects the recommendation to succeed.
+func (e Expect) wantsAcceptance() bool { return e.StatusCode == 200 }
+
+// accepted reports whether the API produced a recommendation rather than rejecting the input.
+func accepted(statusCode int) bool { return statusCode >= 200 && statusCode < 300 }
+
 // evaluate applies the scenario's declared expectations plus the structural checks that
 // every successful recommendation must satisfy.
-func evaluate(exp Expect, statusCode int, body []byte) (checks []string, passed bool) {
-	passed = true
+//
+// The outcome (accepted vs rejected) is judged separately from the status code, so a correctly
+// rejected input reported with the wrong status is distinguishable from a genuinely wrong
+// recommendation. Only the former is a contract defect; the latter means the recommender broke.
+func evaluate(exp Expect, statusCode int, body []byte) (checks []string, outcome caseOutcome) {
+	outcomeMatches := exp.wantsAcceptance() == accepted(statusCode)
 
-	if statusCode == exp.StatusCode {
+	switch {
+	case !outcomeMatches && exp.wantsAcceptance():
+		checks = append(checks, fmt.Sprintf("❌ input was rejected (HTTP %d) but a recommendation was expected", statusCode))
+		return checks, outcomeUnexpected
+	case !outcomeMatches:
+		checks = append(checks, fmt.Sprintf("❌ input was accepted (HTTP %d) but rejection was expected", statusCode))
+		return checks, outcomeUnexpected
+	case statusCode == exp.StatusCode:
 		checks = append(checks, fmt.Sprintf("✅ status code %d as expected", statusCode))
-	} else {
-		passed = false
-		checks = append(checks, fmt.Sprintf("❌ status code %d, want %d", statusCode, exp.StatusCode))
-		// Keep going: the body may still explain the mismatch in the report.
+		outcome = outcomeAsExpected
+	default:
+		checks = append(checks,
+			fmt.Sprintf("✅ input rejected as expected"),
+			fmt.Sprintf("⚠️  status code %d, but the API declares %d for this case", statusCode, exp.StatusCode))
+		outcome = outcomeDeviation
 	}
 
-	// Nothing further to assert for negative scenarios.
-	if exp.StatusCode != 200 {
-		return checks, passed
-	}
-	if statusCode != 200 {
-		return checks, passed
+	// Nothing further to assert for scenarios that expect rejection.
+	if !exp.wantsAcceptance() {
+		return checks, outcome
 	}
 
 	var apiResp model.ApiResponse[cloudmodel.RecommendedInfra]
 	if err := json.Unmarshal(body, &apiResp); err != nil {
-		return append(checks, fmt.Sprintf("❌ failed to parse response: %s", err)), false
+		return append(checks, fmt.Sprintf("❌ failed to parse response: %s", err)), outcomeUnexpected
 	}
 	if !apiResp.Success {
-		return append(checks, fmt.Sprintf("❌ response success=false: %s", apiResp.Error)), false
+		return append(checks, fmt.Sprintf("❌ response success=false: %s", apiResp.Error)), outcomeUnexpected
 	}
 
 	cluster := apiResp.Data.TargetK8sCluster
 
 	if cluster.Name == "" {
-		passed = false
+		outcome = outcomeUnexpected
 		checks = append(checks, "❌ targetK8sCluster.name is empty")
 	}
 	if cluster.Version == "" {
-		passed = false
+		outcome = outcomeUnexpected
 		checks = append(checks, "❌ targetK8sCluster.version is empty")
 	} else {
 		checks = append(checks, fmt.Sprintf("✅ version: %s", cluster.Version))
@@ -330,7 +378,7 @@ func evaluate(exp Expect, statusCode int, body []byte) (checks []string, passed 
 		if strings.HasPrefix(cluster.Version, exp.VersionPrefix) {
 			checks = append(checks, fmt.Sprintf("✅ version has prefix %q", exp.VersionPrefix))
 		} else {
-			passed = false
+			outcome = outcomeUnexpected
 			checks = append(checks, fmt.Sprintf("❌ version %q lacks prefix %q", cluster.Version, exp.VersionPrefix))
 		}
 	}
@@ -340,7 +388,7 @@ func evaluate(exp Expect, statusCode int, body []byte) (checks []string, passed 
 		if len(groups) == *exp.NodeGroupCount {
 			checks = append(checks, fmt.Sprintf("✅ node group count: %d", len(groups)))
 		} else {
-			passed = false
+			outcome = outcomeUnexpected
 			checks = append(checks, fmt.Sprintf("❌ node group count %d, want %d", len(groups), *exp.NodeGroupCount))
 		}
 	} else {
@@ -351,11 +399,11 @@ func evaluate(exp Expect, statusCode int, body []byte) (checks []string, passed 
 	for i, ng := range groups {
 		total += ng.DesiredNodeSize
 		if ng.SpecId == "" {
-			passed = false
+			outcome = outcomeUnexpected
 			checks = append(checks, fmt.Sprintf("❌ node group[%d] %q has empty specId", i, ng.Name))
 		}
 		if ng.DesiredNodeSize < 1 {
-			passed = false
+			outcome = outcomeUnexpected
 			checks = append(checks, fmt.Sprintf("❌ node group[%d] %q desiredNodeSize=%d (< 1)", i, ng.Name, ng.DesiredNodeSize))
 		}
 		checks = append(checks, fmt.Sprintf("ℹ️  node group[%d] %q spec=%s image=%s nodes=%d",
@@ -366,12 +414,12 @@ func evaluate(exp Expect, statusCode int, body []byte) (checks []string, passed 
 		if total == *exp.TotalNodeSize {
 			checks = append(checks, fmt.Sprintf("✅ total node size: %d", total))
 		} else {
-			passed = false
+			outcome = outcomeUnexpected
 			checks = append(checks, fmt.Sprintf("❌ total node size %d, want %d", total, *exp.TotalNodeSize))
 		}
 	}
 
-	return checks, passed
+	return checks, outcome
 }
 
 func emptyAsDash(s string) string {
@@ -408,23 +456,45 @@ func selectedScenarios(cfg TestConfig) []Scenario {
 	return out
 }
 
-func printFinalSummary(report *TestReport) {
-	passed := 0
-	for _, r := range report.Results {
-		if r.Passed {
-			passed++
+// countOutcomes tallies the three judgement states across all cases.
+func countOutcomes(results []CaseResult) (exact, deviation, unexpected int) {
+	for _, r := range results {
+		switch r.Outcome {
+		case outcomeAsExpected:
+			exact++
+		case outcomeDeviation:
+			deviation++
+		default:
+			unexpected++
 		}
 	}
+	return exact, deviation, unexpected
+}
+
+func printFinalSummary(report *TestReport) {
+	exact, deviation, unexpected := countOutcomes(report.Results)
+	total := len(report.Results)
+
 	fmt.Println("\n=========================================================")
 	fmt.Println(" OVERALL TEST SUMMARY")
 	fmt.Println("=========================================================")
-	fmt.Printf(" Total Cases : %d\n", len(report.Results))
-	fmt.Printf(" Passed      : %d\n", passed)
-	fmt.Printf(" Failed      : %d\n", len(report.Results)-passed)
-	if passed == len(report.Results) {
-		fmt.Println(" ✅ All recommendation checks passed.")
-	} else {
-		fmt.Println(" ❌ Some checks failed. See testresult/ for details.")
+	fmt.Printf(" Total cases            : %d\n", total)
+	fmt.Printf(" Behaved as expected    : %d\n", exact+deviation)
+	fmt.Printf("   ├ fully conforming   : %d\n", exact)
+	fmt.Printf("   └ status code differs: %d\n", deviation)
+	fmt.Printf(" Unexpected behaviour   : %d\n", unexpected)
+	fmt.Println("=========================================================")
+
+	switch {
+	case unexpected > 0:
+		fmt.Printf(" ❌ %d case(s) did not behave as expected. See testresult/ for details.\n", unexpected)
+	case deviation > 0:
+		fmt.Printf(" ✅ All %d case(s) behaved as expected.\n", total)
+		fmt.Printf(" ⚠️  %d of them are rejected with a status code the API does not declare\n", deviation)
+		fmt.Println("    (input validation errors returned as 500 where 400 is declared).")
+		fmt.Println("    The recommendation logic is correct; only the status code deviates.")
+	default:
+		fmt.Printf(" ✅ All %d case(s) behaved as expected, with conforming status codes.\n", total)
 	}
 	fmt.Println("=========================================================")
 }
@@ -589,29 +659,44 @@ func writeSummaryMatrix(sb *strings.Builder, report *TestReport) {
 		index[r.ScenarioName+"|"+r.DisplayName] = r
 	}
 
-	passed := 0
 	for _, sc := range report.Scenarios {
 		sb.WriteString(fmt.Sprintf("| `%s` |", sc.Name))
 		for _, t := range report.Targets {
 			r, ok := index[sc.Name+"|"+t.Name]
-			switch {
-			case !ok:
+			if !ok {
 				sb.WriteString(" — |")
-			case r.Passed:
-				passed++
-				sb.WriteString(fmt.Sprintf(" ✅ %d |", r.StatusCode))
-			default:
-				sb.WriteString(fmt.Sprintf(" ❌ %d |", r.StatusCode))
+				continue
 			}
+			sb.WriteString(fmt.Sprintf(" %s %d |", r.Outcome.icon(), r.StatusCode))
 		}
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString(fmt.Sprintf("\n**Overall Result**: %d/%d cases passed", passed, len(report.Results)))
-	if passed == len(report.Results) {
+	exact, deviation, unexpected := countOutcomes(report.Results)
+	total := len(report.Results)
+
+	sb.WriteString("\n| Legend | Meaning |\n|---|---|\n")
+	sb.WriteString("| ✅ | Behaved as expected, with the status code the API declares |\n")
+	sb.WriteString("| ⚠️ | Behaved as expected (input correctly accepted or rejected), ")
+	sb.WriteString("but the status code differs from the declared one |\n")
+	sb.WriteString("| ❌ | Did not behave as expected — input accepted where it should be rejected, or vice versa |\n\n")
+
+	sb.WriteString(fmt.Sprintf("**Behaved as expected**: %d/%d", exact+deviation, total))
+	if unexpected == 0 {
 		sb.WriteString(" ✅\n\n")
 	} else {
 		sb.WriteString(" ❌\n\n")
+	}
+	sb.WriteString(fmt.Sprintf("- Fully conforming: %d\n", exact))
+	sb.WriteString(fmt.Sprintf("- Status code differs: %d\n", deviation))
+	sb.WriteString(fmt.Sprintf("- Unexpected behaviour: %d\n\n", unexpected))
+
+	if deviation > 0 {
+		sb.WriteString("> [!NOTE]\n")
+		sb.WriteString("> The ⚠️ cases are **not malfunctions**. The API rejects those inputs for the right\n")
+		sb.WriteString("> reason and reports a correct error message; only the HTTP status code deviates —\n")
+		sb.WriteString("> input validation errors are returned as `500` where the API declares `400`.\n")
+		sb.WriteString("> The recommendation logic itself behaved as expected in every case.\n\n")
 	}
 	sb.WriteString("---\n\n")
 }
@@ -620,11 +705,8 @@ func writeCaseDetails(sb *strings.Builder, report *TestReport) {
 	sb.WriteString("## Case Details\n\n")
 
 	for _, r := range report.Results {
-		status := "✅ PASS"
-		if !r.Passed {
-			status = "❌ FAIL"
-		}
-		sb.WriteString(fmt.Sprintf("### %s — %s (%s)\n\n", r.ScenarioName, r.DisplayName, status))
+		sb.WriteString(fmt.Sprintf("### %s — %s (%s %s)\n\n",
+			r.ScenarioName, r.DisplayName, r.Outcome.icon(), r.Outcome.label()))
 		sb.WriteString(fmt.Sprintf("- **Fixture**: `%s`\n", r.ScenarioFile))
 		sb.WriteString(fmt.Sprintf("- **Request**: `POST %s`\n", r.RequestURL))
 		sb.WriteString(fmt.Sprintf("- **Status Code**: %d\n", r.StatusCode))

@@ -8,27 +8,27 @@
 
 - CSP / Region: aws / ap-northeast-2
 - CM-Beetle URL: http://localhost:8056
-- CM-Beetle Version: v0.6.0
-- Git Commit: 803afb4
+- CM-Beetle Version: v0.6.0+ (1cfe558)
+- Git Commit: 1cfe558
 - Namespace: mig01
-- Test Date: 2026-08-20 15:15:35 KST
+- Test Date: 2026-08-21 11:40:25 KST
 - Cluster ID: mig01-on-prem-k8s-cluster
 
 ## Test Results Summary
 
 | Step | Description | Status | Duration |
 |------|-------------|--------|----------|
-| 1 | POST /recommendation/k8sCluster | ✅ **PASS** | 931ms |
-| 2 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 7m30.093s |
+| 1 | POST /recommendation/k8sCluster | ✅ **PASS** | 23ms |
+| 2 | POST /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 9m0.231s |
 | 3 | GET /migration/ns/{nsId}/k8sCluster | ✅ **PASS** | 1ms |
-| 4 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 1.515s |
-| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ✅ **PASS** | 1m43.493s |
-| 6 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 9m16.536s |
+| 4 | GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation | ✅ **PASS** | 1.108s |
+| 5 | Workload verification (kubeconfig -> K8s API -> nginx) | ✅ **PASS** | 1m28.876s |
+| 6 | DELETE /migration/ns/{nsId}/k8sCluster/{id} | ✅ **PASS** | 9m5.627s |
 | 7 | Residual resource check (Tumblebug) | ✅ **PASS** | 3ms |
 
 **Overall Result**: 7/7 steps passed ✅
 
-**Total Duration**: 18m32s
+**Total Duration**: 19m35s
 
 ---
 
@@ -36,7 +36,7 @@
 
 ### Step 1 — POST /recommendation/k8sCluster
 
-- **Duration**: 931ms
+- **Duration**: 23ms
 - **Status Code**: 200
 
 - ℹ️  cluster: on-prem-k8s-cluster (version 1.33)
@@ -45,13 +45,13 @@
 
 ### Step 2 — POST /migration/ns/{nsId}/k8sCluster
 
-- **Duration**: 7m30.093s
+- **Duration**: 9m0.231s
 - **Status Code**: 202
 
 - ℹ️  nameSeed: mig01
-- ℹ️  async reqId: 1787206536789845713
+- ℹ️  async reqId: 1787280025463497959
 - ℹ️  cluster id: mig01-on-prem-k8s-cluster
-- ℹ️  elapsed: 7m30s
+- ℹ️  elapsed: 9m0s
 - ✅ status: Active
 
 ### Step 3 — GET /migration/ns/{nsId}/k8sCluster
@@ -59,11 +59,11 @@
 - **Duration**: 1ms
 - **Status Code**: 200
 
-- ✅ migrated cluster present in list (3 total)
+- ✅ migrated cluster present in list (1 total)
 
 ### Step 4 — GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation
 
-- **Duration**: 1.515s
+- **Duration**: 1.108s
 - **Status Code**: 200
 
 - ✅ status: Active
@@ -73,9 +73,9 @@
 
 ### Step 5 — Workload verification (kubeconfig -> K8s API -> nginx)
 
-- **Duration**: 1m43.493s
+- **Duration**: 1m28.876s
 
-- ✅ kubeconfig obtained (server: https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com)
+- ✅ kubeconfig obtained (server: https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com)
 - ℹ️  auth method: exec credential plugin
 - ✅ cluster token obtained from Tumblebug
 - ✅ API server reachable (v1.33.13-eks-bca9cf6)
@@ -83,17 +83,17 @@
 - ✅ nginx Deployment created
 - ✅ nginx pod Running (attempt 1)
 - ✅ LoadBalancer Service created
-- ✅ LoadBalancer address assigned: a744452d05ccb4780ba3bb83a48a7239-1969825577.ap-northeast-2.elb.amazonaws.com
-- ✅ nginx served over the LoadBalancer at http://a744452d05ccb4780ba3bb83a48a7239-1969825577.ap-northeast-2.elb.amazonaws.com/ (attempt 6)
+- ✅ LoadBalancer address assigned: a3916bbf5c64b4340b952386c3f11f25-1313336685.ap-northeast-2.elb.amazonaws.com
+- ✅ nginx served over the LoadBalancer at http://a3916bbf5c64b4340b952386c3f11f25-1313336685.ap-northeast-2.elb.amazonaws.com/ (attempt 5)
 - ✅ LoadBalancer Service removed
 - ✅ nginx Deployment removed
 
 ### Step 6 — DELETE /migration/ns/{nsId}/k8sCluster/{id}
 
-- **Duration**: 9m16.536s
+- **Duration**: 9m5.627s
 - **Status Code**: 200
 
-- ✅ deleted on attempt 1 (9m16s)
+- ✅ deleted on attempt 1 (9m5s)
 
 ### Step 7 — Residual resource check (Tumblebug)
 
@@ -233,7 +233,7 @@
 {
   "resourceType": "k8s",
   "id": "mig01-on-prem-k8s-cluster",
-  "uid": "tbdlsc18uvrh6drbdv70",
+  "uid": "tbqajlaplk30cjpsahc6",
   "name": "mig01-on-prem-k8s-cluster",
   "connectionName": "aws-ap-northeast-2",
   "connectionConfig": {
@@ -269,18 +269,18 @@
   "description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
   "systemMessage": "",
   "label": {
-    "Name": "tbdlsc18uvrh6drbdv70",
+    "Name": "tbqajlaplk30cjpsahc6",
     "sys.connectionName": "aws-ap-northeast-2",
-    "sys.createdTime": "2026-08-20 06:15:41.284 +0000 UTC",
-    "sys.cspResourceId": "tbdlsc18uvrh6drbdv70",
-    "sys.cspResourceName": "tbdlsc18uvrh6drbdv70",
+    "sys.createdTime": "2026-08-21 02:40:28.745 +0000 UTC",
+    "sys.cspResourceId": "tbqajlaplk30cjpsahc6",
+    "sys.cspResourceName": "tbqajlaplk30cjpsahc6",
     "sys.description": "Migrated from on-premise K8s cluster (v1.32.3, 2 workers)",
     "sys.id": "mig01-on-prem-k8s-cluster",
     "sys.labelType": "k8s",
     "sys.manager": "cb-tumblebug",
     "sys.name": "mig01-on-prem-k8s-cluster",
     "sys.namespace": "mig01",
-    "sys.uid": "tbdlsc18uvrh6drbdv70",
+    "sys.uid": "tbqajlaplk30cjpsahc6",
     "sys.version": "1.33"
   },
   "systemLabel": "",
@@ -297,7 +297,7 @@
     "keyValueList": [
       {
         "key": "ClusterSecurityGroupId",
-        "value": "sg-0335b04180c79d7ca"
+        "value": "sg-0467761160db4a2ff"
       },
       {
         "key": "EndpointPrivateAccess",
@@ -341,12 +341,12 @@
       "status": "Active",
       "k8sNodes": [
         {
-          "cspResourceName": "i-031447656bc5f8abf",
-          "cspResourceId": "i-031447656bc5f8abf"
+          "cspResourceName": "i-03dc94bf5dbd38c86",
+          "cspResourceId": "i-03dc94bf5dbd38c86"
         },
         {
-          "cspResourceName": "i-0e3c3fffd635b89bb",
-          "cspResourceId": "i-0e3c3fffd635b89bb"
+          "cspResourceName": "i-0bf3d6c84a78defb4",
+          "cspResourceId": "i-0bf3d6c84a78defb4"
         }
       ],
       "keyValueList": [
@@ -392,11 +392,11 @@
         },
         {
           "key": "Nodes",
-          "value": "{NameId:,SystemId:i-031447656bc5f8abf}; {NameId:,SystemId:i-0e3c3fffd635b89bb}"
+          "value": "{NameId:,SystemId:i-03dc94bf5dbd38c86}; {NameId:,SystemId:i-0bf3d6c84a78defb4}"
         },
         {
           "key": "KeyValueList",
-          "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbdlsc18uvrh6drbdv70}; {Key:CreatedAt,Value:2026-08-20T06:21:32.328Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-20T06:22:43.889Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbdlsc18uvrh6drbdv70/workers1/5cd00eea-7860-d7b8-7846-0ab62961a4b5}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-5cd00eea-7860-d7b8-7846-0ab62961a4b5}],RemoteAccessSecurityGroup:sg-074607780cfdd6b92}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
+          "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbqajlaplk30cjpsahc6}; {Key:CreatedAt,Value:2026-08-21T02:47:11.123Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-21T02:48:53.478Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbqajlaplk30cjpsahc6/workers1/8ed0111b-86ff-c035-79d7-ce32357dd95a}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-8ed0111b-86ff-c035-79d7-ce32357dd95a}],RemoteAccessSecurityGroup:sg-08bb5f8b9279adcc9}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
         }
       ],
       "cspResourceName": "workers1",
@@ -423,12 +423,12 @@
         "Status": "Active",
         "Nodes": [
           {
-            "NameId": "i-031447656bc5f8abf",
-            "SystemId": "i-031447656bc5f8abf"
+            "NameId": "i-03dc94bf5dbd38c86",
+            "SystemId": "i-03dc94bf5dbd38c86"
           },
           {
-            "NameId": "i-0e3c3fffd635b89bb",
-            "SystemId": "i-0e3c3fffd635b89bb"
+            "NameId": "i-0bf3d6c84a78defb4",
+            "SystemId": "i-0bf3d6c84a78defb4"
           }
         ],
         "KeyValueList": [
@@ -474,25 +474,25 @@
           },
           {
             "key": "Nodes",
-            "value": "{NameId:,SystemId:i-031447656bc5f8abf}; {NameId:,SystemId:i-0e3c3fffd635b89bb}"
+            "value": "{NameId:,SystemId:i-03dc94bf5dbd38c86}; {NameId:,SystemId:i-0bf3d6c84a78defb4}"
           },
           {
             "key": "KeyValueList",
-            "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbdlsc18uvrh6drbdv70}; {Key:CreatedAt,Value:2026-08-20T06:21:32.328Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-20T06:22:43.889Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbdlsc18uvrh6drbdv70/workers1/5cd00eea-7860-d7b8-7846-0ab62961a4b5}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-5cd00eea-7860-d7b8-7846-0ab62961a4b5}],RemoteAccessSecurityGroup:sg-074607780cfdd6b92}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
+            "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbqajlaplk30cjpsahc6}; {Key:CreatedAt,Value:2026-08-21T02:47:11.123Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-21T02:48:53.478Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbqajlaplk30cjpsahc6/workers1/8ed0111b-86ff-c035-79d7-ce32357dd95a}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-8ed0111b-86ff-c035-79d7-ce32357dd95a}],RemoteAccessSecurityGroup:sg-08bb5f8b9279adcc9}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
           }
         ]
       }
     }
   ],
   "accessInfo": {
-    "endpoint": "https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com",
-    "kubeconfig": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRS3pTV1A3ODE1VTFzdUpJOXFzWE1TakFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1EQTJNVFUxTTFvWERUTXhNRGd4T1RBMgpNVFUxTTFvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBT3czVjd0Zk44WU1FR1E1REE2Q0dvNEhMZGJnc3hJRzZNa29qV3RycWZsZGYwb3IKOWRZc1VDc3NISGhwRklWcmNOdmkwTmJ1UVlqQlBnMmFaZUwrNXlUU05SV1pOdXJFcHZiZ1h1MDFLVlJwdVBIdwpSQjdZQUh3cllRUSt4b0JtU1dVL3ZUaVh0SzRQRWhydjU5cjlhT0l3S0p5OTFiRGV6QXhVdFlVTld3TUNEU3hOClhSTk5OdC91SC9CaDN1YnN4Um9jVUlzN3VOWnViVjBhcDNpc0NJbExRdENYeTgyRVRQRmE5OU5xa0g2Rlhwc1IKRXhGTzhWSnQ2eW1KR1hmdTBvTVFBTjYxc1RzUkwxd1BUWmxEZjJhSFdJRmxwL2dDbSt4Z2xjUnkwNVRCZkV2dwphV1BUQ0FCdE4wVTR6Y3crYU5sUmFqU29NZTlGUlFVbjhlSzVzVVVDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkRZVU1KdzBYNGNmUTBpV2I0encKc21GSzYwcHVNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBS3NPSmVseWxsMlJ2TmNRTDgxbnRLMjhSRGxHSWxqNm85L3V0clhnU2YzNlFaRENiZzdIWjA3VUx4aDRxcUNvCnFTK3ZvMWVSMDZIbkZTOWJlTGFKSjJhMjhSUUhLT2NzdUFBWVNsVTcxQ0taUjcxMWlRSlQxMTRRM2VkSW9qWGYKYVlHWCs0Q1lvc0lpazdmd2hNSkxzRWM5aTRIdnRlOHNYWGtHZDQ4RncxZHlOdk5lK0J2YW1jaXk1bHd2cXRtQQpJVmlVMVdnYXl6YzYraEkrTnZyTFpVSFc0a00ybXZwa0xCWXNVdElyL05kaXBmYTZjMEsyYjg3RHJtUU9nYjNMCk5QSlZxbGQvZnByNkExT3lMT1UwdlhCNjJEWktLdDJpcWdWcUFXRG9tY2FNKzZZUDhMMmJkc3dITlVIbEczQzUKSFNZVWhtUVR5akg1TkNEWXAxRjc4eXc9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n  name: tbdlsc18uvrh6drbdv70\ncontexts:\n- context:\n    cluster: tbdlsc18uvrh6drbdv70\n    user: aws-dynamic-token\n  name: tbdlsc18uvrh6drbdv70\ncurrent-context: tbdlsc18uvrh6drbdv70\nusers:\n- name: aws-dynamic-token\n  user:\n    exec:\n      apiVersion: client.authentication.k8s.io/v1\n      interactiveMode: Never\n      command: sh\n      args:\n      - -c\n      - \". ~/.cb-spider/.spider-credential \u0026\u0026 curl -s -u \\\"$SPIDER_USERNAME:$SPIDER_PASSWORD\\\" \\\"http://0.0.0.0:1024/spider/cluster/tbdlsc18uvrh6drbdv70/token?ConnectionName=aws-ap-northeast-2\\\"\"\n"
+    "endpoint": "https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com",
+    "kubeconfig": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRYk9HOENhQ05pQkU2UGVpTEFaYUE5VEFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1UQXlOREF6T1ZvWERUTXhNRGd5TURBeQpOREF6T1Zvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBTWpoc1puYnMrK1NoMEVvd2ROVzdJL2x2RHdIdTNjREIvTkY0NHJMeFJkZWlMTHMKQ2d6MnZkdWY0aHR4cWhJRU1lb0ZkTk9VMkZiR2kyeE9rNWlGdkhYQWtFV1VPTHgxdldxNzU2bUczTk9RRTBTaAorMzlqOGZJOUh1Yk9Qc2lLZlhJN1lxM3o4YWF3TzRFeE1lSFdxNlhIZlBvdnIzR29ZaFFyL2txK3NJUWFpYnQ2CncxL2N1bTJzejJXMFo3bXR1Vjlub2ZTWGxucEtIOTl1Q1ZXalIvamVEWUNMR0VudExkWnQ0THhxc0h5dWtpeEcKRFk2T2tXQ29jMFRRTlpSSWRzeVZ0MUZmRnV4dFdoVDQvRkhhMFlkL09OK2FGek1KZmhtV2ZIWkRaN1NzV1FwMgplR3ZpNHhtS0VCRzd4TUpyL0xtM2w4RFNjUEt4NEJjV2VuUi9JLzBDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkNjaWxHTGFCREo3MjYxM3ZDRloKdUtjQkJpMXNNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBSHIzUGZEcFZ0THplWDV1emJKRlFkUkNNa3ZJckx2WHg0UlhTa1lNc3B4Nld0U2RRMGE5Q2cyMlZrR1dtaGdNCnRjMXo2dmxNcHVZUGVhcS8wQ25RQTFhVlRQZWxndFRBakpFaVY3VzZlQWZiZWgvSGxLZW8vVEJnVmdudTRXaVIKTEZOWFl1L1RkUUJjanZ2WFE2MklUMzZkekNGb2pLN0E2U29hUnkydFFld0E2ZWxHekJOaUlEcmcyT0VOQldJagpDZXJoYkxIdDBSN0U2Y2t0Z3dZVHprV082QXdzRTAySjhqWWlRaEVQZWxJWTAzMGhKRHkrbzNQbDZTcC9FSldECjdDa1Z5KzVCTFlBbWszSUMyVjk0M0RJN1RPQUxYRUtIOXFYVHB6Q0Jld1lZOFpidURwM2N2OVc1VlBJdGtGUnAKL3p5VG9FTlZqVTVYSGJOcS9kZlhEMFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n  name: tbqajlaplk30cjpsahc6\ncontexts:\n- context:\n    cluster: tbqajlaplk30cjpsahc6\n    user: aws-dynamic-token\n  name: tbqajlaplk30cjpsahc6\ncurrent-context: tbqajlaplk30cjpsahc6\nusers:\n- name: aws-dynamic-token\n  user:\n    exec:\n      apiVersion: client.authentication.k8s.io/v1\n      interactiveMode: Never\n      command: sh\n      args:\n      - -c\n      - \". ~/.cb-spider/.spider-credential \u0026\u0026 curl -s -u \\\"$SPIDER_USERNAME:$SPIDER_PASSWORD\\\" \\\"http://0.0.0.0:1024/spider/cluster/tbqajlaplk30cjpsahc6/token?ConnectionName=aws-ap-northeast-2\\\"\"\n"
   },
   "addons": {
     "keyValueList": [
       {
         "key": "AddonArn",
-        "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbdlsc18uvrh6drbdv70/aws-ebs-csi-driver/c4d00ee7-d2c7-dc8b-57d9-c1e0e7d04dc5"
+        "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbqajlaplk30cjpsahc6/aws-ebs-csi-driver/32d01118-7bee-835a-b742-59eb902f372c"
       },
       {
         "key": "AddonName",
@@ -504,11 +504,11 @@
       },
       {
         "key": "ClusterName",
-        "value": "tbdlsc18uvrh6drbdv70"
+        "value": "tbqajlaplk30cjpsahc6"
       },
       {
         "key": "CreatedAt",
-        "value": "2026-08-20T06:15:42.923Z"
+        "value": "2026-08-21T02:40:29.969Z"
       },
       {
         "key": "Health",
@@ -516,7 +516,7 @@
       },
       {
         "key": "ModifiedAt",
-        "value": "2026-08-20T06:15:42.94Z"
+        "value": "2026-08-21T02:40:30.04Z"
       },
       {
         "key": "Status",
@@ -524,7 +524,7 @@
       },
       {
         "key": "AddonArn",
-        "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbdlsc18uvrh6drbdv70/eks-pod-identity-agent/aed00ee7-d395-8f71-c953-1ddd85bae1aa"
+        "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbqajlaplk30cjpsahc6/eks-pod-identity-agent/68d01118-7d04-d95c-159d-92ab6f64aff9"
       },
       {
         "key": "AddonName",
@@ -536,11 +536,11 @@
       },
       {
         "key": "ClusterName",
-        "value": "tbdlsc18uvrh6drbdv70"
+        "value": "tbqajlaplk30cjpsahc6"
       },
       {
         "key": "CreatedAt",
-        "value": "2026-08-20T06:15:43.325Z"
+        "value": "2026-08-21T02:40:30.382Z"
       },
       {
         "key": "Health",
@@ -548,36 +548,36 @@
       },
       {
         "key": "ModifiedAt",
-        "value": "2026-08-20T06:15:43.34Z"
+        "value": "2026-08-21T02:48:13.224Z"
       },
       {
         "key": "Status",
-        "value": "CREATING"
+        "value": "ACTIVE"
       }
     ]
   },
   "status": "Active",
-  "createdTime": "2026-08-20T06:15:41.284Z",
+  "createdTime": "2026-08-21T02:40:28.745Z",
   "keyValueList": [
     {
       "key": "Arn",
-      "value": "arn:aws:eks:ap-northeast-2:635484366616:cluster/tbdlsc18uvrh6drbdv70"
+      "value": "arn:aws:eks:ap-northeast-2:635484366616:cluster/tbqajlaplk30cjpsahc6"
     },
     {
       "key": "CertificateAuthority",
-      "value": "{Data:LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRS3pTV1A3ODE1VTFzdUpJOXFzWE1TakFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1EQTJNVFUxTTFvWERUTXhNRGd4T1RBMgpNVFUxTTFvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBT3czVjd0Zk44WU1FR1E1REE2Q0dvNEhMZGJnc3hJRzZNa29qV3RycWZsZGYwb3IKOWRZc1VDc3NISGhwRklWcmNOdmkwTmJ1UVlqQlBnMmFaZUwrNXlUU05SV1pOdXJFcHZiZ1h1MDFLVlJwdVBIdwpSQjdZQUh3cllRUSt4b0JtU1dVL3ZUaVh0SzRQRWhydjU5cjlhT0l3S0p5OTFiRGV6QXhVdFlVTld3TUNEU3hOClhSTk5OdC91SC9CaDN1YnN4Um9jVUlzN3VOWnViVjBhcDNpc0NJbExRdENYeTgyRVRQRmE5OU5xa0g2Rlhwc1IKRXhGTzhWSnQ2eW1KR1hmdTBvTVFBTjYxc1RzUkwxd1BUWmxEZjJhSFdJRmxwL2dDbSt4Z2xjUnkwNVRCZkV2dwphV1BUQ0FCdE4wVTR6Y3crYU5sUmFqU29NZTlGUlFVbjhlSzVzVVVDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkRZVU1KdzBYNGNmUTBpV2I0encKc21GSzYwcHVNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBS3NPSmVseWxsMlJ2TmNRTDgxbnRLMjhSRGxHSWxqNm85L3V0clhnU2YzNlFaRENiZzdIWjA3VUx4aDRxcUNvCnFTK3ZvMWVSMDZIbkZTOWJlTGFKSjJhMjhSUUhLT2NzdUFBWVNsVTcxQ0taUjcxMWlRSlQxMTRRM2VkSW9qWGYKYVlHWCs0Q1lvc0lpazdmd2hNSkxzRWM5aTRIdnRlOHNYWGtHZDQ4RncxZHlOdk5lK0J2YW1jaXk1bHd2cXRtQQpJVmlVMVdnYXl6YzYraEkrTnZyTFpVSFc0a00ybXZwa0xCWXNVdElyL05kaXBmYTZjMEsyYjg3RHJtUU9nYjNMCk5QSlZxbGQvZnByNkExT3lMT1UwdlhCNjJEWktLdDJpcWdWcUFXRG9tY2FNKzZZUDhMMmJkc3dITlVIbEczQzUKSFNZVWhtUVR5akg1TkNEWXAxRjc4eXc9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K}"
+      "value": "{Data:LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRYk9HOENhQ05pQkU2UGVpTEFaYUE5VEFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1UQXlOREF6T1ZvWERUTXhNRGd5TURBeQpOREF6T1Zvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBTWpoc1puYnMrK1NoMEVvd2ROVzdJL2x2RHdIdTNjREIvTkY0NHJMeFJkZWlMTHMKQ2d6MnZkdWY0aHR4cWhJRU1lb0ZkTk9VMkZiR2kyeE9rNWlGdkhYQWtFV1VPTHgxdldxNzU2bUczTk9RRTBTaAorMzlqOGZJOUh1Yk9Qc2lLZlhJN1lxM3o4YWF3TzRFeE1lSFdxNlhIZlBvdnIzR29ZaFFyL2txK3NJUWFpYnQ2CncxL2N1bTJzejJXMFo3bXR1Vjlub2ZTWGxucEtIOTl1Q1ZXalIvamVEWUNMR0VudExkWnQ0THhxc0h5dWtpeEcKRFk2T2tXQ29jMFRRTlpSSWRzeVZ0MUZmRnV4dFdoVDQvRkhhMFlkL09OK2FGek1KZmhtV2ZIWkRaN1NzV1FwMgplR3ZpNHhtS0VCRzd4TUpyL0xtM2w4RFNjUEt4NEJjV2VuUi9JLzBDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkNjaWxHTGFCREo3MjYxM3ZDRloKdUtjQkJpMXNNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBSHIzUGZEcFZ0THplWDV1emJKRlFkUkNNa3ZJckx2WHg0UlhTa1lNc3B4Nld0U2RRMGE5Q2cyMlZrR1dtaGdNCnRjMXo2dmxNcHVZUGVhcS8wQ25RQTFhVlRQZWxndFRBakpFaVY3VzZlQWZiZWgvSGxLZW8vVEJnVmdudTRXaVIKTEZOWFl1L1RkUUJjanZ2WFE2MklUMzZkekNGb2pLN0E2U29hUnkydFFld0E2ZWxHekJOaUlEcmcyT0VOQldJagpDZXJoYkxIdDBSN0U2Y2t0Z3dZVHprV082QXdzRTAySjhqWWlRaEVQZWxJWTAzMGhKRHkrbzNQbDZTcC9FSldECjdDa1Z5KzVCTFlBbWszSUMyVjk0M0RJN1RPQUxYRUtIOXFYVHB6Q0Jld1lZOFpidURwM2N2OVc1VlBJdGtGUnAKL3p5VG9FTlZqVTVYSGJOcS9kZlhEMFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K}"
     },
     {
       "key": "CreatedAt",
-      "value": "2026-08-20T06:15:41.284Z"
+      "value": "2026-08-21T02:40:28.745Z"
     },
     {
       "key": "Endpoint",
-      "value": "https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com"
+      "value": "https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com"
     },
     {
       "key": "Identity",
-      "value": "{Oidc:{Issuer:https://oidc.eks.ap-northeast-2.amazonaws.com/id/A1E5A99B85D7AEE154F241C6E2E2D464}}"
+      "value": "{Oidc:{Issuer:https://oidc.eks.ap-northeast-2.amazonaws.com/id/A42C0404A862C06B0E9998C1EC42D7E1}}"
     },
     {
       "key": "KubernetesNetworkConfig",
@@ -589,7 +589,7 @@
     },
     {
       "key": "Name",
-      "value": "tbdlsc18uvrh6drbdv70"
+      "value": "tbqajlaplk30cjpsahc6"
     },
     {
       "key": "PlatformVersion",
@@ -597,7 +597,7 @@
     },
     {
       "key": "ResourcesVpcConfig",
-      "value": "{ClusterSecurityGroupId:sg-0335b04180c79d7ca,EndpointPrivateAccess:false,EndpointPublicAccess:true,PublicAccessCidrs:[0.0.0.0/0],SecurityGroupIds:[sg-00b0fa9c3c57c2cc5],SubnetIds:[subnet-05247863bd834f2df,subnet-0b020a2249bb6475b],VpcId:vpc-01af9f247d39edce6}"
+      "value": "{ClusterSecurityGroupId:sg-0467761160db4a2ff,EndpointPrivateAccess:false,EndpointPublicAccess:true,PublicAccessCidrs:[0.0.0.0/0],SecurityGroupIds:[sg-00b0fa9c3c57c2cc5],SubnetIds:[subnet-05247863bd834f2df,subnet-0b020a2249bb6475b],VpcId:vpc-01af9f247d39edce6}"
     },
     {
       "key": "RoleArn",
@@ -609,19 +609,19 @@
     },
     {
       "key": "Tags",
-      "value": "{Name:tbdlsc18uvrh6drbdv70,sys.id:mig01-on-prem-k8s-cluster,sys.uid:tbdlsc18uvrh6drbdv70}"
+      "value": "{Name:tbqajlaplk30cjpsahc6,sys.cspResourceId:tbqajlaplk30cjpsahc6,sys.cspResourceName:tbqajlaplk30cjpsahc6,sys.labelType:k8s,sys.namespace:mig01}"
     },
     {
       "key": "Version",
       "value": "1.33"
     }
   ],
-  "cspResourceName": "tbdlsc18uvrh6drbdv70",
-  "cspResourceId": "tbdlsc18uvrh6drbdv70",
+  "cspResourceName": "tbqajlaplk30cjpsahc6",
+  "cspResourceId": "tbqajlaplk30cjpsahc6",
   "spiderViewK8sClusterDetail": {
     "IId": {
-      "NameId": "tbdlsc18uvrh6drbdv70",
-      "SystemId": "tbdlsc18uvrh6drbdv70"
+      "NameId": "tbqajlaplk30cjpsahc6",
+      "SystemId": "tbqajlaplk30cjpsahc6"
     },
     "Version": "1.33",
     "Network": {
@@ -648,7 +648,7 @@
       "KeyValueList": [
         {
           "key": "ClusterSecurityGroupId",
-          "value": "sg-0335b04180c79d7ca"
+          "value": "sg-0467761160db4a2ff"
         },
         {
           "key": "EndpointPrivateAccess",
@@ -699,12 +699,12 @@
         "Status": "Active",
         "Nodes": [
           {
-            "NameId": "i-031447656bc5f8abf",
-            "SystemId": "i-031447656bc5f8abf"
+            "NameId": "i-03dc94bf5dbd38c86",
+            "SystemId": "i-03dc94bf5dbd38c86"
           },
           {
-            "NameId": "i-0e3c3fffd635b89bb",
-            "SystemId": "i-0e3c3fffd635b89bb"
+            "NameId": "i-0bf3d6c84a78defb4",
+            "SystemId": "i-0bf3d6c84a78defb4"
           }
         ],
         "KeyValueList": [
@@ -750,24 +750,24 @@
           },
           {
             "key": "Nodes",
-            "value": "{NameId:,SystemId:i-031447656bc5f8abf}; {NameId:,SystemId:i-0e3c3fffd635b89bb}"
+            "value": "{NameId:,SystemId:i-03dc94bf5dbd38c86}; {NameId:,SystemId:i-0bf3d6c84a78defb4}"
           },
           {
             "key": "KeyValueList",
-            "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbdlsc18uvrh6drbdv70}; {Key:CreatedAt,Value:2026-08-20T06:21:32.328Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-20T06:22:43.889Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbdlsc18uvrh6drbdv70/workers1/5cd00eea-7860-d7b8-7846-0ab62961a4b5}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-5cd00eea-7860-d7b8-7846-0ab62961a4b5}],RemoteAccessSecurityGroup:sg-074607780cfdd6b92}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
+            "value": "{Key:AmiType,Value:AL2023_x86_64_STANDARD}; {Key:CapacityType,Value:ON_DEMAND}; {Key:ClusterName,Value:tbqajlaplk30cjpsahc6}; {Key:CreatedAt,Value:2026-08-21T02:47:11.123Z}; {Key:DiskSize,Value:100}; {Key:Health,Value:{Issues:[]}}; {Key:InstanceTypes,Value:c5a.xlarge}; {Key:ModifiedAt,Value:2026-08-21T02:48:53.478Z}; {Key:NodeRole,Value:arn:aws:iam::635484366616:role/cloud-barista-eks-nodegroup-role}; {Key:NodegroupArn,Value:arn:aws:eks:ap-northeast-2:635484366616:nodegroup/tbqajlaplk30cjpsahc6/workers1/8ed0111b-86ff-c035-79d7-ce32357dd95a}; {Key:NodegroupName,Value:workers1}; {Key:ReleaseVersion,Value:1.33.13-20260818}; {Key:RemoteAccess,Value:{Ec2SshKey:tbdn1fr85uqtviuhtgle,SourceSecurityGroups:[sg-00b0fa9c3c57c2cc5]}}; {Key:Resources,Value:{AutoScalingGroups:[{Name:eks-workers1-8ed0111b-86ff-c035-79d7-ce32357dd95a}],RemoteAccessSecurityGroup:sg-08bb5f8b9279adcc9}}; {Key:ScalingConfig,Value:{DesiredSize:2,MaxSize:2,MinSize:2}}; {Key:Status,Value:ACTIVE}; {Key:Subnets,Value:subnet-05247863bd834f2df; subnet-0b020a2249bb6475b}; {Key:Tags,Value:{key:nodegroup,value:workers1}}; {Key:UpdateConfig,Value:{MaxUnavailable:1,MaxUnavailablePercentage:null}}; {Key:Version,Value:1.33}"
           }
         ]
       }
     ],
     "AccessInfo": {
-      "Endpoint": "https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com",
-      "Kubeconfig": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRS3pTV1A3ODE1VTFzdUpJOXFzWE1TakFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1EQTJNVFUxTTFvWERUTXhNRGd4T1RBMgpNVFUxTTFvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBT3czVjd0Zk44WU1FR1E1REE2Q0dvNEhMZGJnc3hJRzZNa29qV3RycWZsZGYwb3IKOWRZc1VDc3NISGhwRklWcmNOdmkwTmJ1UVlqQlBnMmFaZUwrNXlUU05SV1pOdXJFcHZiZ1h1MDFLVlJwdVBIdwpSQjdZQUh3cllRUSt4b0JtU1dVL3ZUaVh0SzRQRWhydjU5cjlhT0l3S0p5OTFiRGV6QXhVdFlVTld3TUNEU3hOClhSTk5OdC91SC9CaDN1YnN4Um9jVUlzN3VOWnViVjBhcDNpc0NJbExRdENYeTgyRVRQRmE5OU5xa0g2Rlhwc1IKRXhGTzhWSnQ2eW1KR1hmdTBvTVFBTjYxc1RzUkwxd1BUWmxEZjJhSFdJRmxwL2dDbSt4Z2xjUnkwNVRCZkV2dwphV1BUQ0FCdE4wVTR6Y3crYU5sUmFqU29NZTlGUlFVbjhlSzVzVVVDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkRZVU1KdzBYNGNmUTBpV2I0encKc21GSzYwcHVNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBS3NPSmVseWxsMlJ2TmNRTDgxbnRLMjhSRGxHSWxqNm85L3V0clhnU2YzNlFaRENiZzdIWjA3VUx4aDRxcUNvCnFTK3ZvMWVSMDZIbkZTOWJlTGFKSjJhMjhSUUhLT2NzdUFBWVNsVTcxQ0taUjcxMWlRSlQxMTRRM2VkSW9qWGYKYVlHWCs0Q1lvc0lpazdmd2hNSkxzRWM5aTRIdnRlOHNYWGtHZDQ4RncxZHlOdk5lK0J2YW1jaXk1bHd2cXRtQQpJVmlVMVdnYXl6YzYraEkrTnZyTFpVSFc0a00ybXZwa0xCWXNVdElyL05kaXBmYTZjMEsyYjg3RHJtUU9nYjNMCk5QSlZxbGQvZnByNkExT3lMT1UwdlhCNjJEWktLdDJpcWdWcUFXRG9tY2FNKzZZUDhMMmJkc3dITlVIbEczQzUKSFNZVWhtUVR5akg1TkNEWXAxRjc4eXc9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n  name: tbdlsc18uvrh6drbdv70\ncontexts:\n- context:\n    cluster: tbdlsc18uvrh6drbdv70\n    user: aws-dynamic-token\n  name: tbdlsc18uvrh6drbdv70\ncurrent-context: tbdlsc18uvrh6drbdv70\nusers:\n- name: aws-dynamic-token\n  user:\n    exec:\n      apiVersion: client.authentication.k8s.io/v1\n      interactiveMode: Never\n      command: sh\n      args:\n      - -c\n      - \". ~/.cb-spider/.spider-credential \u0026\u0026 curl -s -u \\\"$SPIDER_USERNAME:$SPIDER_PASSWORD\\\" \\\"http://0.0.0.0:1024/spider/cluster/tbdlsc18uvrh6drbdv70/token?ConnectionName=aws-ap-northeast-2\\\"\"\n"
+      "Endpoint": "https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com",
+      "Kubeconfig": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    server: https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRYk9HOENhQ05pQkU2UGVpTEFaYUE5VEFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1UQXlOREF6T1ZvWERUTXhNRGd5TURBeQpOREF6T1Zvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBTWpoc1puYnMrK1NoMEVvd2ROVzdJL2x2RHdIdTNjREIvTkY0NHJMeFJkZWlMTHMKQ2d6MnZkdWY0aHR4cWhJRU1lb0ZkTk9VMkZiR2kyeE9rNWlGdkhYQWtFV1VPTHgxdldxNzU2bUczTk9RRTBTaAorMzlqOGZJOUh1Yk9Qc2lLZlhJN1lxM3o4YWF3TzRFeE1lSFdxNlhIZlBvdnIzR29ZaFFyL2txK3NJUWFpYnQ2CncxL2N1bTJzejJXMFo3bXR1Vjlub2ZTWGxucEtIOTl1Q1ZXalIvamVEWUNMR0VudExkWnQ0THhxc0h5dWtpeEcKRFk2T2tXQ29jMFRRTlpSSWRzeVZ0MUZmRnV4dFdoVDQvRkhhMFlkL09OK2FGek1KZmhtV2ZIWkRaN1NzV1FwMgplR3ZpNHhtS0VCRzd4TUpyL0xtM2w4RFNjUEt4NEJjV2VuUi9JLzBDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkNjaWxHTGFCREo3MjYxM3ZDRloKdUtjQkJpMXNNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBSHIzUGZEcFZ0THplWDV1emJKRlFkUkNNa3ZJckx2WHg0UlhTa1lNc3B4Nld0U2RRMGE5Q2cyMlZrR1dtaGdNCnRjMXo2dmxNcHVZUGVhcS8wQ25RQTFhVlRQZWxndFRBakpFaVY3VzZlQWZiZWgvSGxLZW8vVEJnVmdudTRXaVIKTEZOWFl1L1RkUUJjanZ2WFE2MklUMzZkekNGb2pLN0E2U29hUnkydFFld0E2ZWxHekJOaUlEcmcyT0VOQldJagpDZXJoYkxIdDBSN0U2Y2t0Z3dZVHprV082QXdzRTAySjhqWWlRaEVQZWxJWTAzMGhKRHkrbzNQbDZTcC9FSldECjdDa1Z5KzVCTFlBbWszSUMyVjk0M0RJN1RPQUxYRUtIOXFYVHB6Q0Jld1lZOFpidURwM2N2OVc1VlBJdGtGUnAKL3p5VG9FTlZqVTVYSGJOcS9kZlhEMFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K\n  name: tbqajlaplk30cjpsahc6\ncontexts:\n- context:\n    cluster: tbqajlaplk30cjpsahc6\n    user: aws-dynamic-token\n  name: tbqajlaplk30cjpsahc6\ncurrent-context: tbqajlaplk30cjpsahc6\nusers:\n- name: aws-dynamic-token\n  user:\n    exec:\n      apiVersion: client.authentication.k8s.io/v1\n      interactiveMode: Never\n      command: sh\n      args:\n      - -c\n      - \". ~/.cb-spider/.spider-credential \u0026\u0026 curl -s -u \\\"$SPIDER_USERNAME:$SPIDER_PASSWORD\\\" \\\"http://0.0.0.0:1024/spider/cluster/tbqajlaplk30cjpsahc6/token?ConnectionName=aws-ap-northeast-2\\\"\"\n"
     },
     "Addons": {
       "KeyValueList": [
         {
           "key": "AddonArn",
-          "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbdlsc18uvrh6drbdv70/aws-ebs-csi-driver/c4d00ee7-d2c7-dc8b-57d9-c1e0e7d04dc5"
+          "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbqajlaplk30cjpsahc6/aws-ebs-csi-driver/32d01118-7bee-835a-b742-59eb902f372c"
         },
         {
           "key": "AddonName",
@@ -779,11 +779,11 @@
         },
         {
           "key": "ClusterName",
-          "value": "tbdlsc18uvrh6drbdv70"
+          "value": "tbqajlaplk30cjpsahc6"
         },
         {
           "key": "CreatedAt",
-          "value": "2026-08-20T06:15:42.923Z"
+          "value": "2026-08-21T02:40:29.969Z"
         },
         {
           "key": "Health",
@@ -791,7 +791,7 @@
         },
         {
           "key": "ModifiedAt",
-          "value": "2026-08-20T06:15:42.94Z"
+          "value": "2026-08-21T02:40:30.04Z"
         },
         {
           "key": "Status",
@@ -799,7 +799,7 @@
         },
         {
           "key": "AddonArn",
-          "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbdlsc18uvrh6drbdv70/eks-pod-identity-agent/aed00ee7-d395-8f71-c953-1ddd85bae1aa"
+          "value": "arn:aws:eks:ap-northeast-2:635484366616:addon/tbqajlaplk30cjpsahc6/eks-pod-identity-agent/68d01118-7d04-d95c-159d-92ab6f64aff9"
         },
         {
           "key": "AddonName",
@@ -811,11 +811,11 @@
         },
         {
           "key": "ClusterName",
-          "value": "tbdlsc18uvrh6drbdv70"
+          "value": "tbqajlaplk30cjpsahc6"
         },
         {
           "key": "CreatedAt",
-          "value": "2026-08-20T06:15:43.325Z"
+          "value": "2026-08-21T02:40:30.382Z"
         },
         {
           "key": "Health",
@@ -823,36 +823,36 @@
         },
         {
           "key": "ModifiedAt",
-          "value": "2026-08-20T06:15:43.34Z"
+          "value": "2026-08-21T02:48:13.224Z"
         },
         {
           "key": "Status",
-          "value": "CREATING"
+          "value": "ACTIVE"
         }
       ]
     },
     "Status": "Active",
-    "CreatedTime": "2026-08-20T06:15:41.284Z",
+    "CreatedTime": "2026-08-21T02:40:28.745Z",
     "KeyValueList": [
       {
         "key": "Arn",
-        "value": "arn:aws:eks:ap-northeast-2:635484366616:cluster/tbdlsc18uvrh6drbdv70"
+        "value": "arn:aws:eks:ap-northeast-2:635484366616:cluster/tbqajlaplk30cjpsahc6"
       },
       {
         "key": "CertificateAuthority",
-        "value": "{Data:LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRS3pTV1A3ODE1VTFzdUpJOXFzWE1TakFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1EQTJNVFUxTTFvWERUTXhNRGd4T1RBMgpNVFUxTTFvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBT3czVjd0Zk44WU1FR1E1REE2Q0dvNEhMZGJnc3hJRzZNa29qV3RycWZsZGYwb3IKOWRZc1VDc3NISGhwRklWcmNOdmkwTmJ1UVlqQlBnMmFaZUwrNXlUU05SV1pOdXJFcHZiZ1h1MDFLVlJwdVBIdwpSQjdZQUh3cllRUSt4b0JtU1dVL3ZUaVh0SzRQRWhydjU5cjlhT0l3S0p5OTFiRGV6QXhVdFlVTld3TUNEU3hOClhSTk5OdC91SC9CaDN1YnN4Um9jVUlzN3VOWnViVjBhcDNpc0NJbExRdENYeTgyRVRQRmE5OU5xa0g2Rlhwc1IKRXhGTzhWSnQ2eW1KR1hmdTBvTVFBTjYxc1RzUkwxd1BUWmxEZjJhSFdJRmxwL2dDbSt4Z2xjUnkwNVRCZkV2dwphV1BUQ0FCdE4wVTR6Y3crYU5sUmFqU29NZTlGUlFVbjhlSzVzVVVDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkRZVU1KdzBYNGNmUTBpV2I0encKc21GSzYwcHVNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBS3NPSmVseWxsMlJ2TmNRTDgxbnRLMjhSRGxHSWxqNm85L3V0clhnU2YzNlFaRENiZzdIWjA3VUx4aDRxcUNvCnFTK3ZvMWVSMDZIbkZTOWJlTGFKSjJhMjhSUUhLT2NzdUFBWVNsVTcxQ0taUjcxMWlRSlQxMTRRM2VkSW9qWGYKYVlHWCs0Q1lvc0lpazdmd2hNSkxzRWM5aTRIdnRlOHNYWGtHZDQ4RncxZHlOdk5lK0J2YW1jaXk1bHd2cXRtQQpJVmlVMVdnYXl6YzYraEkrTnZyTFpVSFc0a00ybXZwa0xCWXNVdElyL05kaXBmYTZjMEsyYjg3RHJtUU9nYjNMCk5QSlZxbGQvZnByNkExT3lMT1UwdlhCNjJEWktLdDJpcWdWcUFXRG9tY2FNKzZZUDhMMmJkc3dITlVIbEczQzUKSFNZVWhtUVR5akg1TkNEWXAxRjc4eXc9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K}"
+        "value": "{Data:LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUREVENDQWZXZ0F3SUJBZ0lRYk9HOENhQ05pQkU2UGVpTEFaYUE5VEFOQmdrcWhraUc5dzBCQVFzRkFEQVYKTVJNd0VRWURWUVFERXdwcmRXSmxjbTVsZEdWek1CNFhEVEkyTURneU1UQXlOREF6T1ZvWERUTXhNRGd5TURBeQpOREF6T1Zvd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBTWpoc1puYnMrK1NoMEVvd2ROVzdJL2x2RHdIdTNjREIvTkY0NHJMeFJkZWlMTHMKQ2d6MnZkdWY0aHR4cWhJRU1lb0ZkTk9VMkZiR2kyeE9rNWlGdkhYQWtFV1VPTHgxdldxNzU2bUczTk9RRTBTaAorMzlqOGZJOUh1Yk9Qc2lLZlhJN1lxM3o4YWF3TzRFeE1lSFdxNlhIZlBvdnIzR29ZaFFyL2txK3NJUWFpYnQ2CncxL2N1bTJzejJXMFo3bXR1Vjlub2ZTWGxucEtIOTl1Q1ZXalIvamVEWUNMR0VudExkWnQ0THhxc0h5dWtpeEcKRFk2T2tXQ29jMFRRTlpSSWRzeVZ0MUZmRnV4dFdoVDQvRkhhMFlkL09OK2FGek1KZmhtV2ZIWkRaN1NzV1FwMgplR3ZpNHhtS0VCRzd4TUpyL0xtM2w4RFNjUEt4NEJjV2VuUi9JLzBDQXdFQUFhTlpNRmN3RGdZRFZSMFBBUUgvCkJBUURBZ0trTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3SFFZRFZSME9CQllFRkNjaWxHTGFCREo3MjYxM3ZDRloKdUtjQkJpMXNNQlVHQTFVZEVRUU9NQXlDQ210MVltVnlibVYwWlhNd0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQgpBSHIzUGZEcFZ0THplWDV1emJKRlFkUkNNa3ZJckx2WHg0UlhTa1lNc3B4Nld0U2RRMGE5Q2cyMlZrR1dtaGdNCnRjMXo2dmxNcHVZUGVhcS8wQ25RQTFhVlRQZWxndFRBakpFaVY3VzZlQWZiZWgvSGxLZW8vVEJnVmdudTRXaVIKTEZOWFl1L1RkUUJjanZ2WFE2MklUMzZkekNGb2pLN0E2U29hUnkydFFld0E2ZWxHekJOaUlEcmcyT0VOQldJagpDZXJoYkxIdDBSN0U2Y2t0Z3dZVHprV082QXdzRTAySjhqWWlRaEVQZWxJWTAzMGhKRHkrbzNQbDZTcC9FSldECjdDa1Z5KzVCTFlBbWszSUMyVjk0M0RJN1RPQUxYRUtIOXFYVHB6Q0Jld1lZOFpidURwM2N2OVc1VlBJdGtGUnAKL3p5VG9FTlZqVTVYSGJOcS9kZlhEMFk9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K}"
       },
       {
         "key": "CreatedAt",
-        "value": "2026-08-20T06:15:41.284Z"
+        "value": "2026-08-21T02:40:28.745Z"
       },
       {
         "key": "Endpoint",
-        "value": "https://A1E5A99B85D7AEE154F241C6E2E2D464.yl4.ap-northeast-2.eks.amazonaws.com"
+        "value": "https://A42C0404A862C06B0E9998C1EC42D7E1.gr7.ap-northeast-2.eks.amazonaws.com"
       },
       {
         "key": "Identity",
-        "value": "{Oidc:{Issuer:https://oidc.eks.ap-northeast-2.amazonaws.com/id/A1E5A99B85D7AEE154F241C6E2E2D464}}"
+        "value": "{Oidc:{Issuer:https://oidc.eks.ap-northeast-2.amazonaws.com/id/A42C0404A862C06B0E9998C1EC42D7E1}}"
       },
       {
         "key": "KubernetesNetworkConfig",
@@ -864,7 +864,7 @@
       },
       {
         "key": "Name",
-        "value": "tbdlsc18uvrh6drbdv70"
+        "value": "tbqajlaplk30cjpsahc6"
       },
       {
         "key": "PlatformVersion",
@@ -872,7 +872,7 @@
       },
       {
         "key": "ResourcesVpcConfig",
-        "value": "{ClusterSecurityGroupId:sg-0335b04180c79d7ca,EndpointPrivateAccess:false,EndpointPublicAccess:true,PublicAccessCidrs:[0.0.0.0/0],SecurityGroupIds:[sg-00b0fa9c3c57c2cc5],SubnetIds:[subnet-05247863bd834f2df,subnet-0b020a2249bb6475b],VpcId:vpc-01af9f247d39edce6}"
+        "value": "{ClusterSecurityGroupId:sg-0467761160db4a2ff,EndpointPrivateAccess:false,EndpointPublicAccess:true,PublicAccessCidrs:[0.0.0.0/0],SecurityGroupIds:[sg-00b0fa9c3c57c2cc5],SubnetIds:[subnet-05247863bd834f2df,subnet-0b020a2249bb6475b],VpcId:vpc-01af9f247d39edce6}"
       },
       {
         "key": "RoleArn",
@@ -884,7 +884,7 @@
       },
       {
         "key": "Tags",
-        "value": "{Name:tbdlsc18uvrh6drbdv70,sys.id:mig01-on-prem-k8s-cluster,sys.uid:tbdlsc18uvrh6drbdv70}"
+        "value": "{Name:tbqajlaplk30cjpsahc6,sys.cspResourceId:tbqajlaplk30cjpsahc6,sys.cspResourceName:tbqajlaplk30cjpsahc6,sys.labelType:k8s,sys.namespace:mig01}"
       },
       {
         "key": "Version",

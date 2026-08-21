@@ -105,8 +105,16 @@ type AuthConfig struct {
 	TumblebugEndpoint    string `json:"tumblebugEndpoint"`
 }
 
+// progressf prints an in-flight progress line. Targets run concurrently and their output
+// interleaves, so every line carries the target name — without it a stalled CSP cannot be told
+// apart from a healthy one.
+func progressf(target, format string, a ...interface{}) {
+	fmt.Printf("      [%s] %s\n", target, fmt.Sprintf(format, a...))
+}
+
 // StepResult holds one lifecycle step's outcome.
 type StepResult struct {
+	Target     string
 	Number     int
 	Name       string
 	StartTime  time.Time
@@ -273,39 +281,43 @@ func runLifecycle(cfg TestConfig, auth AuthConfig, target TestCase, requestBody 
 
 	printBanner(target)
 
-	steps := []func(*resty.Client, TestConfig, AuthConfig, *CSPTestReport, []byte) StepResult{
-		stepRecommend,
-		stepMigrate,
-		stepList,
-		stepGetAndVerify,
+	// The name is declared here rather than read back from the result, so it can be announced
+	// before the step runs — a step that takes minutes needs its heading up front.
+	steps := []struct {
+		number int
+		name   string
+		run    func(*resty.Client, TestConfig, AuthConfig, *CSPTestReport, []byte) StepResult
+	}{
+		{1, "POST /recommendation/k8sCluster", stepRecommend},
+		{2, "POST /migration/ns/{nsId}/k8sCluster", stepMigrate},
+		{3, "GET /migration/ns/{nsId}/k8sCluster", stepList},
+		{4, "GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation", stepGetAndVerify},
 	}
 
-	for _, step := range steps {
-		res := step(client, cfg, auth, report, requestBody)
+	runStep := func(number int, name string, fn func(*resty.Client, TestConfig, AuthConfig, *CSPTestReport, []byte) StepResult) StepResult {
+		printStepStart(report.DisplayName, number, name)
+		res := fn(client, cfg, auth, report, requestBody)
 		report.Steps = append(report.Steps, res)
 		printStep(report.DisplayName, res)
-		if !res.Success {
+		return res
+	}
+
+	for _, st := range steps {
+		if res := runStep(st.number, st.name, st.run); !res.Success {
 			break
 		}
 	}
 
 	// Workload verification runs only on a healthy cluster, and always before cleanup.
 	if report.ClusterID != "" && cfg.Workload.Enabled && lastStepPassed(report) {
-		res := stepWorkload(client, cfg, auth, report, requestBody)
-		report.Steps = append(report.Steps, res)
-		printStep(report.DisplayName, res)
+		runStep(5, "Workload verification (kubeconfig -> K8s API -> nginx)", stepWorkload)
 	}
 
 	// Cleanup always runs when there is something to clean up.
 	if report.ClusterID != "" {
-		res := stepDelete(client, cfg, auth, report, requestBody)
-		report.Steps = append(report.Steps, res)
-		printStep(report.DisplayName, res)
-
+		res := runStep(6, "DELETE /migration/ns/{nsId}/k8sCluster/{id}", stepDelete)
 		if res.Success && cfg.Verify.ResidualResources {
-			res := stepResidualCheck(client, cfg, auth, report, requestBody)
-			report.Steps = append(report.Steps, res)
-			printStep(report.DisplayName, res)
+			runStep(7, "Residual resource check (Tumblebug)", stepResidualCheck)
 		}
 	}
 
@@ -315,7 +327,7 @@ func runLifecycle(cfg TestConfig, auth AuthConfig, target TestCase, requestBody 
 // --- Steps -----------------------------------------------------------------
 
 func stepRecommend(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTestReport, requestBody []byte) StepResult {
-	res := StepResult{Number: 1, Name: "POST /recommendation/k8sCluster", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 1, Name: "POST /recommendation/k8sCluster", StartTime: time.Now()}
 
 	url := cfg.Beetle.Endpoint + "/beetle/recommendation/k8sCluster"
 	resp, err := client.R().
@@ -362,7 +374,7 @@ func stepRecommend(client *resty.Client, cfg TestConfig, _ AuthConfig, report *C
 // minutes by its own polling budget — so the async path keeps the HTTP connection short and
 // prints progress while waiting.
 func stepMigrate(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 2, Name: "POST /migration/ns/{nsId}/k8sCluster", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 2, Name: "POST /migration/ns/{nsId}/k8sCluster", StartTime: time.Now()}
 
 	body, err := json.Marshal(report.Recommendation)
 	if err != nil {
@@ -418,7 +430,7 @@ func migrateSync(client *resty.Client, cfg TestConfig, url string, body []byte, 
 	syncClient := *client
 	sc := (&syncClient).SetTimeout(time.Duration(cfg.Migration.TimeoutSec) * time.Second)
 
-	fmt.Printf("      ... sync mode: holding the connection for up to %ds\n", cfg.Migration.TimeoutSec)
+	progressf(res.Target, "... sync mode: holding the connection for up to %ds", cfg.Migration.TimeoutSec)
 	resp, err := sc.R().SetHeader("Content-Type", "application/json").SetBody(body).Post(url)
 	if err != nil {
 		return nil, 0, err
@@ -453,7 +465,7 @@ func migrateAsync(client *resty.Client, cfg TestConfig, url string, body []byte,
 			break
 		}
 		wait := 30 * time.Second
-		fmt.Printf("      ... async job pool full (503), retrying in %v (%d/%d)\n", wait, attempt, maxAdmissionRetries)
+		progressf(res.Target, "... async job pool full (503), retrying in %v (%d/%d)", wait, attempt, maxAdmissionRetries)
 		time.Sleep(wait)
 	}
 
@@ -466,9 +478,9 @@ func migrateAsync(client *resty.Client, cfg TestConfig, url string, body []byte,
 		return nil, resp.StatusCode(), err
 	}
 	res.Notes = append(res.Notes, fmt.Sprintf("ℹ️  async reqId: %s", reqID))
-	fmt.Printf("      -> 202 Accepted, reqId=%s\n", reqID)
+	progressf(res.Target, "-> 202 Accepted, reqId=%s", reqID)
 
-	details, err := pollUntilDone(client, cfg.Beetle.Endpoint, reqID, cfg.Poll.IntervalSec, cfg.Poll.TimeoutSec)
+	details, err := pollUntilDone(client, res.Target, cfg.Beetle.Endpoint, reqID, cfg.Poll.IntervalSec, cfg.Poll.TimeoutSec)
 	if err != nil {
 		return nil, resp.StatusCode(), err
 	}
@@ -573,7 +585,7 @@ func adoptOrphanCluster(client *resty.Client, cfg TestConfig, report *CSPTestRep
 }
 
 func stepList(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 3, Name: "GET /migration/ns/{nsId}/k8sCluster", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 3, Name: "GET /migration/ns/{nsId}/k8sCluster", StartTime: time.Now()}
 
 	// option=id keeps this cheap: the full listing refreshes every cluster through the CSP and
 	// exceeds Tumblebug's 120 s request timeout once several clusters exist. Presence of the ID
@@ -618,7 +630,7 @@ func stepList(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTes
 // against what the recommendation asked for. A migration that succeeds but silently drops a
 // node group or substitutes a spec would otherwise go unnoticed.
 func stepGetAndVerify(client *resty.Client, cfg TestConfig, auth AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 4, Name: "GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 4, Name: "GET /migration/ns/{nsId}/k8sCluster/{id} + verify vs recommendation", StartTime: time.Now()}
 
 	url := fmt.Sprintf("%s/beetle/migration/ns/%s/k8sCluster/%s", cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID, report.ClusterID)
 	resp, err := client.R().Get(url)
@@ -722,7 +734,7 @@ func stepGetAndVerify(client *resty.Client, cfg TestConfig, auth AuthConfig, rep
 // (observed on NCP) reject deletion for several minutes after reporting Active, so failures
 // are retried with a fixed backoff rather than matched against specific error strings.
 func stepDelete(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 6, Name: "DELETE /migration/ns/{nsId}/k8sCluster/{id}", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 6, Name: "DELETE /migration/ns/{nsId}/k8sCluster/{id}", StartTime: time.Now()}
 
 	deleteClient := *client
 	dc := (&deleteClient).SetTimeout(time.Duration(cfg.Delete.TimeoutSec) * time.Second)
@@ -756,7 +768,7 @@ func stepDelete(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPT
 
 		if attempt < cfg.Delete.MaxRetries {
 			wait := time.Duration(cfg.Delete.RetryIntervalSec) * time.Second
-			fmt.Printf("      ... deletion not accepted yet, retrying in %v (%d/%d)\n", wait, attempt, cfg.Delete.MaxRetries)
+			progressf(res.Target, "... deletion not accepted yet, retrying in %v (%d/%d)", wait, attempt, cfg.Delete.MaxRetries)
 			time.Sleep(wait)
 		}
 	}
@@ -771,7 +783,7 @@ func stepDelete(client *resty.Client, cfg TestConfig, _ AuthConfig, report *CSPT
 // Leftover VNet/SecurityGroup/SshKey is current known behaviour, so this is recorded rather
 // than failed: cleanup scope is tracked as a separate Beetle improvement.
 func stepResidualCheck(_ *resty.Client, cfg TestConfig, auth AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 7, Name: "Residual resource check (Tumblebug)", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 7, Name: "Residual resource check (Tumblebug)", StartTime: time.Now()}
 
 	if auth.TumblebugEndpoint == "" {
 		res.Duration = time.Since(res.StartTime)
@@ -855,7 +867,7 @@ func extractReqID(resp *resty.Response) (string, error) {
 }
 
 // pollUntilDone polls GET /request/{reqId} until the job finishes or the timeout elapses.
-func pollUntilDone(client *resty.Client, endpoint, reqID string, intervalSec, timeoutSec int) (RequestDetails, error) {
+func pollUntilDone(client *resty.Client, target, endpoint, reqID string, intervalSec, timeoutSec int) (RequestDetails, error) {
 	statusURL := fmt.Sprintf("%s/beetle/request/%s", endpoint, reqID)
 	start := time.Now()
 	deadline := start.Add(time.Duration(timeoutSec) * time.Second)
@@ -869,21 +881,21 @@ func pollUntilDone(client *resty.Client, endpoint, reqID string, intervalSec, ti
 
 		resp, err := client.R().Get(statusURL)
 		if err != nil {
-			fmt.Printf("      ... [%s elapsed, poll #%d] request error: %v\n", elapsed, attempt, err)
+			progressf(target, "... [%s elapsed, poll #%d] request error: %v", elapsed, attempt, err)
 			continue
 		}
 		var apiResp ApiResponseRaw
 		if err := json.Unmarshal(resp.Body(), &apiResp); err != nil {
-			fmt.Printf("      ... [%s elapsed, poll #%d] parse error: %v\n", elapsed, attempt, err)
+			progressf(target, "... [%s elapsed, poll #%d] parse error: %v", elapsed, attempt, err)
 			continue
 		}
 		var details RequestDetails
 		if err := json.Unmarshal(apiResp.Data, &details); err != nil {
-			fmt.Printf("      ... [%s elapsed, poll #%d] parse error: %v\n", elapsed, attempt, err)
+			progressf(target, "... [%s elapsed, poll #%d] parse error: %v", elapsed, attempt, err)
 			continue
 		}
 
-		fmt.Printf("      ... [%s elapsed, poll #%d] status: %s\n", elapsed, attempt, details.Status)
+		progressf(target, "... [%s elapsed, poll #%d] status: %s", elapsed, attempt, details.Status)
 		if details.Status == "Success" || details.Status == "Error" {
 			return details, nil
 		}
@@ -955,8 +967,15 @@ func printBanner(t TestCase) {
 	fmt.Printf("=========================================================\n")
 }
 
-// printStep labels every line with the target, because targets run concurrently and their
-// output interleaves; without the label a failure cannot be attributed to a CSP.
+// printStepStart announces a step before it runs, so long-running work (cluster creation,
+// load balancer provisioning) has a heading above its progress lines instead of appearing
+// under the previous step's result.
+func printStepStart(target string, number int, name string) {
+	fmt.Printf("▶  [%s] Step %d: %s ...\n", target, number, name)
+}
+
+// printStep reports a finished step. The duration belongs here rather than on the start line,
+// because it is only known once the step ends.
 func printStep(target string, res StepResult) {
 	icon := "✅"
 	switch {
@@ -965,7 +984,8 @@ func printStep(target string, res StepResult) {
 	case !res.Success:
 		icon = "❌"
 	}
-	fmt.Printf("%s [%s] Step %d: %s (%v)\n", icon, target, res.Number, res.Name, res.Duration.Truncate(time.Millisecond))
+	fmt.Printf("%s [%s] Step %d: %s — done in %v\n", icon, target, res.Number, res.Name,
+		res.Duration.Truncate(time.Millisecond))
 	for _, n := range res.Notes {
 		fmt.Printf("      [%s] %s\n", target, n)
 	}

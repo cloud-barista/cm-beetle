@@ -74,7 +74,7 @@ const (
 // workload on it. A cluster that reports Active but cannot schedule a pod has not actually
 // been migrated in any useful sense, which is what this step is here to catch.
 func stepWorkload(_ *resty.Client, cfg TestConfig, auth AuthConfig, report *CSPTestReport, _ []byte) StepResult {
-	res := StepResult{Number: 5, Name: "Workload verification (kubeconfig -> K8s API -> nginx)", StartTime: time.Now()}
+	res := StepResult{Target: report.DisplayName, Number: 5, Name: "Workload verification (kubeconfig -> K8s API -> nginx)", StartTime: time.Now()}
 
 	if auth.TumblebugEndpoint == "" {
 		res.Duration = time.Since(res.StartTime)
@@ -193,7 +193,7 @@ func fetchKubeconfig(tb *resty.Client, url string, cfg TestConfig, res *StepResu
 		if time.Now().After(deadline) {
 			return "", fmt.Errorf("kubeconfig not ready within %ds", cfg.Workload.KubeconfigTimeoutSec)
 		}
-		fmt.Printf("      ... kubeconfig not ready yet, retrying in %v (attempt %d)\n", interval, attempt)
+		progressf(res.Target, "... kubeconfig not ready yet, retrying in %v (attempt %d)", interval, attempt)
 		time.Sleep(interval)
 	}
 }
@@ -402,7 +402,7 @@ func runNginxWorkload(k8s *resty.Client, server string, cfg TestConfig, res *Ste
 					}
 				}
 				if len(pods.Items) > 0 {
-					fmt.Printf("      ... nginx pod phase: %s (attempt %d)\n", pods.Items[0].Status.Phase, attempt)
+					progressf(res.Target, "... nginx pod phase: %s (attempt %d)", pods.Items[0].Status.Phase, attempt)
 				}
 			}
 		}
@@ -488,7 +488,7 @@ func waitForLoadBalancerAddress(k8s *resty.Client, server string, cfg TestConfig
 		if time.Now().After(deadline) {
 			return "", fmt.Errorf("LoadBalancer address was not assigned within %ds", cfg.Workload.LbAddressTimeoutSec)
 		}
-		fmt.Printf("      ... waiting for LoadBalancer address (attempt %d)\n", attempt)
+		progressf(res.Target, "... waiting for LoadBalancer address (attempt %d)", attempt)
 	}
 }
 
@@ -520,7 +520,7 @@ func fetchThroughLoadBalancer(address string, cfg TestConfig, res *StepResult) e
 			return fmt.Errorf("LoadBalancer at %s did not serve within %ds (last: %s)",
 				url, cfg.Workload.LbAccessTimeoutSec, lastErr)
 		}
-		fmt.Printf("      ... LoadBalancer not serving yet: %s (attempt %d)\n", lastErr, attempt)
+		progressf(res.Target, "... LoadBalancer not serving yet: %s (attempt %d)", lastErr, attempt)
 		time.Sleep(interval)
 	}
 }
