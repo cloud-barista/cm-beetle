@@ -23,11 +23,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// RecommendK8sNodeGroupImages recommends a node image for every worker node group derived from the
+// RecommendK8sNodeGroupImages recommends a node image for every architecture present among the
 // source workers, and assembles the L0 response.
 //
-// Workers are grouped by spec signature (same rule as RecommendK8sNodeGroupSpecs).
-// Each group receives the architecture-appropriate node image from the provider's curated list.
+// Grouping is by normalized architecture, which is the only input to node image selection. This
+// intentionally differs from the node group breakdown in RecommendK8sInfra: several node groups can
+// share one architecture and therefore one node image, and grouping by spec here would cost a
+// Tumblebug spec search per group for a result that does not depend on the spec.
 //
 // Returns RecommendedOsImageList. For K8s node images, only TargetOsImage.Id is populated;
 // other ImageInfo fields are empty because the curated list carries only an id string.
@@ -44,23 +46,22 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 		return ret, fmt.Errorf("no worker nodes found in source infra (nodes with role=worker are required)")
 	}
 
-	for i, g := range groupWorkersBySpec(workers) {
+	for i, g := range groupWorkersByArch(workers) {
 		members := machineIdsOf(g.nodes)
-		arch := normalizeArch(g.nodes[0].CPU.Architecture)
 
-		imageId, err := ResolveK8sNodeImageId(provider, region, arch)
+		imageId, designation, err := resolveK8sNodeImage(provider, region, g.arch)
 		if err != nil {
-			log.Warn().Err(err).Int("nodeGroupIndex", i+1).Msg("failed to resolve K8s node image")
+			log.Warn().Err(err).Str("arch", g.arch).Msg("failed to resolve K8s node image")
 			ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
 				Status:        string(NothingRecommended),
 				SourceServers: members,
-				Description:   fmt.Sprintf("failed to resolve node image for node group %d: %v", i+1, err),
+				Description:   fmt.Sprintf("failed to resolve node image for architecture group %d (%s): %v", i+1, g.arch, err),
 				TargetOsImage: cloudmodel.ImageInfo{},
 			})
 			continue
 		}
 
-		desc := buildNodeImageDescription(provider, region, i+1, len(g.nodes), arch, imageId)
+		desc := buildNodeImageDescription(provider, region, i+1, len(g.nodes), g.arch, imageId, designation)
 
 		ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
 			Status:        string(FullyRecommended),
@@ -81,30 +82,62 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 	return ret, nil
 }
 
+// archGroup is the set of source workers sharing one normalized architecture.
+type archGroup struct {
+	arch  string
+	nodes []onpremmodel.NodeProperty
+}
+
+// groupWorkersByArch groups workers by normalized architecture, preserving first-appearance order
+// so group indices are deterministic.
+func groupWorkersByArch(workers []onpremmodel.NodeProperty) []archGroup {
+	index := make(map[string]int)
+	var groups []archGroup
+	for _, w := range workers {
+		arch := normalizeArch(w.CPU.Architecture)
+		if i, ok := index[arch]; ok {
+			groups[i].nodes = append(groups[i].nodes, w)
+			continue
+		}
+		index[arch] = len(groups)
+		groups = append(groups, archGroup{arch: arch, nodes: []onpremmodel.NodeProperty{w}})
+	}
+	return groups
+}
+
 // ResolveK8sNodeImageId returns the node image ID appropriate for the given architecture.
-// Promoted from the unexported resolveNodeImageId used internally by RecommendK8sInfra.
+func ResolveK8sNodeImageId(provider, region, arch string) (string, error) {
+	imageId, _, err := resolveK8sNodeImage(provider, region, arch)
+	return imageId, err
+}
+
+// resolveK8sNodeImage returns the node image ID for the architecture along with the provider's
+// image-designation flag, so a caller that also needs the flag (to describe the choice) does not
+// have to fetch the same data twice.
 //
 // Behavior:
 //   - NodeImageDesignation=false (CSP manages the image) or x86_64 arch → "default".
 //   - NodeImageDesignation=true + arm64 → pick an ARM node image from the curated list.
 //   - arm64 required but no ARM image available → error.
-func ResolveK8sNodeImageId(provider, region, arch string) (string, error) {
+func resolveK8sNodeImage(provider, region, arch string) (imageId string, designation bool, err error) {
 	designation, images, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
 	if err != nil {
 		log.Warn().Err(err).Str("provider", provider).Str("region", region).
 			Msg("Failed to fetch node images; using default image")
-		return "default", nil
+		return "default", false, nil
 	}
 	if !designation || arch != "arm64" {
-		return "default", nil
+		return "default", designation, nil
 	}
 	for _, img := range images {
 		if isArmNodeImageId(img.Id) {
-			return img.Id, nil
+			return img.Id, designation, nil
 		}
 	}
-	return "", fmt.Errorf("no arm64 node image available for provider %q region %q (node image "+
-		"designation required); add an ARM node image to k8sclusterinfo.yaml or use an x86_64 spec", provider, region)
+	return "", designation, fmt.Errorf(
+		"no arm64 K8s node image is available for provider %q region %q. Use x86_64 worker nodes, "+
+			"or check the available node images with searchImage(isKubernetesImage=true, provider=%q)",
+		provider, region, provider)
 }
 
 // isArmNodeImageId reports whether a curated node image identifier denotes an ARM/aarch64 image.
@@ -115,20 +148,15 @@ func isArmNodeImageId(id string) bool {
 }
 
 // buildNodeImageDescription constructs the per-entry description in user-friendly language.
-func buildNodeImageDescription(provider, region string, groupIdx, nodeCount int, arch, imageId string) string {
-	designation, _, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
-	if err != nil || !designation {
+// designation comes from the caller's own lookup rather than a second fetch of the same data.
+func buildNodeImageDescription(provider, region string, groupIdx, nodeCount int, arch, imageId string, designation bool) string {
+	if !designation {
 		return fmt.Sprintf(
-			"Node group %d (%d node(s), %s) — %s manages node image selection automatically",
+			"Architecture group %d (%d node(s), %s) — %s manages node image selection automatically",
 			groupIdx, nodeCount, arch, provider)
 	}
-	if arch != "arm64" {
-		return fmt.Sprintf(
-			"Node group %d (%d node(s), %s) — Use node image '%s' for %s %s",
-			groupIdx, nodeCount, arch, imageId, provider, region)
-	}
 	return fmt.Sprintf(
-		"Node group %d (%d node(s), %s) — Use %s for %s %s",
+		"Architecture group %d (%d node(s), %s) — Use node image '%s' for %s %s",
 		groupIdx, nodeCount, arch, imageId, provider, region)
 }
 

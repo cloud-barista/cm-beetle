@@ -54,37 +54,33 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		clusterName = onpremInfra.K8sCluster.Name
 	}
 
-	// Group workers by spec (vCPU/memory/architecture) and build one node group per group.
-	// Managed K8s node groups are homogeneous — every node in a group shares one instance
-	// spec (EKS managed node group, AKS agent pool, GKE node pool) — so heterogeneous
-	// workers must map to separate node groups. Homogeneous workers collapse to one group.
-	// Node group names use a fixed base ("workers") + index, validated against the CSP
-	// naming rule fetched from Tumblebug.
-	workerGroups := groupWorkersBySpec(workerNodes)
-	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(workerGroups))
-	for i, g := range workerGroups {
-		specs, upscaleNote, specErr := RecommendK8sNodeSpecs(provider, region, g.nodes[0], 1)
-		if specErr != nil {
-			return emptyRet, fmt.Errorf("K8s worker spec recommendation failed for node group %d: %w", i+1, specErr)
-		}
-		if len(specs) == 0 {
-			return emptyRet, fmt.Errorf("no spec found for K8s worker node group %d", i+1)
-		}
-		specId := specs[0].Id
-		// Select an architecture-appropriate node image (see resolveNodeImageId). The spec is
-		// already arch-aware; the image must match so ARM specs get an ARM image, not the x86 default.
-		arch := normalizeArch(g.nodes[0].CPU.Architecture)
-		imageId, imgErr := ResolveK8sNodeImageId(provider, region, arch)
-		if imgErr != nil {
-			return emptyRet, fmt.Errorf("K8s node image selection failed for node group %d: %w", i+1, imgErr)
-		}
+	// Recommend per worker, then merge on the resolved target — not the other way round.
+	//
+	// Managed K8s node groups are homogeneous (EKS managed node group, AKS agent pool, GKE node
+	// pool), so a node group can hold only workers that share one spec. Grouping on the *target*
+	// rather than on the source signature means two workers differing by a single vCPU that
+	// resolve to the same instance type share one node group instead of producing two.
+	//
+	// Node group names use a fixed base ("workers") + index, validated against the CSP naming
+	// rule fetched from Tumblebug.
+	// Ask for the same candidate pool the L0 spec API uses, not just one spec. Requesting a
+	// single spec would delegate the choice to Tumblebug's cost priority and leave
+	// sortK8sSpecsByProximity sorting a one-element slice — so the two APIs could recommend
+	// different specs for the same worker whenever the cheapest candidate in range is not the
+	// closest one.
+	targets := resolveWorkerTargets(provider, region, workerNodes, GetDefaultSpecsLimit())
+	groups, failed := mergeIntoNodeGroups(targets)
+	if len(groups) == 0 {
+		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
+	}
+	logExcludedWorkers(failed)
+
+	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(groups))
+	includedWorkers := 0
+	for i, g := range groups {
 		name := resolveNodeGroupName(provider, "workers", i+1)
-		ng := buildK8sNodeGroupReq(provider, name, specId, g.nodes)
-		ng.ImageId = imageId
-		if upscaleNote != "" {
-			ng.Description += " " + upscaleNote
-		}
-		nodeGroupReqs = append(nodeGroupReqs, ng)
+		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(provider, name, g))
+		includedWorkers += len(g.nodes)
 	}
 
 	vNetReq := buildK8sVNetReq(connectionName, provider, region, onpremInfra)
@@ -97,12 +93,23 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		Version:        version,
 		// VNetId, SubnetIds, SecurityGroupIds are filled in by migration logic
 		K8sNodeGroupList: nodeGroupReqs,
-		Description:      fmt.Sprintf("Migrated from on-premise K8s cluster (v%s, %d workers)", onpremInfra.K8sCluster.Version, len(workerNodes)),
+		// Count the workers actually covered, not every worker in the source: excluded ones
+		// (see below) are not in any node group.
+		Description: fmt.Sprintf("Migrated from on-premise K8s cluster (v%s, %d workers)", onpremInfra.K8sCluster.Version, includedWorkers),
+	}
+
+	// A worker that could not be resolved is excluded rather than failing the whole
+	// recommendation, so the exclusion has to be visible in the response — dropping it silently
+	// would be worse than the hard failure this replaced.
+	description := fmt.Sprintf("K8s cluster recommendation for %s %s (source: v%s → target: v%s)",
+		provider, region, onpremInfra.K8sCluster.Version, version)
+	if note := summarizeFailures(failed); note != "" {
+		description += ". " + note
 	}
 
 	result := cloudmodel.RecommendedInfra{
 		Status:      "recommended",
-		Description: fmt.Sprintf("K8s cluster recommendation for %s %s (source: v%s → target: v%s)", provider, region, onpremInfra.K8sCluster.Version, version),
+		Description: description,
 		TargetCloud: cloudmodel.CloudProperty{
 			Csp:    strings.ToLower(provider),
 			Region: strings.ToLower(region),
@@ -119,6 +126,8 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		Str("version", version).
 		Int("nodeGroupCount", len(nodeGroupReqs)).
 		Int("workerCount", len(workerNodes)).
+		Int("includedWorkers", includedWorkers).
+		Int("excludedWorkers", len(failed)).
 		Msg("K8s infra recommendation completed")
 
 	return result, nil
@@ -135,39 +144,217 @@ func collectWorkerNodes(nodes []onpremmodel.NodeProperty) []onpremmodel.NodeProp
 	return workers
 }
 
-// workerGroup is a set of source worker nodes that share the same spec signature and thus
-// map to a single (homogeneous) managed K8s node group.
-type workerGroup struct {
-	nodes []onpremmodel.NodeProperty
+// sourceVcpuOf returns the source node's vCPU count. One rule serves both the memoization key
+// and the spec search, so a node can never be keyed by one value and sized by another.
+//
+// Cpus == 0 means "totals, not per-socket": a node discovered through the Kubernetes API arrives
+// as {cpus: 0, cores: 0, threads: N} because honeybee lands the API's total CPU count in Threads.
+// Treat it as a single socket. Threads == 0 falls back to Cores (assume no SMT) rather than 1,
+// since a bare 1 understates a multi-core socket by its full core count.
+func sourceVcpuOf(n onpremmodel.NodeProperty) uint32 {
+	cpus := n.CPU.Cpus
+	if cpus == 0 {
+		cpus = 1
+	}
+	threads := n.CPU.Threads
+	if threads == 0 {
+		threads = n.CPU.Cores
+	}
+	if threads == 0 {
+		threads = 1
+	}
+	return cpus * threads
 }
 
-// groupWorkersBySpec groups workers by their spec signature (vCPU, memory, architecture),
-// preserving first-appearance order so node group indices are deterministic. Homogeneous
-// workers yield a single group; heterogeneous workers yield one group per distinct spec.
-func groupWorkersBySpec(workers []onpremmodel.NodeProperty) []workerGroup {
-	index := make(map[string]int)
-	var groups []workerGroup
+// workerSpecKey is the memoization key for spec recommendation — NOT a partition key.
+//
+// Two workers sharing a key resolve to the same target, so the recommendation is computed once.
+// Two workers with different keys may still end up in the same node group: merging happens on the
+// resolved target, not here (see mergeIntoNodeGroups). That is what stops a 1-unit difference in
+// the source from producing a separate node group.
+func workerSpecKey(n onpremmodel.NodeProperty) string {
+	return fmt.Sprintf("%d|%d|%s", sourceVcpuOf(n), n.Memory.TotalSize, normalizeArch(n.CPU.Architecture))
+}
+
+// workerTarget is one source worker resolved against the target cloud: the ranked specs it maps
+// onto, the node image its architecture requires, and any note that must reach the user.
+//
+// A non-nil err means this worker could not be resolved. It is excluded from the node groups and
+// reported back to the caller rather than aborting the whole recommendation — one worker without
+// an available node image must not cost the caller the entire cluster.
+type workerTarget struct {
+	node        onpremmodel.NodeProperty
+	specs       []cloudmodel.SpecInfo // ranked; specs[0] is the chosen one
+	imageId     string
+	upscaleNote string
+	err         error
+}
+
+// specId returns the chosen target spec id, or "" when the worker failed to resolve.
+func (t workerTarget) specId() string {
+	if t.err != nil || len(t.specs) == 0 {
+		return ""
+	}
+	return t.specs[0].Id
+}
+
+// resolveWorkerTargets recommends a target spec and node image for every worker, in source order.
+//
+// Recommendation is memoized by workerSpecKey so identical workers cost one Tumblebug call, which
+// keeps the call count at what the previous group-then-recommend flow used. The key is a cache key
+// only — see workerSpecKey.
+//
+// The memo lives for one call, during which limit is fixed, so limit is not part of the key. Add
+// it if a future caller varies limit per worker.
+func resolveWorkerTargets(provider, region string, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
+
+	memo := make(map[string]workerTarget, len(workers))
+	targets := make([]workerTarget, 0, len(workers))
+
 	for _, w := range workers {
 		key := workerSpecKey(w)
+		if cached, ok := memo[key]; ok {
+			cached.node = w // the node differs per worker; everything else is shared
+			targets = append(targets, cached)
+			continue
+		}
+
+		t := workerTarget{node: w}
+
+		specs, note, err := RecommendK8sNodeSpecs(provider, region, w, limit)
+		switch {
+		case err != nil:
+			// Keep machine IDs out of the error text: failures are grouped by cause and the
+			// affected IDs are listed separately (see groupFailuresByCause).
+			t.err = fmt.Errorf("spec recommendation failed: %w", err)
+		case len(specs) == 0:
+			t.err = fmt.Errorf("no target spec found within the search range")
+		default:
+			t.specs, t.upscaleNote = specs, note
+			// The spec search already filtered on this architecture, so the image must match it:
+			// an ARM spec needs an ARM image, not the x86 default.
+			imageId, imgErr := ResolveK8sNodeImageId(provider, region, normalizeArch(w.CPU.Architecture))
+			if imgErr != nil {
+				t.err = fmt.Errorf("node image selection failed: %w", imgErr)
+			} else {
+				t.imageId = imageId
+			}
+		}
+
+		memo[key] = t
+		targets = append(targets, t)
+	}
+	return targets
+}
+
+// nodeGroupAccum accumulates the source workers that resolved to one target (spec, image) pair.
+type nodeGroupAccum struct {
+	specs   []cloudmodel.SpecInfo // ranked; specs[0] is the chosen target spec
+	imageId string
+	nodes   []onpremmodel.NodeProperty
+	notes   []string
+}
+
+// specId returns the node group's target spec id.
+func (g nodeGroupAccum) specId() string {
+	if len(g.specs) == 0 {
+		return ""
+	}
+	return g.specs[0].Id
+}
+
+// mergeIntoNodeGroups collapses resolved workers into homogeneous node groups keyed by the target
+// (specId, imageId) pair — never by source attributes. Two source workers differing by a single
+// vCPU that resolve to the same instance type therefore share one node group.
+//
+// Architecture needs no separate key: specId implies it (a spec belongs to exactly one
+// architecture), so arm64 and x86_64 workers can never merge and every member of a group shares
+// one node image.
+//
+// Groups are ordered by first appearance in the source node list, so node group indices — and
+// therefore names — are deterministic across runs.
+func mergeIntoNodeGroups(targets []workerTarget) (groups []nodeGroupAccum, failed []workerTarget) {
+	index := make(map[string]int)
+
+	for _, t := range targets {
+		if t.err != nil {
+			failed = append(failed, t)
+			continue
+		}
+		key := t.specId() + "|" + t.imageId
 		if i, ok := index[key]; ok {
-			groups[i].nodes = append(groups[i].nodes, w)
+			groups[i].nodes = append(groups[i].nodes, t.node)
 			continue
 		}
 		index[key] = len(groups)
-		groups = append(groups, workerGroup{nodes: []onpremmodel.NodeProperty{w}})
+		groups = append(groups, nodeGroupAccum{
+			specs:   t.specs,
+			imageId: t.imageId,
+			nodes:   []onpremmodel.NodeProperty{t.node},
+			notes:   noteSlice(t.upscaleNote),
+		})
+	}
+	return groups, failed
+}
+
+// noteSlice wraps a possibly-empty note so a group starts with either zero or one note.
+func noteSlice(note string) []string {
+	if note == "" {
+		return nil
+	}
+	return []string{note}
+}
+
+// failureGroup is a set of workers excluded for the same reason.
+type failureGroup struct {
+	cause      string
+	machineIds []string
+}
+
+// groupFailuresByCause groups excluded workers by error text so one shared cause is reported once
+// with the affected machine IDs listed, rather than repeating the same sentence per worker.
+// First-appearance order keeps the output deterministic.
+func groupFailuresByCause(failed []workerTarget) []failureGroup {
+	index := make(map[string]int)
+	var groups []failureGroup
+
+	for _, t := range failed {
+		cause := "unknown error"
+		if t.err != nil {
+			cause = t.err.Error()
+		}
+		if i, ok := index[cause]; ok {
+			groups[i].machineIds = append(groups[i].machineIds, t.node.MachineId)
+			continue
+		}
+		index[cause] = len(groups)
+		groups = append(groups, failureGroup{cause: cause, machineIds: []string{t.node.MachineId}})
 	}
 	return groups
 }
 
-// workerSpecKey builds the spec signature used both for grouping and (implicitly) for spec
-// recommendation: vCPU (cpus×threads), memory (GiB), and normalized architecture.
-func workerSpecKey(n onpremmodel.NodeProperty) string {
-	threads := n.CPU.Threads
-	if threads == 0 {
-		threads = 1
+// summarizeFailures renders excluded workers as one sentence, grouped by cause.
+// Returns "" when nothing was excluded, so callers can append it unconditionally.
+func summarizeFailures(failed []workerTarget) string {
+	if len(failed) == 0 {
+		return ""
 	}
-	vcpu := n.CPU.Cpus * threads
-	return fmt.Sprintf("%d|%d|%s", vcpu, n.Memory.TotalSize, normalizeArch(n.CPU.Architecture))
+	groups := groupFailuresByCause(failed)
+	parts := make([]string, 0, len(groups))
+	for _, g := range groups {
+		parts = append(parts, fmt.Sprintf("%s (%s)", g.cause, strings.Join(g.machineIds, ", ")))
+	}
+	return fmt.Sprintf("%d source worker(s) excluded: %s", len(failed), strings.Join(parts, "; "))
+}
+
+// logExcludedWorkers reports excluded workers once per cause at warn level.
+func logExcludedWorkers(failed []workerTarget) {
+	for _, g := range groupFailuresByCause(failed) {
+		log.Warn().
+			Str("cause", g.cause).
+			Strs("machineIds", g.machineIds).
+			Msg("Source workers excluded from K8s recommendation")
+	}
 }
 
 // archAliases maps the architecture strings on-premise sources report to the canonical values
@@ -630,7 +817,7 @@ func normalizeNodeGroupName(base string, index, maxLen int) string {
 	return cleaned + suffix
 }
 
-// buildK8sNodeGroupReq builds a K8sNodeGroupReq from source worker nodes.
+// buildK8sNodeGroupReq builds a K8sNodeGroupReq from one merged node group.
 // Note: SshKeyId is intentionally empty here; migration logic fills it after SshKey creation.
 //
 // Min/MaxNodeSize handling differs per CSP even when auto-scaling is disabled:
@@ -638,8 +825,8 @@ func normalizeNodeGroupName(base string, index, maxLen int) string {
 //     specified, OnAutoScaling must be enabled"), so both are left at 0.
 //   - AWS EKS requires MaxNodeSize >= 1 unconditionally ("The MaxNodeSize value must
 //     be greater than or equal to 1"), so a fixed-size group uses Max = desiredSize.
-func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.NodeProperty) cloudmodel.K8sNodeGroupReq {
-	desiredSize := len(workers)
+func buildK8sNodeGroupReq(provider, name string, g nodeGroupAccum) cloudmodel.K8sNodeGroupReq {
+	desiredSize := len(g.nodes)
 	if desiredSize == 0 {
 		desiredSize = 1
 	}
@@ -647,7 +834,7 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 	// Use the largest root disk in the group so no node in this (homogeneous) group is
 	// under-provisioned on disk.
 	rootDiskSize := 0
-	for _, w := range workers {
+	for _, w := range g.nodes {
 		if int(w.RootDisk.TotalSize) > rootDiskSize {
 			rootDiskSize = int(w.RootDisk.TotalSize)
 		}
@@ -662,10 +849,15 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 		minNodeSize, maxNodeSize = desiredSize, desiredSize
 	}
 
+	description := fmt.Sprintf("Worker node group migrated from on-premise (%d node(s))", desiredSize)
+	if len(g.notes) > 0 {
+		description += " " + strings.Join(g.notes, " ")
+	}
+
 	return cloudmodel.K8sNodeGroupReq{
 		Name:         name,
-		ImageId:      "default",
-		SpecId:       specId,
+		ImageId:      g.imageId,
+		SpecId:       g.specId(),
 		RootDiskType: "default",
 		RootDiskSize: rootDiskSize,
 		// SshKeyId filled by migration logic
@@ -673,6 +865,6 @@ func buildK8sNodeGroupReq(provider, name, specId string, workers []onpremmodel.N
 		DesiredNodeSize: desiredSize,
 		MinNodeSize:     minNodeSize,
 		MaxNodeSize:     maxNodeSize,
-		Description:     fmt.Sprintf("Worker node group migrated from on-premise (%d nodes)", desiredSize),
+		Description:     description,
 	}
 }
