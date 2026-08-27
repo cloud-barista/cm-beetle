@@ -68,7 +68,7 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 	// sortK8sSpecsByProximity sorting a one-element slice — so the two APIs could recommend
 	// different specs for the same worker whenever the cheapest candidate in range is not the
 	// closest one.
-	targets := resolveWorkerTargets(provider, region, workerNodes, GetDefaultSpecsLimit())
+	targets := recommendWorkerTargets(provider, region, workerNodes, GetDefaultSpecsLimit())
 	groups, failed := mergeIntoNodeGroups(targets)
 	if len(groups) == 0 {
 		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
@@ -78,7 +78,7 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(groups))
 	includedWorkers := 0
 	for i, g := range groups {
-		name := resolveNodeGroupName(provider, "workers", i+1)
+		name := buildNodeGroupName(provider, "workers", i+1)
 		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(provider, name, g))
 		includedWorkers += len(g.nodes)
 	}
@@ -198,7 +198,7 @@ func (t workerTarget) specId() string {
 	return t.specs[0].Id
 }
 
-// resolveWorkerTargets recommends a target spec and node image for every worker, in source order.
+// recommendWorkerTargets recommends a target spec and node image for every worker, in source order.
 //
 // Recommendation is memoized by workerSpecKey so identical workers cost one Tumblebug call, which
 // keeps the call count at what the previous group-then-recommend flow used. The key is a cache key
@@ -206,7 +206,7 @@ func (t workerTarget) specId() string {
 //
 // The memo lives for one call, during which limit is fixed, so limit is not part of the key. Add
 // it if a future caller varies limit per worker.
-func resolveWorkerTargets(provider, region string, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
+func recommendWorkerTargets(provider, region string, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
 
 	memo := make(map[string]workerTarget, len(workers))
 	targets := make([]workerTarget, 0, len(workers))
@@ -233,7 +233,7 @@ func resolveWorkerTargets(provider, region string, workers []onpremmodel.NodePro
 			t.specs, t.upscaleNote = specs, note
 			// The spec search already filtered on this architecture, so the image must match it:
 			// an ARM spec needs an ARM image, not the x86 default.
-			imageId, imgErr := ResolveK8sNodeImageId(provider, region, normalizeArch(w.CPU.Architecture))
+			imageId, _, imgErr := selectK8sNodeImage(provider, region, normalizeArch(w.CPU.Architecture))
 			if imgErr != nil {
 				t.err = fmt.Errorf("node image selection failed: %w", imgErr)
 			} else {
@@ -747,16 +747,15 @@ var cspRequiresFixedNodeGroupSize = map[string]bool{
 // names allow 40 chars) to remain safe across providers.
 const defaultMaxNodeGroupNameLen = 40
 
-// resolveNodeGroupName builds a node group name from base + index, normalizes it to satisfy
+// buildNodeGroupName assembles a node group name from base + index, normalizes it to satisfy
 // common CSP constraints (lowercase alphanumeric, letter-initial), enforces a safe length
 // cap, and validates it against the CSP naming rule fetched from Tumblebug. It never fails:
 // on any error it falls back to the normalized default, keeping recommendation resilient to
 // Tumblebug hiccups.
 //
-// The source model carries no node group name to preserve, so a single synthesized group is
-// generated. Multiple-group support (source-name normalization, sequence suffixes) can reuse
-// normalizeNodeGroupName once the source model exposes node groups.
-func resolveNodeGroupName(provider, base string, index int) string {
+// The source model carries no node group name to preserve, so names are synthesized. The index
+// is what keeps them distinct when heterogeneous workers resolve to several node groups.
+func buildNodeGroupName(provider, base string, index int) string {
 	safeName := normalizeNodeGroupName(base, index, maxNodeGroupNameLen(provider))
 
 	rule, err := tbclient.NewSession().GetK8sNodeGroupNamingRule(provider)

@@ -49,7 +49,7 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 	for i, g := range groupWorkersByArch(workers) {
 		members := machineIdsOf(g.nodes)
 
-		imageId, designation, err := resolveK8sNodeImage(provider, region, g.arch)
+		imageId, designation, err := selectK8sNodeImage(provider, region, g.arch)
 		if err != nil {
 			log.Warn().Err(err).Str("arch", g.arch).Msg("failed to resolve K8s node image")
 			ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
@@ -105,21 +105,15 @@ func groupWorkersByArch(workers []onpremmodel.NodeProperty) []archGroup {
 	return groups
 }
 
-// ResolveK8sNodeImageId returns the node image ID appropriate for the given architecture.
-func ResolveK8sNodeImageId(provider, region, arch string) (string, error) {
-	imageId, _, err := resolveK8sNodeImage(provider, region, arch)
-	return imageId, err
-}
-
-// resolveK8sNodeImage returns the node image ID for the architecture along with the provider's
-// image-designation flag, so a caller that also needs the flag (to describe the choice) does not
-// have to fetch the same data twice.
+// selectK8sNodeImage picks the node image for the architecture and also returns the provider's
+// image-designation flag, so a caller that needs the flag (to describe the choice) does not have
+// to fetch the same data twice. Callers that only want the id discard it: `id, _, err := ...`.
 //
 // Behavior:
 //   - NodeImageDesignation=false (CSP manages the image) or x86_64 arch → "default".
 //   - NodeImageDesignation=true + arm64 → pick an ARM node image from the curated list.
 //   - arm64 required but no ARM image available → error.
-func resolveK8sNodeImage(provider, region, arch string) (imageId string, designation bool, err error) {
+func selectK8sNodeImage(provider, region, arch string) (imageId string, designation bool, err error) {
 	designation, images, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
 	if err != nil {
 		log.Warn().Err(err).Str("provider", provider).Str("region", region).
