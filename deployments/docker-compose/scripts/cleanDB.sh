@@ -26,8 +26,8 @@ if [ ! -d "$DATA_DIR" ]; then
     exit 0
 fi
 
-# Identify subdirectories to remove (excluding openbao-data)
-CLEAN_TARGETS=$(ls -A1 "$DATA_DIR" 2>/dev/null | grep -v "^openbao-data$" || true)
+# Identify subdirectories to remove (excluding openbao-data and openbao-honeybee-data)
+CLEAN_TARGETS=$(ls -A1 "$DATA_DIR" 2>/dev/null | grep -v "^openbao-data$" | grep -v "^openbao-honeybee-data$" || true)
 
 if [ -z "$CLEAN_TARGETS" ]; then
     echo -e "No data found to clean (excluding openbao-data)."

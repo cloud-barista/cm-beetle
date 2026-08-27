@@ -61,7 +61,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 Beetle UX Lab
               </span>
               <span className="ml-2.5 text-xs font-semibold px-2.5 py-1 bg-bg-input border border-border-main rounded-full text-text-muted">
-                CM-Beetle v0.5.6
+                CM-Beetle v0.6.0
               </span>
             </div>
           </div>
