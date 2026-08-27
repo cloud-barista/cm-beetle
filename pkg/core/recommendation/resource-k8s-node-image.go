@@ -19,7 +19,6 @@ import (
 
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
-	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,10 +45,12 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 		return ret, fmt.Errorf("no worker nodes found in source infra (nodes with role=worker are required)")
 	}
 
+	profile := getTargetProfile(provider, region)
+
 	for i, g := range groupWorkersByArch(workers) {
 		members := machineIdsOf(g.nodes)
 
-		imageId, designation, err := selectK8sNodeImage(provider, region, g.arch)
+		imageId, err := selectK8sNodeImage(profile, g.arch)
 		if err != nil {
 			log.Warn().Err(err).Str("arch", g.arch).Msg("failed to resolve K8s node image")
 			ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
@@ -61,7 +62,7 @@ func RecommendK8sNodeGroupImages(provider, region string, srcInfra onpremmodel.O
 			continue
 		}
 
-		desc := buildNodeImageDescription(provider, region, i+1, len(g.nodes), g.arch, imageId, designation)
+		desc := buildNodeImageDescription(profile, i+1, len(g.nodes), g.arch, imageId)
 
 		ret.RecommendedOsImageList = append(ret.RecommendedOsImageList, cloudmodel.RecommendedOsImage{
 			Status:        string(FullyRecommended),
@@ -105,33 +106,30 @@ func groupWorkersByArch(workers []onpremmodel.NodeProperty) []archGroup {
 	return groups
 }
 
-// selectK8sNodeImage picks the node image for the architecture and also returns the provider's
-// image-designation flag, so a caller that needs the flag (to describe the choice) does not have
-// to fetch the same data twice. Callers that only want the id discard it: `id, _, err := ...`.
+// selectK8sNodeImage picks the node image for the given architecture from the target profile.
 //
 // Behavior:
-//   - NodeImageDesignation=false (CSP manages the image) or x86_64 arch → "default".
-//   - NodeImageDesignation=true + arm64 → pick an ARM node image from the curated list.
-//   - arm64 required but no ARM image available → error.
-func selectK8sNodeImage(provider, region, arch string) (imageId string, designation bool, err error) {
-	designation, images, err := tbclient.NewSession().GetK8sNodeImages(provider, region)
-	if err != nil {
-		log.Warn().Err(err).Str("provider", provider).Str("region", region).
-			Msg("Failed to fetch node images; using default image")
-		return "default", false, nil
+//   - NodeImageDesignation=false (the CSP manages the image) or x86_64 → "default".
+//   - arm64 + designation → pick an ARM node image from the curated list.
+//   - arm64 but no ARM image available → error.
+//
+// Note: when the profile lookup failed, nodeImageDesignation is false and every architecture gets
+// "default" — including arm64, which then pairs an ARM spec with the provider's x86 image. That
+// is the pre-existing behavior, kept here deliberately; see
+// docs/k8s-recommendation/k8s-io-consolidation-implementation-plan.md for the proposed fix.
+func selectK8sNodeImage(p targetProfile, arch string) (imageId string, err error) {
+	if !p.nodeImageDesignation || arch != "arm64" {
+		return "default", nil
 	}
-	if !designation || arch != "arm64" {
-		return "default", designation, nil
-	}
-	for _, img := range images {
+	for _, img := range p.nodeImages {
 		if isArmNodeImageId(img.Id) {
-			return img.Id, designation, nil
+			return img.Id, nil
 		}
 	}
-	return "", designation, fmt.Errorf(
+	return "", fmt.Errorf(
 		"no arm64 K8s node image is available for provider %q region %q. Use x86_64 worker nodes, "+
 			"or check the available node images with searchImage(isKubernetesImage=true, provider=%q)",
-		provider, region, provider)
+		p.provider, p.region, p.provider)
 }
 
 // isArmNodeImageId reports whether a curated node image identifier denotes an ARM/aarch64 image.
@@ -142,16 +140,15 @@ func isArmNodeImageId(id string) bool {
 }
 
 // buildNodeImageDescription constructs the per-entry description in user-friendly language.
-// designation comes from the caller's own lookup rather than a second fetch of the same data.
-func buildNodeImageDescription(provider, region string, groupIdx, nodeCount int, arch, imageId string, designation bool) string {
-	if !designation {
+func buildNodeImageDescription(p targetProfile, groupIdx, nodeCount int, arch, imageId string) string {
+	if !p.nodeImageDesignation {
 		return fmt.Sprintf(
 			"Architecture group %d (%d node(s), %s) — %s manages node image selection automatically",
-			groupIdx, nodeCount, arch, provider)
+			groupIdx, nodeCount, arch, p.provider)
 	}
 	return fmt.Sprintf(
 		"Architecture group %d (%d node(s), %s) — Use node image '%s' for %s %s",
-		groupIdx, nodeCount, arch, imageId, provider, region)
+		groupIdx, nodeCount, arch, imageId, p.provider, p.region)
 }
 
 // summarizeRecommendedOsImageList derives the overall status and description.

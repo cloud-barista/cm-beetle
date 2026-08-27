@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 
+	tbmodel "github.com/cloud-barista/cb-tumblebug/src/core/model"
 	cloudmodel "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
 	onpremmodel "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
 	tbclient "github.com/cloud-barista/cm-beetle/pkg/client/tumblebug"
@@ -40,8 +41,19 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 		return emptyRet, fmt.Errorf("no worker nodes found in source K8s cluster")
 	}
 
-	// Select K8s version
-	version, err := selectK8sVersion(provider, region, onpremInfra.K8sCluster.Version)
+	// Read everything the target cloud declares before any per-worker work begins. Keeping the
+	// lookups here — rather than inside the helpers that consume them — is what makes the rest of
+	// this function, and those helpers, free of hidden I/O.
+	profile := getTargetProfile(provider, region)
+
+	// Versions come from a different endpoint than the K8s asset, so they are read separately
+	// rather than folded into the profile: the L0 APIs need the profile but not the versions.
+	available, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
+	if err != nil {
+		return emptyRet, fmt.Errorf("failed to fetch available K8s versions from Tumblebug: %w", err)
+	}
+
+	version, err := selectK8sVersion(available, provider, onpremInfra.K8sCluster.Version)
 	if err != nil {
 		return emptyRet, fmt.Errorf("K8s version selection failed: %w", err)
 	}
@@ -61,29 +73,29 @@ func RecommendK8sInfra(provider, region string, onpremInfra onpremmodel.OnpremIn
 	// rather than on the source signature means two workers differing by a single vCPU that
 	// resolve to the same instance type share one node group instead of producing two.
 	//
-	// Node group names use a fixed base ("workers") + index, validated against the CSP naming
-	// rule fetched from Tumblebug.
 	// Ask for the same candidate pool the L0 spec API uses, not just one spec. Requesting a
 	// single spec would delegate the choice to Tumblebug's cost priority and leave
 	// sortK8sSpecsByProximity sorting a one-element slice — so the two APIs could recommend
 	// different specs for the same worker whenever the cheapest candidate in range is not the
 	// closest one.
-	targets := recommendWorkerTargets(provider, region, workerNodes, GetDefaultSpecsLimit())
+	targets := recommendWorkerTargets(profile, workerNodes, GetDefaultSpecsLimit())
 	groups, failed := mergeIntoNodeGroups(targets)
+	logExcludedWorkers(failed)
 	if len(groups) == 0 {
 		return emptyRet, fmt.Errorf("no K8s worker node group could be recommended: %s", summarizeFailures(failed))
 	}
-	logExcludedWorkers(failed)
 
 	nodeGroupReqs := make([]cloudmodel.K8sNodeGroupReq, 0, len(groups))
 	includedWorkers := 0
 	for i, g := range groups {
-		name := buildNodeGroupName(provider, "workers", i+1)
+		// Node group names use a fixed base ("workers") + index, normalized and checked against
+		// the CSP naming rule the profile carries.
+		name := buildNodeGroupName(profile, "workers", i+1)
 		nodeGroupReqs = append(nodeGroupReqs, buildK8sNodeGroupReq(provider, name, g))
 		includedWorkers += len(g.nodes)
 	}
 
-	vNetReq := buildK8sVNetReq(connectionName, provider, region, onpremInfra)
+	vNetReq := buildK8sVNetReq(profile, connectionName, onpremInfra)
 	sshKeyReq := buildK8sSshKeyReq(connectionName)
 	sgReqList := buildK8sSecurityGroupReqList(connectionName, provider, region, workerNodes, onpremInfra.K8sCluster)
 
@@ -206,7 +218,7 @@ func (t workerTarget) specId() string {
 //
 // The memo lives for one call, during which limit is fixed, so limit is not part of the key. Add
 // it if a future caller varies limit per worker.
-func recommendWorkerTargets(provider, region string, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
+func recommendWorkerTargets(p targetProfile, workers []onpremmodel.NodeProperty, limit int) []workerTarget {
 
 	memo := make(map[string]workerTarget, len(workers))
 	targets := make([]workerTarget, 0, len(workers))
@@ -221,7 +233,7 @@ func recommendWorkerTargets(provider, region string, workers []onpremmodel.NodeP
 
 		t := workerTarget{node: w}
 
-		specs, note, err := RecommendK8sNodeSpecs(provider, region, w, limit)
+		specs, note, err := RecommendK8sNodeSpecs(p.provider, p.region, w, limit)
 		switch {
 		case err != nil:
 			// Keep machine IDs out of the error text: failures are grouped by cause and the
@@ -233,7 +245,7 @@ func recommendWorkerTargets(provider, region string, workers []onpremmodel.NodeP
 			t.specs, t.upscaleNote = specs, note
 			// The spec search already filtered on this architecture, so the image must match it:
 			// an ARM spec needs an ARM image, not the x86 default.
-			imageId, _, imgErr := selectK8sNodeImage(provider, region, normalizeArch(w.CPU.Architecture))
+			imageId, imgErr := selectK8sNodeImage(p, normalizeArch(w.CPU.Architecture))
 			if imgErr != nil {
 				t.err = fmt.Errorf("node image selection failed: %w", imgErr)
 			} else {
@@ -398,13 +410,9 @@ func normalizeArch(arch string) string {
 //
 // TODO: Remove this workaround once CB-Tumblebug exposes an isLts field in
 // availableK8sVersion. At that point, filter by isLts=false and remove the Azure branch.
-func selectK8sVersion(provider, region, sourceVersion string) (string, error) {
-	available, err := tbclient.NewSession().GetAvailableK8sVersions(provider, region)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch available K8s versions from Tumblebug: %w", err)
-	}
+func selectK8sVersion(available []tbmodel.K8sClusterVersionDetailAvailable, provider, sourceVersion string) (string, error) {
 	if len(available) == 0 {
-		return "", fmt.Errorf("no K8s versions available for %s %s", provider, region)
+		return "", fmt.Errorf("no K8s versions available for provider %q", provider)
 	}
 
 	sourceMajorMinor := extractMajorMinor(sourceVersion)
@@ -518,14 +526,12 @@ const (
 // RecommendVNet, then checks that the chosen CIDR does not overlap with the cluster's
 // PodCIDR or ServiceCIDR. If network data is absent or recommendation fails, it falls
 // back to the hardcoded 10.10.0.0/16 default so recommendation remains resilient.
-func buildK8sVNetReq(connectionName, provider, region string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
+func buildK8sVNetReq(p targetProfile, connectionName string, srcInfra onpremmodel.OnpremInfra) cloudmodel.VNetReq {
 	const fallbackCIDR = "10.10.0.0/16"
 
-	subnetCount := resolveRequiredSubnetCount(provider)
-	var zones []string
-	if subnetCount > 1 {
-		zones = resolveRegionZones(provider, region)
-	}
+	provider, region := p.provider, p.region
+	subnetCount := p.requiredSubnetCount
+	zones := p.regionZones
 
 	buildVNet := func(vpcCIDR string) cloudmodel.VNetReq {
 		subnets := make([]cloudmodel.SubnetReq, 0, subnetCount)
@@ -604,25 +610,21 @@ func cidrsOverlap(cidr1, cidr2 string) bool {
 	return net1.Contains(net2.IP) || net2.Contains(net1.IP)
 }
 
-// resolveRequiredSubnetCount returns the number of subnets the target CSP requires for a K8s
-// cluster, from Tumblebug. Falls back to a safe per-provider default on lookup failure.
-func resolveRequiredSubnetCount(provider string) int {
-	count, err := tbclient.NewSession().GetK8sRequiredSubnetCount(provider)
-	if err != nil || count < 1 {
-		fallback := 1
-		if strings.EqualFold(provider, "aws") {
-			fallback = 2
-		}
-		log.Warn().Err(err).Str("provider", provider).Int("fallback", fallback).
-			Msg("Failed to fetch required subnet count; using per-provider fallback")
-		return fallback
+// defaultRequiredSubnetCount is the per-CSP fallback used when the K8s asset does not say how many
+// subnets a cluster needs. AWS EKS requires two, in distinct AZs; the other CSPs need one.
+func defaultRequiredSubnetCount(provider string) int {
+	if strings.EqualFold(provider, "aws") {
+		return 2
 	}
-	return count
+	return 1
 }
 
-// resolveRegionZones returns the availability zones of the region, from Tumblebug. Falls back
-// to the conventional "<region>a"/"<region>b" names on lookup failure.
-func resolveRegionZones(provider, region string) []string {
+// getRegionZones returns the availability zones of the region, from Tumblebug. Falls back to the
+// conventional "<region>a"/"<region>b" names on lookup failure.
+//
+// This stays a lookup of its own rather than joining the K8s asset read: it hits a different
+// endpoint, and only multi-subnet CSPs need it at all.
+func getRegionZones(provider, region string) []string {
 	info, err := tbclient.NewSession().ReadRegionInfo(provider, region)
 	if err != nil || len(info.Zones) == 0 {
 		fallback := []string{region + "a", region + "b"}
@@ -631,6 +633,53 @@ func resolveRegionZones(provider, region string) []string {
 		return fallback
 	}
 	return info.Zones
+}
+
+// targetProfile is what the target cloud declares about K8s clusters, read before any per-worker
+// work begins. Gathering it in one place is what keeps the rest of the recommendation free of
+// scattered lookups — and what lets the functions taking a profile be tested without Tumblebug.
+//
+// provider and region ride along so those functions need no extra parameters.
+type targetProfile struct {
+	provider string
+	region   string
+
+	nodeImageDesignation bool
+	nodeImages           []tbmodel.K8sClusterNodeImageDetailAvailable
+
+	nodeGroupNamingRule string
+	requiredSubnetCount int
+	regionZones         []string // only fetched when requiredSubnetCount > 1
+}
+
+// getTargetProfile reads the target cloud's K8s declarations in one place.
+//
+// It does not fail. Each field falls back to what the individual lookups used before, so a
+// Tumblebug hiccup degrades the recommendation instead of aborting it.
+func getTargetProfile(provider, region string) targetProfile {
+	p := targetProfile{provider: provider, region: region}
+
+	profile, err := tbclient.NewSession().GetK8sClusterProfile(provider, region)
+	if err != nil {
+		log.Warn().Err(err).Str("provider", provider).Str("region", region).
+			Msg("Failed to read K8s cluster info; using per-field defaults")
+		p.requiredSubnetCount = defaultRequiredSubnetCount(provider)
+	} else {
+		p.nodeImageDesignation = profile.NodeImageDesignation
+		p.nodeImages = profile.NodeImages
+		p.nodeGroupNamingRule = profile.NodeGroupNamingRule
+		p.requiredSubnetCount = profile.RequiredSubnetCount
+		if p.requiredSubnetCount < 1 {
+			log.Warn().Str("provider", provider).Int("fallback", defaultRequiredSubnetCount(provider)).
+				Msg("K8s asset declares no required subnet count; using per-provider fallback")
+			p.requiredSubnetCount = defaultRequiredSubnetCount(provider)
+		}
+	}
+
+	if p.requiredSubnetCount > 1 {
+		p.regionZones = getRegionZones(provider, region)
+	}
+	return p
 }
 
 // buildK8sSshKeyReq builds a SshKeyReq for worker node access.
@@ -755,27 +804,21 @@ const defaultMaxNodeGroupNameLen = 40
 //
 // The source model carries no node group name to preserve, so names are synthesized. The index
 // is what keeps them distinct when heterogeneous workers resolve to several node groups.
-func buildNodeGroupName(provider, base string, index int) string {
-	safeName := normalizeNodeGroupName(base, index, maxNodeGroupNameLen(provider))
+func buildNodeGroupName(p targetProfile, base string, index int) string {
+	safeName := normalizeNodeGroupName(base, index, maxNodeGroupNameLen(p.provider))
 
-	rule, err := tbclient.NewSession().GetK8sNodeGroupNamingRule(provider)
-	if err != nil {
-		log.Warn().Err(err).Str("provider", provider).Str("name", safeName).
-			Msg("Failed to fetch node group naming rule; using normalized default")
-		return safeName
-	}
-	if rule == "" {
-		return safeName // CSP defines no naming rule
+	if p.nodeGroupNamingRule == "" {
+		return safeName // CSP defines no naming rule, or it could not be read
 	}
 
-	re, err := regexp.Compile(rule)
+	re, err := regexp.Compile(p.nodeGroupNamingRule)
 	if err != nil {
-		log.Warn().Err(err).Str("rule", rule).Str("name", safeName).
+		log.Warn().Err(err).Str("rule", p.nodeGroupNamingRule).Str("name", safeName).
 			Msg("Invalid node group naming rule regex from Tumblebug; using normalized default")
 		return safeName
 	}
 	if !re.MatchString(safeName) {
-		log.Warn().Str("rule", rule).Str("name", safeName).
+		log.Warn().Str("rule", p.nodeGroupNamingRule).Str("name", safeName).
 			Msg("Normalized node group name does not match CSP rule; using it as best effort")
 	}
 	return safeName

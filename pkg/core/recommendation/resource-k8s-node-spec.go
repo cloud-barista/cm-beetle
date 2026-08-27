@@ -55,7 +55,7 @@ func RecommendK8sNodeGroupSpecs(provider, region string, srcInfra onpremmodel.On
 	// Share the resolve-then-merge pipeline with RecommendK8sInfra so both APIs report the same
 	// node group breakdown for the same input. They used to derive groups independently, which let
 	// them disagree.
-	targets := recommendWorkerTargets(provider, region, workers, specsLimit)
+	targets := recommendWorkerTargets(getTargetProfile(provider, region), workers, specsLimit)
 	groups, failed := mergeIntoNodeGroups(targets)
 	logExcludedWorkers(failed)
 
