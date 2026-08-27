@@ -1,0 +1,38 @@
+{
+  "status": "recommended",
+  "description": "Successfully recommended 1 managed RDBMS configuration(s) for aws (ap-northeast-2)",
+  "warnings": [],
+  "targetCloud": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
+  "targetRDBMSInstances": [
+    {
+      "sourceInstanceName": "prod-mysql-01",
+      "sourceMachineId": "node-550e8400-e29b-41d4-a716-446655440000",
+      "rdbmsName": "mig-rdbms-01",
+      "dbEngine": "mysql",
+      "dbEngineVersion": "8.0",
+      "dbInstanceSpec": "db.m6i.xlarge",
+      "storageType": "gp3",
+      "storageSize": 150,
+      "iops": "3000",
+      "adminUserName": "cbuser",
+      "adminUserPassword": "BeetleRdbmsPassword123!",
+      "highAvailability": false,
+      "backupRetentionDays": 7,
+      "publicAccess": true,
+      "deletionProtection": false,
+      "databases": [
+        {
+          "databaseName": "customer_db",
+          "characterSet": "utf8mb4"
+        },
+        {
+          "databaseName": "order_db",
+          "characterSet": "utf8mb4"
+        }
+      ]
+    }
+  ]
+}

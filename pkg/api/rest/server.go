@@ -359,6 +359,12 @@ func RunServer(port string) {
 	gRecommendationMiddleware.POST("/objectStorage", controller.RecommendObjectStorage)
 	gRecommendationMiddleware.GET("/objectStorage/support", controller.GetObjectStorageSupport)
 
+	// Recommendation APIs for managed RDBMS
+	gRecommendationMiddleware.POST("/rdbms", controller.RecommendRDBMS)
+	gRecommendationMiddleware.GET("/rdbms/support", controller.GetRDBMSSupport)
+	gRecommendationMiddleware.GET("/rdbms/capability", controller.GetRDBMSCapability)
+	gRecommendationMiddleware.POST("/rdbms/validate", controller.ValidateRDBMS)
+
 	/*
 	 * API group for computing infra migration
 	 */
@@ -463,6 +469,16 @@ func RunServer(port string) {
 	gMigrationMiddleware.DELETE("/ns/:nsId/objectStorage/:osId/object/:objectKey", controller.DeleteStorageObject)
 	gMigrationMiddleware.HEAD("/ns/:nsId/objectStorage/:osId", controller.ExistObjectStorage)
 	gMigrationMiddleware.DELETE("/ns/:nsId/objectStorage/:osId", controller.DeleteObjectStorage)
+
+	// Migration APIs for managed RDBMS
+	gMigrationMiddleware.POST("/ns/:nsId/rdbms", controller.MigrateRDBMS)
+	gMigrationMiddleware.POST("/ns/:nsId/rdbms/validate", controller.ValidateMigrateRDBMS)
+	gMigrationMiddleware.GET("/ns/:nsId/rdbms", controller.ListRDBMS)
+	gMigrationMiddleware.GET("/ns/:nsId/rdbms/:rdbmsId", controller.GetRDBMS)
+	gMigrationMiddleware.DELETE("/ns/:nsId/rdbms/:rdbmsId", controller.DeleteRDBMS)
+	gMigrationMiddleware.POST("/ns/:nsId/rdbms/:rdbmsId/database", controller.CreateRDBMSDatabase)
+	gMigrationMiddleware.GET("/ns/:nsId/rdbms/:rdbmsId/database", controller.ListRDBMSDatabases)
+	gMigrationMiddleware.DELETE("/ns/:nsId/rdbms/:rdbmsId/database/:dbName", controller.DeleteRDBMSDatabase)
 
 	/*
 	 * API group for migration reports

@@ -32,6 +32,9 @@ When upgrading CB-Tumblebug, check each file against the upstream source and syn
      diff -qr $BEETLE/$dir $TB/$dir 2>&1 | grep "^Only in $TB"
    done
 
+   # Note: assets/spider is excluded from synchronization (cb-tumblebug issue #2694)
+   # Note: assets/rdbmsinfo.yaml is required for Tumblebug managed RDBMS feature
+
    # Detect removed files (Beetle only)
    for dir in assets conf init scripts; do
      diff -qr $BEETLE/$dir $TB/$dir 2>&1 | grep "^Only in $BEETLE"

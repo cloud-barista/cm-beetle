@@ -31,9 +31,14 @@ imdl/
 │   ├── model.go              # Main on-premise infrastructure models
 │   ├── server.go             # Server hardware and OS models
 │   └── network.go            # Network-related models
-└── storage-model/            # Object storage models (source + target)
-    ├── object-storage.go     # Property building-block structs (BucketFeatureProperty, CORSRule, …)
-    └── model.go              # Top-level models (SourceObjectStorage, TargetObjectStorage, RecommendedObjectStorage)
+├── storage-model/            # Object storage models (source + target)
+│   ├── object-storage.go     # Property building-block structs (BucketFeatureProperty, CORSRule, …)
+│   └── model.go              # Top-level models (SourceObjectStorage, TargetObjectStorage, RecommendedObjectStorage)
+└── rdbms-model/              # Managed RDBMS models (source + target)
+    ├── rdbms-source.go       # Source RDBMS & database properties
+    ├── rdbms-target.go       # Target RDBMS instance specs & databases
+    ├── copied-tb-rdbms-model.go # CB-Tumblebug RDBMS API models (synchronized with TB)
+    └── model.go              # Top-level models (SourceRDBMSModel, RecommendedRDBMSModel, CloudProperty)
 ```
 
 ## Model Categories
@@ -79,6 +84,17 @@ imdl/
 - `RecommendedObjectStorage`: Recommendation result and direct input to the migration API
 - `CORSRule`: Shared property type composed into both source and target structs
 
+### 4. RDBMS Models (`rdbms-model/`)
+
+**Purpose**: Model managed relational database instances (MySQL, MariaDB) for both source and target cloud environments.
+
+**Key Types**:
+
+- `SourceRDBMS`: Source DB instance state with compute, storage, engine version, and inner database properties
+- `TargetRDBMSInstance`: Target cloud RDS configuration derived from recommendation and CSP capability
+- `RecommendedRDBMS`: Recommendation result and direct input to the RDBMS migration API
+- `RDBMSInfo`: CB-Tumblebug synchronized RDBMS instance information model
+
 ## Import Usage
 
 Import these models in your code using:
@@ -88,6 +104,7 @@ import (
     cloudmodel    "github.com/cloud-barista/cm-beetle/imdl/cloud-model"
     onpremmodel   "github.com/cloud-barista/cm-beetle/imdl/on-premise-model"
     storagemodel  "github.com/cloud-barista/cm-beetle/imdl/storage-model"
+    rdbmsmodel    "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
 )
 ```
 

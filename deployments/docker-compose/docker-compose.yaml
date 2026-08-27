@@ -60,7 +60,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.12.30
+    image: cloudbaristaorg/cb-tumblebug:edge
     container_name: cb-tumblebug
     # build:
     #   context: ${PROJECT_ROOT}/../cb-tumblebug
@@ -199,7 +199,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.12.42
+    image: cloudbaristaorg/cb-spider:edge
     container_name: cb-spider
     # build:
     #   context: ${PROJECT_ROOT}/../cb-spider
