@@ -46,7 +46,11 @@ This workflow helps you generate a high-quality, conventional commit message tai
 5. **Generate the Commit Message**  
    Compose the message following these strict requirements:
    - **Title**: `type(scope): description` (Max 50 characters, imperative mood).
-   - **Body**: **Max 3 bullet points**, each **≤ 40 characters**. Focus on functional impact only. Omit obvious or low-value lines (e.g., "update README", "regenerate swagger").
+     - **Lowercase Description**: The description after the colon must start with a lowercase letter (e.g., `feat(rdbms): add ...`).
+     - **No Symbols**: Do NOT use `&` or symbols in the title; use `and` or concise plain wording instead.
+   - **Body**: **Max 3 bullet points**, each **≤ 40 characters**.
+     - **Capitalized Bullets**: Each bullet point must start with a capital letter (e.g., `- Add ...`, `- Implement ...`).
+     - Focus on functional impact only. Omit obvious or low-value lines (e.g., "update README", "regenerate swagger").
    - **Breaking Changes**: Add `BREAKING CHANGE: <description>` in the footer if public APIs or configs changed.
    - **Release Staging**: If bumping versions or refreshing multiple test results, use `release: staging vX.Y.Z with [highlights]`.
 

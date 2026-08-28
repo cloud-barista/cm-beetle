@@ -1,0 +1,39 @@
+beetle:
+  endpoint: http://localhost:8056/beetle
+  namespaceId: default
+  requestBodyFile: rdbms-req.json
+  authConfigFile: auth.json
+
+test:
+  set:
+    mode: sequential # sequential or parallel
+  cases:
+    - name: "AWS AP-Northeast-2 (Seoul) MySQL Test"
+      csp: aws
+      region: ap-northeast-2
+      rdbmsId: test-rdbms-aws
+      connectionName: aws-ap-northeast-2
+      vNetName: test-rdbms-vnet-aws
+      cidrBlock: 10.0.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.0.1.0/24
+          zone: ap-northeast-2a
+        - name: subnet-2
+          cidr: 10.0.2.0/24
+          zone: ap-northeast-2c
+      securityGroupName: test-rdbms-sg-aws
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: Password123!
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true

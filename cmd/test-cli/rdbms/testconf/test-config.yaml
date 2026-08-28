@@ -1,0 +1,233 @@
+beetle:
+  endpoint: http://localhost:8056/beetle
+  namespaceId: default
+  requestBodyFile: rdbms-req.json
+  authConfigFile: auth.json
+
+test:
+  set:
+    mode: sequential # sequential or parallel
+  cases:
+    - name: "AWS AP-Northeast-2 (Seoul) MySQL Test"
+      csp: aws
+      region: ap-northeast-2
+      rdbmsId: test-rdbms-aws
+      connectionName: aws-ap-northeast-2
+      vNetName: test-rdbms-vnet-aws
+      cidrBlock: 10.0.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.0.1.0/24
+          zone: ap-northeast-2a
+        - name: subnet-2
+          cidr: 10.0.2.0/24
+          zone: ap-northeast-2c
+      securityGroupName: test-rdbms-sg-aws
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: Password123!
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: true
+
+    - name: "Azure KoreaCentral MySQL Test"
+      csp: azure
+      region: koreacentral
+      rdbmsId: test-rdbms-azure
+      connectionName: azure-koreacentral
+      vNetName: test-rdbms-vnet-azure
+      cidrBlock: 10.1.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.1.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-azure
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      dbInstanceSpec: Standard_B1ms
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false
+
+    - name: "GCP US-Central1 MySQL Test"
+      csp: gcp
+      region: us-central1
+      rdbmsId: test-rdbms-gcp
+      connectionName: gcp-us-central1
+      vNetName: test-rdbms-vnet-gcp
+      cidrBlock: 10.2.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.2.1.0/24
+          zone: us-central1-a
+      securityGroupName: test-rdbms-sg-gcp
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: Password123!
+      storageType: PD_SSD
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false
+
+    - name: "Alibaba AP-Northeast-2 (Seoul) MySQL Test"
+      csp: alibaba
+      region: ap-northeast-2
+      rdbmsId: test-rdbms-alibaba
+      connectionName: alibaba-ap-northeast-2
+      vNetName: test-rdbms-vnet-alibaba
+      cidrBlock: 10.3.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.3.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-alibaba
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      dbInstanceSpec: mysql.n4.large.1
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false
+
+    - name: "Tencent AP-Seoul MySQL Test"
+      csp: tencent
+      region: ap-seoul
+      rdbmsId: test-rdbms-tencent
+      connectionName: tencent-ap-seoul
+      vNetName: test-rdbms-vnet-tencent
+      cidrBlock: 10.4.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.4.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-tencent
+      dbEngine: mysql
+      adminUserName: root
+      adminUserPassword: Password123!
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 22.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false
+
+    - name: "IBM US-South MySQL Test"
+      csp: ibm
+      region: us-south
+      rdbmsId: test-rdbms-ibm
+      connectionName: ibm-us-south
+      vNetName: test-rdbms-vnet-ibm
+      cidrBlock: 10.5.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.5.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-ibm
+      dbEngine: mysql
+      adminUserName: admin
+      adminUserPassword: TumblebugPass2026
+      dbInstanceSpec: multitenant
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false
+
+    - name: "NCP Korea MySQL Test"
+      csp: ncp
+      region: kr
+      rdbmsId: test-rdbms-ncp
+      connectionName: ncp-kr
+      vNetName: test-rdbms-vnet-ncp
+      cidrBlock: 10.7.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.7.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-ncp
+      dbEngine: mysql
+      adminUserName: dbadmin
+      adminUserPassword: Password123!
+      publicAccess: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 22.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: "23214590"
+      vmSpecId: "s2-g3"
+      execute: false
+
+    - name: "NHN KR1 MySQL Test"
+      csp: nhn
+      region: kr1
+      rdbmsId: test-rdbms-nhn
+      connectionName: nhn-kr1
+      vNetName: test-rdbms-vnet-nhn
+      cidrBlock: 10.8.0.0/16
+      subnets:
+        - name: subnet-1
+          cidr: 10.8.1.0/24
+          zone: ""
+      securityGroupName: test-rdbms-sg-nhn
+      dbEngine: mysql
+      adminUserName: myadmin
+      adminUserPassword: Password123!
+      publicAccess: true
+      nhnDBSGToAllowAllInbound: true
+      highAvailability: false
+      databaseName: sampledb
+      externalDataIOTest: true
+      internalDataIOTest: true
+      vmOSType: "ubuntu 24.04"
+      vmvCPU: "2"
+      vmMemoryGiB: "4"
+      vmImageId: ""
+      vmSpecId: ""
+      execute: false

@@ -1,0 +1,27 @@
+{
+  "nameSeed": "test",
+  "sourceRDBMSInstances": [
+    {
+      "instanceName": "source-mysql-01",
+      "machineId": "node-550e8400-e29b-41d4-a716-446655440000",
+      "engine": "mysql",
+      "engineVersion": "8.0",
+      "vcpu": 2,
+      "memoryMb": 4096,
+      "storageSizeGb": 100,
+      "storageType": "SSD",
+      "iops": 3000,
+      "port": 3306,
+      "highAvailability": false,
+      "backupRetentionDays": 7,
+      "publicAccess": true,
+      "databases": [
+        {
+          "databaseName": "sampledb",
+          "characterSet": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci"
+        }
+      ]
+    }
+  ]
+}

@@ -12,27 +12,79 @@
 
 services:
   # ============================================================================
-  # 1. CM-Honeybee (On-Premise Infrastructure Extractor)
+  # 1. Dedicated OpenBao for CM-Honeybee (Secrets Backend)
+  # ============================================================================
+  openbao-honeybee:
+    image: openbao/openbao:2.5.1
+    container_name: openbao-honeybee
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - cloud-barista
+    ports:
+      - target: 8200
+        published: 8201
+        protocol: tcp
+    environment:
+      - BAO_ADDR=http://0.0.0.0:8200
+      - SKIP_SETCAP=true
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        chown -R openbao:openbao /openbao/data 2>/dev/null || true
+        exec docker-entrypoint.sh server -config=/openbao/config/openbao-config.hcl
+    volumes:
+      - ./data/openbao-honeybee-data:/openbao/data
+      - ./cm-honeybee/openbao/openbao-config.hcl:/openbao/config/openbao-config.hcl:ro
+    healthcheck:
+      # 0=unsealed, 1=sealed, 2=uninitialized — all mean OpenBao process is ready;
+      # cm-honeybee automatically initializes/unseals it on startup.
+      test: ["CMD", "sh", "-c", "rc=0; bao status || rc=$$?; [ $$rc -le 2 ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ============================================================================
+  # 2. CM-Honeybee (On-Premise Infrastructure Extractor)
   # ============================================================================
   cm-honeybee:
-    image: cloudbaristaorg/cm-honeybee:0.5.3
+    image: cloudbaristaorg/cm-honeybee:0.6.0
     container_name: cm-honeybee
     networks:
       - cloud-barista
     ports:
       - "8081:8081"
+      - "8082:8082"
+    depends_on:
+      openbao-honeybee:
+        condition: service_healthy
+      cb-spider:
+        condition: service_started
     environment:
       - HONEYBEE_API_ALLOW_ORIGINS=*
       - HONEYBEE_LOG_LEVEL=debug
+      - HONEYBEE_VAULT_ADDR=http://openbao-honeybee:8200
+      - HONEYBEE_SPIDER_ENDPOINT=http://cb-spider:1024/spider
+      - HONEYBEE_SPIDER_USERNAME=${SP_API_USERNAME:-default}
+      - HONEYBEE_SPIDER_PASSWORD=${SP_API_PASSWORD:-default}
     volumes:
+      - ./data/cm-honeybee-container/data/:/root/.cm-honeybee/:rw
       - ./data/cm-honeybee-container/db/:/app/db/
-    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/honeybee/readyz"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
   # ============================================================================
-  # 2. CM-Damselfly (On-Premise & Cloud Infrastructure Model Repository)
+  # 3. CM-Damselfly (On-Premise & Cloud Infrastructure Model Repository)
   # ============================================================================
   cm-damselfly:
-    image: cloudbaristaorg/cm-damselfly:0.5.3
+    image: cloudbaristaorg/cm-damselfly:0.6.2
     container_name: cm-damselfly
     networks:
       - cloud-barista
@@ -43,10 +95,16 @@ services:
       - DAMSELFLY_LOG_LEVEL=debug
     volumes:
       - ./data/cm-damselfly-container/db/:/app/db/
-    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/damselfly/readyz"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
 
   # ============================================================================
-  # 3. CM-Beetle UI (Next.js Dashboard, proxies to backend services)
+  # 4. CM-Beetle UI (Next.js Dashboard, proxies to backend services)
   #    Excluded from default 'up' — started explicitly with --profile ui
   #    For local development, run:  cd ui && npm run dev
   # ============================================================================
@@ -67,8 +125,13 @@ services:
       - TUMBLEBUG_ENDPOINT=http://cb-tumblebug:1323
       - HONEYBEE_ENDPOINT=http://cm-honeybee:8081
       - DAMSELFLY_ENDPOINT=http://cm-damselfly:8088
+      - SPIDER_ENDPOINT=http://cb-spider:1024
+      - MAPUI_ENDPOINT=http://cb-mapui:1324
     depends_on:
       - cm-beetle
       - cm-honeybee
       - cm-damselfly
-    restart: always
+      - cb-tumblebug
+      - cb-spider
+      - cb-mapui
+    restart: unless-stopped

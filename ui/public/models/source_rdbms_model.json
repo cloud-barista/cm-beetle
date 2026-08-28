@@ -1,0 +1,39 @@
+{
+  "desiredCloud": {
+    "csp": "aws",
+    "region": "ap-northeast-2"
+  },
+  "sourceRDBMSInstances": [
+    {
+      "instanceName": "prod-mysql-01",
+      "machineId": "node-550e8400-e29b-41d4-a716-446655440000",
+      "engine": "mysql",
+      "engineVersion": "8.0",
+      "vcpu": 4,
+      "memoryMb": 16384,
+      "storageSizeGb": 150,
+      "storageType": "SSD",
+      "iops": 3000,
+      "port": 3306,
+      "highAvailability": false,
+      "backupRetentionDays": 7,
+      "publicAccess": true,
+      "databases": [
+        {
+          "databaseName": "customer_db",
+          "characterSet": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
+          "sizeMb": 1024.5,
+          "tableCount": 35
+        },
+        {
+          "databaseName": "order_db",
+          "characterSet": "utf8mb4",
+          "collation": "utf8mb4_unicode_ci",
+          "sizeMb": 2048.0,
+          "tableCount": 42
+        }
+      ]
+    }
+  ]
+}

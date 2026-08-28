@@ -1,0 +1,632 @@
+# Configuration for RDBMS (Relational Database Management System) of Cloud Service Providers (CSPs)
+# This file defines storage types, DBMS requirements, and database requirements for each CSP
+
+# Last Updated: 2026-08-27
+# Source: CB-Spider storage-type-test, CB-Spider v0.13.1 RDBMS/MariaDB test suites
+# and wiki RDBMS Management Guide. Field naming (dbInstanceSpec, adminUserName/adminUserPassword)
+# reflects Tumblebug's DBInstanceSpec model and Spider's DBSpec contract. CB-Spider v0.13.1
+# introduced NHNAutoOpenDBSecurityGroup (exposed in Tumblebug as nhnDBSGToAllowAllInbound),
+# clarified SG requirements (AWS: required, Tencent: optional, other 7 CSPs: ignored), and
+# clarified Azure Subnet requirement under VPC-private mode (publicAccess=false).
+# dbmsRequirements.<engine>.referenceEngineVersion values come from CB-Spider's own
+# rdbms-mysql-test and rdbms-mariadb-test READMEs,
+# which each document the exact (engine, version, spec, storage) combination CB-Spider's team
+# has confirmed reaches Available per CSP.
+# Reference: https://github.com/cloud-barista/cb-spider/tree/master/test/rdbms-mysql-test/storage-type-test
+#            https://github.com/cloud-barista/cb-spider/blob/master/test/rdbms-mysql-test/README.md
+#            https://github.com/cloud-barista/cb-spider/blob/master/test/rdbms-mariadb-test/README.md
+#            https://github.com/cloud-barista/cb-spider/wiki/RDBMS%E2%80%90Management%E2%80%90Guide(KR)
+
+# The file is in YAML format and contains the following fields. This whole file backs
+# GET /tumblebug/rdbms/support (see resource/rdbms.go) — a static, CSP-wide reference
+# matrix served with no CB-Spider call, as opposed to GET /tumblebug/rdbms/capability,
+# which is a live, per-connection query.
+# dbms: Top level key
+#   <csp>: Name of the CSP (lowercase)
+#     description: Description of the CSP RDBMS service
+#     links: Reference URLs, keyed by label (a CSP can have more than one):
+#       docs: official product documentation
+#       docsMariadb: MariaDB-specific documentation, only when the CSP publishes a separate
+#         page from "docs" (e.g. NHN has distinct sites for RDS for MySQL vs RDS for MariaDB)
+#       console: CSP console access, per the CB-Spider wiki's RDBMS Management Guide §1.2
+#         "Target Service and Console per CSP" — a login URL plus in-console menu path where
+#         the CSP has no fixed deep link (e.g. Azure, NCP, NHN, OpenStack)
+#     supportedDBEngines: DB engines empirically verified for this CSP (per CB-Spider's
+#       rdbms-mysql-test / rdbms-mariadb-test suites). Not listing an engine here does not
+#       necessarily mean CB-Spider rejects it — it means it hasn't been verified yet (e.g.
+#       postgresql has no dedicated CB-Spider test suite as of v0.12.44, so it is omitted
+#       for every CSP below rather than assumed to work).
+#     dbOperationMethod: cspNativeApi|sqlFallback - the fixed method CB-Spider uses for this
+#       CSP's internal Database CRUD API (POST/GET/DELETE .../databases): "cspNativeApi" is a
+#       CSP-native database management API; "sqlFallback" is a direct SQL connection to the
+#       instance using the admin login. One or the other per CSP, not a runtime fallback.
+#     supportsTag: true|false - whether this CSP supports CB-Spider's generic RDBMS tag API
+#       (POST/GET/DELETE /spider/tag with ResourceType=rdbms). This is a static reference
+#       value; the live, per-connection flag is RDBMSMetaInfo.SupportsTag (resource/rdbms.go).
+#     storageTypeSelectable: true|false - whether this CSP lets a caller choose a storage
+#       type at all (per CB-Spider's storage-type-test). false covers both "storage type
+#       is not user-configurable" (e.g. azure/ibm/ncp auto-assign it) and "only one type
+#       exists" CSPs. This is a static reference value; the live, per-connection flag is
+#       RDBMSMetaInfo.SupportsStorageTypeSelection (see resource/rdbms.go).
+#     storageTypes: Storage type configurations (map structure for O(1) lookup)
+#       <storageType>: Storage type identifier (as returned by CSP)
+#         name: Display name
+#         description: User-friendly description
+#         recommendationLevel: legacy|standard|recommended|premium
+#         requiresIops: true|false (whether 'iops' parameter is required)
+#         minStorageSize: Minimum storage size in GB
+#         maxStorageSize: Maximum storage size in GB (optional)
+#         note: Additional notes or constraints
+#     dbmsRequirements: DBMS engine-specific requirements (e.g., MySQL, MariaDB)
+#       <engine>.referenceEngineVersion / referenceDBInstanceSpec: the exact engine version / dbInstanceSpec
+#         CB-Spider's own test suite verifies as Available for this CSP/engine — preferred by
+#         applyRDBMSCreateDefaults over guessing from the live SupportedVersions/dbspec lists,
+#         since a live-reported value can still be rejected by the real CreateRDBMS API for
+#         this specific region/zone/version (e.g. Alibaba/Tencent).
+#     databaseRequirements: Database-level requirements (naming rules, reserved names, etc.)
+#     adminUserNameRequirement: CSP account-service-level constraint on
+#       RDBMSCreateRequest.adminUserName (the RDBMS instance's admin login), enforced by
+#       resource/rdbms.go's validateAdminCredentials (checked client-side on both
+#       /rdbms/validate and /rdbms, before any CB-Spider call). Only add entries confirmed by
+#       an actual CSP rejection — CSPs rarely publish a complete reserved-word list, so don't
+#       guess beyond what's been observed.
+#       fixedValue: this CSP accepts only this exact value (e.g. Tencent: "root")
+#       reservedValues: values this CSP rejects (case-insensitive exact match)
+#       note: what was observed and when
+#     adminUserPasswordRequirement: CSP account-service-level constraint on
+#       RDBMSCreateRequest.adminUserPassword, enforced the same way.
+#       minLength / maxLength: character count bounds
+#       requiresSpecialChar / forbidsSpecialChar: true|false
+#       note: what was observed and when
+
+dbms:
+  aws:
+    description: Amazon Web Services RDS (Relational Database Service)
+    links:
+      docs: https://docs.aws.amazon.com/rds/
+      console: https://console.aws.amazon.com/rds/ (Databases menu)
+    supportedDBEngines: [mysql, mariadb]
+    dbOperationMethod: sqlFallback
+    supportsTag: true
+    storageTypeSelectable: true
+    storageTypes:
+      gp2:
+        name: General Purpose SSD (gp2)
+        description: Legacy general-purpose SSD storage. Consider gp3 for better cost/performance.
+        recommendationLevel: legacy
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 65536
+        note: "Verified: 2026-08-03 (Spider storage-type-test)"
+        
+      gp3:
+        name: General Purpose SSD (gp3)
+        description: Latest generation general-purpose SSD with 3,000 baseline IOPS and 125 MiB/s throughput. Recommended for most workloads.
+        recommendationLevel: recommended
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 65536
+        note: "Verified: 2026-08-03 (Spider storage-type-test)"
+        
+      io1:
+        name: Provisioned IOPS SSD (io1)
+        description: High-performance SSD for I/O-intensive workloads. Requires 'iops' parameter (e.g., '3000'). Minimum 100 GB storage.
+        recommendationLevel: premium
+        requiresIops: true
+        minStorageSize: 100
+        maxStorageSize: 65536
+        iopsRange:
+          min: 1000
+          max: 64000
+        note: "Verified: 2026-08-03 (Spider storage-type-test with iops=3000)"
+        
+      io2:
+        name: Provisioned IOPS SSD (io2)
+        description: Next-generation high-performance SSD with higher durability (99.999%). Requires 'iops' parameter. Minimum 100 GB storage.
+        recommendationLevel: premium
+        requiresIops: true
+        minStorageSize: 100
+        maxStorageSize: 65536
+        iopsRange:
+          min: 1000
+          max: 256000
+        note: "Verified: 2026-08-03 (Spider storage-type-test with iops=3000)"
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 20
+        maxStorageSize: 65536
+        defaultPort: 3306
+        referenceEngineVersion: "8.0"
+        referenceDBInstanceSpec: db.t3.medium
+        note: "Storage size requirements apply to all MySQL versions on AWS RDS. Reference values
+          per CB-Spider's rdbms-mysql-test README (verified Available, 2026-08-03)."
+      mariadb:
+        defaultPort: 3306
+        referenceEngineVersion: "10.6"
+        referenceDBInstanceSpec: db.t3.medium
+        note: "Reference values per CB-Spider's rdbms-mariadb-test README (verified Available,
+          2026-08-18, 100GB)."
+
+    databaseRequirements:
+      maxDatabaseNameLength: 64
+      reservedDatabaseNames:
+        - mysql
+        - information_schema
+        - performance_schema
+        - sys
+        - rdsadmin
+      note: "Database names are case-insensitive on MySQL. Reserved names cannot be used."
+      
+  azure:
+    description: Azure Database for MySQL Flexible Server
+    links:
+      docs: https://learn.microsoft.com/azure/mysql/flexible-server/
+      console: https://portal.azure.com (search "Azure Database for MySQL flexible servers")
+    supportedDBEngines: [mysql]
+    dbOperationMethod: cspNativeApi
+    supportsTag: true
+    note: "Storage type selection not supported. Storage SKU is read-only and automatically set by Azure based on compute tier (Premium SSD for General Purpose/Memory Optimized tiers, locally redundant storage for Burstable tier). dbOperationMethod is cspNativeApi (armmysqlfs.DatabasesClient). Azure uses SubnetNames only in VPC-private mode (PublicAccess=false); when PublicAccess=true, subnet is not used."
+    storageTypeSelectable: false
+    storageTypes:
+      auto:
+        name: Automatic (Azure-managed)
+        description: Storage SKU is automatically determined by Azure based on compute tier. User cannot specify storage type.
+        recommendationLevel: standard
+        note: "Verified: 2026-08-03 (Spider storage-type-test SKIP). storageSku is read-only in Azure MySQL Flexible Server API."
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 20
+        maxStorageSize: 16384
+        defaultPort: 3306
+        referenceEngineVersion: "8.0.21"
+        referenceDBInstanceSpec: Standard_B1ms
+        note: "Storage is managed automatically by Azure based on compute tier selection.
+          Reference values per CB-Spider's rdbms-mysql-test README (verified Available,
+          2026-08-03)."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions"
+
+    adminUserNameRequirement:
+      reservedValues:
+        - admin
+      note: "Confirmed via live rejection (2026-08-14): 'admin' is rejected as administratorLogin
+        with InvalidParameterValue. Azure does not publish a complete reserved-word list for
+        MySQL Flexible Server, so only empirically-confirmed values are listed here."
+
+  gcp:
+    description: Google Cloud Platform Cloud SQL
+    links:
+      docs: https://cloud.google.com/sql/docs
+      console: https://console.cloud.google.com/sql/instances
+    supportedDBEngines: [mysql]
+    dbOperationMethod: cspNativeApi
+    supportsTag: true
+    storageTypeSelectable: true
+    storageTypes:
+      PD_SSD:
+        name: Persistent Disk SSD
+        description: Standard SSD storage. Automatically selected for N2 machine series (db-perf-optimized-N-*) and Shared/Dedicated core instances.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 10
+        maxStorageSize: 65536
+        note: "Verified: 2026-08-03 (Spider storage-type-test). Machine series determines storage type; not directly selectable."
+        
+      PD_HDD:
+        name: Persistent Disk HDD
+        description: Cost-effective HDD storage for less I/O-intensive workloads. Available on Shared/Dedicated core instances.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 10
+        maxStorageSize: 65536
+        note: "Verified: 2026-08-03 (Spider storage-type-test)"
+        
+      HYPERDISK_BALANCED:
+        name: Hyperdisk Balanced
+        description: High-performance next-generation storage. Minimum 20 GB. Only available on C4A (db-c4a-highmem-*) and N4 (db-custom-N4-*) machine series.
+        recommendationLevel: premium
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 65536
+        compatibleMachineSeries:
+          - C4A
+          - N4
+        note: "Verified: 2026-08-03 (Spider storage-type-test). Automatically selected when using C4A/N4 instances."
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 10
+        maxStorageSize: 65536
+        defaultPort: 3306
+        referenceEngineVersion: "8.0"
+        referenceDBInstanceSpec: db-custom-2-8192
+        note: "Storage type is determined by machine series selection (N2, C4A, N4, etc.), not
+          directly by user input. Reference values per CB-Spider's rdbms-mysql-test README
+          (verified Available with PD_SSD, 2026-08-03)."
+        
+    databaseRequirements:
+      maxDatabaseNameLength: 64
+      reservedDatabaseNames:
+        - mysql
+        - information_schema
+        - performance_schema
+        - sys
+      note: "Database names follow standard MySQL naming conventions"
+      
+  alibaba:
+    description: Alibaba Cloud ApsaraDB RDS
+    links:
+      docs: https://www.alibabacloud.com/help/en/rds/
+      console: https://rdsnext.console.aliyun.com/ (region-specific path)
+    supportedDBEngines: [mysql, mariadb]
+    dbOperationMethod: cspNativeApi
+    supportsTag: true
+    storageTypeSelectable: true
+    storageTypes:
+      cloud_auto:
+        name: Auto-selected Storage Type
+        description: Alibaba Cloud automatically selects the optimal storage type based on region and instance specification. Recommended for simplicity.
+        recommendationLevel: recommended
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 32768
+        note: "Verified: 2026-08-03 (Spider storage-type-test returned 'general_essd'). CSP determines actual type at provisioning time."
+        
+      cloud_essd:
+        name: Enhanced SSD (ESSD PL1)
+        description: Standard enhanced SSD with good balance of performance and cost. Performance Level 1.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 32768
+        note: "Verified: 2026-08-03 (Spider storage-type-test)"
+        
+      cloud_essd2:
+        name: Enhanced SSD (ESSD PL2)
+        description: High-performance enhanced SSD. Performance Level 2. Minimum 500 GB storage. Not compatible with mysql.n4.* instance specifications.
+        recommendationLevel: premium
+        requiresIops: false
+        minStorageSize: 500
+        maxStorageSize: 32768
+        incompatibleSpecs:
+          - "mysql.n4.*"
+        note: "Verified: 2026-08-03 (Spider storage-type-test with mysql.n2.small.2c spec). Requires mysql.n2.* or higher spec series."
+        
+      cloud_essd3:
+        name: Enhanced SSD (ESSD PL3)
+        description: Ultra-high-performance enhanced SSD. Performance Level 3. Minimum 1,500 GB storage. Not compatible with mysql.n4.* instance specifications.
+        recommendationLevel: premium
+        requiresIops: false
+        minStorageSize: 1500
+        maxStorageSize: 32768
+        incompatibleSpecs:
+          - "mysql.n4.*"
+        note: "Verified: 2026-08-03 (Spider storage-type-test with mysql.n2.small.2c spec). Requires mysql.n2.* or higher spec series."
+        
+      local_ssd:
+        name: Premium Local SSD
+        description: Local SSD storage with high performance. Only compatible with rds.mysql.* instance specification series. Data loss risk on instance failure.
+        recommendationLevel: premium
+        requiresIops: false
+        minStorageSize: 20
+        maxStorageSize: 2000
+        compatibleSpecs:
+          - "rds.mysql.*"
+        note: "Verified: 2026-08-03 (Spider storage-type-test with rds.mysql.t1.small). Not compatible with mysql.n4.* series (InvalidInstanceLevel.DiskType error)."
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 20
+        maxStorageSize: 32768
+        defaultPort: 3306
+        referenceEngineVersion: "8.0"
+        referenceDBInstanceSpec: mysql.n4.large.1
+        note: "Storage type compatibility depends on instance specification series (mysql.n4.*,
+          mysql.n2.*, rds.mysql.*). Reference values per CB-Spider's rdbms-mysql-test README
+          (verified Available, 2026-08-03) — an older version (e.g. 5.5) or a live-picked
+          spec can fail (InvalidDBInstanceClass.NotFound) since Alibaba restricts which
+          instance classes are valid per engine version/region."
+      mariadb:
+        defaultPort: 3306
+        referenceEngineVersion: "10.6"
+        referenceDBInstanceSpec: mariadb.n2.medium.2c
+        note: "Reference values per CB-Spider's rdbms-mariadb-test README (verified Available,
+          2026-08-18, 20GB)."
+        
+    databaseRequirements:
+      maxDatabaseNameLength: 64
+      reservedDatabaseNames:
+        - mysql
+        - information_schema
+        - performance_schema
+        - sys
+      note: "Database names follow standard MySQL naming conventions"
+
+    adminUserNameRequirement:
+      reservedValues:
+        - admin
+      note: "Confirmed via live rejection (2026-08-18): 'admin' is rejected with
+        InvalidAccountName.Forbid ('Specified account name is a keyword in RDS')."
+
+  tencent:
+    description: Tencent Cloud TencentDB for MySQL
+    links:
+      docs: https://www.tencentcloud.com/document/product/236
+      console: https://console.tencentcloud.com/cdb
+    supportedDBEngines: [mysql]
+    dbOperationMethod: cspNativeApi
+    supportsTag: true
+    note: "SecurityGroup is optional (shares the VM's security group if provided). Other CSPs except AWS ignore securityGroupIds."
+    storageTypeSelectable: true
+    storageTypes:
+      local_ssd:
+        name: Local SSD
+        description: High-performance local SSD storage. Minimum 50 GB.
+        recommendationLevel: premium
+        requiresIops: false
+        minStorageSize: 50
+        note: "Verified: 2026-08-03 (Spider storage-type-test)"
+        
+      CLOUD_HSSD:
+        name: Cloud Enhanced SSD
+        description: Cloud-based enhanced SSD with high performance. Minimum 50 GB.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 50
+        note: "Storage type option available in TencentDB metainfo API"
+        
+      CLOUD_SSD:
+        name: Cloud SSD
+        description: Standard cloud SSD storage. Minimum 50 GB.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 50
+        note: "Storage type option available in TencentDB metainfo API"
+        
+      CLOUD_PREMIUM:
+        name: Cloud Premium
+        description: Premium cloud storage with good balance. Minimum 50 GB.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 50
+        note: "Storage type option available in TencentDB metainfo API"
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 50
+        defaultPort: 3306
+        referenceEngineVersion: "8.0"
+        referenceDBInstanceSpec: "8000"
+        note: "DBSpec is specified in MB (e.g., 8000 = 8 GB memory). Concurrent order rejection may
+          occur (OperationDenied.OtherOderInProcess); driver auto-retries. Reference values per
+          CB-Spider's rdbms-mysql-test README (verified Available, 2026-08-03) — a live-picked
+          smaller spec (e.g. memory=1000/cpu=1) can be rejected as invalid despite appearing in
+          the driver's own listed-valid-specs response."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions"
+
+    adminUserNameRequirement:
+      fixedValue: root
+      note: "Confirmed via live rejection (2026-08-14): Tencent Cloud Database does not support
+        a custom admin login name — the admin user is always root. Set adminUserName to root or
+        leave it empty."
+
+  ibm:
+    description: IBM Cloud Databases for MySQL
+    links:
+      docs: https://cloud.ibm.com/docs/databases-for-mysql
+      console: https://cloud.ibm.com/databases-overview/resources
+    supportedDBEngines: [mysql]
+    dbOperationMethod: sqlFallback
+    supportsTag: true
+    note: "Storage type selection not supported. IBM Cloud Databases manages storage automatically."
+    storageTypeSelectable: false
+    storageTypes:
+      auto:
+        name: Automatic (IBM-managed)
+        description: Storage is managed automatically by IBM Cloud Databases. User cannot specify storage type.
+        recommendationLevel: standard
+        note: "Verified: 2026-08-03 (Spider storage-type-test SKIP). IBM Cloud Databases does not provide storage type selection."
+        
+    dbmsRequirements:
+      mysql:
+        defaultPort: 3306
+        referenceEngineVersion: "8.4"
+        referenceDBInstanceSpec: multitenant
+        note: "Storage is managed automatically by IBM Cloud. Reference values per CB-Spider's
+          rdbms-mysql-test README (verified Available, 2026-08-03)."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions"
+
+    adminUserNameRequirement:
+      fixedValue: admin
+      note: "Confirmed in CB-Spider driver source (2026-08-18): IbmRDBMSHandler rejects any
+        MasterUserName other than 'admin' ('IBM Cloud Databases does not support custom
+        MasterUserName: the admin user is always \"admin\"')."
+
+    adminUserPasswordRequirement:
+      minLength: 15
+      maxLength: 72
+      forbidsSpecialChar: true
+      note: "Confirmed via live rejection (2026-08-14): the admin login password validation
+        failed for an 11-character password ('must be between 15 and 72 characters long').
+        Special-character rejection (e.g. '!', '@') per the CB-Spider wiki's RDBMS Management
+        Guide."
+
+  ncp:
+    description: Naver Cloud Platform Cloud DB for MySQL
+    links:
+      docs: https://www.ncloud.com/product/database/cloudDbMysql
+      console: https://console.ncloud.com (login, then Services -> Database -> Cloud DB for MySQL)
+    supportedDBEngines: [mysql]
+    dbOperationMethod: cspNativeApi
+    supportsTag: false
+    note: "Storage type and storage size configuration not supported. NCP G3 generation automatically applies SSD storage, starts at 10GB, and auto-scales by 10GB increments up to 6000GB."
+    storageTypeSelectable: false
+    storageTypes:
+      ssd:
+        name: SSD (automatic)
+        description: "NCP G3 automatically applies SSD storage (starts at 10GB and auto-scales by 10GB increments up to 6000GB). Storage size and type are not user-configurable."
+        recommendationLevel: standard
+        note: "Verified: 2026-08-03 (Spider storage-type-test SKIP). NCP G3 applies SSD automatically; storage type cannot be specified."
+        
+    dbmsRequirements:
+      mysql:
+        defaultPort: 3306
+        referenceEngineVersion: "8.0.36"
+        referenceDBInstanceSpec: SVR.VDBAS.AMD.STAND.C002.M008.NET.SSD.B050.G003
+        note: "G3 generation uses SSD by default and starts at 10GB auto-scaling storage; no user configuration available.
+          Reference values per CB-Spider's rdbms-mysql-test README (verified Available,
+          2026-08-03)."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions. Direct SQL connection from external machines is not supported by default because NCP Cloud DB provides only private VPC endpoints (*.vpc-cdb.ntruss.com). Direct SQL access requires an internal VPC VM or manual public domain request via NCP console."
+
+    adminUserNameRequirement:
+      reservedValues:
+        - root
+        - admin
+        - radmin
+        - agent
+        - api_admin
+        - ha_admin
+        - ragent
+        - repl_admin
+        - "mysql.session"
+        - "mysql.sys"
+      note: "Confirmed via live rejection (2026-08-21): NCP rejects system account names
+        (root, admin, radmin, agent, api_admin, ha_admin, ragent, repl_admin, mysql.session, mysql.sys)."
+
+    adminUserPasswordRequirement:
+      requiresSpecialChar: true
+      note: "Per the CB-Spider wiki's RDBMS Management Guide: NCP requires at least one special
+        character in the admin login password (opposite of IBM, which forbids them)."
+
+  nhn:
+    description: NHN Cloud RDS for MySQL
+    links:
+      # Old link (…/RDS/ko/overview/) was broken — redirects to an nhncloud.com error page.
+      # Verified 2026-08-18: NHN publishes separate docs sites per engine, not one combined page.
+      docs: https://docs.nhncloud.com/ko/Database/RDS%20for%20MySQL/ko/overview/
+      docsMariadb: https://docs.nhncloud.com/ko/Database/RDS%20for%20MariaDB/ko/overview/
+      console: https://console.nhncloud.com/ (login, select a Project, then Database -> RDS for MySQL/MariaDB)
+    supportedDBEngines: [mysql, mariadb]
+    dbOperationMethod: cspNativeApi
+    supportsTag: false
+    storageTypeSelectable: true
+    storageTypes:
+      General_HDD:
+        name: General HDD
+        description: Cost-effective HDD storage for less demanding workloads. Minimum 20 GB.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 20
+        note: "Verified: 2026-08-03 (Spider storage-type-test, elapsed 10m7s)"
+        
+      General_SSD:
+        name: General SSD
+        description: Standard SSD storage for better performance. Recommended for most workloads. Minimum 20 GB.
+        recommendationLevel: recommended
+        requiresIops: false
+        minStorageSize: 20
+        note: "Verified: 2026-08-03 (Spider storage-type-test, elapsed 11m7s)"
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 20
+        defaultPort: 3306
+        referenceEngineVersion: "MYSQL_V8408"
+        referenceDBInstanceSpec: m2.c2m4
+        note: "Storage type options are queried dynamically from NHN Cloud RDS API.
+          Reference values per CB-Spider's rdbms-mysql-test README (verified Available with PublicAccess,
+          2026-08-25)."
+      mariadb:
+        minStorageSize: 20
+        defaultPort: 3306
+        referenceEngineVersion: "MARIADB_V101118"
+        referenceDBInstanceSpec: m2.c2m4
+        note: "Reference values per CB-Spider's rdbms-mariadb-test README (verified Available,
+          2026-08-18, 20GB)."
+        
+    securityGroupRequirements:
+      note: "NHN Cloud uses a dedicated DB Security Group distinct from VPC Security Groups. SecurityGroupNames is ignored by Spider. In production, configure inbound rules in NHN Cloud Console (Database > RDS for MySQL > DB 보안 그룹). For testing, set nhnDBSGToAllowAllInbound=true (NHNAutoOpenDBSecurityGroup=true) with publicAccess=true to auto-create and attach a 0.0.0.0/0 open DB Security Group."
+
+    endpointStructure:
+      fqdnPattern: "{instance-uuid}.external.{region}.{engine}.rds.nhncloudservice.com"
+      note: "NHN Cloud RDS assigns a single public FQDN endpoint when PublicAccess is enabled. Access control to this endpoint (from both external networks and VPC internal VMs) is governed by NHN Cloud's dedicated DB Security Group (DB 보안 그룹)."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions. Direct client access (port 3306) requires inbound permit rules configured in NHN Cloud Console's dedicated DB Security Group, or enabling nhnDBSGToAllowAllInbound (for testing)."
+
+    adminUserNameRequirement:
+      reservedValues:
+        - admin
+        - root
+        - rds_admin
+        - rds_mha
+        - rds_repl
+        - sqlgw
+        - etladm
+        - alertman
+        - prom
+        - mysql.session
+        - mysql.sys
+        - mysql.infoschema
+      
+  openstack:
+    description: OpenStack Trove
+    links:
+      docs: https://docs.openstack.org/trove/latest/
+      console: "Horizon: self-hosted, no fixed URL - Project -> Database -> Instances menu"
+    supportedDBEngines: [mysql, mariadb]
+    dbOperationMethod: cspNativeApi
+    supportsTag: false
+    note: "An earlier v0.12.44 test run requested MariaDB 10.6 and failed ('Datastore version
+      10.6 cannot be found'). CB-Spider's rdbms-mariadb-test README clarifies the correct
+      reference version for this Trove environment is 10.4, not 10.6 — confirmed Available
+      in a 2026-08-18 run (m1.small/20GB, 3m58s). The datastore was never actually missing;
+      10.6 was simply the wrong version to request."
+    storageTypeSelectable: true
+    storageTypes:
+      __DEFAULT__:
+        name: Default Storage
+        description: Default storage type provided by OpenStack deployment. Actual backend depends on deployment configuration.
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 1
+        note: "Verified: 2026-08-03 (Spider storage-type-test). OpenStack Trove does not expose storage type in instance info after creation."
+        
+      RBD:
+        name: Ceph RBD
+        description: Ceph RADOS Block Device storage (if available in deployment).
+        recommendationLevel: standard
+        requiresIops: false
+        minStorageSize: 1
+        note: "Verified: 2026-08-03 (Spider storage-type-test). Availability depends on OpenStack deployment. Storage type not exposed post-creation."
+        
+    dbmsRequirements:
+      mysql:
+        minStorageSize: 1
+        defaultPort: 3306
+        referenceEngineVersion: "5.7.29"
+        referenceDBInstanceSpec: m1.small
+        note: "Storage type selection depends on OpenStack deployment configuration.
+          Reference values per CB-Spider's rdbms-mysql-test README (verified Available,
+          2026-08-03)."
+      mariadb:
+        minStorageSize: 1
+        defaultPort: 3306
+        referenceEngineVersion: "10.4"
+        referenceDBInstanceSpec: m1.small
+        note: "Reference values per CB-Spider's rdbms-mariadb-test README (verified Available,
+          2026-08-18, 20GB) — not version 10.6, which this Trove deployment's datastore does
+          not have registered."
+        
+    databaseRequirements:
+      note: "Database naming follows standard MySQL conventions"
+      
