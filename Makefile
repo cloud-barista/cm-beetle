@@ -9,7 +9,7 @@ GO := $(GOPROXY_OPTION) go
 GOPATH := $(shell go env GOPATH)
 SWAG := ~/go/bin/swag
 
-.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help
+.PHONY: all dependency tidy lint update swag swagger build arm prod run stop clean help test-infra test-rdbms test-infra-with-nlb test-os test-data test-async test-rate-limiting test-multi-infra-recommendation test-k8s-infra-recommendation test-k8s-infra-migration
 
 all: swag build ## Default target: build the project
 
@@ -107,6 +107,7 @@ clean: ## Remove previous build
 	@cd cmd/test-cli/multi-infra-recommendation && $(GO) clean
 	@cd cmd/test-cli/k8s-infra-recommendation && $(GO) clean
 	@cd cmd/test-cli/k8s-infra-migration && $(GO) clean
+	@cd cmd/test-cli/rdbms && $(GO) clean
 	@echo "Cleaned!"
 
 test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
@@ -116,6 +117,14 @@ test-infra: ## Run the infra migration test CLI for all CSP-Region pairs
 		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
 	fi
 	@cd cmd/test-cli/infra && $(GO) run main.go -config testconf/test-config.yaml
+
+test-rdbms: ## Run the managed RDBMS test CLI for target CSPs
+	@echo "Running managed RDBMS test CLI..."
+	@if [ ! -f cmd/test-cli/rdbms/testconf/test-config.yaml ]; then \
+		cp cmd/test-cli/rdbms/testconf/template-test-config.yaml cmd/test-cli/rdbms/testconf/test-config.yaml; \
+		echo "Created testconf/test-config.yaml from template. Edit it before running."; \
+	fi
+	@cd cmd/test-cli/rdbms && $(GO) run main.go -config testconf/test-config.yaml
 
 test-infra-with-nlb: ## Run the infra-with-nlb migration test CLI for all CSP-Region pairs
 	@echo "Running infra-with-nlb migration test CLI..."

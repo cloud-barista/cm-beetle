@@ -31,38 +31,56 @@ var _ = rdbmsmodel.RDBMSCapabilityResponse{}
 
 // GetRDBMSSupport godoc
 // @ID GetRDBMSSupport
-// @Summary Get CSP feature support map for managed RDBMS (Proxied to Tumblebug)
-// @Description Forward RDBMS support request to CB-Tumblebug via Proxy (Returns RDBMSSupportResponse)
+// @Summary Get CSP feature support map for managed RDBMS
+// @Description Retrieve managed RDBMS support matrix from CB-Tumblebug (Returns RDBMSSupportResponse)
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json
 // @Param cspType query string false "CSP Type filter (e.g., aws, azure, gcp)"
+// @Param providerName query string false "Provider name alias for cspType"
 // @Success 200 {object} rdbmsmodel.RDBMSSupportResponse
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /recommendation/middleware/rdbms/support [get]
 func GetRDBMSSupport(c echo.Context) error {
-	sourcePattern := "/recommendation/middleware/rdbms/support"
-	targetPattern := "/rdbms/support"
+	cspType := c.QueryParam("cspType")
+	if cspType == "" {
+		cspType = c.QueryParam("providerName")
+	}
 
-	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
-	return proxyHandler(c)
+	result, err := recommendation.GetRDBMSSupport(cspType)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get RDBMS support matrix")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS support: %v", err)))
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 // GetRDBMSCapability godoc
 // @ID GetRDBMSCapability
-// @Summary Get real-time capability and spec options for managed RDBMS (Proxied to Tumblebug)
-// @Description Forward RDBMS capability request to CB-Tumblebug via Proxy (Returns RDBMSCapabilityResponse)
+// @Summary Get real-time capability and spec options for managed RDBMS
+// @Description Retrieve real-time capability and spec options for managed RDBMS from CB-Tumblebug (Returns RDBMSCapabilityResponse)
 // @Tags [Recommendation] Managed RDBMS
 // @Accept json
 // @Produce json
 // @Param connectionName query string true "Connection Name (e.g., aws-ap-northeast-2)"
 // @Success 200 {object} rdbmsmodel.RDBMSCapabilityResponse
+// @Failure 400 {object} model.ApiResponse[any] "Invalid request parameters"
+// @Failure 500 {object} model.ApiResponse[any] "Internal server error"
 // @Router /recommendation/middleware/rdbms/capability [get]
 func GetRDBMSCapability(c echo.Context) error {
-	sourcePattern := "/recommendation/middleware/rdbms/capability"
-	targetPattern := "/rdbms/capability"
+	connectionName := c.QueryParam("connectionName")
+	if connectionName == "" {
+		return c.JSON(http.StatusBadRequest, model.SimpleErrorResponse("connectionName is required"))
+	}
 
-	proxyHandler := createTumblebugProxyHandler(sourcePattern, targetPattern)
-	return proxyHandler(c)
+	result, err := recommendation.GetRDBMSCapability(connectionName)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get RDBMS capability")
+		return c.JSON(http.StatusInternalServerError, model.SimpleErrorResponse(fmt.Sprintf("Failed to get RDBMS capability: %v", err)))
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 // ValidateRDBMS godoc

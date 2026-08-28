@@ -1353,6 +1353,485 @@ const docTemplate = `{
                 }
             }
         },
+        "/migration/middleware/ns/{nsId}/rdbms": {
+            "get": {
+                "description": "Retrieve the list of all migrated managed RDBMS instances in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "List migrated managed RDBMS instances",
+                "operationId": "ListRDBMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved RDBMS list",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Migrate managed RDBMS instances to cloud based on recommendation results\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] ` + "`" + `nameSeed` + "`" + ` enables dynamic naming via **Late Binding**.\n- If ` + "`" + `nameSeed` + "`" + ` query param is set (e.g., ` + "`" + `?nameSeed=my` + "`" + `), instance names are prefixed: ` + "`" + `my-rdbms-01` + "`" + `.\n\nBy default this API runs synchronously. Send header ` + "`" + `Prefer: respond-async` + "`" + ` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Migrate managed RDBMS instances to cloud",
+                "operationId": "MigrateRDBMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Optional prefix for instance names (e.g., 'my' → 'my-rdbms-01')",
+                        "name": "nameSeed",
+                        "in": "query"
+                    },
+                    {
+                        "description": "RDBMS migration request (use RecommendRDBMS response)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateRDBMSRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    },
+                    {
+                        "enum": [
+                            "respond-async"
+                        ],
+                        "type": "string",
+                        "description": "Set to 'respond-async' to run this migration asynchronously",
+                        "name": "Prefer",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created - Managed RDBMS instances created successfully"
+                    },
+                    "202": {
+                        "description": "Migration started asynchronously - use GET /request/{reqId} to check status",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-model_AsyncJobResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during RDBMS creation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many requests",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/rdbms/validate": {
+            "post": {
+                "description": "Validate recommended RDBMS configuration against target cloud constraints before actual migration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Validate managed RDBMS migration request against target cloud",
+                "operationId": "ValidateMigrateRDBMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "RDBMS migration request to validate",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.MigrateRDBMSRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated RDBMS migration configurations",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}": {
+            "get": {
+                "description": "Retrieve details of a specific migrated managed RDBMS instance in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Get details of a migrated managed RDBMS instance",
+                "operationId": "GetRDBMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved RDBMS details",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific migrated managed RDBMS instance in the namespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Delete a migrated managed RDBMS instance",
+                "operationId": "DeleteRDBMS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deletion option (e.g., 'force')",
+                        "name": "option",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted managed RDBMS instance",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database": {
+            "get": {
+                "description": "Retrieve the list of logical databases inside an existing managed RDBMS instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "List logical databases inside a managed RDBMS instance",
+                "operationId": "ListRDBMSDatabases",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Password",
+                        "name": "X-Admin-User-Password",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved logical databases",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSDatabaseListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new logical database inside an existing managed RDBMS instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Create a logical database inside a managed RDBMS instance",
+                "operationId": "CreateRDBMSDatabase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Database creation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSDatabaseCreateReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created logical database",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{dbName}": {
+            "delete": {
+                "description": "Delete a logical database inside an existing managed RDBMS instance",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Migration] Managed RDBMS"
+                ],
+                "summary": "Delete a logical database inside a managed RDBMS instance",
+                "operationId": "DeleteRDBMSDatabase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "mig01",
+                        "description": "Namespace ID",
+                        "name": "nsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "RDBMS Instance ID",
+                        "name": "rdbmsId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Database Name",
+                        "name": "dbName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin User Password",
+                        "name": "X-Admin-User-Password",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted logical database",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
         "/migration/middleware/objectStorage/inspect": {
             "post": {
                 "description": "Deeply inspect and extract feature/usage metadata (totalSizeBytes, objectCount, versioning, encryption, CORS, policy, tags, creationDate) from selected cloud object storage buckets.\n\n[Note] Extracted fields strictly conform to Beetle's Recommendation API input specification (` + "`" + `SourceObjectStorage` + "`" + `).\n- Versioning: Extracted via ` + "`" + `GetBucketVersioning` + "`" + `. If versioning is disabled or error occurs, ` + "`" + `versioningEnabled` + "`" + ` is false.\n- Encryption: Extracted via ` + "`" + `GetBucketEncryption` + "`" + `. If encryption rules are absent or error occurs, ` + "`" + `encryptionEnabled` + "`" + ` is false.\n- CORS: Extracted via ` + "`" + `GetBucketCors` + "`" + `. If CORS rules are absent or error occurs, ` + "`" + `corsEnabled` + "`" + ` is false and ` + "`" + `corsRule` + "`" + ` is nil.\n- Public Access: Extracted via ` + "`" + `GetBucketPolicy` + "`" + `. If wildcard public policy statement is detected, ` + "`" + `isPublic` + "`" + ` is true, otherwise false.\n- Tags: Extracted via ` + "`" + `GetBucketTagging` + "`" + `. If tags are not set, ` + "`" + `tags` + "`" + ` is nil/empty map.\n- CreationDate: Extracted via bucket listing creation timestamp formatted in RFC 3339 format.\n- AccessFrequency: Defaults to ` + "`" + `\"frequent\"` + "`" + ` (Standard storage tier baseline for recommendation).",
@@ -3995,6 +4474,203 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/model.ObjectStorageSupportResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/middleware/rdbms": {
+            "post": {
+                "description": "Recommend appropriate managed RDBMS (MySQL, MariaDB) instance specs and configurations for cloud migration\n\n[Note] ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` are required.\n- ` + "`" + `desiredCsp` + "`" + ` and ` + "`" + `desiredRegion` + "`" + ` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (` + "`" + `mig-rdbms-01` + "`" + `, ` + "`" + `mig-rdbms-02` + "`" + `, ...).\n- To apply a naming prefix at migration time, use the ` + "`" + `nameSeed` + "`" + ` query parameter on the migration API.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed RDBMS"
+                ],
+                "summary": "Recommend a managed RDBMS for cloud migration",
+                "operationId": "RecommendRDBMS",
+                "parameters": [
+                    {
+                        "description": "Specify source RDBMS instances to be migrated",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.RecommendRDBMSRequest"
+                        }
+                    },
+                    {
+                        "enum": [
+                            "aws",
+                            "azure",
+                            "gcp",
+                            "alibaba",
+                            "tencent",
+                            "ibm",
+                            "openstack",
+                            "ncp",
+                            "nhn"
+                        ],
+                        "type": "string",
+                        "default": "aws",
+                        "description": "CSP (e.g., aws, azure, gcp)",
+                        "name": "desiredCsp",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "ap-northeast-2",
+                        "description": "Region (e.g., ap-northeast-2)",
+                        "name": "desiredRegion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique request ID",
+                        "name": "X-Request-Id",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully recommended managed RDBMS",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RecommendedRDBMS"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error during recommendation",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/middleware/rdbms/capability": {
+            "get": {
+                "description": "Forward RDBMS capability request to CB-Tumblebug via Proxy (Returns RDBMSCapabilityResponse)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed RDBMS"
+                ],
+                "summary": "Get real-time capability and spec options for managed RDBMS (Proxied to Tumblebug)",
+                "operationId": "GetRDBMSCapability",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Connection Name (e.g., aws-ap-northeast-2)",
+                        "name": "connectionName",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSCapabilityResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/middleware/rdbms/support": {
+            "get": {
+                "description": "Forward RDBMS support request to CB-Tumblebug via Proxy (Returns RDBMSSupportResponse)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed RDBMS"
+                ],
+                "summary": "Get CSP feature support map for managed RDBMS (Proxied to Tumblebug)",
+                "operationId": "GetRDBMSSupport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSP Type filter (e.g., aws, azure, gcp)",
+                        "name": "cspType",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSSupportResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/recommendation/middleware/rdbms/validate": {
+            "post": {
+                "description": "Perform dry-run validation and default parameter auto-filling for an RDBMS configuration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "[Recommendation] Managed RDBMS"
+                ],
+                "summary": "Validate and auto-fill default values for managed RDBMS configuration",
+                "operationId": "ValidateRDBMSRecommendation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "default",
+                        "description": "Optional namespace ID (defaults to 'default')",
+                        "name": "nsId",
+                        "in": "query"
+                    },
+                    {
+                        "description": "RDBMS creation request to validate",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully validated and auto-filled RDBMS configuration",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSCreateRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
                         }
                     }
                 }
@@ -8568,6 +9244,35 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.MigrateRDBMSRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"recommended\", \"partial\", \"failed\"",
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/rdbmsmodel.CloudProperty"
+                },
+                "targetRDBMSInstances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.TargetRDBMSInstance"
+                    }
+                },
+                "warnings": {
+                    "description": "CSP feature-support warnings",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "controller.NodeSSHStatus": {
             "type": "object",
             "properties": {
@@ -8816,6 +9521,25 @@ const docTemplate = `{
                     "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/storagemodel.SourceObjectStorageProperty"
+                    }
+                }
+            }
+        },
+        "controller.RecommendRDBMSRequest": {
+            "type": "object",
+            "required": [
+                "desiredCloud",
+                "sourceRDBMSInstances"
+            ],
+            "properties": {
+                "desiredCloud": {
+                    "$ref": "#/definitions/rdbmsmodel.CloudProperty"
+                },
+                "sourceRDBMSInstances": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.SourceRDBMSProperty"
                     }
                 }
             }
@@ -9120,6 +9844,33 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.K8sClusterInfo"
+                    }
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.RDBMSCreateRequest"
                     }
                 },
                 "error": {
@@ -9679,6 +10430,146 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/model.AsyncJobResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-rdbmsmodel_RDBMSCreateRequest": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSCreateRequest"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-rdbmsmodel_RDBMSDatabaseListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSDatabaseListResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-rdbmsmodel_RDBMSInfo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSInfo"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-rdbmsmodel_RDBMSListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSListResponse"
+                        }
+                    ]
+                },
+                "error": {
+                    "description": "Error message for failed responses",
+                    "type": "string",
+                    "example": "Error message if failure"
+                },
+                "message": {
+                    "description": "Optional message for additional context",
+                    "type": "string",
+                    "example": "Operation successful"
+                },
+                "success": {
+                    "description": "Indicates whether the API call was successful",
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "model.ApiResponse-rdbmsmodel_RecommendedRDBMS": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Contains the actual response data (single object, list, or page)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rdbmsmodel.RecommendedRDBMS"
                         }
                     ]
                 },
@@ -11960,6 +12851,1038 @@ const docTemplate = `{
                 "source": {
                     "description": "Optionally stores the source address (used for policy-based routing)",
                     "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.CloudProperty": {
+            "type": "object",
+            "properties": {
+                "csp": {
+                    "description": "Cloud service provider (e.g., aws, azure, gcp, ncp, alibaba, etc.)",
+                    "type": "string",
+                    "example": "aws"
+                },
+                "region": {
+                    "description": "Region identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "zone": {
+                    "description": "Optional Zone identifier",
+                    "type": "string",
+                    "example": "ap-northeast-2a"
+                }
+            }
+        },
+        "rdbmsmodel.Condition": {
+            "type": "object",
+            "properties": {
+                "lastTransitionTime": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.ConnConfig": {
+            "type": "object",
+            "properties": {
+                "configName": {
+                    "type": "string"
+                },
+                "credentialHolder": {
+                    "type": "string"
+                },
+                "credentialName": {
+                    "type": "string"
+                },
+                "driverName": {
+                    "type": "string"
+                },
+                "providerName": {
+                    "type": "string"
+                },
+                "regionDetail": {
+                    "$ref": "#/definitions/rdbmsmodel.RegionDetail"
+                },
+                "regionRepresentative": {
+                    "type": "boolean"
+                },
+                "regionZoneInfo": {
+                    "$ref": "#/definitions/rdbmsmodel.RegionZoneInfo"
+                },
+                "regionZoneInfoName": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "rdbmsmodel.KeyValue": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.Location": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSAdminUserNameRequirement": {
+            "type": "object",
+            "properties": {
+                "fixedValue": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "reservedValues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSAdminUserPasswordRequirement": {
+            "type": "object",
+            "properties": {
+                "forbidsSpecialChar": {
+                    "type": "boolean"
+                },
+                "maxLength": {
+                    "type": "integer"
+                },
+                "minLength": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "requiresSpecialChar": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSCSPSupportInfo": {
+            "type": "object",
+            "properties": {
+                "dbOperationMethod": {
+                    "type": "string",
+                    "enum": [
+                        "cspNativeApi",
+                        "sqlFallback"
+                    ],
+                    "example": "cspNativeApi"
+                },
+                "note": {
+                    "type": "string",
+                    "example": "Storage type selection is not supported on this CSP."
+                },
+                "storageTypeSelectable": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supported": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportedDBEngines": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "mysql",
+                        "mariadb"
+                    ]
+                },
+                "supportsTag": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSCapabilityResponse": {
+            "type": "object",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "example": "rdbms"
+                },
+                "supports": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSMetaInfo"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSCreateRequest": {
+            "type": "object",
+            "required": [
+                "adminUserName",
+                "adminUserPassword",
+                "connectionName",
+                "dbEngine",
+                "name",
+                "vNetId"
+            ],
+            "properties": {
+                "adminUserName": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "adminUserPassword": {
+                    "type": "string",
+                    "example": "Password123!"
+                },
+                "autoFillDefaults": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "backupRetentionDays": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "dbEngine": {
+                    "type": "string",
+                    "enum": [
+                        "mysql",
+                        "mariadb"
+                    ],
+                    "example": "mysql"
+                },
+                "dbEngineVersion": {
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "dbInstanceSpec": {
+                    "type": "string",
+                    "example": "db.t3.medium"
+                },
+                "deletionProtection": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "description": {
+                    "type": "string",
+                    "example": "managed by CB-Tumblebug"
+                },
+                "highAvailability": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "iops": {
+                    "type": "string",
+                    "example": "3000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "rdbms-01"
+                },
+                "nhnDBSGToAllowAllInbound": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "publicAccess": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "sg-01"
+                    ]
+                },
+                "storageSize": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "gp3"
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "subnet-01"
+                    ]
+                },
+                "tagList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.KeyValue"
+                    }
+                },
+                "vNetId": {
+                    "type": "string",
+                    "example": "vnet-01"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSDBMSRequirement": {
+            "type": "object",
+            "properties": {
+                "defaultPort": {
+                    "type": "integer"
+                },
+                "maxStorageSize": {
+                    "type": "integer"
+                },
+                "minStorageSize": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "referenceDBInstanceSpec": {
+                    "type": "string"
+                },
+                "referenceDBSpec": {
+                    "type": "string"
+                },
+                "referenceEngineVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSDatabaseCreateReq": {
+            "type": "object",
+            "required": [
+                "adminUserPassword",
+                "databaseName"
+            ],
+            "properties": {
+                "adminUserPassword": {
+                    "type": "string",
+                    "example": "Password123!"
+                },
+                "databaseName": {
+                    "type": "string",
+                    "example": "sampledb"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSDatabaseListResponse": {
+            "type": "object",
+            "properties": {
+                "databases": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "sampledb"
+                    ]
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSDatabaseRequirement": {
+            "type": "object",
+            "properties": {
+                "maxDatabaseNameLength": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "reservedDatabaseNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSInfo": {
+            "type": "object",
+            "properties": {
+                "adminUserName": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "backupRetentionDays": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "backupTime": {
+                    "type": "string",
+                    "example": "03:00"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.Condition"
+                    }
+                },
+                "connectionConfig": {
+                    "$ref": "#/definitions/rdbmsmodel.ConnConfig"
+                },
+                "connectionName": {
+                    "type": "string"
+                },
+                "cspResourceId": {
+                    "type": "string"
+                },
+                "cspResourceName": {
+                    "type": "string"
+                },
+                "dbEngine": {
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "dbEngineVersion": {
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "dbInstanceSpec": {
+                    "type": "string",
+                    "example": "db.t3.medium"
+                },
+                "dbInstanceType": {
+                    "type": "string",
+                    "enum": [
+                        "Primary",
+                        "ReadReplica"
+                    ],
+                    "example": "Primary"
+                },
+                "deletionProtection": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "deletionRequestedAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "encryption": {
+                    "type": "boolean"
+                },
+                "endpoint": {
+                    "type": "string",
+                    "example": "rdbms-01.xxxx.rds.amazonaws.com:3306"
+                },
+                "highAvailability": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "id": {
+                    "type": "string",
+                    "example": "rdbms-01"
+                },
+                "iops": {
+                    "type": "string",
+                    "example": "3000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "rdbms-01"
+                },
+                "nhnDBSGToAllowAllInbound": {
+                    "type": "boolean"
+                },
+                "publicAccess": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "resourceType": {
+                    "type": "string",
+                    "example": "rdbms"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "storageSize": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "gp3"
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "systemMessage": {
+                    "type": "string"
+                },
+                "tagList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.KeyValue"
+                    }
+                },
+                "uid": {
+                    "type": "string",
+                    "example": "wef12awefadf1221edcf"
+                },
+                "vNetId": {
+                    "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSListResponse": {
+            "type": "object",
+            "properties": {
+                "rdbms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.RDBMSInfo"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSMetaInfo": {
+            "type": "object",
+            "properties": {
+                "adminUserNameRequirement": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSAdminUserNameRequirement"
+                },
+                "adminUserPasswordRequirement": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSAdminUserPasswordRequirement"
+                },
+                "connectionName": {
+                    "type": "string",
+                    "example": "aws-ap-northeast-2"
+                },
+                "databaseRequirements": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSDatabaseRequirement"
+                },
+                "dbEngine": {
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "dbInstanceSpecOptions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "db.t3.medium"
+                    ]
+                },
+                "dbOperationMethod": {
+                    "type": "string",
+                    "example": "cspNativeApi"
+                },
+                "dbmsRequirements": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/rdbmsmodel.RDBMSDBMSRequirement"
+                    }
+                },
+                "defaultStorageType": {
+                    "type": "string",
+                    "example": "gp3"
+                },
+                "providerName": {
+                    "type": "string",
+                    "example": "aws"
+                },
+                "regionName": {
+                    "type": "string",
+                    "example": "ap-northeast-2"
+                },
+                "staticFields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.StaticFieldNote"
+                    }
+                },
+                "storageSizeRange": {
+                    "$ref": "#/definitions/rdbmsmodel.StorageSizeRange"
+                },
+                "storageTypeGuidance": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/rdbmsmodel.StorageTypeNote"
+                    }
+                },
+                "storageTypeOptions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "gp2",
+                        "gp3"
+                    ]
+                },
+                "supportedVersions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "8.0",
+                        "8.4"
+                    ]
+                },
+                "supportsStorageTypeSelection": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsTag": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSSupportResponse": {
+            "type": "object",
+            "properties": {
+                "resourceType": {
+                    "type": "string",
+                    "example": "rdbms"
+                },
+                "supports": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/rdbmsmodel.RDBMSCSPSupportInfo"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RecommendedRDBMS": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "Human-readable summary",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "\"recommended\", \"partial\", \"failed\"",
+                    "type": "string"
+                },
+                "targetCloud": {
+                    "$ref": "#/definitions/rdbmsmodel.CloudProperty"
+                },
+                "targetRDBMSInstances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.TargetRDBMSInstance"
+                    }
+                },
+                "warnings": {
+                    "description": "CSP feature-support warnings",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RegionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/rdbmsmodel.Location"
+                },
+                "regionId": {
+                    "type": "string"
+                },
+                "regionName": {
+                    "type": "string"
+                },
+                "representativeZone": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "rdbmsmodel.RegionZoneInfo": {
+            "type": "object",
+            "properties": {
+                "assignedRegion": {
+                    "type": "string"
+                },
+                "assignedZone": {
+                    "type": "string"
+                }
+            }
+        },
+        "rdbmsmodel.SourceDatabaseProperty": {
+            "type": "object",
+            "required": [
+                "databaseName"
+            ],
+            "properties": {
+                "characterSet": {
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "collation": {
+                    "type": "string",
+                    "example": "utf8mb4_unicode_ci"
+                },
+                "databaseName": {
+                    "type": "string",
+                    "example": "order_db"
+                },
+                "sizeMb": {
+                    "type": "number",
+                    "example": 512.5
+                },
+                "tableCount": {
+                    "type": "integer",
+                    "example": 24
+                }
+            }
+        },
+        "rdbmsmodel.SourceRDBMSProperty": {
+            "type": "object",
+            "required": [
+                "engine",
+                "engineVersion",
+                "instanceName",
+                "memoryMb",
+                "storageSizeGb",
+                "vcpu"
+            ],
+            "properties": {
+                "backupRetentionDays": {
+                    "description": "Backup \u0026 Policy",
+                    "type": "integer",
+                    "example": 7
+                },
+                "databases": {
+                    "description": "Logical Databases (Inner DBs)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.SourceDatabaseProperty"
+                    }
+                },
+                "engine": {
+                    "description": "Engine \u0026 Version",
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "engineVersion": {
+                    "description": "e.g. \"8.0\", \"10.5\"",
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "highAvailability": {
+                    "description": "HA / Replication mode",
+                    "type": "boolean",
+                    "example": false
+                },
+                "instanceName": {
+                    "description": "InstanceName is the identifier for the DB instance.",
+                    "type": "string",
+                    "example": "prod-mysql-01"
+                },
+                "iops": {
+                    "description": "Observed IOPS",
+                    "type": "integer",
+                    "example": 3000
+                },
+                "machineId": {
+                    "description": "MachineId is the optional host machine identifier (e.g., node UUID) for infra traceability.",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "memoryMb": {
+                    "description": "Memory in MB",
+                    "type": "integer",
+                    "example": 8192
+                },
+                "port": {
+                    "description": "Network \u0026 Topology",
+                    "type": "integer",
+                    "example": 3306
+                },
+                "publicAccess": {
+                    "description": "External public access enabled",
+                    "type": "boolean",
+                    "example": false
+                },
+                "storageSizeGb": {
+                    "description": "Storage",
+                    "type": "integer",
+                    "example": 100
+                },
+                "storageType": {
+                    "description": "Storage type (e.g. SSD, HDD)",
+                    "type": "string",
+                    "example": "SSD"
+                },
+                "vcpu": {
+                    "description": "Compute \u0026 Memory",
+                    "type": "integer",
+                    "example": 4
+                }
+            }
+        },
+        "rdbmsmodel.StaticFieldNote": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string",
+                    "example": "storageSizeRange"
+                },
+                "note": {
+                    "type": "string",
+                    "example": "Static fallback value"
+                }
+            }
+        },
+        "rdbmsmodel.StorageSizeRange": {
+            "type": "object",
+            "properties": {
+                "max": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "min": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "rdbmsmodel.StorageTypeNote": {
+            "type": "object",
+            "properties": {
+                "compatibleSpecs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "rds.mysql.*"
+                    ]
+                },
+                "constraints": {
+                    "type": "string",
+                    "example": "Requires 'iops' parameter (e.g., '3000')"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Cost-effective, 3000 baseline IOPS, recommended for general workloads"
+                },
+                "displayName": {
+                    "type": "string",
+                    "example": "General Purpose SSD v3"
+                },
+                "incompatibleSpecs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "mysql.n4.*"
+                    ]
+                },
+                "iopsRange": {
+                    "$ref": "#/definitions/rdbmsmodel.StorageSizeRange"
+                },
+                "maxSize": {
+                    "type": "integer",
+                    "example": 65536
+                },
+                "minSize": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "recommendationLevel": {
+                    "type": "string",
+                    "enum": [
+                        "legacy",
+                        "standard",
+                        "recommended",
+                        "premium"
+                    ],
+                    "example": "recommended"
+                },
+                "recommended": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "requiresIops": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "gp3"
+                }
+            }
+        },
+        "rdbmsmodel.TargetDatabase": {
+            "type": "object",
+            "required": [
+                "databaseName"
+            ],
+            "properties": {
+                "characterSet": {
+                    "type": "string",
+                    "example": "utf8mb4"
+                },
+                "databaseName": {
+                    "type": "string",
+                    "example": "order_db"
+                }
+            }
+        },
+        "rdbmsmodel.TargetRDBMSInstance": {
+            "type": "object",
+            "required": [
+                "adminUserName",
+                "dbEngine",
+                "rdbmsName"
+            ],
+            "properties": {
+                "adminUserName": {
+                    "description": "Admin Credentials",
+                    "type": "string",
+                    "example": "cbuser"
+                },
+                "adminUserPassword": {
+                    "type": "string",
+                    "example": "Password123!"
+                },
+                "backupRetentionDays": {
+                    "type": "integer",
+                    "example": 7
+                },
+                "databases": {
+                    "description": "Optional Inner Databases to create after instance provisioning",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.TargetDatabase"
+                    }
+                },
+                "dbEngine": {
+                    "description": "Target Engine \u0026 Version",
+                    "type": "string",
+                    "example": "mysql"
+                },
+                "dbEngineVersion": {
+                    "type": "string",
+                    "example": "8.0"
+                },
+                "dbInstanceSpec": {
+                    "description": "Target Spec \u0026 Storage",
+                    "type": "string",
+                    "example": "db.t3.medium"
+                },
+                "deletionProtection": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "highAvailability": {
+                    "description": "Availability \u0026 Protection",
+                    "type": "boolean",
+                    "example": false
+                },
+                "iops": {
+                    "type": "string",
+                    "example": "3000"
+                },
+                "publicAccess": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "rdbmsName": {
+                    "description": "Target instance name (supports Late-Binding nameSeed)",
+                    "type": "string",
+                    "example": "mig-rdbms-01"
+                },
+                "securityGroupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"sg-01\"]"
+                    ]
+                },
+                "sourceInstanceName": {
+                    "description": "Source traceability",
+                    "type": "string",
+                    "example": "prod-mysql-01"
+                },
+                "sourceMachineId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "storageSize": {
+                    "description": "Disk size in GB",
+                    "type": "integer",
+                    "example": 100
+                },
+                "storageType": {
+                    "type": "string",
+                    "example": "gp3"
+                },
+                "subnetIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"subnet-01\"",
+                        "\"subnet-02\"]"
+                    ]
+                },
+                "vNetId": {
+                    "description": "Network \u0026 Access",
+                    "type": "string",
+                    "example": "vnet-01"
                 }
             }
         },

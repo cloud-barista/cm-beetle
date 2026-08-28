@@ -13,9 +13,9 @@ services:
   cm-beetle:
     image: cloudbaristaorg/cm-beetle:0.6.0
     container_name: cm-beetle
-    # build:
-    #   context: ${PROJECT_ROOT}
-    #   dockerfile: Dockerfile
+    build:
+      context: ${PROJECT_ROOT}
+      dockerfile: Dockerfile
     platform: linux/amd64
     networks:
       - cloud-barista
@@ -60,11 +60,12 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:edge
+    image: cloudbaristaorg/cb-tumblebug:0.13.1
+    #image: cloudbaristaorg/cb-tumblebug:0.13.2
     container_name: cb-tumblebug
-    # build:
-    #   context: ${PROJECT_ROOT}/../cb-tumblebug
-    #   dockerfile: Dockerfile
+    build:
+      context: ${PROJECT_ROOT}/../cb-tumblebug
+      dockerfile: Dockerfile
     networks:
       - cloud-barista
     ports:

@@ -17,6 +17,7 @@ package tbclient
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	rdbmsmodel "github.com/cloud-barista/cm-beetle/imdl/rdbms-model"
@@ -37,7 +38,7 @@ func (s *Session) GetRDBMSSupport(cspType string) (rdbmsmodel.RDBMSSupportRespon
 	req := s.SetResult(&resBody)
 
 	if cspType != "" {
-		req = req.SetQueryParam("cspType", cspType)
+		req = req.SetQueryParam("providerName", cspType)
 	}
 
 	resp, err := req.Get("/rdbms/support")
@@ -61,15 +62,28 @@ func (s *Session) GetRDBMSSupport(cspType string) (rdbmsmodel.RDBMSSupportRespon
 	return resBody, nil
 }
 
-// GetRDBMSCapability retrieves real-time capability information (specs, versions, constraints) for a connection.
-func (s *Session) GetRDBMSCapability(connectionName string) (rdbmsmodel.RDBMSCapabilityResponse, error) {
+// GetRDBMSCapability retrieves real-time capability information (specs, versions, constraints) for a connection and optional dbEngine.
+func (s *Session) GetRDBMSCapability(connectionName string, optionalEngine ...string) (rdbmsmodel.RDBMSCapabilityResponse, error) {
 	log.Debug().Msgf("Retrieving RDBMS capability for connection: %s", connectionName)
 
 	var resBody rdbmsmodel.RDBMSCapabilityResponse
 	req := s.SetResult(&resBody)
 
+	engine := "mysql"
+	if len(optionalEngine) > 0 && optionalEngine[0] != "" {
+		engine = optionalEngine[0]
+	}
+
 	if connectionName != "" {
 		req = req.SetQueryParam("connectionName", connectionName)
+		parts := strings.Split(connectionName, "-")
+		if len(parts) >= 2 {
+			providerName := parts[0]
+			regionName := strings.Join(parts[1:], "-")
+			req = req.SetQueryParam("providerName", providerName).
+				SetQueryParam("regionName", regionName).
+				SetQueryParam("dbEngine", engine)
+		}
 	}
 
 	resp, err := req.Get("/rdbms/capability")

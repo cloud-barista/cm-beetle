@@ -82,26 +82,52 @@ type StaticFieldNote struct {
 	Note  string `json:"note" example:"Static fallback value"`
 }
 
+// RDBMSDBInstanceSpecInfo represents individual instance specification in Tumblebug capability.
+type RDBMSDBInstanceSpecInfo struct {
+	Name               string           `json:"name" example:"db.t3.medium"`
+	VCpuCount          string           `json:"vCpuCount,omitempty" example:"2"`
+	VCpuClockGHz       string           `json:"vCpuClockGHz,omitempty" example:"2.5"`
+	MemSizeMiB         string           `json:"memSizeMiB,omitempty" example:"4096"`
+	StorageSizeRangeGB StorageSizeRange `json:"storageSizeRangeGB,omitempty"`
+}
+
+// RDBMSNotes holds structured guidance notes for storage types and instance specs.
+type RDBMSNotes struct {
+	StorageTypes []StorageTypeNote `json:"storageTypes,omitempty"`
+}
+
 // RDBMSMetaInfo represents Tumblebug-style RDBMS support capability details.
 type RDBMSMetaInfo struct {
-	ProviderName                 string                             `json:"providerName" example:"aws"`
-	RegionName                   string                             `json:"regionName" example:"ap-northeast-2"`
-	ConnectionName               string                             `json:"connectionName" example:"aws-ap-northeast-2"`
-	DBEngine                     string                             `json:"dbEngine" example:"mysql"`
-	SupportedVersions            []string                           `json:"supportedVersions" example:"8.0,8.4"`
-	DBInstanceSpecOptions        []string                           `json:"dbInstanceSpecOptions" example:"db.t3.medium"`
-	StorageTypeOptions           []string                           `json:"storageTypeOptions" example:"gp2,gp3"`
-	DefaultStorageType           string                             `json:"defaultStorageType" example:"gp3"`
-	StorageSizeRange             StorageSizeRange                   `json:"storageSizeRange"`
-	SupportsTag                  bool                               `json:"supportsTag" example:"true"`
-	SupportsStorageTypeSelection bool                               `json:"supportsStorageTypeSelection" example:"true"`
-	StorageTypeGuidance          map[string]StorageTypeNote         `json:"storageTypeGuidance,omitempty"`
-	AdminUserNameRequirement     *RDBMSAdminUserNameRequirement     `json:"adminUserNameRequirement,omitempty"`
-	AdminUserPasswordRequirement *RDBMSAdminUserPasswordRequirement `json:"adminUserPasswordRequirement,omitempty"`
-	DBMSRequirements             map[string]RDBMSDBMSRequirement    `json:"dbmsRequirements,omitempty"`
-	DatabaseRequirements         *RDBMSDatabaseRequirement          `json:"databaseRequirements,omitempty"`
-	DBOperationMethod            string                             `json:"dbOperationMethod" example:"cspNativeApi"`
-	StaticFields                 []StaticFieldNote                  `json:"staticFields,omitempty"`
+	ProviderName                     string                             `json:"providerName" example:"aws"`
+	RegionName                       string                             `json:"regionName" example:"ap-northeast-2"`
+	ConnectionName                   string                             `json:"connectionName" example:"aws-ap-northeast-2"`
+	DBEngine                         string                             `json:"dbEngine" example:"mysql"`
+	SupportedVersions                []string                           `json:"supportedVersions" example:"8.0,8.4"`
+	DBInstanceSpecOptions            []string                           `json:"dbInstanceSpecOptions" example:"db.t3.medium"`
+	DBInstanceSpecs                  []RDBMSDBInstanceSpecInfo          `json:"dbInstanceSpecs,omitempty"`
+	LiveSupportedEngines             []string                           `json:"liveSupportedEngines,omitempty"`
+	StorageTypeOptions               []string                           `json:"storageTypeOptions" example:"gp2,gp3"`
+	DefaultStorageType               string                             `json:"defaultStorageType" example:"gp3"`
+	StorageSizeRange                 StorageSizeRange                   `json:"storageSizeRange"`
+	SupportsTag                      bool                               `json:"supportsTag" example:"true"`
+	SupportsStorageTypeSelection     bool                               `json:"supportsStorageTypeSelection" example:"true"`
+	SupportsStorageSizeConfiguration bool                               `json:"supportsStorageSizeConfiguration" example:"true"`
+	SupportsHighAvailability         bool                               `json:"supportsHighAvailability" example:"true"`
+	SupportsPublicAccess             bool                               `json:"supportsPublicAccess" example:"true"`
+	SupportsBackup                   bool                               `json:"supportsBackup" example:"true"`
+	SupportsEncryption               bool                               `json:"supportsEncryption" example:"true"`
+	SupportsDeletionProtection       bool                               `json:"supportsDeletionProtection" example:"true"`
+	RequiresSubnet                   bool                               `json:"requiresSubnet" example:"true"`
+	RequiresSecurityGroup            bool                               `json:"requiresSecurityGroup" example:"true"`
+	BackupRetentionRange             string                             `json:"backupRetentionRange,omitempty"`
+	StorageTypeGuidance              map[string]StorageTypeNote         `json:"storageTypeGuidance,omitempty"`
+	Notes                            *RDBMSNotes                        `json:"notes,omitempty"`
+	AdminUserNameRequirement         *RDBMSAdminUserNameRequirement     `json:"adminUserNameRequirement,omitempty"`
+	AdminUserPasswordRequirement     *RDBMSAdminUserPasswordRequirement `json:"adminUserPasswordRequirement,omitempty"`
+	DBMSRequirements                 map[string]RDBMSDBMSRequirement    `json:"dbmsRequirements,omitempty"`
+	DatabaseRequirements             *RDBMSDatabaseRequirement          `json:"databaseRequirements,omitempty"`
+	DBOperationMethod                string                             `json:"dbOperationMethod" example:"cspNativeApi"`
+	StaticFields                     []StaticFieldNote                  `json:"staticFields,omitempty"`
 }
 
 // RDBMSCapabilityResponse wraps the Tumblebug API response for GET /rdbms/capability.

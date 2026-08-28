@@ -90,10 +90,10 @@ func checkReadiness(url string) (bool, error) {
 	// Disable Resty default logging by setting a no-op logger
 	client.SetLogger(&NoOpLogger{})
 
-	// Set for retries
-	retryMaxAttempts := 20
-	retryWaitTime := 3 * time.Second
-	retryMaxWaitTime := 80 * time.Second
+	// Set for retries (every 10 seconds, up to 2 hours = 720 attempts)
+	retryMaxAttempts := 720
+	retryWaitTime := 10 * time.Second
+	retryMaxWaitTime := 2 * time.Hour
 	// Configure retries
 	client.
 		// Set retry count to non zero to enable retries
@@ -109,11 +109,12 @@ func checkReadiness(url string) (bool, error) {
 		SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
 			attempt := resp.Request.Attempt // Current attempt number
 			maxAttempts := retryMaxAttempts // Maximum attempt number
+			elapsed := time.Duration(attempt) * retryWaitTime
 
-			log.Info().Msgf("check readiness by %s. Attempt %d/%d.",
-				resp.Request.URL, attempt, maxAttempts)
+			log.Info().Msgf("Waiting for Tumblebug to be ready (%s)... Attempt %d/%d (elapsed: %s / max: 2h).",
+				resp.Request.URL, attempt, maxAttempts, elapsed.String())
 
-			// Always retry after the calculated wait time
+			// Always retry after the calculated wait time (10 seconds)
 			return retryWaitTime, nil
 		})
 
