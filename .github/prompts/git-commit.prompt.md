@@ -75,16 +75,18 @@ When staging changes for a release (version bump, dependency updates, test resul
 **Title Requirements:**
 
 - Format: `type(scope): description`
+- Description after colon MUST start with a lowercase letter (e.g., `feat(rdbms): add ...`)
 - Maximum 50 characters
 - Imperative mood (add, fix, improve)
 - Specific to CM-Beetle functionality
+- Do NOT use symbols like `&` in the title; use `and` or concise plain wording instead
 
 **Body Requirements:**
 
-- Maximum 3-5 bullet points
+- Maximum 3 bullet points, each line ≤ 40 characters
+- Each bullet point MUST start with a capital letter (e.g., `- Add ...`, `- Implement ...`)
 - Focus on functional impact for migration/recommendation features
 - Essential changes only, omit implementation details
-- Each line under 50 characters when possible
 - **Breaking Changes:** If the change modifies public API signatures or configuration structures in a non-backward-compatible way, append `BREAKING CHANGE: <description>` in the footer.
 
 ## CM-Beetle Specific Guidelines
