@@ -4,29 +4,32 @@ model: Claude Sonnet 4.5
 description: "Synchronize CB-Tumblebug models and docker-compose files with specified version"
 ---
 
-# SyncTB - CB-Tumblebug Model Synchronization
+# SyncTB - CB-Tumblebug Model and Deployment Synchronization
 
-Synchronize TB models in `copied-tb-model.go` with the specified CB-Tumblebug version.
+Synchronize TB models in `copied-tb-model.go` and `copied-tb-k8s-model.go`, along with deployment files (`assets/`, `conf/`, `init/templates/`, `scripts/`, `interface/mcp/`), with the specified CB-Tumblebug version.
 
 ## Target Version
 
-${input:version:CB-Tumblebug version (e.g., v0.11.2, v0.12.0, latest)}
+${input:version:CB-Tumblebug version (e.g., v0.12.30, v0.13.1, main, latest)}
 
 ## Process Overview
 
-This prompt will help synchronize CB-Tumblebug models by:
+This prompt will help synchronize CB-Tumblebug models and deployment assets by:
 
-1. **Current Version Detection**: Extract current TB version from copied-tb-model.go
-2. **Repository Setup**: Clone CB-Tumblebug repository temporarily
-3. **Git Diff Analysis**: Execute git diff to identify all changed structs between versions
-4. **Struct Dependency Mapping**: Map all existing structs in copied-tb-model.go and their dependencies
-5. **Comprehensive Synchronization**: Update ALL structs that exist in copied-tb-model.go and their dependencies
-6. **Version Files Update**: Update docker-compose.yaml and go.mod with target version
-7. **Docker-Compose Files Sync**: Compare and update docker-compose related files (assets, config, init scripts)
-8. **SYNC.md Documentation**: Update SYNC.md with detailed change summary for the target version
+1. **Current Version Detection**: Extract current TB version from `copied-tb-model.go` and `copied-tb-k8s-model.go` header comments
+2. **Repository Setup**: Clone or navigate to CB-Tumblebug repository
+3. **Git Diff Analysis**: Execute git diff to identify all changed structs and assets between versions
+4. **Struct Dependency Mapping**: Map all existing structs in `copied-tb-model.go` and `copied-tb-k8s-model.go`
+5. **Comprehensive Synchronization**: Update ALL structs in `copied-tb-model.go` (Infra, Spec, Image, Disk, SecurityGroup, SSHKey, VNet, NLB) and `copied-tb-k8s-model.go` (K8sCluster, K8sNodeGroup, Token/Kubeconfig)
+6. **Version Files Update**: Update `docker-compose.yaml` and `go.mod` with target version
+7. **Docker-Compose Files Sync**: Compare and update docker-compose related files:
+   - `assets/` (DB dump, `k8sclusterinfo.yaml`, `diskinfo.yaml`, `rdbmsinfo.yaml`, `cloudinfo.yaml`, etc.)
+   - `init/templates/` (standardized `infra-*.json`, `k8scluster-across.json`, `sg-*.json`, `vnet-*.json`)
+   - `scripts/` (`restore-assets.sh`, `backup-assets.sh`, `scripts/lib/pg-backend.sh`)
+   - `interface/mcp/` (`tb-mcp.py`, `Dockerfile`, `README.md`)
+8. **SYNC.md Documentation**: Update `SYNC.md` with detailed change summary for the target version
 9. **CM-Beetle Breaking Changes Documentation**: If the sync introduces a breaking change for Beetle API/imdl consumers, document it in `docs/changes/BREAKING_CHANGES_v{cm_beetle_version}.md`
-10. **Cleanup**: Remove temporary repository and return to original directory
-11. **Validation**: Ensure compilation and proper serialization
+10. **Validation**: Ensure Go compilation (`go build ./imdl/... ./cmd/... ./pkg/...`) and compose config validation (`docker compose config`)
 
 ## Synchronization Rules
 
@@ -281,19 +284,27 @@ Compare and synchronize docker-compose deployment files:
   ```
 
 - **File-by-File Analysis**:
-  - `assets/assets.dump.gz`: Compare MD5 checksums
-  - `assets/cloudimage.csv`: Check for new/updated image entries
+  - `assets/assets.dump.gz` & `.info`: Compare MD5 checksums and sync 39MB dump
+  - `assets/cloudimage.csv`, `cloudspec.csv`: Check for new/updated image/spec entries
   - `assets/k8sclusterinfo.yaml`: Verify K8s version updates
-  - `assets/cloudinfo.yaml`, `cloudspec.csv`: Check for CSP updates
-  - `conf/cloud_conf.yaml`: Review configuration changes
-  - `init/*.py`, `init/*.sh`: Check initialization script updates
-  - `scripts/*.sh`: Verify operational script changes
+  - `assets/diskinfo.yaml`: Verify disk specifications and IOPS metadata
+  - `assets/rdbmsinfo.yaml`: Verify managed RDBMS multi-cloud matrices
+  - `assets/cloudinfo.yaml`, `extractionpatterns.yaml`: Check for CSP updates
+  - `init/templates/`: Ensure 1:1 match with standardized `infra-*.json`, `k8scluster-across.json`, `sg-*.json`, `vnet-*.json` templates
+  - `scripts/lib/pg-backend.sh`: Essential PostgreSQL backend detection library used by restore-assets.sh
+  - `scripts/restore-assets.sh`, `scripts/backup-assets.sh`: Asset backup/restore scripts
+  - `interface/mcp/*`: Stateless HTTP MCP server and proxy scripts
 
 - **Use `run_in_terminal`**: Copy updated files when needed:
   ```bash
   # Example: Update specific files
-  cp $TB_PATH/assets/cloudimage.csv $BEETLE_PATH/assets/
-  cp $TB_PATH/assets/k8sclusterinfo.yaml $BEETLE_PATH/assets/
+  cp $TB_PATH/assets/*.yaml $BEETLE_PATH/assets/
+  cp $TB_PATH/assets/*.csv $BEETLE_PATH/assets/
+  cp $TB_PATH/assets/assets.dump.gz* $BEETLE_PATH/assets/
+  rm -rf $BEETLE_PATH/init/templates && cp -r $TB_PATH/init/templates $BEETLE_PATH/init/
+  mkdir -p $BEETLE_PATH/scripts/lib && cp $TB_PATH/scripts/lib/pg-backend.sh $BEETLE_PATH/scripts/lib/
+  cp $TB_PATH/scripts/restore-assets.sh $TB_PATH/scripts/backup-assets.sh $BEETLE_PATH/scripts/
+  cp -r $TB_PATH/src/interface/mcp/* $BEETLE_PATH/interface/mcp/
   ```
 
 ### Step 7: SYNC.md Documentation

@@ -3,6 +3,9 @@
 # CB-Tumblebug Assets Database Restore Script
 # Usage: ./scripts/restore-assets.sh [backup-file]
 # Default: ./assets/assets.dump.gz
+#
+# Backend selection (docker | kubectl | direct): see scripts/lib/pg-backend.sh
+# Non-interactive: RESTORE_SKIP_CONFIRM=yes
 
 set -e
 
@@ -12,37 +15,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Configuration
-# Container name: use env var override, or auto-detect from known names
-if [ -n "$TB_POSTGRES_CONTAINER" ]; then
-    CONTAINER_NAME="$TB_POSTGRES_CONTAINER"
-elif docker ps --format "{{.Names}}" | grep -Fxq "cb-tumblebug-postgres"; then
-    CONTAINER_NAME="cb-tumblebug-postgres"
-elif docker ps --format "{{.Names}}" | grep -Fxq "mc-infra-manager-postgres"; then
-    CONTAINER_NAME="mc-infra-manager-postgres"
-else
-    CONTAINER_NAME=""
-fi
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+. "$SCRIPT_DIR/lib/pg-backend.sh"
 
-if [ -z "$CONTAINER_NAME" ]; then
-    echo -e "${RED}Error: No running PostgreSQL container found.${NC}"
-    echo "Set TB_POSTGRES_CONTAINER to the container name and retry:"
-    echo "  TB_POSTGRES_CONTAINER=my-postgres $0"
-    exit 1
-fi
-
-DB_USER="${TB_POSTGRES_USER:-tumblebug}"
-DB_NAME="${TB_POSTGRES_DATABASE:-tumblebug}"
-
-# Validate DB_USER and DB_NAME: allow only safe identifier characters
-_validate_identifier() {
-    if ! echo "$1" | grep -Eq '^[a-zA-Z_][a-zA-Z0-9_]*$'; then
-        echo -e "${RED}Error: Invalid identifier '$1' — only letters, digits, and underscores are allowed.${NC}"
-        exit 1
-    fi
-}
-_validate_identifier "$DB_USER"
-_validate_identifier "$DB_NAME"
 DEFAULT_BACKUP="./assets/assets.dump.gz"
 BACKUP_FILE="${1:-$DEFAULT_BACKUP}"
 
@@ -64,12 +39,21 @@ if [ ! -f "$BACKUP_FILE" ]; then
     exit 1
 fi
 
-# Check if container is running (exact name match)
-if ! docker ps --format "{{.Names}}" | grep -Fxq "$CONTAINER_NAME"; then
-    echo -e "${RED}Error: PostgreSQL container '$CONTAINER_NAME' is not running${NC}"
-    echo "Please start the container with: make up"
-    exit 1
+pg_backend_init
+echo "Target: $(pg_backend_describe), database: $PG_DB"
+
+# Preview what this backup holds, from the manifest written at backup time, so the user
+# confirms with context. Older backups without a manifest fall back to file date + size.
+echo ""
+INFO_FILE="${BACKUP_FILE}.info"
+if [ -f "$INFO_FILE" ]; then
+    echo -e "${YELLOW}Backup contents:${NC}"
+    cat "$INFO_FILE"
+else
+    echo -e "${YELLOW}Backup file:${NC} $BACKUP_FILE ($(du -h "$BACKUP_FILE" 2>/dev/null | cut -f1), dated $(date -r "$BACKUP_FILE" '+%Y-%m-%d %H:%M' 2>/dev/null))"
+    echo "  (no manifest; regenerate with 'make backup-assets' to include row/CSP details)"
 fi
+echo ""
 
 # Warning (skip if RESTORE_SKIP_CONFIRM=yes)
 if [ "$RESTORE_SKIP_CONFIRM" != "yes" ]; then
@@ -90,40 +74,42 @@ echo ""
 # Decompress if needed
 TEMP_FILE="/tmp/tumblebug_restore_$$.dump"
 if [[ "$BACKUP_FILE" == *.gz ]]; then
-    echo -e "${YELLOW}Step 1/5: Decompressing backup...${NC}"
+    echo -e "${YELLOW}Step 1/3: Decompressing backup...${NC}"
     gunzip -c "$BACKUP_FILE" > "$TEMP_FILE"
 else
     TEMP_FILE="$BACKUP_FILE"
 fi
 
-# Copy backup to container
-echo -e "${YELLOW}Step 2/5: Copying backup to container...${NC}"
-docker cp "$TEMP_FILE" "$CONTAINER_NAME:/var/lib/postgresql/data/restore.dump"
+# The dump is data-only; the schema is owned by cb-tumblebug's AutoMigrate, which runs at
+# server startup. So the target tables must already exist — the server must have been
+# started at least once against this database. This is what keeps a backup from ever
+# carrying a stale schema: schema follows the code, only rows come from the backup.
+echo -e "${YELLOW}Step 2/3: Verifying schema exists...${NC}"
+TABLE_COUNT=$(pg_psql "$PG_DB" "SELECT count(*) FROM pg_tables WHERE schemaname = 'public';" 2>/dev/null | grep -Eo '[0-9]+' | head -1 || true)
+if [ -z "$TABLE_COUNT" ] || [ "$TABLE_COUNT" -eq 0 ]; then
+    echo -e "${RED}✖ No tables found in database '$PG_DB'.${NC}"
+    echo "  The schema is created by the cb-tumblebug server at startup, not by this restore."
+    echo "  Start the server first (make up / make k-up), then re-run: make restore-assets"
+    exit 1
+fi
 
-# Drop existing connections
-echo -e "${YELLOW}Step 3/5: Terminating existing connections...${NC}"
-docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "
-SELECT pg_terminate_backend(pg_stat_activity.pid)
-FROM pg_stat_activity
-WHERE pg_stat_activity.datname = '$DB_NAME'
-  AND pid <> pg_backend_pid();
-" 2>/dev/null || true
-
-# Drop and recreate database
-echo -e "${YELLOW}Step 4/5: Recreating database...${NC}"
-docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS \"$DB_NAME\";" 2>/dev/null || true
-docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\";"
-
-# Restore backup
-echo -e "${YELLOW}Step 5/5: Restoring database...${NC}"
-docker exec "$CONTAINER_NAME" pg_restore \
-    -U "$DB_USER" \
-    -d "$DB_NAME" \
-    -v \
-    /var/lib/postgresql/data/restore.dump
+# Clear existing rows, then load rows from the backup. TRUNCATE (not DROP) preserves the
+# app-created schema; iterating every public table keeps this correct as models evolve.
+echo -e "${YELLOW}Step 3/3: Clearing existing data and restoring rows...${NC}"
+TRUNCATE_SQL=$(cat <<'SQL'
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' RESTART IDENTITY CASCADE';
+  END LOOP;
+END $$;
+SQL
+)
+pg_psql "$PG_DB" "$TRUNCATE_SQL"
+pg_restore_file "$TEMP_FILE" "$PG_DB"
 
 # Cleanup
-docker exec "$CONTAINER_NAME" rm -f /var/lib/postgresql/data/restore.dump
 if [[ "$BACKUP_FILE" == *.gz ]]; then
     rm -f "$TEMP_FILE"
 fi
@@ -135,14 +121,14 @@ echo ""
 
 # Get restored database statistics
 echo -e "${YELLOW}Restored Database Statistics:${NC}"
-docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
-SELECT 
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size,
-    (SELECT COUNT(*) FROM pg_catalog.pg_class WHERE relname = tablename) AS exists
-FROM pg_stat_user_tables
-ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+pg_psql "$PG_DB" "
+SELECT
+    t.schemaname,
+    t.relname AS tablename,
+    pg_size_pretty(pg_total_relation_size(t.schemaname||'.'||t.relname)) AS size,
+    (SELECT COUNT(*) FROM pg_catalog.pg_class c WHERE c.relname = t.relname) AS exists
+FROM pg_stat_user_tables t
+ORDER BY pg_total_relation_size(t.schemaname||'.'||t.relname) DESC;
 " 2>/dev/null || true
 
 echo ""
