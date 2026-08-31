@@ -1349,7 +1349,7 @@
         },
         "/migration/middleware/ns/{nsId}/rdbms": {
             "get": {
-                "description": "Retrieve the list of all migrated managed RDBMS instances in the namespace",
+                "description": "Retrieve the list of all migrated managed RDBMS / RDS instances in the namespace",
                 "consumes": [
                     "application/json"
                 ],
@@ -1359,7 +1359,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "List migrated managed RDBMS instances",
+                "summary": "List migrated Managed RDBMS (RDS) instances",
                 "operationId": "ListRDBMS",
                 "parameters": [
                     {
@@ -1393,7 +1393,7 @@
                 }
             },
             "post": {
-                "description": "Migrate managed RDBMS instances to cloud based on recommendation results\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] `nameSeed` enables dynamic naming via **Late Binding**.\n- If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.\n\nBy default this API runs synchronously. Send header `Prefer: respond-async` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.",
+                "description": "Provision and migrate managed RDBMS / RDS instances in target cloud based on recommendation results (supports AWS RDS, GCP Cloud SQL, Azure Database, NCP Cloud DB, NHN RDS, Alibaba ApsaraDB, TencentDB, IBM Databases)\n\n[Note]\n- This API provisions managed RDBMS instances in the target cloud within the specified namespace.\n- Input should be the output from the RecommendRDBMS API.\n- Connection name is automatically resolved from CSP and region in the request body.\n\n[Note] `nameSeed` enables dynamic naming via **Late Binding**.\n- If `nameSeed` query param is set (e.g., `?nameSeed=my`), instance names are prefixed: `my-rdbms-01`.\n\nBy default this API runs synchronously. Send header `Prefer: respond-async` to run it\nasynchronously instead (recommended due to CSP RDS provisioning time of 5-10 minutes): receive 202 Accepted with a reqId.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1403,7 +1403,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Migrate managed RDBMS instances to cloud",
+                "summary": "Migrate Managed RDBMS (RDS) instances to cloud",
                 "operationId": "MigrateRDBMS",
                 "parameters": [
                     {
@@ -1478,7 +1478,7 @@
         },
         "/migration/middleware/ns/{nsId}/rdbms/validate": {
             "post": {
-                "description": "Validate recommended RDBMS configuration against target cloud constraints before actual migration",
+                "description": "Validate managed RDBMS configuration against target cloud constraints before actual migration",
                 "consumes": [
                     "application/json"
                 ],
@@ -1488,7 +1488,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Validate managed RDBMS migration request against target cloud",
+                "summary": "Validate Managed RDBMS (RDS) creation request against target cloud",
                 "operationId": "ValidateMigrateRDBMS",
                 "parameters": [
                     {
@@ -1500,20 +1500,20 @@
                         "required": true
                     },
                     {
-                        "description": "RDBMS migration request to validate",
+                        "description": "RDBMS creation request to validate",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.MigrateRDBMSRequest"
+                            "$ref": "#/definitions/rdbmsmodel.RDBMSCreateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully validated RDBMS migration configurations",
+                        "description": "Successfully validated RDBMS creation configuration",
                         "schema": {
-                            "$ref": "#/definitions/model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest"
+                            "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSCreateRequest"
                         }
                     },
                     "400": {
@@ -1533,7 +1533,7 @@
         },
         "/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}": {
             "get": {
-                "description": "Retrieve details of a specific migrated managed RDBMS instance in the namespace",
+                "description": "Retrieve details of a specific migrated managed RDBMS / RDS instance in the namespace",
                 "consumes": [
                     "application/json"
                 ],
@@ -1543,7 +1543,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Get details of a migrated managed RDBMS instance",
+                "summary": "Get details of a migrated Managed RDBMS (RDS) instance",
                 "operationId": "GetRDBMS",
                 "parameters": [
                     {
@@ -1584,7 +1584,7 @@
                 }
             },
             "delete": {
-                "description": "Delete a specific migrated managed RDBMS instance in the namespace",
+                "description": "Delete a specific migrated managed RDBMS / RDS instance in the namespace",
                 "consumes": [
                     "application/json"
                 ],
@@ -1594,7 +1594,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Delete a migrated managed RDBMS instance",
+                "summary": "Delete a migrated Managed RDBMS (RDS) instance",
                 "operationId": "DeleteRDBMS",
                 "parameters": [
                     {
@@ -1653,7 +1653,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "List logical databases inside a managed RDBMS instance",
+                "summary": "List logical databases inside a Managed RDBMS (RDS) instance",
                 "operationId": "ListRDBMSDatabases",
                 "parameters": [
                     {
@@ -1710,7 +1710,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Create a logical database inside a managed RDBMS instance",
+                "summary": "Create a logical database inside a Managed RDBMS (RDS) instance",
                 "operationId": "CreateRDBMSDatabase",
                 "parameters": [
                     {
@@ -1772,7 +1772,7 @@
                 "tags": [
                     "[Migration] Managed RDBMS"
                 ],
-                "summary": "Delete a logical database inside a managed RDBMS instance",
+                "summary": "Delete a logical database inside a Managed RDBMS (RDS) instance",
                 "operationId": "DeleteRDBMSDatabase",
                 "parameters": [
                     {
@@ -4463,6 +4463,14 @@
                 ],
                 "summary": "Get CSP feature support map for object storage (Proxied to Tumblebug)",
                 "operationId": "GetObjectStorageSupport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSP Type filter (e.g., aws, azure, gcp)",
+                        "name": "providerName",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -4475,7 +4483,7 @@
         },
         "/recommendation/middleware/rdbms": {
             "post": {
-                "description": "Recommend appropriate managed RDBMS (MySQL, MariaDB) instance specs and configurations for cloud migration\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).\n- To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.",
+                "description": "Recommend optimal Managed RDBMS / RDS (MySQL, MariaDB) instance specs, engine versions, and storage configurations for target cloud migration (supports AWS RDS, GCP Cloud SQL, Azure Database, Alibaba ApsaraDB, TencentDB, IBM Databases, NCP Cloud DB, NHN RDS)\n\n[Note] `desiredCsp` and `desiredRegion` are required.\n- `desiredCsp` and `desiredRegion` can be set in the query parameter or the request body.\n- If set in the request body, the query parameter values will be overridden.\n\n[Note] The recommended instance names use default patterns (`mig-rdbms-01`, `mig-rdbms-02`, ...).\n- To apply a naming prefix at migration time, use the `nameSeed` query parameter on the migration API.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4485,7 +4493,7 @@
                 "tags": [
                     "[Recommendation] Managed RDBMS"
                 ],
-                "summary": "Recommend a managed RDBMS for cloud migration",
+                "summary": "Recommend Managed RDBMS (RDS) for cloud migration",
                 "operationId": "RecommendRDBMS",
                 "parameters": [
                     {
@@ -4553,7 +4561,7 @@
         },
         "/recommendation/middleware/rdbms/capability": {
             "get": {
-                "description": "Forward RDBMS capability request to CB-Tumblebug via Proxy (Returns RDBMSCapabilityResponse)",
+                "description": "Retrieve real-time engine versions, DB instance specs, and storage options for Managed RDBMS / RDS (Amazon RDS, Cloud SQL, Azure Database, etc.) from CB-Tumblebug",
                 "consumes": [
                     "application/json"
                 ],
@@ -4563,7 +4571,7 @@
                 "tags": [
                     "[Recommendation] Managed RDBMS"
                 ],
-                "summary": "Get real-time capability and spec options for managed RDBMS (Proxied to Tumblebug)",
+                "summary": "Get real-time capability and spec options for Managed RDBMS (RDS)",
                 "operationId": "GetRDBMSCapability",
                 "parameters": [
                     {
@@ -4580,13 +4588,25 @@
                         "schema": {
                             "$ref": "#/definitions/rdbmsmodel.RDBMSCapabilityResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ApiResponse-any"
+                        }
                     }
                 }
             }
         },
         "/recommendation/middleware/rdbms/support": {
             "get": {
-                "description": "Forward RDBMS support request to CB-Tumblebug via Proxy (Returns RDBMSSupportResponse)",
+                "description": "Retrieve CSP feature support matrix for managed RDBMS / RDS (Amazon RDS, Google Cloud SQL, Azure Database, NCP Cloud DB, etc.) via CB-Tumblebug",
                 "consumes": [
                     "application/json"
                 ],
@@ -4596,13 +4616,13 @@
                 "tags": [
                     "[Recommendation] Managed RDBMS"
                 ],
-                "summary": "Get CSP feature support map for managed RDBMS (Proxied to Tumblebug)",
+                "summary": "Get CSP support map for Managed RDBMS (RDS)",
                 "operationId": "GetRDBMSSupport",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "CSP Type filter (e.g., aws, azure, gcp)",
-                        "name": "cspType",
+                        "name": "providerName",
                         "in": "query"
                     }
                 ],
@@ -4618,7 +4638,7 @@
         },
         "/recommendation/middleware/rdbms/validate": {
             "post": {
-                "description": "Perform dry-run validation and default parameter auto-filling for an RDBMS configuration",
+                "description": "Perform strict dry-run validation for a Managed RDBMS / RDS configuration against target cloud constraints",
                 "consumes": [
                     "application/json"
                 ],
@@ -4628,13 +4648,13 @@
                 "tags": [
                     "[Recommendation] Managed RDBMS"
                 ],
-                "summary": "Validate and auto-fill default values for managed RDBMS configuration",
+                "summary": "Validate Managed RDBMS (RDS) configuration against target cloud",
                 "operationId": "ValidateRDBMSRecommendation",
                 "parameters": [
                     {
                         "type": "string",
-                        "default": "default",
-                        "description": "Optional namespace ID (defaults to 'default')",
+                        "default": "mig01",
+                        "description": "Namespace ID (defaults to 'mig01')",
                         "name": "nsId",
                         "in": "query"
                     },
@@ -4650,7 +4670,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully validated and auto-filled RDBMS configuration",
+                        "description": "Successfully validated RDBMS configuration",
                         "schema": {
                             "$ref": "#/definitions/model.ApiResponse-rdbmsmodel_RDBMSCreateRequest"
                         }
@@ -6362,6 +6382,10 @@
                     "type": "string",
                     "example": "csp-06eb41e14121c550a"
                 },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):\nnon-empty means the row is kept until CSP-side removal is confirmed",
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -6480,6 +6504,9 @@
                 "systemLabel": {
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "type": "string",
@@ -7094,7 +7121,7 @@
                     "example": 40
                 },
                 "rootDiskType": {
-                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_ssd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
+                    "description": "\"\", \"default\", \"TYPE1\", AWS: [\"standard\", \"gp2\", \"gp3\"], Azure: [\"PremiumSSD\", \"StandardSSD\", \"StandardHDD\"], GCP: [\"pd-standard\", \"pd-balanced\", \"pd-ssd\", \"pd-extreme\"], ALIBABA: [\"cloud_efficiency\", \"cloud\", \"cloud_essd\"], TENCENT: [\"CLOUD_PREMIUM\", \"CLOUD_SSD\"]",
                     "type": "string",
                     "example": "cloud_essd"
                 },
@@ -7201,6 +7228,10 @@
                 "cspResourceName": {
                     "type": "string"
                 },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the\nrecord is kept until CSP-side removal is confirmed",
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -7238,6 +7269,9 @@
                     "type": "string"
                 },
                 "systemLabel": {
+                    "type": "string"
+                },
+                "systemMessage": {
                     "type": "string"
                 },
                 "targetGroup": {
@@ -9857,33 +9891,6 @@
                 }
             }
         },
-        "model.ApiResponse-array_rdbmsmodel_RDBMSCreateRequest": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Contains the actual response data (single object, list, or page)",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/rdbmsmodel.RDBMSCreateRequest"
-                    }
-                },
-                "error": {
-                    "description": "Error message for failed responses",
-                    "type": "string",
-                    "example": "Error message if failure"
-                },
-                "message": {
-                    "description": "Optional message for additional context",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "success": {
-                    "description": "Indicates whether the API call was successful",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
         "model.ApiResponse-cloudmodel_IdList": {
             "type": "object",
             "properties": {
@@ -10911,6 +10918,15 @@
         "model.BastionNode": {
             "type": "object",
             "properties": {
+                "assigned": {
+                    "description": "Assigned records who registered this bastion: BastionAssignedManual when an\noperator named it, BastionAssignedAuto when the system picked any Running VM\nwith a public IP. The distinction matters when both kinds are registered for\none subnet: naming a bastion asserts the target is NOT directly reachable,\nwhile an auto entry only asserts \"some VM here has a public IP\". Empty means\nthe entry predates this field (see pickBastion for how that is handled).",
+                    "type": "string",
+                    "enum": [
+                        "manual",
+                        "auto"
+                    ],
+                    "example": "manual"
+                },
                 "infraId": {
                     "type": "string"
                 },
@@ -11665,6 +11681,13 @@
                         "type": "string"
                     }
                 },
+                "conditions": {
+                    "description": "Conditions hold structured state observations (Ready/Synced), K8s-style",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Condition"
+                    }
+                },
                 "connectionConfig": {
                     "$ref": "#/definitions/model.ConnConfig"
                 },
@@ -11680,6 +11703,10 @@
                     "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
                     "type": "string",
                     "example": "we12fawefadf1221edcf"
+                },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the\nrecord is kept until CSP-side removal is confirmed",
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
@@ -11713,10 +11740,18 @@
                     "description": "ResourceType is the type of the resource",
                     "type": "string"
                 },
+                "status": {
+                    "description": "Status is the lifecycle status; empty is treated as Available for backward compatibility",
+                    "type": "string",
+                    "example": "Available"
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
@@ -11997,6 +12032,13 @@
                         "type": "string"
                     }
                 },
+                "conditions": {
+                    "description": "Conditions hold structured state observations (Ready/Synced), K8s-style",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Condition"
+                    }
+                },
                 "connectionConfig": {
                     "$ref": "#/definitions/model.ConnConfig"
                 },
@@ -12012,6 +12054,10 @@
                     "description": "CspResourceName is name assigned to the CSP resource. This name is internally used to handle the resource.",
                     "type": "string",
                     "example": "we12fawefadf1221edcf"
+                },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone: non-empty means the\nrecord is kept until CSP-side removal is confirmed",
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
@@ -12048,10 +12094,18 @@
                     "description": "ResourceType is the type of the resource",
                     "type": "string"
                 },
+                "status": {
+                    "description": "Status is the lifecycle status; empty is treated as Available for backward compatibility",
+                    "type": "string",
+                    "example": "Available"
+                },
                 "systemLabel": {
                     "description": "SystemLabel is for describing the Resource in a keyword (any string can be used) for special System purpose",
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "description": "Uid is universally unique identifier for the object, used for labelSelector",
@@ -13149,11 +13203,49 @@
                 }
             }
         },
+        "rdbmsmodel.RDBMSDBInstanceSpecInfo": {
+            "type": "object",
+            "properties": {
+                "memSizeMiB": {
+                    "type": "string",
+                    "example": "4096"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "db.t3.medium"
+                },
+                "storageSizeRangeGB": {
+                    "$ref": "#/definitions/rdbmsmodel.StorageSizeRange"
+                },
+                "vCpuClockGHz": {
+                    "type": "string",
+                    "example": "2.5"
+                },
+                "vCpuCount": {
+                    "type": "string",
+                    "example": "2"
+                }
+            }
+        },
         "rdbmsmodel.RDBMSDBMSRequirement": {
             "type": "object",
             "properties": {
                 "defaultPort": {
                     "type": "integer"
+                },
+                "deprecatedVersions": {
+                    "description": "DeprecatedVersions lists engine versions that are deprecated by the CSP and discouraged for new deployments.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "endOfLifeVersions": {
+                    "description": "EndOfLifeVersions lists engine versions that have reached official End of Life (EOL) and cannot be provisioned.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "maxStorageSize": {
                     "type": "integer"
@@ -13165,9 +13257,6 @@
                     "type": "string"
                 },
                 "referenceDBInstanceSpec": {
-                    "type": "string"
-                },
-                "referenceDBSpec": {
                     "type": "string"
                 },
                 "referenceEngineVersion": {
@@ -13381,6 +13470,9 @@
                 "adminUserPasswordRequirement": {
                     "$ref": "#/definitions/rdbmsmodel.RDBMSAdminUserPasswordRequirement"
                 },
+                "backupRetentionRange": {
+                    "type": "string"
+                },
                 "connectionName": {
                     "type": "string",
                     "example": "aws-ap-northeast-2"
@@ -13401,6 +13493,12 @@
                         "db.t3.medium"
                     ]
                 },
+                "dbInstanceSpecs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.RDBMSDBInstanceSpecInfo"
+                    }
+                },
                 "dbOperationMethod": {
                     "type": "string",
                     "example": "cspNativeApi"
@@ -13415,6 +13513,15 @@
                     "type": "string",
                     "example": "gp3"
                 },
+                "liveSupportedEngines": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notes": {
+                    "$ref": "#/definitions/rdbmsmodel.RDBMSNotes"
+                },
                 "providerName": {
                     "type": "string",
                     "example": "aws"
@@ -13422,6 +13529,14 @@
                 "regionName": {
                     "type": "string",
                     "example": "ap-northeast-2"
+                },
+                "requiresSecurityGroup": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "requiresSubnet": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "staticFields": {
                     "type": "array",
@@ -13458,6 +13573,30 @@
                         "8.4"
                     ]
                 },
+                "supportsBackup": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsDeletionProtection": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsEncryption": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsHighAvailability": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsPublicAccess": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "supportsStorageSizeConfiguration": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "supportsStorageTypeSelection": {
                     "type": "boolean",
                     "example": true
@@ -13465,6 +13604,17 @@
                 "supportsTag": {
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "rdbmsmodel.RDBMSNotes": {
+            "type": "object",
+            "properties": {
+                "storageTypes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rdbmsmodel.StorageTypeNote"
+                    }
                 }
             }
         },
@@ -13634,6 +13784,11 @@
                     "description": "Memory in MB",
                     "type": "integer",
                     "example": 8192
+                },
+                "nhnDBSGToAllowAllInbound": {
+                    "description": "NHN-specific: allow inbound 3306 from 0.0.0.0/0 on DB Security Group",
+                    "type": "boolean",
+                    "example": false
                 },
                 "port": {
                     "description": "Network \u0026 Topology",
@@ -13826,6 +13981,11 @@
                 "iops": {
                     "type": "string",
                     "example": "3000"
+                },
+                "nhnDBSGToAllowAllInbound": {
+                    "description": "CSP-Specific Options",
+                    "type": "boolean",
+                    "example": true
                 },
                 "publicAccess": {
                     "type": "boolean",
@@ -15001,6 +15161,10 @@
                     "type": "string",
                     "example": "csp-06eb41e14121c550a"
                 },
+                "deletionRequestedAt": {
+                    "description": "DeletionRequestedAt (RFC3339) marks a deletion tombstone (customImage only):\nnon-empty means the row is kept until CSP-side removal is confirmed",
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -15119,6 +15283,9 @@
                 "systemLabel": {
                     "type": "string",
                     "example": "Managed by CB-Tumblebug"
+                },
+                "systemMessage": {
+                    "type": "string"
                 },
                 "uid": {
                     "type": "string",
