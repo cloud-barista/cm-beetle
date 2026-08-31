@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -103,7 +104,7 @@ type AuthConfig struct {
 
 // RDBMSRequestFile represents the source RDBMS JSON file.
 type RDBMSRequestFile struct {
-	NameSeed             string                            `json:"nameSeed"`
+	NameSeed             string                           `json:"nameSeed"`
 	SourceRDBMSInstances []rdbmsmodel.SourceRDBMSProperty `json:"sourceRDBMSInstances"`
 }
 
@@ -258,7 +259,11 @@ func main() {
 			wg.Add(1)
 			go func(idx int, testCase TestCase) {
 				defer wg.Done()
-				reports[idx] = runSingleRDBMSTest(testConfig, authConfig, rdbmsReq, testCase)
+				// Deep copy baseReq for goroutine safety
+				reqBytes, _ := json.Marshal(rdbmsReq)
+				var reqCopy RDBMSRequestFile
+				_ = json.Unmarshal(reqBytes, &reqCopy)
+				reports[idx] = runSingleRDBMSTest(testConfig, authConfig, reqCopy, testCase)
 			}(i, tc)
 		}
 		wg.Wait()
@@ -341,7 +346,7 @@ func runSingleRDBMSTest(
 	// ------------------------------------------------------------------------
 	// Phase 1: Pre-requisite Cloud Infrastructure Provisioning (VNet & SecurityGroup)
 	// ------------------------------------------------------------------------
-	// 1.1 Create VNet with Subnets via POST /ns/{nsId}/resources/vNet
+	// 1.1 Create VNet with Subnets via POST /tumblebug/ns/{nsId}/resources/vNet
 	vNetStep := TestResults{TestName: "Tumblebug POST /resources/vNet (Create VNet & Subnets)", StartTime: time.Now()}
 	vNetName := tc.VNetName
 	if vNetName == "" {
@@ -414,13 +419,13 @@ func runSingleRDBMSTest(
 				vNetStep.Success = false
 				vNetStep.StatusCode = vNetResp.StatusCode()
 				vNetStep.Error = fmt.Sprintf("err: %v, body: %s", vNetErr, vNetResp.String())
-				log.Error().Msgf("[%s] TB Create VNet failed: %s", tc.Csp, vNetStep.Error)
+				log.Error().Msgf("[%s] Tumblebug Create VNet failed: %s", tc.Csp, vNetStep.Error)
 			}
 		} else {
 			vNetStep.Success = false
 			vNetStep.StatusCode = vNetResp.StatusCode()
 			vNetStep.Error = fmt.Sprintf("err: %v, body: %s", vNetErr, vNetResp.String())
-			log.Error().Msgf("[%s] TB Create VNet failed: %s", tc.Csp, vNetStep.Error)
+			log.Error().Msgf("[%s] Tumblebug Create VNet failed: %s", tc.Csp, vNetStep.Error)
 		}
 	} else {
 		vNetStep.Success = true
@@ -441,11 +446,11 @@ func runSingleRDBMSTest(
 				}
 			}
 		}
-		log.Info().Msgf("[%s] TB Create VNet OK: id=%s, subnets=%v", tc.Csp, vNetId, subnetIds)
+		log.Info().Msgf("[%s] Tumblebug Create VNet OK: id=%s, subnets=%v", tc.Csp, vNetId, subnetIds)
 	}
 	report.TestResults = append(report.TestResults, vNetStep)
 
-	// 1.2 Create SecurityGroup via POST /ns/{nsId}/resources/securityGroup
+	// 1.2 Create SecurityGroup via POST /tumblebug/ns/{nsId}/resources/securityGroup
 	sgStep := TestResults{TestName: "Tumblebug POST /resources/securityGroup (Create SecurityGroup)", StartTime: time.Now()}
 	if vNetId != "" {
 		sgName := tc.SecurityGroupName
@@ -496,13 +501,13 @@ func runSingleRDBMSTest(
 					sgStep.Success = false
 					sgStep.StatusCode = sgResp.StatusCode()
 					sgStep.Error = fmt.Sprintf("err: %v, body: %s", sgErr, sgResp.String())
-					log.Error().Msgf("[%s] TB Create SecurityGroup failed: %s", tc.Csp, sgStep.Error)
+					log.Error().Msgf("[%s] Tumblebug Create SecurityGroup failed: %s", tc.Csp, sgStep.Error)
 				}
 			} else {
 				sgStep.Success = false
 				sgStep.StatusCode = sgResp.StatusCode()
 				sgStep.Error = fmt.Sprintf("err: %v, body: %s", sgErr, sgResp.String())
-				log.Error().Msgf("[%s] TB Create SecurityGroup failed: %s", tc.Csp, sgStep.Error)
+				log.Error().Msgf("[%s] Tumblebug Create SecurityGroup failed: %s", tc.Csp, sgStep.Error)
 			}
 		} else {
 			sgStep.Success = true
@@ -514,7 +519,7 @@ func runSingleRDBMSTest(
 			if id, ok := sgInfo["id"].(string); ok {
 				sgIds = append(sgIds, id)
 			}
-			log.Info().Msgf("[%s] TB Create SecurityGroup OK: id=%v", tc.Csp, sgIds)
+			log.Info().Msgf("[%s] Tumblebug Create SecurityGroup OK: id=%v", tc.Csp, sgIds)
 		}
 	} else {
 		sgStep.Skipped = true
@@ -527,7 +532,7 @@ func runSingleRDBMSTest(
 	// ------------------------------------------------------------------------
 	// 2.1 GET /recommendation/middleware/rdbms/support
 	suppStep := TestResults{TestName: "Beetle GET RDBMS Support", StartTime: time.Now()}
-	suppURL := fmt.Sprintf("%s/recommendation/middleware/rdbms/support?cspType=%s", cfg.Beetle.Endpoint, tc.Csp)
+	suppURL := fmt.Sprintf("%s/recommendation/middleware/rdbms/support?providerName=%s", cfg.Beetle.Endpoint, tc.Csp)
 	suppResp, suppErr := bClient.R().Get(suppURL)
 	suppStep.EndTime = time.Now()
 	suppStep.Duration = suppStep.EndTime.Sub(suppStep.StartTime)
@@ -624,6 +629,9 @@ func runSingleRDBMSTest(
 				inst.StorageSize = tc.StorageSize
 			}
 			inst.PublicAccess = tc.PublicAccess
+			if tc.PublicAccess && tc.NHNDBSGToAllowAllInbound {
+				inst.NHNDBSGToAllowAllInbound = true
+			}
 			inst.HighAvailability = tc.HighAvailability
 			inst.Databases = []rdbmsmodel.TargetDatabase{
 				{DatabaseName: dbName},
@@ -635,21 +643,22 @@ func runSingleRDBMSTest(
 	valStep := TestResults{TestName: "Beetle POST Validate RDBMS Recommendation", StartTime: time.Now()}
 	if len(recommendedResult.TargetRDBMSInstances) > 0 {
 		valReq := rdbmsmodel.RDBMSCreateRequest{
-			Name:              recommendedResult.TargetRDBMSInstances[0].RDBMSName,
-			ConnectionName:    tc.ConnectionName,
-			VNetId:            vNetId,
-			SubnetIds:         subnetIds,
-			SecurityGroupIds:  sgIds,
-			DBEngine:          recommendedResult.TargetRDBMSInstances[0].DBEngine,
-			DBEngineVersion:   recommendedResult.TargetRDBMSInstances[0].DBEngineVersion,
-			DBInstanceSpec:    recommendedResult.TargetRDBMSInstances[0].DBInstanceSpec,
-			StorageType:       recommendedResult.TargetRDBMSInstances[0].StorageType,
-			StorageSize:       recommendedResult.TargetRDBMSInstances[0].StorageSize,
-			AdminUserName:     recommendedResult.TargetRDBMSInstances[0].AdminUserName,
-			AdminUserPassword: recommendedResult.TargetRDBMSInstances[0].AdminUserPassword,
-			PublicAccess:      recommendedResult.TargetRDBMSInstances[0].PublicAccess,
-			HighAvailability:  recommendedResult.TargetRDBMSInstances[0].HighAvailability,
-			AutoFillDefaults:  true,
+			Name:                     recommendedResult.TargetRDBMSInstances[0].RDBMSName,
+			ConnectionName:           tc.ConnectionName,
+			VNetId:                   vNetId,
+			SubnetIds:                subnetIds,
+			SecurityGroupIds:         sgIds,
+			DBEngine:                 recommendedResult.TargetRDBMSInstances[0].DBEngine,
+			DBEngineVersion:          recommendedResult.TargetRDBMSInstances[0].DBEngineVersion,
+			DBInstanceSpec:           recommendedResult.TargetRDBMSInstances[0].DBInstanceSpec,
+			StorageType:              recommendedResult.TargetRDBMSInstances[0].StorageType,
+			StorageSize:              recommendedResult.TargetRDBMSInstances[0].StorageSize,
+			AdminUserName:            recommendedResult.TargetRDBMSInstances[0].AdminUserName,
+			AdminUserPassword:        recommendedResult.TargetRDBMSInstances[0].AdminUserPassword,
+			PublicAccess:             recommendedResult.TargetRDBMSInstances[0].PublicAccess,
+			NHNDBSGToAllowAllInbound: recommendedResult.TargetRDBMSInstances[0].NHNDBSGToAllowAllInbound,
+			HighAvailability:         recommendedResult.TargetRDBMSInstances[0].HighAvailability,
+			AutoFillDefaults:         true,
 		}
 		valURL := fmt.Sprintf("%s/recommendation/middleware/rdbms/validate?nsId=%s", cfg.Beetle.Endpoint, cfg.Beetle.NamespaceID)
 		valResp, valErr := bClient.R().SetBody(valReq).Post(valURL)
@@ -859,7 +868,8 @@ func runSingleRDBMSTest(
 	// ------------------------------------------------------------------------
 	// 4.1 External Remote Data I/O Test (Direct from Test Runner)
 	extIoStep := TestResults{TestName: "Data I/O Test (External Remote)", StartTime: time.Now()}
-	if tc.ExternalDataIOTest && rdbmsEndpoint != "" && tc.PublicAccess {
+	isExternalSupported := tc.PublicAccess && strings.ToLower(tc.Csp) != "ncp"
+	if tc.ExternalDataIOTest && rdbmsEndpoint != "" && isExternalSupported {
 		log.Info().Msgf("[%s] Running External Remote Data I/O Test on endpoint '%s'...", tc.Csp, rdbmsEndpoint)
 		extErr := runExternalDataIOTest(rdbmsEndpoint, tc.AdminUserName, tc.AdminUserPassword, dbName)
 		extIoStep.EndTime = time.Now()
@@ -880,8 +890,8 @@ func runSingleRDBMSTest(
 		if !tc.ExternalDataIOTest {
 			extIoStep.ErrorMessage = "External data test disabled in test config"
 			report.ExternalDataIOTest = "N/A (Disabled)"
-		} else if !tc.PublicAccess {
-			extIoStep.ErrorMessage = "Skipped: Public Access is false for this CSP"
+		} else if strings.ToLower(tc.Csp) == "ncp" || !tc.PublicAccess {
+			extIoStep.ErrorMessage = "Skipped: Public Access is not supported/configured for this CSP (VPC private endpoint only)"
 			report.ExternalDataIOTest = "N/A (Private Access only)"
 		} else {
 			extIoStep.ErrorMessage = "Skipped: RDBMS endpoint unavailable"
@@ -894,7 +904,7 @@ func runSingleRDBMSTest(
 	intIoStep := TestResults{TestName: "Data I/O Test (Internal VPC VM)", StartTime: time.Now()}
 	if tc.InternalDataIOTest && rdbmsEndpoint != "" && vNetId != "" && len(subnetIds) > 0 {
 		log.Info().Msgf("[%s] Running Internal VPC VM Data I/O Test on dedicated runner VM in VNet '%s'...", tc.Csp, vNetId)
-		intStatus, intErr := runInternalVmDataIOTest(auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, tbClient)
+		intStatus, intErr := runInternalVmDataIOTest(cfg.Beetle.Endpoint, auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, tc, vNetId, subnetIds[0], sgIds, rdbmsEndpoint, dbName, bClient, tbClient)
 		intIoStep.EndTime = time.Now()
 		intIoStep.Duration = intIoStep.EndTime.Sub(intIoStep.StartTime)
 		if intErr != nil {
@@ -997,7 +1007,7 @@ func runSingleRDBMSTest(
 	if len(sgIds) > 0 {
 		for _, sgId := range sgIds {
 			delSGURL := fmt.Sprintf("%s/tumblebug/ns/%s/resources/securityGroup/%s", auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, sgId)
-			log.Info().Msgf("[%s] Deleting SecurityGroup '%s'...", tc.Csp, sgId)
+			log.Info().Msgf("[%s] Deleting SecurityGroup '%s' via Tumblebug...", tc.Csp, sgId)
 			for attempt := 1; attempt <= 10; attempt++ {
 				delSGResp, delSGErr := tbClient.R().Delete(delSGURL)
 				if delSGErr == nil && !delSGResp.IsError() {
@@ -1027,7 +1037,7 @@ func runSingleRDBMSTest(
 	delVNetStep := TestResults{TestName: "Tumblebug DELETE /resources/vNet", StartTime: time.Now()}
 	if vNetId != "" {
 		delVNetURL := fmt.Sprintf("%s/tumblebug/ns/%s/resources/vNet/%s?action=withSubnets", auth.TumblebugEndpoint, cfg.Beetle.NamespaceID, vNetId)
-		log.Info().Msgf("[%s] Deleting VNet '%s' (withSubnets)...", tc.Csp, vNetId)
+		log.Info().Msgf("[%s] Deleting VNet '%s' (withSubnets) via Tumblebug...", tc.Csp, vNetId)
 		for attempt := 1; attempt <= 10; attempt++ {
 			delVNetResp, delVNetErr := tbClient.R().Delete(delVNetURL)
 			if delVNetErr == nil && !delVNetResp.IsError() {
@@ -1243,17 +1253,18 @@ func runExternalDataIOTest(endpoint, user, password, dbName string) error {
 // runInternalVmDataIOTest creates a temporary runner VM inside the test VNet/Subnet,
 // executes remote MySQL commands via Tumblebug Remote Command API, and cleans up the runner VM.
 func runInternalVmDataIOTest(
-	tbBaseURL, nsId string,
+	beetleBaseURL, tbBaseURL, nsId string,
 	tc TestCase,
 	vNetId, subnetId string,
 	sgIds []string,
 	rdbmsEndpoint, dbName string,
+	bClient *resty.Client,
 	tbClient *resty.Client,
 ) (string, error) {
 	infraId := fmt.Sprintf("test-rdbms-runner-%s", tc.Csp)
 	sshKeyId := fmt.Sprintf("test-rdbms-sshkey-%s", tc.Csp)
 
-	// Ensure cleanup of test VM and SSHKey upon completion
+	// Ensure cleanup of test VM and SSHKey upon completion via Tumblebug APIs
 	defer func() {
 		urlDeleteInfra := fmt.Sprintf("%s/tumblebug/ns/%s/infra/%s?option=terminate", tbBaseURL, nsId, infraId)
 		_, _ = tbClient.R().Delete(urlDeleteInfra)
@@ -1272,7 +1283,7 @@ func runInternalVmDataIOTest(
 		_, _ = tbClient.R().Delete(urlDeleteKey)
 	}()
 
-	// 1. Create SSHKey if needed
+	// 1. Create SSHKey if needed via Tumblebug API
 	keyReq := map[string]any{
 		"name":           sshKeyId,
 		"connectionName": tc.ConnectionName,
@@ -1284,7 +1295,7 @@ func runInternalVmDataIOTest(
 		return "Failed (SSHKey create failed)", fmt.Errorf("failed to create SSHKey: %v (body: %s)", keyErr, keyResp.String())
 	}
 
-	// 2. Create Runner VM Infra in same VNet/Subnet
+	// 2. Create Runner VM Infra in same VNet/Subnet via Tumblebug API
 	specId := tc.VmSpecId
 	if specId == "" {
 		specId = tc.CommonSpec
@@ -1365,7 +1376,7 @@ func runInternalVmDataIOTest(
 
 func createRestClient(user, pass string) *resty.Client {
 	client := resty.New()
-	client.SetTimeout(15 * time.Minute)
+	client.SetTimeout(35 * time.Minute)
 	client.SetLogger(restyNoopLogger{})
 	if user != "" && pass != "" {
 		client.SetBasicAuth(user, pass)
@@ -1378,29 +1389,61 @@ func maskSecrets(v any) any {
 	if err != nil {
 		return v
 	}
-	var m map[string]any
+	var m any
 	if err := json.Unmarshal(b, &m); err != nil {
 		return v
 	}
-	maskMap(m)
+	maskAny(m)
 	return m
 }
 
-func maskMap(m map[string]any) {
-	for k, v := range m {
-		kLower := strings.ToLower(k)
-		if strings.Contains(kLower, "password") || strings.Contains(kLower, "secret") {
-			m[k] = "******"
-		} else if subMap, ok := v.(map[string]any); ok {
-			maskMap(subMap)
-		} else if subList, ok := v.([]any); ok {
-			for _, item := range subList {
-				if itemMap, ok := item.(map[string]any); ok {
-					maskMap(itemMap)
-				}
+func maskAny(v any) {
+	switch val := v.(type) {
+	case map[string]any:
+		for k, item := range val {
+			kLower := strings.ToLower(k)
+			if strings.Contains(kLower, "password") || strings.Contains(kLower, "secret") || strings.Contains(kLower, "privatekey") {
+				val[k] = "******"
+			} else {
+				maskAny(item)
 			}
 		}
+	case []any:
+		for _, item := range val {
+			maskAny(item)
+		}
 	}
+}
+
+// maskSensitiveInfo redacts CSP account identifiers, subscription IDs, and remaining credentials from report content.
+func maskSensitiveInfo(content string) string {
+	// 1. Mask Azure Subscription IDs
+	reSub := regexp.MustCompile(`(?i)/subscriptions/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
+	content = reSub.ReplaceAllString(content, "/subscriptions/AZURE_SUBSCRIPTION_ID")
+
+	// 2. Mask GCP Project IDs
+	reGCP := regexp.MustCompile(`projects/([a-z0-9\-]+)/`)
+	content = reGCP.ReplaceAllStringFunc(content, func(match string) string {
+		parts := strings.Split(match, "/")
+		if len(parts) >= 2 {
+			projectId := parts[1]
+			if projectId == "compute" || projectId == "v1" {
+				return match
+			}
+			return "projects/GCP_PROJECT_ID/"
+		}
+		return match
+	})
+
+	// 3. Mask Password values in JSON snippets
+	rePassword := regexp.MustCompile(`(?i)"(adminUserPassword|adminPassword|password|dbPassword|clientSecret|apiKey)":\s*"[^"]*"`)
+	content = rePassword.ReplaceAllString(content, `"$1": "******"`)
+
+	// 4. Mask Email addresses
+	reEmail := regexp.MustCompile(`[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}`)
+	content = reEmail.ReplaceAllString(content, "MASKED_EMAIL")
+
+	return content
 }
 
 func calculateSummary(results []TestResults) TestResults {
@@ -1427,6 +1470,22 @@ func generateSummaryReport(outputDir string, reports []*RDBMSTestReport, totalDu
 	sb.WriteString(fmt.Sprintf("- **Test Date:** %s\n", time.Now().Format("2006-01-02 15:04:05")))
 	sb.WriteString(fmt.Sprintf("- **Total Duration:** %s\n", totalDuration.Round(time.Second)))
 	sb.WriteString(fmt.Sprintf("- **Total Test Cases:** %d\n\n", len(reports)))
+
+	sb.WriteString("## Scenario & Tested APIs\n\n")
+	sb.WriteString("1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`\n")
+	sb.WriteString("2. **Create Pre-requisite Infra (VNet/SG)**: `POST /tumblebug/ns/{nsId}/resources/vNet`, `POST /tumblebug/ns/{nsId}/resources/securityGroup`\n")
+	sb.WriteString("3. **Get RDBMS Support Matrix**: `GET /beetle/recommendation/middleware/rdbms/support`\n")
+	sb.WriteString("4. **Get Real-time Capability**: `GET /beetle/recommendation/middleware/rdbms/capability`\n")
+	sb.WriteString("5. **Recommend Managed RDBMS**: `POST /beetle/recommendation/middleware/rdbms`\n")
+	sb.WriteString("6. **Validate Recommendation**: `POST /beetle/recommendation/middleware/rdbms/validate`\n")
+	sb.WriteString("7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`\n")
+	sb.WriteString("8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`\n")
+	sb.WriteString("9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`\n")
+	sb.WriteString("10. **External Data I/O**: Direct TCP/SQL connectivity test\n")
+	sb.WriteString("11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)\n")
+	sb.WriteString("12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`\n")
+	sb.WriteString("13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`\n")
+	sb.WriteString("14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`\n\n")
 
 	sb.WriteString("## Test Matrix Results\n\n")
 
@@ -1458,18 +1517,10 @@ func generateSummaryReport(outputDir string, reports []*RDBMSTestReport, totalDu
 	}
 	sb.WriteString("\n")
 
-	// 3. Metadata Rows
-	// Region
+	// 3. Metadata Rows - Region only
 	sb.WriteString("| **Region** |")
 	for _, r := range validReports {
 		sb.WriteString(fmt.Sprintf(" `%s` |", r.Region))
-	}
-	sb.WriteString("\n")
-
-	// RDBMS ID
-	sb.WriteString("| **RDBMS ID** |")
-	for _, r := range validReports {
-		sb.WriteString(fmt.Sprintf(" `%s` |", r.DisplayName))
 	}
 	sb.WriteString("\n")
 
@@ -1484,6 +1535,8 @@ func generateSummaryReport(outputDir string, reports []*RDBMSTestReport, totalDu
 	stepDefs := []stepRowDef{
 		{label: "Pre-flight Spec & Image Review", stepName: "Tumblebug POST /specImagePairReview (Pre-flight Spec & Image Review)"},
 		{label: "Create Pre-requisite Infra (VNet/SG)", stepName: "Tumblebug POST /resources/vNet (Create VNet & Subnets)"},
+		{label: "Get RDBMS Support", stepName: "Beetle GET RDBMS Support"},
+		{label: "Get RDBMS Capability", stepName: "Beetle GET RDBMS Capability"},
 		{label: "Recommend RDBMS", stepName: "Beetle POST Recommend RDBMS"},
 		{label: "Validate Recommendation", stepName: "Beetle POST Validate RDBMS Recommendation"},
 		{label: "Migrate RDBMS (Provisioning)", stepName: "Beetle POST Migrate RDBMS (Provisioning)"},
@@ -1502,14 +1555,11 @@ func generateSummaryReport(outputDir string, reports []*RDBMSTestReport, totalDu
 		for _, r := range validReports {
 			var icon string
 			if def.isDirect {
-				if def.ioField == "ext" {
-					icon = r.ExternalDataIOTest
-				} else {
-					icon = r.InternalDataIOTest
+				raw := r.ExternalDataIOTest
+				if def.ioField != "ext" {
+					raw = r.InternalDataIOTest
 				}
-				if icon == "" {
-					icon = "⚪ N/A"
-				}
+				icon = formatDataIOEmoji(raw)
 			} else {
 				icon = getStepIcon(r.TestResults, def.stepName)
 			}
@@ -1521,32 +1571,47 @@ func generateSummaryReport(outputDir string, reports []*RDBMSTestReport, totalDu
 	// 5. Overall Result Row
 	sb.WriteString("| **Overall Result** |")
 	for _, r := range validReports {
-		resEmoji := "✅ PASS"
+		resEmoji := "**✅**"
 		if !r.Summary.Success {
-			resEmoji = "❌ FAIL"
+			resEmoji = "**❌**"
 		}
-		sb.WriteString(fmt.Sprintf(" **%s** |", resEmoji))
+		sb.WriteString(fmt.Sprintf(" %s |", resEmoji))
 	}
 	sb.WriteString("\n")
 
 	sb.WriteString("\n---\n*Generated by CM-Beetle Managed RDBMS Test CLI*\n")
-	_ = os.WriteFile(summaryPath, []byte(sb.String()), 0644)
-	fmt.Println("\n" + sb.String())
+	finalSummary := maskSensitiveInfo(sb.String())
+	_ = os.WriteFile(summaryPath, []byte(finalSummary), 0644)
+	fmt.Println("\n" + finalSummary)
+}
+
+func formatDataIOEmoji(raw string) string {
+	rawLower := strings.ToLower(strings.TrimSpace(raw))
+	if rawLower == "" || strings.Contains(rawLower, "n/a") {
+		return "—"
+	}
+	if strings.Contains(rawLower, "skip") {
+		return "⚪"
+	}
+	if rawLower == "pass" || strings.Contains(rawLower, "success") {
+		return "🟢"
+	}
+	return "🔴"
 }
 
 func getStepIcon(results []TestResults, stepName string) string {
 	for _, r := range results {
 		if r.TestName == stepName {
 			if r.Skipped {
-				return "⚪ Skip"
+				return "⚪"
 			}
 			if r.Success {
-				return "🟢 Pass"
+				return "🟢"
 			}
-			return "🔴 Fail"
+			return "🔴"
 		}
 	}
-	return "⚪ N/A"
+	return "—"
 }
 
 func generateDetailedReport(outputDir string, r *RDBMSTestReport) {
@@ -1559,6 +1624,29 @@ func generateDetailedReport(outputDir string, r *RDBMSTestReport) {
 	sb.WriteString(fmt.Sprintf("- **Namespace:** `%s`\n", r.NamespaceID))
 	sb.WriteString(fmt.Sprintf("- **Total Duration:** %s\n", r.Summary.Duration.Round(time.Millisecond)))
 	sb.WriteString(fmt.Sprintf("- **Overall Status:** %s\n\n", getOverallEmoji(r.Summary.Success)))
+
+	sb.WriteString("## Environment and Scenario\n\n")
+	sb.WriteString("### Environment\n")
+	sb.WriteString(fmt.Sprintf("- **Target CSP:** %s\n", strings.ToUpper(r.CSP)))
+	sb.WriteString(fmt.Sprintf("- **Target Region:** `%s`\n", r.Region))
+	sb.WriteString(fmt.Sprintf("- **Namespace:** `%s`\n", r.NamespaceID))
+	sb.WriteString(fmt.Sprintf("- **Test Date:** %s %s\n\n", r.TestDate, r.TestTime))
+
+	sb.WriteString("### Scenario & Tested APIs\n")
+	sb.WriteString("1. **Pre-flight Spec & Image Review**: `POST /tumblebug/specImagePairReview`\n")
+	sb.WriteString("2. **Create Pre-requisite Infra (VNet/SG)**: `POST /tumblebug/ns/{nsId}/resources/vNet`, `POST /tumblebug/ns/{nsId}/resources/securityGroup`\n")
+	sb.WriteString("3. **Get RDBMS Support Matrix**: `GET /beetle/recommendation/middleware/rdbms/support`\n")
+	sb.WriteString("4. **Get Real-time Capability**: `GET /beetle/recommendation/middleware/rdbms/capability`\n")
+	sb.WriteString("5. **Recommend Managed RDBMS**: `POST /beetle/recommendation/middleware/rdbms`\n")
+	sb.WriteString("6. **Validate Recommendation**: `POST /beetle/recommendation/middleware/rdbms/validate`\n")
+	sb.WriteString("7. **Migrate RDBMS (Provisioning)**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms`\n")
+	sb.WriteString("8. **Get RDBMS Info & List**: `GET /beetle/migration/middleware/ns/{nsId}/rdbms`\n")
+	sb.WriteString("9. **Create Logical Database**: `POST /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database`\n")
+	sb.WriteString("10. **External Data I/O**: Direct TCP/SQL connectivity test\n")
+	sb.WriteString("11. **Internal Data I/O**: SQL execution via internal Runner VM (`POST /tumblebug/ns/{nsId}/infra`)\n")
+	sb.WriteString("12. **Delete Logical Database**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}/database/{databaseName}`\n")
+	sb.WriteString("13. **Delete RDBMS**: `DELETE /beetle/migration/middleware/ns/{nsId}/rdbms/{rdbmsId}`\n")
+	sb.WriteString("14. **Delete Pre-requisite SG & VNet**: `DELETE /tumblebug/ns/{nsId}/resources/securityGroup/{sgId}`, `DELETE /tumblebug/ns/{nsId}/resources/vNet/{vNetId}`\n\n")
 
 	sb.WriteString("## Execution Steps & API Traces\n\n")
 	for i, step := range r.TestResults {
@@ -1575,17 +1663,20 @@ func generateDetailedReport(outputDir string, r *RDBMSTestReport) {
 			sb.WriteString(fmt.Sprintf("- **Request URL:** `%s`\n", step.RequestURL))
 		}
 		if step.RequestBody != nil {
-			bodyJson, _ := json.MarshalIndent(step.RequestBody, "", "  ")
+			maskedReq := maskSecrets(step.RequestBody)
+			bodyJson, _ := json.MarshalIndent(maskedReq, "", "  ")
 			sb.WriteString(fmt.Sprintf("```json\n// Request Body\n%s\n```\n", string(bodyJson)))
 		}
 		if step.Response != nil {
-			respJson, _ := json.MarshalIndent(step.Response, "", "  ")
+			maskedResp := maskSecrets(step.Response)
+			respJson, _ := json.MarshalIndent(maskedResp, "", "  ")
 			sb.WriteString(fmt.Sprintf("```json\n// Response Body\n%s\n```\n", string(respJson)))
 		}
 		sb.WriteString("\n")
 	}
 
-	_ = os.WriteFile(filePath, []byte(sb.String()), 0644)
+	finalContent := maskSensitiveInfo(sb.String())
+	_ = os.WriteFile(filePath, []byte(finalContent), 0644)
 }
 
 func getOverallEmoji(success bool) string {

@@ -63,6 +63,11 @@ cmd/test-cli/k8s-infra-migration/test-k8s-infra-migration
 cmd/test-cli/k8s-infra-migration/k8s-infra-migration
 cmd/test-cli/k8s-infra-migration/testconf/auth-config.json
 cmd/test-cli/k8s-infra-migration/testconf/test-config.yaml
+cmd/test-cli/rdbms/test-rdbms
+cmd/test-cli/rdbms/rdbms
+cmd/test-cli/rdbms/testconf/auth.json
+cmd/test-cli/rdbms/testconf/auth-config.json
+cmd/test-cli/rdbms/testconf/test-config.yaml
 pkg/testclient/scripts/sequentialFullTest/executionStatus*
 pkg/testclient/scripts/sequentialFullTest/ansibleAutoConf/*
 pkg/testclient/scripts/credentials*
